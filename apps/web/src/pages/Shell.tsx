@@ -1309,7 +1309,7 @@ function SpaceShell() {
         open={shortcutsOpen}
         onOpenChange={setShortcutsOpen}
         host={{ desktop: Boolean(desktopBridge()), apple: isApplePlatform() }}
-        dictation={Boolean(bootstrapMe?.phoneCallsEnabled)}
+        dictation={true}
       />
 
       {computerOpen && computerBot ? (
