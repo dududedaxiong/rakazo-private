@@ -1672,6 +1672,8 @@ export const JA_MESSAGES: Record<string, string> = {
   "Subscription failed. Check the address and try again.":
     "Subscription failed. Check the address and try again.",
   "On-device voice": "デバイス内音声",
+  "Model files": "Model files",
+  "Not imported": "Not imported",
   "Download voice models ({size} MB)": "音声モデルをダウンロード（{size} MB）",
   "Downloading voice models… {percent}%": "音声モデルをダウンロード中…{percent}％",
   "Delete voice models": "音声モデルを削除",

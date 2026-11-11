@@ -1704,6 +1704,8 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Subscribed: {name}": "已訂閱：{name}",
   "Subscription failed. Check the address and try again.": "訂閱失敗，檢查地址後重試。",
   "On-device voice": "本機語音",
+  "Model files": "模型檔案",
+  "Not imported": "未匯入",
   "Download voice models ({size} MB)": "下載語音模型（{size} MB）",
   "Downloading voice models… {percent}%": "正在下載語音模型…{percent}%",
   "Delete voice models": "刪除語音模型",

@@ -45,6 +45,15 @@ vi.mock("./on-device-speech", () => ({
     tts: "missing",
     progress: null,
   })),
+  getOnDeviceSpeechModelDiagnostics: vi.fn(async () => ({
+    stt: { category: "stt", dirExists: false, files: [], dataDirEntries: null },
+    tts: {
+      category: "tts",
+      dirExists: false,
+      files: [],
+      dataDirEntries: { expected: 392, actual: null },
+    },
+  })),
   onDeviceSpeechModelSizes: () => ({ sttMb: 71, ttsMb: 141, totalMb: 212 }),
   downloadOnDeviceSpeechModels: vi.fn(async () => undefined),
   downloadOnDeviceSpeechModelsFromAddress: vi.fn(async () => undefined),

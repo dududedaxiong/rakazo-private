@@ -1679,6 +1679,8 @@ export const RU_MESSAGES: Record<string, string> = {
   "Subscription failed. Check the address and try again.":
     "Subscription failed. Check the address and try again.",
   "On-device voice": "Голос на устройстве",
+  "Model files": "Model files",
+  "Not imported": "Not imported",
   "Download voice models ({size} MB)": "Скачать голосовые модели ({size} МБ)",
   "Downloading voice models… {percent}%": "Загрузка голосовых моделей… {percent} %",
   "Delete voice models": "Удалить голосовые модели",

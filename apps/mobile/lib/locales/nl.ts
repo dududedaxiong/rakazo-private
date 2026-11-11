@@ -1638,6 +1638,8 @@ export const NL_MESSAGES: Record<string, string> = {
   "Subscription failed. Check the address and try again.":
     "Subscription failed. Check the address and try again.",
   "On-device voice": "Stem op apparaat",
+  "Model files": "Model files",
+  "Not imported": "Not imported",
   "Download voice models ({size} MB)": "Spraakmodellen downloaden ({size} MB)",
   "Downloading voice models… {percent}%": "Spraakmodellen downloaden… {percent} %",
   "Delete voice models": "Spraakmodellen verwijderen",

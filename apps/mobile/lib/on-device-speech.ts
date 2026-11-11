@@ -446,6 +446,132 @@ async function onDeviceSpeechModelReady(category: OnDeviceSpeechModelCategory): 
   }
 }
 
+/**
+ * The exact files a complete extraction leaves in a model's directory,
+ * with the byte sizes from the engine's official release tarballs.
+ * The readiness check only proves a file exists and is non-empty, so
+ * a truncated file can pass it and still kill the native loader; the
+ * diagnostics below read these sizes back so a bad model can be seen
+ * instead of guessed at. STT lists both the int8 and full-precision
+ * transducer files the archive ships; the engine loads the first
+ * encoder/decoder/joiner it finds. TTS lists the model, the voice
+ * table, the token list, the lexicons and the rule tables the voice
+ * engine reads, plus the pronunciation data files inside
+ * espeak-ng-data.
+ */
+const ON_DEVICE_SPEECH_MODEL_DIAGNOSTIC_FILES: Record<
+  OnDeviceSpeechModelCategory,
+  { name: string; expectedSize: number }[]
+> = {
+  stt: [
+    { name: "encoder-epoch-99-avg-1.int8.onnx", expectedSize: 21_621_684 },
+    { name: "decoder-epoch-99-avg-1.int8.onnx", expectedSize: 1_888_682 },
+    { name: "joiner-epoch-99-avg-1.int8.onnx", expectedSize: 1_795_562 },
+    { name: "encoder-epoch-99-avg-1.onnx", expectedSize: 40_948_171 },
+    { name: "decoder-epoch-99-avg-1.onnx", expectedSize: 7_509_745 },
+    { name: "joiner-epoch-99-avg-1.onnx", expectedSize: 7_109_975 },
+    { name: "tokens.txt", expectedSize: 48_697 },
+  ],
+  tts: [
+    { name: "model.int8.onnx", expectedSize: 114_203_914 },
+    { name: "voices.bin", expectedSize: 53_790_720 },
+    { name: "tokens.txt", expectedSize: 1_111 },
+    { name: "lexicon-zh.txt", expectedSize: 2_120_131 },
+    { name: "lexicon-us-en.txt", expectedSize: 5_956_885 },
+    { name: "lexicon-gb-en.txt", expectedSize: 6_366_635 },
+    { name: "phone-zh.fst", expectedSize: 88_630 },
+    { name: "date-zh.fst", expectedSize: 59_154 },
+    { name: "number-zh.fst", expectedSize: 64_482 },
+    { name: "espeak-ng-data/phontab", expectedSize: 55_796 },
+    { name: "espeak-ng-data/phonindex", expectedSize: 39_074 },
+    { name: "espeak-ng-data/phondata", expectedSize: 550_424 },
+  ],
+};
+
+/** Expected entries (files and subdirectories) in espeak-ng-data. */
+const ON_DEVICE_SPEECH_ESPEAK_NG_DATA_ENTRIES = 392;
+
+export type OnDeviceSpeechFileDiagnostic = {
+  /** File name, relative to the model directory. */
+  name: string;
+  expectedSize: number;
+  /** Null when the file is missing. */
+  actualSize: number | null;
+};
+
+export type OnDeviceSpeechModelDiagnostics = {
+  category: OnDeviceSpeechModelCategory;
+  /** False when the model's directory does not exist at all. */
+  dirExists: boolean;
+  files: OnDeviceSpeechFileDiagnostic[];
+  /** Pronunciation data entry count (TTS only); null when the dir is missing. */
+  dataDirEntries: { expected: number; actual: number | null } | null;
+};
+
+export type OnDeviceSpeechDiagnostics = {
+  stt: OnDeviceSpeechModelDiagnostics;
+  tts: OnDeviceSpeechModelDiagnostics;
+};
+
+/**
+ * Lists the files a complete extraction leaves in each model's
+ * directory, with the on-disk size next to the expected size, so a
+ * truncated or partial model can be seen instead of guessed at.
+ * Listing only: it never loads the speech engine. Never throws; an
+ * unreadable model reports every file as missing.
+ */
+export async function getOnDeviceSpeechModelDiagnostics(): Promise<OnDeviceSpeechDiagnostics> {
+  const native = await loadNative().catch(() => null);
+  const diagnose = async (
+    category: OnDeviceSpeechModelCategory,
+  ): Promise<OnDeviceSpeechModelDiagnostics> => {
+    const missing: OnDeviceSpeechModelDiagnostics = {
+      category,
+      dirExists: false,
+      files: ON_DEVICE_SPEECH_MODEL_DIAGNOSTIC_FILES[category].map(({ name, expectedSize }) => ({
+        name,
+        expectedSize,
+        actualSize: null,
+      })),
+      dataDirEntries:
+        category === "tts"
+          ? { expected: ON_DEVICE_SPEECH_ESPEAK_NG_DATA_ENTRIES, actual: null }
+          : null,
+    };
+    try {
+      if (!native) return missing;
+      const path = await native.getModelPath(category, onDeviceSpeechModelId(category));
+      if (!path) return missing;
+      const { Directory, File } = await loadFileSystem();
+      const dir = new Directory(toFileUri(path));
+      if (!dir.exists) return missing;
+      const files: OnDeviceSpeechFileDiagnostic[] = [];
+      for (const { name, expectedSize } of ON_DEVICE_SPEECH_MODEL_DIAGNOSTIC_FILES[category]) {
+        const file = new File(toFileUri(path), ...name.split("/"));
+        let actualSize: number | null = null;
+        if (file.exists) {
+          const size = file.info().size;
+          actualSize = typeof size === "number" ? size : null;
+        }
+        files.push({ name, expectedSize, actualSize });
+      }
+      let dataDirEntries: OnDeviceSpeechModelDiagnostics["dataDirEntries"] = null;
+      if (category === "tts") {
+        const dataDir = new Directory(toFileUri(path), "espeak-ng-data");
+        dataDirEntries = {
+          expected: ON_DEVICE_SPEECH_ESPEAK_NG_DATA_ENTRIES,
+          actual: dataDir.exists ? dataDir.list().length : null,
+        };
+      }
+      return { category, dirExists: true, files, dataDirEntries };
+    } catch {
+      return missing;
+    }
+  };
+  const [stt, tts] = await Promise.all([diagnose("stt"), diagnose("tts")]);
+  return { stt, tts };
+}
+
 /** Where the download manager expects a model's archive. */
 async function onDeviceSpeechArchivePath(category: OnDeviceSpeechModelCategory): Promise<string> {
   const native = await loadNative();

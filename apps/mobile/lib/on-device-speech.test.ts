@@ -8,6 +8,7 @@ import {
   downloadOnDeviceSpeechModelsFromAddress,
   finishOnDeviceSpeech,
   floatSamplesToWavBase64,
+  getOnDeviceSpeechModelDiagnostics,
   importOnDeviceSpeechModel,
   listenOnDeviceSpeech,
   loadOnDeviceSpeechEnabled,
@@ -405,6 +406,110 @@ describe("on-device speech availability", () => {
     await saveOnDeviceSpeechEnabled(true);
     fsState.files.delete("file:///models/tts/espeak-ng-data/phondata");
     expect(await onDeviceSpeechAvailable()).toBe(false);
+  });
+});
+
+describe("on-device speech model diagnostics", () => {
+  const expectedSizes: Record<string, number> = {
+    "file:///models/stt/encoder-epoch-99-avg-1.int8.onnx": 21_621_684,
+    "file:///models/stt/decoder-epoch-99-avg-1.int8.onnx": 1_888_682,
+    "file:///models/stt/joiner-epoch-99-avg-1.int8.onnx": 1_795_562,
+    "file:///models/stt/encoder-epoch-99-avg-1.onnx": 40_948_171,
+    "file:///models/stt/decoder-epoch-99-avg-1.onnx": 7_509_745,
+    "file:///models/stt/joiner-epoch-99-avg-1.onnx": 7_109_975,
+    "file:///models/stt/tokens.txt": 48_697,
+    "file:///models/tts/model.int8.onnx": 114_203_914,
+    "file:///models/tts/voices.bin": 53_790_720,
+    "file:///models/tts/tokens.txt": 1_111,
+    "file:///models/tts/lexicon-zh.txt": 2_120_131,
+    "file:///models/tts/lexicon-us-en.txt": 5_956_885,
+    "file:///models/tts/lexicon-gb-en.txt": 6_366_635,
+    "file:///models/tts/phone-zh.fst": 88_630,
+    "file:///models/tts/date-zh.fst": 59_154,
+    "file:///models/tts/number-zh.fst": 64_482,
+    "file:///models/tts/espeak-ng-data/phontab": 55_796,
+    "file:///models/tts/espeak-ng-data/phonindex": 39_074,
+    "file:///models/tts/espeak-ng-data/phondata": 550_424,
+  };
+
+  function seedCompleteDiagnostics() {
+    for (const name of [
+      "encoder-epoch-99-avg-1.onnx",
+      "decoder-epoch-99-avg-1.onnx",
+      "joiner-epoch-99-avg-1.onnx",
+    ]) {
+      fsState.files.add(`file:///models/stt/${name}`);
+    }
+    for (const name of [
+      "lexicon-zh.txt",
+      "lexicon-us-en.txt",
+      "lexicon-gb-en.txt",
+      "phone-zh.fst",
+      "date-zh.fst",
+      "number-zh.fst",
+    ]) {
+      fsState.files.add(`file:///models/tts/${name}`);
+    }
+    for (const [uri, size] of Object.entries(expectedSizes)) {
+      fsState.fileSizes.set(uri, size);
+    }
+    // The release ships 392 entries in espeak-ng-data; the seed has 3.
+    for (let i = 0; i < 389; i += 1) {
+      fsState.files.add(`file:///models/tts/espeak-ng-data/entry-${i}`);
+    }
+  }
+
+  it("reports every file at its release size when the extraction is complete", async () => {
+    seedCompleteDiagnostics();
+    const diagnostics = await getOnDeviceSpeechModelDiagnostics();
+    expect(diagnostics.stt.dirExists).toBe(true);
+    expect(diagnostics.tts.dirExists).toBe(true);
+    for (const file of [...diagnostics.stt.files, ...diagnostics.tts.files]) {
+      expect(file.actualSize).toBe(file.expectedSize);
+    }
+    expect(diagnostics.tts.dataDirEntries).toEqual({ expected: 392, actual: 392 });
+    expect(diagnostics.stt.dataDirEntries).toBeNull();
+  });
+
+  it("reports a missing file", async () => {
+    seedCompleteDiagnostics();
+    fsState.files.delete("file:///models/tts/lexicon-zh.txt");
+    const diagnostics = await getOnDeviceSpeechModelDiagnostics();
+    const lexicon = diagnostics.tts.files.find((file) => file.name === "lexicon-zh.txt");
+    expect(lexicon?.actualSize).toBeNull();
+  });
+
+  it("reports a truncated file", async () => {
+    seedCompleteDiagnostics();
+    fsState.fileSizes.set("file:///models/tts/model.int8.onnx", 1_024);
+    const diagnostics = await getOnDeviceSpeechModelDiagnostics();
+    const model = diagnostics.tts.files.find((file) => file.name === "model.int8.onnx");
+    expect(model?.actualSize).toBe(1_024);
+    expect(model?.expectedSize).toBe(114_203_914);
+  });
+
+  it("reports an empty pronunciation data directory", async () => {
+    seedCompleteDiagnostics();
+    for (const name of ["phontab", "phonindex", "phondata"]) {
+      fsState.files.delete(`file:///models/tts/espeak-ng-data/${name}`);
+    }
+    for (let i = 0; i < 389; i += 1) {
+      fsState.files.delete(`file:///models/tts/espeak-ng-data/entry-${i}`);
+    }
+    const diagnostics = await getOnDeviceSpeechModelDiagnostics();
+    expect(diagnostics.tts.dataDirEntries).toEqual({ expected: 392, actual: 0 });
+  });
+
+  it("reports both models missing when their directories are gone", async () => {
+    fsState.files.delete("file:///models/stt");
+    fsState.files.delete("file:///models/tts");
+    fsState.dirs.delete("file:///models/stt");
+    fsState.dirs.delete("file:///models/tts");
+    const diagnostics = await getOnDeviceSpeechModelDiagnostics();
+    expect(diagnostics.stt.dirExists).toBe(false);
+    expect(diagnostics.tts.dirExists).toBe(false);
+    expect(diagnostics.stt.files.every((file) => file.actualSize === null)).toBe(true);
+    expect(diagnostics.tts.files.every((file) => file.actualSize === null)).toBe(true);
   });
 });
 

@@ -36,13 +36,16 @@ import { loadDeviceVoiceEnabled, saveDeviceVoiceEnabled } from "../../lib/device
 import { useI18n } from "../../lib/i18n";
 import { native, useThemedStyles } from "../../lib/native";
 import type {
+  OnDeviceSpeechDiagnostics,
   OnDeviceSpeechModelCategory,
+  OnDeviceSpeechModelDiagnostics,
   OnDeviceSpeechModelsStatus,
 } from "../../lib/on-device-speech";
 import {
   deleteOnDeviceSpeechModels,
   downloadOnDeviceSpeechModels,
   downloadOnDeviceSpeechModelsFromAddress,
+  getOnDeviceSpeechModelDiagnostics,
   importOnDeviceSpeechModel,
   loadOnDeviceSpeechEnabled,
   loadOnDeviceSpeechModelBaseUrl,
@@ -135,6 +138,7 @@ export default function VoiceSettings() {
   const [onDeviceSpeech, setOnDeviceSpeech] = useState(false);
   const [onDeviceSpeechReady, setOnDeviceSpeechReady] = useState(!deviceSettings);
   const [modelStatus, setModelStatus] = useState<OnDeviceSpeechModelsStatus | null>(null);
+  const [modelDiagnostics, setModelDiagnostics] = useState<OnDeviceSpeechDiagnostics | null>(null);
   const [downloadingModels, setDownloadingModels] = useState(false);
   const [importingModels, setImportingModels] = useState(false);
   const [modelBaseUrl, setModelBaseUrl] = useState("");
@@ -237,12 +241,14 @@ export default function VoiceSettings() {
         loadOnDeviceSpeechEnabled(),
         onDeviceSpeechModelsStatus(),
         loadOnDeviceSpeechModelBaseUrl(),
+        getOnDeviceSpeechModelDiagnostics().catch(() => null),
       ])
-        .then(([enabled, status, baseUrl]) => {
+        .then(([enabled, status, baseUrl, diagnostics]) => {
           if (deviceVoiceRevision.current !== revision) return;
           setOnDeviceSpeech(enabled);
           setModelStatus(status);
           setModelBaseUrl(baseUrl);
+          setModelDiagnostics(diagnostics);
           setOnDeviceSpeechReady(true);
         })
         .catch(() => {
@@ -351,6 +357,10 @@ export default function VoiceSettings() {
     }
   }
 
+  async function refreshModelDiagnostics() {
+    setModelDiagnostics(await getOnDeviceSpeechModelDiagnostics().catch(() => null));
+  }
+
   async function downloadModels() {
     if (downloadingModels || importingModels || pending !== null) return;
     setDownloadingModels(true);
@@ -368,6 +378,7 @@ export default function VoiceSettings() {
       setModelStatus(await onDeviceSpeechModelsStatus().catch(() => null));
     } finally {
       setDownloadingModels(false);
+      void refreshModelDiagnostics();
     }
   }
 
@@ -405,6 +416,7 @@ export default function VoiceSettings() {
       setModelStatus(await onDeviceSpeechModelsStatus().catch(() => null));
     } finally {
       setImportingModels(false);
+      void refreshModelDiagnostics();
     }
   }
 
@@ -419,7 +431,48 @@ export default function VoiceSettings() {
       setError(errorText(err, t("Could not delete the voice models.")));
     } finally {
       setPending(null);
+      void refreshModelDiagnostics();
     }
+  }
+
+  /** One row per expected model file: on-disk size against the release size. */
+  function diagnosticRows(diagnostics: OnDeviceSpeechModelDiagnostics) {
+    const label = diagnostics.category === "stt" ? "STT" : "TTS";
+    const markFor = (actual: number | null, expected: number) =>
+      actual === null ? "✕" : actual < expected ? "!" : "✓";
+    const rows = [
+      <View key={`${label}-label`} style={[styles.groupRow, styles.groupDivider]}>
+        <View style={styles.rowCopy}>
+          <Text style={styles.cardTitle}>{label}</Text>
+        </View>
+        {!diagnostics.dirExists ? (
+          <Text style={[styles.cardTitle, styles.destructive]}>{t("Not imported")}</Text>
+        ) : null}
+      </View>,
+    ];
+    if (!diagnostics.dirExists) return rows;
+    const renderRow = (key: string, name: string, actual: number | null, expected: number) => {
+      const mark = markFor(actual, expected);
+      return (
+        <View key={key} style={[styles.groupRow, styles.groupDivider]}>
+          <Text style={styles.diagnosticName}>{name}</Text>
+          <Text style={styles.diagnosticSize}>
+            {actual === null ? "—" : formatDiagnosticSize(actual)}
+            {" / "}
+            {formatDiagnosticSize(expected)}
+          </Text>
+          <Text style={[styles.diagnosticMark, mark !== "✓" && styles.destructive]}>{mark}</Text>
+        </View>
+      );
+    };
+    for (const file of diagnostics.files) {
+      rows.push(renderRow(`${label}-${file.name}`, file.name, file.actualSize, file.expectedSize));
+    }
+    if (diagnostics.dataDirEntries) {
+      const { expected, actual } = diagnostics.dataDirEntries;
+      rows.push(renderRow(`${label}-espeak-ng-data`, "espeak-ng-data", actual, expected));
+    }
+    return rows;
   }
 
   async function chooseProvider(nextProvider: string) {
@@ -729,6 +782,17 @@ export default function VoiceSettings() {
                 </>
               )
             ) : null}
+            {onDeviceSpeech && modelDiagnostics ? (
+              <>
+                <View style={[styles.groupRow, styles.groupDivider]}>
+                  <View style={styles.rowCopy}>
+                    <Text style={styles.cardTitle}>{t("Model files")}</Text>
+                  </View>
+                </View>
+                {diagnosticRows(modelDiagnostics.stt)}
+                {diagnosticRows(modelDiagnostics.tts)}
+              </>
+            ) : null}
           </View>
         ) : null}
         {catalog.length ? (
@@ -945,6 +1009,11 @@ export default function VoiceSettings() {
   );
 }
 
+/** Grouped digits, so an on-disk size reads next to the release size. */
+function formatDiagnosticSize(size: number): string {
+  return size.toLocaleString("en-US");
+}
+
 function createVoiceStyles() {
   const tokens = mobileTokens();
   return StyleSheet.create({
@@ -968,6 +1037,9 @@ function createVoiceStyles() {
     rowCopy: { flex: 1 },
     addressInput: { flex: 1 },
     cardTitle: { color: native.label, fontSize: 16 },
+    diagnosticName: { color: native.label, fontSize: 14, flex: 1 },
+    diagnosticSize: { color: native.secondaryLabel, fontSize: 13 },
+    diagnosticMark: { color: native.label, fontSize: 16, width: 20, textAlign: "center" },
     fieldLabel: { color: native.label, marginTop: 16 },
     input: {
       marginTop: 8,

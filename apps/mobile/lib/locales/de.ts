@@ -1651,6 +1651,8 @@ export const DE_MESSAGES: Record<string, string> = {
   "Subscription failed. Check the address and try again.":
     "Subscription failed. Check the address and try again.",
   "On-device voice": "Sprache auf dem Gerät",
+  "Model files": "Model files",
+  "Not imported": "Not imported",
   "Download voice models ({size} MB)": "Sprachmodelle herunterladen ({size} MB)",
   "Downloading voice models… {percent}%": "Sprachmodelle werden heruntergeladen… {percent} %",
   "Delete voice models": "Sprachmodelle löschen",
