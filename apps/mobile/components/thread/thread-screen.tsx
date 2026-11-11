@@ -578,7 +578,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     mentionBots,
   });
 
-  const { startVoiceCall, openBotChat } = useThreadVoiceCall({
+  const { openBotChat } = useThreadVoiceCall({
     botId,
     readOnly,
     displayName,
