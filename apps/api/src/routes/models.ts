@@ -222,7 +222,7 @@ export function modelsRoutes(ctx: RouterContext) {
           let apiKey = input.apiKey;
           let headers = input.headers;
           let authMode = input.authMode;
-          if (!apiKey?.trim() || headers === undefined || authMode === undefined) {
+          if (!apiKey?.trim() || headers === undefined) {
             try {
               const preferred = await findModelCredential(
                 deps.prisma,
