@@ -488,8 +488,14 @@ const ON_DEVICE_SPEECH_MODEL_DIAGNOSTIC_FILES: Record<
   ],
 };
 
-/** Expected entries (files and subdirectories) in espeak-ng-data. */
-const ON_DEVICE_SPEECH_ESPEAK_NG_DATA_ENTRIES = 392;
+/**
+ * Expected entries (files and subdirectories, counted recursively) under
+ * espeak-ng-data, excluding the directory itself. The release tarball
+ * lists 392 paths under espeak-ng-data including the directory entry;
+ * the contents are 391. A flat list() only sees the top level (~120),
+ * so the diagnostics walk the tree instead.
+ */
+const ON_DEVICE_SPEECH_ESPEAK_NG_DATA_ENTRIES = 391;
 
 export type OnDeviceSpeechFileDiagnostic = {
   /** File name, relative to the model directory. */
@@ -558,9 +564,22 @@ export async function getOnDeviceSpeechModelDiagnostics(): Promise<OnDeviceSpeec
       let dataDirEntries: OnDeviceSpeechModelDiagnostics["dataDirEntries"] = null;
       if (category === "tts") {
         const dataDir = new Directory(toFileUri(path), "espeak-ng-data");
+        // list() only returns direct children, so walk the tree: the
+        // nested voice files under espeak-ng-data/voices/ are part of
+        // the release and a flat count would miss them entirely.
+        const countEntries = (dir: InstanceType<typeof Directory>): number => {
+          let count = 0;
+          for (const entry of dir.list()) {
+            count += 1;
+            if (entry instanceof Directory) {
+              count += countEntries(entry);
+            }
+          }
+          return count;
+        };
         dataDirEntries = {
           expected: ON_DEVICE_SPEECH_ESPEAK_NG_DATA_ENTRIES,
-          actual: dataDir.exists ? dataDir.list().length : null,
+          actual: dataDir.exists ? countEntries(dataDir) : null,
         };
       }
       return { category, dirExists: true, files, dataDirEntries };

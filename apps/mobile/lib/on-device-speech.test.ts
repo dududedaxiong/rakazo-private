@@ -453,10 +453,17 @@ describe("on-device speech model diagnostics", () => {
     for (const [uri, size] of Object.entries(expectedSizes)) {
       fsState.fileSizes.set(uri, size);
     }
-    // The release ships 392 entries in espeak-ng-data; the seed has 3.
-    for (let i = 0; i < 389; i += 1) {
+    // The release ships 391 entries under espeak-ng-data (files and
+    // subdirectories, counted recursively); the seed has 3 top-level
+    // files, so add 383 flat entries plus a nested voice directory.
+    for (let i = 0; i < 383; i += 1) {
       fsState.files.add(`file:///models/tts/espeak-ng-data/entry-${i}`);
     }
+    fsState.dirs.add("file:///models/tts/espeak-ng-data/voices");
+    fsState.files.add("file:///models/tts/espeak-ng-data/voices/en");
+    fsState.files.add("file:///models/tts/espeak-ng-data/voices/zh");
+    fsState.dirs.add("file:///models/tts/espeak-ng-data/voices/!v");
+    fsState.files.add("file:///models/tts/espeak-ng-data/voices/!v/voice1");
   }
 
   it("reports every file at its release size when the extraction is complete", async () => {
@@ -467,7 +474,7 @@ describe("on-device speech model diagnostics", () => {
     for (const file of [...diagnostics.stt.files, ...diagnostics.tts.files]) {
       expect(file.actualSize).toBe(file.expectedSize);
     }
-    expect(diagnostics.tts.dataDirEntries).toEqual({ expected: 392, actual: 392 });
+    expect(diagnostics.tts.dataDirEntries).toEqual({ expected: 391, actual: 391 });
     expect(diagnostics.stt.dataDirEntries).toBeNull();
   });
 
@@ -493,11 +500,28 @@ describe("on-device speech model diagnostics", () => {
     for (const name of ["phontab", "phonindex", "phondata"]) {
       fsState.files.delete(`file:///models/tts/espeak-ng-data/${name}`);
     }
-    for (let i = 0; i < 389; i += 1) {
+    for (let i = 0; i < 383; i += 1) {
       fsState.files.delete(`file:///models/tts/espeak-ng-data/entry-${i}`);
     }
+    fsState.files.delete("file:///models/tts/espeak-ng-data/voices/en");
+    fsState.files.delete("file:///models/tts/espeak-ng-data/voices/zh");
+    fsState.files.delete("file:///models/tts/espeak-ng-data/voices/!v/voice1");
+    fsState.dirs.delete("file:///models/tts/espeak-ng-data/voices/!v");
+    fsState.dirs.delete("file:///models/tts/espeak-ng-data/voices");
     const diagnostics = await getOnDeviceSpeechModelDiagnostics();
-    expect(diagnostics.tts.dataDirEntries).toEqual({ expected: 392, actual: 0 });
+    expect(diagnostics.tts.dataDirEntries).toEqual({ expected: 391, actual: 0 });
+  });
+
+  it("reports missing nested pronunciation data when only the top level is intact", async () => {
+    seedCompleteDiagnostics();
+    fsState.files.delete("file:///models/tts/espeak-ng-data/voices/en");
+    fsState.files.delete("file:///models/tts/espeak-ng-data/voices/zh");
+    fsState.files.delete("file:///models/tts/espeak-ng-data/voices/!v/voice1");
+    fsState.dirs.delete("file:///models/tts/espeak-ng-data/voices/!v");
+    fsState.dirs.delete("file:///models/tts/espeak-ng-data/voices");
+    const diagnostics = await getOnDeviceSpeechModelDiagnostics();
+    // 3 seed files + 383 flat entries; the 5 nested entries are gone.
+    expect(diagnostics.tts.dataDirEntries).toEqual({ expected: 391, actual: 386 });
   });
 
   it("reports both models missing when their directories are gone", async () => {
