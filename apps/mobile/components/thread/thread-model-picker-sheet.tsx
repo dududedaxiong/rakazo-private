@@ -9,6 +9,7 @@ import { mergeHealthReports, TEST_PROVIDER_TIMEOUT_MS } from "../../lib/availabl
 import { chatModelPickerChoices } from "../../lib/chat-model";
 import { useI18n } from "../../lib/i18n";
 import type { MobileModelCredential } from "../../lib/mobile-types";
+import { removableModel, removeModelFromConnection } from "../../lib/model-removal";
 import { errorText } from "../../lib/user-error";
 import { ModelHealthDialog } from "../model-health-dialog";
 import { ModelPickerList } from "../model-picker-list";
@@ -115,6 +116,51 @@ export function ThreadModelPickerSheet({
     }
   }
 
+  async function reloadChoices() {
+    try {
+      const [me, catalog, nextCredentials] = await Promise.all([
+        rpc("me"),
+        rpc("models/list"),
+        rpc("models/credentials"),
+      ]);
+      setCredentials(nextCredentials);
+      setChoices(chatModelPickerChoices(me, catalog, nextCredentials, selectedKey, t));
+    } catch (err) {
+      setLoadError(errorText(err, t("Could not load model settings")));
+    }
+  }
+
+  /** Removes a swiped model from its connection; the row drops at once and the reload confirms it. */
+  async function removeChoice(choice: ChatModelChoice) {
+    const target = removableModel(credentials ?? [], choice);
+    if (!target || saving) return;
+    setSaving(true);
+    setError(null);
+    setChoices((prev) => prev?.filter((item) => item.key !== choice.key) ?? null);
+    try {
+      await removeModelFromConnection(target);
+      if (choice.key === selectedKey) {
+        if (role === "main") {
+          await rpc("bots/update", { botId, modelProvider: null, modelId: null });
+        } else {
+          await rpc("models/setRole", {
+            role: "computer",
+            expectedUserId: userId,
+            scope: "account",
+            primary: null,
+          });
+        }
+        onSaved({ provider: null, modelId: null });
+      }
+      await reloadChoices();
+    } catch (err) {
+      setError(errorText(err, t("Could not remove this model")));
+      await reloadChoices();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   /** Tests every model on every connection with one real question each. */
   async function testAllModels() {
     if (!credentials || credentials.length === 0 || testing) return;
@@ -189,6 +235,8 @@ export function ThreadModelPickerSheet({
           selectedKey={selectedKey}
           error={loadError}
           onSelect={(choice) => void select(choice)}
+          isRemovable={(choice) => removableModel(credentials ?? [], choice) !== null}
+          onRemove={(choice) => void removeChoice(choice)}
         />
       </View>
       {mergedHealth ? (

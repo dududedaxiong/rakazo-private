@@ -8,15 +8,17 @@ import {
   AccessibilityInfo,
   ActivityIndicator,
   Platform,
+  Pressable,
   SectionList,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFloatingHeaderInset } from "../lib/floating-header";
 import { useI18n } from "../lib/i18n";
-import { native, useThemedStyles } from "../lib/native";
+import { native, useMobileTokens, useThemedStyles } from "../lib/native";
 import { useSideInsets } from "../lib/side-insets";
 import { useListSearch } from "../lib/use-list-search";
 import { ListSearchInput } from "./list-search-input";
@@ -33,6 +35,8 @@ export function ModelPickerList({
   providerLabel,
   emptyMessage,
   connectChoices,
+  isRemovable,
+  onRemove,
 }: {
   choices: readonly ChatModelChoice[] | null;
   /** Providers that need a connection first, listed after the models. */
@@ -43,12 +47,17 @@ export function ModelPickerList({
   emptyMessage?: string;
   /** A single-provider picker only needs vendor headings. */
   providerLabel?: string;
+  /** Rows that can be swiped left to remove from their connection. */
+  isRemovable?: (choice: ChatModelChoice) => boolean;
+  /** Called when the swipe-to-remove action is tapped for a removable row. */
+  onRemove?: (choice: ChatModelChoice) => void;
 }) {
   const { t } = useI18n();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const sideInsets = useSideInsets();
   const styles = useThemedStyles(createStyles);
+  const mobileTokens = useMobileTokens();
   const headerInset = useFloatingHeaderInset();
   const list = useRef<SectionList<ChatModelChoice>>(null);
   const initialScroll = useRef({
@@ -246,7 +255,7 @@ export function ModelPickerList({
       }
       renderItem={({ item, index, section }) => {
         const selected = item.key === selectedKey;
-        return (
+        const cell = (
           <View
             style={[
               styles.cell,
@@ -275,6 +284,35 @@ export function ModelPickerList({
             />
           </View>
         );
+        if (section.connect || !isRemovable?.(item) || !onRemove) return cell;
+        const last = index === section.data.length - 1;
+        return (
+          <Swipeable
+            renderRightActions={() => (
+              <View
+                style={[
+                  styles.removeAction,
+                  { backgroundColor: mobileTokens.destructiveFill },
+                  index === 0 && styles.removeActionFirst,
+                  last && styles.removeActionLast,
+                ]}
+              >
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("Remove")}
+                  onPress={() => onRemove(item)}
+                  style={styles.removeButton}
+                >
+                  <Text style={[styles.removeLabel, { color: mobileTokens.destructiveForeground }]}>
+                    {t("Remove")}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+          >
+            {cell}
+          </Swipeable>
+        );
       }}
     />
   );
@@ -290,6 +328,16 @@ function createStyles() {
     cell: { backgroundColor: native.fill, overflow: "hidden" },
     first: { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderCurve: "continuous" },
     last: { borderBottomLeftRadius: 16, borderBottomRightRadius: 16, borderCurve: "continuous" },
+    removeAction: { justifyContent: "center", width: 88 },
+    removeActionFirst: { borderTopRightRadius: 16, borderCurve: "continuous" },
+    removeActionLast: { borderBottomRightRadius: 16, borderCurve: "continuous" },
+    removeButton: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 12,
+    },
+    removeLabel: { fontSize: 15, fontWeight: "600" },
     separator: {
       height: StyleSheet.hairlineWidth,
       marginStart: 16,

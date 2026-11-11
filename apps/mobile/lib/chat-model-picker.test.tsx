@@ -51,6 +51,7 @@ const mocks = vi.hoisted(() => ({
   vendorLabels: false,
   subscriptionSignIn: false,
   secondConnection: false,
+  enabledModelIds: undefined as string[] | undefined,
   alert: vi.fn(),
   prompt: vi.fn(),
   completeOAuth: vi.fn(),
@@ -237,11 +238,16 @@ vi.mock("./api", () => ({
         maxTokens?: number | null;
         accountId?: string;
         gatewayId?: string;
+        enabledModelIds?: string[];
       };
       // A null limit clears it, as the server does.
       mocks.savedMaxTokens = saved.maxTokens ?? undefined;
       if (saved.accountId) mocks.savedAccountId = saved.accountId;
       if (saved.gatewayId) mocks.savedGatewayId = saved.gatewayId;
+      // A saved model list persists, as the server does, so a reload after a
+      // removal shows the remaining models.
+      if (saved.enabledModelIds && mocks.enabledModelIds !== undefined)
+        mocks.enabledModelIds = saved.enabledModelIds;
       return { id: CREDENTIAL_ID };
     }
     if (procedure === "models/beginOAuth")
@@ -344,6 +350,7 @@ vi.mock("./api", () => ({
               modelId: "vendor/model-1",
               isDefault: true,
               thinkingLevel: "high",
+              ...(mocks.enabledModelIds ? { enabledModelIds: mocks.enabledModelIds } : {}),
             },
             ...(mocks.secondConnection
               ? [
@@ -550,9 +557,26 @@ vi.mock("react-native", () => {
 });
 vi.mock("./native", () => ({
   native: new Proxy({}, { get: (_target, name) => String(name) }),
-  useMobileTokens: () => ({ mutedForeground: "muted", foreground: "ink", destructive: "error" }),
+  useMobileTokens: () => ({
+    mutedForeground: "muted",
+    foreground: "ink",
+    destructive: "error",
+    destructiveFill: "error-fill",
+    destructiveForeground: "on-error-fill",
+  }),
   useResolvedAppearance: () => "light",
   useThemedStyles: (createStyles: () => unknown) => createStyles(),
+}));
+// react-native-gesture-handler ships syntax the jsdom runner cannot parse; the
+// swipe action renders inline here so its button stays clickable in tests.
+vi.mock("react-native-gesture-handler", () => ({
+  Swipeable: ({
+    children,
+    renderRightActions,
+  }: {
+    children?: ReactNode;
+    renderRightActions?: () => ReactNode;
+  }) => createElement("div", null, children, renderRightActions?.()),
 }));
 vi.mock("./i18n", () => {
   const t = (text: string, values?: Record<string, string | number>) =>
@@ -735,6 +759,7 @@ beforeEach(() => {
   mocks.vendorLabels = false;
   mocks.subscriptionSignIn = false;
   mocks.secondConnection = false;
+  mocks.enabledModelIds = undefined;
   mocks.backups = [];
   mocks.primary = null;
   mocks.computerPrimary = null;
@@ -2101,6 +2126,11 @@ describe("thread composer quick cards", () => {
 
 describe("thread model picker sheet", () => {
   const sheetRows = () => [...container.querySelectorAll<HTMLButtonElement>("li button")];
+  // The swipe mock renders each row's Remove button inside the same li; the
+  // row buttons carry the model's full label, the Remove buttons do not.
+  const modelRows = () => sheetRows().filter((row) => row.getAttribute("aria-label") !== "Remove");
+  const removeButtons = () =>
+    [...container.querySelectorAll("button")].filter((button) => button.textContent === "Remove");
   const pickModel = async (cardLabel: string, modelLabel: string) => {
     await renderChips();
     await act(async () => chipCard(cardLabel)!.click());
@@ -2163,6 +2193,109 @@ describe("thread model picker sheet", () => {
     await act(async () => button!.click());
     expect(container.textContent).toContain("Could not test these models");
     expect(container.textContent).not.toContain("Test results");
+  });
+
+  it("removes a swiped model from its connection and keeps the sheet open", async () => {
+    mocks.enabledModelIds = ["vendor/model-1", "vendor/model-2", "vendor/model-3"];
+    await renderChips();
+    await act(async () => chipCard("Main model")!.click());
+    expect(modelRows().map((row) => row.textContent)).toEqual([
+      "Space defaultModel 1",
+      "vendor/model-1",
+      "vendor/model-2",
+      "vendor/model-3",
+    ]);
+    expect(removeButtons()).toHaveLength(3);
+    await act(async () => removeButtons()[1]!.click());
+    expect(mocks.rpc).toHaveBeenCalledWith("models/connect", {
+      provider: "openrouter",
+      credentialId: CREDENTIAL_ID,
+      modelId: "vendor/model-1",
+      enabledModelIds: ["vendor/model-1", "vendor/model-3"],
+      makeDefault: false,
+    });
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(modelRows().map((row) => row.textContent)).toEqual([
+      "Space defaultModel 1",
+      "vendor/model-1",
+      "vendor/model-3",
+    ]);
+  });
+
+  it("clears the bot's model when the removed model was selected", async () => {
+    // The shared harness opens the sheet with no selection; this one opens it
+    // on vendor/model-1, the way the chat does for the bot's current model.
+    mocks.enabledModelIds = ["vendor/model-1", "vendor/model-2", "vendor/model-3"];
+    function Harness() {
+      const [mainOverride, setMainOverride] = useState<ThreadModelSave | null>(null);
+      const [sheetRole, setSheetRole] = useState<ThreadModelPickerRole | null>(null);
+      return (
+        <>
+          <ThreadComposerChips
+            botId="bot-fixture"
+            currentBot={threadBot}
+            userId="user-fixture"
+            catalog={catalog as MobileModel[]}
+            mainOverride={mainOverride}
+            computerChoice={mocks.computerPrimary}
+            onPickModel={setSheetRole}
+            favoriteCount={0}
+            onOpenFavorites={() => undefined}
+            backgroundLabel="Default"
+            onOpenBackground={() => undefined}
+            onOpenBackup={() => undefined}
+          />
+          {sheetRole ? (
+            <ThreadModelPickerSheet
+              visible
+              role={sheetRole}
+              botId="bot-fixture"
+              userId="user-fixture"
+              selectedKey="openrouter::vendor/model-1"
+              onClose={() => setSheetRole(null)}
+              onSaved={(choice) => {
+                if (sheetRole === "main") setMainOverride(choice);
+              }}
+            />
+          ) : null}
+        </>
+      );
+    }
+    mocks.computerPrimary = { provider: "openrouter", modelId: "vendor/model-2" };
+    await act(async () => root.render(<Harness />));
+    await act(async () => chipCard("Main model")!.click());
+    await act(async () => removeButtons()[0]!.click());
+    expect(mocks.rpc).toHaveBeenCalledWith("models/connect", {
+      provider: "openrouter",
+      credentialId: CREDENTIAL_ID,
+      modelId: "vendor/model-2",
+      enabledModelIds: ["vendor/model-2", "vendor/model-3"],
+      makeDefault: false,
+    });
+    expect(mocks.update).toHaveBeenCalledWith({
+      botId: "bot-fixture",
+      modelProvider: null,
+      modelId: null,
+    });
+    // The removed model stays listed as the saved-but-no-longer-offered row:
+    // this harness keeps the old selectedKey, while the real chat clears it
+    // through onSaved.
+    expect(modelRows().map((row) => row.textContent)).toEqual([
+      "Space defaultModel 1",
+      "vendor/model-1",
+      "vendor/model-2",
+      "vendor/model-3",
+    ]);
+  });
+
+  it("reports when a removal fails and restores the row", async () => {
+    mocks.enabledModelIds = ["vendor/model-1", "vendor/model-2", "vendor/model-3"];
+    await renderChips();
+    await act(async () => chipCard("Main model")!.click());
+    mocks.rpc.mockRejectedValueOnce(new Error("offline"));
+    await act(async () => removeButtons()[1]!.click());
+    expect(container.textContent).toContain("offline");
+    expect(modelRows()).toHaveLength(4);
   });
 
   it("opens the native sheet on Android", async () => {
