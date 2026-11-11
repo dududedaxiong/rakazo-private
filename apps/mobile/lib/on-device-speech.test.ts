@@ -301,6 +301,9 @@ function seedModelFiles() {
   for (const name of ["model.int8.onnx", "voices.bin", "tokens.txt"]) {
     fsState.files.add(`file:///models/tts/${name}`);
   }
+  for (const name of ["phontab", "phonindex", "phondata"]) {
+    fsState.files.add(`file:///models/tts/espeak-ng-data/${name}`);
+  }
   fsState.dirs.add("file:///models/stt");
   fsState.dirs.add("file:///models/tts");
   fsState.dirs.add("file:///models/tts/espeak-ng-data");
@@ -380,6 +383,27 @@ describe("on-device speech availability", () => {
   it("is false when a required file is empty", async () => {
     await saveOnDeviceSpeechEnabled(true);
     fsState.fileSizes.set("file:///models/tts/voices.bin", 0);
+    expect(await onDeviceSpeechAvailable()).toBe(false);
+  });
+
+  it("is false when the pronunciation data directory is empty", async () => {
+    await saveOnDeviceSpeechEnabled(true);
+    // The folder survives a partial extraction while its files do not,
+    // so the directory alone must not count as a usable voice model.
+    for (const name of ["phontab", "phonindex", "phondata"]) {
+      fsState.files.delete(`file:///models/tts/espeak-ng-data/${name}`);
+    }
+    expect(await onDeviceSpeechAvailable()).toBe(false);
+  });
+
+  it("is true when the pronunciation data directory has its files", async () => {
+    await saveOnDeviceSpeechEnabled(true);
+    expect(await onDeviceSpeechAvailable()).toBe(true);
+  });
+
+  it("is false when a pronunciation data file is missing", async () => {
+    await saveOnDeviceSpeechEnabled(true);
+    fsState.files.delete("file:///models/tts/espeak-ng-data/phondata");
     expect(await onDeviceSpeechAvailable()).toBe(false);
   });
 });

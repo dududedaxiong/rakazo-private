@@ -331,29 +331,46 @@ function onDeviceSpeechArchiveName(category: OnDeviceSpeechModelCategory): strin
 }
 
 /**
- * The files the engine needs inside a model's directory. The download
- * manager marks a model ready when any model-like file survived
- * extraction, so a partial extraction can look ready while the native
- * loader has nothing to load — and a native load of a missing file can
- * kill the app instead of failing. Check the exact files each engine
- * looks for before trusting or loading a model.
+ * The files the engine needs inside a model's directory, including the
+ * files inside a required subdirectory. The download manager marks a
+ * model ready when any model-like file survived extraction, so a partial
+ * extraction can look ready while the native loader has nothing to
+ * load — and a native load of a missing file can kill the app instead
+ * of failing. Check the exact files each engine looks for before
+ * trusting or loading a model.
  */
 const ON_DEVICE_SPEECH_MODEL_FILES: Record<
   OnDeviceSpeechModelCategory,
-  { onnxPrefixes: string[]; files: string[]; dirs: string[] }
+  {
+    onnxPrefixes: string[];
+    files: string[];
+    dirs: string[];
+    dirFiles: Record<string, string[]>;
+  }
 > = {
   // Streaming transducer: encoder, decoder and joiner plus the token list.
-  stt: { onnxPrefixes: ["encoder", "decoder", "joiner"], files: ["tokens.txt"], dirs: [] },
+  stt: {
+    onnxPrefixes: ["encoder", "decoder", "joiner"],
+    files: ["tokens.txt"],
+    dirs: [],
+    dirFiles: {},
+  },
   // Kokoro: one model file, the voice table, the token list and the
-  // pronunciation data directory.
-  tts: { onnxPrefixes: ["model"], files: ["voices.bin", "tokens.txt"], dirs: ["espeak-ng-data"] },
+  // pronunciation data directory with the files the voice engine reads.
+  tts: {
+    onnxPrefixes: ["model"],
+    files: ["voices.bin", "tokens.txt"],
+    dirs: ["espeak-ng-data"],
+    dirFiles: { "espeak-ng-data": ["phontab", "phonindex", "phondata"] },
+  },
 };
 
 /**
- * True when every file the engine needs is in the model's directory and
- * non-empty. False when the directory is missing, unreadable, or any
- * required file is missing or empty. Never throws: an unverifiable model
- * is treated as unusable, never loaded.
+ * True when every file the engine needs is in the model's directory
+ * (including inside a required subdirectory) and non-empty. False when
+ * the directory is missing, unreadable, or any required file is missing
+ * or empty. Never throws: an unverifiable model is treated as unusable,
+ * never loaded.
  */
 async function onDeviceSpeechModelFilesComplete(
   category: OnDeviceSpeechModelCategory,
@@ -385,6 +402,25 @@ async function onDeviceSpeechModelFilesComplete(
     }
     for (const name of required.dirs) {
       if (!dirs.has(name)) return false;
+    }
+    // A directory can exist while its contents are missing: a partial
+    // extraction leaves the folder behind but not the files the engine
+    // reads from it, and the native loader aborts on the missing file.
+    // Check the files each required directory must contain.
+    for (const [dirName, innerFiles] of Object.entries(required.dirFiles)) {
+      const subdir = new Directory(toFileUri(modelPath), dirName);
+      if (!subdir.exists) return false;
+      const inner = new Map<string, number>();
+      for (const entry of subdir.list()) {
+        if (entry instanceof File) {
+          const size = entry.info().size;
+          inner.set(entry.name, typeof size === "number" ? size : 0);
+        }
+      }
+      for (const name of innerFiles) {
+        const size = inner.get(name);
+        if (size === undefined || size <= 0) return false;
+      }
     }
     return true;
   } catch {
