@@ -222,7 +222,32 @@ vi.mock("react-native", () => {
   };
 });
 vi.mock("@expo/ui/community/menu", () => ({
-  MenuView: ({ children }: { children?: ReactNode }) => children,
+  MenuView: ({
+    children,
+    actions,
+    onPressAction,
+  }: {
+    children?: ReactNode;
+    actions?: { id: string; title: string }[];
+    onPressAction?: (event: { nativeEvent: { event: string } }) => void;
+  }) =>
+    createElement(
+      "div",
+      null,
+      children,
+      ...(actions ?? []).map((action) =>
+        createElement(
+          "button",
+          {
+            key: action.id,
+            type: "button",
+            "data-menu-action": action.id,
+            onClick: () => onPressAction?.({ nativeEvent: { event: action.id } }),
+          },
+          action.title,
+        ),
+      ),
+    ),
 }));
 vi.mock("../components/glass-surface", () => ({
   GlassSurface: ({
@@ -1378,5 +1403,67 @@ describe("thread composer isolation", () => {
     expect(field().value).toBe("");
     expect(props.send).not.toHaveBeenCalled();
     expect(container.querySelector('button[aria-label="Hold to talk"]')).not.toBeNull();
+  });
+
+  function thinkingButton() {
+    return container.querySelector('[data-testid="thinking-level-button"]');
+  }
+
+  function renderThinking() {
+    const save = vi.fn(async () => {});
+    render({
+      thinkingLevel: {
+        state: { levels: ["low", "medium", "high"], value: "medium" },
+        save,
+      },
+    });
+    return save;
+  }
+
+  it("shows the thinking button inside the capsule beside the voice pill when the model can think", () => {
+    renderThinking();
+    const button = thinkingButton();
+    expect(button).not.toBeNull();
+    const voice = container.querySelector('button[aria-label="Hold to talk"]')!;
+    const capsule = voice.closest('[data-glass="roundedRectangle"]')!;
+    expect(button!.closest('[data-glass="roundedRectangle"]')).toBe(capsule);
+    // The menu wrapper sits directly before the voice pill: nothing else between them.
+    expect(button!.parentElement!.nextElementSibling).toBe(voice);
+    // Moved, not copied: exactly one thinking button, and none outside the capsule.
+    expect(container.querySelectorAll('[data-testid="thinking-level-button"]')).toHaveLength(1);
+  });
+
+  it("keeps the thinking button beside the send pill once the draft is sendable", () => {
+    renderThinking();
+    type("Hello");
+    const send = container.querySelector('button[aria-label="Send"]')!;
+    expect(thinkingButton()!.parentElement!.nextElementSibling).toBe(send);
+  });
+
+  it("hides the thinking button when the model cannot think", () => {
+    render();
+    expect(thinkingButton()).toBeNull();
+    expect(container.querySelectorAll("[data-menu-action]")).toHaveLength(0);
+  });
+
+  it("saves the picked thinking level from the menu", () => {
+    const save = renderThinking();
+    expect(
+      [...container.querySelectorAll("[data-menu-action]")].map((element) =>
+        element.getAttribute("data-menu-action"),
+      ),
+    ).toEqual(["default", "low", "medium", "high"]);
+    act(() => {
+      (
+        container.querySelector('[data-menu-action="low"]') as HTMLButtonElement
+      ).click();
+    });
+    expect(save).toHaveBeenCalledWith("low");
+    act(() => {
+      (
+        container.querySelector('[data-menu-action="default"]') as HTMLButtonElement
+      ).click();
+    });
+    expect(save).toHaveBeenCalledWith("");
   });
 });

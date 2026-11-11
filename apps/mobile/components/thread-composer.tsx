@@ -744,35 +744,6 @@ export function ThreadComposer({
             </GlassSurface>
           </View>
         </MenuView>
-        {thinkingActions ? (
-          <MenuView
-            actions={thinkingActions}
-            colorScheme={colorScheme}
-            onPressAction={(event) => pickThinkingLevel(event.nativeEvent.event)}
-            title={t("Reasoning effort")}
-          >
-            <View
-              accessible
-              accessibilityRole="button"
-              accessibilityLabel={t("Reasoning effort")}
-              accessibilityValue={{ text: thinkingValueLabel }}
-              style={{ width: 44, height: 44 }}
-            >
-              <GlassSurface
-                shape="circle"
-                style={styles.circleButton}
-                fallbackStyle={styles.composerFill}
-              >
-                <NativeSymbol
-                  ios="brain"
-                  android="bulb-outline"
-                  size={18}
-                  color={thinking?.value === "" ? tokens.mutedForeground : tokens.primary}
-                />
-              </GlassSurface>
-            </View>
-          </MenuView>
-        ) : null}
         <GlassSurface
           shape="roundedRectangle"
           style={{
@@ -969,6 +940,36 @@ export function ThreadComposer({
           </View>
           {/* The button stays put while dictating: interim text makes the draft
               sendable, which would otherwise swap the button out from under the hold. */}
+          {thinkingActions ? (
+            <MenuView
+              actions={thinkingActions}
+              colorScheme={colorScheme}
+              onPressAction={(event) => pickThinkingLevel(event.nativeEvent.event)}
+              title={t("Reasoning effort")}
+            >
+              <View
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={t("Reasoning effort")}
+                accessibilityValue={{ text: thinkingValueLabel }}
+                testID="thinking-level-button"
+                style={{
+                  marginBottom: 8,
+                  width: 28,
+                  height: 28,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <NativeSymbol
+                  ios="brain"
+                  android="bulb-outline"
+                  size={16}
+                  color={thinking?.value === "" ? tokens.mutedForeground : tokens.primary}
+                />
+              </View>
+            </MenuView>
+          ) : null}
           {(!canSend || dictating) && botId && !onCall ? (
             <Pressable
               accessibilityRole="button"
