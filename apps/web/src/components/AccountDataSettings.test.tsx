@@ -59,6 +59,11 @@ vi.mock("@rakazo/ui-web", () => ({
 vi.mock("./ai/primitives", () => ({
   SuccessPop: ({ label }: { label: string }) => <span data-testid="success">{label}</span>,
 }));
+// The WebDAV section loads its own account on mount; it is covered by its
+// own test file, so the export/import tests here see the parent alone.
+vi.mock("./WebdavBackupSettings", () => ({
+  WebdavBackupSettings: () => null,
+}));
 
 import { AccountDataSettings } from "./AccountDataSettings";
 

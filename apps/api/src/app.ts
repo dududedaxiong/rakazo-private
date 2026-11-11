@@ -162,6 +162,7 @@ import { createSpeechSummarizer } from "./speech-summary.js";
 import { settleWithTimeout } from "./team-chat-startup.js";
 import { endUserDeviceSession, mountUserDeviceRoutes } from "./user-devices.js";
 import { mountVoiceHttpRoutes } from "./voice.js";
+import { mountWebdavBackupRoutes } from "./webdav-backup.js";
 import { mountWebhookHttpRoutes } from "./webhook.js";
 
 /**
@@ -1011,6 +1012,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     },
     sessionActor,
   );
+  mountWebdavBackupRoutes(app, { prisma, secrets }, sessionActor);
   mountWebhookHttpRoutes(app, { prisma, secrets, events, jobs });
   if (env.inboundEmail) {
     mountEmailInboundRoute(app, {

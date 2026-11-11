@@ -14,6 +14,7 @@ import { errorText } from "../lib/user-error";
 import { SuccessPop } from "./ai/primitives";
 import { useIdentityConfirmation } from "./ConfirmIdentityDialog";
 import { SettingsRow } from "./SettingsRows";
+import { WebdavBackupSettings } from "./WebdavBackupSettings";
 
 function exportFilename(contentDisposition: string | null): string {
   const match = /filename="([^"]+)"/.exec(contentDisposition ?? "");
@@ -273,6 +274,12 @@ export function AccountDataSettings({
           </p>
         </div>
       </SettingsRow>
+      <WebdavBackupSettings
+        backupPassword={backupPassword}
+        backupPasswordConfirm={backupPasswordConfirm}
+        onBackupPasswordUsed={clearBackupPassword}
+        onImported={onImported}
+      />
       {onImportAgent ? (
         <SettingsRow
           label={<Trans>Agent from another app</Trans>}

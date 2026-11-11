@@ -7996,3 +7996,133 @@ msgstr "你的语音提供方拒绝了该密钥。"
 #: src/components/vault/VaultItemEditor.tsx
 msgid "ZIP or postal code"
 msgstr "邮政编码"
+
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "A parent directory is missing on the server."
+msgstr "服务器上缺少父目录。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Back up now"
+msgstr "立即备份"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backed up"
+msgstr "已备份"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup directory"
+msgstr "备份目录"
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup passwords do not match"
+msgstr "两次备份密码不一致"
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup passwords need an HTTPS connection"
+msgstr "备份密码需要 HTTPS 连接"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the backup password to restore"
+msgstr "输入备份密码以恢复"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the username."
+msgstr "请输入用户名。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the WebDAV password."
+msgstr "请输入 WebDAV 密码。"
+
+#. placeholder {0}: new Date(lastBackup.exportedAt).toLocaleString()
+#: src/components/WebdavBackupSettings.tsx
+msgid "Last backup: {0}"
+msgstr "上次备份：{0}"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "No backup found on the server."
+msgstr "服务器上没有备份。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "No backup yet"
+msgstr "还没有备份"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Password set"
+msgstr "已设置密码"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Put the account and password in their own fields, not in the address."
+msgstr "账号和密码请填在各自的输入框里，不要写在地址里。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Restore from WebDAV"
+msgstr "从 WebDAV 恢复"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Save WebDAV account"
+msgstr "保存 WebDAV 账号"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Server address"
+msgstr "服务器地址"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Signed in, but the backup directory does not exist yet."
+msgstr "已登录，但备份目录还不存在。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Test WebDAV connection"
+msgstr "测试 WebDAV 连接"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "That server address is not valid."
+msgstr "服务器地址无效。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The backup password is wrong."
+msgstr "备份密码错误。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The directory is not valid."
+msgstr "目录无效。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The export link expired. Try again."
+msgstr "导出链接已过期，请重试。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The server answered with an error."
+msgstr "服务器返回错误。"
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "This password appeared in a data breach. Choose another."
+msgstr "这个密码曾在数据泄露中出现过，请换一个。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Uploading…"
+msgstr "上传中…"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use a different password from your account password."
+msgstr "不要和账号密码相同。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use an https address."
+msgstr "请用 https 地址。"
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
+msgstr "备份密码至少 {BACKUP_PASSWORD_MIN_LENGTH} 个字符"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "WebDAV backup"
+msgstr "WebDAV 备份"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Wrong password"
+msgstr "密码错误"

@@ -7936,3 +7936,133 @@ msgstr "음성 서비스에서 키를 거부했습니다."
 #: src/components/vault/VaultItemEditor.tsx
 msgid "ZIP or postal code"
 msgstr "우편번호"
+
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "A parent directory is missing on the server."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Back up now"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backed up"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup directory"
+msgstr ""
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup passwords do not match"
+msgstr ""
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup passwords need an HTTPS connection"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the backup password to restore"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the username."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the WebDAV password."
+msgstr ""
+
+#. placeholder {0}: new Date(lastBackup.exportedAt).toLocaleString()
+#: src/components/WebdavBackupSettings.tsx
+msgid "Last backup: {0}"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "No backup found on the server."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "No backup yet"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Password set"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Put the account and password in their own fields, not in the address."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Restore from WebDAV"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Save WebDAV account"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Server address"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Signed in, but the backup directory does not exist yet."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Test WebDAV connection"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "That server address is not valid."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The backup password is wrong."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The directory is not valid."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The export link expired. Try again."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The server answered with an error."
+msgstr ""
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "This password appeared in a data breach. Choose another."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Uploading…"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use a different password from your account password."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use an https address."
+msgstr ""
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "WebDAV backup"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Wrong password"
+msgstr ""
