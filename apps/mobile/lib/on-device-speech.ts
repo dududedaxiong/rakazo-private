@@ -84,6 +84,8 @@ export type OnDeviceSpeechNative = {
   createTts: (options: {
     modelPath: { type: "file"; path: string };
     modelType: string;
+    /** Native debug logging; the loader's failure lines land in logcat. */
+    debug?: boolean;
   }) => Promise<{
     generateSpeech: (
       text: string,
@@ -1017,6 +1019,80 @@ export type OnDeviceSpeechPlayback = {
   stop(): void;
 };
 
+/**
+ * The last TTS engine init, so a native crash that leaves no JS error can
+ * still be seen. The native loader dies with exit(-1) or a native abort,
+ * which no JS catch can see, so the attempt is recorded before the call:
+ * a journal left at "started" after a restart means the engine died in
+ * init, and the memory figure shows whether it was starved.
+ */
+export type TtsInitJournal = {
+  phase: "started" | "ready" | "failed";
+  /** ISO timestamp of the last write. */
+  at: string;
+  /** KiB available when init started; null when the native module is absent. */
+  memAvailableKB: number | null;
+  memTotalKB: number | null;
+  error?: string;
+};
+
+const TTS_INIT_JOURNAL_NAME = "tts-init-journal.json";
+
+async function ttsInitJournalFile() {
+  const native = await loadNative();
+  const { Directory, File } = await loadFileSystem();
+  const base = (await native.getStorageBasePath()).replace(/\/+$/, "");
+  const dir = new Directory(toFileUri(base), "sherpa-onnx");
+  if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
+  return new File(dir, TTS_INIT_JOURNAL_NAME);
+}
+
+async function writeTtsInitJournal(entry: TtsInitJournal): Promise<void> {
+  try {
+    const file = await ttsInitJournalFile();
+    file.create({ overwrite: true });
+    file.write(JSON.stringify(entry));
+  } catch {
+    // Best effort: a journal failure must never break voice.
+  }
+}
+
+/** The last TTS engine init, or null when none was recorded. Never throws. */
+export async function getTtsInitJournal(): Promise<TtsInitJournal | null> {
+  try {
+    const file = await ttsInitJournalFile();
+    if (!file.exists) return null;
+    const parsed: unknown = JSON.parse(await file.text());
+    if (!parsed || typeof parsed !== "object") return null;
+    const entry = parsed as Partial<TtsInitJournal>;
+    if (entry.phase !== "started" && entry.phase !== "ready" && entry.phase !== "failed") {
+      return null;
+    }
+    if (typeof entry.at !== "string") return null;
+    return {
+      phase: entry.phase,
+      at: entry.at,
+      memAvailableKB: typeof entry.memAvailableKB === "number" ? entry.memAvailableKB : null,
+      memTotalKB: typeof entry.memTotalKB === "number" ? entry.memTotalKB : null,
+      error: typeof entry.error === "string" ? entry.error : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function readTtsInitMemory(): Promise<{
+  memAvailableKB: number;
+  memTotalKB: number;
+} | null> {
+  try {
+    const { readNativeMemory } = await import("./native-log");
+    return await readNativeMemory();
+  } catch {
+    return null;
+  }
+}
+
 async function loadTtsEngine(): Promise<Awaited<ReturnType<OnDeviceSpeechNative["createTts"]>>> {
   if (ttsEngine) return ttsEngine;
   ttsEnginePromise ??= (async () => {
@@ -1028,12 +1104,34 @@ async function loadTtsEngine(): Promise<Awaited<ReturnType<OnDeviceSpeechNative[
     if (!(await onDeviceSpeechModelFilesComplete("tts", path))) {
       throw new Error(t("Voice models are not downloaded yet."));
     }
-    const engine = await native.createTts({
-      modelPath: { type: "file", path },
-      modelType: "kokoro",
-    });
-    ttsEngine = engine;
-    return engine;
+    // The native loader dies with exit(-1) or a native abort, which no JS
+    // catch can see, so the attempt is journalled before the call: a
+    // journal left at "started" after a restart means the engine died in
+    // init. debug logs the loader's steps to logcat for the same reason.
+    const memory = await readTtsInitMemory().catch(() => null);
+    const journalBase = {
+      memAvailableKB: memory?.memAvailableKB ?? null,
+      memTotalKB: memory?.memTotalKB ?? null,
+    };
+    await writeTtsInitJournal({ phase: "started", at: new Date().toISOString(), ...journalBase });
+    try {
+      const engine = await native.createTts({
+        modelPath: { type: "file", path },
+        modelType: "kokoro",
+        debug: true,
+      });
+      await writeTtsInitJournal({ phase: "ready", at: new Date().toISOString(), ...journalBase });
+      ttsEngine = engine;
+      return engine;
+    } catch (error) {
+      await writeTtsInitJournal({
+        phase: "failed",
+        at: new Date().toISOString(),
+        ...journalBase,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   })();
   try {
     return await ttsEnginePromise;

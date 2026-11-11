@@ -86,6 +86,7 @@ vi.mock("./on-device-speech", () => ({
   loadOnDeviceSpeechModelBaseUrl: vi.fn(async () => ""),
   saveOnDeviceSpeechModelBaseUrl: vi.fn(async () => undefined),
   deleteOnDeviceSpeechModels: vi.fn(async () => undefined),
+  getTtsInitJournal: vi.fn(async () => null),
 }));
 vi.mock("./voice", () => ({ speakText: vi.fn() }));
 vi.mock("./i18n", () => ({ t: mocks.t, useI18n: () => ({ t: mocks.t }) }));

@@ -61,6 +61,7 @@ vi.mock("./on-device-speech", () => ({
   loadOnDeviceSpeechModelBaseUrl: vi.fn(async () => ""),
   saveOnDeviceSpeechModelBaseUrl: vi.fn(async () => undefined),
   deleteOnDeviceSpeechModels: vi.fn(async () => undefined),
+  getTtsInitJournal: vi.fn(async () => null),
 }));
 vi.mock("./call-sounds", () => ({
   loadCallGreetingEnabled: async () => true,

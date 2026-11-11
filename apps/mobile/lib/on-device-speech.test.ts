@@ -9,6 +9,7 @@ import {
   finishOnDeviceSpeech,
   floatSamplesToWavBase64,
   getOnDeviceSpeechModelDiagnostics,
+  getTtsInitJournal,
   importOnDeviceSpeechModel,
   listenOnDeviceSpeech,
   loadOnDeviceSpeechEnabled,
@@ -54,6 +55,10 @@ vi.mock("./session", () => ({
     selectionId: null,
   })),
 }));
+vi.mock("./native-log", () => ({
+  readNativeMemory: vi.fn(async () => ({ memTotalKB: 8_000_000, memAvailableKB: 2_000_000 })),
+  readNativeLog: vi.fn(async () => null),
+}));
 
 const players: {
   play: ReturnType<typeof vi.fn>;
@@ -87,6 +92,7 @@ const fsState = vi.hoisted(() => ({
   files: new Set<string>(),
   dirs: new Set<string>(),
   fileSizes: new Map<string, number>(),
+  contents: new Map<string, string>(),
   copies: [] as Array<{ from: string; to: string }>,
   downloads: [] as Array<{ url: string; to: string }>,
   createdDirs: [] as string[],
@@ -126,8 +132,12 @@ vi.mock("expo-file-system", () => {
     create() {
       fsState.files.add(this.uri);
     }
-    write() {
+    write(content?: unknown) {
       fsState.files.add(this.uri);
+      if (typeof content === "string") fsState.contents.set(this.uri, content);
+    }
+    async text() {
+      return fsState.contents.get(this.uri) ?? "";
     }
     async copy(target: FakeFile, options?: { overwrite?: boolean }) {
       // Mirror the real File.copy: it rejects when the destination
@@ -318,6 +328,7 @@ beforeEach(() => {
   fsState.files.clear();
   fsState.dirs.clear();
   fsState.fileSizes.clear();
+  fsState.contents.clear();
   fsState.copies.length = 0;
   fsState.downloads.length = 0;
   fsState.createdDirs.length = 0;
@@ -643,6 +654,49 @@ describe("on-device speech read-aloud", () => {
     expect(await speakOnDeviceSpeech("你好")).toBe(false);
     expect(fake.native.createTts).not.toHaveBeenCalled();
     expect(fake.ttsEngine.generateSpeech).not.toHaveBeenCalled();
+  });
+});
+
+describe("on-device speech TTS init journal", () => {
+  const journalUri = "file:///doc/sherpa-onnx/tts-init-journal.json";
+
+  it("records a successful init with memory and debug logging", async () => {
+    expect(await speakOnDeviceSpeech("你好")).toBe(true);
+    expect(fake.native.createTts).toHaveBeenCalledWith(
+      expect.objectContaining({ modelType: "kokoro", debug: true }),
+    );
+    const journal = await getTtsInitJournal();
+    expect(journal).toMatchObject({
+      phase: "ready",
+      memAvailableKB: 2_000_000,
+      memTotalKB: 8_000_000,
+    });
+    expect(typeof journal?.at).toBe("string");
+  });
+
+  it("records a failed init", async () => {
+    vi.mocked(fake.native.createTts).mockRejectedValueOnce(new Error("boom"));
+    expect(await speakOnDeviceSpeech("你好")).toBe(false);
+    const journal = await getTtsInitJournal();
+    expect(journal).toMatchObject({ phase: "failed", error: "boom" });
+  });
+
+  it("returns null when no journal was recorded", async () => {
+    expect(await getTtsInitJournal()).toBeNull();
+  });
+
+  it("returns null for a corrupt journal", async () => {
+    fsState.files.add(journalUri);
+    fsState.contents.set(journalUri, "not json");
+    expect(await getTtsInitJournal()).toBeNull();
+  });
+
+  it("does not record an init when the model is not downloaded", async () => {
+    fake = fakeNative({ ttsPath: null });
+    setOnDeviceSpeechNative(fake.native);
+    expect(await speakOnDeviceSpeech("你好")).toBe(false);
+    expect(fake.native.createTts).not.toHaveBeenCalled();
+    expect(await getTtsInitJournal()).toBeNull();
   });
 });
 

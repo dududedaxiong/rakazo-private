@@ -35,17 +35,20 @@ import {
 import { loadDeviceVoiceEnabled, saveDeviceVoiceEnabled } from "../../lib/device-voice";
 import { useI18n } from "../../lib/i18n";
 import { native, useThemedStyles } from "../../lib/native";
+import { readNativeLog } from "../../lib/native-log";
 import type {
   OnDeviceSpeechDiagnostics,
   OnDeviceSpeechModelCategory,
   OnDeviceSpeechModelDiagnostics,
   OnDeviceSpeechModelsStatus,
+  TtsInitJournal,
 } from "../../lib/on-device-speech";
 import {
   deleteOnDeviceSpeechModels,
   downloadOnDeviceSpeechModels,
   downloadOnDeviceSpeechModelsFromAddress,
   getOnDeviceSpeechModelDiagnostics,
+  getTtsInitJournal,
   importOnDeviceSpeechModel,
   loadOnDeviceSpeechEnabled,
   loadOnDeviceSpeechModelBaseUrl,
@@ -139,6 +142,13 @@ export default function VoiceSettings() {
   const [onDeviceSpeechReady, setOnDeviceSpeechReady] = useState(!deviceSettings);
   const [modelStatus, setModelStatus] = useState<OnDeviceSpeechModelsStatus | null>(null);
   const [modelDiagnostics, setModelDiagnostics] = useState<OnDeviceSpeechDiagnostics | null>(null);
+  const [ttsInitJournal, setTtsInitJournal] = useState<TtsInitJournal | null>(null);
+  const [nativeLog, setNativeLog] = useState<string | null>(null);
+  const [nativeLogLoading, setNativeLogLoading] = useState(false);
+  const [nativeLogError, setNativeLogError] = useState<string | null>(null);
+  // A journal left at "started" means the last init died in native code;
+  // the log is grabbed once, before the ring buffer rotates it away.
+  const nativeLogAutoLoaded = useRef(false);
   const [downloadingModels, setDownloadingModels] = useState(false);
   const [importingModels, setImportingModels] = useState(false);
   const [modelBaseUrl, setModelBaseUrl] = useState("");
@@ -157,6 +167,41 @@ export default function VoiceSettings() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const deviceVoiceRevision = useRef(0);
   const deviceVoiceSaveInFlight = useRef(false);
+
+  async function loadNativeLog() {
+    setNativeLogLoading(true);
+    setNativeLogError(null);
+    try {
+      const log = await readNativeLog();
+      if (log) {
+        setNativeLog(log);
+      } else {
+        setNativeLog(null);
+        setNativeLogError(t("Could not read the native log."));
+      }
+    } catch (err) {
+      setNativeLog(null);
+      setNativeLogError(errorText(err, t("Could not read the native log.")));
+    } finally {
+      setNativeLogLoading(false);
+    }
+  }
+
+  async function shareNativeLog() {
+    if (!nativeLog) return;
+    try {
+      const [{ File, Paths }, Sharing] = await Promise.all([
+        import("expo-file-system"),
+        import("expo-sharing"),
+      ]);
+      const file = new File(Paths.cache, `rakazo-native-log-${Date.now()}.txt`);
+      file.create({ overwrite: true });
+      file.write(nativeLog);
+      await Sharing.shareAsync(file.uri, { mimeType: "text/plain" });
+    } catch (err) {
+      setError(errorText(err, t("Could not share file")));
+    }
+  }
 
   /**
    * Opening keeps fields typed into meanwhile and may share a read already in flight; after a
@@ -242,14 +287,20 @@ export default function VoiceSettings() {
         onDeviceSpeechModelsStatus(),
         loadOnDeviceSpeechModelBaseUrl(),
         getOnDeviceSpeechModelDiagnostics().catch(() => null),
+        getTtsInitJournal().catch(() => null),
       ])
-        .then(([enabled, status, baseUrl, diagnostics]) => {
+        .then(([enabled, status, baseUrl, diagnostics, journal]) => {
           if (deviceVoiceRevision.current !== revision) return;
           setOnDeviceSpeech(enabled);
           setModelStatus(status);
           setModelBaseUrl(baseUrl);
           setModelDiagnostics(diagnostics);
+          setTtsInitJournal(journal);
           setOnDeviceSpeechReady(true);
+          if (journal?.phase === "started" && !nativeLogAutoLoaded.current) {
+            nativeLogAutoLoaded.current = true;
+            void loadNativeLog();
+          }
         })
         .catch(() => {
           if (deviceVoiceRevision.current !== revision) return;
@@ -791,6 +842,75 @@ export default function VoiceSettings() {
                 </View>
                 {diagnosticRows(modelDiagnostics.stt)}
                 {diagnosticRows(modelDiagnostics.tts)}
+                {/* The native loader dies with no JS error, so the journal
+                    and the log are the only record of why an init crashed. */}
+                <View style={[styles.groupRow, styles.groupDivider]}>
+                  <View style={styles.rowCopy}>
+                    <Text style={styles.cardTitle}>{t("Native log")}</Text>
+                  </View>
+                </View>
+                {ttsInitJournal?.phase === "started" ? (
+                  <View style={[styles.groupRow, styles.groupDivider]}>
+                    <Text style={[styles.diagnosticName, styles.destructive]}>
+                      {t("Crashed while loading the voice engine")}
+                    </Text>
+                  </View>
+                ) : null}
+                {ttsInitJournal?.phase === "started" && ttsInitJournal.memAvailableKB !== null ? (
+                  <View style={[styles.groupRow, styles.groupDivider]}>
+                    <Text style={styles.diagnosticName}>
+                      {t("Free memory: {mb} MB", {
+                        mb: String(Math.round(ttsInitJournal.memAvailableKB / 1024)),
+                      })}
+                    </Text>
+                  </View>
+                ) : null}
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={nativeLogLoading}
+                  onPress={() => void loadNativeLog()}
+                  style={({ pressed }) => [
+                    styles.groupRow,
+                    styles.groupDivider,
+                    nativeLogLoading && styles.disabled,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <View style={styles.rowCopy}>
+                    <Text style={styles.cardTitle}>{t("View")}</Text>
+                  </View>
+                </Pressable>
+                {nativeLog ? (
+                  <>
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => void shareNativeLog()}
+                      style={({ pressed }) => [
+                        styles.groupRow,
+                        styles.groupDivider,
+                        pressed && styles.pressed,
+                      ]}
+                    >
+                      <View style={styles.rowCopy}>
+                        <Text style={styles.cardTitle}>{t("Share")}</Text>
+                      </View>
+                    </Pressable>
+                    <View style={[styles.groupRow, styles.groupDivider]}>
+                      <ScrollView nestedScrollEnabled style={styles.logScroll}>
+                        <Text selectable style={styles.logText}>
+                          {nativeLog}
+                        </Text>
+                      </ScrollView>
+                    </View>
+                  </>
+                ) : null}
+                {nativeLogError ? (
+                  <View style={[styles.groupRow, styles.groupDivider]}>
+                    <Text style={[styles.diagnosticName, styles.destructive]}>
+                      {nativeLogError}
+                    </Text>
+                  </View>
+                ) : null}
               </>
             ) : null}
           </View>
@@ -1040,6 +1160,8 @@ function createVoiceStyles() {
     diagnosticName: { color: native.label, fontSize: 14, flex: 1 },
     diagnosticSize: { color: native.secondaryLabel, fontSize: 13 },
     diagnosticMark: { color: native.label, fontSize: 16, width: 20, textAlign: "center" },
+    logScroll: { flex: 1, maxHeight: 260 },
+    logText: { color: native.secondaryLabel, fontSize: 12, fontFamily: "monospace" },
     fieldLabel: { color: native.label, marginTop: 16 },
     input: {
       marginTop: 8,
