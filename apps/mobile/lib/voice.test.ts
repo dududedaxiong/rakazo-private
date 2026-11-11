@@ -7,6 +7,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { captureApiRequestContext, currentApiBase, rpc } from "./api";
 import { DEVICE_VOICE_KEY } from "./device-voice";
 import * as onDeviceSpeech from "./on-device-speech";
+
+/** The SecureStore key voice-direction stores the read-aloud choice under. */
+const READALOUD_VOICE_SOURCE_KEY = "rakazo.voice-readaloud-source";
+
 import {
   createSpeechOwner,
   getVoicePlaybackState,
@@ -60,6 +64,7 @@ vi.mock("./live-notifications", () => ({
 }));
 vi.mock("./on-device-speech", () => ({
   onDeviceSpeechAvailable: vi.fn(async () => false),
+  onDeviceTtsReady: vi.fn(async () => false),
   speakOnDeviceSpeech: vi.fn(async () => false),
   stopOnDeviceSpeechPlayback: vi.fn(),
 }));
@@ -148,6 +153,58 @@ describe("mobile speech", () => {
       expect(url).toBe("https://support.example/api/voice/speak");
       expect(init?.headers).toMatchObject(requestContext.headers);
     }
+  });
+
+  it("prepares and renders speech through the pinned read-aloud connection", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockImplementation(async (key) =>
+      key === READALOUD_VOICE_SOURCE_KEY ? "server:groq" : key === DEVICE_VOICE_KEY ? "0" : null,
+    );
+
+    await expect(speakText("Read this", { botId: "bot-1" })).resolves.toBe(true);
+
+    expect(rpc).toHaveBeenCalledWith(
+      "voice/prepare",
+      { text: "Read this", voiceId: undefined, botId: "bot-1", provider: "groq" },
+      { requestContext: expect.objectContaining({ apiBase: "https://support.example" }) },
+    );
+    const fetchMock = vi.mocked(fetch);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    for (const [, init] of fetchMock.mock.calls) {
+      expect(JSON.parse(String(init?.body))).toMatchObject({ provider: "groq" });
+    }
+  });
+
+  it("speaks on-device when read-aloud is pinned to it, without touching the server", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockImplementation(async (key) =>
+      key === READALOUD_VOICE_SOURCE_KEY ? "on-device" : key === DEVICE_VOICE_KEY ? "0" : null,
+    );
+    vi.mocked(onDeviceSpeech.onDeviceTtsReady).mockResolvedValueOnce(true);
+    vi.mocked(onDeviceSpeech.speakOnDeviceSpeech).mockResolvedValueOnce(true);
+    vi.mocked(rpc).mockClear();
+    vi.mocked(fetch).mockClear();
+
+    await expect(speakText("Read this", { botId: "bot-1" })).resolves.toBe(true);
+
+    expect(onDeviceSpeech.speakOnDeviceSpeech).toHaveBeenCalledOnce();
+    expect(rpc).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("speaks with the system voice when read-aloud is pinned to it", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockImplementation(async (key) =>
+      key === READALOUD_VOICE_SOURCE_KEY ? "system" : key === DEVICE_VOICE_KEY ? "0" : null,
+    );
+    vi.mocked(Speech.speak).mockImplementation((_text, options) => {
+      options?.onDone?.();
+    });
+    vi.mocked(rpc).mockClear();
+    vi.mocked(fetch).mockClear();
+
+    await expect(speakText("Read this", { botId: "bot-1" })).resolves.toBe(true);
+
+    expect(Speech.speak).toHaveBeenCalledOnce();
+    expect(rpc).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("plays WAV from a server that renders speech itself and MP3 otherwise", () => {

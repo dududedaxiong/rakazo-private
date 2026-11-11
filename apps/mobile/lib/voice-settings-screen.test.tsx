@@ -66,6 +66,15 @@ vi.mock("./device-voice", () => ({
   loadDeviceVoiceEnabled: mocks.loadDevice,
   saveDeviceVoiceEnabled: vi.fn(),
 }));
+// The screen reads the per-direction sources from SecureStore; the real
+// module pulls the native module graph into this jsdom test.
+vi.mock("./voice-direction", () => ({
+  VOICE_SOURCE_AUTO: "auto",
+  loadVoiceSource: vi.fn(async () => "auto"),
+  saveVoiceSource: vi.fn(async () => undefined),
+  serverVoiceSource: (provider: string) => `server:${provider}`,
+}));
+vi.mock("./dictation", () => ({ recognitionSupported: vi.fn(async () => false) }));
 vi.mock("./on-device-speech", () => ({
   loadOnDeviceSpeechEnabled: mocks.loadOnDevice,
   saveOnDeviceSpeechEnabled: mocks.saveOnDevice,

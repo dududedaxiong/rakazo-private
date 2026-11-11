@@ -108,6 +108,20 @@ export async function available(): Promise<boolean> {
   }
 }
 
+/**
+ * True when the phone ships a speech recognizer at all. Asks nothing of the
+ * user, so settings can hide the system option on a phone without one
+ * instead of letting it be picked and then fail.
+ */
+export async function recognitionSupported(): Promise<boolean> {
+  try {
+    const recognizer = await load();
+    return recognizer.isRecognitionAvailable();
+  } catch {
+    return false;
+  }
+}
+
 export function stop(): void {
   const session = active;
   active = null;

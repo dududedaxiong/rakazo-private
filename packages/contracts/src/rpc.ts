@@ -1563,7 +1563,9 @@ export const appContract = {
   },
   voice: {
     catalog: oc.output(z.array(VoiceCatalogEntrySchema)),
-    status: oc.input(settingsScopeInput.optional()).output(VoiceStatusSchema),
+    status: oc
+      .input(settingsScopeInput.extend({ provider: z.string().optional() }).optional())
+      .output(VoiceStatusSchema),
     credentials: oc.input(settingsScopeInput.optional()).output(z.array(VoiceCredentialSchema)),
     connect: oc
       .input(
@@ -1624,6 +1626,8 @@ export const appContract = {
           voiceId: z.string().max(120).optional(),
           botId: Id.optional(),
           scope: SettingsScopeSchema.optional(),
+          /** The connection to speak with; omitted uses the default voice. */
+          provider: z.string().optional(),
         }),
       )
       .output(z.object({ ready: z.boolean(), utterances: z.array(z.string()) })),

@@ -434,8 +434,13 @@ export function accountRoutes(ctx: RouterContext) {
         listVoiceCatalog({ allowPrivateEndpoint: deps.env?.mcpAllowPrivateEndpoint }),
       ),
       status: authed.voice.status.handler(async ({ context, input }) => {
-        const cred = await findDefaultVoiceCredential(deps.prisma, context.actor, input?.scope);
-        return toVoiceStatus(cred);
+        const loaded = await loadVoiceCredential(
+          deps,
+          context.actor,
+          input?.provider,
+          input?.scope,
+        );
+        return toVoiceStatus(loaded?.cred ?? null);
       }),
       credentials: authed.voice.credentials.handler(async ({ context, input }) => {
         const target = await voicePreferenceTarget(deps.prisma, context.actor, input?.scope);

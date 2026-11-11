@@ -1,4 +1,6 @@
 import { displayName } from "@rakazo/core";
+import type { VoiceSourceId } from "./voice-direction";
+import { serverProviderOf } from "./voice-direction";
 export type VoiceCallStatus = { ready: boolean; transcribe: boolean };
 
 export type VoiceCallPlan =
@@ -13,6 +15,8 @@ export type VoiceCallPlanDeps = {
   /** On-device speech (offline engine); when it is ready the call runs on the phone. */
   onDeviceSpeechAvailable?: () => Promise<boolean>;
   loadVoiceStatus: () => Promise<VoiceCallStatus>;
+  /** The caller's pinned input choice; omitted keeps the existing fallback order. */
+  loadInputSource?: () => Promise<VoiceSourceId>;
 };
 
 /**
@@ -21,6 +25,32 @@ export type VoiceCallPlanDeps = {
  * not turn a local-only reply into hosted voice traffic.
  */
 export async function resolveVoiceCallPlan(deps: VoiceCallPlanDeps): Promise<VoiceCallPlan> {
+  // A pinned input decides the call's path before any fallback order:
+  // the caller picked this source on purpose, so no other source may win.
+  if (deps.loadInputSource) {
+    const input = await deps.loadInputSource().catch(() => "auto");
+    if (input === "on-device") {
+      try {
+        if (deps.onDeviceSpeechAvailable && (await deps.onDeviceSpeechAvailable())) {
+          return { kind: "device", transcribe: false };
+        }
+      } catch {
+        // Unavailable: the pinned source cannot hear, so say so below.
+      }
+      return { kind: "dictation" };
+    }
+    if (input === "system") {
+      if (await deps.dictationAvailable().catch(() => false)) {
+        return { kind: "device", transcribe: false };
+      }
+      return { kind: "dictation" };
+    }
+    if (serverProviderOf(input)) {
+      const status = await deps.loadVoiceStatus().catch(() => null);
+      if (status?.ready && status.transcribe) return { kind: "provider", transcribe: true };
+      return { kind: "settings" };
+    }
+  }
   // On-device speech first: it handles recognition and read-aloud on the
   // phone, so a call works with no system recognizer and no voice provider.
   if (deps.onDeviceSpeechAvailable) {

@@ -806,6 +806,27 @@ export async function onDeviceSpeechAvailable(): Promise<boolean> {
   }
 }
 
+/**
+ * One direction's half of the check above: recognition only needs its
+ * model, read-aloud only its own, so a direction pinned to the phone
+ * stays usable when only the other half is missing.
+ */
+export async function onDeviceSttReady(): Promise<boolean> {
+  try {
+    return (await loadOnDeviceSpeechEnabled()) && (await onDeviceSpeechModelReady("stt"));
+  } catch {
+    return false;
+  }
+}
+
+export async function onDeviceTtsReady(): Promise<boolean> {
+  try {
+    return (await loadOnDeviceSpeechEnabled()) && (await onDeviceSpeechModelReady("tts"));
+  } catch {
+    return false;
+  }
+}
+
 // Dictation: the microphone streams into the recognizer, which reports
 // words as they are heard. The turn ends the same way system dictation
 // ends it — a quiet gap.

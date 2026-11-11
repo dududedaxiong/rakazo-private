@@ -17,6 +17,8 @@ import {
   onDeviceSpeechAvailable,
   onDeviceSpeechModelSizes,
   onDeviceSpeechModelsStatus,
+  onDeviceSttReady,
+  onDeviceTtsReady,
   saveOnDeviceSpeechEnabled,
   saveOnDeviceSpeechModelBaseUrl,
   setOnDeviceSpeechNative,
@@ -420,6 +422,27 @@ describe("on-device speech availability", () => {
     await saveOnDeviceSpeechEnabled(true);
     fsState.files.delete("file:///models/tts/espeak-ng-data/phondata");
     expect(await onDeviceSpeechAvailable()).toBe(false);
+  });
+
+  it("reports recognition ready when only the speech model is downloaded", async () => {
+    await saveOnDeviceSpeechEnabled(true);
+    fake = fakeNative({ ttsDownloaded: false });
+    setOnDeviceSpeechNative(fake.native);
+    expect(await onDeviceSttReady()).toBe(true);
+    expect(await onDeviceTtsReady()).toBe(false);
+  });
+
+  it("reports read-aloud ready when only the voice model is downloaded", async () => {
+    await saveOnDeviceSpeechEnabled(true);
+    fake = fakeNative({ sttDownloaded: false });
+    setOnDeviceSpeechNative(fake.native);
+    expect(await onDeviceSttReady()).toBe(false);
+    expect(await onDeviceTtsReady()).toBe(true);
+  });
+
+  it("reports neither direction ready when switched off", async () => {
+    expect(await onDeviceSttReady()).toBe(false);
+    expect(await onDeviceTtsReady()).toBe(false);
   });
 });
 

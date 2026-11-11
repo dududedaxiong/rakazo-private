@@ -20,6 +20,7 @@ import {
   toVoiceCredential,
   toVoiceStatus,
   transcribeInboundVoice,
+  transcribeVoice,
   updateVoiceSpeechModel,
   voiceChoicesChanged,
   voiceCredentialPlaintext,
@@ -686,6 +687,69 @@ describe("synthesizeVoice", () => {
     expect(synthesize.mock.calls[1]?.[0]).toMatchObject({ voiceId: "space-voice" });
   });
 
+  it("speaks through the requested provider instead of the default", async () => {
+    const synthesize = vi
+      .fn()
+      .mockResolvedValue({ bytes: new Uint8Array(), mimeType: "audio/mpeg" });
+    vi.spyOn(adapters, "createVoiceProvider").mockReturnValue({ synthesize } as never);
+    const groqPreference = {
+      isDefault: false,
+      voiceId: "groq-voice",
+      speechModel: null,
+      credential: {
+        id: "cred-groq",
+        userId: actor.userId,
+        provider: "openai-compatible",
+        secretId: "secret-groq",
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+      },
+    };
+    const defaultPreference = {
+      isDefault: true,
+      voiceId: "voice-1",
+      speechModel: "s1",
+      credential: {
+        id: "cred-1",
+        userId: actor.userId,
+        provider: "fish-audio",
+        secretId: "secret-1",
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+      },
+    };
+    const prisma = {
+      spaceSettingOverride: { findUnique: vi.fn().mockResolvedValue(null) },
+      userVoicePreference: {
+        findFirst: vi.fn(async ({ where }: { where?: { credential?: { provider?: string } } }) =>
+          where?.credential?.provider === "openai-compatible" ? groqPreference : defaultPreference,
+        ),
+      },
+      secret: {
+        findFirst: vi.fn(async ({ where }: { where: { id: string } }) => ({
+          id: where.id,
+          ciphertext: where.id === "secret-groq" ? "groq-cipher" : "fish-cipher",
+        })),
+      },
+    };
+    const deps = {
+      prisma,
+      secrets: {
+        load: vi.fn(async (ciphertext: string) =>
+          ciphertext === "groq-cipher" ? "groq-key" : "fish-key",
+        ),
+        put: vi.fn(),
+      },
+    } as unknown as VoiceDeps;
+
+    await synthesizeVoice(deps, actor, { text: "Hello", provider: "openai-compatible" });
+
+    expect(synthesize).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "Hello", voiceId: "groq-voice", apiKey: "groq-key" }),
+      expect.anything(),
+    );
+  });
+
   it.each([
     ["VOICE_OUT_OF_CREDIT", 402],
     ["VOICE_KEY_REJECTED", 403],
@@ -740,6 +804,78 @@ describe("synthesizeVoice", () => {
     });
     expect(sink.events.map((event) => event.level)).toEqual(["warn"]);
     installLogger(createLogger({ service: "rakazo-api", level: "off", sinks: [] }));
+  });
+});
+
+describe("transcribeVoice", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("transcribes through the requested provider instead of the default", async () => {
+    const transcribe = vi.fn().mockResolvedValue({ text: "你好", durationSeconds: 2 });
+    vi.spyOn(adapters, "createVoiceProvider").mockReturnValue({ transcribe } as never);
+    const groqPreference = {
+      isDefault: false,
+      voiceId: "",
+      speechModel: null,
+      credential: {
+        id: "cred-groq",
+        userId: actor.userId,
+        provider: "openai-compatible",
+        secretId: "secret-groq",
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+      },
+    };
+    const defaultPreference = {
+      isDefault: true,
+      voiceId: "voice-1",
+      speechModel: null,
+      credential: {
+        id: "cred-1",
+        userId: actor.userId,
+        provider: "fish-audio",
+        secretId: "secret-1",
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+      },
+    };
+    const prisma = {
+      spaceSettingOverride: { findUnique: vi.fn().mockResolvedValue(null) },
+      userVoicePreference: {
+        findFirst: vi.fn(async ({ where }: { where?: { credential?: { provider?: string } } }) =>
+          where?.credential?.provider === "openai-compatible" ? groqPreference : defaultPreference,
+        ),
+      },
+      secret: {
+        findFirst: vi.fn(async ({ where }: { where: { id: string } }) => ({
+          id: where.id,
+          ciphertext: where.id === "secret-groq" ? "groq-cipher" : "fish-cipher",
+        })),
+      },
+    };
+    const deps = {
+      prisma,
+      secrets: {
+        load: vi.fn(async (ciphertext: string) =>
+          ciphertext === "groq-cipher" ? "groq-key" : "fish-key",
+        ),
+        put: vi.fn(),
+      },
+    } as unknown as VoiceDeps;
+
+    const result = await transcribeVoice(deps, actor, {
+      audio: new Uint8Array([1, 2, 3]),
+      mimeType: "audio/m4a",
+      provider: "openai-compatible",
+    });
+
+    expect(result).toEqual({ text: "你好", durationSeconds: 2 });
+    expect(transcribe).toHaveBeenCalledWith(
+      expect.objectContaining({ apiKey: "groq-key", mimeType: "audio/m4a" }),
+      expect.anything(),
+    );
   });
 });
 

@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SpeechRecognizer } from "./dictation";
-import { ENDPOINT_SILENCE_MS, finish, listen, setSpeechRecognizer, stop } from "./dictation";
+import {
+  ENDPOINT_SILENCE_MS,
+  finish,
+  listen,
+  recognitionSupported,
+  setSpeechRecognizer,
+  stop,
+} from "./dictation";
 import { reportMobileError } from "./monitoring";
 
 vi.mock("./monitoring", () => ({ reportMobileError: vi.fn() }));
@@ -321,5 +328,17 @@ describe("mobile dictation", () => {
       "voice.microphone",
       { source: "dictation" },
     );
+  });
+
+  it("reports recognition support without asking for permission", async () => {
+    const ask = vi.fn(async () => ({ granted: true }));
+    fake.recognizer.requestPermissionsAsync = ask;
+    await expect(recognitionSupported()).resolves.toBe(true);
+    expect(ask).not.toHaveBeenCalled();
+  });
+
+  it("reports unsupported when the recognizer says so", async () => {
+    fake.recognizer.isRecognitionAvailable = () => false;
+    await expect(recognitionSupported()).resolves.toBe(false);
   });
 });

@@ -43,12 +43,17 @@ import { deviceLanguage, getActiveUiLocale, t } from "./i18n";
 import type { MobileSnapshot } from "./mobile-types";
 import { blockText } from "./mobile-types";
 import { reportMobileError } from "./monitoring";
-import { listenOnDeviceSpeech, onDeviceSpeechAvailable } from "./on-device-speech";
+import {
+  listenOnDeviceSpeech,
+  onDeviceSpeechAvailable,
+  onDeviceSttReady,
+} from "./on-device-speech";
 import { fetchServer } from "./server-headers";
 import { currentSessionGeneration, subscribeSessionGeneration } from "./session";
 import { errorText, voiceAccountErrorText } from "./user-error";
 import type { SpeechOwner, StreamingSpeech } from "./voice";
 import { createSpeechOwner, speakStreaming, speakText, stopSpeaking } from "./voice";
+import { loadVoiceSource, serverProviderOf } from "./voice-direction";
 
 export type CallPhase = "listening" | "thinking" | "speaking";
 
@@ -976,6 +981,24 @@ function productionDeps(requestContext?: ApiRequestContext): CallDeps {
 
 /** The device's own speech recognition, which works with a speak-only voice provider. */
 async function dictateTurn(handlers: DictationHandlers, signal: AbortSignal): Promise<boolean> {
+  // A pinned input uses only that source. A pinned server connection is not
+  // dictated inline: the caller falls through to record-then-transcribe,
+  // which keeps the microphone open for barge-in while the reply plays.
+  const input = await loadVoiceSource("input").catch(() => "auto");
+  if (input === "on-device") {
+    if (await onDeviceSttReady()) {
+      await listenOnDeviceSpeech({ ...handlers, signal });
+      return true;
+    }
+    return false;
+  }
+  if (input === "system") {
+    if (!(await dictation.available())) return false;
+    const lang = recognitionLocaleTag(getActiveUiLocale(), await deviceLanguage());
+    await dictation.listen({ ...handlers, signal, lang });
+    return true;
+  }
+  if (serverProviderOf(input)) return false;
   // On-device speech first: it needs neither the system recognizer nor a
   // server, so it is the only path that works on a phone without either.
   if (await onDeviceSpeechAvailable()) {
@@ -1072,12 +1095,19 @@ async function transcribeClip(
   requestContext: ApiRequestContext,
 ): Promise<string> {
   const { apiBase, headers } = requestContext;
+  // A pinned server connection transcribes the clip; anything else uses the default voice.
+  const input = await loadVoiceSource("input").catch(() => "auto");
+  const provider = serverProviderOf(input);
   const res = await fetchServer(
     `${apiBase}/api/voice/transcribe`,
     {
       method: "POST",
       headers: { "content-type": "application/json", origin: "rakazo://", ...headers },
-      body: JSON.stringify({ audioBase64: clip.base64, mimeType: clip.mimeType }),
+      body: JSON.stringify({
+        audioBase64: clip.base64,
+        mimeType: clip.mimeType,
+        ...(provider ? { provider } : {}),
+      }),
       signal,
     },
     apiBase,

@@ -26,6 +26,7 @@ import {
   finishOnDeviceSpeech,
   listenOnDeviceSpeech,
   onDeviceSpeechAvailable,
+  onDeviceSttReady,
   stopOnDeviceSpeech,
 } from "./on-device-speech";
 import {
@@ -38,6 +39,7 @@ import { errorText } from "./user-error";
 import type { StreamingSpeech } from "./voice";
 import { createSpeechOwner, speakStreaming, speakText, stopSpeaking } from "./voice";
 import { DEFAULT_VOICE_CHAT_SCENARIO_ID, voiceChatScenario } from "./voice-chat-scenarios";
+import { loadVoiceSource, serverProviderOf } from "./voice-direction";
 
 export type VoiceChatPhase = "idle" | "listening" | "thinking" | "speaking" | "not-ready";
 
@@ -618,6 +620,32 @@ async function dictateTurn(
   handlers: VoiceChatDictationHandlers,
   signal: AbortSignal,
 ): Promise<boolean> {
+  // A pinned input uses only that source, so each type's strength is picked
+  // on purpose instead of the fallback order deciding for the caller.
+  const input = await loadVoiceSource("input").catch(() => "auto");
+  if (input === "on-device") {
+    if (await onDeviceSttReady()) {
+      await listenOnDeviceSpeech({ ...handlers, signal });
+      return true;
+    }
+    return false;
+  }
+  if (input === "system") {
+    if (await dictation.available()) {
+      const lang = recognitionLocaleTag(getActiveUiLocale(), await deviceLanguage());
+      await dictation.listen({ ...handlers, signal, lang });
+      return true;
+    }
+    return false;
+  }
+  const provider = serverProviderOf(input);
+  if (provider) {
+    if (await serverTranscribeAvailable(provider)) {
+      await listenServerDictation({ ...handlers, signal, provider });
+      return true;
+    }
+    return false;
+  }
   // On-device speech first: it needs neither the system recognizer nor a
   // server, so it is the only path that works on a phone without either.
   if (await onDeviceSpeechAvailable()) {

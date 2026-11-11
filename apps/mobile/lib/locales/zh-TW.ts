@@ -1722,6 +1722,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Subscribed: {name}": "已訂閱：{name}",
   "Subscription failed. Check the address and try again.": "訂閱失敗，檢查地址後重試。",
   "On-device voice": "本機語音",
+  "Voice input": "語音輸入",
   "Model files": "模型檔案",
   "Native log": "原生日誌",
   "Crashed while loading the voice engine": "載入語音引擎時閃退",

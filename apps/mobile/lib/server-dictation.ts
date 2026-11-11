@@ -36,6 +36,8 @@ type Session = {
   /** `finish()` was called: end the clip at the next meter poll and transcribe it. */
   finishRequested: boolean;
   heardSpeech: boolean;
+  /** The connection to transcribe with; omitted uses the default voice. */
+  provider?: string;
 };
 
 let active: Session | null = null;
@@ -56,8 +58,8 @@ async function loadAudio(): Promise<AudioModuleShape> {
 }
 
 /** True when the account's voice provider can transcribe a recorded clip. */
-export async function serverTranscribeAvailable(): Promise<boolean> {
-  return probeProviderTranscribe(() => rpc("voice/status"));
+export async function serverTranscribeAvailable(provider?: string): Promise<boolean> {
+  return probeProviderTranscribe(() => rpc("voice/status", provider ? { provider } : undefined));
 }
 
 export function stopServerDictation(): void {
@@ -92,6 +94,8 @@ export async function listenServerDictation(opts: {
   onFinal: (text: string) => void;
   onGiveUp?: (reason: DictationGiveUp) => void;
   signal?: AbortSignal;
+  /** The connection to transcribe with; omitted uses the default voice. */
+  provider?: string;
 }): Promise<void> {
   if (opts.signal?.aborted) return;
   stopServerDictation();
@@ -114,6 +118,7 @@ export async function listenServerDictation(opts: {
     controller,
     finishRequested: false,
     heardSpeech: false,
+    provider: opts.provider,
   };
   active = session;
   opts.signal?.addEventListener(
@@ -183,7 +188,7 @@ async function runClip(session: Session): Promise<void> {
     const file = new File(uri);
     clip = { base64: await file.base64(), mimeType: "audio/m4a" };
     deleteQuietly(uri);
-    const text = await transcribeClip(clip, session.controller.signal);
+    const text = await transcribeClip(clip, session.controller.signal, session.provider);
     if (active !== session && session.controller.signal.aborted) return;
     if (text.trim()) session.onFinal(text.trim());
     else session.onGiveUp?.("idle");
@@ -205,6 +210,7 @@ async function runClip(session: Session): Promise<void> {
 async function transcribeClip(
   clip: { base64: string; mimeType: string },
   signal: AbortSignal,
+  provider?: string,
 ): Promise<string> {
   const { apiBase, headers } = await captureApiRequestContext();
   const res = await fetchServer(
@@ -212,7 +218,11 @@ async function transcribeClip(
     {
       method: "POST",
       headers: { "content-type": "application/json", origin: "rakazo://", ...headers },
-      body: JSON.stringify({ audioBase64: clip.base64, mimeType: clip.mimeType }),
+      body: JSON.stringify({
+        audioBase64: clip.base64,
+        mimeType: clip.mimeType,
+        ...(provider ? { provider } : {}),
+      }),
       signal,
     },
     apiBase,

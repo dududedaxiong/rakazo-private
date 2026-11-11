@@ -20,9 +20,18 @@ vi.mock("./dictation", () => ({
 }));
 vi.mock("./on-device-speech", () => ({
   onDeviceSpeechAvailable: vi.fn(async () => false),
+  onDeviceSttReady: vi.fn(async () => false),
   listenOnDeviceSpeech: vi.fn(),
   finishOnDeviceSpeech: vi.fn(),
   stopOnDeviceSpeech: vi.fn(),
+}));
+const pinnedInput = vi.hoisted(() => ({ value: "auto" }));
+vi.mock("./voice-direction", () => ({
+  loadVoiceSource: vi.fn(async () => pinnedInput.value),
+  saveVoiceSource: vi.fn(async () => undefined),
+  serverProviderOf: (id: string) =>
+    id.startsWith("server:") && id.length > "server:".length ? id.slice("server:".length) : null,
+  serverVoiceSource: (provider: string) => `server:${provider}`,
 }));
 vi.mock("./server-dictation", () => ({
   serverTranscribeAvailable: vi.fn(async () => false),
@@ -572,6 +581,7 @@ describe("production voice chat dictation", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    pinnedInput.value = "auto";
   });
 
   it("uses on-device recognition when the device has it", async () => {
@@ -615,6 +625,57 @@ describe("production voice chat dictation", () => {
     const started = await productionVoiceChatDeps().dictate(handlers, signal);
     expect(started).toBe(false);
     expect(dictation.listen).not.toHaveBeenCalled();
+    expect(serverDictation.listenServerDictation).not.toHaveBeenCalled();
+  });
+
+  it("transcribes through the pinned server connection and skips the device paths", async () => {
+    pinnedInput.value = "server:groq";
+    vi.mocked(serverDictation.serverTranscribeAvailable).mockResolvedValueOnce(true);
+    const started = await productionVoiceChatDeps().dictate(handlers, signal);
+    expect(started).toBe(true);
+    expect(serverDictation.serverTranscribeAvailable).toHaveBeenCalledWith("groq");
+    expect(serverDictation.listenServerDictation).toHaveBeenCalledWith(
+      expect.objectContaining({ provider: "groq" }),
+    );
+    expect(onDeviceSpeech.onDeviceSpeechAvailable).not.toHaveBeenCalled();
+    expect(dictation.available).not.toHaveBeenCalled();
+  });
+
+  it("reports not ready when the pinned server connection cannot transcribe", async () => {
+    pinnedInput.value = "server:groq";
+    vi.mocked(serverDictation.serverTranscribeAvailable).mockResolvedValueOnce(false);
+    const started = await productionVoiceChatDeps().dictate(handlers, signal);
+    expect(started).toBe(false);
+    expect(serverDictation.listenServerDictation).not.toHaveBeenCalled();
+    expect(dictation.listen).not.toHaveBeenCalled();
+  });
+
+  it("uses only on-device recognition when input is pinned to it", async () => {
+    pinnedInput.value = "on-device";
+    vi.mocked(onDeviceSpeech.onDeviceSttReady).mockResolvedValueOnce(true);
+    const started = await productionVoiceChatDeps().dictate(handlers, signal);
+    expect(started).toBe(true);
+    expect(onDeviceSpeech.listenOnDeviceSpeech).toHaveBeenCalledOnce();
+    expect(dictation.listen).not.toHaveBeenCalled();
+    expect(serverDictation.listenServerDictation).not.toHaveBeenCalled();
+  });
+
+  it("reports not ready when pinned on-device recognition is not ready", async () => {
+    pinnedInput.value = "on-device";
+    vi.mocked(onDeviceSpeech.onDeviceSttReady).mockResolvedValueOnce(false);
+    const started = await productionVoiceChatDeps().dictate(handlers, signal);
+    expect(started).toBe(false);
+    expect(dictation.listen).not.toHaveBeenCalled();
+    expect(serverDictation.listenServerDictation).not.toHaveBeenCalled();
+  });
+
+  it("uses only system recognition when input is pinned to it", async () => {
+    pinnedInput.value = "system";
+    vi.mocked(dictation.available).mockResolvedValueOnce(true);
+    const started = await productionVoiceChatDeps().dictate(handlers, signal);
+    expect(started).toBe(true);
+    expect(dictation.listen).toHaveBeenCalledOnce();
+    expect(onDeviceSpeech.listenOnDeviceSpeech).not.toHaveBeenCalled();
     expect(serverDictation.listenServerDictation).not.toHaveBeenCalled();
   });
 });

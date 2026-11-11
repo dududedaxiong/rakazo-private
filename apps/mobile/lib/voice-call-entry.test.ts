@@ -6,6 +6,19 @@ import {
   resolveVoiceCallPlan,
 } from "./voice-call-entry";
 
+// The real module reads SecureStore, which pulls the native module graph
+// (and react-native's uncompiled Flow source) into this test.
+vi.mock("./voice-direction", () => ({
+  loadVoiceSource: vi.fn(async () => "auto"),
+  saveVoiceSource: vi.fn(async () => undefined),
+  serverProviderOf: (id: string) =>
+    id.startsWith("server:") && id.length > "server:".length
+      ? id.slice("server:".length)
+      : undefined,
+  serverVoiceSource: (provider: string) => `server:${provider}`,
+  VOICE_SOURCE_AUTO: "auto",
+}));
+
 function deps(options: { deviceVoice: boolean; dictation: boolean; status: VoiceCallStatus }) {
   return {
     loadDeviceVoiceEnabled: vi.fn(async () => options.deviceVoice),
@@ -135,6 +148,98 @@ describe("mobile voice call entry", () => {
       transcribe: false,
     });
     expect(fakes.loadVoiceStatus).not.toHaveBeenCalled();
+  });
+
+  it("starts a provider call through the pinned server connection", async () => {
+    const fakes = {
+      ...deps({
+        deviceVoice: false,
+        dictation: false,
+        status: { ready: true, transcribe: true },
+      }),
+      loadInputSource: vi.fn(async () => "server:groq"),
+    };
+
+    await expect(resolveVoiceCallPlan(fakes)).resolves.toEqual({
+      kind: "provider",
+      transcribe: true,
+    });
+    expect(fakes.loadDeviceVoiceEnabled).not.toHaveBeenCalled();
+    expect(fakes.dictationAvailable).not.toHaveBeenCalled();
+  });
+
+  it("opens provider setup when the pinned server connection cannot transcribe", async () => {
+    const fakes = {
+      ...deps({
+        deviceVoice: true,
+        dictation: true,
+        status: { ready: true, transcribe: false },
+      }),
+      loadInputSource: vi.fn(async () => "server:groq"),
+    };
+
+    await expect(resolveVoiceCallPlan(fakes)).resolves.toEqual({ kind: "settings" });
+  });
+
+  it("starts a device call when input is pinned to on-device speech", async () => {
+    const fakes = {
+      ...deps({
+        deviceVoice: false,
+        dictation: false,
+        status: { ready: false, transcribe: false },
+      }),
+      onDeviceSpeechAvailable: vi.fn(async () => true),
+      loadInputSource: vi.fn(async () => "on-device"),
+    };
+
+    await expect(resolveVoiceCallPlan(fakes)).resolves.toEqual({
+      kind: "device",
+      transcribe: false,
+    });
+    expect(fakes.loadVoiceStatus).not.toHaveBeenCalled();
+  });
+
+  it("reports missing recognition when pinned on-device speech is not ready", async () => {
+    const fakes = {
+      ...deps({
+        deviceVoice: true,
+        dictation: true,
+        status: { ready: true, transcribe: true },
+      }),
+      onDeviceSpeechAvailable: vi.fn(async () => false),
+      loadInputSource: vi.fn(async () => "on-device"),
+    };
+
+    await expect(resolveVoiceCallPlan(fakes)).resolves.toEqual({ kind: "dictation" });
+  });
+
+  it("starts a device call when input is pinned to system recognition", async () => {
+    const fakes = {
+      ...deps({
+        deviceVoice: false,
+        dictation: true,
+        status: { ready: false, transcribe: false },
+      }),
+      loadInputSource: vi.fn(async () => "system"),
+    };
+
+    await expect(resolveVoiceCallPlan(fakes)).resolves.toEqual({
+      kind: "device",
+      transcribe: false,
+    });
+  });
+
+  it("reports missing recognition when pinned system recognition is absent", async () => {
+    const fakes = {
+      ...deps({
+        deviceVoice: false,
+        dictation: false,
+        status: { ready: true, transcribe: true },
+      }),
+      loadInputSource: vi.fn(async () => "system"),
+    };
+
+    await expect(resolveVoiceCallPlan(fakes)).resolves.toEqual({ kind: "dictation" });
   });
 });
 

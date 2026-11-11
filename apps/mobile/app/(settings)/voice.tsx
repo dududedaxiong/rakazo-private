@@ -33,6 +33,7 @@ import {
   saveWaitSoundEnabled,
 } from "../../lib/call-sounds";
 import { loadDeviceVoiceEnabled, saveDeviceVoiceEnabled } from "../../lib/device-voice";
+import { recognitionSupported } from "../../lib/dictation";
 import { useI18n } from "../../lib/i18n";
 import { native, useThemedStyles } from "../../lib/native";
 import { readNativeLog } from "../../lib/native-log";
@@ -63,6 +64,13 @@ import { settingsRpc, settingsTarget } from "../../lib/settings-target";
 import { useSideInsets } from "../../lib/side-insets";
 import { errorText } from "../../lib/user-error";
 import { speakText } from "../../lib/voice";
+import type { VoiceDirection, VoiceSourceId } from "../../lib/voice-direction";
+import {
+  loadVoiceSource,
+  saveVoiceSource,
+  serverVoiceSource,
+  VOICE_SOURCE_AUTO,
+} from "../../lib/voice-direction";
 
 type VoiceField = "voiceId" | "speechModel" | "baseUrl" | "ttsModel" | "sttModel";
 
@@ -141,6 +149,11 @@ export default function VoiceSettings() {
   const [onDeviceSpeech, setOnDeviceSpeech] = useState(false);
   const [onDeviceSpeechReady, setOnDeviceSpeechReady] = useState(!deviceSettings);
   const [onDeviceExpanded, setOnDeviceExpanded] = useState(false);
+  // Each direction's pinned source, or auto for the existing fallback order.
+  const [inputSource, setInputSource] = useState<VoiceSourceId>(VOICE_SOURCE_AUTO);
+  const [readAloudSource, setReadAloudSource] = useState<VoiceSourceId>(VOICE_SOURCE_AUTO);
+  // Whether this phone ships a speech recognizer at all; unknown until probed.
+  const [systemDictation, setSystemDictation] = useState<boolean | null>(null);
   const [modelStatus, setModelStatus] = useState<OnDeviceSpeechModelsStatus | null>(null);
   const [modelDiagnostics, setModelDiagnostics] = useState<OnDeviceSpeechDiagnostics | null>(null);
   const [ttsInitJournal, setTtsInitJournal] = useState<TtsInitJournal | null>(null);
@@ -307,6 +320,20 @@ export default function VoiceSettings() {
           if (deviceVoiceRevision.current !== revision) return;
           setOnDeviceSpeechReady(true);
         });
+      // Input and read-aloud each keep their own source on this device, so
+      // a phone can transcribe through one connection and speak through another.
+      void Promise.all([
+        loadVoiceSource("input"),
+        loadVoiceSource("readAloud"),
+        recognitionSupported(),
+      ])
+        .then(([input, readAloud, system]) => {
+          if (deviceVoiceRevision.current !== revision) return;
+          setInputSource(input);
+          setReadAloudSource(readAloud);
+          setSystemDictation(system);
+        })
+        .catch(() => undefined);
       const soundRevision = soundPrefsRevision.current;
       void Promise.allSettled([
         loadCallSoundsEnabled(),
@@ -527,6 +554,20 @@ export default function VoiceSettings() {
     return rows;
   }
 
+  /** Pins one direction to one source; the other direction is untouched. */
+  async function chooseVoiceSource(direction: VoiceDirection, source: VoiceSourceId) {
+    if (pending !== null) return;
+    const show = direction === "input" ? setInputSource : setReadAloudSource;
+    const previous = direction === "input" ? inputSource : readAloudSource;
+    show(source);
+    try {
+      await saveVoiceSource(direction, source);
+    } catch {
+      show(previous);
+      setError(t("Could not save that preference"));
+    }
+  }
+
   async function chooseProvider(nextProvider: string) {
     if (pending !== null || !deviceVoiceReady) return;
     const wasDeviceVoice = deviceVoice;
@@ -582,6 +623,70 @@ export default function VoiceSettings() {
   const selfHosted = selected?.id === OPENAI_COMPATIBLE_PROVIDER_ID;
   const keyless = Boolean(selected?.keyless);
   const canConnect = keyless || (selfHosted ? Boolean(baseUrl.trim()) : apiKey.trim().length >= 8);
+
+  // One direction's source list: auto first, then the sources this phone can
+  // actually use. A source that vanished (models deleted, connection removed)
+  // is not listed, and the choice falls back to auto until it returns.
+  function voiceSourceOptions(direction: VoiceDirection) {
+    const serverOptions = credentials.filter((cred) =>
+      direction === "input" ? cred.transcribe : true,
+    );
+    const onDeviceReady =
+      onDeviceSpeech &&
+      (direction === "input" ? modelStatus?.stt === "ready" : modelStatus?.tts === "ready");
+    const systemReady = direction === "input" ? systemDictation === true : true;
+    const options: { id: VoiceSourceId; label: string }[] = [
+      { id: VOICE_SOURCE_AUTO, label: t("Auto") },
+    ];
+    if (onDeviceReady) options.push({ id: "on-device", label: t("On-device voice") });
+    if (systemReady) options.push({ id: "system", label: t("Device voice") });
+    for (const cred of serverOptions) {
+      options.push({
+        id: serverVoiceSource(cred.provider),
+        label: catalog.find((entry) => entry.id === cred.provider)?.name ?? cred.provider,
+      });
+    }
+    return options;
+  }
+
+  const inputOptions = voiceSourceOptions("input");
+  const readAloudOptions = voiceSourceOptions("readAloud");
+  const effectiveInputSource = inputOptions.some((option) => option.id === inputSource)
+    ? inputSource
+    : VOICE_SOURCE_AUTO;
+  const effectiveReadAloudSource = readAloudOptions.some((option) => option.id === readAloudSource)
+    ? readAloudSource
+    : VOICE_SOURCE_AUTO;
+
+  function voiceSourceRows(
+    direction: VoiceDirection,
+    options: { id: VoiceSourceId; label: string }[],
+    effective: VoiceSourceId,
+  ) {
+    return options.map((option, index) => {
+      const chosen = effective === option.id;
+      return (
+        <Pressable
+          key={option.id}
+          accessibilityRole="button"
+          accessibilityState={{ selected: chosen }}
+          disabled={pending !== null}
+          onPress={() => void chooseVoiceSource(direction, option.id)}
+          style={({ pressed }) => [
+            styles.groupRow,
+            index > 0 && styles.groupDivider,
+            pending !== null && styles.disabled,
+            pressed && styles.pressed,
+          ]}
+        >
+          <View style={styles.rowCopy}>
+            <Text style={styles.cardTitle}>{option.label}</Text>
+          </View>
+          {chosen ? <Checkmark /> : null}
+        </Pressable>
+      );
+    });
+  }
 
   async function connect() {
     if (!selected || !canConnect) return;
@@ -957,6 +1062,20 @@ export default function VoiceSettings() {
               );
             })}
           </View>
+        ) : null}
+        {/* Input and read-aloud each pick their own source on this device, so
+            one connection can transcribe while another one speaks. */}
+        {deviceSettings ? (
+          <>
+            <Text style={styles.fieldLabel}>{t("Voice input")}</Text>
+            <View style={styles.group}>
+              {voiceSourceRows("input", inputOptions, effectiveInputSource)}
+            </View>
+            <Text style={styles.fieldLabel}>{t("Speak")}</Text>
+            <View style={styles.group}>
+              {voiceSourceRows("readAloud", readAloudOptions, effectiveReadAloudSource)}
+            </View>
+          </>
         ) : null}
         {/* Connections belong to the account, so a space never removes them. */}
         {hiddenSelfHosted && scope === "account" ? (

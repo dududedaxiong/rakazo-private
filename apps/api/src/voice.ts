@@ -240,7 +240,7 @@ export async function loadVoiceCredential(
 export async function resolveVoiceTarget(
   deps: VoiceDeps,
   actor: Actor,
-  input: { botId?: string; voiceId?: string; scope?: SettingsScope },
+  input: { botId?: string; voiceId?: string; scope?: SettingsScope; provider?: string },
 ) {
   let botVoiceId: string | null = null;
   if (input.botId) {
@@ -251,7 +251,9 @@ export async function resolveVoiceTarget(
     if (!bot) throw new IsolationError();
     botVoiceId = bot.voiceId;
   }
-  const loaded = await loadDefaultVoiceCredential(deps, actor, input.scope);
+  const loaded = input.provider
+    ? await loadVoiceCredential(deps, actor, input.provider, input.scope)
+    : await loadDefaultVoiceCredential(deps, actor, input.scope);
   if (!loaded) throw new NoVoiceConfigured("key");
   const voiceId = input.voiceId || botVoiceId || loaded.cred.voiceId;
   if (!voiceId) throw new NoVoiceConfigured("voice");
@@ -485,6 +487,7 @@ export async function prepareVoice(
     voiceId?: string;
     botId?: string;
     scope?: SettingsScope;
+    provider?: string;
     signal?: AbortSignal;
   },
 ) {
@@ -521,6 +524,7 @@ export async function synthesizeVoice(
     voiceId?: string;
     botId?: string;
     scope?: SettingsScope;
+    provider?: string;
     signal?: AbortSignal;
   },
 ) {
@@ -546,9 +550,18 @@ export async function synthesizeVoice(
 export async function transcribeVoice(
   deps: VoiceDeps,
   actor: Actor,
-  input: { audio: Uint8Array; mimeType: string; language?: string; signal?: AbortSignal },
+  input: {
+    audio: Uint8Array;
+    mimeType: string;
+    language?: string;
+    /** The connection to transcribe with; omitted uses the default voice. */
+    provider?: string;
+    signal?: AbortSignal;
+  },
 ) {
-  const loaded = await loadDefaultVoiceCredential(deps, actor);
+  const loaded = input.provider
+    ? await loadVoiceCredential(deps, actor, input.provider)
+    : await loadDefaultVoiceCredential(deps, actor);
   if (!loaded) throw new NoVoiceConfigured("key");
   const provider = await voiceProviderFor(deps, loaded.cred.provider);
   if (!provider.transcribe) {
@@ -678,6 +691,7 @@ export function mountVoiceHttpRoutes(
           voiceId: optionalString((body as { voiceId?: unknown }).voiceId),
           botId: optionalString((body as { botId?: unknown }).botId),
           scope: SettingsScopeSchema.safeParse((body as { scope?: unknown }).scope).data,
+          provider: optionalString((body as { provider?: unknown }).provider),
           signal: AbortSignal.any(
             [c.req.raw.signal, AbortSignal.timeout(SPEAK_TIMEOUT_MS)].filter(
               Boolean,
@@ -713,6 +727,7 @@ export function mountVoiceHttpRoutes(
           audio,
           mimeType: String((body as { mimeType?: unknown }).mimeType ?? "audio/webm"),
           language,
+          provider: optionalString((body as { provider?: unknown }).provider),
           signal: c.req.raw.signal,
         }),
       );

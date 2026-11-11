@@ -5,7 +5,9 @@ import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import VoiceSettings from "../app/(settings)/voice";
+import { loadOnDeviceSpeechEnabled, onDeviceSpeechModelsStatus } from "./on-device-speech";
 import { queryClient } from "./query";
+import { saveVoiceSource } from "./voice-direction";
 
 const state = vi.hoisted(() => ({
   rpc: vi.fn(),
@@ -72,6 +74,16 @@ vi.mock("./call-sounds", () => ({
   playCallCue: vi.fn(),
 }));
 vi.mock("./voice", () => ({ speakText: vi.fn() }));
+const voiceSources = vi.hoisted(() => ({ input: "auto", readAloud: "auto" }));
+vi.mock("./voice-direction", () => ({
+  VOICE_SOURCE_AUTO: "auto",
+  loadVoiceSource: vi.fn(async (direction: "input" | "readAloud") => voiceSources[direction]),
+  saveVoiceSource: vi.fn(async (direction: "input" | "readAloud", source: string) => {
+    voiceSources[direction] = source;
+  }),
+  serverVoiceSource: (provider: string) => `server:${provider}`,
+}));
+vi.mock("./dictation", () => ({ recognitionSupported: vi.fn(async () => true) }));
 vi.mock("./appearance", () => ({ mobileTokens: () => ({}) }));
 vi.mock("./native", () => ({ native: {}, useThemedStyles: (factory: () => unknown) => factory() }));
 vi.mock("./i18n", () => ({ t: (text: string) => text, useI18n: () => ({ t }) }));
@@ -141,8 +153,14 @@ const catalog = [
   { id: "new", name: "New provider", transcribe: false },
 ];
 const credentials = [
-  { id: "fish", provider: "fish-audio", voiceId: "fish-voice", speechModel: "speech-model" },
-  { id: "other", provider: "other", voiceId: "other-voice" },
+  {
+    id: "fish",
+    provider: "fish-audio",
+    voiceId: "fish-voice",
+    speechModel: "speech-model",
+    transcribe: true,
+  },
+  { id: "other", provider: "other", voiceId: "other-voice", transcribe: false },
 ];
 let activeProvider: string;
 let root: Root;
@@ -173,6 +191,9 @@ beforeEach(() => {
   state.params = {};
   queryClient.clear();
   activeProvider = "fish-audio";
+  voiceSources.input = "auto";
+  voiceSources.readAloud = "auto";
+  vi.mocked(saveVoiceSource).mockClear();
   state.load.mockReset().mockResolvedValue(true);
   state.save.mockReset().mockResolvedValue(undefined);
   state.held = null;
@@ -471,4 +492,83 @@ it("keeps a saved speech model when an opening read started before the save land
   });
   await act(async () => releaseCatalog());
   await vi.waitFor(() => expect(input().value).toBe("saved-model"));
+});
+
+function groupButtons(heading: string) {
+  const head = [...container.querySelectorAll("span")].find(
+    (item) =>
+      item.textContent === heading && item.nextElementSibling?.querySelector("button") !== null,
+  );
+  if (!head) throw new Error(`Missing heading: ${heading}`);
+  return [...head.nextElementSibling!.querySelectorAll("button")];
+}
+function groupButton(heading: string, label: string) {
+  const found = groupButtons(heading).find((item) => item.textContent?.startsWith(label));
+  if (!found) throw new Error(`Missing button: ${label} in ${heading}`);
+  return found;
+}
+function groupLabels(heading: string) {
+  return groupButtons(heading).map((item) => item.textContent);
+}
+function groupSelected(heading: string, label: string) {
+  const found = groupButton(heading, label);
+  expect(found.getAttribute("aria-pressed")).toBe("true");
+  expect(found.querySelector('[data-testid="checkmark"]')).not.toBeNull();
+}
+function groupUnselected(heading: string, label: string) {
+  const found = groupButton(heading, label);
+  expect(found.getAttribute("aria-pressed")).toBe("false");
+  expect(found.querySelector('[data-testid="checkmark"]')).toBeNull();
+}
+async function clickGroup(heading: string, label: string) {
+  await act(async () => groupButton(heading, label).click());
+}
+
+it("lists only transcribe-capable connections for input and all connections for read-aloud", async () => {
+  await render();
+  expect(groupLabels("Voice input")).toEqual(["Auto", "Device voice", "Fish Audio"]);
+  expect(groupLabels("Speak")).toEqual(["Auto", "Device voice", "Fish Audio", "Other provider"]);
+  groupSelected("Voice input", "Auto");
+  groupSelected("Speak", "Auto");
+});
+
+it("pins input to a server connection and read-aloud to on-device speech", async () => {
+  vi.mocked(loadOnDeviceSpeechEnabled).mockResolvedValueOnce(true);
+  vi.mocked(onDeviceSpeechModelsStatus).mockResolvedValueOnce({
+    stt: "ready",
+    tts: "ready",
+    progress: null,
+  });
+  await render();
+  expect(groupLabels("Voice input")).toContain("On-device voice");
+  expect(groupLabels("Speak")).toContain("On-device voice");
+
+  await clickGroup("Voice input", "Fish Audio");
+  expect(saveVoiceSource).toHaveBeenCalledWith("input", "server:fish-audio");
+  groupSelected("Voice input", "Fish Audio");
+  groupUnselected("Voice input", "Auto");
+  groupSelected("Speak", "Auto");
+
+  await clickGroup("Speak", "On-device voice");
+  expect(saveVoiceSource).toHaveBeenCalledWith("readAloud", "on-device");
+  groupSelected("Speak", "On-device voice");
+  groupSelected("Voice input", "Fish Audio");
+});
+
+it("falls back to auto when a pinned input is no longer listed", async () => {
+  voiceSources.input = "server:other";
+  voiceSources.readAloud = "server:other";
+  await render();
+  // "Other provider" cannot transcribe, so it is not an input choice.
+  expect(groupLabels("Voice input")).not.toContain("Other provider");
+  groupSelected("Voice input", "Auto");
+  // The same connection can still speak, so read-aloud keeps it.
+  groupSelected("Speak", "Other provider");
+});
+
+it("hides the direction groups in a Space override", async () => {
+  state.params = { spaceId: "space-other" };
+  await render();
+  expect(container.textContent).not.toContain("Voice input");
+  expect(container.textContent).not.toContain("Speak");
 });

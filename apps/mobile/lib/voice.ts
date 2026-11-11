@@ -22,12 +22,15 @@ import { loadDeviceVoiceEnabled } from "./device-voice";
 import { t } from "./i18n";
 import {
   onDeviceSpeechAvailable,
+  onDeviceTtsReady,
   speakOnDeviceSpeech,
   stopOnDeviceSpeechPlayback,
 } from "./on-device-speech";
 import { fetchServer } from "./server-headers";
 import { subscribeSessionGeneration } from "./session";
 import { errorText, voiceAccountErrorText } from "./user-error";
+import type { VoiceSourceId } from "./voice-direction";
+import { loadVoiceSource, serverProviderOf } from "./voice-direction";
 
 /** Who is speaking, for the dock: it is mounted outside any one thread's bot list. */
 export type PlaybackSpeaker = { name?: string; color?: string };
@@ -49,6 +52,8 @@ type SpeechOptions = {
   speaker?: PlaybackSpeaker;
   /** Tags this speech for its starter, so stopSpeaking(owner) cuts only this playback. */
   owner?: SpeechOwner;
+  /** The connection to speak with; omitted uses the read-aloud choice, then the default voice. */
+  provider?: string;
 };
 
 // Playback status lets a persistent mini-player show and control what's speaking, without every
@@ -343,6 +348,12 @@ export async function speakText(text: string, opts: SpeechOptions = {}): Promise
   return speakPrepared(text, opts, beginSpeech(opts.owner));
 }
 
+// The read-aloud the current speech started with. One speech keeps its
+// source across its utterances, so a queue or stream reads the store once
+// instead of once per sentence; a new speech reads it again.
+let resolvedReadAloudEpoch = -1;
+let resolvedReadAloud: VoiceSourceId = "auto";
+
 async function speakPrepared(text: string, opts: SpeechOptions, epoch: number): Promise<boolean> {
   if (!isCurrentSpeech(epoch)) return false;
   // Each queued item owns the epoch while it prepares and plays.
@@ -362,26 +373,61 @@ async function speakPrepared(text: string, opts: SpeechOptions, epoch: number): 
     prepareControl,
   );
   try {
+    // Both reads start together: each is a store round-trip, and overlapping
+    // them keeps a pinned choice from adding a second one to every utterance.
+    // The device-voice default is only used when read-aloud falls back to
+    // auto; resolving it early also resolves the same default auto mode
+    // would resolve on its next use.
+    const readAloudPromise =
+      epoch === resolvedReadAloudEpoch
+        ? Promise.resolve(resolvedReadAloud)
+        : loadVoiceSource("readAloud")
+            .catch(() => "auto")
+            .then((source) => {
+              resolvedReadAloudEpoch = epoch;
+              resolvedReadAloud = source;
+              return source;
+            });
+    const deviceVoicePromise = loadDeviceVoiceEnabled().catch(() => true);
+    const readAloud = await readAloudPromise;
+    const serverProvider = serverProviderOf(readAloud) ?? opts.provider;
+    // A pinned read-aloud uses only that source, so each type's strength is
+    // picked on purpose instead of the fallback order deciding for the caller.
+    if (readAloud === "on-device") {
+      if (await onDeviceTtsReady()) {
+        const spoken = await speakWithOnDeviceSpeech(text, opts.botId, opts.messageId, epoch);
+        if (!isCurrentSpeech(epoch)) return false;
+        if (!spoken && playback.status !== "idle") setPlayback(IDLE_PLAYBACK, null);
+        return spoken;
+      }
+      if (!isCurrentSpeech(epoch)) return false;
+      if (playback.status !== "idle") setPlayback(IDLE_PLAYBACK, null);
+      return false;
+    }
+    if (readAloud === "system") {
+      const spoken = await speakOnDevice(text, opts.botId, opts.messageId, epoch);
+      if (!isCurrentSpeech(epoch)) return false;
+      if (!spoken && playback.status !== "idle") setPlayback(IDLE_PLAYBACK, null);
+      return spoken;
+    }
     let useDeviceVoice = false;
-    try {
-      useDeviceVoice = await loadDeviceVoiceEnabled();
-    } catch {
+    if (!serverProvider) {
       // A read failure must not be treated as "off": that would send reply text
       // through hosted voice after the user opted for on-device only.
-      useDeviceVoice = true;
+      useDeviceVoice = await deviceVoicePromise;
     }
     if (!isCurrentSpeech(epoch)) return false;
     // On-device speech first: the user switched it on explicitly, and it
     // needs neither the system voice nor a server. It is checked before the
     // device-voice default, which would otherwise always win for installs
     // with no hosted voice.
-    if (await onDeviceSpeechAvailable()) {
+    if (!serverProvider && (await onDeviceSpeechAvailable())) {
       const spoken = await speakWithOnDeviceSpeech(text, opts.botId, opts.messageId, epoch);
       if (!isCurrentSpeech(epoch)) return false;
       if (!spoken && playback.status !== "idle") setPlayback(IDLE_PLAYBACK, null);
       return spoken;
     }
-    if (useDeviceVoice) {
+    if (!serverProvider && useDeviceVoice) {
       const spoken = await speakOnDevice(text, opts.botId, opts.messageId, epoch);
       if (!isCurrentSpeech(epoch)) return false;
       if (!spoken && playback.status !== "idle") setPlayback(IDLE_PLAYBACK, null);
@@ -391,7 +437,13 @@ async function speakPrepared(text: string, opts: SpeechOptions, epoch: number): 
     if (!isCurrentSpeech(epoch)) return false;
     const prepared = await rpc(
       "voice/prepare",
-      { text, voiceId: opts.voiceId, botId: opts.botId, scope: opts.scope },
+      {
+        text,
+        voiceId: opts.voiceId,
+        botId: opts.botId,
+        scope: opts.scope,
+        ...(serverProvider ? { provider: serverProvider } : {}),
+      },
       { requestContext },
     );
     if (!isCurrentSpeech(epoch)) return false;
@@ -433,7 +485,7 @@ async function speakPrepared(text: string, opts: SpeechOptions, epoch: number): 
     // Render one clip ahead; failures ride as values so an abandoned prefetch never rejects unhandled.
     type Rendered = { audio: Uint8Array; error?: never } | { audio?: never; error: unknown };
     const render = (text: string): Promise<Rendered> =>
-      renderUtterance(text, opts, requestContext).then(
+      renderUtterance(text, { ...opts, provider: serverProvider }, requestContext).then(
         (audio) => ({ audio }),
         (error: unknown) => ({ error }),
       );
@@ -670,6 +722,7 @@ async function renderUtterance(
             voiceId: opts.voiceId,
             botId: opts.botId,
             scope: opts.scope,
+            ...(opts.provider ? { provider: opts.provider } : {}),
           }),
           signal: deadline.signal,
         },

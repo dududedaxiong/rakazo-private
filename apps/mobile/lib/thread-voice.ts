@@ -28,6 +28,7 @@ import {
   resolveVoiceCallPlan,
 } from "./voice-call-entry";
 import { onShortcutVoiceChat, takeShortcutVoiceChat } from "./voice-chat-intent";
+import { loadVoiceSource, serverProviderOf } from "./voice-direction";
 
 const ATTACHMENT_PLACEHOLDER_LINE = /^\[(?:image|file|chart): .*\]$/;
 
@@ -214,7 +215,13 @@ export function useThreadVoiceCall({
     const targetBotId = botId;
     if (!targetBotId || voiceCallStarting.current) return;
     voiceCallStarting.current = true;
-    const loadVoiceStatus = () => rpc("voice/status");
+    // A pinned server connection reports its own readiness, so the call
+    // plan judges the connection input will actually use.
+    const loadVoiceStatus = async () => {
+      const input = await loadVoiceSource("input").catch(() => "auto");
+      const provider = serverProviderOf(input);
+      return rpc("voice/status", provider ? { provider } : undefined);
+    };
     try {
       const [plan, callerName, greet] = await Promise.all([
         resolveVoiceCallPlan({
@@ -222,6 +229,7 @@ export function useThreadVoiceCall({
           dictationAvailable,
           onDeviceSpeechAvailable,
           loadVoiceStatus,
+          loadInputSource: () => loadVoiceSource("input"),
         }),
         loadCallCallerName(() => rpc("me")),
         loadCallGreetingEnabled().catch(() => true),
@@ -263,11 +271,16 @@ export function useThreadVoiceCall({
       });
       if (!startedCallId) return;
       if (plan.kind === "device") {
-        void probeProviderTranscribe(loadVoiceStatus)
-          .then((enabled) => {
-            if (enabled) setCallProviderTranscribe(true, startedCallId);
-          })
-          .catch(() => undefined);
+        // A pinned local input stays local: no background provider fallback
+        // rescues a call whose chosen source gave up.
+        const input = await loadVoiceSource("input").catch(() => "auto");
+        if (input === "auto") {
+          void probeProviderTranscribe(loadVoiceStatus)
+            .then((enabled) => {
+              if (enabled) setCallProviderTranscribe(true, startedCallId);
+            })
+            .catch(() => undefined);
+        }
       }
     } catch {
       if (activeBotId.current === targetBotId) router.push("/voice");

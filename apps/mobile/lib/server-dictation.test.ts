@@ -37,6 +37,19 @@ vi.mock("./user-error", () => ({
   errorText: (_error: unknown, fallback: string) => fallback,
   voiceAccountErrorText: () => undefined,
 }));
+// server-dictation reaches voice-direction through voice-call-entry; the
+// real module reads SecureStore, which pulls the native module graph
+// (and react-native's uncompiled Flow source) into this test.
+vi.mock("./voice-direction", () => ({
+  loadVoiceSource: vi.fn(async () => "auto"),
+  saveVoiceSource: vi.fn(async () => undefined),
+  serverProviderOf: (id: string) =>
+    id.startsWith("server:") && id.length > "server:".length
+      ? id.slice("server:".length)
+      : undefined,
+  serverVoiceSource: (provider: string) => `server:${provider}`,
+  VOICE_SOURCE_AUTO: "auto",
+}));
 
 import { rpc } from "./api";
 import { fetchServer } from "./server-headers";
@@ -100,6 +113,12 @@ describe("server dictation", () => {
     await expect(serverTranscribeAvailable()).resolves.toBe(false);
   });
 
+  it("asks the pinned provider for its transcribe capability", async () => {
+    vi.mocked(rpc).mockResolvedValueOnce({ ready: true, transcribe: true } as never);
+    await expect(serverTranscribeAvailable("groq")).resolves.toBe(true);
+    expect(rpc).toHaveBeenCalledWith("voice/status", { provider: "groq" });
+  });
+
   it("records speech, then transcribes the clip on the server", async () => {
     audio.metering = [-20, -20, -50, -50, -50, -50, -50, -50];
     const finished = new Promise<string>((resolve) => {
@@ -118,6 +137,27 @@ describe("server dictation", () => {
     expect(JSON.parse(String(init?.body))).toEqual({
       audioBase64: "AAAA",
       mimeType: "audio/m4a",
+    });
+  });
+
+  it("transcribes the clip through the pinned provider", async () => {
+    audio.metering = [-20, -20, -50, -50, -50, -50, -50, -50];
+    const finished = new Promise<string>((resolve) => {
+      void listenServerDictation({
+        onFinal: (text) => resolve(text),
+        onGiveUp: (reason) => resolve(`gave-up:${reason}`),
+        provider: "groq",
+      });
+    });
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(await finished).toBe("你好");
+    expect(fetchServer).toHaveBeenCalledOnce();
+    const [url, init] = vi.mocked(fetchServer).mock.calls[0]!;
+    expect(url).toBe("https://api.example/api/voice/transcribe");
+    expect(JSON.parse(String(init?.body))).toEqual({
+      audioBase64: "AAAA",
+      mimeType: "audio/m4a",
+      provider: "groq",
     });
   });
 
