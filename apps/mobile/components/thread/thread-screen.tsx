@@ -1024,7 +1024,6 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
               attachFrom={attachments.attachFrom}
               send={composer.send}
               stop={composer.stop}
-              startVoiceCall={startVoiceCall}
               onSlashAction={composer.runSlashAction}
               onEmptied={composer.composerEmptied}
             />

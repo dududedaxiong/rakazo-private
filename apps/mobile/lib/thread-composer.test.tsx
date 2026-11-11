@@ -21,6 +21,23 @@ const input = vi.hoisted(() => ({
   select: (_event: { nativeEvent: { selection: { start: number; end: number } } }) => {},
 }));
 const mentionApi = vi.hoisted(() => ({ rpc: vi.fn(), capture: vi.fn(), generation: 1 }));
+const holdDictation = vi.hoisted(() => ({
+  dictate: vi.fn(),
+  finishDictation: vi.fn(),
+  stopDictation: vi.fn(),
+  handlers: null as {
+    onInterim: (text: string) => void;
+    onFinal: (text: string) => void;
+    onGiveUp: (reason: "idle" | "failed") => void;
+  } | null,
+}));
+vi.mock("./voice-chat", () => ({
+  productionVoiceChatDeps: () => ({
+    dictate: holdDictation.dictate,
+    finishDictation: holdDictation.finishDictation,
+    stopDictation: holdDictation.stopDictation,
+  }),
+}));
 const routerPush = vi.hoisted(() => vi.fn());
 vi.mock("expo-router", () => ({ useRouter: () => ({ push: routerPush }) }));
 vi.mock("./api-server", () => ({}));
@@ -118,6 +135,8 @@ vi.mock("react-native", () => {
     Pressable: ({
       children,
       onPress,
+      onPressIn,
+      onPressOut,
       accessibilityLabel,
       accessible,
       disabled,
@@ -125,6 +144,8 @@ vi.mock("react-native", () => {
     }: {
       children?: ReactNode;
       onPress: () => void;
+      onPressIn?: () => void;
+      onPressOut?: () => void;
       accessibilityLabel?: string;
       accessible?: boolean;
       disabled?: boolean;
@@ -135,6 +156,8 @@ vi.mock("react-native", () => {
         {
           type: "button",
           onClick: onPress,
+          onPointerDown: onPressIn,
+          onPointerUp: onPressOut,
           "aria-label": accessibilityLabel,
           "data-accessible": accessible,
           disabled,
@@ -248,7 +271,6 @@ const props: Omit<ComponentProps<typeof ThreadComposer>, "ref"> = {
   attachFrom: vi.fn(),
   send: vi.fn(async () => {}),
   stop: vi.fn(async () => {}),
-  startVoiceCall: vi.fn(async () => {}),
   onSlashAction: vi.fn(),
 };
 
@@ -330,6 +352,13 @@ describe("thread composer isolation", () => {
       sessionGeneration: mentionApi.generation,
       headers: { authorization: "Bearer account-a", "x-rakazo-space-id": "space-a" },
     }));
+    holdDictation.dictate.mockReset().mockImplementation(async (handlers) => {
+      holdDictation.handlers = handlers;
+      return true;
+    });
+    holdDictation.finishDictation.mockReset();
+    holdDictation.stopDictation.mockReset();
+    holdDictation.handlers = null;
     container = document.createElement("div");
     document.body.append(container);
     root = createRoot(container);
@@ -1178,14 +1207,12 @@ describe("thread composer isolation", () => {
     expect(composer.current!.snapshot().skill).toBeNull();
   });
 
-  it("clears a slash query before routing and uses the call control for an empty draft", () => {
+  it("clears a slash query before routing", () => {
     type("/settings");
     press("Chat Settings");
     expect(props.onSlashAction).toHaveBeenCalledWith("chat-settings");
     expect(container.querySelector("input")!.value).toBe("");
     expect(container.querySelector('[data-testid="slash-picker"]')).toBeNull();
-    press("Call");
-    expect(props.startVoiceCall).toHaveBeenCalledOnce();
   });
 
   it("focuses the input when its padding wrapper is pressed without adding an accessibility stop", () => {
@@ -1224,9 +1251,9 @@ describe("thread composer isolation", () => {
     },
   );
 
-  it("insets the call and send pills equally from the capsule's bottom and trailing edges", () => {
+  it("insets the hold-to-talk and send pills equally from the capsule's bottom and trailing edges", () => {
     const style = (element: Element) => JSON.parse((element as HTMLElement).dataset.style!);
-    for (const label of ["Call", "Send"]) {
+    for (const label of ["Hold to talk", "Send"]) {
       if (label === "Send") type("Hello");
       const button = container.querySelector(`button[aria-label="${label}"]`)!;
       const pill = style(button.querySelector("[data-glass]")!);
@@ -1237,11 +1264,11 @@ describe("thread composer isolation", () => {
     }
   });
 
-  it("keeps right-to-left text clear of the call and send pills", () => {
+  it("keeps right-to-left text clear of the hold-to-talk and send pills", () => {
     const style = (element: Element) => JSON.parse((element as HTMLElement).dataset.style!);
     // Right-to-left text runs up to the field's trailing edge, right next to the pill.
     for (const [label, draft] of [
-      ["Call", ""],
+      ["Hold to talk", ""],
       ["Send", "אבג"],
       ["Send", "مرحبا\nبالعالم"],
     ] as const) {
@@ -1250,5 +1277,106 @@ describe("thread composer isolation", () => {
       const capsule = style(button.closest('[data-glass="roundedRectangle"]')!);
       expect(capsule.gap).toBe(capsule.paddingEnd);
     }
+  });
+
+  function holdButton() {
+    const button = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Hold to talk"]',
+    )!;
+    expect(button).not.toBeNull();
+    return button;
+  }
+
+  async function flush() {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  }
+
+  async function holdStart() {
+    act(() => {
+      holdButton().dispatchEvent(new Event("pointerdown", { bubbles: true }));
+    });
+    await flush();
+  }
+
+  function holdEnd() {
+    act(() => {
+      holdButton().dispatchEvent(new Event("pointerup", { bubbles: true }));
+    });
+  }
+
+  function dictate(text: string, final = false) {
+    act(() => {
+      if (final) holdDictation.handlers?.onFinal(text);
+      else holdDictation.handlers?.onInterim(text);
+    });
+  }
+
+  it("shows interim dictation in the input and sends it on release", async () => {
+    // finishDictation delivers the final at once, like on-device dictation.
+    holdDictation.finishDictation.mockImplementation(() => {
+      holdDictation.handlers?.onFinal("你好世界");
+    });
+    await holdStart();
+    expect(holdDictation.dictate).toHaveBeenCalledOnce();
+    dictate("你好");
+    expect(field().value).toBe("你好");
+    // Interim text makes the draft sendable, but the hold button stays put.
+    expect(container.querySelector('button[aria-label="Hold to talk"]')).not.toBeNull();
+    expect(container.querySelector('button[aria-label="Send"]')).toBeNull();
+    holdEnd();
+    expect(holdDictation.finishDictation).toHaveBeenCalledOnce();
+    await flush();
+    expect(props.send).toHaveBeenCalledOnce();
+    expect(composer.current!.snapshot().promptText).toBe("你好世界");
+  });
+
+  it("sends the final when it arrives after release, like server transcription", async () => {
+    await holdStart();
+    dictate("你好");
+    holdEnd();
+    expect(holdDictation.finishDictation).toHaveBeenCalledOnce();
+    expect(props.send).not.toHaveBeenCalled();
+    dictate("你好世界", true);
+    await flush();
+    expect(props.send).toHaveBeenCalledOnce();
+    expect(composer.current!.snapshot().promptText).toBe("你好世界");
+  });
+
+  it("sends what was heard when the recognizer ends on its own mid-hold", async () => {
+    await holdStart();
+    dictate("你好", true);
+    holdEnd();
+    expect(holdDictation.finishDictation).not.toHaveBeenCalled();
+    await flush();
+    expect(props.send).toHaveBeenCalledOnce();
+  });
+
+  it("sends the heard text when silence ends the turn mid-hold", async () => {
+    await holdStart();
+    dictate("你好");
+    act(() => holdDictation.handlers?.onGiveUp("idle"));
+    holdEnd();
+    await flush();
+    expect(props.send).toHaveBeenCalledOnce();
+  });
+
+  it("sends nothing on a short hold with no speech", async () => {
+    await holdStart();
+    holdEnd();
+    expect(holdDictation.stopDictation).toHaveBeenCalledOnce();
+    expect(holdDictation.finishDictation).not.toHaveBeenCalled();
+    await flush();
+    expect(props.send).not.toHaveBeenCalled();
+    expect(field().value).toBe("");
+  });
+
+  it("does nothing when no recognizer is available", async () => {
+    holdDictation.dictate.mockResolvedValueOnce(false);
+    await holdStart();
+    expect(field().value).toBe("");
+    expect(props.send).not.toHaveBeenCalled();
+    expect(container.querySelector('button[aria-label="Hold to talk"]')).not.toBeNull();
   });
 });

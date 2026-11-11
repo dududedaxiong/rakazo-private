@@ -43,6 +43,7 @@ import { useI18n } from "../lib/i18n";
 import { useMobileTokens, useResolvedAppearance } from "../lib/native";
 import { thinkingLevelLabel } from "../lib/thinking-level";
 import type { ComposerSnapshot } from "../lib/thread-feedback";
+import type { VoiceChatDeps } from "../lib/voice-chat";
 import { BotAvatar } from "./bot-avatar";
 import { GlassSurface } from "./glass-surface";
 import { NativeSymbol } from "./native-symbol";
@@ -93,10 +94,23 @@ type ThreadComposerProps = {
   attachFrom: (source: string) => void;
   send: () => Promise<void>;
   stop: () => Promise<void>;
-  startVoiceCall: () => Promise<void>;
   onSlashAction: (action: SlashActionId) => void;
   /** The composer holds no text: the last of it was deleted or sent. */
   onEmptied?: () => void;
+};
+
+/** One press-and-hold dictation on the waveform button. */
+type HoldDictation = {
+  controller: AbortController;
+  deps: Pick<VoiceChatDeps, "dictate" | "finishDictation" | "stopDictation"> | null;
+  /** Latest interim or final text; the turn's words so far. */
+  heard: string;
+  /** The recognizer finished on its own, so no final is coming. */
+  ended: boolean;
+  /** The finger lifted; the final settles the hold when it lands. */
+  released: boolean;
+  /** Settle ran already; a late callback must not send twice. */
+  settled: boolean;
 };
 
 export function ThreadComposer({
@@ -119,7 +133,6 @@ export function ThreadComposer({
   attachFrom,
   send,
   stop,
-  startVoiceCall,
   onSlashAction,
   onEmptied,
 }: ThreadComposerProps) {
@@ -158,6 +171,136 @@ export function ThreadComposer({
     setMentionBindings(next);
   }
   const [selectedSkill, setSelectedSkill] = useState<AgentSkillCatalogEntry | null>(null);
+  /** One hold-to-talk listen on the waveform button: press to hear, release to send. */
+  const holdRef = useRef<HoldDictation | null>(null);
+  const [dictating, setDictating] = useState(false);
+
+  function setDictatedText(text: string) {
+    draftRef.current = text;
+    setDraft(text);
+    const end = text.length;
+    pendingNativeEdit.current = null;
+    nativeSelection.current = { start: end, end };
+    selectionHistory.current = [nativeSelection.current];
+    completedSelection.current = null;
+    setSelection(nativeSelection.current);
+  }
+
+  function clearDictatedText() {
+    if (!draftRef.current) return;
+    draftRef.current = "";
+    setDraft("");
+    nativeSelection.current = { start: 0, end: 0 };
+    completedSelection.current = null;
+    setSelection({ start: 0, end: 0 });
+  }
+
+  /** Sends the dictated turn, or clears it when nothing was heard. Runs once per hold. */
+  function settleHold() {
+    const hold = holdRef.current;
+    if (!hold || hold.settled) return;
+    hold.settled = true;
+    holdRef.current = null;
+    setDictating(false);
+    hold.controller.abort();
+    const text = hold.heard.trim();
+    if (!text) {
+      clearDictatedText();
+      return;
+    }
+    setDictatedText(text);
+    // The send reads the composer's snapshot, so it runs after the dictated
+    // draft lands in state.
+    setTimeout(() => {
+      void send();
+    }, 0);
+  }
+
+  /** Drops a hold that never heard anything, without a word to the caller. */
+  function endHoldSilently() {
+    const hold = holdRef.current;
+    if (!hold) return;
+    holdRef.current = null;
+    setDictating(false);
+    hold.controller.abort();
+    hold.deps?.stopDictation();
+    clearDictatedText();
+  }
+
+  async function startHoldDictation() {
+    if (holdRef.current || !botId) return;
+    const hold: HoldDictation = {
+      controller: new AbortController(),
+      deps: null,
+      heard: "",
+      ended: false,
+      released: false,
+      settled: false,
+    };
+    holdRef.current = hold;
+    setDictating(true);
+    let deps: Pick<VoiceChatDeps, "dictate" | "finishDictation" | "stopDictation">;
+    try {
+      // The speech stack loads only when the caller holds the button.
+      deps = (await import("../lib/voice-chat")).productionVoiceChatDeps();
+    } catch {
+      endHoldSilently();
+      return;
+    }
+    if (holdRef.current !== hold || hold.controller.signal.aborted) return;
+    hold.deps = deps;
+    let started: boolean;
+    try {
+      started = await deps.dictate(
+        {
+          onInterim: (text) => {
+            if (holdRef.current !== hold) return;
+            hold.heard = text;
+            setDictatedText(text);
+          },
+          onFinal: (text) => {
+            if (holdRef.current !== hold) return;
+            hold.heard = text;
+            hold.ended = true;
+            setDictatedText(text);
+            if (hold.released) settleHold();
+          },
+          onGiveUp: () => {
+            if (holdRef.current !== hold) return;
+            hold.ended = true;
+            if (hold.released) settleHold();
+          },
+        },
+        hold.controller.signal,
+      );
+    } catch {
+      if (holdRef.current === hold) endHoldSilently();
+      return;
+    }
+    if (holdRef.current !== hold) return;
+    // No recognizer at all: the hold just does nothing.
+    if (!started) endHoldSilently();
+  }
+
+  function releaseHoldDictation() {
+    const hold = holdRef.current;
+    if (!hold) return;
+    hold.released = true;
+    // The recognizer already finished on its own: no final is coming, so
+    // send what was heard instead of losing the turn.
+    if (hold.ended) {
+      settleHold();
+      return;
+    }
+    if (!hold.heard.trim()) {
+      hold.deps?.stopDictation();
+      settleHold();
+      return;
+    }
+    // Deliver the utterance heard so far as the finished turn; the final
+    // arrives through onFinal, at once or after transcription.
+    hold.deps?.finishDictation();
+  }
   // Saving waits for a pause in typing; closing the conversation or leaving the app saves at once.
   // Set while the composer holds text that storage does not have yet.
   const pendingSave = useRef<(() => boolean) | null>(null);
@@ -187,6 +330,27 @@ export function ThreadComposer({
       flushDraftSave();
     };
   }, []);
+  useEffect(() => {
+    // A call starting mid-hold takes the microphone; stop listening and leave
+    // the dictated words as the draft.
+    if (!onCall) return;
+    const hold = holdRef.current;
+    if (!hold) return;
+    holdRef.current = null;
+    setDictating(false);
+    hold.controller.abort();
+    hold.deps?.stopDictation();
+  }, [onCall]);
+  useEffect(
+    () => () => {
+      const hold = holdRef.current;
+      if (!hold) return;
+      holdRef.current = null;
+      hold.controller.abort();
+      hold.deps?.stopDictation();
+    },
+    [],
+  );
   useImperativeHandle(ref, () => ({
     snapshot: () => ({
       promptText: serializeComposerPrompt(draft, selectedSkill),
@@ -803,12 +967,15 @@ export function ThreadComposer({
               </TextInput>
             </Pressable>
           </View>
-          {!canSend && botId && !onCall ? (
+          {/* The button stays put while dictating: interim text makes the draft
+              sendable, which would otherwise swap the button out from under the hold. */}
+          {(!canSend || dictating) && botId && !onCall ? (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t("Call")}
+              accessibilityLabel={t("Hold to talk")}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-              onPress={() => void startVoiceCall()}
+              onPressIn={() => void startHoldDictation()}
+              onPressOut={() => releaseHoldDictation()}
               style={{ marginBottom: 8 }}
             >
               <GlassSurface
