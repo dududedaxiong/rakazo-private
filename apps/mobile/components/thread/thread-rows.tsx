@@ -82,6 +82,7 @@ export function useThreadRows({
   markedUnreadMessageId,
   highlightedMessageId,
   speakingMessageId,
+  overlaySpeakingMessageIds,
   favoriteIds,
   searchHitIds,
   searchCurrentId,
@@ -107,6 +108,8 @@ export function useThreadRows({
   highlightedMessageId: string | null;
   /** The message being read aloud right now, if any. */
   speakingMessageId?: string;
+  /** Messages sounding now in an overlay read-aloud chain. */
+  overlaySpeakingMessageIds?: ReadonlySet<string>;
   /** Bot replies in the thread's favorites. */
   favoriteIds?: ReadonlySet<string>;
   /** Messages matching the open conversation search. */
@@ -187,7 +190,9 @@ export function useThreadRows({
               run.id === message.runId &&
               (run.status === "waiting_input" || run.status === "waiting_takeover"),
           )}
-          speaking={speakingMessageId === message.id}
+          speaking={
+            speakingMessageId === message.id || overlaySpeakingMessageIds?.has(message.id) === true
+          }
           favorited={favoriteIds?.has(message.id) ?? false}
           searchHit={searchHitIds?.has(message.id) ?? false}
           searchCurrent={searchCurrentId === message.id}

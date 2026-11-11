@@ -43,7 +43,6 @@ import { useMobileTokens, useResolvedAppearance } from "../../lib/native";
 import { selectableTextFromMarkdown } from "../../lib/selectable-text";
 import { ThreadReadOnlyContext } from "../../lib/thread-read-only";
 import type { UserBubble } from "../../lib/user-bubble";
-import { stopVoicePlayback } from "../../lib/voice";
 import { BotAvatar } from "../bot-avatar";
 import type { ImageArtifactPreviewTarget } from "../image-artifact-viewer";
 import { presentMessageMenu } from "../message-action-menu";
@@ -594,8 +593,9 @@ export const MessageRow = memo(function MessageRow({
                 regenerate: t("Regenerate"),
               }}
               onCopy={copyMessage}
-              // Tapping read-aloud while this reply is speaking stops it.
-              onSpeak={() => (speaking ? stopVoicePlayback() : actions.speak(message))}
+              // Tapping read-aloud toggles it: the speak action stops a
+              // message that is already being read, overlay or single.
+              onSpeak={() => actions.speak(message)}
               canSpeak={canSpeak}
               speaking={speaking ?? false}
               reducedMotion={reducedMotion}

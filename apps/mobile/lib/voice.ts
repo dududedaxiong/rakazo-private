@@ -26,6 +26,7 @@ import {
   speakOnDeviceSpeech,
   stopOnDeviceSpeechPlayback,
 } from "./on-device-speech";
+import { stopAllOverlaySpeech } from "./overlay-speech";
 import { fetchServer } from "./server-headers";
 import { subscribeSessionGeneration } from "./session";
 import { errorText, voiceAccountErrorText } from "./user-error";
@@ -112,6 +113,9 @@ export function stopVoicePlayback(): void {
   playbackEpoch += 1;
   speechQueue = [];
   activeControl?.stop();
+  // A global stop ends the overlay chains too; otherwise a message read
+  // would keep playing after the player bar says it stopped.
+  stopAllOverlaySpeech();
 }
 
 /** Cuts the reply off mid-sentence, for a caller who talked over it. */

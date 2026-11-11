@@ -8,9 +8,14 @@ import type { CallState } from "./call-session";
 import { getSnapshot as getCallSnapshot, startCall } from "./call-session";
 import { loadCallGreetingEnabled } from "./call-sounds";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "./mobile-types";
+import {
+  readAloudUsesOnDevice,
+  speakOverlayChain,
+  stopOverlayChainForMessage,
+} from "./overlay-speech";
 import { clearSessionToken, currentSessionGeneration, saveSessionToken } from "./session";
 import { useAutoSpeakReply, useSpeakMessages, useThreadVoiceCall } from "./thread-voice";
-import { speakQueue, speakText } from "./voice";
+import { getVoicePlaybackState, speakQueue, speakText, stopVoicePlayback } from "./voice";
 import { takeShortcutVoiceChat } from "./voice-chat-intent";
 
 vi.mock("expo-router", () => ({
@@ -54,6 +59,13 @@ vi.mock("./i18n", () => ({ useI18n: () => ({ t: (text: string) => text }) }));
 vi.mock("./voice", () => ({
   speakQueue: vi.fn(async () => true),
   speakText: vi.fn(async () => true),
+  getVoicePlaybackState: vi.fn(() => ({ status: "idle", canPause: false })),
+  stopVoicePlayback: vi.fn(),
+}));
+vi.mock("./overlay-speech", () => ({
+  readAloudUsesOnDevice: vi.fn(async () => true),
+  speakOverlayChain: vi.fn(async () => true),
+  stopOverlayChainForMessage: vi.fn(() => false),
 }));
 vi.mock("./voice-chat-intent", () => ({
   onShortcutVoiceChat: () => () => undefined,
@@ -228,6 +240,11 @@ describe("read-aloud while a call is active", () => {
     vi.mocked(getCallSnapshot).mockReturnValue(null);
     vi.mocked(speakText).mockClear();
     vi.mocked(speakQueue).mockClear();
+    vi.mocked(readAloudUsesOnDevice).mockClear();
+    vi.mocked(speakOverlayChain).mockClear();
+    vi.mocked(stopOverlayChainForMessage).mockClear();
+    vi.mocked(getVoicePlaybackState).mockClear();
+    vi.mocked(stopVoicePlayback).mockClear();
     await saveSessionToken("fake-token-a");
     root = createRoot(document.createElement("div"));
   });
@@ -338,16 +355,76 @@ describe("read-aloud while a call is active", () => {
     expect(speakQueue).not.toHaveBeenCalled();
   });
 
-  it("reads from a message on request when no call is active", () => {
+  it("reads from a message on request when no call is active", async () => {
+    vi.mocked(readAloudUsesOnDevice).mockResolvedValueOnce(false);
     act(() =>
       root.render(createElement(ManualReadHarness, { messages: [message("m1", "first reply")] })),
     );
-    act(() => latestSpeakFrom(message("m2", "second reply")));
+    await act(async () => {
+      latestSpeakFrom(message("m2", "second reply"));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
     expect(speakQueue).toHaveBeenCalledOnce();
     expect(vi.mocked(speakQueue).mock.calls[0]?.[0]?.[0]).toMatchObject({
       text: "second reply",
       botId: "bot-b",
       messageId: "m2",
     });
+    expect(speakOverlayChain).not.toHaveBeenCalled();
+  });
+
+  it("reads on-device chains overlapping instead of replacing the first", async () => {
+    const messages = [message("m1", "first reply"), message("m2", "second reply")];
+    act(() => root.render(createElement(ManualReadHarness, { messages })));
+    await act(async () => {
+      latestSpeakFrom(messages[0]!);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    await act(async () => {
+      latestSpeakFrom(messages[1]!);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(speakOverlayChain).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(speakOverlayChain).mock.calls[0]?.[0]).toMatchObject([
+      { messageId: "m1", text: "first reply" },
+      { messageId: "m2", text: "second reply" },
+    ]);
+    expect(vi.mocked(speakOverlayChain).mock.calls[1]?.[0]).toMatchObject([
+      { messageId: "m2", text: "second reply" },
+    ]);
+    expect(speakQueue).not.toHaveBeenCalled();
+  });
+
+  it("tapping a message in an active chain stops it", async () => {
+    vi.mocked(stopOverlayChainForMessage).mockReturnValueOnce(true);
+    act(() =>
+      root.render(createElement(ManualReadHarness, { messages: [message("m1", "first reply")] })),
+    );
+    await act(async () => {
+      latestSpeakFrom(message("m1", "first reply"));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(stopOverlayChainForMessage).toHaveBeenCalledWith("m1");
+    expect(speakOverlayChain).not.toHaveBeenCalled();
+    expect(speakQueue).not.toHaveBeenCalled();
+  });
+
+  it("tapping the message the single playback is sounding stops it", async () => {
+    vi.mocked(readAloudUsesOnDevice).mockResolvedValueOnce(false);
+    vi.mocked(getVoicePlaybackState).mockReturnValueOnce({
+      status: "playing",
+      messageId: "m1",
+      canPause: false,
+    });
+    act(() =>
+      root.render(createElement(ManualReadHarness, { messages: [message("m1", "first reply")] })),
+    );
+    await act(async () => {
+      latestSpeakFrom(message("m1", "first reply"));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(stopVoicePlayback).toHaveBeenCalledOnce();
+    expect(speakOverlayChain).not.toHaveBeenCalled();
+    expect(speakQueue).not.toHaveBeenCalled();
   });
 });

@@ -37,6 +37,7 @@ import { heroBackgroundHeightFor, useCustomSettings } from "../../lib/custom-set
 import { useI18n } from "../../lib/i18n";
 import type { MobileModel, MobileModelCredential } from "../../lib/mobile-types";
 import { useThemedStyles } from "../../lib/native";
+import { getOverlaySpeakingMessageIds, subscribeOverlaySpeech } from "../../lib/overlay-speech";
 import { useChatOnScreen } from "../../lib/page-card-detail";
 import { useInboxBot } from "../../lib/search-inbox";
 import { useSplitView } from "../../lib/split-view";
@@ -677,6 +678,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   // The player bar reads the same state; a row's speaker icon pulses only
   // while its own message is the one playing.
   const playback = useSyncExternalStore(subscribeVoicePlayback, getVoicePlaybackState);
+  const overlaySpeakingMessageIds = useSyncExternalStore(
+    subscribeOverlaySpeech,
+    getOverlaySpeakingMessageIds,
+  );
 
   const { liveItems, renderMessageRow, renderItem } = useThreadRows({
     snap,
@@ -698,6 +703,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     markedUnreadMessageId,
     highlightedMessageId: scroll.highlightedMessageId,
     speakingMessageId: playback.status === "playing" ? playback.messageId : undefined,
+    overlaySpeakingMessageIds,
     favoriteIds,
     searchHitIds,
     searchCurrentId,

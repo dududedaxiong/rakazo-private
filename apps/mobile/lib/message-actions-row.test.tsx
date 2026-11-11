@@ -295,11 +295,13 @@ describe("MessageRow action row", () => {
     expect(style).toMatchObject({ backgroundColor: "#2f6bff" });
   });
 
-  it("stops playback instead of speaking again while the reply is speaking", async () => {
+  it("hands the speak toggle to the speak action while the reply is speaking", async () => {
+    // The row no longer stops playback itself: the speak action toggles,
+    // so it can stop its own overlay chain as well as the single playback.
     const { container, actions } = renderRow({ speaking: true });
     await click(buttons(container)[1]!);
-    expect(mocks.stopVoicePlayback).toHaveBeenCalledTimes(1);
-    expect(actions.speak).not.toHaveBeenCalled();
+    expect(actions.speak).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: "m1" }));
+    expect(mocks.stopVoicePlayback).not.toHaveBeenCalled();
   });
 
   it("shares the message text", async () => {

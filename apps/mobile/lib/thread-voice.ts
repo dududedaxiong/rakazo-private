@@ -18,10 +18,15 @@ import { available as dictationAvailable } from "./dictation";
 import { useI18n } from "./i18n";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "./mobile-types";
 import { onDeviceSpeechAvailable } from "./on-device-speech";
+import {
+  readAloudUsesOnDevice,
+  speakOverlayChain,
+  stopOverlayChainForMessage,
+} from "./overlay-speech";
 import { currentSessionGeneration } from "./session";
 import { speakerColorFor } from "./thread-message-text";
 import { errorText } from "./user-error";
-import { speakQueue, speakText } from "./voice";
+import { getVoicePlaybackState, speakQueue, speakText, stopVoicePlayback } from "./voice";
 import {
   loadCallCallerName,
   probeProviderTranscribe,
@@ -135,6 +140,14 @@ export function useSpeakMessages({
     (message: MobileMessage) => {
       // An active call owns the speaker; a manual read must not cut into it.
       if (getCallSnapshot()) return;
+      // Tapping a message that is already being read stops it: its own
+      // overlay chain, or the single playback when that is the one sounding.
+      if (stopOverlayChainForMessage(message.id)) return;
+      const playback = getVoicePlaybackState();
+      if (playback.status === "playing" && playback.messageId === message.id) {
+        stopVoicePlayback();
+        return;
+      }
       const startIndex = visibleMessages.findIndex((candidate) => candidate.id === message.id);
       const fromHere = startIndex === -1 ? [message] : visibleMessages.slice(startIndex);
       const items = fromHere.flatMap((candidate) => {
@@ -155,17 +168,24 @@ export function useSpeakMessages({
         ];
       });
       if (items.length === 0) return;
-      void speakQueue(items)
-        .then((spoken) => {
-          if (!spoken)
-            Alert.alert(t("Could not speak"), t("Add a voice provider in Voice settings."), [
-              { text: t("Cancel"), style: "cancel" },
-              { text: t("Open Voice"), onPress: () => router.push("/voice") },
-            ]);
-        })
-        .catch((err: unknown) =>
-          Alert.alert(t("Could not speak"), errorText(err, t("Try again."))),
-        );
+      const showCouldNotSpeak = () =>
+        Alert.alert(t("Could not speak"), t("Add a voice provider in Voice settings."), [
+          { text: t("Cancel"), style: "cancel" },
+          { text: t("Open Voice"), onPress: () => router.push("/voice") },
+        ]);
+      // On-device reads overlap: each tap starts its own chain and the
+      // earlier ones keep playing. Any other engine stays on the single
+      // playback, where a new read replaces the old one.
+      void (async () => {
+        try {
+          const spoken = (await readAloudUsesOnDevice())
+            ? await speakOverlayChain(items)
+            : await speakQueue(items);
+          if (!spoken) showCouldNotSpeak();
+        } catch (err) {
+          Alert.alert(t("Could not speak"), errorText(err, t("Try again.")));
+        }
+      })();
     },
     [botId, displayName, mentionBots, members, visibleMessages],
   );
