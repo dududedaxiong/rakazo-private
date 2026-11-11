@@ -137,6 +137,8 @@ export const ES_MESSAGES: Record<string, string> = {
     "El modelo alcanzó su límite de salida antes de terminar la respuesta.",
   "The model returned an unusable response. Try again.":
     "El modelo devolvió una respuesta inutilizable. Inténtalo de nuevo.",
+  "The on-device Chinese voice data is not loaded.":
+    "Los datos de voz en chino del dispositivo no están cargados.",
   "This connection's request limit is too small. Choose another model.":
     "El límite de solicitud de esta conexión es demasiado bajo. Elige otro modelo.",
   "This model's context window is too small. Choose another model.":

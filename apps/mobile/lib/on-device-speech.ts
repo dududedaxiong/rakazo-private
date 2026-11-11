@@ -33,6 +33,15 @@ const STT_MODEL_MB = 71;
 const TTS_MODEL_MB = 141;
 /** The Chinese female voice used for read-aloud. */
 const TTS_VOICE_SID = 3;
+/** Smoke phrase for the TTS engine check: two Chinese syllables. */
+const TTS_SMOKE_TEXT = "你好";
+/**
+ * Minimum seconds the smoke phrase must speak for. With the Chinese lexicon
+ * loaded it takes well over half a second; without it every character is
+ * out of vocabulary and the engine returns a few tens of milliseconds.
+ */
+const TTS_SMOKE_MIN_SECONDS = 0.3;
+
 /** Microphone and recognition sample rate. */
 const STT_SAMPLE_RATE = 16_000;
 
@@ -1051,6 +1060,14 @@ export type OnDeviceSpeechPlayback = {
 };
 
 /**
+ * The voice engine loaded, but its Chinese pronunciation data is missing, so
+ * Chinese comes out as a few milliseconds of sound instead of speech.
+ * Callers report this instead of staying silent, so the user sees why
+ * read-aloud produces nothing.
+ */
+export class TtsChineseVoiceMissingError extends Error {}
+
+/**
  * The last TTS engine init, so a native crash that leaves no JS error can
  * still be seen. The native loader dies with exit(-1) or a native abort,
  * which no JS catch can see, so the attempt is recorded before the call:
@@ -1065,6 +1082,10 @@ export type TtsInitJournal = {
   memAvailableKB: number | null;
   memTotalKB: number | null;
   error?: string;
+  /** Samples the "你好" smoke check produced; absent when the check never ran. */
+  smokeSamples?: number;
+  /** Seconds of speech the smoke check produced. */
+  smokeSeconds?: number;
 };
 
 const TTS_INIT_JOURNAL_NAME = "tts-init-journal.json";
@@ -1106,6 +1127,8 @@ export async function getTtsInitJournal(): Promise<TtsInitJournal | null> {
       memAvailableKB: typeof entry.memAvailableKB === "number" ? entry.memAvailableKB : null,
       memTotalKB: typeof entry.memTotalKB === "number" ? entry.memTotalKB : null,
       error: typeof entry.error === "string" ? entry.error : undefined,
+      smokeSamples: typeof entry.smokeSamples === "number" ? entry.smokeSamples : undefined,
+      smokeSeconds: typeof entry.smokeSeconds === "number" ? entry.smokeSeconds : undefined,
     };
   } catch {
     return null;
@@ -1145,13 +1168,33 @@ async function loadTtsEngine(): Promise<Awaited<ReturnType<OnDeviceSpeechNative[
       memTotalKB: memory?.memTotalKB ?? null,
     };
     await writeTtsInitJournal({ phase: "started", at: new Date().toISOString(), ...journalBase });
+    let smoke: { samples: number; seconds: number } | null = null;
     try {
       const engine = await native.createTts({
         modelPath: { type: "file", path },
         modelType: "kokoro",
         debug: true,
       });
-      await writeTtsInitJournal({ phase: "ready", at: new Date().toISOString(), ...journalBase });
+      // Smoke check: the engine loads fine with only the English lexicon, but
+      // then every Chinese word is out of vocabulary and a Chinese sentence
+      // comes out as a few milliseconds of sound. Speak two Chinese
+      // syllables and check the length, so a missing lexicon fails loudly
+      // here instead of playing a blip for every read-aloud.
+      const smokeAudio = await engine.generateSpeech(TTS_SMOKE_TEXT, { sid: TTS_VOICE_SID });
+      smoke = {
+        samples: smokeAudio.samples.length,
+        seconds: smokeAudio.sampleRate > 0 ? smokeAudio.samples.length / smokeAudio.sampleRate : 0,
+      };
+      if (smoke.seconds < TTS_SMOKE_MIN_SECONDS) {
+        throw new TtsChineseVoiceMissingError(t("The on-device Chinese voice data is not loaded."));
+      }
+      await writeTtsInitJournal({
+        phase: "ready",
+        at: new Date().toISOString(),
+        ...journalBase,
+        smokeSamples: smoke.samples,
+        smokeSeconds: smoke.seconds,
+      });
       ttsEngine = engine;
       return engine;
     } catch (error) {
@@ -1160,6 +1203,7 @@ async function loadTtsEngine(): Promise<Awaited<ReturnType<OnDeviceSpeechNative[
         at: new Date().toISOString(),
         ...journalBase,
         error: error instanceof Error ? error.message : String(error),
+        ...(smoke ? { smokeSamples: smoke.samples, smokeSeconds: smoke.seconds } : {}),
       });
       throw error;
     }
@@ -1197,7 +1241,10 @@ export async function speakOnDeviceSpeech(
   let engine: Awaited<ReturnType<OnDeviceSpeechNative["createTts"]>>;
   try {
     engine = await loadTtsEngine();
-  } catch {
+  } catch (error) {
+    // A missing Chinese lexicon is reported, not swallowed: the caller shows
+    // why read-aloud produces nothing instead of a misleading fallback error.
+    if (error instanceof TtsChineseVoiceMissingError) throw error;
     return false;
   }
   if (opts.signal?.aborted) return false;

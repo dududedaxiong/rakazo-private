@@ -224,6 +224,8 @@ export const NL_MESSAGES: Record<string, string> = {
     "Het model bereikte zijn uitvoerlimiet voordat het antwoord af was.",
   "The model returned an unusable response. Try again.":
     "Het model gaf een onbruikbaar antwoord. Probeer het opnieuw.",
+  "The on-device Chinese voice data is not loaded.":
+    "De Chinese spraakgegevens op het apparaat zijn niet geladen.",
   "This connection's request limit is too small. Choose another model.":
     "De aanvraaglimiet van deze verbinding is te laag. Kies een ander model.",
   "This model's context window is too small. Choose another model.":

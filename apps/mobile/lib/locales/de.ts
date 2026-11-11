@@ -231,6 +231,8 @@ export const DE_MESSAGES: Record<string, string> = {
     "Das Modell hat sein Ausgabelimit erreicht, bevor es die Antwort fertig geschrieben hat.",
   "The model returned an unusable response. Try again.":
     "Das Modell hat eine unbrauchbare Antwort geliefert. Versuche es erneut.",
+  "The on-device Chinese voice data is not loaded.":
+    "Die chinesischen Sprachdaten auf dem Gerät sind nicht geladen.",
   "This connection's request limit is too small. Choose another model.":
     "Das Anfragelimit dieser Verbindung ist zu niedrig. Wähle ein anderes Modell.",
   "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model.":

@@ -23,6 +23,7 @@ import {
   speakOnDeviceSpeech,
   stopOnDeviceSpeech,
   stopOnDeviceSpeechPlayback,
+  TtsChineseVoiceMissingError,
 } from "./on-device-speech";
 
 const store = new Map<string, string>();
@@ -248,8 +249,10 @@ function fakeNative(
     }),
   };
   const ttsEngine = {
+    // Half a second of speech at 24 kHz: the smoke check in loadTtsEngine
+    // speaks "你好" and needs a realistic length to pass.
     generateSpeech: vi.fn(async (_text: string, _options?: { sid?: number }) => ({
-      samples: [0.1, -0.2, 0.3, 0.0],
+      samples: new Array<number>(12_000).fill(0.1),
       sampleRate: 24000,
     })),
     destroy: vi.fn(async () => undefined),
@@ -702,6 +705,8 @@ describe("on-device speech TTS init journal", () => {
       phase: "ready",
       memAvailableKB: 2_000_000,
       memTotalKB: 8_000_000,
+      smokeSamples: 12_000,
+      smokeSeconds: 0.5,
     });
     expect(typeof journal?.at).toBe("string");
   });
@@ -711,6 +716,24 @@ describe("on-device speech TTS init journal", () => {
     expect(await speakOnDeviceSpeech("你好")).toBe(false);
     const journal = await getTtsInitJournal();
     expect(journal).toMatchObject({ phase: "failed", error: "boom" });
+  });
+
+  it("reports a missing Chinese lexicon instead of playing a blip", async () => {
+    // Two samples at 24 kHz is a few tens of microseconds: what the engine
+    // returns for Chinese when only the English lexicon is loaded.
+    vi.mocked(fake.ttsEngine.generateSpeech).mockResolvedValueOnce({
+      samples: [0.1, -0.2],
+      sampleRate: 24000,
+    });
+    await expect(speakOnDeviceSpeech("你好")).rejects.toThrow(TtsChineseVoiceMissingError);
+    const journal = await getTtsInitJournal();
+    expect(journal).toMatchObject({
+      phase: "failed",
+      error: "The on-device Chinese voice data is not loaded.",
+      smokeSamples: 2,
+    });
+    expect(journal?.smokeSeconds).toBeCloseTo(2 / 24000);
+    expect(players.length).toBe(0);
   });
 
   it("returns null when no journal was recorded", async () => {

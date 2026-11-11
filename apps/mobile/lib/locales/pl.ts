@@ -222,6 +222,8 @@ export const PL_MESSAGES: Record<string, string> = {
     "Model osiągnął limit odpowiedzi przed jej ukończeniem.",
   "The model returned an unusable response. Try again.":
     "Model zwrócił odpowiedź, której nie można użyć. Spróbuj ponownie.",
+  "The on-device Chinese voice data is not loaded.":
+    "Chińskie dane głosowe na urządzeniu nie są załadowane.",
   "This connection's request limit is too small. Choose another model.":
     "Limit żądania tego połączenia jest zbyt mały. Wybierz inny model.",
   "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model.":

@@ -1,0 +1,19 @@
+diff --git a/android/src/main/cpp/jni/model_detect/sherpa-onnx-model-detect-tts.cpp b/android/src/main/cpp/jni/model_detect/sherpa-onnx-model-detect-tts.cpp
+index 77dc56b4d5a4f1b283bb945fa8266ef8e39879a5..68adefbeb52de4dd4a5a780c778c3b2c056a71bd 100644
+--- a/android/src/main/cpp/jni/model_detect/sherpa-onnx-model-detect-tts.cpp
++++ b/android/src/main/cpp/jni/model_detect/sherpa-onnx-model-detect-tts.cpp
+@@ -254,8 +254,12 @@ static TtsDetectResult DetectTtsModelFromFiles(
+     for (const auto& c : lexiconCandidates) {
+         result.lexiconLanguageCandidates.push_back(c.languageId);
+     }
+-    if (!lexiconCandidates.empty()) {
+-        lexiconPath = lexiconCandidates[0].path;
++    // The engine splits the lexicon path on commas and loads every file, so
++    // pass all candidates: taking only the first leaves the Chinese lexicon
++    // unloaded and every Chinese word out of vocabulary.
++    for (size_t i = 0; i < lexiconCandidates.size(); ++i) {
++        if (i > 0) lexiconPath += ",";
++        lexiconPath += lexiconCandidates[i].path;
+     }
+ 
+     if (selected == TtsModelKind::kMatcha && !acousticModel.empty() && vocoder.empty()) {

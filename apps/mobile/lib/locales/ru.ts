@@ -223,6 +223,8 @@ export const RU_MESSAGES: Record<string, string> = {
     "Модель достигла лимита вывода, не закончив ответ.",
   "The model returned an unusable response. Try again.":
     "Модель вернула непригодный ответ. Попробуйте ещё раз.",
+  "The on-device Chinese voice data is not loaded.":
+    "Китайские голосовые данные на устройстве не загружены.",
   "This connection's request limit is too small. Choose another model.":
     "Лимит запроса этого подключения слишком мал. Выберите другую модель.",
   "This model's context window is too small. Choose another model.":
