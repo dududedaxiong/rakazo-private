@@ -174,6 +174,7 @@ export const RU_MESSAGES: Record<string, string> = {
 
   Headers: "Заголовки",
   "Add header": "Добавить заголовок",
+  Remove: "Удалить",
   "Remove header": "Удалить заголовок",
   "Header name": "Название заголовка",
   "Header value": "Значение заголовка",
@@ -569,6 +570,7 @@ export const RU_MESSAGES: Record<string, string> = {
   "Could not reach that server": "Не удалось связаться с этим сервером",
   "Could not reach this model server": "Не удалось связаться с сервером этой модели.",
   "Could not remove source": "Не удалось удалить источник",
+  "Could not remove this model": "Не удалось удалить эту модель",
   "Could not load chats": "Не удалось загрузить чаты",
   "Could not restore bot": "Не удалось восстановить бота",
   "Could not revoke connection": "Не удалось отменить соединение",

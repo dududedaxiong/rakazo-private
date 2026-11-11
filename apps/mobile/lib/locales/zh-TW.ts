@@ -159,6 +159,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
 
   Headers: "標頭",
   "Add header": "新增標頭",
+  Remove: "移除",
   "Remove header": "移除標頭",
   "Header name": "標頭名稱",
   "Header value": "標頭值",
@@ -516,6 +517,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Could not reach that server": "無法連線到該伺服器",
   "Could not reach this model server": "無法連線到此模型伺服器",
   "Could not remove source": "無法移除此來源",
+  "Could not remove this model": "無法移除此模型",
   "Could not load chats": "無法載入聊天清單",
   "Could not restore bot": "無法還原機器人",
   "Could not revoke connection": "無法撤銷連線授權",

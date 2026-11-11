@@ -178,6 +178,7 @@ export const DE_MESSAGES: Record<string, string> = {
 
   Headers: "Header",
   "Add header": "Header hinzufügen",
+  Remove: "Entfernen",
   "Remove header": "Header entfernen",
   "Header name": "Header-Name",
   "Header value": "Header-Wert",
@@ -723,6 +724,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Could not approve this server": "Server konnte nicht genehmigt werden",
   "Could not connect": "Verbindung fehlgeschlagen",
   "Could not remove source": "Quelle konnte nicht entfernt werden",
+  "Could not remove this model": "Dieses Modell konnte nicht entfernt werden",
   "Could not rename connection": "Verbindung konnte nicht umbenannt werden",
   "Could not revoke connection": "Verbindung konnte nicht widerrufen werden",
   "Custom connector": "Eigener Connector",

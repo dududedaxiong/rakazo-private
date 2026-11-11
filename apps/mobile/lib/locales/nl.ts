@@ -175,6 +175,7 @@ export const NL_MESSAGES: Record<string, string> = {
 
   Headers: "Headers",
   "Add header": "Header toevoegen",
+  Remove: "Verwijderen",
   "Remove header": "Header verwijderen",
   "Header name": "Headernaam",
   "Header value": "Headerwaarde",
@@ -716,6 +717,7 @@ export const NL_MESSAGES: Record<string, string> = {
   "Could not approve this server": "Deze server goedkeuren mislukt",
   "Could not connect": "Verbinden mislukt",
   "Could not remove source": "Bron verwijderen mislukt",
+  "Could not remove this model": "Dit model kon niet worden verwijderd",
   "Could not rename connection": "Verbinding hernoemen mislukt",
   "Could not revoke connection": "Verbinding intrekken mislukt",
   "Custom connector": "Eigen connector",

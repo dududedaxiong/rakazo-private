@@ -168,6 +168,7 @@ export const ZH_MESSAGES: Record<string, string> = {
 
   Headers: "请求头",
   "Add header": "添加请求头",
+  Remove: "移除",
   "Remove header": "移除请求头",
   "Header name": "请求头名称",
   "Header value": "请求头值",
@@ -542,6 +543,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Could not reach that server": "无法连接到该服务器",
   "Could not reach this model server": "无法连接到此模型服务器",
   "Could not remove source": "无法移除此来源",
+  "Could not remove this model": "无法移除此模型",
   "Could not load chats": "无法加载聊天列表",
   "Could not restore bot": "无法恢复 Bot",
   "Could not revoke connection": "无法撤销连接",
