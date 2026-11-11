@@ -1129,6 +1129,10 @@ msgstr "{0}に"
 msgid "at {timeSelect}"
 msgstr "{timeSelect}に"
 
+#: src/components/AccountDataSettings.tsx
+msgid "At least 12 characters (16 recommended). Don't reuse your account password."
+msgstr ""
+
 #: src/pages/shell/composer.tsx
 msgid "Attach file"
 msgstr "ファイルを添付"
@@ -1234,6 +1238,10 @@ msgstr "チャットに戻る"
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
 msgstr "ログインに戻る"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Backup password"
+msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
@@ -1897,6 +1905,10 @@ msgstr "このサーバーではコンピューターは無効です。"
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "アプリを接続するには、サーバーでプラグインカタログを設定してください。"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Confirm backup password"
+msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -5056,6 +5068,10 @@ msgstr "{codeHost}から送られたコードのみを入力してください�
 msgid "Only me"
 msgstr "自分のみ"
 
+#: src/components/AccountDataSettings.tsx
+msgid "Only provider keys are encrypted; the backup file itself is not. If you lose this password, the keys are gone for good."
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "自分のみ"
@@ -5933,6 +5949,10 @@ msgstr "最後に保存されたワークスペースを復元します。コン
 #: src/components/AskCard.tsx
 msgid "Restored"
 msgstr "復元しました"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Restoring imports new copies and never overwrites. Enter the same password here to restore keys. Leave it empty to export without keys."
+msgstr ""
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"

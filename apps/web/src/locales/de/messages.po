@@ -1129,6 +1129,10 @@ msgstr "um {0}"
 msgid "at {timeSelect}"
 msgstr "um {timeSelect}"
 
+#: src/components/AccountDataSettings.tsx
+msgid "At least 12 characters (16 recommended). Don't reuse your account password."
+msgstr ""
+
 #: src/pages/shell/composer.tsx
 msgid "Attach file"
 msgstr "Datei anhängen"
@@ -1234,6 +1238,10 @@ msgstr "Zurück zum Chat"
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
 msgstr "Zurück zur Anmeldung"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Backup password"
+msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
@@ -1897,6 +1905,10 @@ msgstr "Computer sind auf diesem Server aus."
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "Konfiguriere auf dem Server einen Plugin-Katalog, um Apps zu verbinden."
+
+#: src/components/AccountDataSettings.tsx
+msgid "Confirm backup password"
+msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -5056,6 +5068,10 @@ msgstr "Gib nur einen Code ein, den dir {codeHost} gesendet hat."
 msgid "Only me"
 msgstr "Nur ich"
 
+#: src/components/AccountDataSettings.tsx
+msgid "Only provider keys are encrypted; the backup file itself is not. If you lose this password, the keys are gone for good."
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "Nur du"
@@ -5933,6 +5949,10 @@ msgstr "Stellt den zuletzt gespeicherten Arbeitsbereich wieder her. Nicht gespei
 #: src/components/AskCard.tsx
 msgid "Restored"
 msgstr "Wiederhergestellt"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Restoring imports new copies and never overwrites. Enter the same password here to restore keys. Leave it empty to export without keys."
+msgstr ""
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"

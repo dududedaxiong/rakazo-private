@@ -1129,6 +1129,10 @@ msgstr "em {0}"
 msgid "at {timeSelect}"
 msgstr "em {timeSelect}"
 
+#: src/components/AccountDataSettings.tsx
+msgid "At least 12 characters (16 recommended). Don't reuse your account password."
+msgstr ""
+
 #: src/pages/shell/composer.tsx
 msgid "Attach file"
 msgstr "Escolher arquivo"
@@ -1234,6 +1238,10 @@ msgstr "Voltar ao chat"
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
 msgstr "Voltar para o login"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Backup password"
+msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
@@ -1897,6 +1905,10 @@ msgstr "Computadores estão desligados neste servidor."
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "Configure um catálogo de plugins no servidor para conectar apps."
+
+#: src/components/AccountDataSettings.tsx
+msgid "Confirm backup password"
+msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -5056,6 +5068,10 @@ msgstr "Digite apenas um código que {codeHost} enviou para você."
 msgid "Only me"
 msgstr "Só eu"
 
+#: src/components/AccountDataSettings.tsx
+msgid "Only provider keys are encrypted; the backup file itself is not. If you lose this password, the keys are gone for good."
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "Só você"
@@ -5933,6 +5949,10 @@ msgstr "Restaure o último espaço de trabalho salvo. O trabalho não salvo no c
 #: src/components/AskCard.tsx
 msgid "Restored"
 msgstr "Restaurado"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Restoring imports new copies and never overwrites. Enter the same password here to restore keys. Leave it empty to export without keys."
+msgstr ""
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"

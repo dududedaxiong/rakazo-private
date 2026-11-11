@@ -1190,6 +1190,10 @@ msgstr "{0}"
 msgid "at {timeSelect}"
 msgstr "{timeSelect}"
 
+#: src/components/AccountDataSettings.tsx
+msgid "At least 12 characters (16 recommended). Don't reuse your account password."
+msgstr "至少 12 個字元（建議 16 個）。不要重複使用帳號密碼。"
+
 #: src/pages/shell/composer.tsx
 msgid "Attach file"
 msgstr "附加檔案"
@@ -1295,6 +1299,10 @@ msgstr "返回聊天"
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
 msgstr "返回登入"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Backup password"
+msgstr "備份密碼"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
@@ -1958,6 +1966,10 @@ msgstr "此伺服器未開啟電腦。"
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "請在伺服器上設定外掛程式目錄，以連接應用程式。"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Confirm backup password"
+msgstr "確認備份密碼"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -5117,6 +5129,10 @@ msgstr "僅輸入 {codeHost} 傳給你的驗證碼。"
 msgid "Only me"
 msgstr "僅限我"
 
+#: src/components/AccountDataSettings.tsx
+msgid "Only provider keys are encrypted; the backup file itself is not. If you lose this password, the keys are gone for good."
+msgstr "只有供應商金鑰會被加密；備份檔案本身不會加密。如果遺失此密碼，金鑰將永久遺失。"
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "僅限自己"
@@ -5994,6 +6010,10 @@ msgstr "還原上次儲存的工作空間。電腦上未儲存的工作會遺失
 #: src/components/AskCard.tsx
 msgid "Restored"
 msgstr "已還原"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Restoring imports new copies and never overwrites. Enter the same password here to restore keys. Leave it empty to export without keys."
+msgstr "還原會匯入新副本，絕不覆寫。在此輸入相同密碼以還原金鑰。留空則匯出不含金鑰的版本。"
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"

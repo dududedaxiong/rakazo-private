@@ -1129,6 +1129,10 @@ msgstr "godz. {0}"
 msgid "at {timeSelect}"
 msgstr "godz. {timeSelect}"
 
+#: src/components/AccountDataSettings.tsx
+msgid "At least 12 characters (16 recommended). Don't reuse your account password."
+msgstr ""
+
 #: src/pages/shell/composer.tsx
 msgid "Attach file"
 msgstr "Załącz plik"
@@ -1234,6 +1238,10 @@ msgstr "Wróć do czatu"
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
 msgstr "Wróć do logowania"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Backup password"
+msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
@@ -1897,6 +1905,10 @@ msgstr "Komputery są wyłączone na tym serwerze."
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "Skonfiguruj katalog wtyczek na serwerze, aby łączyć aplikacje."
+
+#: src/components/AccountDataSettings.tsx
+msgid "Confirm backup password"
+msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -5056,6 +5068,10 @@ msgstr "Wpisz tylko kod wysłany przez {codeHost}."
 msgid "Only me"
 msgstr "Tylko ja"
 
+#: src/components/AccountDataSettings.tsx
+msgid "Only provider keys are encrypted; the backup file itself is not. If you lose this password, the keys are gone for good."
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "Tylko Ty"
@@ -5933,6 +5949,10 @@ msgstr "Przywróć ostatni zapisany obszar roboczy. Niezapisana praca na kompute
 #: src/components/AskCard.tsx
 msgid "Restored"
 msgstr "Przywrócono"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Restoring imports new copies and never overwrites. Enter the same password here to restore keys. Leave it empty to export without keys."
+msgstr ""
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"

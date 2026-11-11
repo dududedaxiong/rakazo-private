@@ -1129,6 +1129,10 @@ msgstr "at {0}"
 msgid "at {timeSelect}"
 msgstr "at {timeSelect}"
 
+#: src/components/AccountDataSettings.tsx
+msgid "At least 12 characters (16 recommended). Don't reuse your account password."
+msgstr "At least 12 characters (16 recommended). Don't reuse your account password."
+
 #: src/pages/shell/composer.tsx
 msgid "Attach file"
 msgstr "Attach file"
@@ -1234,6 +1238,10 @@ msgstr "Back to chat"
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
 msgstr "Back to sign in"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Backup password"
+msgstr "Backup password"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
@@ -1897,6 +1905,10 @@ msgstr "Computers are off on this server."
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "Configure a plugin catalog on the server to connect apps."
+
+#: src/components/AccountDataSettings.tsx
+msgid "Confirm backup password"
+msgstr "Confirm backup password"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -5056,6 +5068,10 @@ msgstr "Only enter a code {codeHost} sent you."
 msgid "Only me"
 msgstr "Only me"
 
+#: src/components/AccountDataSettings.tsx
+msgid "Only provider keys are encrypted; the backup file itself is not. If you lose this password, the keys are gone for good."
+msgstr "Only provider keys are encrypted; the backup file itself is not. If you lose this password, the keys are gone for good."
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "Only you"
@@ -5933,6 +5949,10 @@ msgstr "Restore the last saved workspace. Unsaved work on the computer is lost."
 #: src/components/AskCard.tsx
 msgid "Restored"
 msgstr "Restored"
+
+#: src/components/AccountDataSettings.tsx
+msgid "Restoring imports new copies and never overwrites. Enter the same password here to restore keys. Leave it empty to export without keys."
+msgstr "Restoring imports new copies and never overwrites. Enter the same password here to restore keys. Leave it empty to export without keys."
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Restoring your workspace"
