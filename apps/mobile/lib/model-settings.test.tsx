@@ -746,6 +746,18 @@ it("lets the limit fields hold every value the server accepts", () => {
   expect(field("Context limit")?.maxLength).toBe(String(MAX_MODEL_CONTEXT_WINDOW).length);
 });
 
+it("reveals the API key when the eye button is tapped", async () => {
+  const eye = (label: string) =>
+    [...container.querySelectorAll("button")].find(
+      (button) => button.getAttribute("aria-label") === label,
+    )!;
+  expect(field("API key")?.type).toBe("password");
+  await act(async () => eye("Show password").click());
+  expect(field("API key")?.type).toBe("text");
+  await act(async () => eye("Hide password").click());
+  expect(field("API key")?.type).toBe("password");
+});
+
 it("shows the API key under the server address for generic compatible servers", async () => {
   const row = (name: string) =>
     [...container.querySelectorAll("button")].find((button) => button.textContent === name)!;

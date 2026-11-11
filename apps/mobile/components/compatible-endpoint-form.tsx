@@ -19,7 +19,7 @@ import type { useListSearch } from "../lib/use-list-search";
 import { HeaderRowsEditor } from "./header-rows-editor";
 import { ListSearchInput } from "./list-search-input";
 import { MenuPickerMenu } from "./menu-picker";
-import { DisclosureRow, LimitField } from "./model-connection-fields";
+import { DisclosureRow, LimitField, SecretField } from "./model-connection-fields";
 import { createModelsStyles } from "./model-connection-styles";
 import { NativeActionButton } from "./native-action-button";
 import { NativeSwitch } from "./native-switch";
@@ -177,22 +177,14 @@ export function CompatibleEndpointForm({
       {acceptsKey ? (
         <>
           <Text style={styles.sectionTitle}>{t("API key")}</Text>
-          <TextInput
-            accessibilityLabel={t("API key")}
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="off"
-            editable={!busy}
-            importantForAutofill="no"
+          <SecretField
+            label={t("API key")}
+            value={apiKey}
             onChangeText={onChangeApiKey}
             placeholder={
               hasSavedKey ? t("Paste a replacement key") : hasPreset ? undefined : t("Optional")
             }
-            placeholderTextColor={native.tertiaryLabel}
-            secureTextEntry
-            style={styles.keyInput}
-            textContentType="none"
-            value={apiKey}
+            busy={busy}
           />
         </>
       ) : null}

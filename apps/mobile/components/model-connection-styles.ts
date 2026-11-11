@@ -120,6 +120,23 @@ export function createModelsStyles() {
       marginTop: 4,
       fontSize: 16,
     },
+    /** A key input with an eye button: same field look, the button sits inside it. */
+    secretRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      minHeight: 48,
+      borderRadius: 12,
+      backgroundColor: native.fill,
+      marginTop: 4,
+      paddingLeft: 14,
+    },
+    secretInput: {
+      flex: 1,
+      minWidth: 0,
+      paddingVertical: 10,
+      fontSize: 16,
+      color: native.label,
+    },
     error: {
       color: tokens.destructive,
       fontSize: 14,

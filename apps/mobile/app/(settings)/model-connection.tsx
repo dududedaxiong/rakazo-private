@@ -48,7 +48,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { CompatibleEndpointForm } from "../../components/compatible-endpoint-form";
-import { DisclosureRow, LimitField } from "../../components/model-connection-fields";
+import { DisclosureRow, LimitField, SecretField } from "../../components/model-connection-fields";
 import { createModelsStyles } from "../../components/model-connection-styles";
 import { ModelHealthDialog } from "../../components/model-health-dialog";
 import { NativeActionButton } from "../../components/native-action-button";
@@ -818,20 +818,12 @@ export default function ModelConnection() {
                 <Text style={styles.sectionTitle}>
                   {!credential && subscriptionSignIn ? t("Or connect an API key") : t("API key")}
                 </Text>
-                <TextInput
-                  accessibilityLabel={t("API key")}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="off"
-                  editable={!busy}
-                  importantForAutofill="no"
+                <SecretField
+                  label={t("API key")}
+                  value={apiKey}
                   onChangeText={updateApiKey}
                   placeholder={credential?.hasKey ? t("Paste a replacement key") : t("sk-…")}
-                  placeholderTextColor={native.tertiaryLabel}
-                  secureTextEntry
-                  style={styles.keyInput}
-                  textContentType="none"
-                  value={apiKey}
+                  busy={busy}
                 />
               </>
             ) : null}
