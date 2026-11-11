@@ -374,3 +374,26 @@ it("drops a speech model typed for the provider an opening refresh replaces", as
   await act(async () => typeIntoFish("s3"));
   expect(field().value).toBe("eleven_v3");
 });
+
+it("keeps the on-device voice section collapsed until its header is opened", async () => {
+  mocks.loadOnDevice.mockResolvedValueOnce(true);
+  await render();
+  const header = () =>
+    [...container.querySelectorAll("button")].find((node) =>
+      node.textContent?.includes("On-device voice"),
+    );
+  expect(container.textContent).not.toContain("Download voice models");
+  await act(async () => header()!.click());
+  expect(container.textContent).toContain("Download voice models");
+  await act(async () => header()!.click());
+  expect(container.textContent).not.toContain("Download voice models");
+});
+
+it("toggles on-device voice without expanding its section", async () => {
+  mocks.loadOnDevice.mockResolvedValue(false);
+  await render();
+  await act(async () => toggle("On-device voice").click());
+  expect(mocks.saveOnDevice).toHaveBeenCalledWith(true);
+  expect(toggle("On-device voice").checked).toBe(true);
+  expect(container.textContent).not.toContain("Download voice models");
+});

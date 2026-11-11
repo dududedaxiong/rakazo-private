@@ -21,7 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LoadFailure } from "../../components/load-failure";
 import { NativeActionButton } from "../../components/native-action-button";
 import { NativeSwitch } from "../../components/native-switch";
-import { Checkmark } from "../../components/row-accessories";
+import { Checkmark, Chevron } from "../../components/row-accessories";
 import { mobileTokens } from "../../lib/appearance";
 import {
   loadCallGreetingEnabled,
@@ -140,6 +140,7 @@ export default function VoiceSettings() {
   const [deviceVoiceReady, setDeviceVoiceReady] = useState(!deviceSettings);
   const [onDeviceSpeech, setOnDeviceSpeech] = useState(false);
   const [onDeviceSpeechReady, setOnDeviceSpeechReady] = useState(!deviceSettings);
+  const [onDeviceExpanded, setOnDeviceExpanded] = useState(false);
   const [modelStatus, setModelStatus] = useState<OnDeviceSpeechModelsStatus | null>(null);
   const [modelDiagnostics, setModelDiagnostics] = useState<OnDeviceSpeechDiagnostics | null>(null);
   const [ttsInitJournal, setTtsInitJournal] = useState<TtsInitJournal | null>(null);
@@ -740,9 +741,24 @@ export default function VoiceSettings() {
         {deviceSettings && onDeviceSpeechReady ? (
           <View style={styles.group}>
             <View style={styles.groupRow}>
-              <View style={styles.rowCopy}>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  onDeviceExpanded
+                    ? t("Collapse {name}", { name: t("On-device voice") })
+                    : t("Expand {name}", { name: t("On-device voice") })
+                }
+                accessibilityState={{ expanded: onDeviceExpanded }}
+                onPress={() => setOnDeviceExpanded((open) => !open)}
+                style={({ pressed }) => [
+                  styles.rowCopy,
+                  styles.sectionTitleRow,
+                  pressed && styles.pressed,
+                ]}
+              >
                 <Text style={styles.cardTitle}>{t("On-device voice")}</Text>
-              </View>
+                <Chevron expanded={onDeviceExpanded} />
+              </Pressable>
               <NativeSwitch
                 accessibilityLabel={t("On-device voice")}
                 value={onDeviceSpeech}
@@ -750,7 +766,7 @@ export default function VoiceSettings() {
                 onValueChange={() => void toggleOnDeviceSpeech()}
               />
             </View>
-            {onDeviceSpeech && modelStatus ? (
+            {onDeviceExpanded && onDeviceSpeech && modelStatus ? (
               modelStatus.stt === "ready" && modelStatus.tts === "ready" ? (
                 <Pressable
                   accessibilityRole="button"
@@ -833,7 +849,7 @@ export default function VoiceSettings() {
                 </>
               )
             ) : null}
-            {onDeviceSpeech && modelDiagnostics ? (
+            {onDeviceExpanded && onDeviceSpeech && modelDiagnostics ? (
               <>
                 <View style={[styles.groupRow, styles.groupDivider]}>
                   <View style={styles.rowCopy}>
@@ -1155,6 +1171,7 @@ function createVoiceStyles() {
       borderTopColor: native.separator,
     },
     rowCopy: { flex: 1 },
+    sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
     addressInput: { flex: 1 },
     cardTitle: { color: native.label, fontSize: 16 },
     diagnosticName: { color: native.label, fontSize: 14, flex: 1 },
