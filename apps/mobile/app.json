@@ -95,6 +95,7 @@
       "./plugins/with-android-no-gwp-asan",
       "./plugins/with-agent-notifications",
       "./plugins/with-android-r8",
+      "./plugins/with-sherpa-proguard",
       "./plugins/with-app-intents",
       "@kesha-antonov/react-native-background-downloader"
     ],
