@@ -110,7 +110,6 @@ export default function ModelConnection() {
   const [maxImagesPerPrompt, setMaxImagesPerPrompt] = useState("");
   const [showEndpointHelp, setShowEndpointHelp] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showApiKey, setShowApiKey] = useState(false);
   const [{ models: probeModels, probing }, setProbe] = useState(initialModelProbeState);
   const [modelProbe] = useState(() => createModelProbe(setProbe));
   const resetOpenAiCompatibleProbe = modelProbe.reset;
@@ -582,6 +581,10 @@ export default function ModelConnection() {
       probing={probing}
       baseUrl={baseUrl}
       onChangeBaseUrl={updateBaseUrl}
+      apiKey={apiKey}
+      onChangeApiKey={updateApiKey}
+      hasSavedKey={Boolean(credential?.hasKey)}
+      acceptsKey={acceptsKey}
       onFindModels={() => void probeServerModels()}
       canTestModels={Boolean(credential)}
       testingModels={healthTesting}
@@ -634,42 +637,10 @@ export default function ModelConnection() {
     </Text>
   );
 
+  // The key input lives in the form, right under the server address; this is only the save button.
   const compatKeySection =
     isOpenAiCompatible && acceptsKey ? (
       <View style={styles.keySection}>
-        {endpointPreset ? (
-          <Text style={styles.sectionTitle}>{t("API key")}</Text>
-        ) : (
-          <DisclosureRow
-            label={t("API key")}
-            expanded={showApiKey}
-            onPress={() => setShowApiKey((visible) => !visible)}
-          />
-        )}
-        {showApiKey || endpointPreset ? (
-          <TextInput
-            accessibilityLabel={t("API key")}
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="off"
-            editable={!busy}
-            importantForAutofill="no"
-            onChangeText={updateApiKey}
-            placeholder={
-              credential?.hasKey
-                ? t("Paste a replacement key")
-                : endpointPreset
-                  ? undefined
-                  : t("Optional")
-            }
-            placeholderTextColor={native.tertiaryLabel}
-            secureTextEntry
-            style={styles.keyInput}
-            textContentType="none"
-            value={apiKey}
-          />
-        ) : null}
-
         <NativeActionButton
           disabled={
             busy || (isOpenAiCompatible ? !openAiCompatibleReady : apiKey.trim().length < 8)

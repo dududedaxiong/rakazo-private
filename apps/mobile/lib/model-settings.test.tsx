@@ -746,19 +746,18 @@ it("lets the limit fields hold every value the server accepts", () => {
   expect(field("Context limit")?.maxLength).toBe(String(MAX_MODEL_CONTEXT_WINDOW).length);
 });
 
-it("keeps setup help and API key collapsible for generic compatible servers", async () => {
+it("shows the API key under the server address for generic compatible servers", async () => {
   const row = (name: string) =>
     [...container.querySelectorAll("button")].find((button) => button.textContent === name)!;
-  expect(field("API key")).toBeNull();
+  expect(field("API key")).not.toBeNull();
+  expect(
+    [...container.querySelectorAll("button")].filter((button) => button.textContent === "API key"),
+  ).toHaveLength(0);
   expect(container.textContent).not.toContain("Rakazo adds /v1");
   await act(async () => row("Setup help").click());
   expect(container.textContent).toContain("Rakazo adds /v1");
   await act(async () => row("Setup help").click());
   expect(container.textContent).not.toContain("Rakazo adds /v1");
-  await act(async () => row("API key").click());
-  expect(field("API key")).not.toBeNull();
-  await act(async () => row("API key").click());
-  expect(field("API key")).toBeNull();
 });
 
 it.each(["https://ollama.com", "https://ollama.com/v1/"])(

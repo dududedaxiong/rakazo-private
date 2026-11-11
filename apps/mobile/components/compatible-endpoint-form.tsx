@@ -33,6 +33,12 @@ type CompatibleEndpointFormProps = {
   onChangeLabel: (next: string) => void;
   baseUrl: string;
   onChangeBaseUrl: (next: string) => void;
+  /** The key sits right under the address: the model probe needs it, so it must not hide below the form. */
+  apiKey: string;
+  onChangeApiKey: (next: string) => void;
+  hasSavedKey: boolean;
+  /** No key field when the server needs no auth. */
+  acceptsKey: boolean;
   onFindModels: () => void;
   /** A saved connection can be tested model by model; a new one cannot yet. */
   canTestModels: boolean;
@@ -82,6 +88,10 @@ export function CompatibleEndpointForm({
   onChangeLabel,
   baseUrl,
   onChangeBaseUrl,
+  apiKey,
+  onChangeApiKey,
+  hasSavedKey,
+  acceptsKey,
   onFindModels,
   canTestModels,
   testingModels,
@@ -164,6 +174,28 @@ export function CompatibleEndpointForm({
         style={styles.keyInput}
         value={baseUrl}
       />
+      {acceptsKey ? (
+        <>
+          <Text style={styles.sectionTitle}>{t("API key")}</Text>
+          <TextInput
+            accessibilityLabel={t("API key")}
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="off"
+            editable={!busy}
+            importantForAutofill="no"
+            onChangeText={onChangeApiKey}
+            placeholder={
+              hasSavedKey ? t("Paste a replacement key") : hasPreset ? undefined : t("Optional")
+            }
+            placeholderTextColor={native.tertiaryLabel}
+            secureTextEntry
+            style={styles.keyInput}
+            textContentType="none"
+            value={apiKey}
+          />
+        </>
+      ) : null}
       <NativeActionButton
         disabled={busy || probing || !effectiveBaseUrl}
         fill
