@@ -159,6 +159,19 @@ describe("mobile voice chat", () => {
     expect(session.getState().phase).toBe("idle");
   });
 
+  it("returns to idle without sending when a press-to-talk turn ends in silence", async () => {
+    const fake = fakeDeps();
+    const session = createVoiceChatSession(fake.deps);
+    session.start("bot-1", "小智");
+    session.pressToTalk();
+    await flush();
+
+    fake.giveUp("idle");
+    expect(session.getState().phase).toBe("idle");
+    expect(fake.deps.send).not.toHaveBeenCalled();
+    expect(fake.deps.dictate).toHaveBeenCalledOnce();
+  });
+
   it("says plainly when speech recognition is unavailable instead of failing silently", async () => {
     const fake = fakeDeps();
     vi.mocked(fake.deps.dictate).mockResolvedValueOnce(false);

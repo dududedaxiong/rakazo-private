@@ -591,6 +591,38 @@ describe("on-device speech dictation", () => {
     expect(onGiveUp).not.toHaveBeenCalled();
   });
 
+  it("gives up idle when the endpoint fires without hearing anything", async () => {
+    const onFinal = vi.fn();
+    const onGiveUp = vi.fn();
+    await listenOnDeviceSpeech({ onFinal, onGiveUp });
+    fake.hear("", true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(onFinal).not.toHaveBeenCalled();
+    expect(onGiveUp).toHaveBeenCalledWith("idle");
+  });
+
+  it("gives up idle when the turn times out without hearing anything", async () => {
+    const onFinal = vi.fn();
+    const onGiveUp = vi.fn();
+    await listenOnDeviceSpeech({ onFinal, onGiveUp });
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(onFinal).not.toHaveBeenCalled();
+    expect(onGiveUp).toHaveBeenCalledWith("idle");
+  });
+
+  it("gives up failed after repeated decode errors", async () => {
+    const onFinal = vi.fn();
+    const onGiveUp = vi.fn();
+    await listenOnDeviceSpeech({ onFinal, onGiveUp });
+    vi.mocked(fake.stream.processAudioChunk).mockRejectedValue(new Error("decode failed"));
+    for (let i = 0; i < 5; i++) {
+      fake.hear("", false);
+      await vi.advanceTimersByTimeAsync(0);
+    }
+    expect(onFinal).not.toHaveBeenCalled();
+    expect(onGiveUp).toHaveBeenCalledWith("failed");
+  });
+
   it("gives up when the speech model is not downloaded", async () => {
     fake = fakeNative({ sttPath: null });
     setOnDeviceSpeechNative(fake.native);

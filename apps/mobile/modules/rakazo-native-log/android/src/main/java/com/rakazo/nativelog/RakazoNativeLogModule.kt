@@ -72,6 +72,7 @@ class RakazoNativeLogModule : Module() {
     /** The speech engine, its loader, and the runtime's crash lines. */
     private val LOG_TAGS = listOf(
       "sherpa-onnx",
+      "SherpaOnnx",
       "SherpaOnnxTts",
       "AndroidRuntime",
       "DEBUG",

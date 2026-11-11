@@ -806,7 +806,16 @@ export async function onDeviceSpeechAvailable(): Promise<boolean> {
 // recognizer knows whether speech was present rather than only how loud the
 // room is. A JavaScript timer with the same 1.2 s gap is the fallback, for
 // a model whose endpoint detection does not fire; either one ending the
-// turn delivers the same text.
+// turn delivers the same text. A turn that ends with nothing heard is
+// reported as "idle" instead of going silent, so the caller can reopen
+// the microphone — rule1 fires on 1.2 s of silence whether or not anyone
+// spoke, and without the report the caller would keep showing "listening"
+// on a microphone that is already closed.
+
+/** A listening turn ends by itself after this long, even if the recognizer never fires an endpoint. Matches the server transcription clip cap. */
+const MAX_TURN_MS = 30_000;
+/** Consecutive decode failures that mean the recognizer is wedged, not just quiet. */
+const MAX_DECODE_ERRORS = 5;
 
 type ListenSession = {
   onInterim?: (text: string) => void;
@@ -819,6 +828,10 @@ type ListenSession = {
   engine: Awaited<ReturnType<OnDeviceSpeechNative["createStreamingStt"]>>;
   heard: string;
   silence?: ReturnType<typeof setTimeout>;
+  /** Ends the turn when the recognizer never fires an endpoint. */
+  turn?: ReturnType<typeof setTimeout>;
+  /** Consecutive processAudioChunk failures; reset on every good chunk. */
+  decodeErrors: number;
   finished: boolean;
   /** Drops the microphone data/error listeners. */
   unsubscribe?: () => void;
@@ -834,6 +847,7 @@ export function stopOnDeviceSpeech(): void {
   token += 1;
   if (!session) return;
   clearTimeout(session.silence);
+  clearTimeout(session.turn);
   void teardown(session).catch(() => undefined);
 }
 
@@ -937,6 +951,7 @@ export async function listenOnDeviceSpeech(opts: {
     stream,
     engine,
     heard: "",
+    decodeErrors: 0,
     finished: false,
   };
   active = session;
@@ -967,6 +982,12 @@ export async function listenOnDeviceSpeech(opts: {
     return;
   }
   if (token !== mine) return;
+  // The recognizer may never fire an endpoint and never decode a word;
+  // without this the turn would listen forever on a wedged engine.
+  session.turn = setTimeout(
+    () => finishSession(session, session.heard.trim() ? undefined : "idle"),
+    MAX_TURN_MS,
+  );
 }
 
 async function onAudio(
@@ -978,7 +999,12 @@ async function onAudio(
   let outcome: { result: { text: string }; isEndpoint: boolean };
   try {
     outcome = await session.stream.processAudioChunk(samples, sampleRate);
+    session.decodeErrors = 0;
   } catch {
+    // A single bad chunk is routine; a run of them means the recognizer
+    // is wedged, so stop instead of listening forever on a dead engine.
+    session.decodeErrors += 1;
+    if (session.decodeErrors >= MAX_DECODE_ERRORS) giveUp(session, "failed");
     return;
   }
   if (active !== session || session.finished) return;
@@ -990,7 +1016,12 @@ async function onAudio(
     clearTimeout(session.silence);
     session.silence = setTimeout(() => finishSession(session), ENDPOINT_SILENCE_MS);
   }
-  if (outcome.isEndpoint) finishSession(session);
+  if (outcome.isEndpoint) {
+    // Rule1 fires on 1.2 s of silence whether or not anyone spoke; a
+    // silent endpoint must still tell the caller, or it keeps showing
+    // "listening" on a microphone that is already closed.
+    finishSession(session, session.heard.trim() ? undefined : "idle");
+  }
 }
 
 function giveUp(session: ListenSession, reason: DictationGiveUp): void {
