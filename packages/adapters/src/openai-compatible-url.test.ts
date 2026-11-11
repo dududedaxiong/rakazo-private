@@ -3,6 +3,8 @@ import {
   assertAllowedOpenAiCompatibleRequestUrl,
   assertAllowedOpenAiCompatibleUrl,
   assertHttpsForKeyedOpenAiCompatibleUrl,
+  COMPATIBLE_ENDPOINT_PRESETS,
+  compatibleEndpointPreset,
   normalizeOpenAiCompatibleBaseUrl,
   openAiCompatAllowPublicHosts,
   PRIVATE_MODEL_ENDPOINT_MESSAGE,
@@ -21,6 +23,14 @@ afterEach(() => {
 });
 
 describe("openai-compatible URL policy", () => {
+  it("offers Groq as a hosted compatible preset", () => {
+    expect(COMPATIBLE_ENDPOINT_PRESETS).toContainEqual({
+      name: "Groq",
+      baseUrl: "https://api.groq.com/openai/v1",
+    });
+    expect(compatibleEndpointPreset("https://api.groq.com/openai/v1")?.name).toBe("Groq");
+  });
+
   it("validates request URLs without changing their path", () => {
     expect(
       assertAllowedOpenAiCompatibleRequestUrl("http://127.0.0.1:8000/v1/chat/completions", OWNER)

@@ -18,6 +18,7 @@ const BUILT_IN_PUBLIC_MODEL_HOSTS = new Set(["ollama.com"]);
 /** Hosted compatible services the catalog offers by name. Each one needs a key. */
 export const COMPATIBLE_ENDPOINT_PRESETS: CompatibleEndpointPreset[] = [
   { name: "Ollama Cloud", baseUrl: "https://ollama.com/v1" },
+  { name: "Groq", baseUrl: "https://api.groq.com/openai/v1" },
 ];
 
 export function compatibleEndpointPreset(baseUrl: string | undefined) {
