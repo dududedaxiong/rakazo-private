@@ -21,6 +21,7 @@ export const createMenuItems: CreateMenuItem[] = [
     id: "import-bot",
     label: "Import bot",
     sfSymbol: "square.and.arrow.down",
+    materialIcon: "file_download",
   },
   { id: "group", label: "New group chat", sfSymbol: "person.2", materialIcon: "group" },
   {

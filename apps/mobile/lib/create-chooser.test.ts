@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createMenuActions, isCreateAction } from "./create-chooser";
 
 vi.mock("./material-icons", () => ({
-  materialIcons: { person_add: 101, group: 102, grid_view: 103 },
+  materialIcons: { person_add: 101, group: 102, grid_view: 103, file_download: 104 },
 }));
 
 const t = (text: string) => `translated: ${text}`;
@@ -20,7 +20,7 @@ describe("create menu", () => {
   it("uses Material icon assets on Android in the same order", () => {
     expect(createMenuActions(t, "android").map(({ id, image }) => [id, image])).toEqual([
       ["bot", 101],
-      ["import-bot", undefined],
+      ["import-bot", 104],
       ["group", 102],
       ["space", 103],
     ]);
