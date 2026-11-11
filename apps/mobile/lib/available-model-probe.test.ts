@@ -5,6 +5,7 @@ import type { AvailableModelProbeDeps } from "./available-model-probe";
 import {
   availableModelsFromReports,
   isProviderModelError,
+  mergeHealthReports,
   probeAvailableModels,
   probeProviderIds,
 } from "./available-model-probe";
@@ -127,6 +128,52 @@ describe("availableModelsFromReports", () => {
       ],
     );
     expect(models.map((model) => model.label)).toEqual(["Shared (GB relay)", "Shared (Anthropic)"]);
+  });
+});
+
+describe("mergeHealthReports", () => {
+  it("adds totals and summaries across connections", () => {
+    const merged = mergeHealthReports([
+      report("openai-compatible", ["kimi-k2"], "GB relay"),
+      {
+        ...report("anthropic", ["claude"], "Anthropic"),
+        total: 2,
+        results: [
+          { model: "claude", state: "ok" as const, detail: "2", seconds: 1 },
+          { model: "ghost", state: "auth" as const, detail: "No permission", seconds: 1 },
+        ],
+        summary: {
+          ok: 1,
+          empty: 0,
+          limited: 0,
+          auth: 1,
+          notfound: 0,
+          badreq: 0,
+          servererr: 0,
+          timeout: 0,
+          neterr: 0,
+        },
+      },
+    ]);
+    expect(merged?.label).toBe("GB relay · Anthropic");
+    expect(merged?.total).toBe(3);
+    expect(merged?.ok).toEqual(["kimi-k2", "claude"]);
+    expect(merged?.summary).toMatchObject({ ok: 2, auth: 1 });
+  });
+
+  it("tells a model offered by two connections apart by connection", () => {
+    const merged = mergeHealthReports([
+      report("openai-compatible", ["shared-model"], "GB relay"),
+      report("anthropic", ["shared-model"], "Anthropic"),
+    ]);
+    expect(merged?.results.map((row) => row.model)).toEqual([
+      "shared-model (GB relay)",
+      "shared-model (Anthropic)",
+    ]);
+  });
+
+  it("returns null when there is nothing to merge", () => {
+    expect(mergeHealthReports([])).toBeNull();
   });
 });
 

@@ -1,4 +1,4 @@
-import type { ModelHealthReport } from "@rakazo/contracts";
+import type { ModelHealthReport, ModelHealthSummary } from "@rakazo/contracts";
 import { parseModelFallbackFailure } from "@rakazo/core";
 import type { MobileModel, MobileModelCredential } from "./mobile-types";
 
@@ -89,6 +89,53 @@ export function availableModelsFromReports(
 
 /** How long one provider test may run, as on the model connection screen. */
 export const TEST_PROVIDER_TIMEOUT_MS = 120_000;
+
+/**
+ * Merges one report per connection into a single report for a dialog: totals
+ * and summaries add up, and a model offered by several connections gets its
+ * connection label so the rows stay distinct.
+ */
+export function mergeHealthReports(
+  reports: readonly ModelHealthReport[],
+): ModelHealthReport | null {
+  if (reports.length === 0) return null;
+  const modelCounts = new Map<string, number>();
+  for (const report of reports) {
+    for (const row of report.results) {
+      modelCounts.set(row.model, (modelCounts.get(row.model) ?? 0) + 1);
+    }
+  }
+  const summary: ModelHealthSummary = {
+    ok: 0,
+    empty: 0,
+    limited: 0,
+    auth: 0,
+    notfound: 0,
+    badreq: 0,
+    servererr: 0,
+    timeout: 0,
+    neterr: 0,
+  };
+  for (const report of reports) {
+    for (const [key, count] of Object.entries(report.summary)) {
+      summary[key as keyof ModelHealthSummary] += count;
+    }
+  }
+  return {
+    label: reports.map((report) => report.label).join(" · "),
+    provider: reports[0]?.provider ?? "",
+    total: reports.reduce((sum, report) => sum + report.total, 0),
+    truncated: reports.some((report) => report.truncated),
+    ok: reports.flatMap((report) => report.ok),
+    results: reports.flatMap((report) =>
+      report.results.map((row) => ({
+        ...row,
+        model: (modelCounts.get(row.model) ?? 0) > 1 ? `${row.model} (${report.label})` : row.model,
+      })),
+    ),
+    summary,
+  };
+}
 
 /** The RPC surface the probe needs; the hook adapts the real rpc to it. */
 export type AvailableModelProbeDeps = {

@@ -1,12 +1,16 @@
+import type { ModelHealthReport } from "@rakazo/contracts";
 import type { ChatModelChoice } from "@rakazo/core";
 import { useNavigation } from "expo-router";
 import { useEffect, useState } from "react";
 import { Modal, Platform, Text, useWindowDimensions, View } from "react-native";
 import { rpc } from "../../lib/api";
 import { mobileTokens } from "../../lib/appearance";
+import { mergeHealthReports, TEST_PROVIDER_TIMEOUT_MS } from "../../lib/available-model-probe";
 import { chatModelPickerChoices } from "../../lib/chat-model";
 import { useI18n } from "../../lib/i18n";
+import type { MobileModelCredential } from "../../lib/mobile-types";
 import { errorText } from "../../lib/user-error";
+import { ModelHealthDialog } from "../model-health-dialog";
 import { ModelPickerList } from "../model-picker-list";
 import { NativeActionButton } from "../native-action-button";
 import { NativeSheet, useNativeSheet } from "../native-sheet";
@@ -46,20 +50,26 @@ export function ThreadModelPickerSheet({
   const Sheet = useNativeSheet();
   const { height } = useWindowDimensions();
   const [choices, setChoices] = useState<ChatModelChoice[] | null>(null);
+  const [credentials, setCredentials] = useState<MobileModelCredential[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [healthReports, setHealthReports] = useState<ModelHealthReport[] | null>(null);
+  const mergedHealth = healthReports ? mergeHealthReports(healthReports) : null;
   const title = role === "main" ? t("Main model") : t("Computer model");
 
   useEffect(() => {
     if (!visible) return;
     let cancelled = false;
     setChoices(null);
+    setCredentials(null);
     setLoadError(null);
     setError(null);
     void Promise.all([rpc("me"), rpc("models/list"), rpc("models/credentials")])
       .then(([me, catalog, credentials]) => {
         if (cancelled) return;
+        setCredentials(credentials);
         setChoices(chatModelPickerChoices(me, catalog, credentials, selectedKey, t));
       })
       .catch((err: unknown) => {
@@ -105,6 +115,36 @@ export function ThreadModelPickerSheet({
     }
   }
 
+  /** Tests every model on every connection with one real question each. */
+  async function testAllModels() {
+    if (!credentials || credentials.length === 0 || testing) return;
+    setTesting(true);
+    setError(null);
+    try {
+      const settled = await Promise.allSettled(
+        credentials.map((credential) =>
+          rpc(
+            "models/testProvider",
+            { credentialId: credential.id },
+            { timeoutMs: TEST_PROVIDER_TIMEOUT_MS },
+          ),
+        ),
+      );
+      const reports = settled.flatMap((result) =>
+        result.status === "fulfilled" ? [result.value] : [],
+      );
+      if (reports.length === 0) {
+        setError(t("Could not test these models"));
+        return;
+      }
+      setHealthReports(reports);
+    } catch (err) {
+      setError(errorText(err, t("Could not test these models")));
+    } finally {
+      setTesting(false);
+    }
+  }
+
   if (!visible || Sheet === undefined) return null;
 
   const content = (
@@ -125,7 +165,15 @@ export function ThreadModelPickerSheet({
         }}
       >
         <Text style={{ color: tokens.foreground, fontSize: 17, fontWeight: "600" }}>{title}</Text>
-        <NativeActionButton label={t("Cancel")} prominence="plain" onPress={onClose} />
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <NativeActionButton
+            disabled={!credentials || credentials.length === 0 || testing}
+            label={testing ? t("Testing…") : t("Test all models")}
+            prominence="secondary"
+            onPress={() => void testAllModels()}
+          />
+          <NativeActionButton label={t("Cancel")} prominence="plain" onPress={onClose} />
+        </View>
       </View>
       {error ? (
         <Text
@@ -143,6 +191,13 @@ export function ThreadModelPickerSheet({
           onSelect={(choice) => void select(choice)}
         />
       </View>
+      {mergedHealth ? (
+        <ModelHealthDialog
+          result={mergedHealth}
+          keeping={false}
+          onClose={() => setHealthReports(null)}
+        />
+      ) : null}
     </View>
   );
 

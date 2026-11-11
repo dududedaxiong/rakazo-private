@@ -54,6 +54,28 @@ const mocks = vi.hoisted(() => ({
   alert: vi.fn(),
   prompt: vi.fn(),
   completeOAuth: vi.fn(),
+  testProvider: vi.fn((input: { credentialId: string }) => ({
+    label: input.credentialId === WORK_CREDENTIAL_ID ? "Work" : "OpenRouter",
+    provider: "openrouter",
+    total: 2,
+    truncated: false,
+    ok: ["vendor/model-1"],
+    results: [
+      { model: "vendor/model-1", state: "ok", detail: "2", seconds: 1 },
+      { model: "vendor/model-2", state: "auth", detail: "No permission", seconds: 1 },
+    ],
+    summary: {
+      ok: 1,
+      empty: 0,
+      limited: 0,
+      auth: 1,
+      notfound: 0,
+      badreq: 0,
+      servererr: 0,
+      timeout: 0,
+      neterr: 0,
+    },
+  })),
   rpc: vi.fn(),
   dismissKeyboard: vi.fn(),
   listProps: {} as Record<string, unknown>,
@@ -337,6 +359,8 @@ vi.mock("./api", () => ({
               : []),
           ]
         : [];
+    if (procedure === "models/testProvider")
+      return mocks.testProvider(input as { credentialId: string });
     return [];
   },
 }));
@@ -1136,10 +1160,7 @@ describe("provider connection limit saves", () => {
       }),
     );
     expect(buttonWithText("Save")?.disabled).toBe(true);
-    expect(
-      container.querySelector('input[aria-label="API key"]')?.parentElement?.nextElementSibling
-        ?.textContent,
-    ).toBe("Saved.");
+    expect(buttonWithText("Save")?.parentElement?.nextElementSibling?.textContent).toBe("Saved.");
     editField("Gateway ID", "gateway-updated");
     expect(container.textContent).not.toContain("Saved.");
     editField("Gateway ID", "gateway-fixture");
@@ -2114,6 +2135,34 @@ describe("thread model picker sheet", () => {
     expect(mocks.push).not.toHaveBeenCalled();
     expect(sheetRows()).toHaveLength(0);
     expect(chipCard("Computer model")?.getAttribute("aria-label")).toBe("Computer model: Model 4");
+  });
+
+  it("tests every connection from the header and shows the merged results", async () => {
+    mocks.secondConnection = true;
+    await renderChips();
+    await act(async () => chipCard("Main model")!.click());
+    const button = [...container.querySelectorAll("button")].find(
+      (button) => button.textContent === "Test all models",
+    );
+    expect(button).toBeDefined();
+    await act(async () => button!.click());
+    expect(mocks.testProvider).toHaveBeenCalledWith({ credentialId: CREDENTIAL_ID });
+    expect(mocks.testProvider).toHaveBeenCalledWith({ credentialId: WORK_CREDENTIAL_ID });
+    expect(container.textContent).toContain("Test results · OpenRouter · Work");
+    expect(container.textContent).toContain("2 of 4 models work");
+    expect(container.textContent).toContain("vendor/model-1");
+  });
+
+  it("reports when every provider test fails", async () => {
+    mocks.testProvider.mockRejectedValueOnce(new Error("offline"));
+    await renderChips();
+    await act(async () => chipCard("Main model")!.click());
+    const button = [...container.querySelectorAll("button")].find(
+      (button) => button.textContent === "Test all models",
+    );
+    await act(async () => button!.click());
+    expect(container.textContent).toContain("Could not test these models");
+    expect(container.textContent).not.toContain("Test results");
   });
 
   it("opens the native sheet on Android", async () => {

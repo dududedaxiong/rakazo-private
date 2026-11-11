@@ -42,7 +42,8 @@ function HealthStateBadge({ state }: { state: ModelHealthState }) {
  * One connection's health result: how many models answered, then every model
  * with its state and, for failures, the upstream's own reason. "Keep only
  * usable models" is off when there is nothing to drop, nothing usable, or
- * the run stopped at the cap and untested models would be lost with it.
+ * the run stopped at the cap and untested models would be lost with it. The
+ * keep action is omitted where it is not an action, such as the model picker.
  */
 export function ModelHealthDialog({
   result,
@@ -53,7 +54,7 @@ export function ModelHealthDialog({
   result: ModelHealthReport;
   keeping: boolean;
   onClose: () => void;
-  onKeepUsable: () => void;
+  onKeepUsable?: () => void;
 }) {
   const { t } = useI18n();
   const tokens = useMobileTokens();
@@ -110,13 +111,15 @@ export function ModelHealthDialog({
             ))
           )}
         </ScrollView>
-        <NativeActionButton
-          label={t("Keep only usable models")}
-          disabled={!canKeep}
-          busy={keeping}
-          fill
-          onPress={onKeepUsable}
-        />
+        {onKeepUsable ? (
+          <NativeActionButton
+            label={t("Keep only usable models")}
+            disabled={!canKeep}
+            busy={keeping}
+            fill
+            onPress={onKeepUsable}
+          />
+        ) : null}
         <NativeActionButton
           label={t("Close")}
           prominence="secondary"
