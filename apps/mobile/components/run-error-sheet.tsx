@@ -3,11 +3,12 @@ import * as Clipboard from "expo-clipboard";
 import { useEffect, useReducer, useState } from "react";
 import { Platform, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import type { AvailableModelProbe } from "../lib/available-model-probe";
 import { useI18n } from "../lib/i18n";
 import { useMobileTokens } from "../lib/native";
 import { runErrorDiagnostic, runErrorWhatHappened } from "../lib/run-error-presentation";
 import { NativeSymbol } from "./native-symbol";
-import { RunErrorAction, RunErrorTextAction } from "./run-error-actions";
+import { ModelProbeActions, RunErrorAction, RunErrorTextAction } from "./run-error-actions";
 import { RunErrorSheetContainer } from "./run-error-sheet-container";
 import { SheetCloseButton } from "./sheet-close-button";
 
@@ -46,11 +47,14 @@ export function RunErrorSheet({
   details,
   onClose,
   action,
+  modelProbe,
 }: {
   details: string | null;
   onClose: () => void;
   /** The one action that fixes the failure. */
   action?: { label: string; onPress: () => void } | null;
+  /** The one-click test for another working model; null when it does not apply. */
+  modelProbe?: AvailableModelProbe | null;
 }) {
   const { t, locale } = useI18n();
   const tokens = useMobileTokens();
@@ -119,6 +123,7 @@ export function RunErrorSheet({
             {runErrorWhatHappened(t, error)}
           </Text>
           {action ? <RunErrorAction label={action.label} onPress={action.onPress} /> : null}
+          {modelProbe ? <ModelProbeActions probe={modelProbe} /> : null}
           <RunErrorTextAction
             label={t("Technical details")}
             expanded={technical}

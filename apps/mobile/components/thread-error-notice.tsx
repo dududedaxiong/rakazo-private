@@ -1,9 +1,10 @@
 import { StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import type { AvailableModelProbe } from "../lib/available-model-probe";
 import { customErrorTextStyle, useCustomSettings } from "../lib/custom-settings";
 import { useI18n } from "../lib/i18n";
 import { native, useMobileTokens } from "../lib/native";
 import { NativeSymbol } from "./native-symbol";
-import { RunErrorAction, RunErrorTextAction } from "./run-error-actions";
+import { ModelProbeActions, RunErrorAction, RunErrorTextAction } from "./run-error-actions";
 
 /** A list item: its full height participates in scrolling above the composer. */
 export function ThreadErrorNotice({
@@ -12,6 +13,7 @@ export function ThreadErrorNotice({
   resetAt,
   onDetails,
   action,
+  modelProbe,
   userId,
 }: {
   error: string | null;
@@ -20,6 +22,8 @@ export function ThreadErrorNotice({
   onDetails?: () => void;
   /** The one action that fixes the failure. */
   action?: { label: string; onPress: () => void } | null;
+  /** The one-click test for another working model; null when it does not apply. */
+  modelProbe?: AvailableModelProbe | null;
   /** The account whose interface settings style the error text. */
   userId?: string;
 }) {
@@ -39,7 +43,12 @@ export function ThreadErrorNotice({
           }).format(resetAt),
         })
       : null;
-  const hasBody = (summary && error) || upcomingReset || action || (summary && onDetails);
+  const hasBody =
+    (summary && error) ||
+    upcomingReset ||
+    action ||
+    modelProbe?.available ||
+    (summary && onDetails);
   return (
     <View
       accessibilityRole="alert"
@@ -87,6 +96,7 @@ export function ThreadErrorNotice({
             </Text>
           ) : null}
           {action ? <RunErrorAction label={action.label} onPress={action.onPress} /> : null}
+          {modelProbe ? <ModelProbeActions probe={modelProbe} /> : null}
           {summary && onDetails ? (
             <RunErrorTextAction label={t("Details")} onPress={onDetails} />
           ) : null}

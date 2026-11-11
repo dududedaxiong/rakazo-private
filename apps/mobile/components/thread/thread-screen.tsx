@@ -587,8 +587,15 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     activeBotId,
   });
 
-  const { runError, normalizedRunError, runErrorAction, detailsOpen, setDetailsOpen } =
-    useThreadRunError(snap?.run, botId);
+  const {
+    runError,
+    normalizedRunError,
+    runErrorAction,
+    detailsOpen,
+    setDetailsOpen,
+    handled: runErrorHandled,
+    modelProbe,
+  } = useThreadRunError(snap?.run, botId, currentBot?.modelProvider);
 
   // Event actions read the latest committed screen state without invalidating settled rows.
   const rowActions = useLatestRowActions({
@@ -776,7 +783,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   ));
 
   // Fetch failures stay visible at either paging edge; provider recovery belongs to the live end.
-  const visibleRunError = liveEndRunError(normalizedRunError, scroll.pinnedNewerCursor);
+  // Once the user switches to a working model, the old failure stops showing.
+  const visibleRunError = runErrorHandled
+    ? null
+    : liveEndRunError(normalizedRunError, scroll.pinnedNewerCursor);
   const errorNotice = (
     <ThreadErrorNotice
       error={null}
@@ -784,6 +794,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       resetAt={visibleRunError?.resetAt}
       onDetails={() => setDetailsOpen(true)}
       action={visibleRunError ? runErrorAction : null}
+      modelProbe={visibleRunError ? modelProbe : null}
       userId={userId}
     />
   );
@@ -1094,6 +1105,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
           details={detailsOpen ? runError : null}
           onClose={() => setDetailsOpen(false)}
           action={runErrorAction}
+          modelProbe={modelProbe}
         />
         {quoteTarget ? (
           <QuoteSheet
