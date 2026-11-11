@@ -18,6 +18,62 @@ msgstr ""
 msgid " (unread)"
 msgstr "（未讀）"
 
+#: src/pages/model-settings/use-model-settings.ts
+msgid "Could not save models"
+msgstr "無法儲存模型"
+
+#: src/pages/model-settings/use-model-settings.ts
+msgid "Could not test models"
+msgstr "無法測試這些模型"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Empty reply"
+msgstr "空回覆"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Keep only usable models"
+msgstr "只保留可用模型"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Keeping…"
+msgstr "保留中…"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "No models to test"
+msgstr "沒有可測試的模型"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "No permission"
+msgstr "無權限"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Not found"
+msgstr "不存在"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Only the first 50 models were tested."
+msgstr "只測了前 50 個。"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Rate limited"
+msgstr "限流"
+
+#: src/pages/model-settings/compatible-model-fields.tsx
+msgid "Test all models"
+msgstr "測試全部模型"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Test results · {label}"
+msgstr "測試結果 · {label}"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Timed out"
+msgstr "逾時"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Usable"
+msgstr "可用"
+
 #. placeholder {0}: servers.length
 #: src/pages/plugins/manage-view.tsx
 msgid "{0, plural, one {# connector} other {# connectors}}"
@@ -440,6 +496,10 @@ msgstr "{title}，儲存為 {savedAs}"
 #: src/pages/plugins/connector-detail.tsx
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# 個工具} other {# 個工具}}"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "{usable} of {total} models work"
+msgstr "{total} 個裡 {usable} 個能用"
 
 #: src/components/ModelCredits.tsx
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"

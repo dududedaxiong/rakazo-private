@@ -15,6 +15,7 @@ import {
 import { ModelPreflightFeedback } from "../../components/ModelConnectionPreflightNotice";
 import { ModelHeadersEditor } from "../../components/ModelHeadersEditor";
 import { useListSearch } from "../../lib/use-list-search";
+import { ModelHealthDialog } from "./model-health-dialog";
 
 import type { ModelSettingsState } from "./use-model-settings";
 
@@ -30,13 +31,18 @@ export function CompatibleModelFields({
   baseUrl,
   busy,
   cancelOAuthAttempt,
+  closeHealthResult,
   compatibleRows,
   contextWindow,
   defaultModelOptions,
   effectiveBaseUrl,
   enabledModelIds,
   endpointPreset,
+  healthKeeping,
+  healthResult,
+  healthTesting,
   invalidatePreflight,
+  keepUsableModels,
   maxImagesPerPrompt,
   maxTokens,
   modelId,
@@ -59,6 +65,7 @@ export function CompatibleModelFields({
   setThinkingLevel,
   stageCompatibleModelId,
   supportsImages,
+  testAllModels,
   thinkingLevel,
   updateApiProtocol,
   updateAuthMode,
@@ -76,13 +83,18 @@ export function CompatibleModelFields({
   | "baseUrl"
   | "busy"
   | "cancelOAuthAttempt"
+  | "closeHealthResult"
   | "compatibleRows"
   | "contextWindow"
   | "defaultModelOptions"
   | "effectiveBaseUrl"
   | "enabledModelIds"
   | "endpointPreset"
+  | "healthKeeping"
+  | "healthResult"
+  | "healthTesting"
   | "invalidatePreflight"
+  | "keepUsableModels"
   | "maxImagesPerPrompt"
   | "maxTokens"
   | "modelId"
@@ -105,6 +117,7 @@ export function CompatibleModelFields({
   | "setThinkingLevel"
   | "stageCompatibleModelId"
   | "supportsImages"
+  | "testAllModels"
   | "thinkingLevel"
   | "updateApiProtocol"
   | "updateAuthMode"
@@ -168,6 +181,17 @@ export function CompatibleModelFields({
         >
           {probing ? <Trans>Finding…</Trans> : <Trans>Find models</Trans>}
         </Button>
+        {credential ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={busy || healthTesting}
+            onClick={() => void testAllModels()}
+          >
+            {healthTesting ? <Trans>Testing…</Trans> : <Trans>Test all models</Trans>}
+          </Button>
+        ) : null}
       </div>
       {!endpointPreset ? (
         <Disclosure
@@ -398,6 +422,14 @@ export function CompatibleModelFields({
           }}
         />
       </ModelThinkingOptions>
+      {healthResult ? (
+        <ModelHealthDialog
+          result={healthResult}
+          keeping={healthKeeping}
+          onClose={closeHealthResult}
+          onKeepUsable={() => void keepUsableModels()}
+        />
+      ) : null}
     </div>
   );
 }

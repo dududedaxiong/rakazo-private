@@ -766,7 +766,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "test_model_connection",
     description:
-      "Test whether a model connection (provider) is reachable right now, when the user asks to check or test one (/ptest). Identify it by its label, provider, or id. Reports only whether it works and how many models it lists; never shows API keys.",
+      "Test every model on a model connection (provider) with a real question, when the user asks to check or test one (/ptest). Identify it by its label, provider, or id. Reports which models answer and which fail, with a short reason per failure; never shows API keys.",
     inputSchema: {
       type: "object",
       properties: {

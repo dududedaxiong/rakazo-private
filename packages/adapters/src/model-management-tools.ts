@@ -6,16 +6,19 @@
 //
 // Security: results never include an API key or any secret value. The list
 // shows only labels, providers, model ids and whether a key is present.
-// The test probes the provider live and reports only success/failure.
-// The menu sender calls Telegram directly with the bot's own token; it only
-// ever messages the chat the bot is already linked to.
+// The test sends every model one real question and reports which answer;
+// a provider can list dozens of models and only enable a few, so listing
+// alone never proves a model works. The menu sender calls Telegram directly
+// with the bot's own token; it only ever messages the chat the bot is already
+// linked to.
+import type { ModelHealthReport } from "@rakazo/contracts";
 import { getLogger } from "@rakazo/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { modelCredentialDto } from "./model-connect.js";
 import { parseModelSecret } from "./model-secret.js";
 import { loadStoredModelSecret } from "./model-selection.js";
 import { verifyCatalogProviderApiKey } from "./pi-models.js";
-import { probeOpenAiCompatibleModels } from "./pi-openai-compatible-provider.js";
+import { probeModelHealth } from "./pi-openai-compatible-provider.js";
 
 type RunRef = { id: string; spaceId: string; userId: string; botId: string };
 
@@ -132,13 +135,14 @@ export async function testModelConnectionFromTool(
   const parsed = parseModelSecret(loaded.plaintext);
   try {
     if (parsed.kind === "openai_compatible") {
-      const models = await probeOpenAiCompatibleModels(
+      const report = await probeModelHealth(
         {
           baseUrl: parsed.baseUrl,
           apiKey: parsed.apiKey,
           headers: parsed.headers,
           apiProtocol: parsed.apiProtocol,
           authMode: parsed.authMode,
+          models: parsed.enabledModelIds?.length ? parsed.enabledModelIds : undefined,
         },
         undefined,
         undefined,
@@ -148,12 +152,12 @@ export async function testModelConnectionFromTool(
         ok: true,
         connection: row.label,
         provider: row.provider,
-        modelsFound: models.length,
-        models: models.slice(0, MAX_MODELS_SHOWN),
-        message:
-          models.length > 0
-            ? `"${row.label}" is reachable and lists ${models.length} model(s).`
-            : `"${row.label}" is reachable but lists no models.`,
+        total: report.total,
+        truncated: report.truncated,
+        usable: report.ok,
+        results: report.results,
+        summary: report.summary,
+        message: modelHealthReportMessage(row.label, report),
       };
     }
     if (parsed.kind === "api_key") {
@@ -184,6 +188,57 @@ export async function testModelConnectionFromTool(
       message: error instanceof Error ? error.message : `Could not reach "${row.label}".`,
     };
   }
+}
+
+/** The failure counts, grouped the way the user reads them; empty groups stay out. */
+function modelHealthStatsLine(
+  report: Omit<ModelHealthReport, "label" | "provider">,
+): string | null {
+  const groups: Array<[string, number]> = [
+    ["限流", report.summary.limited],
+    ["无权限", report.summary.auth],
+    ["不存在", report.summary.notfound],
+    ["失败", report.summary.badreq + report.summary.servererr + report.summary.neterr],
+    ["超时", report.summary.timeout],
+    ["空回复", report.summary.empty],
+  ];
+  const parts = groups
+    .filter(([, count]) => count > 0)
+    .map(([label, count]) => `${label} ${count} 个`);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** What the user has to act on: a key or plan failure, or an upstream outage. */
+function modelHealthAttentionLine(
+  report: Omit<ModelHealthReport, "label" | "provider">,
+): string | null {
+  const parts: string[] = [];
+  const denied = report.results.filter((result) => result.state === "auth");
+  if (denied.length > 0) {
+    const detail = denied[0]?.detail;
+    parts.push(`无权限 ${denied.length} 个${detail && detail !== "无权限" ? `（${detail}）` : ""}`);
+  }
+  if (report.summary.servererr > 0) parts.push(`上游故障 ${report.summary.servererr} 个`);
+  return parts.length > 0 ? `需要你处理的：${parts.join("；")}` : null;
+}
+
+/** One provider, one line of conclusion, then the failures and what needs the user. */
+function modelHealthReportMessage(
+  label: string,
+  report: Omit<ModelHealthReport, "label" | "provider">,
+): string {
+  if (report.total === 0) return `「${label}」能连通，但没有列出模型。`;
+  const lines = [
+    `① ${label}：${report.total} 个里 ${report.ok.length} 个能用${
+      report.ok.length > 0 ? ` —— ${report.ok.join("、")}` : ""
+    }`,
+  ];
+  const stats = modelHealthStatsLine(report);
+  if (stats) lines.push(stats);
+  const attention = modelHealthAttentionLine(report);
+  if (attention) lines.push(attention);
+  if (report.truncated) lines.push(`共 ${report.total} 个，只测了前 50 个。`);
+  return lines.join("\n");
 }
 
 /**

@@ -6,7 +6,14 @@ import { anthropicMessagesApi } from "@earendil-works/pi-ai/api/anthropic-messag
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
 import { openAIResponsesApi } from "@earendil-works/pi-ai/api/openai-responses.lazy";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
-import type { ModelApiProtocol, ModelAuthMode } from "@rakazo/contracts";
+import type {
+  ModelApiProtocol,
+  ModelAuthMode,
+  ModelHealthReport,
+  ModelHealthResult,
+  ModelHealthState,
+  ModelHealthSummary,
+} from "@rakazo/contracts";
 import {
   DEFAULT_MODEL_CONTEXT_WINDOW,
   DEFAULT_MODEL_MAX_TOKENS,
@@ -32,7 +39,11 @@ import {
   OPENAI_COMPATIBLE_PROVIDER_ID,
   PRIVATE_MODEL_ENDPOINT_MESSAGE,
 } from "./openai-compatible-url.js";
-import { MODEL_CONNECT_TIMEOUT_MS, modelConnectTimeoutMs } from "./pi-runtime-limits.js";
+import {
+  MODEL_CONNECT_TIMEOUT_MS,
+  modelConnectTimeoutMs,
+  modelHealthTimeoutMs,
+} from "./pi-runtime-limits.js";
 import { guardToolCallNames } from "./pi-tool-call-guard.js";
 import { dispatcherFetch, fetchPairedWithDispatcher } from "./undici-fetch.js";
 
@@ -602,6 +613,8 @@ export async function probeOpenAiCompatibleModels(
     headers?: Record<string, string>;
     apiProtocol?: ModelApiProtocol;
     authMode?: ModelAuthMode;
+    /** Sent as the User-Agent; some fronted endpoints reject a plain library agent. */
+    userAgent?: string;
   },
   fetchImpl?: typeof fetch,
   signal?: AbortSignal,
@@ -624,6 +637,7 @@ export async function probeOpenAiCompatibleModels(
     if (input.apiProtocol === "anthropic-messages") {
       headers["anthropic-version"] = ANTHROPIC_MESSAGES_VERSION;
     }
+    if (input.userAgent?.trim()) headers["User-Agent"] = input.userAgent.trim();
     const mode = effectiveAuthMode(input.authMode, input.apiProtocol);
     const key = input.apiKey?.trim();
     if (key && mode !== "none") {
@@ -668,4 +682,393 @@ export async function probeOpenAiCompatibleModels(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+/** One short question every model answers; the reply only has to prove the model runs. */
+const MODEL_HEALTH_PROMPT = "1+1等于几？只回数字。";
+const MODEL_HEALTH_MAX_TOKENS = 100;
+const MODEL_HEALTH_CONCURRENCY = 4;
+/** Cap one run: a relay can list thousands of models, and each test is a real request. */
+const MAX_MODEL_HEALTH_MODELS = 50;
+/** Cap one reply or error body; a health check never needs more than a short answer. */
+const MAX_MODEL_HEALTH_RESPONSE_BYTES = 256 * 1024;
+/** CF-fronted endpoints reject a plain library agent with 403 error 1010. */
+const MODEL_HEALTH_BROWSER_USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+/** Display order: usable first, then the states that may recover, then the failures. */
+const MODEL_HEALTH_STATE_ORDER: ModelHealthState[] = [
+  "ok",
+  "empty",
+  "limited",
+  "auth",
+  "notfound",
+  "badreq",
+  "servererr",
+  "timeout",
+  "neterr",
+];
+
+function healthDetail(text: string, maxLength: number): string {
+  return text.replace(/\s+/g, " ").trim().slice(0, maxLength);
+}
+
+/** Reads a bounded body as text; a health reply is short, an error page is not needed whole. */
+async function readBoundedHealthText(response: Response): Promise<string> {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let bytes = 0;
+  let text = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    bytes += value.byteLength;
+    if (bytes > MAX_MODEL_HEALTH_RESPONSE_BYTES) {
+      await reader.cancel().catch(() => undefined);
+      break;
+    }
+    text += decoder.decode(value, { stream: true });
+  }
+  return text + decoder.decode();
+}
+
+/** The upstream's own error message when it has one, else the raw body, shortened. */
+function healthErrorMessage(bodyText: string): string {
+  try {
+    const parsed = JSON.parse(bodyText) as unknown;
+    const error =
+      parsed !== null && typeof parsed === "object"
+        ? (parsed as Record<string, unknown>).error
+        : undefined;
+    const message =
+      typeof error === "string"
+        ? error
+        : error !== null &&
+            typeof error === "object" &&
+            typeof (error as Record<string, unknown>).message === "string"
+          ? ((error as Record<string, unknown>).message as string)
+          : typeof (parsed as Record<string, unknown>).message === "string"
+            ? ((parsed as Record<string, unknown>).message as string)
+            : "";
+    if (message.trim()) return healthDetail(message, 120);
+  } catch {
+    // Not JSON; fall through to the raw body.
+  }
+  return healthDetail(bodyText, 120);
+}
+
+/** The reply text for the protocol, or null when the body carries no reply. */
+function healthReplyText(apiProtocol: ModelApiProtocol | undefined, body: unknown): string | null {
+  if (body === null || typeof body !== "object") return null;
+  const parsed = body as Record<string, unknown>;
+  if (apiProtocol === "anthropic-messages") {
+    const content = Array.isArray(parsed.content) ? parsed.content : [];
+    const text = content
+      .filter(
+        (block): block is Record<string, unknown> =>
+          block !== null &&
+          typeof block === "object" &&
+          (block as Record<string, unknown>).type === "text",
+      )
+      .map((block) => (typeof block.text === "string" ? block.text : ""))
+      .join("");
+    return text;
+  }
+  if (apiProtocol === "responses") {
+    if (typeof parsed.output_text === "string") return parsed.output_text;
+    const output = Array.isArray(parsed.output) ? parsed.output : [];
+    const text = output
+      .filter(
+        (item): item is Record<string, unknown> =>
+          item !== null &&
+          typeof item === "object" &&
+          (item as Record<string, unknown>).type === "message",
+      )
+      .flatMap((item) => (Array.isArray(item.content) ? item.content : []))
+      .filter(
+        (block): block is Record<string, unknown> =>
+          block !== null &&
+          typeof block === "object" &&
+          (block as Record<string, unknown>).type === "output_text",
+      )
+      .map((block) => (typeof block.text === "string" ? block.text : ""))
+      .join("");
+    return text;
+  }
+  const choices = Array.isArray(parsed.choices) ? parsed.choices : [];
+  const message =
+    choices[0] !== null && typeof choices[0] === "object"
+      ? (choices[0] as Record<string, unknown>).message
+      : undefined;
+  const content =
+    message !== null && typeof message === "object"
+      ? (message as Record<string, unknown>).content
+      : undefined;
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part) =>
+        part !== null &&
+        typeof part === "object" &&
+        typeof (part as Record<string, unknown>).text === "string"
+          ? ((part as Record<string, unknown>).text as string)
+          : "",
+      )
+      .join("");
+  }
+  return null;
+}
+
+/** The error the body carries, if any, as a readable message. */
+function healthBodyError(body: unknown): string | undefined {
+  if (body === null || typeof body !== "object") return undefined;
+  const parsed = body as Record<string, unknown>;
+  if (typeof parsed.error === "string") return parsed.error;
+  const error = parsed.error;
+  if (error !== null && typeof error === "object") {
+    const message = (error as Record<string, unknown>).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  if (typeof parsed.message === "string" && parsed.message.trim()) return parsed.message;
+  return undefined;
+}
+
+function classifyHealthResponse(
+  status: number,
+  bodyText: string,
+  body: unknown,
+): { state: ModelHealthState; detail: string } {
+  const upstream = healthErrorMessage(bodyText);
+  const low = bodyText.toLowerCase();
+  if (
+    status === 429 ||
+    low.includes("rate limit") ||
+    low.includes("rate_limit") ||
+    low.includes("too many")
+  ) {
+    return { state: "limited", detail: upstream || "限流" };
+  }
+  // 402 is a plan/balance failure, not a broken key: the upstream message says what to do.
+  if (status === 401 || status === 402 || status === 403) {
+    return { state: "auth", detail: upstream || "无权限" };
+  }
+  if (status === 404 || bodyText.includes("不存在") || bodyText.includes("停用")) {
+    return { state: "notfound", detail: upstream || "模型不存在或已停用" };
+  }
+  if (status === 400) return { state: "badreq", detail: upstream || "请求无效" };
+  if (status >= 500) return { state: "servererr", detail: upstream || "上游服务错误" };
+  if (status >= 400) return { state: "badreq", detail: upstream || `请求被拒绝（${status}）` };
+  // A 200 with an error body: sort it by what the error says, like the status cases above.
+  const error = healthBodyError(body);
+  if (error) {
+    const message = healthDetail(error, 120);
+    const lowError = error.toLowerCase();
+    if (
+      lowError.includes("rate limit") ||
+      lowError.includes("rate_limit") ||
+      lowError.includes("too many")
+    ) {
+      return { state: "limited", detail: message };
+    }
+    return { state: "badreq", detail: message };
+  }
+  return { state: "badreq", detail: upstream || "请求无效" };
+}
+
+/** The chat URL and body for one model, per protocol. */
+function healthChatRequest(
+  baseUrl: URL,
+  apiProtocol: ModelApiProtocol | undefined,
+  model: string,
+): { url: string; body: Record<string, unknown> } {
+  const messages = [{ role: "user", content: MODEL_HEALTH_PROMPT }];
+  if (apiProtocol === "anthropic-messages") {
+    // The Anthropic SDK posts /v1/messages under its base URL, and this connection's base
+    // URL is stored without /v1; the probe must hit the same endpoint real chats use.
+    return {
+      url: new URL("v1/messages", `${anthropicMessagesBaseUrl(baseUrl.href)}/`).href,
+      body: { model, max_tokens: MODEL_HEALTH_MAX_TOKENS, messages, temperature: 0 },
+    };
+  }
+  if (apiProtocol === "responses") {
+    return {
+      url: new URL("responses", `${baseUrl.href}/`).href,
+      body: {
+        model,
+        input: MODEL_HEALTH_PROMPT,
+        max_output_tokens: MODEL_HEALTH_MAX_TOKENS,
+        temperature: 0,
+      },
+    };
+  }
+  return {
+    url: new URL("chat/completions", `${baseUrl.href}/`).href,
+    body: { model, messages, max_tokens: MODEL_HEALTH_MAX_TOKENS, temperature: 0 },
+  };
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof Error && error.name === "AbortError") ||
+    (typeof DOMException !== "undefined" &&
+      error instanceof DOMException &&
+      error.name === "AbortError")
+  );
+}
+
+/** Sends one model the health question and classifies the answer. */
+async function probeOneModelHealth(
+  safeFetch: typeof globalThis.fetch,
+  baseUrl: URL,
+  input: {
+    apiKey?: string;
+    apiProtocol?: ModelApiProtocol;
+    authMode?: ModelAuthMode;
+  },
+  model: string,
+  signal?: AbortSignal,
+): Promise<ModelHealthResult> {
+  const started = Date.now();
+  const seconds = () => Math.round(((Date.now() - started) / 1000) * 10) / 10;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), modelHealthTimeoutMs());
+  const merged = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+  try {
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "User-Agent": MODEL_HEALTH_BROWSER_USER_AGENT,
+    };
+    if (input.apiProtocol === "anthropic-messages") {
+      headers["anthropic-version"] = ANTHROPIC_MESSAGES_VERSION;
+    }
+    const mode = effectiveAuthMode(input.authMode, input.apiProtocol);
+    const key = input.apiKey?.trim();
+    if (key && mode !== "none") {
+      if (mode === "bearer" || mode === "both") headers.Authorization = `Bearer ${key}`;
+      if (mode === "x-api-key" || mode === "both") headers["x-api-key"] = key;
+    }
+    const { url, body } = healthChatRequest(baseUrl, input.apiProtocol, model);
+    const response = await safeFetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      redirect: "error",
+      signal: merged,
+    });
+    const bodyText = await readBoundedHealthText(response);
+    let parsed: unknown = null;
+    try {
+      parsed = JSON.parse(bodyText) as unknown;
+    } catch {
+      parsed = null;
+    }
+    if (!response.ok) {
+      const classified = classifyHealthResponse(response.status, bodyText, parsed);
+      return { model, ...classified, seconds: seconds() };
+    }
+    if (parsed === null) {
+      return { model, state: "badreq", detail: "返回不是 JSON", seconds: seconds() };
+    }
+    const reply = healthReplyText(input.apiProtocol, parsed);
+    if (reply === null) {
+      const classified = classifyHealthResponse(response.status, bodyText, parsed);
+      return { model, ...classified, seconds: seconds() };
+    }
+    const text = reply.trim();
+    return text
+      ? { model, state: "ok", detail: healthDetail(text, 60), seconds: seconds() }
+      : { model, state: "empty", detail: "空回复", seconds: seconds() };
+  } catch (error) {
+    // The caller's own cancel aborts the whole run; a per-model timeout is one result.
+    if (signal?.aborted) throw error;
+    if (isAbortError(error)) {
+      return { model, state: "timeout", detail: "请求超时", seconds: seconds() };
+    }
+    const message = error instanceof Error ? error.message : "";
+    return {
+      model,
+      state: "neterr",
+      detail: message ? healthDetail(`网络错误：${message}`, 120) : "网络错误",
+      seconds: seconds(),
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Tests every model on an OpenAI-compatible endpoint with one real question each, and
+ * classifies the answers. A `/models` list is not proof a model works: relays list the
+ * whole catalogue and only enable a few, so each id gets a real request. `models` tests
+ * a given list (a connection's enabled models); without it the list comes from the
+ * server, capped at MAX_MODEL_HEALTH_MODELS with `truncated` set.
+ */
+export async function probeModelHealth(
+  input: {
+    baseUrl: string;
+    apiKey?: string;
+    headers?: Record<string, string>;
+    apiProtocol?: ModelApiProtocol;
+    authMode?: ModelAuthMode;
+    models?: string[];
+  },
+  fetchImpl?: typeof fetch,
+  signal?: AbortSignal,
+  opts?: OpenAiCompatibleUrlPolicy & { catalogProbe?: boolean },
+): Promise<Omit<ModelHealthReport, "label" | "provider">> {
+  const baseUrl = assertAllowedOpenAiCompatibleUrl(input.baseUrl, opts);
+  assertHttpsForKeyedOpenAiCompatibleUrl(
+    baseUrl,
+    input.apiKey,
+    Object.keys(input.headers ?? {}).length > 0,
+  );
+  await verifyOpenAiCompatibleApiKey(input, fetchImpl, signal);
+  const listed =
+    input.models && input.models.length > 0
+      ? input.models
+      : await probeOpenAiCompatibleModels(
+          { ...input, userAgent: MODEL_HEALTH_BROWSER_USER_AGENT },
+          fetchImpl,
+          signal,
+          opts,
+        );
+  const truncated = listed.length > MAX_MODEL_HEALTH_MODELS;
+  const tested = listed.slice(0, MAX_MODEL_HEALTH_MODELS);
+  const safeFetch = createOpenAiCompatibleFetch(fetchImpl, undefined, {
+    ...opts,
+    headers: input.headers,
+  });
+  const queue = [...tested];
+  const results: ModelHealthResult[] = [];
+  const workers = Array.from(
+    { length: Math.min(MODEL_HEALTH_CONCURRENCY, tested.length) },
+    async () => {
+      while (queue.length > 0) {
+        const model = queue.shift();
+        if (model === undefined) return;
+        results.push(await probeOneModelHealth(safeFetch, baseUrl, input, model, signal));
+      }
+    },
+  );
+  await Promise.all(workers);
+  results.sort(
+    (left, right) =>
+      MODEL_HEALTH_STATE_ORDER.indexOf(left.state) -
+        MODEL_HEALTH_STATE_ORDER.indexOf(right.state) || left.model.localeCompare(right.model),
+  );
+  const summary = Object.fromEntries(
+    MODEL_HEALTH_STATE_ORDER.map((state) => [
+      state,
+      results.filter((result) => result.state === state).length,
+    ]),
+  ) as ModelHealthSummary;
+  return {
+    total: listed.length,
+    truncated,
+    ok: results.filter((result) => result.state === "ok").map((result) => result.model),
+    results,
+    summary,
+  };
 }

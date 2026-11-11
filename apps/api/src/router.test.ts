@@ -5134,6 +5134,118 @@ describe("OpenAI-compatible model probes", () => {
   });
 });
 
+describe("provider model health check", () => {
+  const actor = {
+    spaceId: "workspace-1",
+    userId: "user-1",
+    email: "user@rakazo.test",
+    isDeploymentOwner: true,
+  } satisfies Actor;
+  const baseUrl = "https://127.0.0.1:8000/v1";
+
+  function fixture(options: { stored?: string; credentialUserId?: string } = {}) {
+    const credential = {
+      id: "cred-1",
+      userId: options.credentialUserId ?? actor.userId,
+      provider: "openai-compatible",
+      label: "Test Relay",
+      secretId: "secret-1",
+    };
+    const findCredential = vi.fn(async ({ where }: { where: { id: string; userId: string } }) =>
+      where.id === credential.id && where.userId === credential.userId ? credential : null,
+    );
+    const findSecret = vi.fn(
+      async ({ where }: { where: { id: string; userId: string; spaceId: null } }) =>
+        where.id === credential.secretId &&
+        where.userId === credential.userId &&
+        where.spaceId === null
+          ? { id: credential.secretId, ciphertext: "fake-ciphertext" }
+          : null,
+    );
+    const load = vi.fn().mockResolvedValue(
+      options.stored ??
+        JSON.stringify({
+          kind: "openai_compatible",
+          baseUrl,
+          apiKey: "fake-saved-key",
+          enabledModelIds: ["good", "down"],
+        }),
+    );
+    const fetch = vi.fn<typeof globalThis.fetch>(async (input, init) => {
+      const url = String(input);
+      if (url.endsWith("/models")) return Response.json({ data: [{ id: "listed" }] });
+      const model = (JSON.parse(String(init?.body ?? "{}")) as { model?: string }).model ?? "";
+      if (model === "good" || model === "listed")
+        return Response.json({ choices: [{ message: { content: "2" } }] });
+      return new Response(JSON.stringify({ error: { message: "Upstream unavailable" } }), {
+        status: 503,
+      });
+    });
+    const health = adapters.probeModelHealth;
+    vi.spyOn(adapters, "probeModelHealth").mockImplementation((input, _, signal, opts) =>
+      health(input, fetch, signal, opts),
+    );
+    const deps = {
+      prisma: {
+        userModelCredential: { findFirst: findCredential },
+        secret: { findFirst: findSecret },
+      },
+      secrets: { load },
+      modelConnectionFetch: vi.fn(() => {
+        throw new Error("Unexpected injected transport");
+      }),
+      env: { sandboxProvider: "fake", mcpAllowPrivateEndpoint: true },
+    } as unknown as RouterDeps;
+    const client = createRouterClient(createRouter(deps), {
+      context: { actor } as never,
+    });
+    return { client, fetch, findCredential, findSecret, load };
+  }
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it("tests the connection's enabled models and reports per-model health", async () => {
+    const { client } = fixture();
+    const report = await client.models.testProvider({ credentialId: "cred-1" });
+    expect(report.label).toBe("Test Relay");
+    expect(report.provider).toBe("openai-compatible");
+    expect(report.total).toBe(2);
+    expect(report.ok).toEqual(["good"]);
+    expect(report.summary.ok).toBe(1);
+    expect(report.summary.servererr).toBe(1);
+    expect(report.results.map((result) => [result.model, result.state])).toEqual([
+      ["good", "ok"],
+      ["down", "servererr"],
+    ]);
+    expect(JSON.stringify(report)).not.toContain("fake-saved-key");
+  });
+
+  it("lists models from the server when the connection has no enabled list", async () => {
+    const { client } = fixture({
+      stored: JSON.stringify({ kind: "openai_compatible", baseUrl, apiKey: "fake-saved-key" }),
+    });
+    const report = await client.models.testProvider({ credentialId: "cred-1" });
+    expect(report.total).toBe(1);
+    expect(report.ok).toEqual(["listed"]);
+  });
+
+  it("rejects another user's connection", async () => {
+    const { client } = fixture({ credentialUserId: "other-user" });
+    await expect(client.models.testProvider({ credentialId: "cred-1" })).rejects.toMatchObject({
+      code: "NOT_FOUND",
+    });
+  });
+
+  it("rejects connections that are not OpenAI-compatible", async () => {
+    const { client } = fixture({
+      stored: JSON.stringify({ kind: "api_key", key: "fake-key" }),
+    });
+    await expect(client.models.testProvider({ credentialId: "cred-1" })).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+  });
+});
+
 describe("model credential persistence", () => {
   const actor = {
     spaceId: "workspace-1",

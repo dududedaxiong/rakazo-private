@@ -7,6 +7,13 @@ import {
 } from "./model-management-tools.js";
 import { serializeModelSecret } from "./model-secret.js";
 
+const { probeModelHealthMock } = vi.hoisted(() => ({ probeModelHealthMock: vi.fn() }));
+
+vi.mock("./pi-openai-compatible-provider.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./pi-openai-compatible-provider.js")>();
+  return { ...actual, probeModelHealth: probeModelHealthMock };
+});
+
 const run = { id: "run-1", spaceId: "space-1", userId: "user-1", botId: "bot-1" };
 
 function fakeDeps(overrides: Record<string, unknown> = {}) {
@@ -114,6 +121,76 @@ describe("testModelConnectionFromTool", () => {
       connection: "Test Relay",
     });
     expect(result.error).toMatch(/could not read the saved key/i);
+  });
+
+  it("tests every model and reports which work, with the reason for each failure", async () => {
+    const { deps } = fakeDeps();
+    probeModelHealthMock.mockResolvedValue({
+      total: 2,
+      truncated: false,
+      ok: ["model-a"],
+      results: [
+        { model: "model-a", state: "ok", detail: "2", seconds: 1.2 },
+        {
+          model: "model-b",
+          state: "auth",
+          detail: "预扣费额度失败，用户剩余额度：10，需要预扣费额度：50",
+          seconds: 0.8,
+        },
+      ],
+      summary: {
+        ok: 1,
+        empty: 0,
+        limited: 0,
+        auth: 1,
+        notfound: 0,
+        badreq: 0,
+        servererr: 0,
+        timeout: 0,
+        neterr: 0,
+      },
+    });
+    const result = await testModelConnectionFromTool(deps, run, { connection: "Test Relay" });
+    expect(result.ok).toBe(true);
+    expect(result.usable).toEqual(["model-a"]);
+    expect(result.message).toBe(
+      "① Test Relay：2 个里 1 个能用 —— model-a\n" +
+        "无权限 1 个\n" +
+        "需要你处理的：无权限 1 个（预扣费额度失败，用户剩余额度：10，需要预扣费额度：50）",
+    );
+    expect(JSON.stringify(result)).not.toContain("test-key-that-must-never-leak");
+    expect(probeModelHealthMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        baseUrl: "https://relay.example.test",
+        models: ["model-a", "model-b"],
+      }),
+      undefined,
+      undefined,
+      { allowPrivate: true },
+    );
+  });
+
+  it("says so when the provider lists no models", async () => {
+    const { deps } = fakeDeps();
+    probeModelHealthMock.mockResolvedValue({
+      total: 0,
+      truncated: false,
+      ok: [],
+      results: [],
+      summary: {
+        ok: 0,
+        empty: 0,
+        limited: 0,
+        auth: 0,
+        notfound: 0,
+        badreq: 0,
+        servererr: 0,
+        timeout: 0,
+        neterr: 0,
+      },
+    });
+    const result = await testModelConnectionFromTool(deps, run, { connection: "Test Relay" });
+    expect(result.message).toBe("「Test Relay」能连通，但没有列出模型。");
   });
 });
 

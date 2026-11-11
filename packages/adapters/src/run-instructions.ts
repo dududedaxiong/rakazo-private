@@ -410,7 +410,7 @@ export function userTurnInstructions(parts: {
     offeredBuiltinClause(
       parts.disabledBuiltinTools,
       "test_model_connection",
-      "When the user asks to check or test a model connection (or types /ptest), use test_model_connection with the connection's label, provider, or id. Report only whether it works and how many models it lists; never show API keys.",
+      "When the user asks to check or test a model connection (or types /ptest), use test_model_connection with the connection's label, provider, or id. Report how many models work, name the usable ones, and give the failure counts with their reasons; never show API keys.",
     ),
     offeredBuiltinClause(
       parts.disabledBuiltinTools,

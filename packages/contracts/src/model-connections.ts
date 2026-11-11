@@ -101,6 +101,59 @@ export function effectiveAuthMode(
   return apiProtocol === "anthropic-messages" ? "x-api-key" : "bearer";
 }
 
+/** One model's outcome from a health check: one real question, one real reply. */
+export const ModelHealthStateSchema = z.enum([
+  "ok",
+  "empty",
+  "limited",
+  "auth",
+  "notfound",
+  "badreq",
+  "servererr",
+  "timeout",
+  "neterr",
+]);
+export type ModelHealthState = z.infer<typeof ModelHealthStateSchema>;
+
+export const ModelHealthResultSchema = z.object({
+  model: z.string(),
+  state: ModelHealthStateSchema,
+  /** Short readable reason: the model's reply for ok, the upstream error otherwise. */
+  detail: z.string(),
+  /** Seconds the probe took for this model. */
+  seconds: z.number(),
+});
+export type ModelHealthResult = z.infer<typeof ModelHealthResultSchema>;
+
+export const ModelHealthSummarySchema = z.object({
+  ok: z.number().int().nonnegative(),
+  empty: z.number().int().nonnegative(),
+  limited: z.number().int().nonnegative(),
+  auth: z.number().int().nonnegative(),
+  notfound: z.number().int().nonnegative(),
+  badreq: z.number().int().nonnegative(),
+  servererr: z.number().int().nonnegative(),
+  timeout: z.number().int().nonnegative(),
+  neterr: z.number().int().nonnegative(),
+});
+export type ModelHealthSummary = z.infer<typeof ModelHealthSummarySchema>;
+
+/** The result of testing every model on one connection. */
+export const ModelHealthReportSchema = z.object({
+  /** The connection's label. */
+  label: z.string(),
+  provider: z.string(),
+  /** Models considered, before the test cap. */
+  total: z.number().int().nonnegative(),
+  /** True when the list was capped and only the first models were tested. */
+  truncated: z.boolean(),
+  /** Models that answered. */
+  ok: z.array(z.string()),
+  results: z.array(ModelHealthResultSchema),
+  summary: ModelHealthSummarySchema,
+});
+export type ModelHealthReport = z.infer<typeof ModelHealthReportSchema>;
+
 export const ModelCredentialSchema = z.object({
   /** Computed space preference order; credentials themselves remain newest first. */
   preferenceRank: z.number().int().nonnegative().optional(),

@@ -6,6 +6,8 @@ import { LOCAL_PROVIDER_ID } from "./pi-local-provider-id.js";
 export const MODEL_STREAM_TIMEOUT_MS = 120_000;
 /** Bound connection establishment independently of response streaming. */
 export const MODEL_CONNECT_TIMEOUT_MS = 30_000;
+/** One model's health question budget; a slow model fails one result, not the run. */
+export const MODEL_HEALTH_TIMEOUT_MS = 30_000;
 /**
  * `timeoutMs` bounds only time-to-headers; the SSE body that follows is
  * unbounded. Bound silence for every provider so a stalled stream can fail
@@ -37,6 +39,10 @@ export function modelStreamTimeoutMs(): number {
 
 export function modelConnectTimeoutMs(): number {
   return timeoutMsFromEnv(process.env.MODEL_CONNECT_TIMEOUT_MS, MODEL_CONNECT_TIMEOUT_MS);
+}
+
+export function modelHealthTimeoutMs(): number {
+  return timeoutMsFromEnv(process.env.MODEL_HEALTH_TIMEOUT_MS, MODEL_HEALTH_TIMEOUT_MS);
 }
 
 export function modelStreamIdleTimeoutMs(): number {

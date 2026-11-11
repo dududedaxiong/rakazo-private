@@ -6,8 +6,10 @@ import {
   ModelSignInError,
   modelCredentialDto,
   oauthCredentialEmail,
+  parseModelSecret,
   prepareStoredModelAuth,
   probeCatalogProviderModels,
+  probeModelHealth,
   probeOpenAiCompatibleModels,
   providerCatalogCache,
   resolveMemberMainModel,
@@ -301,6 +303,54 @@ export function modelsRoutes(ctx: RouterContext) {
         } catch (error) {
           throw new ORPCError("BAD_REQUEST", {
             message: error instanceof Error ? error.message : "Could not list models",
+          });
+        }
+      }),
+      testProvider: authed.models.testProvider.handler(async ({ context, input }) => {
+        const credential = await deps.prisma.userModelCredential.findFirst({
+          where: { id: input.credentialId, userId: context.actor.userId },
+        });
+        if (!credential) throw new ORPCError("NOT_FOUND", { message: "Connection not found" });
+        const secret = await deps.prisma.secret.findFirst({
+          where: { id: credential.secretId, userId: context.actor.userId, spaceId: null },
+          select: { ciphertext: true },
+        });
+        if (!secret) throw new ORPCError("NOT_FOUND", { message: "Connection not found" });
+        let plaintext: string;
+        try {
+          plaintext = await deps.secrets.load(secret.ciphertext, credential.secretId);
+        } catch (error) {
+          if (error instanceof SecretStoreUnavailableError)
+            throw new ORPCError("SERVICE_UNAVAILABLE", { cause: error });
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Could not read the saved key for this connection",
+          });
+        }
+        const parsed = parseModelSecret(plaintext);
+        if (parsed.kind !== "openai_compatible") {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Only OpenAI-compatible connections can be tested this way",
+          });
+        }
+        try {
+          const report = await probeModelHealth(
+            {
+              baseUrl: parsed.baseUrl,
+              apiKey: parsed.apiKey,
+              headers: parsed.headers,
+              apiProtocol: parsed.apiProtocol,
+              authMode: parsed.authMode,
+              models: parsed.enabledModelIds?.length ? parsed.enabledModelIds : undefined,
+            },
+            compatibleEndpointPreset(parsed.baseUrl) ? deps.modelConnectionFetch : undefined,
+            context.signal,
+            { allowPrivate: mayUsePrivateEndpoint(deps) },
+          );
+          return { label: credential.label, provider: credential.provider, ...report };
+        } catch (error) {
+          if (error instanceof Error && error.name === "AbortError") throw error;
+          throw new ORPCError("BAD_REQUEST", {
+            message: error instanceof Error ? error.message : "Could not test this connection",
           });
         }
       }),

@@ -1,5 +1,14 @@
 export const PL_MESSAGES: Record<string, string> = {
+  "Could not save models": "Nie można zapisać modeli",
+  "Could not test these models": "Nie można przetestować tych modeli",
+  "Empty reply": "Pusta odpowiedź",
   "Float outside the app": "Wyświetlaj poza aplikacją",
+  "Keep only usable models": "Zachowaj tylko działające modele",
+  "No models to test": "Brak modeli do przetestowania",
+  "No permission": "Brak uprawnień",
+  "Not found": "Nie znaleziono",
+  "Only the first 50 models were tested.": "Przetestowano tylko pierwsze 50 modeli.",
+  "Rate limited": "Limit zapytań",
   "Stop floating outside the app": "Przestań wyświetlać poza aplikacją",
   "Can't float outside the app": "Nie można wyświetlać poza aplikacją",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
@@ -19,6 +28,9 @@ export const PL_MESSAGES: Record<string, string> = {
     "Pyta przed wysłaniem, wydaniem pieniędzy lub zmianą czegokolwiek w twoich aplikacjach.",
   Haptics: "Haptyka",
   "Add rule": "Dodaj regułę",
+  "Test all models": "Przetestuj wszystkie modele",
+  "Test results · {label}": "Wyniki testu · {label}",
+  "Timed out": "Przekroczono czas",
   "Tool name": "Nazwa narzędzia",
   Address: "Adres",
   "Address line 2": "Druga linia adresu",
@@ -54,6 +66,7 @@ export const PL_MESSAGES: Record<string, string> = {
     "Nie można odczytać zapisanych ustawień. Usuń ten element i dodaj go ponownie.",
   "Use letters, numbers and _, starting with a letter.":
     "Użyj liter, cyfr i znaku _. Zacznij od litery.",
+  Usable: "Działa",
   Variable: "Zmienna",
   Variables: "Zmienne",
   "When to use": "Kiedy używać",
@@ -1644,6 +1657,7 @@ export const PL_MESSAGES: Record<string, string> = {
   "Could not download the voice models.": "Nie można było pobrać modeli głosowych.",
   "Could not delete the voice models.": "Nie można było usunąć modeli głosowych.",
   "Voice models are not downloaded yet.": "Modele głosowe nie zostały jeszcze pobrane.",
+  "{usable} of {total} models work": "{usable} z {total} modeli działa",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

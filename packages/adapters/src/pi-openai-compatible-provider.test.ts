@@ -22,6 +22,7 @@ import {
   OPENAI_COMPATIBLE_CATALOG_MODEL_ID,
   openAiCompatibleCatalogProvider,
   prepareOpenAiCompatibleConnect,
+  probeModelHealth,
   probeOpenAiCompatibleModels,
   registerOpenAiCompatibleCatalog,
   registerOpenAiCompatibleRuntime,
@@ -1558,5 +1559,252 @@ describe("anthropic-messages wire protocol", () => {
       ),
     ).resolves.toEqual(["claude-fixture"]);
     expect(new Headers(fetchImpl.mock.calls[0]?.[1]?.headers).get("x-api-key")).toBeNull();
+  });
+});
+
+describe("model health probe", () => {
+  const baseUrl = "http://127.0.0.1:8000/v1";
+
+  /** Routes a chat request by the model id in its body. */
+  function routingFetch(
+    routes: Record<string, { status: number; body: unknown }>,
+    seen?: Array<{ url: string; init?: RequestInit }>,
+  ): typeof fetch {
+    return (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      seen?.push({ url, init });
+      if (url.endsWith("/models")) {
+        return Response.json({ data: Object.keys(routes).map((id) => ({ id })) });
+      }
+      const model = (JSON.parse(String(init?.body ?? "{}")) as { model?: string }).model ?? "";
+      const route = routes[model];
+      if (!route) return new Response("no such fixture", { status: 500 });
+      return new Response(JSON.stringify(route.body), { status: route.status });
+    }) as typeof fetch;
+  }
+
+  it("classifies one real answer per model", async () => {
+    const seen: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl = routingFetch(
+      {
+        good: { status: 200, body: { choices: [{ message: { content: "2" } }] } },
+        blank: { status: 200, body: { choices: [{ message: { content: "" } }] } },
+        "slow-429": {
+          status: 429,
+          body: { error: { message: "Rate limit exceeded, retry in 60s" } },
+        },
+        "no-key": {
+          status: 403,
+          body: { error: { message: "预扣费额度失败，用户剩余额度：10，需要预扣费额度：50" } },
+        },
+        gone: { status: 404, body: { error: { message: "Model not found" } } },
+        bad: { status: 400, body: { error: { message: "Unsupported model" } } },
+        down: { status: 503, body: { error: { message: "Upstream unavailable" } } },
+      },
+      seen,
+    );
+    const report = await probeModelHealth(
+      {
+        baseUrl,
+        apiKey: "real-key",
+        models: ["good", "blank", "slow-429", "no-key", "gone", "bad", "down"],
+      },
+      fetchImpl,
+      undefined,
+      OWNER,
+    );
+    expect(report.total).toBe(7);
+    expect(report.truncated).toBe(false);
+    expect(report.ok).toEqual(["good"]);
+    expect(report.summary).toEqual({
+      ok: 1,
+      empty: 1,
+      limited: 1,
+      auth: 1,
+      notfound: 1,
+      badreq: 1,
+      servererr: 1,
+      timeout: 0,
+      neterr: 0,
+    });
+    expect(report.results.map((result) => [result.model, result.state])).toEqual([
+      ["good", "ok"],
+      ["blank", "empty"],
+      ["slow-429", "limited"],
+      ["no-key", "auth"],
+      ["gone", "notfound"],
+      ["bad", "badreq"],
+      ["down", "servererr"],
+    ]);
+    const byModel = new Map(report.results.map((result) => [result.model, result]));
+    expect(byModel.get("good")?.detail).toBe("2");
+    expect(byModel.get("no-key")?.detail).toBe(
+      "预扣费额度失败，用户剩余额度：10，需要预扣费额度：50",
+    );
+    expect(byModel.get("down")?.detail).toBe("Upstream unavailable");
+    for (const result of report.results) expect(result.seconds).toBeGreaterThanOrEqual(0);
+    const chat = seen.find((call) => call.url.endsWith("/chat/completions"));
+    expect(chat?.url).toBe("http://127.0.0.1:8000/v1/chat/completions");
+    const body = JSON.parse(String(chat?.init?.body ?? "{}")) as Record<string, unknown>;
+    expect(body.max_tokens).toBe(100);
+    expect(body.temperature).toBe(0);
+    expect(body.messages).toEqual([{ role: "user", content: "1+1等于几？只回数字。" }]);
+    const headers = new Headers(chat?.init?.headers);
+    expect(headers.get("authorization")).toBe("Bearer real-key");
+    expect(headers.get("user-agent")).toContain("Chrome/");
+  });
+
+  it("lists models from the server when none are given", async () => {
+    const seen: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl = routingFetch(
+      {
+        a: { status: 200, body: { choices: [{ message: { content: "2" } }] } },
+        b: { status: 200, body: { choices: [{ message: { content: "2" } }] } },
+      },
+      seen,
+    );
+    const report = await probeModelHealth({ baseUrl }, fetchImpl, undefined, OWNER);
+    expect(report.total).toBe(2);
+    expect(report.ok).toEqual(["a", "b"]);
+    const list = seen.find((call) => call.url.endsWith("/models"));
+    expect(new Headers(list?.init?.headers).get("user-agent")).toContain("Chrome/");
+  });
+
+  it("caps the run at 50 models and reports truncated", async () => {
+    const ids = Array.from({ length: 55 }, (_, index) => `m${index}`);
+    const fetchImpl = routingFetch(
+      Object.fromEntries(
+        ids.map((id) => [id, { status: 200, body: { choices: [{ message: { content: "2" } }] } }]),
+      ),
+    );
+    const report = await probeModelHealth({ baseUrl }, fetchImpl, undefined, OWNER);
+    expect(report.total).toBe(55);
+    expect(report.truncated).toBe(true);
+    expect(report.results).toHaveLength(50);
+    expect(report.ok).toHaveLength(50);
+  });
+
+  it("probes Anthropic endpoints at /v1/messages with x-api-key", async () => {
+    const seen: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl = routingFetch(
+      {
+        "claude-fixture": {
+          status: 200,
+          body: { content: [{ type: "text", text: "2" }] },
+        },
+      },
+      seen,
+    );
+    const report = await probeModelHealth(
+      {
+        baseUrl,
+        apiKey: "real-key",
+        apiProtocol: "anthropic-messages",
+        models: ["claude-fixture"],
+      },
+      fetchImpl,
+      undefined,
+      OWNER,
+    );
+    expect(report.ok).toEqual(["claude-fixture"]);
+    const chat = seen[0];
+    // The Anthropic SDK posts /v1/messages under a base URL stored without /v1;
+    // the probe must hit the same endpoint real chats use.
+    expect(chat?.url).toBe("http://127.0.0.1:8000/v1/messages");
+    const headers = new Headers(chat?.init?.headers);
+    expect(headers.get("x-api-key")).toBe("real-key");
+    expect(headers.get("authorization")).toBeNull();
+    expect(headers.get("anthropic-version")).toBe("2023-06-01");
+    const body = JSON.parse(String(chat?.init?.body ?? "{}")) as Record<string, unknown>;
+    expect(body.max_tokens).toBe(100);
+    expect(body.messages).toEqual([{ role: "user", content: "1+1等于几？只回数字。" }]);
+  });
+
+  it("probes Responses endpoints at /responses", async () => {
+    const seen: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl = routingFetch(
+      {
+        "gpt-fixture": {
+          status: 200,
+          body: {
+            output: [{ type: "message", content: [{ type: "output_text", text: "2" }] }],
+          },
+        },
+      },
+      seen,
+    );
+    const report = await probeModelHealth(
+      { baseUrl, apiProtocol: "responses", models: ["gpt-fixture"] },
+      fetchImpl,
+      undefined,
+      OWNER,
+    );
+    expect(report.ok).toEqual(["gpt-fixture"]);
+    expect(seen[0]?.url).toBe("http://127.0.0.1:8000/v1/responses");
+    const body = JSON.parse(String(seen[0]?.init?.body ?? "{}")) as Record<string, unknown>;
+    expect(body.max_output_tokens).toBe(100);
+    expect(body.input).toBe("1+1等于几？只回数字。");
+  });
+
+  it("marks a stalled model as a timeout, not a run failure", async () => {
+    const saved = process.env.MODEL_HEALTH_TIMEOUT_MS;
+    process.env.MODEL_HEALTH_TIMEOUT_MS = "1000";
+    try {
+      const fetchImpl = ((_input: RequestInfo | URL, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener(
+            "abort",
+            () => {
+              const error = new Error("The operation was aborted.");
+              error.name = "AbortError";
+              reject(error);
+            },
+            { once: true },
+          );
+        })) as typeof fetch;
+      const report = await probeModelHealth(
+        { baseUrl, models: ["stalled"] },
+        fetchImpl,
+        undefined,
+        OWNER,
+      );
+      expect(report.results).toEqual([
+        { model: "stalled", state: "timeout", detail: "请求超时", seconds: expect.any(Number) },
+      ]);
+      expect(report.summary.timeout).toBe(1);
+    } finally {
+      if (saved === undefined) delete process.env.MODEL_HEALTH_TIMEOUT_MS;
+      else process.env.MODEL_HEALTH_TIMEOUT_MS = saved;
+    }
+  });
+
+  it("marks a transport failure as neterr and keeps the run going", async () => {
+    const fetchImpl = routingFetch({
+      good: { status: 200, body: { choices: [{ message: { content: "2" } }] } },
+    });
+    const failingFetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const model = (JSON.parse(String(init?.body ?? "{}")) as { model?: string }).model ?? "";
+      if (model === "unreachable") throw new TypeError("fetch failed");
+      return fetchImpl(input, init);
+    }) as typeof fetch;
+    const report = await probeModelHealth(
+      { baseUrl, models: ["good", "unreachable"] },
+      failingFetch,
+      undefined,
+      OWNER,
+    );
+    expect(report.ok).toEqual(["good"]);
+    expect(report.results.find((result) => result.model === "unreachable")?.state).toBe("neterr");
+  });
+
+  it("lets the caller's cancel abort the run", async () => {
+    const caller = new AbortController();
+    caller.abort();
+    const fetchImpl = (async () => {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }) as typeof fetch;
+    await expect(
+      probeModelHealth({ baseUrl, models: ["a"] }, fetchImpl, caller.signal, OWNER),
+    ).rejects.toMatchObject({ name: "AbortError" });
   });
 });

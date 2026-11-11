@@ -1,5 +1,14 @@
 export const RU_MESSAGES: Record<string, string> = {
+  "Could not save models": "Не удалось сохранить модели",
+  "Could not test these models": "Не удалось проверить эти модели",
+  "Empty reply": "Пустой ответ",
   "Float outside the app": "Вывести за пределы приложения",
+  "Keep only usable models": "Оставить только рабочие модели",
+  "No models to test": "Нет моделей для проверки",
+  "No permission": "Нет доступа",
+  "Not found": "Не найдена",
+  "Only the first 50 models were tested.": "Проверены только первые 50 моделей.",
+  "Rate limited": "Лимит запросов",
   "Stop floating outside the app": "Убрать всплывающее окно",
   "Can't float outside the app": "Не удаётся вывести за пределы приложения",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
@@ -19,6 +28,9 @@ export const RU_MESSAGES: Record<string, string> = {
     "Спрашивает перед отправкой, тратой денег или изменением чего-либо в ваших приложениях.",
   Haptics: "Тактильный отклик",
   "Add rule": "Добавить правило",
+  "Test all models": "Протестировать все модели",
+  "Test results · {label}": "Результаты проверки · {label}",
+  "Timed out": "Превышено время ожидания",
   "Tool name": "Название инструмента",
   Address: "Адрес",
   "Address line 2": "Адрес, строка 2",
@@ -54,6 +66,7 @@ export const RU_MESSAGES: Record<string, string> = {
     "Не удаётся прочитать сохранённые настройки. Удалите запись и добавьте её снова.",
   "Use letters, numbers and _, starting with a letter.":
     "Используйте буквы, цифры и _, начиная с буквы.",
+  Usable: "Работает",
   Variable: "Переменная",
   Variables: "Переменные",
   "When to use": "Когда использовать",
@@ -1692,6 +1705,7 @@ export const RU_MESSAGES: Record<string, string> = {
   "Could not download the voice models.": "Не удалось скачать голосовые модели.",
   "Could not delete the voice models.": "Не удалось удалить голосовые модели.",
   "Voice models are not downloaded yet.": "Голосовые модели ещё не скачаны.",
+  "{usable} of {total} models work": "{usable} из {total} моделей работают",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

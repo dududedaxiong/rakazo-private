@@ -1,5 +1,14 @@
 export const NL_MESSAGES: Record<string, string> = {
+  "Could not save models": "Modellen konden niet worden opgeslagen",
+  "Could not test these models": "Deze modellen konden niet worden getest",
+  "Empty reply": "Leeg antwoord",
   "Float outside the app": "Buiten de app laten zweven",
+  "Keep only usable models": "Alleen bruikbare modellen behouden",
+  "No models to test": "Geen modellen om te testen",
+  "No permission": "Geen toestemming",
+  "Not found": "Niet gevonden",
+  "Only the first 50 models were tested.": "Alleen de eerste 50 modellen zijn getest.",
+  "Rate limited": "Snelheidslimiet",
   "Stop floating outside the app": "Stop zweven buiten de app",
   "Can't float outside the app": "Zweven buiten de app is niet mogelijk",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
@@ -19,6 +28,9 @@ export const NL_MESSAGES: Record<string, string> = {
     "Vraagt eerst voordat er iets in je apps wordt verstuurd, uitgegeven of gewijzigd.",
   Haptics: "Haptische feedback",
   "Add rule": "Regel toevoegen",
+  "Test all models": "Alle modellen testen",
+  "Test results · {label}": "Testresultaten · {label}",
+  "Timed out": "Time-out",
   "Tool name": "Toolnaam",
   Address: "Adres",
   "Address line 2": "Adresregel 2",
@@ -54,6 +66,7 @@ export const NL_MESSAGES: Record<string, string> = {
     "Deze bewaarde instellingen zijn niet leesbaar. Verwijder het item en voeg het opnieuw toe.",
   "Use letters, numbers and _, starting with a letter.":
     "Gebruik letters, cijfers en _, beginnend met een letter.",
+  Usable: "Bruikbaar",
   Variable: "Variabele",
   Variables: "Variabelen",
   "When to use": "Wanneer gebruiken",
@@ -1651,6 +1664,7 @@ export const NL_MESSAGES: Record<string, string> = {
   "Could not download the voice models.": "De spraakmodellen konden niet worden gedownload.",
   "Could not delete the voice models.": "De spraakmodellen konden niet worden verwijderd.",
   "Voice models are not downloaded yet.": "De spraakmodellen zijn nog niet gedownload.",
+  "{usable} of {total} models work": "{usable} van de {total} modellen werken",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

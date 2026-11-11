@@ -1,5 +1,14 @@
 export const DE_MESSAGES: Record<string, string> = {
+  "Could not save models": "Modelle konnten nicht gespeichert werden",
+  "Could not test these models": "Diese Modelle konnten nicht getestet werden",
+  "Empty reply": "Leere Antwort",
   "Float outside the app": "Außerhalb der App schweben lassen",
+  "Keep only usable models": "Nur nutzbare Modelle behalten",
+  "No models to test": "Keine Modelle zum Testen",
+  "No permission": "Keine Berechtigung",
+  "Not found": "Nicht gefunden",
+  "Only the first 50 models were tested.": "Nur die ersten 50 Modelle wurden getestet.",
+  "Rate limited": "Ratenlimit",
   "Stop floating outside the app": "Schweben außerhalb der App beenden",
   "Can't float outside the app": "Schweben außerhalb der App nicht möglich",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
@@ -19,6 +28,9 @@ export const DE_MESSAGES: Record<string, string> = {
     "Fragt, bevor in deinen Apps etwas gesendet, ausgegeben oder geändert wird.",
   Haptics: "Haptisches Feedback",
   "Add rule": "Regel hinzufügen",
+  "Test all models": "Alle Modelle testen",
+  "Test results · {label}": "Testergebnisse · {label}",
+  "Timed out": "Zeitüberschreitung",
   "Tool name": "Tool-Name",
   Address: "Adresse",
   "Address line 2": "Adresszeile 2",
@@ -54,6 +66,7 @@ export const DE_MESSAGES: Record<string, string> = {
     "Diese gespeicherten Einstellungen können nicht gelesen werden. Entferne den Eintrag und füge ihn erneut hinzu.",
   "Use letters, numbers and _, starting with a letter.":
     "Verwende Buchstaben, Zahlen und _, beginnend mit einem Buchstaben.",
+  Usable: "Nutzbar",
   Variable: "Variable",
   Variables: "Variablen",
   "When to use": "Wann verwenden",
@@ -1664,6 +1677,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Could not download the voice models.": "Die Sprachmodelle konnten nicht heruntergeladen werden.",
   "Could not delete the voice models.": "Die Sprachmodelle konnten nicht gelöscht werden.",
   "Voice models are not downloaded yet.": "Die Sprachmodelle sind noch nicht heruntergeladen.",
+  "{usable} of {total} models work": "{usable} von {total} Modellen funktionieren",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

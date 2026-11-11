@@ -1,5 +1,14 @@
 export const JA_MESSAGES: Record<string, string> = {
+  "Could not save models": "モデルを保存できませんでした",
+  "Could not test these models": "これらのモデルをテストできませんでした",
+  "Empty reply": "空の応答",
   "Float outside the app": "アプリの外にフローティング表示",
+  "Keep only usable models": "利用可能なモデルのみ残す",
+  "No models to test": "テストするモデルがありません",
+  "No permission": "権限なし",
+  "Not found": "見つかりません",
+  "Only the first 50 models were tested.": "最初の50個のモデルのみテストしました。",
+  "Rate limited": "レート制限",
   "Stop floating outside the app": "アプリ外のフローティングを止める",
   "Can't float outside the app": "アプリの外にフローティングできません",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
@@ -19,6 +28,9 @@ export const JA_MESSAGES: Record<string, string> = {
     "アプリでの送信、支払い、変更の前に確認します。",
   Haptics: "触覚フィードバック",
   "Add rule": "ルールを追加",
+  "Test all models": "すべてのモデルをテスト",
+  "Test results · {label}": "テスト結果 · {label}",
+  "Timed out": "タイムアウト",
   "Tool name": "ツール名",
   Address: "住所",
   "Address line 2": "住所 2",
@@ -54,6 +66,7 @@ export const JA_MESSAGES: Record<string, string> = {
     "保存された設定を読み取れません。削除してもう一度追加してください。",
   "Use letters, numbers and _, starting with a letter.":
     "英字、数字、_ を使い、英字で始めてください。",
+  Usable: "利用可能",
   Variable: "変数",
   Variables: "変数",
   "When to use": "使う場面",
@@ -1685,6 +1698,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Could not download the voice models.": "音声モデルをダウンロードできませんでした。",
   "Could not delete the voice models.": "音声モデルを削除できませんでした。",
   "Voice models are not downloaded yet.": "音声モデルはまだダウンロードされていません。",
+  "{usable} of {total} models work": "{total} 個中 {usable} 個のモデルが動作します",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "{peer}とのメッセージ{count}件" };

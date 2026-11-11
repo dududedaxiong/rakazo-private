@@ -1,11 +1,12 @@
 import { useLingui } from "@lingui/react/macro";
-import type { Me, SettingsScope, ThinkingLevel } from "@rakazo/contracts";
+import type { Me, ModelHealthReport, SettingsScope, ThinkingLevel } from "@rakazo/contracts";
 import {
   compatibleEndpointPresets,
   connectionDisplayName,
   MAX_MODEL_CONTEXT_WINDOW,
   MAX_MODEL_MAX_TOKENS,
   matchCompatibleEndpointPreset,
+  OPENAI_COMPATIBLE_PROVIDER_ID,
   savedCompatibleEndpointMatches,
 } from "@rakazo/contracts";
 import {
@@ -112,6 +113,7 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     runPreflight,
     selected,
     setApiKey,
+    setEnabledModelIds,
     setError,
     setHeaderRows,
     setModelId,
@@ -130,6 +132,9 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
   );
   const [pending, setPending] = useState<"connect" | "settings" | "disconnect" | null>(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+  const [healthTesting, setHealthTesting] = useState(false);
+  const [healthResult, setHealthResult] = useState<ModelHealthReport | null>(null);
+  const [healthKeeping, setHealthKeeping] = useState(false);
   const refreshRevisionRef = useRef(0);
   const selectionRevisionRef = useRef(0);
   const formRevisionRef = useRef(0);
@@ -465,6 +470,54 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     }
   }
 
+  /** Tests every model on the saved connection with one real question each. */
+  async function testAllModels() {
+    if (!credential || !isOpenAiCompatible || healthTesting) return;
+    setHealthTesting(true);
+    setError(null);
+    try {
+      setHealthResult(await rpc.models.testProvider({ credentialId: credential.id }));
+    } catch (err) {
+      setError(errorText(err, t`Could not test models`));
+    } finally {
+      setHealthTesting(false);
+    }
+  }
+
+  /**
+   * Keeps only the models that answered, on the saved connection. The test ran
+   * against the saved endpoint, so the save uses its base URL and model, not
+   * the form's unsaved edits.
+   */
+  async function keepUsableModels() {
+    if (!credential || !healthResult || healthKeeping) return;
+    const usable = healthResult.ok;
+    setHealthKeeping(true);
+    setError(null);
+    try {
+      const saved = await rpc.models.connect({
+        provider: OPENAI_COMPATIBLE_PROVIDER_ID,
+        credentialId: credential.id,
+        baseUrl: credential.baseUrl ?? baseUrl,
+        modelId: credential.modelId ?? modelId,
+        enabledModelIds: usable,
+        makeDefault: false,
+      });
+      setEnabledModelIds(saved.enabledModelIds ?? usable);
+      setHealthResult(null);
+      await refresh({ keepForm: true });
+      setNotice(t`Saved.`);
+    } catch (err) {
+      setError(errorText(err, t`Could not save models`));
+    } finally {
+      setHealthKeeping(false);
+    }
+  }
+
+  function closeHealthResult() {
+    setHealthResult(null);
+  }
+
   function handleClose() {
     cancelOAuthAttempt(false);
     onClose();
@@ -503,6 +556,7 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     catalog,
     catalogThinkingLevels,
     chooseProvider,
+    closeHealthResult,
     codeCopied,
     compatibleRows,
     confirmDisconnect,
@@ -520,7 +574,11 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     effectiveBaseUrl,
     groups,
     handleClose,
+    healthKeeping,
+    healthResult,
+    healthTesting,
     hostCredentialSource,
+    keepUsableModels,
     loading,
     me,
     oauth,
@@ -537,6 +595,7 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     settingsDirty,
     submitOAuthCode,
     subscriptionSignIn,
+    testAllModels,
     testOAuthConnection,
     usingServerCredentials,
   };

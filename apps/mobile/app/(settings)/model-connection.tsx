@@ -2,6 +2,7 @@ import type {
   ModelApiProtocol,
   ModelAuthMode,
   ModelHeaderRow,
+  ModelHealthReport,
   ThinkingLevel,
 } from "@rakazo/contracts";
 import {
@@ -49,6 +50,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { CompatibleEndpointForm } from "../../components/compatible-endpoint-form";
 import { DisclosureRow, LimitField } from "../../components/model-connection-fields";
 import { createModelsStyles } from "../../components/model-connection-styles";
+import { ModelHealthDialog } from "../../components/model-health-dialog";
 import { NativeActionButton } from "../../components/native-action-button";
 import { useI18n } from "../../lib/i18n";
 import type { MobileMe, MobileModel, MobileModelCredential } from "../../lib/mobile-types";
@@ -112,6 +114,9 @@ export default function ModelConnection() {
   const [{ models: probeModels, probing }, setProbe] = useState(initialModelProbeState);
   const [modelProbe] = useState(() => createModelProbe(setProbe));
   const resetOpenAiCompatibleProbe = modelProbe.reset;
+  const [healthTesting, setHealthTesting] = useState(false);
+  const [healthResult, setHealthResult] = useState<ModelHealthReport | null>(null);
+  const [healthKeeping, setHealthKeeping] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<"connect" | "disconnect" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -373,6 +378,61 @@ export default function ModelConnection() {
     });
   }
 
+  /** Tests every model on the saved connection with one real question each. */
+  async function testAllModels() {
+    if (!credential || !isOpenAiCompatible || healthTesting) return;
+    setHealthTesting(true);
+    clearFeedback();
+    try {
+      setHealthResult(
+        await rpc("models/testProvider", { credentialId: credential.id }, { timeoutMs: 120_000 }),
+      );
+    } catch (err) {
+      publishFeedback("connection", {
+        error: errorText(err, t("Could not test these models")),
+      });
+    } finally {
+      setHealthTesting(false);
+    }
+  }
+
+  /**
+   * Keeps only the models that answered, on the saved connection. The test ran
+   * against the saved endpoint, so the save uses its base URL and model, not
+   * the form's unsaved edits. No key is sent, so the saved one is kept.
+   */
+  async function keepUsableModels() {
+    if (!credential || !healthResult || healthKeeping) return;
+    const usable = healthResult.ok;
+    setHealthKeeping(true);
+    clearFeedback();
+    try {
+      const saved = await rpc(
+        "models/connect",
+        {
+          provider: OPENAI_COMPATIBLE_PROVIDER_ID,
+          credentialId: credential.id,
+          baseUrl: credential.baseUrl ?? baseUrl,
+          modelId: credential.modelId ?? modelId,
+          enabledModelIds: usable,
+          makeDefault: false,
+        },
+        { timeoutMs: MODEL_CONNECT_TIMEOUT_MS },
+      );
+      credentialIdRef.current = saved.id;
+      setCredentialId(saved.id);
+      setHealthResult(null);
+      await load({ modelId });
+      publishFeedback("connection", { notice: t("Saved.") });
+    } catch (err) {
+      publishFeedback("connection", {
+        error: errorText(err, t("Could not save models")),
+      });
+    } finally {
+      setHealthKeeping(false);
+    }
+  }
+
   async function disconnectCredential() {
     if (!selected || !credential) return;
     cancelOAuth();
@@ -523,6 +583,9 @@ export default function ModelConnection() {
       baseUrl={baseUrl}
       onChangeBaseUrl={updateBaseUrl}
       onFindModels={() => void probeServerModels()}
+      canTestModels={Boolean(credential)}
+      testingModels={healthTesting}
+      onTestModels={() => void testAllModels()}
       hasPreset={Boolean(endpointPreset)}
       showEndpointHelp={showEndpointHelp}
       onToggleEndpointHelp={() => setShowEndpointHelp((visible) => !visible)}
@@ -922,6 +985,14 @@ export default function ModelConnection() {
           feedback
         )}
       </ScrollView>
+      {healthResult ? (
+        <ModelHealthDialog
+          result={healthResult}
+          keeping={healthKeeping}
+          onClose={() => setHealthResult(null)}
+          onKeepUsable={() => void keepUsableModels()}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }

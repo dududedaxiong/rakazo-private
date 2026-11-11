@@ -34,6 +34,10 @@ type CompatibleEndpointFormProps = {
   baseUrl: string;
   onChangeBaseUrl: (next: string) => void;
   onFindModels: () => void;
+  /** A saved connection can be tested model by model; a new one cannot yet. */
+  canTestModels: boolean;
+  testingModels: boolean;
+  onTestModels: () => void;
   /** A known endpoint needs no setup help. */
   hasPreset: boolean;
   showEndpointHelp: boolean;
@@ -79,6 +83,9 @@ export function CompatibleEndpointForm({
   baseUrl,
   onChangeBaseUrl,
   onFindModels,
+  canTestModels,
+  testingModels,
+  onTestModels,
   hasPreset,
   showEndpointHelp,
   onToggleEndpointHelp,
@@ -165,6 +172,16 @@ export function CompatibleEndpointForm({
         prominence="secondary"
         style={{ marginTop: 12 }}
       />
+      {canTestModels ? (
+        <NativeActionButton
+          disabled={busy || testingModels}
+          fill
+          label={testingModels ? t("Testing…") : t("Test all models")}
+          onPress={onTestModels}
+          prominence="secondary"
+          style={{ marginTop: 12 }}
+        />
+      ) : null}
       {!hasPreset ? (
         <>
           <DisclosureRow

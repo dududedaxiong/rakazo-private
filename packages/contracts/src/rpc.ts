@@ -190,6 +190,7 @@ import {
   ModelConnectionLabelSchema,
   ModelConnectionTargetSchema,
   ModelCredentialSchema,
+  ModelHealthReportSchema,
   ModelOAuthBeginSchema,
   OPENAI_COMPATIBLE_PROVIDER_ID,
 } from "./model-connections.js";
@@ -548,6 +549,7 @@ export const appContract = {
         }),
       )
       .output(z.object({ models: z.array(z.string()) })),
+    testProvider: oc.input(z.object({ credentialId: z.string() })).output(ModelHealthReportSchema),
     probeCatalog: oc
       .input(
         z.object({
