@@ -4,6 +4,7 @@ import {
   narrateTool,
   speakable,
   speechFromBlocks,
+  splitCompleteSentences,
   spokenDecision,
   toUtterances,
 } from "./speech-text.js";
@@ -229,6 +230,52 @@ describe("toUtterances", () => {
   it("is empty for text that speaks to nothing", () => {
     expect(toUtterances("```\ncode only\n```")).not.toContain("code only");
     expect(toUtterances("")).toEqual([]);
+  });
+});
+
+describe("splitCompleteSentences", () => {
+  it("splits Chinese sentences at their own marks", () => {
+    const out = splitCompleteSentences("你好，我是小智。今天天气不错，我们去公园吧。");
+    expect(out.sentences).toEqual(["你好，我是小智。", "今天天气不错，我们去公园吧。"]);
+    expect(out.rest).toBe("");
+  });
+
+  it("splits English sentences and keeps the unfinished tail", () => {
+    const out = splitCompleteSentences("The tests pass now. I changed two");
+    expect(out.sentences).toEqual(["The tests pass now."]);
+    expect(out.rest).toBe("I changed two");
+  });
+
+  it("does not split inside a decimal or an abbreviation", () => {
+    const out = splitCompleteSentences("It dropped to 11.7 seconds. Dr. Smith agreed.");
+    expect(out.sentences).toEqual(["It dropped to 11.7 seconds.", "Dr. Smith agreed."]);
+    expect(out.rest).toBe("");
+  });
+
+  it("splits at a newline and at a sentence that ends the buffer", () => {
+    const out = splitCompleteSentences("First line\nSecond line.");
+    expect(out.sentences).toEqual(["First line", "Second line."]);
+    expect(out.rest).toBe("");
+  });
+
+  it("keeps a closing quote with its sentence", () => {
+    const out = splitCompleteSentences("他说：“你好。”然后走了。");
+    expect(out.sentences).toEqual(["他说：“你好。”", "然后走了。"]);
+  });
+
+  it("cuts a run-on tail at a clause instead of waiting forever", () => {
+    const tail = `这是一句很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长很长的话，没有句号`;
+    expect(tail.length).toBeGreaterThan(60);
+    const out = splitCompleteSentences(`先说一句。${tail}`);
+    expect(out.sentences[0]).toBe("先说一句。");
+    expect(out.sentences.length).toBeGreaterThan(1);
+    expect(out.sentences.join("")).toContain("这是一句");
+    expect(out.rest.length).toBeLessThanOrEqual(60);
+  });
+
+  it("returns nothing spoken for an empty buffer", () => {
+    expect(splitCompleteSentences("")).toEqual({ sentences: [], rest: "" });
+    expect(splitCompleteSentences("   ").sentences).toEqual([]);
   });
 });
 

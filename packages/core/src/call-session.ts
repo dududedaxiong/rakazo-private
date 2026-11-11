@@ -4,7 +4,7 @@ import { isRunWorking } from "./run-state.js";
 import { spokenDecision } from "./speech-text.js";
 
 /** One line of a call's transcript. */
-export type CallExchange = { role: "user" | "bot"; text: string };
+export type CallExchange = { role: "user" | "bot"; text: string; messageId?: string };
 
 /** How long a goodbye waits for a reply that may never come before hanging up anyway. */
 export const CALL_FAREWELL_TIMEOUT_MS = 20_000;

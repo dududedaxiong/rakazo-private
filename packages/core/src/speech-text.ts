@@ -110,6 +110,115 @@ export function speakable(input: string): string {
 const BOUNDARY =
   /(?<!\b(?:e\.g|i\.e|etc|vs|Dr|Mr|Mrs|Ms|No|approx))(?<![.\d])([.!?])(["')\]]*)\s+/g;
 
+/** What a still-growing reply yields: the sentences ready to speak, and the tail still waiting on its ending. */
+export type StreamingSentences = { sentences: string[]; rest: string };
+
+/** Words whose dot ends an abbreviation, not a sentence. */
+const STREAMING_ABBREVIATIONS = new Set([
+  "e.g",
+  "i.e",
+  "etc",
+  "vs",
+  "dr",
+  "mr",
+  "mrs",
+  "ms",
+  "no",
+  "approx",
+]);
+
+const CLOSING_MARKS = /["'”’）」』\]\)]/;
+
+/**
+ * Where one sentence ends in still-arriving text: past its terminal marks
+ * and any closing quotes, or -1 when the mark does not end a sentence.
+ * Chinese marks end a sentence wherever they land; an English mark needs
+ * whitespace or the end after it, and never splits a decimal or an
+ * abbreviation. A newline ends a sentence too.
+ */
+function streamingBoundaryEnd(text: string, index: number): number {
+  const ch = text[index]!;
+  if (ch === "\n") return index + 1;
+  const isChinese = ch === "。" || ch === "！" || ch === "？" || ch === "；" || ch === "…";
+  const isAscii = ch === "." || ch === "!" || ch === "?";
+  if (!isChinese && !isAscii) return -1;
+  if (isAscii) {
+    const prev = text[index - 1] ?? "";
+    const next = text[index + 1] ?? "";
+    if (ch === "." && /\d/.test(prev) && /\d/.test(next)) return -1;
+    if (ch === ".") {
+      const word = text
+        .slice(0, index)
+        .match(/([A-Za-z]+)$/)?.[1]
+        ?.toLowerCase();
+      if (word && STREAMING_ABBREVIATIONS.has(word)) return -1;
+    }
+    // A run of terminal marks counts as one ending ("Hello..." ends once).
+    let j = index + 1;
+    while (j < text.length && /[.!?]/.test(text[j]!)) j++;
+    while (j < text.length && CLOSING_MARKS.test(text[j]!)) j++;
+    const after = text[j] ?? "";
+    if (after !== "" && !/\s/.test(after)) return -1;
+    return j;
+  }
+  let j = index + 1;
+  while (j < text.length && /[。！？；…]/.test(text[j]!)) j++;
+  while (j < text.length && CLOSING_MARKS.test(text[j]!)) j++;
+  return j;
+}
+
+/** Cuts a run-on tail at a clause, or hard at the budget, keeping pairs intact. */
+function forceCutTail(text: string, maxChars: number): number {
+  const window = text.slice(0, maxChars);
+  const at = Math.max(
+    window.lastIndexOf("，"),
+    window.lastIndexOf("、"),
+    window.lastIndexOf(", "),
+    window.lastIndexOf("; "),
+    window.lastIndexOf(" "),
+  );
+  if (at > maxChars / 2) return at + 1;
+  return Array.from(text).slice(0, maxChars).join("").length;
+}
+
+/**
+ * Pulls complete sentences out of text that is still arriving. A sentence
+ * ends at a Chinese or English terminal mark, or a newline; the tail stays
+ * in `rest` until its own ending arrives. A tail that runs past
+ * `maxTailChars` without an ending is cut at a clause instead, so the voice
+ * never waits on a run-on sentence.
+ */
+export function splitCompleteSentences(
+  buffer: string,
+  { maxTailChars = 60 }: { maxTailChars?: number } = {},
+): StreamingSentences {
+  const sentences: string[] = [];
+  let start = 0;
+  let i = 0;
+  while (i < buffer.length) {
+    const end = streamingBoundaryEnd(buffer, i);
+    if (end === -1) {
+      i += 1;
+      continue;
+    }
+    const sentence = buffer.slice(start, end).trim();
+    if (sentence) sentences.push(sentence);
+    let next = end;
+    while (next < buffer.length && /\s/.test(buffer[next]!)) next += 1;
+    start = next;
+    i = next;
+  }
+  let rest = buffer.slice(start);
+  while (rest.length > maxTailChars) {
+    const cut = forceCutTail(rest, maxTailChars);
+    if (cut <= 0) break;
+    const piece = rest.slice(0, cut).trim();
+    if (piece) sentences.push(piece);
+    rest = rest.slice(cut).trimStart();
+  }
+  return { sentences, rest };
+}
+
 /**
  * Split speakable text into utterances a synthesizer can start on.
  * Short fragments are glued onto their neighbour so the voice keeps context.

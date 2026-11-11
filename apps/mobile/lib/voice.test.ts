@@ -14,6 +14,7 @@ import {
   playSpeechClip,
   resumeVoicePlayback,
   speakQueue,
+  speakStreaming,
   speakText,
   speakUtterance,
   speakWithDeviceVoice,
@@ -233,6 +234,78 @@ class ControllableAudio {
     this.paused = true;
   }
 }
+
+describe("streaming speech", () => {
+  beforeEach(() => {
+    vi.mocked(onDeviceSpeech.onDeviceSpeechAvailable).mockResolvedValue(true);
+  });
+
+  afterEach(() => {
+    // restoreAllMocks does not reset these factory mocks back to unavailable,
+    // and a later suite's speakText would take the on-device branch instead
+    // of the hosted one it is testing.
+    vi.mocked(onDeviceSpeech.onDeviceSpeechAvailable).mockResolvedValue(false);
+    vi.mocked(onDeviceSpeech.speakOnDeviceSpeech).mockResolvedValue(false);
+  });
+
+  it("speaks finished sentences in order as they arrive", async () => {
+    const spoken: string[] = [];
+    vi.mocked(onDeviceSpeech.speakOnDeviceSpeech).mockImplementation(async (text: string) => {
+      spoken.push(text);
+      return true;
+    });
+    const owner = createSpeechOwner();
+    const stream = speakStreaming({ botId: "bot-1", owner });
+    stream.enqueue("第一句。第二句。");
+    await waitFor(() => spoken.length === 2);
+    expect(spoken).toEqual(["第一句。", "第二句。"]);
+    await expect(stream.finish()).resolves.toBe(true);
+  });
+
+  it("finish speaks the trailing text without punctuation", async () => {
+    const spoken: string[] = [];
+    vi.mocked(onDeviceSpeech.speakOnDeviceSpeech).mockImplementation(async (text: string) => {
+      spoken.push(text);
+      return true;
+    });
+    const owner = createSpeechOwner();
+    const stream = speakStreaming({ botId: "bot-1", owner });
+    stream.enqueue("第一句。");
+    stream.enqueue("第一句。第二句没标点");
+    await waitFor(() => spoken.length === 1);
+    await expect(stream.finish()).resolves.toBe(true);
+    expect(spoken).toEqual(["第一句。", "第二句没标点"]);
+  });
+
+  it("stop clears the queue and settles the stream without speaking the rest", async () => {
+    const spoken: string[] = [];
+    let releaseFirst!: () => void;
+    const firstHeld = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    vi.mocked(onDeviceSpeech.speakOnDeviceSpeech).mockImplementation(async (text: string) => {
+      spoken.push(text);
+      if (text === "第一句。") await firstHeld;
+      return true;
+    });
+    const owner = createSpeechOwner();
+    const stream = speakStreaming({ botId: "bot-1", owner });
+    stream.enqueue("第一句。第二句。第三句。");
+    await waitFor(() => spoken.length === 1);
+    stopSpeaking(owner);
+    releaseFirst();
+    await expect(stream.done).resolves.toBe(true);
+    expect(spoken).toEqual(["第一句。"]);
+  });
+
+  it("reports false when no voice speaks anything", async () => {
+    vi.mocked(onDeviceSpeech.speakOnDeviceSpeech).mockResolvedValue(false);
+    const owner = createSpeechOwner();
+    const stream = speakStreaming({ botId: "bot-1", owner });
+    stream.enqueue("第一句。");
+    await expect(stream.finish()).resolves.toBe(false);
+  });
+});
 
 describe("hosted voice playback controls", () => {
   beforeEach(() => {

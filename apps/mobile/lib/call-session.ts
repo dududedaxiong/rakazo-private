@@ -47,8 +47,8 @@ import { listenOnDeviceSpeech, onDeviceSpeechAvailable } from "./on-device-speec
 import { fetchServer } from "./server-headers";
 import { currentSessionGeneration, subscribeSessionGeneration } from "./session";
 import { errorText, voiceAccountErrorText } from "./user-error";
-import type { SpeechOwner } from "./voice";
-import { createSpeechOwner, speakText, stopSpeaking } from "./voice";
+import type { SpeechOwner, StreamingSpeech } from "./voice";
+import { createSpeechOwner, speakStreaming, speakText, stopSpeaking } from "./voice";
 
 export type CallPhase = "listening" | "thinking" | "speaking";
 
@@ -94,6 +94,8 @@ export type CallDeps = {
   /** Tells the server the caller hung up, so it files the call marker and the wrap-up run. */
   endCall: (botId: string, callId: string) => Promise<void>;
   speak: (botId: string, text: string) => Promise<void>;
+  /** Streams a reply aloud as it arrives; when absent, replies speak whole. */
+  speakStream?: (botId: string) => StreamingSpeech;
   /** Cuts the reply off when the caller talks over it. */
   stopSpeaking: () => void;
   /** The opening cue as the call starts, the closing one once the caller's turn is heard. */
@@ -106,6 +108,8 @@ export type CallDeps = {
     onCallEnded: (ended: CallEnded) => void,
     /** Every update of the call's thread, so a turn can answer what the bot is waiting on. */
     onThread: (thread: MobileSnapshot) => void,
+    /** A reply still streaming in, so its first sentences can be spoken as they arrive. */
+    onPartial?: (messageId: string, text: string, runId?: string) => void,
   ) => () => void;
 };
 
@@ -158,6 +162,9 @@ let consentBlocked = false;
 let botEndedCall = false;
 let hangUpTimer: ReturnType<typeof setTimeout> | null = null;
 let spokenMessageId: string | null = null;
+/** The reply streaming in now, if any: its speech, so the final text flushes it instead of speaking whole. */
+let streamingSpeech: { messageId: string; speech: StreamingSpeech; finished: boolean } | null =
+  null;
 /** The call's thread as the live feed last reported it. */
 let thread: MobileSnapshot | null = null;
 /** The microphone stays shut while the bot waits on a code typed on screen. */
@@ -181,6 +188,7 @@ let bargedIn = false;
 const interim = createInterimBargeIn(() => {
   if (state?.phase !== "speaking") return;
   bargedIn = true;
+  streamingSpeech = null;
   deps.stopSpeaking();
   set({ phase: "listening", caption: "" });
 });
@@ -268,9 +276,15 @@ export function startCall(
   };
   // An ended call's watcher can still deliver a buffered snapshot; it must not reach this call.
   const watchedCallId = callId;
-  unwatch = deps.watch(call.botId, onReply, onCallEnded, (next) => {
-    if (callId === watchedCallId) onThread(next);
-  });
+  unwatch = deps.watch(
+    call.botId,
+    onReply,
+    onCallEnded,
+    (next) => {
+      if (callId === watchedCallId) onThread(next);
+    },
+    onPartial,
+  );
   emit();
   void openCall(callId, call.greeting);
   return callId;
@@ -333,6 +347,7 @@ export function endCall(): void {
   botEndedCall = false;
   callRunId = null;
   spokenMessageId = null;
+  streamingSpeech = null;
   thread = null;
   heldForCode = false;
   failures = 0;
@@ -500,6 +515,7 @@ async function handleTranscript(raw: string): Promise<void> {
     // The caller talked over the reply: cut the audio, and never resume that message.
     bargedIn = true;
     interim.clear();
+    streamingSpeech = null;
     deps.stopSpeaking();
     set({ phase: "thinking", caption: "" });
   }
@@ -655,11 +671,116 @@ function heardInterim(text: string): void {
 
 function onReply(messageId: string, text: string, runId?: string): void {
   // Work the bot files after hanging up belongs in the thread, not in the caller's ear.
-  if (!state || switching || botEndedCall || messageId === spokenMessageId) return;
+  if (!state || switching || botEndedCall) return;
   // A reply to something typed into the thread mid-call belongs on screen only.
   if (callRunId && runId && runId !== callRunId) return;
+  const streaming = streamingSpeech?.messageId === messageId ? streamingSpeech : null;
+  if (streaming) {
+    // The reply already streamed in: flush its tail and let the stream land.
+    streaming.finished = true;
+    spokenMemory.remember(text);
+    set({
+      exchanges: state.exchanges.map((exchange) =>
+        exchange.messageId === messageId ? { ...exchange, text } : exchange,
+      ),
+    });
+    streaming.speech.enqueue(text);
+    void streaming.speech.finish();
+    return;
+  }
+  if (messageId === spokenMessageId) {
+    // The reply streamed in, then the caller cut it off: the transcript still
+    // shows the whole reply, it just never plays.
+    set({
+      exchanges: state.exchanges.map((exchange) =>
+        exchange.messageId === messageId ? { ...exchange, text } : exchange,
+      ),
+    });
+    return;
+  }
   spokenMessageId = messageId;
   speakAndListen(text);
+}
+
+/** A reply still streaming in: speak its finished sentences as they arrive. */
+function onPartial(messageId: string, text: string, runId?: string): void {
+  if (!state || switching || botEndedCall) return;
+  if (callRunId && runId && runId !== callRunId) return;
+  if (!deps.speakStream) return;
+  const streaming = streamingSpeech?.messageId === messageId ? streamingSpeech : null;
+  if (streaming) {
+    if (streaming.finished) return;
+    const spoken = text.trim();
+    if (!spoken) return;
+    // Remember each arrival: the microphone hears the reply as it plays, and
+    // the echo check must know those words before they come back through it.
+    spokenMemory.remember(text);
+    streaming.speech.enqueue(text);
+    set({
+      exchanges: state.exchanges.map((exchange) =>
+        exchange.messageId === messageId ? { ...exchange, text } : exchange,
+      ),
+    });
+    return;
+  }
+  if (messageId === spokenMessageId) return;
+  if (streamingSpeech) return;
+  const spoken = text.trim();
+  if (!spoken) return;
+  startStreamingSpeak(messageId, text);
+}
+
+/** The streaming version of speakAndListen: the first sentence plays while the rest arrives. */
+function startStreamingSpeak(messageId: string, firstText: string): void {
+  if (!state || !deps.speakStream) return;
+  const { botId } = state;
+  const speakingCallId = callId;
+  const speechId = ++speechSeq;
+  const superseded = () =>
+    state?.botId !== botId || callId !== speakingCallId || speechSeq !== speechId;
+  bargedIn = false;
+  interim.clear();
+  spokenMessageId = messageId;
+  spokenMemory.remember(firstText);
+  set({ exchanges: [...state.exchanges, { role: "bot", text: firstText, messageId }] });
+  if (consentBlocked) {
+    set({ phase: "listening", heard: "" });
+    return;
+  }
+  // Only the on-device path can hear the caller over the reply; the recorder would just
+  // record the speaker, so it stays shut until playback ends.
+  if (!onDevice) {
+    turn?.abort();
+    turn = null;
+    micOpen = false;
+  }
+  set({ phase: "speaking", heard: "" });
+  if (onDevice) void openMic();
+  const speech = deps.speakStream(botId);
+  streamingSpeech = { messageId, speech, finished: false };
+  speech.enqueue(firstText);
+  void speech.done.then((spoken) => {
+    if (superseded()) return;
+    if (bargedIn) return;
+    if (streamingSpeech?.messageId === messageId) streamingSpeech = null;
+    const error = speech.error;
+    if (error instanceof AiConsentBlocked) {
+      if (botEndedCall || farewellSent) {
+        endCall();
+        return;
+      }
+      blockForConsent(error);
+      return;
+    }
+    if (!spoken) {
+      set({
+        caption: error
+          ? errorText(error, t("Could not speak that."))
+          : t("Add a voice provider in Voice settings."),
+      });
+    }
+    void listen();
+  });
 }
 
 /** Keeps the thread current, and the microphone shut while the bot waits on a typed code. */
@@ -838,6 +959,7 @@ function productionDeps(requestContext?: ApiRequestContext): CallDeps {
       ),
     endCall: async (botId, id) => closeCall(botId, id, await callContext()),
     speak: (botId, text) => speakReply(botId, text, speechOwner, requestContext),
+    speakStream: (botId) => speakStreaming({ botId, owner: speechOwner, requestContext }),
     stopSpeaking: () => stopSpeaking(speechOwner),
     cue: playCallCue,
     waitSound: (action) => {
@@ -846,8 +968,8 @@ function productionDeps(requestContext?: ApiRequestContext): CallDeps {
       else if (action === "preload") void preloadWaitSound().catch(() => undefined);
       else releaseWaitSound();
     },
-    watch: (botId, onReply, onEnded, onThread) =>
-      watchReplies(botId, onReply, onEnded, onThread, requestContext),
+    watch: (botId, onReply, onEnded, onThread, onPartial) =>
+      watchReplies(botId, onReply, onEnded, onThread, requestContext, onPartial),
   };
   return own;
 }
@@ -999,12 +1121,14 @@ function watchReplies(
   onEnded: (ended: CallEnded) => void,
   onThread: (thread: MobileSnapshot) => void,
   requestContext?: ApiRequestContext,
+  onPartial?: (messageId: string, text: string, runId?: string) => void,
 ): () => void {
   const controller = new AbortController();
   const watchedCallId = callId;
   void (async () => {
     let snapshot: MobileSnapshot | null = null;
     let lastSeen: string | null = null;
+    let lastPartial: { id: string; text: string } | null = null;
     let cursor = 0;
     let retry = FEED_RETRY_MIN_MS;
     let failure: unknown;
@@ -1021,7 +1145,11 @@ function watchReplies(
             { botId },
             { signal: controller.signal, requestContext },
           );
-          lastSeen = latestSpokenCallReply(snapshot.messages, watchedCallId)?.id ?? null;
+          const latest = latestSpokenCallReply(snapshot.messages, watchedCallId);
+          lastSeen = latest?.id ?? null;
+          // Seed the partial text too: a reply already on screen only
+          // streams from where it changes, never from the start.
+          lastPartial = latest ? { id: latest.id, text: blockText(latest).trim() } : null;
           cursor = snapshot.cursor ?? 0;
           onThread(snapshot);
         }
@@ -1042,18 +1170,27 @@ function watchReplies(
             if (!snapshot) return;
             if (snapshot !== previous) onThread(snapshot);
             const message = latestSpokenCallReply(snapshot.messages, watchedCallId);
-            if (!message || message.id === lastSeen) return;
-            // Wait for the message's own run to settle so half-written blocks are never
-            // spoken; another run still working says nothing about this one.
+            if (!message) return;
+            const text = blockText(message).trim();
+            if (!text) return;
+            // While the message's own run is still working, hand the text
+            // over as it arrives instead of waiting for the whole reply;
+            // another run still working says nothing about this one.
             // An answered question can resume a run behind the one the thread shows first, so
             // look the message's run up among every active run.
             const run =
               snapshot?.activeRuns?.find((active) => active.id === message.runId) ?? snapshot?.run;
             const fromAnotherRun = Boolean(message.runId && message.runId !== run?.id);
-            if (!fromAnotherRun && run && ACTIVE_RUN_STATUSES.some((s) => s === run.status)) return;
-            const text = blockText(message).trim();
-            if (!text) return;
+            if (!fromAnotherRun && run && ACTIVE_RUN_STATUSES.some((s) => s === run.status)) {
+              if (onPartial && (lastPartial?.id !== message.id || lastPartial.text !== text)) {
+                lastPartial = { id: message.id, text };
+                onPartial(message.id, text, message.runId);
+              }
+              return;
+            }
+            if (message.id === lastSeen) return;
             lastSeen = message.id;
+            lastPartial = null;
             onNewReply(message.id, text, message.runId);
           },
           controller.signal,

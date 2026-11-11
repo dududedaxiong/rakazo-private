@@ -62,6 +62,7 @@ vi.mock("expo-file-system", () => ({
 vi.mock("./voice", () => ({
   createSpeechOwner: () => Symbol("SpeechOwner"),
   speakText: vi.fn(),
+  speakStreaming: vi.fn(),
   stopSpeaking: vi.fn(),
 }));
 vi.mock("./call-sounds", () => ({ playCallCue: vi.fn() }));
@@ -133,6 +134,22 @@ function deferred<T>(): Deferred<T> {
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+function fakeStream() {
+  let resolveDone: (spoken: boolean) => void = () => undefined;
+  const done = new Promise<boolean>((resolve) => {
+    resolveDone = resolve;
+  });
+  const stream = {
+    enqueue: vi.fn(),
+    finish: vi.fn(() => {
+      resolveDone(true);
+      return done;
+    }),
+    done,
+  };
+  return { stream, resolveDone };
+}
+
 function idleThread(botId: string): MobileSnapshot {
   return { threadId: "thread-1", botId, cursor: 0, olderCursor: null, run: null, messages: [] };
 }
@@ -141,6 +158,7 @@ function fakes(opts: { onDevice?: boolean; loadThread?: boolean } = {}) {
   const recordings: Array<Deferred<CallClip | null>> = [];
   const signals: AbortSignal[] = [];
   const speeches: Array<Deferred<void>> = [];
+  const streams: Array<ReturnType<typeof fakeStream>> = [];
   const send = vi.fn(
     async (_botId: string, _text: string, _clientNonce: string): Promise<string | undefined> =>
       "run-1",
@@ -157,11 +175,14 @@ function fakes(opts: { onDevice?: boolean; loadThread?: boolean } = {}) {
   const unwatch = vi.fn();
   let threadUpdate: (thread: MobileSnapshot) => void = () => undefined;
   let reply: (messageId: string, text: string, runId?: string) => void = () => undefined;
+  let partial: (messageId: string, text: string, runId?: string) => void = () => undefined;
   let ended: (ended: CallEnded) => void = () => undefined;
   const spoken: string[] = [];
   let handlers: DictationHandlers | null = null;
   const stopSpeaking = vi.fn(() => {
     speeches[speeches.length - 1]?.resolve();
+    // The real stream stops with the speaker: its done settles instead of hanging.
+    streams[streams.length - 1]?.resolveDone(true);
   });
   const cues: string[] = [];
   const waits: string[] = [];
@@ -197,10 +218,16 @@ function fakes(opts: { onDevice?: boolean; loadThread?: boolean } = {}) {
       speeches.push(next);
       return next.promise;
     },
-    watch: (botId, onReply, onCallEnded, onThread) => {
+    speakStream: vi.fn(() => {
+      const made = fakeStream();
+      streams.push(made);
+      return made.stream;
+    }),
+    watch: (botId, onReply, onCallEnded, onThread, onPartial) => {
       reply = onReply;
       ended = onCallEnded;
       threadUpdate = onThread;
+      partial = onPartial ?? (() => undefined);
       // The real watcher hands over the loaded thread first; the microphone waits for it.
       if (opts.loadThread !== false) onThread(idleThread(botId));
       return unwatch;
@@ -216,6 +243,7 @@ function fakes(opts: { onDevice?: boolean; loadThread?: boolean } = {}) {
     recordings,
     signals,
     speeches,
+    streams,
     spoken,
     send,
     answer,
@@ -226,6 +254,7 @@ function fakes(opts: { onDevice?: boolean; loadThread?: boolean } = {}) {
     say: (text: string) =>
       recordings[recordings.length - 1]?.resolve({ base64: text, mimeType: "audio/m4a" }),
     replyWith: (messageId: string, text: string, runId?: string) => reply(messageId, text, runId),
+    partial: (messageId: string, text: string, runId?: string) => partial(messageId, text, runId),
     endedCall: (callId: string | undefined, farewell?: string) => ended({ callId, farewell }),
   };
 }
@@ -724,6 +753,74 @@ describe("mobile call session", () => {
     await flush();
     expect(getSnapshot()?.phase).toBe("listening");
     expect(fake.recordings).toHaveLength(2);
+  });
+
+  it("speaks the first sentence as soon as it streams in, without waiting for the whole reply", async () => {
+    const fake = fakes();
+    startCall({ botId: "bot-1", botName: "Ada" }, fake.deps);
+    await flush();
+    fake.say("status please");
+    await flush();
+
+    fake.partial("message-1", "It is green.");
+    expect(getSnapshot()?.phase).toBe("speaking");
+    expect(fake.spoken).toEqual([]);
+    expect(getSnapshot()?.exchanges).toEqual([
+      { role: "user", text: "status please" },
+      { role: "bot", text: "It is green.", messageId: "message-1" },
+    ]);
+
+    fake.replyWith("message-1", "It is green. And the tests pass.");
+    await flush();
+    expect(fake.streams[0]?.stream.finish).toHaveBeenCalled();
+    expect(fake.spoken).toEqual([]);
+    expect(getSnapshot()?.phase).toBe("listening");
+    expect(getSnapshot()?.exchanges).toEqual([
+      { role: "user", text: "status please" },
+      { role: "bot", text: "It is green. And the tests pass.", messageId: "message-1" },
+    ]);
+  });
+
+  it("streams later sentences in order, on one stream", async () => {
+    const fake = fakes();
+    startCall({ botId: "bot-1", botName: "Ada" }, fake.deps);
+    await flush();
+    fake.say("status please");
+    await flush();
+
+    fake.partial("message-1", "First.");
+    fake.partial("message-1", "First. Second.");
+    fake.partial("message-1", "First. Second. Third.");
+    expect(fake.streams).toHaveLength(1);
+    const enqueue = fake.streams[0]?.stream.enqueue;
+    expect(enqueue).toHaveBeenCalledTimes(3);
+    expect(enqueue).toHaveBeenNthCalledWith(1, "First.");
+    expect(enqueue).toHaveBeenNthCalledWith(2, "First. Second.");
+    expect(enqueue).toHaveBeenNthCalledWith(3, "First. Second. Third.");
+    expect(fake.spoken).toEqual([]);
+
+    fake.replyWith("message-1", "First. Second. Third.");
+    await flush();
+    expect(getSnapshot()?.phase).toBe("listening");
+  });
+
+  it("falls back to whole replies when no stream is available", async () => {
+    const fake = fakes();
+    startCall({ botId: "bot-1", botName: "Ada" }, { ...fake.deps, speakStream: undefined });
+    await flush();
+    fake.say("status please");
+    await flush();
+
+    fake.partial("message-1", "It is green.");
+    expect(fake.streams).toHaveLength(0);
+    expect(fake.spoken).toEqual([]);
+
+    fake.replyWith("message-1", "It is green.");
+    expect(getSnapshot()?.phase).toBe("speaking");
+    expect(fake.spoken).toEqual(["It is green."]);
+    fake.speeches[0]?.resolve();
+    await flush();
+    expect(getSnapshot()?.phase).toBe("listening");
   });
 
   it("plays the opening cue, speaks the greeting, then listens", async () => {
@@ -1711,6 +1808,41 @@ describe("mobile call session on a timer", () => {
       "actually hang on",
       expect.stringMatching(/^call:/),
     );
+  });
+
+  it("cuts a streaming reply short when the caller talks over it, and never replays it", async () => {
+    const fake = fakes({ onDevice: true });
+    startCall({ botId: "bot-1", botName: "Ada", transcribe: false }, fake.deps);
+    await tick();
+    fake.hear("status please");
+    await tick();
+    fake.partial("message-1", "It is green.");
+    await tick();
+    expect(getSnapshot()?.phase).toBe("speaking");
+    expect(fake.spoken).toEqual([]);
+
+    fake.interim("actually hang on");
+    await tick(INTERIM_BARGE_IN_MS);
+    expect(fake.stopSpeaking).toHaveBeenCalled();
+    expect(getSnapshot()?.phase).toBe("listening");
+
+    fake.hear("actually hang on");
+    await tick();
+    expect(fake.send).toHaveBeenLastCalledWith(
+      "bot-1",
+      "actually hang on",
+      expect.stringMatching(/^call:/),
+    );
+
+    // The barged-out reply settles late: the transcript shows the whole reply, it never plays.
+    fake.replyWith("message-1", "It is green. And more.");
+    await tick();
+    expect(fake.spoken).toEqual([]);
+    expect(getSnapshot()?.exchanges).toEqual([
+      { role: "user", text: "status please" },
+      { role: "bot", text: "It is green. And more.", messageId: "message-1" },
+      { role: "user", text: "actually hang on" },
+    ]);
   });
 
   it("keeps the bot's farewell when the barged-out reply settles late", async () => {

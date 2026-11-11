@@ -34,15 +34,34 @@ vi.mock("./user-error", () => ({ errorText: (_error: unknown, fallback: string) 
 vi.mock("./voice", () => ({
   createSpeechOwner: () => Symbol("voice-chat-test"),
   speakText: vi.fn(async () => true),
+  speakStreaming: vi.fn(),
   stopSpeaking: vi.fn(),
 }));
+
+function fakeStream() {
+  let resolveDone: (spoken: boolean) => void = () => undefined;
+  const done = new Promise<boolean>((resolve) => {
+    resolveDone = resolve;
+  });
+  const stream = {
+    enqueue: vi.fn(),
+    finish: vi.fn(() => {
+      resolveDone(true);
+      return done;
+    }),
+    done,
+  };
+  return { stream, resolveDone };
+}
 
 function fakeDeps() {
   let handlers: VoiceChatDictationHandlers | null = null;
   let lastHeard = "";
   let replyListener: ((messageId: string, text: string) => void) | null = null;
+  let partialListener: ((messageId: string, text: string) => void) | null = null;
   let lostListener: (() => void) | null = null;
   const unwatch = vi.fn();
+  const streams: ReturnType<typeof fakeStream>[] = [];
   const deps: VoiceChatDeps = {
     dictate: vi.fn(async (next: VoiceChatDictationHandlers) => {
       handlers = next;
@@ -54,24 +73,37 @@ function fakeDeps() {
     stopDictation: vi.fn(),
     send: vi.fn(async () => "run-1"),
     watch: vi.fn(
-      (_botId: string, onReply: (messageId: string, text: string) => void, onLost: () => void) => {
+      (
+        _botId: string,
+        onReply: (messageId: string, text: string) => void,
+        onLost: () => void,
+        onPartial?: (messageId: string, text: string) => void,
+      ) => {
         replyListener = onReply;
+        partialListener = onPartial ?? null;
         lostListener = onLost;
         return unwatch;
       },
     ),
     speak: vi.fn(async () => true),
+    speakStream: vi.fn(() => {
+      const made = fakeStream();
+      streams.push(made);
+      return made.stream;
+    }),
     stopSpeaking: vi.fn(),
   };
   return {
     deps,
     unwatch,
+    streams,
     hear: (text: string) => {
       lastHeard = text;
       handlers?.onInterim(text);
     },
     giveUp: (reason: "idle" | "failed") => handlers?.onGiveUp(reason),
     reply: (messageId: string, text: string) => replyListener?.(messageId, text),
+    partial: (messageId: string, text: string) => partialListener?.(messageId, text),
     loseWatch: () => lostListener?.(),
   };
 }
@@ -107,6 +139,7 @@ describe("mobile voice chat", () => {
       "bot-1",
       expect.any(Function),
       expect.any(Function),
+      expect.any(Function),
     );
 
     session.pressToTalk();
@@ -130,6 +163,105 @@ describe("mobile voice chat", () => {
       { role: "user", text: "你好" },
       { role: "bot", text: "你好呀", messageId: "m1" },
     ]);
+  });
+
+  it("speaks the first sentence as soon as it streams in, without waiting for the whole reply", async () => {
+    const fake = fakeDeps();
+    const session = createVoiceChatSession(fake.deps);
+    session.start("bot-1", "小智");
+    session.pressToTalk();
+    await flush();
+    fake.hear("你好");
+    session.releaseToSend();
+    expect(session.getState().phase).toBe("thinking");
+
+    fake.partial("m1", "你好呀。");
+    expect(fake.deps.speakStream).toHaveBeenCalledWith("bot-1");
+    expect(fake.deps.speak).not.toHaveBeenCalled();
+    expect(session.getState().phase).toBe("speaking");
+    expect(session.getState().exchanges).toEqual([
+      { role: "user", text: "你好" },
+      { role: "bot", text: "你好呀。", messageId: "m1" },
+    ]);
+    expect(fake.streams[0]?.stream.enqueue).toHaveBeenCalledWith("你好呀。");
+
+    fake.reply("m1", "你好呀。再见。");
+    await flush();
+    expect(fake.streams[0]?.stream.finish).toHaveBeenCalled();
+    expect(fake.deps.speak).not.toHaveBeenCalled();
+    expect(session.getState().phase).toBe("idle");
+    expect(session.getState().exchanges).toEqual([
+      { role: "user", text: "你好" },
+      { role: "bot", text: "你好呀。再见。", messageId: "m1" },
+    ]);
+  });
+
+  it("streams later sentences in order, on one stream", async () => {
+    const fake = fakeDeps();
+    const session = createVoiceChatSession(fake.deps);
+    session.start("bot-1", "小智");
+    session.pressToTalk();
+    await flush();
+    fake.hear("你好");
+    session.releaseToSend();
+
+    fake.partial("m1", "第一句。");
+    fake.partial("m1", "第一句。第二句。");
+    fake.partial("m1", "第一句。第二句。第三句。");
+    expect(fake.deps.speakStream).toHaveBeenCalledTimes(1);
+    const enqueue = fake.streams[0]?.stream.enqueue;
+    expect(enqueue).toHaveBeenCalledTimes(3);
+    expect(enqueue).toHaveBeenNthCalledWith(1, "第一句。");
+    expect(enqueue).toHaveBeenNthCalledWith(2, "第一句。第二句。");
+    expect(enqueue).toHaveBeenNthCalledWith(3, "第一句。第二句。第三句。");
+
+    fake.reply("m1", "第一句。第二句。第三句。");
+    await flush();
+    expect(session.getState().phase).toBe("idle");
+  });
+
+  it("cuts a streaming reply off and never replays it, but keeps the whole text on screen", async () => {
+    const fake = fakeDeps();
+    const session = createVoiceChatSession(fake.deps);
+    session.start("bot-1", "小智");
+    session.pressToTalk();
+    await flush();
+    fake.hear("你好");
+    session.releaseToSend();
+    fake.partial("m1", "你好呀。");
+    expect(session.getState().phase).toBe("speaking");
+
+    session.pressToTalk();
+    expect(fake.deps.stopSpeaking).toHaveBeenCalled();
+    expect(session.getState().phase).toBe("listening");
+
+    fake.reply("m1", "你好呀。再见。");
+    await flush();
+    expect(fake.deps.speak).not.toHaveBeenCalled();
+    expect(session.getState().exchanges).toEqual([
+      { role: "user", text: "你好" },
+      { role: "bot", text: "你好呀。再见。", messageId: "m1" },
+    ]);
+  });
+
+  it("falls back to whole replies when no stream is available", async () => {
+    const fake = fakeDeps();
+    fake.deps.speakStream = undefined;
+    const session = createVoiceChatSession(fake.deps);
+    session.start("bot-1", "小智");
+    session.pressToTalk();
+    await flush();
+    fake.hear("你好");
+    session.releaseToSend();
+
+    fake.partial("m1", "你好呀。");
+    expect(session.getState().phase).toBe("thinking");
+    expect(fake.deps.speak).not.toHaveBeenCalled();
+
+    fake.reply("m1", "你好呀。");
+    await flush();
+    expect(fake.deps.speak).toHaveBeenCalledWith("bot-1", "你好呀。");
+    expect(session.getState().phase).toBe("idle");
   });
 
   it("sends the heard text even when the recognizer already ended", async () => {

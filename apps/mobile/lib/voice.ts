@@ -4,6 +4,7 @@ import {
   readVoiceAudio,
   readVoiceError,
   requestDeadline,
+  splitCompleteSentences,
   toUtterances,
   VOICE_RESPONSE_TIMEOUT_MS,
   withAbort,
@@ -219,6 +220,123 @@ async function advanceSpeechQueue(epoch: number): Promise<boolean> {
   if (!isCurrentSpeech(epoch)) return true;
   if (spoken && speechQueue.length > 0) await advanceSpeechQueue(epoch);
   return spoken;
+}
+
+/**
+ * A reply spoken sentence by sentence as it streams in, instead of waiting
+ * for the whole reply: the first sentence plays as soon as it is complete,
+ * and later ones queue behind it in order. `enqueue` takes the reply text so
+ * far; `finish` flushes the last partial sentence and resolves when the
+ * queue drains. A newer Play or Stop ends the stream the same way it ends
+ * any other speech, and `done` resolves true for it.
+ */
+export type StreamingSpeech = {
+  /** Hands the stream the reply text so far; complete sentences start playing in order. */
+  enqueue(text: string): void;
+  /** No more text is coming; resolves when the queue drains. */
+  finish(): Promise<boolean>;
+  /** Resolves when the stream ends, finished or stopped. */
+  done: Promise<boolean>;
+  /** The error that ended the stream early, if one did. */
+  error?: unknown;
+};
+
+export function speakStreaming(opts: SpeechOptions = {}): StreamingSpeech {
+  const epoch = beginSpeech(opts.owner);
+  let seen = "";
+  let buffer = "";
+  let finished = false;
+  let spokenAny = false;
+  let pumping = false;
+  let notify: (() => void) | null = null;
+  let resolveDone: (spoken: boolean) => void = () => undefined;
+  const done = new Promise<boolean>((resolve) => {
+    resolveDone = resolve;
+  });
+  const stream: StreamingSpeech = {
+    enqueue,
+    finish,
+    done,
+  };
+
+  // Parked only while the queue is empty and more text may still come; the
+  // timeout bounds how long a Stop waits for the pump to notice it is stale.
+  const park = () =>
+    new Promise<void>((resolve) => {
+      const timer = setTimeout(() => {
+        notify = null;
+        resolve();
+      }, 200);
+      notify = () => {
+        clearTimeout(timer);
+        notify = null;
+        resolve();
+      };
+    });
+
+  async function pump() {
+    if (pumping) return;
+    pumping = true;
+    try {
+      while (isCurrentSpeech(epoch)) {
+        const next = speechQueue.shift();
+        if (!next) {
+          if (finished) break;
+          await park();
+          continue;
+        }
+        const { text, ...rest } = next;
+        let spoken: boolean;
+        try {
+          spoken = await speakPrepared(text, rest, epoch);
+        } catch (error) {
+          // A structural failure (consent, a voice that will not load) ends
+          // the stream; a single bad clip inside speakPrepared never throws.
+          if (!isCurrentSpeech(epoch)) break;
+          stream.error = error;
+          break;
+        }
+        if (!isCurrentSpeech(epoch)) break;
+        spokenAny = spokenAny || spoken;
+      }
+    } finally {
+      pumping = false;
+      // A newer Play or Stop owns the outcome, so a stopped stream resolves
+      // true; only a stream that ran to the end reports whether it spoke.
+      const stopped = !isCurrentSpeech(epoch);
+      resolveDone(stopped ? true : stream.error === undefined ? spokenAny : false);
+    }
+  }
+
+  function enqueue(text: string) {
+    if (finished) return;
+    if (!text.startsWith(seen)) {
+      // The reply was replaced rather than extended; drop the buffered tail.
+      seen = "";
+      buffer = "";
+    }
+    buffer += text.slice(seen.length);
+    seen = text;
+    const { sentences, rest } = splitCompleteSentences(buffer);
+    buffer = rest;
+    for (const sentence of sentences) speechQueue.push({ ...opts, text: sentence });
+    notify?.();
+    void pump();
+  }
+
+  function finish() {
+    if (buffer.trim()) {
+      speechQueue.push({ ...opts, text: buffer });
+      buffer = "";
+    }
+    finished = true;
+    notify?.();
+    void pump();
+    return done;
+  }
+
+  void pump();
+  return stream;
 }
 
 export async function speakText(text: string, opts: SpeechOptions = {}): Promise<boolean> {

@@ -35,7 +35,8 @@ import {
   stopServerDictation,
 } from "./server-dictation";
 import { errorText } from "./user-error";
-import { createSpeechOwner, speakText, stopSpeaking } from "./voice";
+import type { StreamingSpeech } from "./voice";
+import { createSpeechOwner, speakStreaming, speakText, stopSpeaking } from "./voice";
 import { DEFAULT_VOICE_CHAT_SCENARIO_ID, voiceChatScenario } from "./voice-chat-scenarios";
 
 export type VoiceChatPhase = "idle" | "listening" | "thinking" | "speaking" | "not-ready";
@@ -92,9 +93,13 @@ export type VoiceChatDeps = {
     botId: string,
     onReply: (messageId: string, text: string) => void,
     onLost: () => void,
+    /** Calls onPartial while a reply is still streaming in, so it can be spoken as it arrives. */
+    onPartial?: (messageId: string, text: string) => void,
   ) => () => void;
   /** Reads a reply aloud; false when no voice is set up. */
   speak: (botId: string, text: string) => Promise<boolean>;
+  /** Streams a reply aloud as it arrives; when absent, replies speak whole. */
+  speakStream?: (botId: string) => StreamingSpeech;
   /** Cuts the reply off, for a caller who talks over it. */
   stopSpeaking: () => void;
 };
@@ -135,6 +140,8 @@ export function createVoiceChatSession(deps: VoiceChatDeps): VoiceChatSession {
   let generation = 0;
   let turn: AbortController | null = null;
   let unwatch: (() => void) | null = null;
+  /** The reply streaming in now, if any: its speech, so the final text flushes it instead of speaking whole. */
+  let stream: { messageId: string; speech: StreamingSpeech; finished: boolean } | null = null;
   /** The picked scenario's instruction, waiting for the next turn to carry it. */
   let pendingInstruction: string | null = null;
 
@@ -171,6 +178,9 @@ export function createVoiceChatSession(deps: VoiceChatDeps): VoiceChatSession {
       },
       () => {
         if (generation === mine) onWatchLost();
+      },
+      (messageId, text) => {
+        if (generation === mine) onPartial(messageId, text);
       },
     );
     emit();
@@ -285,15 +295,96 @@ export function createVoiceChatSession(deps: VoiceChatDeps): VoiceChatSession {
   }
 
   function onWatchLost() {
+    const mine = generation;
+    if (stream) {
+      // The feed dropped mid-reply: play what arrived instead of hanging on it.
+      const finishing = stream;
+      stream = null;
+      void finishing.speech.finish().then(() => {
+        if (generation !== mine) return;
+        if (state.phase === "speaking") toIdle();
+        set({ notice: t("The connection dropped. Try again.") });
+      });
+      return;
+    }
     if (state.phase === "thinking") {
       toIdle();
       set({ notice: t("The connection dropped. Try again.") });
     }
   }
 
+  /** A reply still streaming in: speak its finished sentences as they arrive. */
+  function onPartial(messageId: string, text: string) {
+    if (!deps.speakStream) return;
+    if (stream && stream.messageId !== messageId) return;
+    if (!stream && state.phase !== "thinking") return;
+    if (stream?.finished) return;
+    const spoken = text.trim();
+    if (!spoken) return;
+    if (!stream) {
+      // The first sentence of a new reply: the wait is over, and the
+      // transcript shows the reply growing instead of appearing whole.
+      stream = { messageId, speech: deps.speakStream(state.botId), finished: false };
+      set({
+        phase: "speaking",
+        exchanges: [...state.exchanges, { role: "bot", text, messageId }],
+      });
+    } else {
+      set({
+        exchanges: state.exchanges.map((exchange) =>
+          exchange.messageId === messageId ? { ...exchange, text } : exchange,
+        ),
+      });
+    }
+    stream.speech.enqueue(text);
+  }
+
   function onReply(messageId: string, text: string) {
-    if (state.exchanges.some((exchange) => exchange.messageId === messageId)) return;
     const mine = generation;
+    const streaming = stream?.messageId === messageId ? stream : null;
+    if (streaming) {
+      // The reply already streamed in: flush its tail and let the stream land.
+      streaming.finished = true;
+      set({
+        exchanges: state.exchanges.map((exchange) =>
+          exchange.messageId === messageId ? { ...exchange, text } : exchange,
+        ),
+      });
+      const speech = streaming.speech;
+      speech.enqueue(text);
+      void speech.finish().then((spoken) => {
+        if (generation !== mine) return;
+        if (stream !== streaming) return;
+        stream = null;
+        if (state.phase !== "speaking") return;
+        if (!spoken) {
+          // A stream that errored says why; one that spoke nothing has no voice.
+          const error = speech.error;
+          set({
+            phase: "idle",
+            handsFree: error ? state.handsFree : false,
+            notice: error
+              ? errorText(error, t("Could not speak that."))
+              : t("Add a voice provider in Voice settings."),
+          });
+          return;
+        }
+        // A reply playing when the caller presses the microphone was already
+        // cut off into a new listen; only a reply still playing reopens it.
+        toIdle();
+      });
+      return;
+    }
+    if (state.exchanges.some((exchange) => exchange.messageId === messageId)) {
+      // The reply streamed in, then the caller cut it off: the transcript still
+      // shows the whole reply, it just never plays.
+      set({
+        exchanges: state.exchanges.map((exchange) =>
+          exchange.messageId === messageId ? { ...exchange, text } : exchange,
+        ),
+      });
+      return;
+    }
     set({
       phase: "speaking",
       exchanges: [...state.exchanges, { role: "bot", text, messageId }],
@@ -326,6 +417,7 @@ export function createVoiceChatSession(deps: VoiceChatDeps): VoiceChatSession {
     if (state.phase === "not-ready" || state.phase === "thinking") return;
     if (!state.botId) return;
     if (state.phase === "speaking") deps.stopSpeaking();
+    stream = null;
     beginListening();
   }
 
@@ -411,6 +503,7 @@ export function createVoiceChatSession(deps: VoiceChatDeps): VoiceChatSession {
     generation += 1;
     turn?.abort();
     turn = null;
+    stream = null;
     deps.stopDictation();
     deps.stopSpeaking();
     unwatch?.();
@@ -454,17 +547,25 @@ function watchVoiceChatReplies(
   botId: string,
   onReply: (messageId: string, text: string) => void,
   onLost: () => void,
+  onPartial?: (messageId: string, text: string) => void,
 ): () => void {
   const controller = new AbortController();
   void (async () => {
     let snapshot: MobileSnapshot | null = null;
     let lastSeen: string | null = null;
+    let lastPartial: { id: string; text: string } | null = null;
     let cursor = 0;
     while (!controller.signal.aborted) {
       try {
         if (!snapshot) {
           snapshot = await rpc("threads/get", { botId }, { signal: controller.signal });
-          lastSeen = latestBotReply(snapshot.messages)?.id ?? null;
+          const latest = latestBotReply(snapshot.messages);
+          lastSeen = latest?.id ?? null;
+          // Seed the partial text too: a reply already on screen only
+          // streams from where it changes, never from the start.
+          lastPartial = latest
+            ? { id: latest.id, text: readAloudText(latest.blocks).trim() }
+            : null;
           cursor = snapshot.cursor ?? 0;
         }
         await subscribeThread(
@@ -476,15 +577,24 @@ function watchVoiceChatReplies(
             snapshot = reduceThreadSnapshot(snapshot, event) ?? snapshot;
             if (!snapshot || snapshot === previous) return;
             const message = latestBotReply(snapshot.messages);
-            if (!message || message.id === lastSeen) return;
-            // Wait for the message's own run to settle so half-written blocks are never spoken.
+            if (!message) return;
+            const text = readAloudText(message.blocks).trim();
+            if (!text) return;
+            // While the message's own run is still working, hand the text
+            // over as it arrives instead of waiting for the whole reply.
             const run =
               snapshot?.activeRuns?.find((active) => active.id === message.runId) ?? snapshot?.run;
             const fromAnotherRun = Boolean(message.runId && message.runId !== run?.id);
-            if (!fromAnotherRun && run && ACTIVE_RUN_STATUSES.some((s) => s === run.status)) return;
-            const text = readAloudText(message.blocks).trim();
-            if (!text) return;
+            if (!fromAnotherRun && run && ACTIVE_RUN_STATUSES.some((s) => s === run.status)) {
+              if (onPartial && (lastPartial?.id !== message.id || lastPartial.text !== text)) {
+                lastPartial = { id: message.id, text };
+                onPartial(message.id, text);
+              }
+              return;
+            }
+            if (message.id === lastSeen) return;
             lastSeen = message.id;
+            lastPartial = null;
             onReply(message.id, text);
           },
           controller.signal,
@@ -548,6 +658,7 @@ export function productionVoiceChatDeps(): VoiceChatDeps {
     },
     watch: watchVoiceChatReplies,
     speak: (botId, text) => speakText(text, { botId, owner: speechOwner }),
+    speakStream: (botId) => speakStreaming({ botId, owner: speechOwner }),
     stopSpeaking: () => stopSpeaking(speechOwner),
   };
 }
