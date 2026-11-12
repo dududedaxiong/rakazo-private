@@ -19,6 +19,11 @@ export async function writeBotInstructions(
     versionId?: string;
     expectedInstructions?: string;
     undo?: boolean;
+    /**
+     * The template these instructions came from. Every other write clears the link:
+     * once the instructions change outside an apply, they no longer match the template.
+     */
+    promptTemplateId?: string | null;
   },
 ) {
   await tx.$queryRaw`SELECT id FROM bots WHERE id = ${input.botId} FOR UPDATE`;
@@ -53,6 +58,7 @@ export async function writeBotInstructions(
     where: { id: bot.id },
     data: {
       instructions,
+      promptTemplateId: input.promptTemplateId ?? null,
       instructionHistory: [version, ...history].slice(0, 20),
     },
   });

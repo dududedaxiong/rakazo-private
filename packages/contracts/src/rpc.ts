@@ -221,6 +221,17 @@ import {
   SpendingPaymentSchema,
   SpendingStatusSchema,
 } from "./payments.js";
+import {
+  ApplyPromptTemplateInput,
+  ConfirmPromptTemplateImportInput,
+  CreatePromptTemplateInput,
+  FetchedPromptTemplatesSchema,
+  FetchPromptTemplatesInput,
+  PromptTemplateIdInput,
+  PromptTemplateSchema,
+  SaveCurrentAsTemplateInput,
+  UpdatePromptTemplateInput,
+} from "./prompt-templates.js";
 import { MessageReactionSchema } from "./reactions.js";
 import { RoutineWatchSchema } from "./routine-watch.js";
 import {
@@ -689,6 +700,19 @@ export const appContract = {
         webhookConfigured: z.literal(true),
       }),
     ),
+  },
+  promptTemplates: {
+    list: oc.output(z.array(PromptTemplateSchema)),
+    create: oc.input(CreatePromptTemplateInput).output(PromptTemplateSchema),
+    update: oc.input(UpdatePromptTemplateInput).output(PromptTemplateSchema),
+    remove: oc.input(PromptTemplateIdInput).output(z.object({ ok: z.literal(true) })),
+    apply: oc.input(ApplyPromptTemplateInput).output(BotSchema),
+    saveCurrentAsTemplate: oc.input(SaveCurrentAsTemplateInput).output(PromptTemplateSchema),
+    restoreDefaults: oc.output(z.array(PromptTemplateSchema)),
+    fetchFromUrl: oc.input(FetchPromptTemplatesInput).output(FetchedPromptTemplatesSchema),
+    confirmImport: oc
+      .input(ConfirmPromptTemplateImportInput)
+      .output(z.object({ templates: z.array(PromptTemplateSchema) })),
   },
   groups: {
     create: oc.input(CreateGroupInput).output(GroupSchema),

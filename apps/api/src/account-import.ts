@@ -20,9 +20,12 @@ import {
   ACCOUNT_EXPORT_FORMAT,
   ACCOUNT_EXPORT_MANIFEST_PATH,
   ACCOUNT_EXPORT_MAX_HOME_FILE_BYTES,
+  ACCOUNT_EXPORT_PROMPT_TEMPLATES_MAX_BYTES,
+  ACCOUNT_EXPORT_PROMPT_TEMPLATES_PATH,
   ACCOUNT_EXPORT_VERSION,
   AccountExportExecutablesSchema,
   AccountExportManifestSchema,
+  AccountExportPromptTemplatesSchema,
   AccountExportRecordSchema,
   attachmentSizeLabel,
   resolveBotAvatarSet,
@@ -34,6 +37,7 @@ import {
   InvalidSpaceNameError,
   Prisma,
   parseComputerMode,
+  restorePromptTemplates,
   runAsSystem,
   runAsTenant,
   SpaceLimitError,
@@ -58,6 +62,8 @@ export const ACCOUNT_IMPORT_LIMITS = {
   manifestBytes: 1024 * 1024,
   /** The credentials section is kilobytes; its own cap, not the generic one. */
   credentialsBytes: ACCOUNT_EXPORT_CREDENTIALS_MAX_BYTES,
+  /** The templates section is small; its own cap, not the generic one. */
+  promptTemplatesBytes: ACCOUNT_EXPORT_PROMPT_TEMPLATES_MAX_BYTES,
   /** Room for about a million executable paths, more than a space's workspace files could hold. */
   executablesBytes: 64 * 1024 * 1024,
   recordLineBytes: 64 * 1024 * 1024,
@@ -98,6 +104,7 @@ export type AccountImportDeps = SpaceDeletionDeps & {
 export type ArchiveEntry =
   | { kind: "manifest" }
   | { kind: "credentials" }
+  | { kind: "promptTemplates" }
   | { kind: "records"; spaceId: string }
   | { kind: "artifact"; spaceId: string; artifactId: string }
   | { kind: "home"; spaceId: string; botId: string; path: string }
@@ -112,6 +119,9 @@ export function parseEntryName(name: string, index: number): ArchiveEntry {
   // The credentials section has one name and one place: right after the manifest. Any other
   // spelling or position is not the section, and falls through to the rejection below.
   if (index === 1 && name === ACCOUNT_EXPORT_CREDENTIALS_PATH) return { kind: "credentials" };
+  // The templates section sits right after the manifest, or after the credentials section.
+  if ((index === 1 || index === 2) && name === ACCOUNT_EXPORT_PROMPT_TEMPLATES_PATH)
+    return { kind: "promptTemplates" };
   if (/[\\\0]/.test(name)) throw invalidEntry();
   const segments = name.split("/");
   if (segments.some((segment) => segment === "" || segment === "." || segment === ".."))
@@ -133,6 +143,8 @@ function entryLimit(entry: ArchiveEntry, limits: ArchiveLimits): number {
       return limits.manifestBytes;
     case "credentials":
       return limits.credentialsBytes;
+    case "promptTemplates":
+      return limits.promptTemplatesBytes;
     case "executables":
       return limits.executablesBytes;
     case "records":
@@ -384,6 +396,13 @@ class AccountImporter implements ArchiveSink {
   private manifest: AccountExportManifest | null = null;
   /** The encrypted credentials section, read only — decryption waits for the second phase. */
   private credentialsFile: Uint8Array | null = null;
+  /** The prompt templates section, parsed on close — restore waits for the second phase. */
+  private promptTemplates: Array<{
+    name: string;
+    content: string;
+    isBuiltIn?: boolean;
+    sourceUrl?: string | null;
+  }> | null = null;
   private readonly created: Array<{ id: string; name: string; sourceId: string }> = [];
   private readonly finished = new Set<string>();
   /** Source bot ids to the new bots, kept after each space finishes, for credential restore. */
@@ -412,6 +431,11 @@ class AccountImporter implements ArchiveSink {
     if (entry.kind === "credentials") {
       // Only a version 2 archive has a credentials section, and only one copy of it.
       if (manifest.version !== 2 || this.credentialsFile) throw invalidEntry();
+      return;
+    }
+    if (entry.kind === "promptTemplates") {
+      // One copy, before any space starts.
+      if (this.promptTemplates || this.current || this.finished.size > 0) throw invalidEntry();
       return;
     }
     if (entry.kind === "records") {
@@ -474,6 +498,9 @@ class AccountImporter implements ArchiveSink {
       case "credentials":
         this.credentialsFile = bytes;
         return;
+      case "promptTemplates":
+        this.promptTemplates = parsePromptTemplates(bytes);
+        return;
       case "records":
         return this.closeRecords();
       case "artifact":
@@ -515,6 +542,16 @@ class AccountImporter implements ArchiveSink {
   /** The encrypted credentials section, if the archive carried one. */
   credentialsSection(): Uint8Array | null {
     return this.credentialsFile;
+  }
+
+  /** The prompt templates section, if the archive carried one. */
+  promptTemplatesSection(): Array<{
+    name: string;
+    content: string;
+    isBuiltIn?: boolean;
+    sourceUrl?: string | null;
+  }> | null {
+    return this.promptTemplates;
   }
 
   /** All or nothing: every space this import created goes, with its files. */
@@ -1123,6 +1160,23 @@ class AccountImporter implements ArchiveSink {
   }
 }
 
+function parsePromptTemplates(bytes: Uint8Array): Array<{
+  name: string;
+  content: string;
+  isBuiltIn?: boolean;
+  sourceUrl?: string | null;
+}> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    throw unreadable();
+  }
+  const templates = AccountExportPromptTemplatesSchema.safeParse(parsed);
+  if (!templates.success) throw unreadable();
+  return templates.data.templates;
+}
+
 function parseManifest(bytes: Uint8Array): AccountExportManifest {
   let parsed: unknown;
   try {
@@ -1178,6 +1232,11 @@ export async function importAccount(
   // Second phase, after the main import committed: decrypting and rebuilding credentials
   // runs outside the rollback above, so a wrong backup password costs only the credentials,
   // never the spaces that just imported. The password buffer is zeroed here, whatever happens.
+  // Prompt templates restore the same way: a bad templates section costs only the templates.
+  const templates = importer.promptTemplatesSection();
+  if (templates) {
+    await restorePromptTemplates(deps.prisma, actor.userId, templates);
+  }
   const password = options.backupPassword ?? null;
   try {
     const credentials = await restoreAccountCredentials(

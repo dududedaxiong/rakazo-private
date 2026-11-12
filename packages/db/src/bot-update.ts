@@ -37,6 +37,8 @@ export async function commitBotUpdate(
     expectedUserAvatarSet?: { userId: string; botAvatarSet: string };
     instructionRestore?: { versionId: string; undo?: boolean };
     reason?: string;
+    /** The template these instructions came from; every other write clears the link. */
+    promptTemplateId?: string | null;
   },
   appendEvent: AppendEvent = appendEventInTransaction,
 ): Promise<{ id: string; name: string; description: string } | null> {
@@ -76,6 +78,7 @@ export async function commitBotUpdate(
         instructions,
         reason: options.instructionRestore ? "Restore" : (options.reason ?? "Manual edit"),
         expectedInstructions: options.expectedInstructions,
+        promptTemplateId: options.promptTemplateId,
         ...options.instructionRestore,
       });
     }

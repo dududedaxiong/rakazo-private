@@ -1,7 +1,9 @@
 import type { AccountExportRecord } from "@rakazo/contracts";
 import {
   ACCOUNT_EXPORT_MAX_HOME_FILE_BYTES,
+  ACCOUNT_EXPORT_PROMPT_TEMPLATES_PATH,
   AccountExportManifestSchema,
+  AccountExportPromptTemplatesSchema,
   AccountExportRecordSchema,
   accountExportPaths,
 } from "@rakazo/contracts";
@@ -68,7 +70,7 @@ const botRecord = (id: string): Extract<AccountExportRecord, { type: "bot" }> =>
   createdAt,
 });
 
-function source(): AccountExportSource {
+function source(promptTemplates: AccountExportSource["promptTemplates"] = []): AccountExportSource {
   const space = (
     id: string,
     records: AccountExportRecord[],
@@ -89,6 +91,7 @@ function source(): AccountExportSource {
   return {
     userId: "user-1",
     user: { name: "Ada", email: "ada@example.test", timezone: null },
+    promptTemplates,
     spaces: [
       space(
         "space-a",
@@ -188,6 +191,28 @@ describe("account export archive", () => {
     expect(fakes.contexts).toEqual(
       Array(3).fill({ kind: "tenant", spaceId: "space-a", userId: "user-1" }),
     );
+  });
+
+  it("yields the prompt templates right after the manifest, and none when empty", async () => {
+    const fakes = stores();
+    const templates = [
+      { name: "默认助手", content: "Be helpful.", isBuiltIn: true, sourceUrl: null },
+      { name: "翻译助手", content: "Translate.", isBuiltIn: true, sourceUrl: null },
+    ];
+    const entries = await unzipStream(
+      zipStream(accountArchiveFiles(source(templates), fakes, { now: new Date(createdAt) })),
+    );
+    expect(entries.map((entry) => entry.name).slice(0, 2)).toEqual([
+      "manifest.json",
+      ACCOUNT_EXPORT_PROMPT_TEMPLATES_PATH,
+    ]);
+    expect(
+      AccountExportPromptTemplatesSchema.parse(JSON.parse(decoder.decode(entries[1]!.data))),
+    ).toEqual({ templates });
+    const without = await unzipStream(
+      zipStream(accountArchiveFiles(source(), fakes, { now: new Date(createdAt) })),
+    );
+    expect(without.map((entry) => entry.name)).not.toContain(ACCOUNT_EXPORT_PROMPT_TEMPLATES_PATH);
   });
 
   it("yields the encrypted credentials section right after the manifest", async () => {
@@ -295,6 +320,7 @@ describe("POST /api/account/export", () => {
       findUniqueOrThrow: async () => ({ name: "Ada", email: "ada@example.com", timezone: null }),
     },
     spaceMember: { findMany: async () => [] },
+    promptTemplate: { findMany: async () => [] },
     secret: { findFirst: async () => ({ ciphertext: "enc:sec-1" }) },
     userModelCredential: {
       findMany: async () => [

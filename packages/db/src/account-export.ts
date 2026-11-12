@@ -29,6 +29,13 @@ export interface AccountExportSource {
   userId: string;
   user: AccountExportManifest["user"];
   spaces: Array<AccountExportManifest["spaces"][number] & AccountExportSpace>;
+  /** The account's prompt templates, in library order. */
+  promptTemplates: Array<{
+    name: string;
+    content: string;
+    isBuiltIn: boolean;
+    sourceUrl: string | null;
+  }>;
 }
 
 /**
@@ -59,7 +66,7 @@ export async function readAccountExport(
   prisma: PrismaClient,
   userId: string,
 ): Promise<AccountExportSource> {
-  const [user, memberships] = await Promise.all([
+  const [user, memberships, promptTemplateRows] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: userId },
       select: { name: true, email: true, timezone: true },
@@ -69,10 +76,18 @@ export async function readAccountExport(
       orderBy: [{ space: { createdAt: "asc" } }, { spaceId: "asc" }],
       select: { role: true, space: { select: { id: true, name: true, createdAt: true } } },
     }),
+    // Read-only: only templates the account already has. A fresh account seeds its
+    // built-ins the first time it lists them, so nothing is lost by not seeding here.
+    prisma.promptTemplate.findMany({
+      where: { userId },
+      orderBy: [{ updatedAt: "desc" }],
+      select: { name: true, content: true, isBuiltIn: true, sourceUrl: true },
+    }),
   ]);
   return {
     userId,
     user,
+    promptTemplates: promptTemplateRows,
     spaces: memberships.map(({ role, space }) => {
       const tenant = { spaceId: space.id, userId };
       const written: Written = { artifacts: [], botIds: [] };

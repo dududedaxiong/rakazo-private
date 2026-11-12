@@ -89,6 +89,8 @@ export const BotSchema = z.object({
   description: z.string(),
   instructions: z.string(),
   instructionHistory: z.array(InstructionVersionSchema).optional(),
+  /** The prompt template this bot's instructions came from; null means custom. */
+  promptTemplateId: Id.nullable(),
   color: z.string(),
   avatarSet: BotAvatarSetSchema.optional(),
   notifyOnFinish: z.boolean(),

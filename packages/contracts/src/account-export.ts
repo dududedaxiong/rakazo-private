@@ -1,11 +1,14 @@
 import * as z from "zod";
 import { Id, IsoDate, ReplyModeSchema } from "./ids.js";
 import { PageSourceSchema, PageTitleSchema } from "./pages.js";
+import { PromptTemplateImportItemSchema } from "./prompt-templates.js";
 
 /**
  * A whole account as one zip, to move between Rakazo installs (Cloud to self-hosted and back).
  *
  * - `manifest.json` comes first: the format, version and the exported spaces.
+ * - `prompt-templates.json`: the account's prompt templates, right after the manifest
+ *   (and the credentials section when present). Absent when the account has none.
  * - `spaces/<spaceId>/records.jsonl`: one `AccountExportRecord` per line. A record only refers to
  *   records earlier in the same file, except `bot.parentBotId`, which may point forward.
  * - `spaces/<spaceId>/artifacts/<artifactId>`: each artifact's bytes, after the records.
@@ -61,6 +64,23 @@ export const accountExportPaths = {
     `spaces/${spaceId}/homes/${botId}/${path}`,
   executables: (spaceId: string) => `spaces/${spaceId}/executables.json`,
 };
+
+/** User-level prompt templates, right after the manifest (and credentials when present). */
+export const ACCOUNT_EXPORT_PROMPT_TEMPLATES_PATH = "prompt-templates.json";
+/** Prompt templates are small; anything bigger is not a templates section. */
+export const ACCOUNT_EXPORT_PROMPT_TEMPLATES_MAX_BYTES = 4 * 1024 * 1024;
+
+export const AccountExportPromptTemplatesSchema = z.object({
+  templates: z
+    .array(
+      PromptTemplateImportItemSchema.extend({
+        isBuiltIn: z.boolean().optional(),
+        sourceUrl: z.string().nullable().optional(),
+      }),
+    )
+    .max(100),
+});
+export type AccountExportPromptTemplates = z.infer<typeof AccountExportPromptTemplatesSchema>;
 
 export const AccountExportExecutablesSchema = z.array(z.object({ botId: Id, path: z.string() }));
 export type AccountExportExecutables = z.infer<typeof AccountExportExecutablesSchema>;

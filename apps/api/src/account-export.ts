@@ -17,6 +17,7 @@ import {
   ACCOUNT_EXPORT_FORMAT,
   ACCOUNT_EXPORT_MANIFEST_PATH,
   ACCOUNT_EXPORT_MAX_HOME_FILE_BYTES,
+  ACCOUNT_EXPORT_PROMPT_TEMPLATES_PATH,
   ACCOUNT_EXPORT_VERSION,
   accountExportPaths,
 } from "@rakazo/contracts";
@@ -147,6 +148,11 @@ export async function* accountArchiveFiles(
   yield { path: ACCOUNT_EXPORT_MANIFEST_PATH, data: [encoder.encode(JSON.stringify(manifest))] };
   if (options.credentialsFile)
     yield { path: ACCOUNT_EXPORT_CREDENTIALS_PATH, data: [options.credentialsFile] };
+  if (source.promptTemplates.length > 0)
+    yield {
+      path: ACCOUNT_EXPORT_PROMPT_TEMPLATES_PATH,
+      data: [encoder.encode(JSON.stringify({ templates: source.promptTemplates }))],
+    };
   for (const space of source.spaces) {
     options.signal?.throwIfAborted();
     const tenant = { spaceId: space.id, userId: source.userId };

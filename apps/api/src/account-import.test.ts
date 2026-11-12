@@ -2,7 +2,7 @@ import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Actor } from "@rakazo/contracts";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { encryptBackupCredentials } from "./account-credentials-crypto.js";
 import type { AccountImportDeps, ArchiveEntry, ArchiveSink } from "./account-import.js";
 import {
@@ -189,6 +189,8 @@ describe("account import archive", () => {
   it("parses the documented layout", () => {
     expect(parseEntryName("manifest.json", 0)).toEqual({ kind: "manifest" });
     expect(parseEntryName("credentials.enc.json", 1)).toEqual({ kind: "credentials" });
+    expect(parseEntryName("prompt-templates.json", 1)).toEqual({ kind: "promptTemplates" });
+    expect(parseEntryName("prompt-templates.json", 2)).toEqual({ kind: "promptTemplates" });
     expect(parseEntryName("spaces/s1/records.jsonl", 1)).toEqual({
       kind: "records",
       spaceId: "s1",
@@ -208,6 +210,46 @@ describe("account import archive", () => {
       kind: "executables",
       spaceId: "s1",
     });
+  });
+
+  it("rejects the templates section anywhere but right after the manifest or credentials", () => {
+    expect(() => parseEntryName("prompt-templates.json", 0)).toThrow(AccountImportError);
+    expect(() => parseEntryName("prompt-templates.json", 3)).toThrow(AccountImportError);
+  });
+
+  it("restores prompt templates from the templates section", async () => {
+    const upsert = vi.fn(
+      async ({ create }: { create: { userId: string; name: string; content: string } }) => ({
+        id: "tpl-1",
+        ...create,
+        isBuiltIn: true,
+        sourceUrl: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
+    const templateDeps = {
+      ...deps,
+      prisma: { promptTemplate: { upsert } },
+    } as unknown as AccountImportDeps;
+    const bytes = buildArchive([
+      ["manifest.json", JSON.stringify(manifestFor([]))],
+      [
+        "prompt-templates.json",
+        JSON.stringify({
+          templates: [{ name: "默认助手", content: "Be helpful.", isBuiltIn: true }],
+        }),
+      ],
+    ]);
+    await expect(importAccount(templateDeps, actor, chunked(bytes))).resolves.toEqual({
+      spaces: [],
+    });
+    expect(upsert).toHaveBeenCalledTimes(1);
+    expect(upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId_name: { userId: "user-1", name: "默认助手" } },
+      }),
+    );
   });
 
   it("rejects path traversal in an archive before writing anything", async () => {
