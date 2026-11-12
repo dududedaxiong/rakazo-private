@@ -521,6 +521,10 @@ export default defineConfig(({ command, mode }) => {
       process.env.RAKAZO_CSP_CONNECT_SRC ?? rootEnv.RAKAZO_CSP_CONNECT_SRC,
     ),
     crisp: parseCrispWebsiteId(process.env.CRISP_WEBSITE_ID ?? rootEnv.CRISP_WEBSITE_ID) !== null,
+    // The registration challenge loads from the verification provider; the origin is
+    // allow-listed whether or not a site key is configured, so the policy never
+    // depends on the deployment's registration settings.
+    humanVerification: true,
   });
   return {
     build: {

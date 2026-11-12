@@ -13,6 +13,11 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
+#. placeholder {0}: data.collectiveBanAccounts
+#: src/components/admin/AdminOverview.tsx
+msgid "{0} accounts affected"
+msgstr "{0} 个账号受影响"
+
 #: src/pages/shell/sidebar-roster.tsx
 msgid " (unread)"
 msgstr "（未读）"
@@ -73,35 +78,63 @@ msgstr "超时"
 msgid "Usable"
 msgstr "可用"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "{amount} invite codes generated"
+msgstr "已生成 {amount} 个邀请码"
+
 #. placeholder {0}: servers.length
 #: src/pages/plugins/manage-view.tsx
 msgid "{0, plural, one {# connector} other {# connectors}}"
 msgstr "{0, plural, one {# 个连接器} other {# 个连接器}}"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "90 days"
+msgstr "90 天"
 
 #. placeholder {0}: skill.files.length
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, one {# 个文件} other {# 个文件}}"
 
+#: src/pages/AdminPage.tsx
+msgid "Admin"
+msgstr "管理员"
+
 #. placeholder {0}: referral.rewards
 #: src/components/InviteDialog.tsx
 msgid "{0, plural, one {# free month earned} other {# free months earned}}"
 msgstr "{0, plural, one {已获得 # 个月免费} other {已获得 # 个月免费}}"
+
+#: src/pages/AdminPage.tsx
+msgid "Admin sections"
+msgstr "管理栏目"
 
 #. placeholder {0}: item.freeMonths
 #: src/pages/AdminAccessPage.tsx
 msgid "{0, plural, one {# free month} other {# free months}}"
 msgstr "{0, plural, other {# 个月免费使用期}}"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "All types"
+msgstr "全部类型"
+
 #. placeholder {0}: skills.length - shownSkills.length
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{0, plural, one {# more} other {# more}}"
 msgstr "{0, plural, one {还有 # 个} other {还有 # 个}}"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Allowed email domains, one per line"
+msgstr "允许的邮箱域名，每行一个"
+
 #. placeholder {0}: skillCount(install)
 #: src/components/integrations/skills-dialog.tsx
 msgid "{0, plural, one {# skill} other {# skills}}"
 msgstr "{0, plural, one {# 个技能} other {# 个技能}}"
+
+#: src/pages/AdminPage.tsx
+msgid "Audit log"
+msgstr "审计日志"
 
 #. placeholder {0}: availability.spaceIds.length
 #. placeholder {0}: chosen.length
@@ -109,10 +142,19 @@ msgstr "{0, plural, one {# 个技能} other {# 个技能}}"
 msgid "{0, plural, one {# space} other {# spaces}}"
 msgstr "{0, plural, one {# 个工作区} other {# 个工作区}}"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Blacklist"
+msgstr "拉黑"
+
 #. placeholder {0}: server.health.toolCount
 #: src/pages/McpServersOverlay.tsx
 msgid "{0, plural, one {# tool} other {# tools}}"
 msgstr "{0, plural, other {# 个工具}}"
+
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminUsers.tsx
+msgid "Blacklisted"
+msgstr "已拉黑"
 
 #. placeholder {0}: Math.ceil(oauth.expiresInSeconds / 60)
 #: src/pages/model-settings/connection-controls.tsx
@@ -120,16 +162,28 @@ msgstr "{0, plural, other {# 个工具}}"
 msgid "{0, plural, one {Waiting for sign-in — the code expires in about # minute.} other {Waiting for sign-in — the code expires in about # minutes.}}"
 msgstr "{0, plural, one {正在等待登录，验证码大约 # 分钟后过期。} other {正在等待登录，验证码大约 # 分钟后过期。}}"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Collective ban on excess"
+msgstr "超量集体禁用"
+
 #. placeholder {0}: Math.ceil(oauth.expiresInSeconds / 60)
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "{0, plural, one {Waiting for sign-in — the link expires in about # minute.} other {Waiting for sign-in — the link expires in about # minutes.}}"
 msgstr "{0, plural, one {正在等待登录，链接大约 # 分钟后过期。} other {正在等待登录，链接大约 # 分钟后过期。}}"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Could not delete the user"
+msgstr "无法删除该用户"
+
 #. placeholder {0}: file.name
 #: src/pages/shell/use-composer-actions.ts
 msgid "{0} (max {ATTACHMENT_MAX_COUNT} attachments)"
 msgstr "{0}（最多 {ATTACHMENT_MAX_COUNT} 个附件）"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Could not generate invite codes"
+msgstr "无法生成邀请码"
 
 #. placeholder {0}: file.name
 #. placeholder {1}: attachmentSizeLabel(attachmentMaxBytes(bootstrapMe))
@@ -137,368 +191,706 @@ msgstr "{0}（最多 {ATTACHMENT_MAX_COUNT} 个附件）"
 msgid "{0} (over {1})"
 msgstr "{0}（超过 {1}）"
 
+#: src/components/HumanVerification.tsx
+msgid "Could not load human verification"
+msgstr "人机验证加载失败"
+
 #. placeholder {0}: preset.n
 #: src/lib/cron.ts
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Could not revoke the code"
+msgstr "无法作废该邀请码"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Could not save IP limits"
+msgstr "无法保存 IP 限制"
 
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"
 msgstr "{0} 连接"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Could not save settings"
+msgstr "无法保存设置"
+
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} GB"
 msgstr "{0} GB"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Could not update the user"
+msgstr "无法更新该用户"
 
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} handling"
 msgstr "如何处理 {0}"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Couldn't load invite codes"
+msgstr "邀请码加载失败"
+
 #. placeholder {0}: bot.name
 #: src/components/call/IncomingCall.tsx
 msgid "{0} is calling you"
 msgstr "{0} 正在呼叫你"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Couldn't load IP limits"
+msgstr "IP 限制加载失败"
 
 #. placeholder {0}: updated.name
 #: src/pages/McpServersOverlay.tsx
 msgid "{0} is not working"
 msgstr "{0} 无法正常工作"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Couldn't load IP stats"
+msgstr "IP 统计加载失败"
+
 #. placeholder {0}: updated.name
 #: src/pages/McpServersOverlay.tsx
 msgid "{0} is running"
 msgstr "{0} 正在运行"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Couldn't load registration settings"
+msgstr "注册设置加载失败"
 
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} KB"
 msgstr "{0} KB"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Couldn't load the audit log"
+msgstr "审计日志加载失败"
+
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} MB"
 msgstr "{0} MB"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "Couldn't load the overview"
+msgstr "总览加载失败"
 
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} rollup hours"
 msgstr "{0} 的合并间隔（小时）"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Couldn't load users"
+msgstr "用户列表加载失败"
+
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} TB"
 msgstr "{0} TB"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Count"
+msgstr "数量"
 
 #. placeholder {0}: schedule(routine.crons)
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "{0}, paused until you turn it on"
 msgstr "{0}，开启前保持暂停"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Delete permanently"
+msgstr "永久删除"
+
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Delete this user permanently?"
+msgstr "要永久删除该用户吗？"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Deleted"
+msgstr "已删除"
 
 #: src/pages/shell/dialogs.tsx
 msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
 msgstr "{botCount, plural, other {删除 {name} 及其 # 个机器人？}}"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Disable"
+msgstr "禁用"
+
 #: src/pages/shell/computer-view.tsx
 msgid "{botName}’s computer"
 msgstr "{botName} 的电脑"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Each code works once and stops working after use."
+msgstr "每个邀请码只能使用一次，使用后自动失效。"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "{commandVariable} is reserved and cannot be used as a command variable. Choose another name."
 msgstr "{commandVariable} 是保留名称，不能用作命令变量。请选择其他名称。"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Email domain allowlist"
+msgstr "邮箱域名白名单"
+
 #: src/pages/PluginsOverlay.tsx
 msgid "{connectedCount, plural, one {# connected} other {# connected}}"
 msgstr "{connectedCount, plural, one {# 个已连接} other {# 个已连接}}"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Email registration"
+msgstr "邮箱注册"
 
 #: src/pages/shell/message-view.tsx
 msgid "{count, plural, one {# message with {peer}} other {# messages with {peer}}}"
 msgstr "{count, plural, other {与 {peer} 的 # 条消息}}"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Every admin and system action is recorded here and cannot be changed."
+msgstr "所有管理员与系统操作都会记录在这里，不可修改。"
+
 #: src/components/markdown-copy.tsx
 msgid "{count, plural, one {# row} other {# rows}}"
 msgstr "{count, plural, one {# 行} other {# 行}}"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Expired"
+msgstr "已过期"
 
 #: src/lib/billing.ts
 msgid "{count} days"
 msgstr "{count} 天"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Filter by type"
+msgstr "按类型筛选"
+
 #: src/lib/billing.ts
 msgid "{count} months"
 msgstr "{count} 个月"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate"
+msgstr "生成"
 
 #: src/components/AskCard.tsx
 msgid "{count} more"
 msgstr "还有 {count} 项"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate invite codes"
+msgstr "生成邀请码"
+
 #: src/lib/billing.ts
 msgid "{count} weeks"
 msgstr "{count} 周"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generating…"
+msgstr "生成中…"
 
 #: src/lib/billing.ts
 msgid "{count} years"
 msgstr "{count} 年"
 
+#: src/lib/user-error.ts
+msgid "Human verification failed. Try again."
+msgstr "人机验证失败，请重试。"
+
 #: src/lib/relative-time.ts
 msgid "{days}d ago"
 msgstr "{days} 天前"
+
+#: src/lib/user-error.ts
+msgid "Invalid invite code"
+msgstr "邀请码无效"
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
 msgstr "第 {from}–{to} 行，共 {total} 行"
 
+#: src/pages/Auth.tsx
+msgid "Invite code"
+msgstr "邀请码"
+
 #: src/lib/cron.ts
 msgid "{fromName} to {toName}"
 msgstr "{fromName}至{toName}"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Invite code registration"
+msgstr "邀请码注册"
 
 #: src/components/markdown-copy.tsx
 msgid "{header}, column {index}"
 msgstr "{header}，第 {index} 列"
 
+#: src/components/admin/admin-shared.tsx
+msgid "Invite code revoked"
+msgstr "邀请码已作废"
+
 #: src/components/ToolActivityDisclosure.tsx
 msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
 msgstr "{hidden, plural, one {+# 个更早的步骤} other {+# 个更早的步骤}}"
+
+#: src/pages/AdminPage.tsx
+msgid "Invite codes"
+msgstr "邀请码"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "{hiddenSelectedCount, plural, one {# selected model is hidden by your search.} other {# selected models are hidden by your search.}}"
 msgstr "{hiddenSelectedCount, plural, other {搜索结果未显示 # 个已选模型。}}"
 
+#: src/components/admin/admin-shared.tsx
+msgid "Invite codes generated"
+msgstr "已生成邀请码"
+
 #: src/lib/relative-time.ts
 msgid "{hours}h ago"
 msgstr "{hours} 小时前"
+
+#: src/components/admin/admin-shared.tsx
+msgid "IP collective ban"
+msgstr "IP 集体禁用"
 
 #: src/pages/Invite.tsx
 msgid "{inviterName} invited you"
 msgstr "{inviterName} 邀请了你"
 
+#: src/components/admin/AdminOverview.tsx
+msgid "IP collective bans"
+msgstr "IP 集体禁用"
+
 #: src/components/markdown-copy.tsx
 msgid "{label}, empty"
 msgstr "{label}，空"
+
+#: src/pages/AdminPage.tsx
+msgid "IP limits"
+msgstr "IP 限制"
 
 #: src/lib/relative-time.ts
 msgid "{minutes}m ago"
 msgstr "{minutes} 分钟前"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Limited"
+msgstr "受限"
+
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{name} (same name as a built-in skill)"
 msgstr "{name}（与内置技能同名）"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Limits"
+msgstr "限制规则"
 
 #: src/lib/activity-list-filters.ts
 msgid "{name} asked"
 msgstr "{name} 问"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Never expires"
+msgstr "永不过期"
+
 #: src/lib/activity-list-filters.ts
 msgid "{name} asked: {text}"
 msgstr "{name} 问：{text}"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "New registrations are limited right away; existing accounts are unaffected."
+msgstr "限制对新注册立即生效，已注册账号不受影响。"
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
 msgid "{name} failed"
 msgstr "{name} 失败"
 
+#: src/components/admin/AdminOverview.tsx
+msgid "New registrations, last 7 days"
+msgstr "近 7 天新注册"
+
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
 msgid "{name} finished"
 msgstr "{name} 已完成"
 
+#: src/components/admin/AdminOverview.tsx
+msgid "New this week"
+msgstr "本周新增"
+
 #: src/pages/ModelRoleSettings.tsx
 msgid "{name} options"
 msgstr "{name} 选项"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "New today"
+msgstr "今日新增"
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
 msgid "{name} stopped"
 msgstr "{name} 已停止"
 
+#: src/components/admin/AdminOverview.tsx
+msgid "No admin activity yet"
+msgstr "暂无管理操作"
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{names} keep their own model"
 msgstr "{names} 保留自己的模型"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "No audit events yet"
+msgstr "暂无审计记录"
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{names} keeps its own model"
 msgstr "{names} 保留自己的模型"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "No invite codes yet"
+msgstr "暂无邀请码"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} can't run this model."
 msgstr "{provider}无法运行此模型。"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "No registrations recorded yet"
+msgstr "暂无注册记录"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} couldn't be reached. Check that it's running."
 msgstr "无法连接到{provider}。请检查它是否正在运行。"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "No users match"
+msgstr "没有匹配的用户"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} denied access to this model."
 msgstr "{provider}拒绝了对此模型的访问。"
 
+#: src/pages/AdminPage.tsx
+msgid "Overview"
+msgstr "总览"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} is overloaded right now. Try again in a moment."
 msgstr "{provider}当前负载过高。请稍后再试。"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "Recent activity"
+msgstr "最近操作"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} is rate limiting requests. Try again shortly."
 msgstr "{provider}正在限制请求频率。请稍后重试。"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Registered"
+msgstr "注册时间"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} key hit its daily limit."
 msgstr "{provider}的密钥已达到每日限额。"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Registration IP"
+msgstr "注册 IP"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} key hit its limit."
 msgstr "{provider}的密钥已达到限额。"
 
+#: src/pages/Auth.tsx
+msgid "Registration is closed on this server"
+msgstr "该服务器已关闭注册"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} key hit its monthly limit."
 msgstr "{provider}的密钥已达到每月限额。"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Registration method"
+msgstr "注册方式"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} key hit its weekly limit."
 msgstr "{provider}的密钥已达到每周限额。"
 
+#: src/pages/AdminPage.tsx
+msgid "Registration settings"
+msgstr "注册设置"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its credit limit."
 msgstr "{provider}已达到额度上限。"
+
+#: src/components/admin/admin-shared.tsx
+msgid "Registration settings changed"
+msgstr "注册设置已修改"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its daily credit limit."
 msgstr "{provider}已达到每日额度上限。"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations by IP"
+msgstr "IP 注册统计"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its daily spending limit."
 msgstr "{provider}已达到每日支出限额。"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations per IP"
+msgstr "每个 IP 限注册数"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its monthly credit limit."
 msgstr "{provider}已达到每月额度上限。"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations per IP per hour"
+msgstr "每小时每个 IP 限注册数"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its monthly spending limit."
 msgstr "{provider}已达到每月支出限额。"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Remove from blacklist"
+msgstr "取消拉黑"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its spending limit."
 msgstr "{provider}已达到支出限额。"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Restore deleted"
+msgstr "恢复已删除"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its weekly credit limit."
 msgstr "{provider}已达到每周额度上限。"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Revoking…"
+msgstr "作废中…"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its weekly spending limit."
 msgstr "{provider}已达到每周支出限额。"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Save limits"
+msgstr "保存规则"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} rejected the API key. Check your connection settings."
 msgstr "{provider}拒绝了 API 密钥。请检查连接设置。"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Save settings"
+msgstr "保存设置"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} took too long to respond. Try again."
 msgstr "{provider}响应超时。请重试。"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Search by email or name"
+msgstr "按邮箱或用户名搜索"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left"
 msgstr "剩余 {remaining}"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "The environment master switch is off, so registration stays closed no matter what is set here."
+msgstr "环境总开关已关闭，注册保持关闭，这里改什么都没用。"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "{seats, plural, one {# seat} other {# seats}}"
 msgstr "{seats, plural, one {# 个席位} other {# 个席位}}"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "This removes the account and everything it created. This cannot be undone."
+msgstr "这会删除该账号及其创建的全部内容，无法撤销。"
+
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} a day"
 msgstr "每天 {shown}"
+
+#. placeholder {0}: stat.todayCount
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Today: {0}"
+msgstr "今日：{0}"
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} a month"
 msgstr "每月 {shown}"
 
+#: src/lib/user-error.ts
+msgid "Too many registrations from this network"
+msgstr "该网络注册次数过多"
+
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} a week"
 msgstr "每周 {shown}"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "Total users"
+msgstr "注册用户总数"
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} in total"
 msgstr "总计 {shown}"
 
+#. placeholder {0}: stat.totalCount
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Total: {0}"
+msgstr "累计：{0}"
+
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} spent"
 msgstr "已花费 {shown}"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Used up"
+msgstr "已用完"
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} spent this month"
 msgstr "本月已花费 {shown}"
 
+#: src/components/admin/admin-shared.tsx
+msgid "User blacklisted"
+msgstr "用户已拉黑"
+
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} spent this week"
 msgstr "本周已花费 {shown}"
+
+#: src/components/admin/admin-shared.tsx
+msgid "User deleted"
+msgstr "用户已删除"
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} spent today"
 msgstr "今天已花费 {shown}"
 
+#: src/components/admin/admin-shared.tsx
+msgid "User disabled"
+msgstr "用户已禁用"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
+
+#: src/components/admin/admin-shared.tsx
+msgid "User permanently deleted"
+msgstr "用户已永久删除"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{summary} Backup models failed or were unavailable for this request."
 msgstr "{summary} 备用模型失败或无法用于此请求。"
 
+#: src/components/admin/admin-shared.tsx
+msgid "User removed from blacklist"
+msgstr "用户已取消拉黑"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{summary} No backup model was usable for this request."
 msgstr "{summary} 没有可用于此请求的备用模型。"
+
+#: src/components/admin/admin-shared.tsx
+msgid "User restored"
+msgstr "用户已恢复"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{summary} Resets {date}."
 msgstr "{summary} 将于{date}重置。"
 
+#: src/pages/AdminPage.tsx
+msgid "Users"
+msgstr "用户管理"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{summary} Your backup models also failed."
 msgstr "{summary} 备用模型也失败了。"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Valid for"
+msgstr "有效期"
+
 #: src/pages/ActivityList.tsx
 msgid "{title}, {label}"
 msgstr "{title}，{label}"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When off, no new accounts can register by email."
+msgstr "关闭后，不再接受邮箱注册新账号。"
+
 #: src/pages/shell/agent-import-plan.tsx
 msgid "{title}, saved as {savedAs}"
 msgstr "{title}，保存为 {savedAs}"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "When on, an IP that passes the hourly threshold has all its accounts disabled at once."
+msgstr "开启后，同一 IP 一小时内注册数超过阈值时，该 IP 下的全部账号会被批量禁用。"
 
 #: src/components/ToolActivityDisclosure.tsx
 #: src/pages/plugins/connector-detail.tsx
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# 个工具} other {# 个工具}}"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, only emails from the domains below can register."
+msgstr "开启后，只有使用下方白名单域名的邮箱才能注册。"
+
 #: src/pages/model-settings/model-health-dialog.tsx
 msgid "{usable} of {total} models work"
 msgstr "{total} 个里 {usable} 个能用"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, registration requires a valid invite code."
+msgstr "开启后，注册时必须填写一个有效邀请码。"
 
 #: src/components/ModelCredits.tsx
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"

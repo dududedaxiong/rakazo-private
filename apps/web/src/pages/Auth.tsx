@@ -10,6 +10,7 @@ import { Button, Input, InputOTP, InputOTPGroup, InputOTPSlot, Label } from "@ra
 import { Server } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { HumanVerification } from "../components/HumanVerification";
 import { IconTooltip } from "../components/IconTooltip";
 import { PasskeySignIn } from "../components/PasskeySignIn";
 import { authClient } from "../lib/auth";
@@ -56,10 +57,25 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
   const [capabilityAttempt, setCapabilityAttempt] = useState(0);
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+  const [humanToken, setHumanToken] = useState<string | null>(null);
+  const [challengeResetKey, setChallengeResetKey] = useState(0);
   const useCode = Boolean(reset?.passwordAuth && reset.emailCode) && mode !== "forgot";
+  // Registration extras ride along as extra body fields; the server's sign-up hook
+  // reads them before Better Auth validates the known fields. Nothing is sent when
+  // there is nothing extra, so plain sign-ins keep their exact call shape.
+  const registrationExtras = () => {
+    if (mode !== "up") return {};
+    const body: Record<string, string> = {};
+    if (inviteCode.trim()) body.inviteCode = inviteCode.trim();
+    if (humanToken) body.humanVerificationToken = humanToken;
+    return Object.keys(body).length ? { fetchOptions: { body } } : {};
+  };
+  const registrationClosed = mode === "up" && reset?.signupsEnabled === false;
   // A blank password asks for an emailed code, so code-only accounts need no toggle.
   const codeMode = useCode && !password;
   const codeStep = useCode && codeSent;
+  const challengeRequired = mode === "up" && !codeStep && Boolean(reset?.humanVerificationSiteKey);
   const passwordFieldId = mode === "in" ? "current-password" : "new-password";
   const title =
     sent || codeStep ? (
@@ -137,8 +153,16 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
         const request = await authClient.emailOtp.sendVerificationOtp({
           email: trimmedEmail,
           type: "sign-in",
+          ...registrationExtras(),
         });
         if (request.error) {
+          if (
+            request.error.code === "INVALID_INVITE_CODE" ||
+            request.error.code === "HUMAN_VERIFICATION_FAILED"
+          ) {
+            setHumanToken(null);
+            setChallengeResetKey((key) => key + 1);
+          }
           setError(authErrorText(request.error, t`Could not continue`));
           return;
         }
@@ -152,9 +176,17 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
               email: trimmedEmail,
               password,
               name: name || trimmedEmail.split("@")[0] || "User",
+              ...registrationExtras(),
             })
           : await authClient.signIn.email({ email: trimmedEmail, password });
       if (result.error) {
+        if (
+          result.error.code === "INVALID_INVITE_CODE" ||
+          result.error.code === "HUMAN_VERIFICATION_FAILED"
+        ) {
+          setHumanToken(null);
+          setChallengeResetKey((key) => key + 1);
+        }
         setError(authErrorText(result.error, t`Could not continue`));
         return;
       }
@@ -181,8 +213,16 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
         otp,
         // Only used when this creates the account.
         name: mode === "up" ? name || trimmedEmail.split("@")[0] || "User" : undefined,
+        ...registrationExtras(),
       });
       if (result.error) {
+        if (
+          result.error.code === "INVALID_INVITE_CODE" ||
+          result.error.code === "HUMAN_VERIFICATION_FAILED"
+        ) {
+          setHumanToken(null);
+          setChallengeResetKey((key) => key + 1);
+        }
         setError(authErrorText(result.error, t`Could not continue`));
         setCode("");
         return;
@@ -272,7 +312,19 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
               {error}
             </p>
           ) : null}
-          {reset?.passwordAuth ? (
+          {registrationClosed ? (
+            <div role="alert" className="w-full text-center">
+              <p>
+                <Trans>Registration is closed on this server</Trans>
+              </p>
+              <Link
+                to={`/sign-in${nextQuery}`}
+                className="mt-4 inline-block font-medium text-foreground"
+              >
+                <Trans>Back to sign in</Trans>
+              </Link>
+            </div>
+          ) : reset?.passwordAuth ? (
             <>
               {mode === "up" && !codeStep ? (
                 <div className="mb-4 w-full">
@@ -378,6 +430,33 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
                   ) : null}
                 </div>
               ) : null}
+              {mode === "up" && reset?.inviteCodeRequired && !codeStep ? (
+                <div className="mt-4 w-full">
+                  <Label htmlFor="invite-code" className="text-muted-foreground">
+                    <Trans>Invite code</Trans>
+                  </Label>
+                  <Input
+                    id="invite-code"
+                    name="invite-code"
+                    autoComplete="off"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
+                    placeholder={t`Invite code`}
+                    required
+                    maxLength={12}
+                    className={fieldClass}
+                  />
+                </div>
+              ) : null}
+              {challengeRequired && reset?.humanVerificationSiteKey ? (
+                <div className="mt-4 w-full">
+                  <HumanVerification
+                    siteKey={reset.humanVerificationSiteKey}
+                    onToken={setHumanToken}
+                    resetKey={challengeResetKey}
+                  />
+                </div>
+              ) : null}
               {error ? (
                 <p role="alert" className="mt-3 w-full text-body text-destructive">
                   {error}
@@ -386,7 +465,11 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
               <Button
                 type="submit"
                 size="lg"
-                disabled={pending || (codeStep && code.length < CODE_LENGTH)}
+                disabled={
+                  pending ||
+                  (codeStep && code.length < CODE_LENGTH) ||
+                  (challengeRequired && !humanToken)
+                }
                 className={submitClass}
               >
                 {pending ? (

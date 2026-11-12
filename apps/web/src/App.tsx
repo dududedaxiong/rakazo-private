@@ -72,6 +72,29 @@ const AdminPluginsPage = lazyComponent(() =>
 const AdminAccessPage = lazyComponent(() =>
   import("./pages/AdminAccessPage").then((module) => module.AdminAccessPage),
 );
+const AdminPage = lazyComponent(() =>
+  import("./pages/AdminPage").then((module) => module.AdminPage),
+);
+const AdminOverviewPanel = lazyComponent(() =>
+  import("./components/admin/AdminOverview").then((module) => module.AdminOverviewPanel),
+);
+const AdminRegistrationSettingsPanel = lazyComponent(() =>
+  import("./components/admin/AdminRegistrationSettings").then(
+    (module) => module.AdminRegistrationSettingsPanel,
+  ),
+);
+const AdminUsersPanel = lazyComponent(() =>
+  import("./components/admin/AdminUsers").then((module) => module.AdminUsersPanel),
+);
+const AdminInviteCodesPanel = lazyComponent(() =>
+  import("./components/admin/AdminInviteCodes").then((module) => module.AdminInviteCodesPanel),
+);
+const AdminIpLimitsPanel = lazyComponent(() =>
+  import("./components/admin/AdminIpLimits").then((module) => module.AdminIpLimitsPanel),
+);
+const AdminAuditLogPanel = lazyComponent(() =>
+  import("./components/admin/AdminAuditLog").then((module) => module.AdminAuditLogPanel),
+);
 const NavLinkPage = lazyComponent(() =>
   import("./pages/NavLinkPage").then((module) => module.NavLinkPage),
 );
@@ -274,6 +297,17 @@ function SessionApp() {
                   user ? <AdminAccessPage /> : <Navigate to="/sign-in?next=/admin/access" replace />
                 }
               />
+              <Route
+                path="/admin"
+                element={user ? <AdminPage /> : <Navigate to="/sign-in?next=/admin" replace />}
+              >
+                <Route index element={<AdminOverviewPanel />} />
+                <Route path="settings" element={<AdminRegistrationSettingsPanel />} />
+                <Route path="users" element={<AdminUsersPanel />} />
+                <Route path="invite-codes" element={<AdminInviteCodesPanel />} />
+                <Route path="ip" element={<AdminIpLimitsPanel />} />
+                <Route path="audit" element={<AdminAuditLogPanel />} />
+              </Route>
               <Route
                 element={
                   user ? (
