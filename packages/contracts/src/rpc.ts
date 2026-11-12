@@ -6,6 +6,17 @@ import type {
 import { eventIterator, oc } from "@orpc/contract";
 import * as z from "zod";
 import {
+  AdminUserListInputSchema,
+  AdminUserSchema,
+  InviteCodeCreateInputSchema,
+  InviteCodeListInputSchema,
+  InviteCodeSchema,
+  IpRegistrationStatListInputSchema,
+  IpRegistrationStatSchema,
+  RegistrationSettingsSchema,
+  RegistrationSettingsUpdateSchema,
+} from "./admin.js";
+import {
   AgentImportCreateInput,
   AgentImportPlanSchema,
   AgentImportPreviewInput,
@@ -495,6 +506,32 @@ export const appContract = {
   /** Deployment-owner view of the append-only security event log, newest first. */
   security: {
     events: oc.input(SecurityEventListInputSchema).output(z.array(SecurityEventSchema)),
+  },
+  /** Super-admin backend: registration controls, invite codes, user management, IP limits. */
+  admin: {
+    registrationSettings: {
+      get: oc.output(RegistrationSettingsSchema),
+      update: oc.input(RegistrationSettingsUpdateSchema).output(RegistrationSettingsSchema),
+    },
+    inviteCodes: {
+      list: oc.input(InviteCodeListInputSchema).output(z.array(InviteCodeSchema)),
+      create: oc.input(InviteCodeCreateInputSchema).output(z.array(InviteCodeSchema)),
+      revoke: oc.input(z.object({ id: Id })).output(InviteCodeSchema),
+    },
+    users: {
+      list: oc.input(AdminUserListInputSchema).output(z.array(AdminUserSchema)),
+      get: oc.input(z.object({ id: Id })).output(AdminUserSchema),
+      disable: oc.input(z.object({ id: Id })).output(AdminUserSchema),
+      restore: oc.input(z.object({ id: Id })).output(AdminUserSchema),
+      blacklist: oc.input(z.object({ id: Id })).output(AdminUserSchema),
+      unblacklist: oc.input(z.object({ id: Id })).output(AdminUserSchema),
+      softDelete: oc.input(z.object({ id: Id })).output(AdminUserSchema),
+      restoreDeleted: oc.input(z.object({ id: Id })).output(AdminUserSchema),
+      hardDelete: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
+    },
+    ipStats: {
+      list: oc.input(IpRegistrationStatListInputSchema).output(z.array(IpRegistrationStatSchema)),
+    },
   },
   /** The organization's audit log, newest first. Organization owners and admins only. */
   audit: {

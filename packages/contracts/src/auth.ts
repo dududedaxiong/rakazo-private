@@ -19,6 +19,12 @@ export const authCapabilitiesSchema = z.object({
   nativePasskeys: z.object({ ios: z.boolean(), android: z.boolean() }).optional(),
   /** Crisp chat on the paywall; null or omitted when the deployment offers none. */
   crispWebsiteId: z.string().min(1).nullable().optional(),
+  /** Whether this server currently accepts registrations (master switch and admin settings). */
+  signupsEnabled: z.boolean().optional(),
+  /** Whether registration requires an invite code; omitted by older servers, which means no. */
+  inviteCodeRequired: z.boolean().optional(),
+  /** Human-verification site key for the registration challenge; omitted when off. */
+  humanVerificationSiteKey: z.string().min(1).nullable().optional(),
 });
 export type AuthCapabilities = z.infer<typeof authCapabilitiesSchema>;
 

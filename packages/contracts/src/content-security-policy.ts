@@ -63,6 +63,8 @@ export interface ContentSecurityPolicyExtensions {
   connectSrc?: readonly string[];
   /** Allows the Crisp chat widget the paywall loads when `CRISP_WEBSITE_ID` is set. */
   crisp?: boolean;
+  /** Allows the human-verification challenge on the registration page when it is configured. */
+  humanVerification?: boolean;
 }
 
 // The required origins from Crisp's domain list; images already pass the https: img-src.
@@ -78,6 +80,13 @@ const CRISP_DIRECTIVES: Record<string, string[]> = {
 };
 
 const CRISP_WEBSITE_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The verification provider's challenge origin: its script and its challenge frame. */
+const HUMAN_VERIFICATION_ORIGIN = "https://challenges.cloudflare.com";
+const HUMAN_VERIFICATION_DIRECTIVES: Record<string, string[]> = {
+  "script-src": [HUMAN_VERIFICATION_ORIGIN],
+  "frame-src": [HUMAN_VERIFICATION_ORIGIN],
+};
 
 /** `CRISP_WEBSITE_ID` is optional; a malformed one throws so the server refuses to start. */
 export function parseCrispWebsiteId(value: string | undefined): string | null {
@@ -124,6 +133,11 @@ export function appContentSecurityPolicy(extensions: ContentSecurityPolicyExtens
   };
   if (extensions.crisp) {
     for (const [name, sources] of Object.entries(CRISP_DIRECTIVES)) {
+      directives[name] = [...new Set([...(directives[name] ?? []), ...sources])];
+    }
+  }
+  if (extensions.humanVerification) {
+    for (const [name, sources] of Object.entries(HUMAN_VERIFICATION_DIRECTIVES)) {
       directives[name] = [...new Set([...(directives[name] ?? []), ...sources])];
     }
   }
