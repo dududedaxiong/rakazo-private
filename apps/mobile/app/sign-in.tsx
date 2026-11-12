@@ -528,6 +528,7 @@ export default function SignIn() {
                         <HumanVerification
                           siteKey={reset.humanVerificationSiteKey}
                           resetKey={challengeResetKey}
+                          baseUrl={apiBase}
                           onToken={setHumanToken}
                         />
                       ) : null}

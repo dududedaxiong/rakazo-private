@@ -40,10 +40,18 @@ renderWidget();
 export function HumanVerification({
   siteKey,
   resetKey,
+  baseUrl,
   onToken,
 }: {
   siteKey: string;
   resetKey: number;
+  /**
+   * The server origin the challenge page pretends to live on. Turnstile
+   * checks the page hostname against the site's registered domains, and
+   * inline HTML loads as about:blank, so without this the widget errors
+   * and no token is ever issued.
+   */
+  baseUrl?: string;
   onToken: (token: string | null) => void;
 }) {
   const { t } = useI18n();
@@ -83,7 +91,7 @@ export function HumanVerification({
       />
       <WebView
         key={`${resetKey}-${attempt}`}
-        source={{ html }}
+        source={{ html, baseUrl }}
         originWhitelist={["*"]}
         javaScriptEnabled
         domStorageEnabled={false}
