@@ -7,7 +7,7 @@ export const MODEL_STREAM_TIMEOUT_MS = 120_000;
 /** Bound connection establishment independently of response streaming. */
 export const MODEL_CONNECT_TIMEOUT_MS = 30_000;
 /** One model's health question budget; a slow model fails one result, not the run. */
-export const MODEL_HEALTH_TIMEOUT_MS = 30_000;
+export const MODEL_HEALTH_TIMEOUT_MS = 60_000;
 /**
  * `timeoutMs` bounds only time-to-headers; the SSE body that follows is
  * unbounded. Bound silence for every provider so a stalled stream can fail

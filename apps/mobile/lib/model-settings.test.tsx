@@ -170,6 +170,14 @@ vi.mock("@expo/ui/community/menu", () => ({
     ),
 }));
 vi.mock("expo-clipboard", () => ({ setStringAsync: vi.fn() }));
+
+// The model test run store (reached through the connection screen) persists
+// its snapshot to SecureStore.
+vi.mock("expo-secure-store", () => ({
+  getItemAsync: vi.fn(async () => null),
+  setItemAsync: vi.fn(async () => undefined),
+  deleteItemAsync: vi.fn(async () => undefined),
+}));
 vi.mock("./appearance", () => ({ mobileTokens: () => ({}) }));
 vi.mock("./native", () => ({
   native: new Proxy({}, { get: (_target, name) => String(name) }),

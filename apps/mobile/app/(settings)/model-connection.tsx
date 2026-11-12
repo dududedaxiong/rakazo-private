@@ -58,6 +58,7 @@ import {
   MODEL_CONNECT_TIMEOUT_MS,
   modelConnectionRequest,
 } from "../../lib/model-connection-request";
+import { MODEL_TEST_RUN_TIMEOUT_MS } from "../../lib/model-test-run";
 import { native, useThemedStyles } from "../../lib/native";
 import { ACCOUNT_SETTINGS, settingsRpc } from "../../lib/settings-target";
 import { useListSearch } from "../../lib/use-list-search";
@@ -384,7 +385,11 @@ export default function ModelConnection() {
     clearFeedback();
     try {
       setHealthResult(
-        await rpc("models/testProvider", { credentialId: credential.id }, { timeoutMs: 120_000 }),
+        await rpc(
+          "models/testProvider",
+          { credentialId: credential.id },
+          { timeoutMs: MODEL_TEST_RUN_TIMEOUT_MS },
+        ),
       );
     } catch (err) {
       publishFeedback("connection", {

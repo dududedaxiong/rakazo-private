@@ -22,6 +22,7 @@ import type { MobileBot, MobileModel } from "./mobile-types";
 import type { ModelConnectionRequest } from "./model-connection-request";
 import { modelConnectionRequest, openModelConnection } from "./model-connection-request";
 import { modelPickerRequest } from "./model-picker-selection";
+import { resetModelTestRunStore } from "./model-test-run";
 import { queryClient } from "./query";
 
 // Bot settings now uses the image picker for expression-face replacement;
@@ -203,6 +204,13 @@ vi.mock("expo-clipboard", () => ({ setStringAsync: vi.fn() }));
 vi.mock("./appearance", () => ({ mobileTokens: () => ({}) }));
 vi.mock("./message-action-sheet", () => ({ presentMessageActionSheet: vi.fn() }));
 vi.mock("./live-notifications", () => ({ afterChatNotifyChange: vi.fn(async () => undefined) }));
+
+// The model test run store persists its snapshot to SecureStore.
+vi.mock("expo-secure-store", () => ({
+  getItemAsync: vi.fn(async () => null),
+  setItemAsync: vi.fn(async () => undefined),
+  deleteItemAsync: vi.fn(async () => undefined),
+}));
 
 vi.mock("./session", () => ({
   loadSessionToken: async () => "token",
@@ -743,6 +751,7 @@ let root: Root;
 let container: HTMLDivElement;
 beforeEach(() => {
   vi.clearAllMocks();
+  resetModelTestRunStore();
   mocks.reportVisibleRows = true;
   mocks.headerInset = 0;
   mocks.focused = true;
@@ -2085,6 +2094,13 @@ function chipCard(label: string) {
   return container.querySelector<HTMLButtonElement>(`button[aria-label^="${label}:"]`);
 }
 
+// The test run finishes on detached promise chains; let them drain inside act.
+async function settleRun() {
+  await act(async () => {
+    for (let i = 0; i < 10; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
+
 const FakeSheet = ({ children }: { children?: ReactNode }) =>
   createElement("div", { "data-native-sheet": true }, children);
 
@@ -2131,6 +2147,8 @@ describe("thread model picker sheet", () => {
   const modelRows = () => sheetRows().filter((row) => row.getAttribute("aria-label") !== "Remove");
   const removeButtons = () =>
     [...container.querySelectorAll("button")].filter((button) => button.textContent === "Remove");
+  const menuButton = (label: string) =>
+    [...container.querySelectorAll("button")].find((button) => button.textContent === label);
   const pickModel = async (cardLabel: string, modelLabel: string) => {
     await renderChips();
     await act(async () => chipCard(cardLabel)!.click());
@@ -2139,6 +2157,8 @@ describe("thread model picker sheet", () => {
         .find((row) => row.textContent === modelLabel)!
         .click(),
     );
+    // A row tap opens the menu; switching happens from there.
+    await act(async () => menuButton("Switch to this model")!.click());
   };
 
   it("saves the main model in place and closes without leaving the chat", async () => {
@@ -2167,7 +2187,7 @@ describe("thread model picker sheet", () => {
     expect(chipCard("Computer model")?.getAttribute("aria-label")).toBe("Computer model: Model 4");
   });
 
-  it("tests every connection from the header and shows the merged results", async () => {
+  it("tests every testable connection from the header and shows the results on the rows", async () => {
     mocks.secondConnection = true;
     await renderChips();
     await act(async () => chipCard("Main model")!.click());
@@ -2176,11 +2196,20 @@ describe("thread model picker sheet", () => {
     );
     expect(button).toBeDefined();
     await act(async () => button!.click());
+    await settleRun();
+    // The managed catalog connection rejects every probe, so only the
+    // connection that can answer is tested.
+    expect(mocks.testProvider).toHaveBeenCalledTimes(1);
     expect(mocks.testProvider).toHaveBeenCalledWith({ credentialId: CREDENTIAL_ID });
-    expect(mocks.testProvider).toHaveBeenCalledWith({ credentialId: WORK_CREDENTIAL_ID });
-    expect(container.textContent).toContain("Test results · OpenRouter · Work");
-    expect(container.textContent).toContain("2 of 4 models work");
-    expect(container.textContent).toContain("vendor/model-1");
+    // The merged dialog is gone: results live on the rows.
+    expect(container.textContent).not.toContain("Test results");
+    expect(container.textContent).toContain("Usable · Latency 1s · Text ·");
+    expect(container.textContent).toContain("No permission · 1s · Text ·");
+    expect(container.textContent).toContain("OpenRouter · 1/11 passed");
+    expect(container.textContent).toContain("Space default · 1/1 passed");
+    expect(container.textContent).toContain("Only available");
+    expect(container.textContent).toContain("Available now: 2");
+    expect(container.textContent).toContain("Test finished 2/11");
   });
 
   it("reports when every provider test fails", async () => {
@@ -2191,8 +2220,146 @@ describe("thread model picker sheet", () => {
       (button) => button.textContent === "Test all models",
     );
     await act(async () => button!.click());
+    await settleRun();
     expect(container.textContent).toContain("Could not test these models");
     expect(container.textContent).not.toContain("Test results");
+  });
+
+  it("opens the row menu instead of selecting the model", async () => {
+    await renderChips();
+    await act(async () => chipCard("Main model")!.click());
+    await act(async () =>
+      sheetRows()
+        .find((row) => row.textContent === "Model 3")!
+        .click(),
+    );
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(sheetRows()).toHaveLength(12);
+    expect(container.textContent).toContain("Switch to this model");
+    expect(container.textContent).toContain("Retest this model");
+    expect(container.textContent).toContain("Close");
+    // A catalog row has no saved list to remove from.
+    expect(container.textContent).not.toContain("Remove this model");
+  });
+
+  it("shows the switch action as the current model for the selected row", async () => {
+    function Harness() {
+      const [sheetRole, setSheetRole] = useState<ThreadModelPickerRole | null>(null);
+      return (
+        <>
+          <ThreadComposerChips
+            botId="bot-fixture"
+            currentBot={threadBot}
+            userId="user-fixture"
+            catalog={catalog as MobileModel[]}
+            mainOverride={null}
+            computerChoice={mocks.computerPrimary}
+            onPickModel={setSheetRole}
+            favoriteCount={0}
+            onOpenFavorites={() => undefined}
+            backgroundLabel="Default"
+            onOpenBackground={() => undefined}
+            onOpenBackup={() => undefined}
+          />
+          {sheetRole ? (
+            <ThreadModelPickerSheet
+              visible
+              role={sheetRole}
+              botId="bot-fixture"
+              userId="user-fixture"
+              selectedKey="openrouter::vendor/model-2"
+              onClose={() => setSheetRole(null)}
+              onSaved={() => undefined}
+            />
+          ) : null}
+        </>
+      );
+    }
+    await act(async () => root.render(<Harness />));
+    await act(async () => chipCard("Main model")!.click());
+    await act(async () =>
+      sheetRows()
+        .find((row) => row.textContent === "Model 2")!
+        .click(),
+    );
+    const button = menuButton("Current model");
+    expect(button).toBeDefined();
+    expect(button!.hasAttribute("disabled")).toBe(true);
+    expect(menuButton("Switch to this model")).toBeUndefined();
+  });
+
+  it("retests one model from the row menu and keeps the other results", async () => {
+    await renderChips();
+    await act(async () => chipCard("Main model")!.click());
+    await act(async () => menuButton("Test all models")!.click());
+    await settleRun();
+    expect(container.textContent).toContain("Test finished 2/11");
+    await act(async () =>
+      sheetRows()
+        .find((row) => row.textContent!.startsWith("Model 2"))!
+        .click(),
+    );
+    // The menu shows the failure with its reason.
+    expect(container.textContent).toContain("No permission");
+    await act(async () => menuButton("Retest this model")!.click());
+    await settleRun();
+    expect(mocks.testProvider).toHaveBeenCalledTimes(2);
+    expect(mocks.testProvider).toHaveBeenLastCalledWith({ credentialId: CREDENTIAL_ID });
+    // The retest kept the other model's result.
+    expect(container.textContent).toContain("Usable · Latency 1s · Text ·");
+    expect(container.textContent).toContain("No permission · 1s · Text ·");
+    expect(container.textContent).not.toContain("Switch to this model");
+  });
+
+  it("aborts a run and resumes only the models still untested", async () => {
+    let resolveProbe!: (report: ReturnType<typeof mocks.testProvider>) => void;
+    mocks.testProvider.mockImplementationOnce(
+      () =>
+        new Promise<ReturnType<typeof mocks.testProvider>>((resolve) => {
+          resolveProbe = resolve;
+        }) as unknown as ReturnType<typeof mocks.testProvider>,
+    );
+    await renderChips();
+    await act(async () => chipCard("Main model")!.click());
+    await act(async () => menuButton("Test all models")!.click());
+    expect(menuButton("Testing 0/11")).toBeDefined();
+    expect(menuButton("Abort test")).toBeDefined();
+    await act(async () => menuButton("Abort test")!.click());
+    expect(menuButton("Resume test 0/11")).toBeDefined();
+    expect(menuButton("Abort test")).toBeUndefined();
+    expect(mocks.testProvider).toHaveBeenCalledTimes(1);
+    // The aborted probe answers late; its results are discarded.
+    await act(async () =>
+      resolveProbe({
+        results: [{ model: "vendor/model-1", state: "ok", detail: "2", seconds: 1 }],
+      } as ReturnType<typeof mocks.testProvider>),
+    );
+    expect(menuButton("Resume test 0/11")).toBeDefined();
+    await act(async () => menuButton("Resume test 0/11")!.click());
+    await settleRun();
+    expect(mocks.testProvider).toHaveBeenCalledTimes(2);
+    expect(menuButton("Test finished 2/11")).toBeDefined();
+    expect(container.textContent).toContain("Usable · Latency 1s · Text ·");
+  });
+
+  it("filters to usable models with the Only available chip", async () => {
+    await renderChips();
+    await act(async () => chipCard("Main model")!.click());
+    await act(async () => menuButton("Test all models")!.click());
+    await settleRun();
+    expect(modelRows()).toHaveLength(12);
+    const chip = container.querySelector<HTMLButtonElement>('button[aria-label="Only available"]');
+    expect(chip).not.toBeNull();
+    expect(container.textContent).toContain("Available now: 2");
+    await act(async () => chip!.click());
+    const usable = modelRows();
+    expect(usable).toHaveLength(2);
+    expect(usable[0]!.textContent).toContain("Space default");
+    expect(usable[0]!.textContent).toContain("Usable");
+    expect(usable[1]!.textContent).toContain("Model 1");
+    expect(usable[1]!.textContent).toContain("Usable");
+    await act(async () => chip!.click());
+    expect(modelRows()).toHaveLength(12);
   });
 
   it("removes a swiped model from its connection and keeps the sheet open", async () => {
@@ -2309,6 +2476,7 @@ describe("thread model picker sheet", () => {
         .find((row) => row.textContent === "Model 3")!
         .click(),
     );
+    await act(async () => menuButton("Switch to this model")!.click());
     expect(mocks.update).toHaveBeenCalledWith({
       botId: "bot-fixture",
       modelProvider: "openrouter",
@@ -2370,6 +2538,7 @@ describe("thread model picker sheet", () => {
         .find((row) => row.textContent === "Model 3")!
         .click(),
     );
+    await act(async () => menuButton("Switch to this model")!.click());
     expect(mocks.update).toHaveBeenCalledWith({
       botId: "bot-fixture",
       modelProvider: "openrouter",

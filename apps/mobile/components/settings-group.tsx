@@ -87,6 +87,8 @@ export function SettingsInputRow(props: Omit<TextInputProps, "style">) {
 type SettingsRowProps = Omit<PressableProps, "children" | "style"> & {
   title: string;
   detail?: string;
+  /** Overrides the detail text color; a test result line paints its own state. */
+  detailColor?: string;
   value?: string;
   chevron?: "right" | "down";
   prominent?: boolean;
@@ -100,6 +102,7 @@ type SettingsRowProps = Omit<PressableProps, "children" | "style"> & {
 export function SettingsRow({
   title,
   detail,
+  detailColor,
   value,
   chevron,
   prominent,
@@ -139,7 +142,9 @@ export function SettingsRow({
         >
           {title}
         </Text>
-        {detail ? <Text style={styles.detail}>{detail}</Text> : null}
+        {detail ? (
+          <Text style={[styles.detail, detailColor ? { color: detailColor } : null]}>{detail}</Text>
+        ) : null}
         {stacked ? end : null}
       </View>
       {stacked ? null : end}

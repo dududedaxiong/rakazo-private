@@ -1,8 +1,13 @@
 export const DE_MESSAGES: Record<string, string> = {
+  "Could not load human verification": "Die menschliche Überprüfung konnte nicht geladen werden",
   "Could not save models": "Modelle konnten nicht gespeichert werden",
   "Could not test these models": "Diese Modelle konnten nicht getestet werden",
   "Empty reply": "Leere Antwort",
   "Float outside the app": "Außerhalb der App schweben lassen",
+  "Human verification failed. Try again.":
+    "Menschliche Überprüfung fehlgeschlagen. Bitte erneut versuchen.",
+  "Invalid invite code": "Ungültiger Einladungscode",
+  "Invite code": "Einladungscode",
   "Keep only usable models": "Nur nutzbare Modelle behalten",
   "No available models.": "No available models.",
   "No models to test": "Keine Modelle zum Testen",
@@ -10,11 +15,13 @@ export const DE_MESSAGES: Record<string, string> = {
   "Not found": "Nicht gefunden",
   "Only the first 50 models were tested.": "Nur die ersten 50 Modelle wurden getestet.",
   "Rate limited": "Ratenlimit",
+  "Registration is closed on this server": "Die Registrierung ist auf diesem Server geschlossen",
   "Stop floating outside the app": "Schweben außerhalb der App beenden",
   "Can't float outside the app": "Schweben außerhalb der App nicht möglich",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
     "In diesem Build gibt es kein schwebendes Systemfenster. Der Computerbildschirm bleibt in der App.",
   "Allow floating over other apps": "Schweben über anderen Apps erlauben",
+  "Too many registrations from this network": "Zu viele Registrierungen aus diesem Netzwerk",
   "Turn on “Display over other apps” for Rakazo in Settings. Then leave the app and the computer screen floats over other apps; tap the window or its notification to come back.":
     "Aktiviere in den Einstellungen für Rakazo „Über anderen Apps einblenden“. Verlasse dann die App: Der Computerbildschirm schwebt über anderen Apps; tippe auf das Fenster oder seine Benachrichtigung, um zurückzukehren.",
   "Open Settings": "Einstellungen öffnen",
@@ -33,6 +40,50 @@ export const DE_MESSAGES: Record<string, string> = {
   "Test available models": "Test available models",
   "Test results · {label}": "Testergebnisse · {label}",
   "Timed out": "Zeitüberschreitung",
+  Latency: "Latenz",
+  Reason: "Grund",
+  Text: "Text",
+  "Text and images": "Text und Bilder",
+  "Text model": "Textmodell",
+  "Text and image model": "Text- und Bildmodell",
+  "Not tested": "Nicht getestet",
+  "Invalid request": "Ungültige Anfrage",
+  "Upstream error": "Upstream-Fehler",
+  "Network error": "Netzwerkfehler",
+  "Testing {done}/{total}": "Teste {done}/{total}",
+  "Testing…": "Teste…",
+  "Abort test": "Test abbrechen",
+  "Resume test {done}/{total}": "Test fortsetzen {done}/{total}",
+  Retest: "Erneut testen",
+  "Test finished {done}/{total}": "Test abgeschlossen {done}/{total}",
+  "Testing {model}": "Teste {model}",
+  "Last test interrupted at {time}": "Letzter Test abgebrochen um {time}",
+  "Only available": "Nur verfügbare",
+  "Available now: {count}": "Jetzt verfügbar: {count}",
+  "{passed}/{total} passed": "{passed}/{total} bestanden",
+  "Interrupted at {time}": "Abgebrochen um {time}",
+  "Switch to this model": "Zu diesem Modell wechseln",
+  "Retest this model": "Dieses Modell erneut testen",
+  "Remove this model": "Dieses Modell entfernen",
+  "Current model": "Aktuelles Modell",
+  "Test time": "Testzeit",
+  "Reached the {seconds}-second limit": "{seconds}-Sekunden-Limit erreicht",
+  "The model replied with nothing. Try again, or switch models.":
+    "Das Modell hat leer geantwortet. Versuchen Sie es erneut oder wechseln Sie das Modell.",
+  "The provider is rate limiting requests. Try again later.":
+    "Der Anbieter begrenzt Anfragen. Versuchen Sie es später erneut.",
+  "The key has no permission, or the plan ran out. Check the key and plan, or reconnect the provider.":
+    "Der Schlüssel hat keine Berechtigung oder das Guthaben ist aufgebraucht. Prüfen Sie Schlüssel und Tarif oder verbinden Sie den Anbieter erneut.",
+  "The model does not exist or was retired. Remove it, or check the provider settings.":
+    "Das Modell existiert nicht oder wurde entfernt. Entfernen Sie es oder prüfen Sie die Anbietereinstellungen.",
+  "The request did not return within 60 seconds. The relay may be overloaded or the model may be retired. Try again later, or check the provider settings.":
+    "Die Anfrage kam nicht innerhalb von 60 Sekunden zurück. Das Relay ist möglicherweise überlastet oder das Modell wurde entfernt. Versuchen Sie es später erneut oder prüfen Sie die Anbietereinstellungen.",
+  "The request was rejected. Check the provider settings.":
+    "Die Anfrage wurde abgelehnt. Prüfen Sie die Anbietereinstellungen.",
+  "The provider returned a server error. Try again later.":
+    "Der Anbieter hat einen Serverfehler gemeldet. Versuchen Sie es später erneut.",
+  "The network failed. Check the connection and try again.":
+    "Das Netzwerk ist fehlgeschlagen. Prüfen Sie die Verbindung und versuchen Sie es erneut.",
   "Tool name": "Tool-Name",
   Address: "Adresse",
   "Address line 2": "Adresszeile 2",

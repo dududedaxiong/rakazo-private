@@ -1,18 +1,25 @@
-import type { ModelHealthReport } from "@rakazo/contracts";
 import type { ChatModelChoice } from "@rakazo/core";
 import { useNavigation } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Modal, Platform, Text, useWindowDimensions, View } from "react-native";
 import { rpc } from "../../lib/api";
 import { mobileTokens } from "../../lib/appearance";
-import { mergeHealthReports, TEST_PROVIDER_TIMEOUT_MS } from "../../lib/available-model-probe";
 import { chatModelPickerChoices } from "../../lib/chat-model";
 import { useI18n } from "../../lib/i18n";
-import type { MobileModelCredential } from "../../lib/mobile-types";
+import type { MobileMe, MobileModelCredential } from "../../lib/mobile-types";
 import { removableModel, removeModelFromConnection } from "../../lib/model-removal";
+import type { ModelTestResult } from "../../lib/model-test-result";
+import { formatModelTestClock } from "../../lib/model-test-result";
+import {
+  buildModelTestItems,
+  getModelTestRunStore,
+  modelKeyForChoice,
+  testItemForChoice,
+} from "../../lib/model-test-run";
 import { errorText } from "../../lib/user-error";
-import { ModelHealthDialog } from "../model-health-dialog";
+import type { ModelPickerTestDisplay } from "../model-picker-list";
 import { ModelPickerList } from "../model-picker-list";
+import { ModelTestRowMenu } from "../model-test-row-menu";
 import { NativeActionButton } from "../native-action-button";
 import { NativeSheet, useNativeSheet } from "../native-sheet";
 
@@ -27,6 +34,10 @@ export type ThreadModelSave = {
  * The model picker as a bottom sheet from the chat's quick-access cards, so a pick lands
  * without leaving the chat. Android uses the native bottom sheet; iOS uses a form sheet,
  * and Android without the native sheet falls back to a modal, following BotOrganizeModal.
+ *
+ * Tapping a row opens its menu (detail, switch, retest, remove) instead of
+ * selecting it. The model test runs in a module-level store, so closing the
+ * sheet never stops a run; reopening shows live progress and same-day results.
  */
 export function ThreadModelPickerSheet({
   visible,
@@ -50,15 +61,76 @@ export function ThreadModelPickerSheet({
   const navigation = useNavigation();
   const Sheet = useNativeSheet();
   const { height } = useWindowDimensions();
+  const [me, setMe] = useState<MobileMe | null>(null);
   const [choices, setChoices] = useState<ChatModelChoice[] | null>(null);
   const [credentials, setCredentials] = useState<MobileModelCredential[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [healthReports, setHealthReports] = useState<ModelHealthReport[] | null>(null);
-  const mergedHealth = healthReports ? mergeHealthReports(healthReports) : null;
+  const [menuChoice, setMenuChoice] = useState<ChatModelChoice | null>(null);
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const testRun = getModelTestRunStore();
+  const testSnapshot = useSyncExternalStore(testRun.subscribe, testRun.getSnapshot);
   const title = role === "main" ? t("Main model") : t("Computer model");
+
+  // The store keys results by model; rows key by picker key, so the space
+  // default row reads the result of the model behind it.
+  const resultsByChoiceKey = useMemo(() => {
+    const map = new Map<string, ModelTestResult>();
+    for (const choice of choices ?? []) {
+      const key = modelKeyForChoice(choice, me);
+      const result = key ? testSnapshot.results.get(key) : undefined;
+      if (result) map.set(choice.key, result);
+    }
+    return map;
+  }, [choices, me, testSnapshot.results]);
+  const testingChoiceKeys = useMemo(() => {
+    const keys = new Set<string>();
+    for (const choice of choices ?? []) {
+      if (testSnapshot.testingKeys.has(modelKeyForChoice(choice, me))) keys.add(choice.key);
+    }
+    return keys;
+  }, [choices, me, testSnapshot.testingKeys]);
+  const interruptedChoiceKeys = useMemo(() => {
+    const keys = new Set<string>();
+    if (testSnapshot.status !== "interrupted") return keys;
+    for (const choice of choices ?? []) {
+      if (testSnapshot.queuedKeys.includes(modelKeyForChoice(choice, me))) {
+        keys.add(choice.key);
+      }
+    }
+    return keys;
+  }, [choices, me, testSnapshot.status, testSnapshot.queuedKeys]);
+  const availableCount = useMemo(() => {
+    let count = 0;
+    for (const result of resultsByChoiceKey.values()) {
+      if (result.state === "ok") count += 1;
+    }
+    return count;
+  }, [resultsByChoiceKey]);
+  const testDisplay: ModelPickerTestDisplay = useMemo(
+    () => ({
+      results: resultsByChoiceKey,
+      testingKeys: testingChoiceKeys,
+      interruptedKeys: interruptedChoiceKeys,
+      interruptedAt: testSnapshot.interruptedAt,
+      hasRun: testSnapshot.status !== "idle",
+      onlyAvailable,
+      availableCount,
+      showFilter: testSnapshot.results.size > 0,
+      onToggleOnlyAvailable: () => setOnlyAvailable((value) => !value),
+    }),
+    [
+      resultsByChoiceKey,
+      testingChoiceKeys,
+      interruptedChoiceKeys,
+      testSnapshot.interruptedAt,
+      testSnapshot.status,
+      testSnapshot.results,
+      onlyAvailable,
+      availableCount,
+    ],
+  );
 
   useEffect(() => {
     if (!visible) return;
@@ -68,10 +140,11 @@ export function ThreadModelPickerSheet({
     setLoadError(null);
     setError(null);
     void Promise.all([rpc("me"), rpc("models/list"), rpc("models/credentials")])
-      .then(([me, catalog, credentials]) => {
+      .then(([nextMe, catalog, credentials]) => {
         if (cancelled) return;
+        setMe(nextMe);
         setCredentials(credentials);
-        setChoices(chatModelPickerChoices(me, catalog, credentials, selectedKey, t));
+        setChoices(chatModelPickerChoices(nextMe, catalog, credentials, selectedKey, t));
       })
       .catch((err: unknown) => {
         if (!cancelled) setLoadError(errorText(err, t("Could not load model settings")));
@@ -118,13 +191,14 @@ export function ThreadModelPickerSheet({
 
   async function reloadChoices() {
     try {
-      const [me, catalog, nextCredentials] = await Promise.all([
+      const [nextMe, catalog, nextCredentials] = await Promise.all([
         rpc("me"),
         rpc("models/list"),
         rpc("models/credentials"),
       ]);
+      setMe(nextMe);
       setCredentials(nextCredentials);
-      setChoices(chatModelPickerChoices(me, catalog, nextCredentials, selectedKey, t));
+      setChoices(chatModelPickerChoices(nextMe, catalog, nextCredentials, selectedKey, t));
     } catch (err) {
       setLoadError(errorText(err, t("Could not load model settings")));
     }
@@ -161,37 +235,40 @@ export function ThreadModelPickerSheet({
     }
   }
 
-  /** Tests every model on every connection with one real question each. */
-  async function testAllModels() {
-    if (!credentials || credentials.length === 0 || testing) return;
-    setTesting(true);
-    setError(null);
-    try {
-      const settled = await Promise.allSettled(
-        credentials.map((credential) =>
-          rpc(
-            "models/testProvider",
-            { credentialId: credential.id },
-            { timeoutMs: TEST_PROVIDER_TIMEOUT_MS },
-          ),
-        ),
-      );
-      const reports = settled.flatMap((result) =>
-        result.status === "fulfilled" ? [result.value] : [],
-      );
-      if (reports.length === 0) {
-        setError(t("Could not test these models"));
-        return;
-      }
-      setHealthReports(reports);
-    } catch (err) {
-      setError(errorText(err, t("Could not test these models")));
-    } finally {
-      setTesting(false);
+  /** Starts a test run in the background store; closing the sheet never stops it. */
+  function startTestRun(resume: boolean) {
+    if (!choices || !credentials) return;
+    const items = buildModelTestItems(choices, credentials, me);
+    if (items.length === 0) {
+      setError(t("Could not test these models"));
+      return;
     }
+    setError(null);
+    testRun.start(items, { resume });
+  }
+
+  /** Retests one model from its row menu; the row shows "testing" until it lands. */
+  async function retestChoice(choice: ChatModelChoice) {
+    const item = testItemForChoice(choice, credentials ?? [], me);
+    if (!item) return;
+    await testRun.retestOne(item);
   }
 
   if (!visible || Sheet === undefined) return null;
+
+  const runStatus =
+    testSnapshot.status === "interrupted" && testSnapshot.done >= testSnapshot.total
+      ? "done"
+      : testSnapshot.status;
+  const progress =
+    testSnapshot.total > 0 ? Math.round((testSnapshot.done / testSnapshot.total) * 100) : 0;
+  // A run that finished with nothing tested — every probe failed — says so,
+  // the way the old one-shot test did, instead of showing a bare 0/total.
+  const runError =
+    error ??
+    (runStatus === "done" && testSnapshot.done === 0 && testSnapshot.total > 0
+      ? t("Could not test these models")
+      : null);
 
   const content = (
     <View
@@ -212,21 +289,116 @@ export function ThreadModelPickerSheet({
       >
         <Text style={{ color: tokens.foreground, fontSize: 17, fontWeight: "600" }}>{title}</Text>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <NativeActionButton
-            disabled={!credentials || credentials.length === 0 || testing}
-            label={testing ? t("Testing…") : t("Test all models")}
-            prominence="secondary"
-            onPress={() => void testAllModels()}
-          />
+          {runStatus === "running" ? (
+            <>
+              <NativeActionButton
+                label={t("Testing {done}/{total}", {
+                  done: testSnapshot.done,
+                  total: testSnapshot.total,
+                })}
+                prominence="secondary"
+                busy
+                disabled
+                onPress={() => undefined}
+              />
+              <NativeActionButton
+                label={t("Abort test")}
+                prominence="destructive"
+                variant="text"
+                onPress={() => testRun.abort()}
+              />
+            </>
+          ) : runStatus === "interrupted" ? (
+            <>
+              <NativeActionButton
+                label={t("Resume test {done}/{total}", {
+                  done: testSnapshot.done,
+                  total: testSnapshot.total,
+                })}
+                onPress={() => startTestRun(true)}
+              />
+              <NativeActionButton
+                label={t("Retest")}
+                prominence="quiet"
+                onPress={() => startTestRun(false)}
+              />
+            </>
+          ) : runStatus === "done" ? (
+            <>
+              <NativeActionButton
+                label={t("Test finished {done}/{total}", {
+                  done: testSnapshot.done,
+                  total: testSnapshot.total,
+                })}
+                prominence="secondary"
+                disabled
+                onPress={() => undefined}
+              />
+              <NativeActionButton
+                label={t("Retest")}
+                prominence="quiet"
+                onPress={() => startTestRun(false)}
+              />
+            </>
+          ) : (
+            <NativeActionButton
+              disabled={!credentials || credentials.length === 0}
+              label={t("Test all models")}
+              prominence="secondary"
+              onPress={() => startTestRun(false)}
+            />
+          )}
           <NativeActionButton label={t("Cancel")} prominence="plain" onPress={onClose} />
         </View>
       </View>
-      {error ? (
+      {runStatus === "running" || runStatus === "interrupted" ? (
+        <View>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              paddingHorizontal: 20,
+            }}
+          >
+            <Text style={{ color: tokens.mutedForeground, fontSize: 13 }}>
+              {runStatus === "running"
+                ? testSnapshot.currentLabel
+                  ? t("Testing {model}", { model: testSnapshot.currentLabel })
+                  : t("Testing…")
+                : t("Last test interrupted at {time}", {
+                    time: formatModelTestClock(testSnapshot.interruptedAt ?? Date.now()),
+                  })}
+            </Text>
+            <Text style={{ color: tokens.mutedForeground, fontSize: 13 }}>
+              {testSnapshot.done}/{testSnapshot.total}
+            </Text>
+          </View>
+          <View
+            style={{
+              marginHorizontal: 20,
+              marginTop: 8,
+              height: 4,
+              borderRadius: 2,
+              backgroundColor: tokens.border,
+            }}
+          >
+            <View
+              style={{
+                height: "100%",
+                width: `${progress}%`,
+                borderRadius: 2,
+                backgroundColor: tokens.link,
+              }}
+            />
+          </View>
+        </View>
+      ) : null}
+      {runError ? (
         <Text
           accessibilityRole="alert"
           style={{ color: tokens.destructive, paddingHorizontal: 20, paddingBottom: 8 }}
         >
-          {error}
+          {runError}
         </Text>
       ) : null}
       <View style={{ flex: 1 }}>
@@ -234,18 +406,42 @@ export function ThreadModelPickerSheet({
           choices={choices}
           selectedKey={selectedKey}
           error={loadError}
-          onSelect={(choice) => void select(choice)}
+          onSelect={(choice) => setMenuChoice(choice)}
           isRemovable={(choice) =>
             removableModel(credentials ?? [], choice, choices ?? []) !== null
           }
           onRemove={(choice) => void removeChoice(choice)}
+          test={testDisplay}
         />
       </View>
-      {mergedHealth ? (
-        <ModelHealthDialog
-          result={mergedHealth}
-          keeping={false}
-          onClose={() => setHealthReports(null)}
+      {menuChoice ? (
+        <ModelTestRowMenu
+          modelLabel={menuChoice.modelId ?? me?.defaultModel ?? menuChoice.label}
+          providerLabel={menuChoice.providerLabel ?? t("Space default")}
+          images={menuChoice.images}
+          result={resultsByChoiceKey.get(menuChoice.key) ?? null}
+          testing={testingChoiceKeys.has(menuChoice.key)}
+          interrupted={interruptedChoiceKeys.has(menuChoice.key)}
+          interruptedAt={testSnapshot.interruptedAt}
+          isSelected={menuChoice.key === selectedKey}
+          isRemovable={removableModel(credentials ?? [], menuChoice, choices ?? []) !== null}
+          canRetest={
+            testSnapshot.status !== "running" &&
+            testItemForChoice(menuChoice, credentials ?? [], me) !== null
+          }
+          onSwitch={() => {
+            setMenuChoice(null);
+            void select(menuChoice);
+          }}
+          onRetest={() => {
+            setMenuChoice(null);
+            void retestChoice(menuChoice);
+          }}
+          onRemove={() => {
+            setMenuChoice(null);
+            void removeChoice(menuChoice);
+          }}
+          onClose={() => setMenuChoice(null)}
         />
       ) : null}
     </View>

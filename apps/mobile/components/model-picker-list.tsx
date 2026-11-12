@@ -18,6 +18,8 @@ import { Swipeable } from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFloatingHeaderInset } from "../lib/floating-header";
 import { useI18n } from "../lib/i18n";
+import type { ModelTestResult } from "../lib/model-test-result";
+import { modelTestLineColor, modelTestRowLine } from "../lib/model-test-result";
 import { native, useMobileTokens, useThemedStyles } from "../lib/native";
 import { useSideInsets } from "../lib/side-insets";
 import { useListSearch } from "../lib/use-list-search";
@@ -25,6 +27,28 @@ import { ListSearchInput } from "./list-search-input";
 import { Checkmark } from "./row-accessories";
 import { SettingsLabel, SettingsRow } from "./settings-group";
 import { TextOnlyMark } from "./text-only-mark";
+
+/**
+ * What the model test run shows in the list: per-row results, the run's
+ * progress markers, and the "only available" filter. Absent on screens
+ * without a test run, where the list behaves exactly as before.
+ */
+export type ModelPickerTestDisplay = {
+  /** Results by picker row key, including the space default's own key. */
+  results: ReadonlyMap<string, ModelTestResult>;
+  /** Rows a single-model retest is running for right now. */
+  testingKeys: ReadonlySet<string>;
+  /** Rows without a result when the run stopped. */
+  interruptedKeys: ReadonlySet<string>;
+  interruptedAt: number | null;
+  /** True once a run has started today; before that no test lines show. */
+  hasRun: boolean;
+  onlyAvailable: boolean;
+  availableCount: number;
+  /** False until a same-day run has results to filter by. */
+  showFilter: boolean;
+  onToggleOnlyAvailable: () => void;
+};
 
 /** Searchable grouped model cells shared by chat and connection settings. */
 export function ModelPickerList({
@@ -37,6 +61,7 @@ export function ModelPickerList({
   connectChoices,
   isRemovable,
   onRemove,
+  test,
 }: {
   choices: readonly ChatModelChoice[] | null;
   /** Providers that need a connection first, listed after the models. */
@@ -51,6 +76,7 @@ export function ModelPickerList({
   isRemovable?: (choice: ChatModelChoice) => boolean;
   /** Called when the swipe-to-remove action is tapped for a removable row. */
   onRemove?: (choice: ChatModelChoice) => void;
+  test?: ModelPickerTestDisplay;
 }) {
   const { t } = useI18n();
   const navigation = useNavigation();
@@ -113,29 +139,60 @@ export function ModelPickerList({
     });
   }, [navigation, t, changeQuery, showSearch]);
 
+  // "Only available" hides every row whose latest same-day result is not usable.
+  const testVisible = useMemo(() => {
+    if (!test?.onlyAvailable) return visible;
+    return visible.filter(
+      (row) => !row.connect && test.results.get(row.choice.key)?.state === "ok",
+    );
+  }, [visible, test]);
+
+  // Pass counts come from the whole group, not the search or the filter:
+  // "2/5" stays 2/5 while only the two usable rows show.
+  const passCounts = useMemo(() => {
+    if (!test || test.results.size === 0 || !choices) return null;
+    const counts = new Map<string, { ok: number; total: number }>();
+    for (const section of groupModelChoices(choices, "")) {
+      counts.set(section.key, {
+        ok: section.data.filter((item) => test.results.get(item.key)?.state === "ok").length,
+        total: section.data.length,
+      });
+    }
+    return counts;
+  }, [choices, test]);
+
   const sections = useMemo(() => {
     if (!choices) return [];
     const models = groupModelChoices(
-      visible.flatMap((row) => (row.connect ? [] : [row.choice])),
+      testVisible.flatMap((row) => (row.connect ? [] : [row.choice])),
       "",
-    ).map((section) => ({
-      ...section,
-      connect: false,
-      heading:
+    ).map((section) => {
+      const base =
         providerLabel && section.heading === providerLabel
           ? undefined
           : providerLabel && section.heading?.endsWith(withConnectionName("", providerLabel))
             ? section.heading.slice(0, -withConnectionName("", providerLabel).length)
-            : section.heading,
-    }));
+            : section.heading;
+      const count = passCounts?.get(section.key);
+      return {
+        ...section,
+        connect: false,
+        heading: count
+          ? `${base ?? t("Space default")} · ${t("{passed}/{total} passed", {
+              passed: count.ok,
+              total: count.total,
+            })}`
+          : base,
+      };
+    });
     const connect = groupModelChoices(
-      visible.flatMap((row) => (row.connect ? [row.choice] : [])),
+      testVisible.flatMap((row) => (row.connect ? [row.choice] : [])),
       "",
     ).flatMap((section) => section.data);
     return connect.length
       ? [...models, { key: "connect", heading: undefined, connect: true, data: connect }]
       : models;
-  }, [choices, visible, providerLabel]);
+  }, [choices, testVisible, providerLabel, passCounts, t]);
   useLayoutEffect(() => {
     const state = initialScroll.current;
     if (state.handled || state.cancelled || choices === null) return;
@@ -242,8 +299,52 @@ export function ModelPickerList({
         </View>
       )}
       ListHeaderComponent={
-        Platform.OS === "android" && showSearch ? (
-          <ListSearchInput query={query} setQuery={changeQuery} />
+        (Platform.OS === "android" && showSearch) || test?.showFilter ? (
+          <View>
+            {Platform.OS === "android" && showSearch ? (
+              <ListSearchInput query={query} setQuery={changeQuery} />
+            ) : null}
+            {test?.showFilter ? (
+              <View style={styles.filterRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("Only available")}
+                  accessibilityState={{ selected: test.onlyAvailable }}
+                  onPress={test.onToggleOnlyAvailable}
+                  style={[
+                    styles.filterChip,
+                    {
+                      borderColor: test.onlyAvailable ? mobileTokens.link : mobileTokens.border,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.filterDot,
+                      { borderColor: mobileTokens.mutedForeground },
+                      test.onlyAvailable && {
+                        backgroundColor: mobileTokens.link,
+                        borderColor: mobileTokens.link,
+                      },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.filterLabel,
+                      {
+                        color: test.onlyAvailable ? mobileTokens.link : mobileTokens.foreground,
+                      },
+                    ]}
+                  >
+                    {t("Only available")}
+                  </Text>
+                </Pressable>
+                <Text style={[styles.filterCount, { color: mobileTokens.mutedForeground }]}>
+                  {t("Available now: {count}", { count: test.availableCount })}
+                </Text>
+              </View>
+            ) : null}
+          </View>
         ) : null
       }
       ListEmptyComponent={
@@ -255,6 +356,17 @@ export function ModelPickerList({
       }
       renderItem={({ item, index, section }) => {
         const selected = item.key === selectedKey;
+        const testLine =
+          test?.hasRun && !section.connect
+            ? modelTestRowLine({
+                result: test.results.get(item.key) ?? null,
+                testing: test.testingKeys.has(item.key),
+                interrupted: test.interruptedKeys.has(item.key),
+                interruptedAt: test.interruptedAt,
+                images: item.images,
+                t,
+              })
+            : null;
         const cell = (
           <View
             style={[
@@ -270,7 +382,8 @@ export function ModelPickerList({
               accessibilityState={{ selected }}
               onPress={() => onSelect(item)}
               title={item.title ?? item.label}
-              detail={item.detail}
+              detail={testLine?.text ?? item.detail}
+              detailColor={testLine ? modelTestLineColor(testLine.tone, mobileTokens) : undefined}
               value={section.connect ? t("Connect") : undefined}
               chevron={section.connect ? "right" : undefined}
               trailing={
@@ -324,6 +437,25 @@ function createStyles() {
     content: { paddingHorizontal: 16 },
     sectionHeading: { paddingBottom: 7 },
     sectionGap: { height: 20 },
+    filterRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingTop: 12,
+      paddingBottom: 4,
+    },
+    filterChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 7,
+      borderWidth: 1,
+      borderRadius: 999,
+      paddingHorizontal: 13,
+      paddingVertical: 7,
+    },
+    filterDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 2 },
+    filterLabel: { fontSize: 14 },
+    filterCount: { fontSize: 13 },
     trailing: { flexDirection: "row", alignItems: "center", gap: 10 },
     cell: { backgroundColor: native.fill, overflow: "hidden" },
     first: { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderCurve: "continuous" },
