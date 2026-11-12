@@ -26,7 +26,7 @@ import {
 import { MAX_FONT_SCALE } from "@rakazo/ui-tokens";
 import type { Ref } from "react";
 import { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
-import type { ViewStyle } from "react-native";
+import type { GestureResponderEvent, ViewStyle } from "react-native";
 import {
   AppState,
   Pressable,
@@ -46,6 +46,8 @@ import type { ComposerSnapshot } from "../lib/thread-feedback";
 import type { VoiceChatDeps } from "../lib/voice-chat";
 import { BotAvatar } from "./bot-avatar";
 import { GlassSurface } from "./glass-surface";
+import type { HoldVoiceMode } from "./hold-voice-overlay";
+import { HoldVoiceOverlay } from "./hold-voice-overlay";
 import { NativeSymbol } from "./native-symbol";
 
 type NativeEdit = {
@@ -112,6 +114,8 @@ type HoldDictation = {
   ended: boolean;
   /** The finger lifted; the final settles the hold when it lands. */
   released: boolean;
+  /** What the finger chose on release: send the turn, drop it, or edit it first. */
+  releaseMode: HoldVoiceMode;
   /** Settle ran already; a late callback must not send twice. */
   settled: boolean;
 };
@@ -177,6 +181,18 @@ export function ThreadComposer({
   /** One hold-to-talk listen on the waveform button: press to hear, release to send. */
   const holdRef = useRef<HoldDictation | null>(null);
   const [dictating, setDictating] = useState(false);
+  /**
+   * The slide target while holding: send, cancel, or edit. Kept in a ref so
+   * the release reads the latest finger position, and in state so the overlay repaints.
+   */
+  const holdModeRef = useRef<HoldVoiceMode>("send");
+  const [holdMode, setHoldModeState] = useState<HoldVoiceMode>("send");
+  function setHoldMode(mode: HoldVoiceMode) {
+    holdModeRef.current = mode;
+    setHoldModeState(mode);
+  }
+  /** The finger's page Y when the hold began; the slide is measured from it. */
+  const holdStartYRef = useRef<number | null>(null);
 
   function setDictatedText(text: string) {
     draftRef.current = text;
@@ -198,7 +214,7 @@ export function ThreadComposer({
     setSelection({ start: 0, end: 0 });
   }
 
-  /** Sends the dictated turn, or clears it when nothing was heard. Runs once per hold. */
+  /** Settles the hold by what the finger chose on release: send the turn, drop it, or leave it in the draft for editing. Runs once per hold. */
   function settleHold() {
     const hold = holdRef.current;
     if (!hold || hold.settled) return;
@@ -207,11 +223,16 @@ export function ThreadComposer({
     setDictating(false);
     hold.controller.abort();
     const text = hold.heard.trim();
-    if (!text) {
+    if (!text || hold.releaseMode === "cancel") {
       clearDictatedText();
       return;
     }
     setDictatedText(text);
+    if (hold.releaseMode === "edit") {
+      // Leave the turn in the draft and open it for editing; the caller sends it.
+      inputRef.current?.focus();
+      return;
+    }
     // The send reads the composer's snapshot, so it runs after the dictated
     // draft lands in state.
     setTimeout(() => {
@@ -238,6 +259,7 @@ export function ThreadComposer({
       heard: "",
       ended: false,
       released: false,
+      releaseMode: "send",
       settled: false,
     };
     holdRef.current = hold;
@@ -285,13 +307,32 @@ export function ThreadComposer({
     if (!started) endHoldSilently();
   }
 
-  function releaseHoldDictation() {
+  function trackHoldSlide(event: GestureResponderEvent) {
+    const startY = holdStartYRef.current;
+    const pageY = event.nativeEvent.touches?.[0]?.pageY;
+    if (startY == null || pageY == null || !holdRef.current) return;
+    const dy = pageY - startY;
+    // The button sits at the screen's bottom edge, so the downward slide
+    // has little room: its threshold is smaller than the upward one.
+    // Sliding back into the middle returns to sending.
+    const mode: HoldVoiceMode = dy <= -60 ? "cancel" : dy >= 40 ? "edit" : "send";
+    if (mode !== holdModeRef.current) setHoldMode(mode);
+  }
+
+  function releaseHoldDictation(mode: HoldVoiceMode) {
     const hold = holdRef.current;
     if (!hold) return;
     hold.released = true;
+    hold.releaseMode = mode;
     // The recognizer already finished on its own: no final is coming, so
-    // send what was heard instead of losing the turn.
+    // settle what was heard instead of losing the turn.
     if (hold.ended) {
+      settleHold();
+      return;
+    }
+    if (mode === "cancel") {
+      // Nothing to transcribe: stop the recording and drop the turn.
+      hold.deps?.stopDictation();
       settleHold();
       return;
     }
@@ -985,8 +1026,13 @@ export function ThreadComposer({
               accessibilityRole="button"
               accessibilityLabel={t("Hold to talk")}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-              onPressIn={() => void startHoldDictation()}
-              onPressOut={() => releaseHoldDictation()}
+              onPressIn={(event) => {
+                holdStartYRef.current = event.nativeEvent.touches?.[0]?.pageY ?? null;
+                setHoldMode("send");
+                void startHoldDictation();
+              }}
+              onTouchMove={trackHoldSlide}
+              onPressOut={() => releaseHoldDictation(holdModeRef.current)}
               style={{ marginBottom: 8 }}
             >
               <GlassSurface
@@ -1043,6 +1089,7 @@ export function ThreadComposer({
           </Pressable>
         ) : null}
       </View>
+      {dictating ? <HoldVoiceOverlay mode={holdMode} text={draft} /> : null}
     </>
   );
 }

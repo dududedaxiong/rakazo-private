@@ -139,6 +139,7 @@ vi.mock("react-native", () => {
       onPress,
       onPressIn,
       onPressOut,
+      onTouchMove,
       accessibilityLabel,
       accessible,
       disabled,
@@ -148,6 +149,7 @@ vi.mock("react-native", () => {
       onPress: () => void;
       onPressIn?: () => void;
       onPressOut?: () => void;
+      onTouchMove?: () => void;
       accessibilityLabel?: string;
       accessible?: boolean;
       disabled?: boolean;
@@ -160,6 +162,7 @@ vi.mock("react-native", () => {
           onClick: onPress,
           onPointerDown: onPressIn,
           onPointerUp: onPressOut,
+          onTouchMove,
           "aria-label": accessibilityLabel,
           "data-accessible": accessible,
           disabled,
@@ -1334,6 +1337,23 @@ describe("thread composer isolation", () => {
     });
   }
 
+  async function holdStartAt(pageY: number) {
+    const event = new Event("pointerdown", { bubbles: true });
+    (event as unknown as { touches: { pageY: number }[] }).touches = [{ pageY }];
+    act(() => {
+      holdButton().dispatchEvent(event);
+    });
+    await flush();
+  }
+
+  function holdSlideTo(pageY: number) {
+    const event = new Event("touchmove", { bubbles: true });
+    (event as unknown as { touches: { pageY: number }[] }).touches = [{ pageY }];
+    act(() => {
+      holdButton().dispatchEvent(event);
+    });
+  }
+
   function dictate(text: string, final = false) {
     act(() => {
       if (final) holdDictation.handlers?.onFinal(text);
@@ -1412,6 +1432,75 @@ describe("thread composer isolation", () => {
     expect(holdDictation.finishDictation).toHaveBeenCalledOnce();
     expect(holdDictation.stopDictation).not.toHaveBeenCalled();
     expect(props.send).not.toHaveBeenCalled();
+    await flush();
+    expect(props.send).toHaveBeenCalledOnce();
+    expect(composer.current!.snapshot().promptText).toBe("你好世界");
+  });
+
+  it("shows the hold overlay with the live transcript while dictating", async () => {
+    // finishDictation delivers the final at once, like on-device dictation.
+    holdDictation.finishDictation.mockImplementation(() => {
+      holdDictation.handlers?.onFinal("你好世界");
+    });
+    await holdStart();
+    expect(container.querySelector('[data-testid="hold-voice-overlay"]')).not.toBeNull();
+    expect(container.textContent).toContain("Listening...");
+    dictate("你好");
+    expect(container.textContent).toContain("你好");
+    expect(container.textContent).toContain(
+      "Release to send · Slide up to cancel · Slide down to edit",
+    );
+    holdEnd();
+    await flush();
+    expect(container.querySelector('[data-testid="hold-voice-overlay"]')).toBeNull();
+  });
+
+  it("drops the turn on release after sliding up to cancel", async () => {
+    await holdStartAt(500);
+    dictate("你好");
+    holdSlideTo(420);
+    expect(container.textContent).toContain("Release to cancel");
+    holdEnd();
+    expect(holdDictation.stopDictation).toHaveBeenCalledOnce();
+    expect(holdDictation.finishDictation).not.toHaveBeenCalled();
+    await flush();
+    expect(props.send).not.toHaveBeenCalled();
+    expect(field().value).toBe("");
+    expect(container.querySelector('[data-testid="hold-voice-overlay"]')).toBeNull();
+  });
+
+  it("leaves the text in the input for editing on release after sliding down", async () => {
+    // finishDictation delivers the final at once, like on-device dictation.
+    holdDictation.finishDictation.mockImplementation(() => {
+      holdDictation.handlers?.onFinal("你好世界");
+    });
+    await holdStartAt(500);
+    dictate("你好");
+    holdSlideTo(550);
+    expect(container.textContent).toContain("Release to edit");
+    holdEnd();
+    expect(holdDictation.finishDictation).toHaveBeenCalledOnce();
+    await flush();
+    expect(props.send).not.toHaveBeenCalled();
+    expect(field().value).toBe("你好世界");
+    expect(document.activeElement).toBe(field());
+    expect(container.querySelector('button[aria-label="Send"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="hold-voice-overlay"]')).toBeNull();
+  });
+
+  it("returns to sending when the finger slides back to the middle", async () => {
+    holdDictation.finishDictation.mockImplementation(() => {
+      holdDictation.handlers?.onFinal("你好世界");
+    });
+    await holdStartAt(500);
+    dictate("你好");
+    holdSlideTo(420);
+    expect(container.textContent).toContain("Release to cancel");
+    holdSlideTo(500);
+    expect(container.textContent).toContain(
+      "Release to send · Slide up to cancel · Slide down to edit",
+    );
+    holdEnd();
     await flush();
     expect(props.send).toHaveBeenCalledOnce();
     expect(composer.current!.snapshot().promptText).toBe("你好世界");

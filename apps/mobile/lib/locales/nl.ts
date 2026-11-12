@@ -1545,6 +1545,12 @@ export const NL_MESSAGES: Record<string, string> = {
   "Thinking...": "Denkt na...",
   "AI is replying...": "AI antwoordt...",
   "Hold to talk": "Houd ingedrukt om te praten",
+  "Release to send · Slide up to cancel · Slide down to edit":
+    "Laat los om te verzenden · Veeg omhoog om te annuleren · Veeg omlaag om te bewerken",
+  "Release to cancel": "Laat los om te annuleren",
+  "Release to edit": "Laat los om te bewerken",
+  "Release to edit the text, then tap send":
+    "Bewerk na het loslaten de tekst en tik daarna op verzenden",
   "Release to send": "Laat los om te verzenden",
   "Choose a scenario": "Kies een scenario",
   Microphone: "Microfoon",

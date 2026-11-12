@@ -1556,6 +1556,12 @@ export const DE_MESSAGES: Record<string, string> = {
   "Thinking...": "Denkt nach...",
   "AI is replying...": "KI antwortet...",
   "Hold to talk": "Zum Sprechen gedrückt halten",
+  "Release to send · Slide up to cancel · Slide down to edit":
+    "Loslassen zum Senden · Nach oben wischen zum Abbrechen · Nach unten wischen zum Bearbeiten",
+  "Release to cancel": "Loslassen zum Abbrechen",
+  "Release to edit": "Loslassen zum Bearbeiten",
+  "Release to edit the text, then tap send":
+    "Nach dem Loslassen den Text bearbeiten und dann auf Senden tippen",
   "Release to send": "Loslassen zum Senden",
   "Choose a scenario": "Szenario wählen",
   Microphone: "Mikrofon",

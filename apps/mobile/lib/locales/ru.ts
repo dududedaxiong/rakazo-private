@@ -1585,6 +1585,12 @@ export const RU_MESSAGES: Record<string, string> = {
   "Thinking...": "Думаю...",
   "AI is replying...": "ИИ отвечает...",
   "Hold to talk": "Удерживайте, чтобы говорить",
+  "Release to send · Slide up to cancel · Slide down to edit":
+    "Отпустите, чтобы отправить · Свайп вверх — отмена · Свайп вниз — редактирование",
+  "Release to cancel": "Отпустите, чтобы отменить",
+  "Release to edit": "Отпустите, чтобы редактировать",
+  "Release to edit the text, then tap send":
+    "После отпускания отредактируйте текст и нажмите «Отправить»",
   "Release to send": "Отпустите, чтобы отправить",
   "Choose a scenario": "Выбрать сценарий",
   Microphone: "Микрофон",

@@ -1538,6 +1538,11 @@ export const PL_MESSAGES: Record<string, string> = {
   "Thinking...": "Myślę...",
   "AI is replying...": "AI odpowiada...",
   "Hold to talk": "Przytrzymaj, aby mówić",
+  "Release to send · Slide up to cancel · Slide down to edit":
+    "Puść, aby wysłać · Przesuń w górę, aby anulować · Przesuń w dół, aby edytować",
+  "Release to cancel": "Puść, aby anulować",
+  "Release to edit": "Puść, aby edytować",
+  "Release to edit the text, then tap send": "Po puszczeniu edytuj tekst, a potem dotknij Wyślij",
   "Release to send": "Puść, aby wysłać",
   "Choose a scenario": "Wybierz scenariusz",
   Microphone: "Mikrofon",

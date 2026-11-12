@@ -1499,6 +1499,11 @@ export const ES_MESSAGES: Record<string, string> = {
   "Thinking...": "Pensando...",
   "AI is replying...": "La IA está respondiendo...",
   "Hold to talk": "Mantén pulsado para hablar",
+  "Release to send · Slide up to cancel · Slide down to edit":
+    "Suelta para enviar · Desliza hacia arriba para cancelar · Desliza hacia abajo para editar",
+  "Release to cancel": "Suelta para cancelar",
+  "Release to edit": "Suelta para editar",
+  "Release to edit the text, then tap send": "Al soltar, edita el texto y luego toca enviar",
   "Release to send": "Suelta para enviar",
   "Choose a scenario": "Elegir un escenario",
   Microphone: "Micrófono",

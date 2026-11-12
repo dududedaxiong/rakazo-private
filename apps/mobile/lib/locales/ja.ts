@@ -1579,6 +1579,11 @@ export const JA_MESSAGES: Record<string, string> = {
   "Thinking...": "考え中...",
   "AI is replying...": "AI が返信中...",
   "Hold to talk": "長押しで話す",
+  "Release to send · Slide up to cancel · Slide down to edit":
+    "離して送信 · 上にスワイプでキャンセル · 下にスワイプで編集",
+  "Release to cancel": "離してキャンセル",
+  "Release to edit": "離して編集",
+  "Release to edit the text, then tap send": "離すとテキストを編集できます。編集後に送信をタップ",
   "Release to send": "離して送信",
   "Choose a scenario": "シーンを選ぶ",
   Microphone: "マイク",
