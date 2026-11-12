@@ -31,6 +31,7 @@ import { captureApiRequestContext, currentApiBase, rpc } from "../lib/api";
 import { mobileTokens } from "../lib/appearance";
 import { useI18n } from "../lib/i18n";
 import type { ModelPickerRequest } from "../lib/model-picker-selection";
+import { dropRemovedRoleRows } from "../lib/model-role-removal";
 import { native, useMobileTokens, useResolvedAppearance, useThemedStyles } from "../lib/native";
 import { thinkingLevelLabel } from "../lib/thinking-level";
 import { NativeSymbol } from "./native-symbol";
@@ -315,6 +316,17 @@ export function ModelRoleSettings({
           ...(option.credentialId ? { credentialId: option.credentialId } : {}),
         };
         if (!current || !sameChoice(current, picked)) void fill(slot, picked);
+      },
+      credentials: narrowed ? narrowed.credentials : credentials,
+      onRemoved: async (choice, credentialId) => {
+        // A removed model is refused by the server, so it cannot stay in
+        // this role's list; the first entry left becomes the primary.
+        const next = dropRemovedRoleRows(
+          rows,
+          { key: choice.key, modelId: choice.modelId ?? "", credentialId },
+          connectionFor,
+        );
+        if (next.length !== rows.length) await commit(next);
       },
     };
   }

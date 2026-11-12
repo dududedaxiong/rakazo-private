@@ -267,6 +267,35 @@ describe("connected model choices", () => {
     );
   });
 
+  it("shows one free-form row per single-model connection sharing a label", () => {
+    const choices = connectedModelChoices(
+      [
+        { provider: "openai-compatible", label: "测试", modelId: "deepseek-v4.1-flash" },
+        { provider: "openai-compatible", label: "测试", modelId: "glm-5.3-flash" },
+      ],
+      [],
+    );
+    expect(choices).toEqual([
+      {
+        key: "openai-compatible::deepseek-v4.1-flash",
+        provider: "openai-compatible",
+        modelId: "deepseek-v4.1-flash",
+        label: "deepseek-v4.1-flash (测试)",
+        providerLabel: "测试",
+        modelLabel: "deepseek-v4.1-flash",
+      },
+      {
+        key: "openai-compatible::glm-5.3-flash",
+        provider: "openai-compatible",
+        modelId: "glm-5.3-flash",
+        label: "glm-5.3-flash (测试)",
+        providerLabel: "测试",
+        modelLabel: "glm-5.3-flash",
+      },
+    ]);
+    expect(groupModelChoices(choices, "").map((section) => section.heading)).toEqual(["测试"]);
+  });
+
   it("finds a credential by enabled model id or by its default model", () => {
     const compatible = {
       provider: "openai-compatible",

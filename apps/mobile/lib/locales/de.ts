@@ -178,7 +178,6 @@ export const DE_MESSAGES: Record<string, string> = {
 
   Headers: "Header",
   "Add header": "Header hinzufügen",
-  Remove: "Entfernen",
   "Remove header": "Header entfernen",
   "Header name": "Header-Name",
   "Header value": "Header-Wert",

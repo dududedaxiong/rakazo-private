@@ -1,5 +1,6 @@
 import type { ChatModelChoice } from "@rakazo/core";
 import type { Href } from "expo-router";
+import type { MobileModelCredential } from "./mobile-types";
 
 export type ModelPickerRequest = {
   title?: string;
@@ -12,6 +13,13 @@ export type ModelPickerRequest = {
   onSelect: (choice: ChatModelChoice) => void;
   /** A choice that continues elsewhere replaces the picker with that screen. */
   continueTo?: (choice: ChatModelChoice) => Href | undefined;
+  /** Connections backing the choices, so rows can be swiped to remove. */
+  credentials?: MobileModelCredential[];
+  /**
+   * After a row is removed from its connection; the caller cleans up
+   * references to it (e.g. a role list that named the model).
+   */
+  onRemoved?: (choice: ChatModelChoice, credentialId: string) => void | Promise<void>;
 };
 
 let nextId = 0;

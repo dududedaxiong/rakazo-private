@@ -185,7 +185,6 @@ export const ES_MESSAGES: Record<string, string> = {
     "Permitir la comunicación entre bots de distintos espacios",
   Headers: "Encabezados",
   "Add header": "Agregar encabezado",
-  Remove: "Quitar",
   "Remove header": "Eliminar encabezado",
   "Header name": "Nombre del encabezado",
   "Header value": "Valor del encabezado",

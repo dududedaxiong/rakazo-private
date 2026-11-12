@@ -168,7 +168,6 @@ export const ZH_MESSAGES: Record<string, string> = {
 
   Headers: "请求头",
   "Add header": "添加请求头",
-  Remove: "移除",
   "Remove header": "移除请求头",
   "Header name": "请求头名称",
   "Header value": "请求头值",

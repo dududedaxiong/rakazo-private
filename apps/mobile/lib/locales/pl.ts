@@ -172,7 +172,6 @@ export const PL_MESSAGES: Record<string, string> = {
     "Organizuj pasek boczny i edytuj boty. Zmiany instrukcji, modeli, rutyn i grup wymagają zatwierdzenia.",
   Headers: "Nagłówki",
   "Add header": "Dodaj nagłówek",
-  Remove: "Usuń",
   "Remove header": "Usuń nagłówek",
   "Header name": "Nazwa nagłówka",
   "Header value": "Wartość nagłówka",

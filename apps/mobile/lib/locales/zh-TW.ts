@@ -159,7 +159,6 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
 
   Headers: "標頭",
   "Add header": "新增標頭",
-  Remove: "移除",
   "Remove header": "移除標頭",
   "Header name": "標頭名稱",
   "Header value": "標頭值",

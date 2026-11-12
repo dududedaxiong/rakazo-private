@@ -183,7 +183,6 @@ export const JA_MESSAGES: Record<string, string> = {
     "サイドバーの整理とボットの編集ができます。指示、モデル、ルーティン、グループの編集には承認が必要です。",
   Headers: "ヘッダー",
   "Add header": "ヘッダーを追加",
-  Remove: "削除",
   "Remove header": "ヘッダーを削除",
   "Header name": "ヘッダー名",
   "Header value": "ヘッダー値",

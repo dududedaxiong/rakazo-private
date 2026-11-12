@@ -174,7 +174,6 @@ export const RU_MESSAGES: Record<string, string> = {
 
   Headers: "Заголовки",
   "Add header": "Добавить заголовок",
-  Remove: "Удалить",
   "Remove header": "Удалить заголовок",
   "Header name": "Название заголовка",
   "Header value": "Значение заголовка",

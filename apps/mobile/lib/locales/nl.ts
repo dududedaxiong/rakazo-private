@@ -175,7 +175,6 @@ export const NL_MESSAGES: Record<string, string> = {
 
   Headers: "Headers",
   "Add header": "Header toevoegen",
-  Remove: "Verwijderen",
   "Remove header": "Header verwijderen",
   "Header name": "Headernaam",
   "Header value": "Headerwaarde",

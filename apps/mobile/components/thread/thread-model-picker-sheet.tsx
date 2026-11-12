@@ -132,7 +132,7 @@ export function ThreadModelPickerSheet({
 
   /** Removes a swiped model from its connection; the row drops at once and the reload confirms it. */
   async function removeChoice(choice: ChatModelChoice) {
-    const target = removableModel(credentials ?? [], choice);
+    const target = removableModel(credentials ?? [], choice, choices ?? []);
     if (!target || saving) return;
     setSaving(true);
     setError(null);
@@ -235,7 +235,9 @@ export function ThreadModelPickerSheet({
           selectedKey={selectedKey}
           error={loadError}
           onSelect={(choice) => void select(choice)}
-          isRemovable={(choice) => removableModel(credentials ?? [], choice) !== null}
+          isRemovable={(choice) =>
+            removableModel(credentials ?? [], choice, choices ?? []) !== null
+          }
           onRemove={(choice) => void removeChoice(choice)}
         />
       </View>
