@@ -273,6 +273,62 @@ describe("mobile API sign-in and account", () => {
     expect(SecureStore.setItemAsync).toHaveBeenCalledWith("rakazo.session_token", "signup-token");
   });
 
+  it("sends the invite code and human-verification token with sign-up requests", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({ token: "signup-token" }));
+    vi.stubGlobal("fetch", fetchMock);
+    const extras = { inviteCode: "ABCD1234EFGH", humanVerificationToken: "challenge-token" };
+
+    await signUp("new@example.com", "correct horse", "New User", extras);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:3100/api/auth/sign-up/email",
+      expect.objectContaining({
+        body: JSON.stringify({
+          email: "new@example.com",
+          password: "correct horse",
+          name: "New User",
+          inviteCode: "ABCD1234EFGH",
+          humanVerificationToken: "challenge-token",
+        }),
+      }),
+    );
+  });
+
+  it("sends the invite code and human-verification token with email-code requests", async () => {
+    const fetchMock = vi.fn(async () => jsonResponse({ token: "session-token" }));
+    vi.stubGlobal("fetch", fetchMock);
+    const extras = { inviteCode: "ABCD1234EFGH", humanVerificationToken: "challenge-token" };
+
+    await sendSignInCode("new@example.com", extras);
+    await signInWithCode("new@example.com", "123456", "New User", extras);
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "http://127.0.0.1:3100/api/auth/email-otp/send-verification-otp",
+      expect.objectContaining({
+        body: JSON.stringify({
+          email: "new@example.com",
+          type: "sign-in",
+          inviteCode: "ABCD1234EFGH",
+          humanVerificationToken: "challenge-token",
+        }),
+      }),
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "http://127.0.0.1:3100/api/auth/sign-in/email-otp",
+      expect.objectContaining({
+        body: JSON.stringify({
+          email: "new@example.com",
+          otp: "123456",
+          name: "New User",
+          inviteCode: "ABCD1234EFGH",
+          humanVerificationToken: "challenge-token",
+        }),
+      }),
+    );
+  });
+
   describe.each([
     ["sign-in", () => signIn("ada@example.test", "correct horse")],
     ["sign-up", () => signUp("ada@example.test", "correct horse", "Ada")],

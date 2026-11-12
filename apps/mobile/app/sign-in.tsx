@@ -20,6 +20,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { HumanVerification } from "../components/human-verification";
 import { NativeActionButton } from "../components/native-action-button";
 import { FORM_COLUMN_WIDTH } from "../lib/adaptive-layout";
 import { currentApiBase, rpc } from "../lib/api";
@@ -70,6 +71,9 @@ export default function SignIn() {
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [passkeys, setPasskeys] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
+  const [humanToken, setHumanToken] = useState<string | null>(null);
+  const [challengeResetKey, setChallengeResetKey] = useState(0);
 
   useEffect(() => {
     setPasswordVisible(false);
@@ -142,6 +146,15 @@ export default function SignIn() {
   // A blank password asks for an emailed code, so code-only accounts need no toggle.
   const usingCode = codeFlow && (codeSent || !password);
   const codeStep = codeFlow && codeSent;
+  const registrationClosed = mode === "up" && reset?.signupsEnabled === false;
+  const challengeRequired = mode === "up" && !codeStep && Boolean(reset?.humanVerificationSiteKey);
+  const registrationExtras = () =>
+    mode === "up"
+      ? {
+          inviteCode: inviteCode.trim() || undefined,
+          humanVerificationToken: humanToken ?? undefined,
+        }
+      : {};
 
   async function submit(enteredCode = code) {
     if (pending || !reset?.passwordAuth) return;
@@ -176,7 +189,7 @@ export default function SignIn() {
       }
       if (usingCode && !codeSent) {
         const sentFrom = apiBase;
-        await sendSignInCode(email.trim());
+        await sendSignInCode(email.trim(), registrationExtras());
         if (currentApiBase() !== sentFrom) return;
         setCode("");
         setCodeSent(true);
@@ -189,6 +202,7 @@ export default function SignIn() {
           enteredCode,
           // Only used when this creates the account.
           mode === "up" ? name.trim() || trimmedEmail.split("@")[0] || "User" : undefined,
+          registrationExtras(),
         );
       } else if (mode === "up") {
         const trimmedEmail = email.trim();
@@ -196,6 +210,7 @@ export default function SignIn() {
           trimmedEmail,
           password,
           name.trim() || trimmedEmail.split("@")[0] || "User",
+          registrationExtras(),
         );
         if (result.verificationRequired) {
           setResetSent(true);
@@ -206,6 +221,11 @@ export default function SignIn() {
       }
       await openApp();
     } catch (err) {
+      // A failed sign-up may have spent the one-time challenge token.
+      if (mode === "up" && challengeRequired) {
+        setHumanToken(null);
+        setChallengeResetKey((value) => value + 1);
+      }
       setError(errorText(err, t("Could not continue")));
     } finally {
       setPending(false);
@@ -369,6 +389,23 @@ export default function SignIn() {
                         style={{ alignSelf: "center", marginTop: 16 }}
                       />
                     </>
+                  ) : registrationClosed ? (
+                    <>
+                      <Text
+                        style={{ color: tokens.foreground, marginTop: 28, textAlign: "center" }}
+                      >
+                        {t("Registration is closed on this server")}
+                      </Text>
+                      <NativeActionButton
+                        label={t("Back to sign in")}
+                        prominence="quiet"
+                        onPress={() => {
+                          setMode("in");
+                          setError(null);
+                        }}
+                        style={{ alignSelf: "center", marginTop: 16 }}
+                      />
+                    </>
                   ) : reset?.passwordAuth ? (
                     <>
                       {mode === "up" ? (
@@ -469,11 +506,36 @@ export default function SignIn() {
                           />
                         </View>
                       ) : null}
+                      {mode === "up" && reset?.inviteCodeRequired ? (
+                        <TextInput
+                          autoCapitalize="characters"
+                          autoCorrect={false}
+                          maxLength={12}
+                          placeholder={t("Invite code")}
+                          placeholderTextColor={tokens.mutedForeground}
+                          value={inviteCode}
+                          onChangeText={(value) => setInviteCode(value.toUpperCase())}
+                          style={{
+                            marginTop: 12,
+                            backgroundColor: tokens.muted,
+                            borderRadius: 13,
+                            padding: 16,
+                            color: tokens.foreground,
+                          }}
+                        />
+                      ) : null}
+                      {mode === "up" && reset?.humanVerificationSiteKey ? (
+                        <HumanVerification
+                          siteKey={reset.humanVerificationSiteKey}
+                          resetKey={challengeResetKey}
+                          onToken={setHumanToken}
+                        />
+                      ) : null}
                       {error ? (
                         <Text style={{ color: tokens.destructive, marginTop: 12 }}>{error}</Text>
                       ) : null}
                       <NativeActionButton
-                        disabled={pending}
+                        disabled={pending || (challengeRequired && !humanToken)}
                         label={
                           pending
                             ? t("Working…")

@@ -66,6 +66,9 @@ export function authErrorText(body: unknown, fallback: string): string {
   if (code === "ACCOUNT_DEACTIVATED") return t("This account is deactivated");
   if (code === "REGISTRATION_CLOSED") return t("Registration is closed");
   if (code === "EMAIL_NOT_ALLOWED") return t("Email is not allowed to register");
+  if (code === "INVALID_INVITE_CODE") return t("Invalid invite code");
+  if (code === "IP_REGISTRATION_LIMIT") return t("Too many registrations from this network");
+  if (code === "HUMAN_VERIFICATION_FAILED") return t("Human verification failed. Try again.");
   if (code === "EMAIL_VERIFICATION_REQUIRED" || code === "unable_to_link_account")
     return t("Email verification required");
   if (code === "REAUTHENTICATION_REQUIRED") return t("Sign in again");

@@ -94,29 +94,51 @@ async function authenticate(
   }
   return { verificationRequired: false };
 }
+/** Extra registration fields the server's sign-up hook reads: an invite code and a human-verification token. */
+export type RegistrationExtras = {
+  inviteCode?: string;
+  humanVerificationToken?: string;
+};
+
+function withExtras(
+  input: Record<string, string>,
+  extras?: RegistrationExtras,
+): Record<string, string> {
+  if (!extras) return input;
+  const extra: Record<string, string> = {};
+  if (extras.inviteCode?.trim()) extra.inviteCode = extras.inviteCode.trim();
+  if (extras.humanVerificationToken) extra.humanVerificationToken = extras.humanVerificationToken;
+  return { ...input, ...extra };
+}
+
 export function signIn(email: string, password: string) {
   return authenticate("sign-in/email", { email, password }, t("Sign-in did not return a session"));
 }
-export function signUp(email: string, password: string, name: string) {
+export function signUp(email: string, password: string, name: string, extras?: RegistrationExtras) {
   return authenticate(
     "sign-up/email",
-    { email, password, name },
+    withExtras({ email, password, name }, extras),
     t("Sign-up did not return a session"),
   );
 }
 /** Always succeeds when the server accepts the request, whether or not an email was sent. */
-export async function sendSignInCode(email: string): Promise<void> {
-  const { response, body, invalidJson } = await postAuth("email-otp/send-verification-otp", {
-    email,
-    type: "sign-in",
-  });
+export async function sendSignInCode(email: string, extras?: RegistrationExtras): Promise<void> {
+  const { response, body, invalidJson } = await postAuth(
+    "email-otp/send-verification-otp",
+    withExtras({ email, type: "sign-in" }, extras),
+  );
   if (!response.ok) throw new Error(authResponseErrorText(response.status, body, invalidJson));
 }
 /** Signs in with an emailed code, creating the account (with `name`) when none exists. */
-export async function signInWithCode(email: string, code: string, name?: string): Promise<void> {
+export async function signInWithCode(
+  email: string,
+  code: string,
+  name?: string,
+  extras?: RegistrationExtras,
+): Promise<void> {
   await authenticate(
     "sign-in/email-otp",
-    { email, otp: code, ...(name ? { name } : {}) },
+    withExtras({ email, otp: code, ...(name ? { name } : {}) }, extras),
     t("Sign-in did not return a session"),
   );
 }
