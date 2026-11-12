@@ -8066,3 +8066,172 @@ msgstr ""
 #: src/components/WebdavBackupSettings.tsx
 msgid "Wrong password"
 msgstr ""
+
+#. placeholder {0}: items.length
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "{0, plural, one {Import 1 template} other {Import # templates}}"
+msgstr "{0, plural, one {テンプレートを1件インポート} other {テンプレートを#件インポート}}"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "A name for this persona"
+msgstr "このペルソナの名前"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Check the names and content, then import."
+msgstr "名前と内容を確認してからインポートしてください。"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Choose a file"
+msgstr "ファイルを選択"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Current persona"
+msgstr "現在のペルソナ"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Custom"
+msgstr "カスタム"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Default templates restored"
+msgstr "デフォルトのテンプレートを復元しました"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Edit template"
+msgstr "テンプレートを編集"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Export all"
+msgstr "すべてエクスポート"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Exported files are named after the template. Edit one outside the app and import it again under the same name to update it; a template in use applies right away."
+msgstr "エクスポートされるファイルはテンプレート名で保存されます。アプリ外で編集したら同じ名前で再度インポートすると更新されます。使用中のテンプレートはすぐに適用されます。"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Fetch and preview"
+msgstr "取得してプレビュー"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "From this bot"
+msgstr "このボットから"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Import templates"
+msgstr "テンプレートをインポート"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "In use"
+msgstr "使用中"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Local file"
+msgstr "ローカルファイル"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Manage templates"
+msgstr "テンプレートを管理"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "My template"
+msgstr "マイテンプレート"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "New template"
+msgstr "新しいテンプレート"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "No templates yet"
+msgstr "テンプレートはまだありません"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "No templates yet. Create one or restore the defaults."
+msgstr "テンプレートはまだありません。新規作成するか、デフォルトを復元してください。"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Not linked to a template"
+msgstr "テンプレートに未リンク"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Nothing to import at that address"
+msgstr "そのアドレスにはインポートするものがありません。"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste a prompt, or JSON like {\"name\": \"...\", \"content\": \"...\"}"
+msgstr "プロンプトを貼り付けるか、{\"name\": \"...\", \"content\": \"...\"} のような JSON を入力してください"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste text"
+msgstr "テキストを貼り付け"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Prompt"
+msgstr "プロンプト"
+
+#: src/pages/settings-nav.ts
+msgid "Prompt templates"
+msgstr "プロンプトテンプレート"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Restore defaults"
+msgstr "デフォルトを復元"
+
+#: src/pages/settings-nav.ts
+msgid "Reusable personas for your bots."
+msgstr "ボット用の再利用可能なペルソナ。"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Save and apply to this bot"
+msgstr "保存してこのボットに適用"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Save current persona as template"
+msgstr "現在のペルソナをテンプレートとして保存"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Saved as template"
+msgstr "テンプレートとして保存しました"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Subscription URL"
+msgstr "購読 URL"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switch persona"
+msgstr "ペルソナを切り替え"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switched to {0}"
+msgstr "{0} に切り替えました"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
+msgstr "切り替えはすぐに有効になります。次のメッセージから新しいプロンプトが使われ、以前のメッセージは変わりません。指示を直接編集するとペルソナはカスタムになります。"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Template name"
+msgstr "テンプレート名"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "This bot has no persona yet."
+msgstr "このボットにはまだペルソナがありません。"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "This bot keeps its current persona, but stops following this template."
+msgstr "このボットは現在のペルソナを保持しますが、このテンプレートには従わなくなります。"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "This template is in use on this bot. Saving alone only changes the template."
+msgstr "このテンプレートはこのボットで使用中です。保存だけではテンプレートのみが変更されます。"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Use"
+msgstr "使用"

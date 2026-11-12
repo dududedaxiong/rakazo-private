@@ -8066,3 +8066,172 @@ msgstr ""
 #: src/components/WebdavBackupSettings.tsx
 msgid "Wrong password"
 msgstr ""
+
+#. placeholder {0}: items.length
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "{0, plural, one {Import 1 template} other {Import # templates}}"
+msgstr "{0, plural, one {Импортировать 1 шаблон} other {Импортировать # шаблонов}}"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "A name for this persona"
+msgstr "Имя для этой персоны"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Check the names and content, then import."
+msgstr "Проверьте названия и содержимое, затем импортируйте."
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Choose a file"
+msgstr "Выбрать файл"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Current persona"
+msgstr "Текущая персона"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Custom"
+msgstr "Свой"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Default templates restored"
+msgstr "Шаблоны по умолчанию восстановлены"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Edit template"
+msgstr "Изменить шаблон"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Export all"
+msgstr "Экспортировать все"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Exported files are named after the template. Edit one outside the app and import it again under the same name to update it; a template in use applies right away."
+msgstr "Экспортированные файлы называются по имени шаблона. Отредактируйте файл вне приложения и импортируйте его снова под тем же именем, чтобы обновить; используемый шаблон применится сразу."
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Fetch and preview"
+msgstr "Получить и показать"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "From this bot"
+msgstr "От этого бота"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Import templates"
+msgstr "Импорт шаблонов"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "In use"
+msgstr "Используется"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Local file"
+msgstr "Локальный файл"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Manage templates"
+msgstr "Управление шаблонами"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "My template"
+msgstr "Мой шаблон"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "New template"
+msgstr "Новый шаблон"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "No templates yet"
+msgstr "Шаблонов пока нет"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "No templates yet. Create one or restore the defaults."
+msgstr "Шаблонов пока нет. Создайте один или восстановите шаблоны по умолчанию."
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Not linked to a template"
+msgstr "Не связан с шаблоном"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Nothing to import at that address"
+msgstr "По этому адресу нечего импортировать."
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste a prompt, or JSON like {\"name\": \"...\", \"content\": \"...\"}"
+msgstr "Вставьте промпт или JSON вида {\"name\": \"...\", \"content\": \"...\"}"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste text"
+msgstr "Вставить текст"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Prompt"
+msgstr "Промпт"
+
+#: src/pages/settings-nav.ts
+msgid "Prompt templates"
+msgstr "Шаблоны промптов"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Restore defaults"
+msgstr "Восстановить по умолчанию"
+
+#: src/pages/settings-nav.ts
+msgid "Reusable personas for your bots."
+msgstr "Многоразовые персоны для ваших ботов."
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Save and apply to this bot"
+msgstr "Сохранить и применить к этому боту"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Save current persona as template"
+msgstr "Сохранить текущую персону как шаблон"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Saved as template"
+msgstr "Сохранено как шаблон"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Subscription URL"
+msgstr "URL подписки"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switch persona"
+msgstr "Сменить персону"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switched to {0}"
+msgstr "Переключено на {0}"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
+msgstr "Переключение действует сразу. Следующее сообщение использует новый промпт, а прежние сообщения не меняются. Прямое редактирование инструкций делает персону своей."
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Template name"
+msgstr "Имя шаблона"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "This bot has no persona yet."
+msgstr "У этого бота пока нет персоны."
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "This bot keeps its current persona, but stops following this template."
+msgstr "Этот бот сохранит текущую персону, но перестанет следовать этому шаблону."
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "This template is in use on this bot. Saving alone only changes the template."
+msgstr "Этот шаблон используется этим ботом. Простое сохранение меняет только шаблон."
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Use"
+msgstr "Использовать"

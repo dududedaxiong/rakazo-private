@@ -8066,3 +8066,172 @@ msgstr ""
 #: src/components/WebdavBackupSettings.tsx
 msgid "Wrong password"
 msgstr ""
+
+#. placeholder {0}: items.length
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "{0, plural, one {Import 1 template} other {Import # templates}}"
+msgstr "{0, plural, one {1 टेम्पलेट आयात करें} other {# टेम्पलेट आयात करें}}"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "A name for this persona"
+msgstr "इस पर्सोना के लिए एक नाम"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Check the names and content, then import."
+msgstr "नाम और सामग्री जाँचें, फिर आयात करें।"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Choose a file"
+msgstr "फ़ाइल चुनें"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Current persona"
+msgstr "वर्तमान पर्सोना"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Custom"
+msgstr "कस्टम"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Default templates restored"
+msgstr "डिफ़ॉल्ट टेम्पलेट पुनर्स्थापित"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Edit template"
+msgstr "टेम्पलेट संपादित करें"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Export all"
+msgstr "सभी निर्यात करें"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Exported files are named after the template. Edit one outside the app and import it again under the same name to update it; a template in use applies right away."
+msgstr "निर्यात की गई फ़ाइलों का नाम टेम्पलेट के नाम पर रखा जाता है। किसी फ़ाइल को ऐप के बाहर संपादित करें और उसी नाम से फिर से आयात करके अपडेट करें; उपयोग में आने वाला टेम्पलेट तुरंत लागू होता है।"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Fetch and preview"
+msgstr "लाएँ और पूर्वावलोकन करें"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "From this bot"
+msgstr "इस बॉट से"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Import templates"
+msgstr "टेम्पलेट आयात करें"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "In use"
+msgstr "उपयोग में"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Local file"
+msgstr "स्थानीय फ़ाइल"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Manage templates"
+msgstr "टेम्पलेट प्रबंधित करें"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "My template"
+msgstr "मेरा टेम्पलेट"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "New template"
+msgstr "नया टेम्पलेट"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "No templates yet"
+msgstr "अभी कोई टेम्पलेट नहीं है"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "No templates yet. Create one or restore the defaults."
+msgstr "अभी कोई टेम्पलेट नहीं है। एक बनाएँ या डिफ़ॉल्ट पुनर्स्थापित करें।"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Not linked to a template"
+msgstr "किसी टेम्पलेट से जुड़ा नहीं है"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Nothing to import at that address"
+msgstr "उस पते पर आयात करने के लिए कुछ नहीं है।"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste a prompt, or JSON like {\"name\": \"...\", \"content\": \"...\"}"
+msgstr "कोई प्रॉम्प्ट चिपकाएँ, या {\"name\": \"...\", \"content\": \"...\"} जैसा JSON"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste text"
+msgstr "टेक्स्ट चिपकाएँ"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Prompt"
+msgstr "प्रॉम्प्ट"
+
+#: src/pages/settings-nav.ts
+msgid "Prompt templates"
+msgstr "प्रॉम्प्ट टेम्पलेट"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Restore defaults"
+msgstr "डिफ़ॉल्ट पुनर्स्थापित करें"
+
+#: src/pages/settings-nav.ts
+msgid "Reusable personas for your bots."
+msgstr "आपके बॉट्स के लिए पुन: प्रयोज्य पर्सोना।"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Save and apply to this bot"
+msgstr "सहेजें और इस बॉट पर लागू करें"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Save current persona as template"
+msgstr "वर्तमान पर्सोना को टेम्पलेट के रूप में सहेजें"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Saved as template"
+msgstr "टेम्पलेट के रूप में सहेजा गया"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Subscription URL"
+msgstr "सदस्यता URL"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switch persona"
+msgstr "पर्सोना बदलें"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switched to {0}"
+msgstr "{0} पर स्विच किया गया"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
+msgstr "स्विच तुरंत प्रभावी होता है। अगला संदेश नए प्रॉम्प्ट का उपयोग करता है; पहले के संदेश जैसे हैं वैसे ही रहते हैं। निर्देश सीधे संपादित करने से पर्सोना कस्टम हो जाता है।"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Template name"
+msgstr "टेम्पलेट का नाम"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "This bot has no persona yet."
+msgstr "इस बॉट की अभी कोई पर्सोना नहीं है।"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "This bot keeps its current persona, but stops following this template."
+msgstr "यह बॉट अपनी वर्तमान पर्सोना बनाए रखता है, लेकिन इस टेम्पलेट का पालन करना बंद कर देता है।"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "This template is in use on this bot. Saving alone only changes the template."
+msgstr "यह टेम्पलेट इस बॉट पर उपयोग में है। केवल सहेजने से टेम्पलेट बदलता है।"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Use"
+msgstr "उपयोग करें"

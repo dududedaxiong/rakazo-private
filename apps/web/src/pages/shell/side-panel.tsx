@@ -89,7 +89,11 @@ export function ShellSidePanel({
   const activeBotIdRef = useRef(active?.id);
   activeBotIdRef.current = active?.id;
   const botTab =
-    panel === "computer" || panel === "routines" || panel === "pages" || panel === "settings"
+    panel === "computer" ||
+    panel === "routines" ||
+    panel === "pages" ||
+    panel === "persona" ||
+    panel === "settings"
       ? panel
       : null;
 
@@ -210,6 +214,13 @@ export function ShellSidePanel({
               }
               focusModel={modelFocusRequest}
               onOpenConnections={() => openSettings("models")}
+              onBotUpdated={(updated) => {
+                setBots((current) =>
+                  current.map((entry) => (entry.id === updated.id ? updated : entry)),
+                );
+                void refreshBots().catch(() => undefined);
+              }}
+              onOpenTemplateLibrary={() => openSettings("prompt-templates")}
               memoryProviderConfigured={memoryProviderConfigured}
               onSkillsChange={setAgentSkills}
               onSave={async ({ computerMode, ...patch }) => {

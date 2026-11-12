@@ -6,6 +6,7 @@ import { useState } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
 import { useBilling } from "../../components/SubscriptionGate";
+import { ChatPersonaSwitcher } from "./chat-persona-switcher";
 
 /** The floating header over the transcript: navigation, the chat's name, call and invite. */
 export function ChatHeader({
@@ -20,6 +21,7 @@ export function ChatHeader({
   onOpenNavigation,
   onTogglePanel,
   onCall,
+  onBotUpdated,
 }: {
   inGroup: boolean;
   active: Bot | undefined;
@@ -33,6 +35,8 @@ export function ChatHeader({
   onOpenNavigation: () => void;
   onTogglePanel: () => void;
   onCall: (bot: Bot) => void;
+  /** After a persona switch from the header, so the roster follows the updated bot. */
+  onBotUpdated?: (bot: Bot) => void;
 }) {
   const { t } = useLingui();
   const referral = useBilling().status?.referral;
@@ -77,6 +81,9 @@ export function ChatHeader({
         </span>
       </Button>
       <div className="flex items-center justify-self-end gap-2">
+        {!inGroup && active ? (
+          <ChatPersonaSwitcher bot={active} onBotUpdated={(bot) => onBotUpdated?.(bot)} />
+        ) : null}
         {phoneCallsEnabled && !inGroup && active ? (
           <IconTooltip label={inCall ? t`Open call` : t`Call`}>
             <Button

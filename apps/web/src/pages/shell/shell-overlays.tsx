@@ -125,6 +125,7 @@ export function SettingsOverlays({
   peerConversation,
   setPeerConversation,
   active,
+  onBotUpdated,
   peerBot,
 }: {
   rpc: ReturnType<typeof createSpaceRpc>;
@@ -149,6 +150,8 @@ export function SettingsOverlays({
   peerConversation: { peerBotId: string; peerBotName: string } | null;
   setPeerConversation: (peer: null) => void;
   active: Bot | undefined;
+  /** After a persona switch from the template library, so the roster follows it. */
+  onBotUpdated?: (bot: Bot) => void;
   peerBot: (botId: string) => { color: string; avatarSet?: BotAvatarSet } | undefined;
 }) {
   // Read when Usage opens; a reopened Usage shows the last summary while it refreshes.
@@ -196,6 +199,8 @@ export function SettingsOverlays({
           onUsageOpen={refreshUsage}
           section={overlay.section}
           onSectionChange={(section) => setOverlay({ ...overlay, section })}
+          activeBot={active}
+          onBotUpdated={onBotUpdated}
           billingEnabled={bootstrapMe?.billingEnabled === true}
           sandboxProvider={bootstrapMe?.sandboxProvider}
           computerSettingsEnabled={bootstrapMe?.computerSettingsEnabled === true}

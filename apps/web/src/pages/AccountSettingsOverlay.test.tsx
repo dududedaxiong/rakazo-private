@@ -308,6 +308,8 @@ it("shows usage totals and a per-model breakdown", async () => {
                 outputTokens: 30,
                 totalTokens: 1030,
                 costUsd: 0.5,
+                unknownTokensCalls: 0,
+                unknownCostCalls: 0,
               },
               {
                 provider: "local",
@@ -317,6 +319,8 @@ it("shows usage totals and a per-model breakdown", async () => {
                 outputTokens: 4,
                 totalTokens: 204,
                 costUsd: null,
+                unknownTokensCalls: 0,
+                unknownCostCalls: 0,
               },
             ],
           }}

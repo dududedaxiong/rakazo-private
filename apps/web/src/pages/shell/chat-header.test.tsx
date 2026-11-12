@@ -39,6 +39,17 @@ vi.mock("@rakazo/ui-web", async (importOriginal) => {
     DialogContent: Plain,
     DialogHeader: Plain,
     DialogTitle: Plain,
+    DropdownMenu: ({ children }: { children?: ReactNode }) => <>{children}</>,
+    DropdownMenuContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    DropdownMenuItem: Plain,
+    DropdownMenuLabel: Plain,
+    DropdownMenuTrigger: ({ render, children }: { render?: ReactNode; children?: ReactNode }) => (
+      <>
+        {render}
+        {children}
+      </>
+    ),
+    toast: () => undefined,
   };
 });
 vi.mock("../../components/IconTooltip", () => ({
@@ -91,6 +102,14 @@ function renderHeader({ inGroup = false } = {}) {
 }
 
 const gift = () => container.querySelector<HTMLButtonElement>('[aria-label="Invite a friend"]');
+
+it("shows the persona switcher in a bot chat and not in a group", () => {
+  billing.status = { referral: null };
+  renderHeader();
+  expect(container.querySelector('[data-testid="persona-switcher"]')).not.toBeNull();
+  renderHeader({ inGroup: true });
+  expect(container.querySelector('[data-testid="persona-switcher"]')).toBeNull();
+});
 
 it("shows no gift when the account cannot invite", () => {
   billing.status = { referral: null };

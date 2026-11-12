@@ -176,6 +176,7 @@ function bot(description = "Billing", overrides: Partial<Bot> = {}): Bot {
     disabledBuiltinTools: [],
     webhookConfigured: false,
     spawnKey: null,
+    promptTemplateId: null,
     ...overrides,
   };
 }
@@ -273,6 +274,7 @@ it("shows the profile and the Advanced tab's controls", async () => {
     "Computer",
     "Routines",
     "Pages",
+    "Persona",
     "Advanced",
   ]);
   expect(

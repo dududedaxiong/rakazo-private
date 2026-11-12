@@ -3,6 +3,7 @@ const SETTINGS_SECTIONS = [
   "organization",
   "space",
   "models",
+  "prompt-templates",
   "memory",
   "voice",
   "confirmations",

@@ -9,6 +9,7 @@ import {
   KeyRound,
   MessageCircle,
   Monitor,
+  ScrollText,
   Settings,
   ShieldCheck,
   Volume2,
@@ -39,6 +40,12 @@ export function useSettingsNavItems(available: {
     // the account's usage and admin pages.
     { id: "general", label: t`General`, icon: Settings },
     { id: "models", label: t`Models`, icon: Cpu, description: t`Which LLMs your bots use.` },
+    {
+      id: "prompt-templates",
+      label: t`Prompt templates`,
+      icon: ScrollText,
+      description: t`Reusable personas for your bots.`,
+    },
     {
       id: "confirmations",
       label: t`Approvals`,

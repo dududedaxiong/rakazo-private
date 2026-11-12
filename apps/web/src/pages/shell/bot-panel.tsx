@@ -26,6 +26,7 @@ import { BotEmailAddressField } from "../../components/BotEmailAddressField";
 import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary";
 import { InstructionSettings } from "../../components/InstructionSettings";
 import { PagesList } from "../../components/pages/PagesList";
+import { BotPersonaSection } from "../../components/prompt-templates/BotPersonaSection";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
 import { lazyComponent } from "../../lib/preload-recovery";
 import { useSpaceQueries } from "../../lib/query";
@@ -63,7 +64,7 @@ function advancedValues(bot: Bot) {
   ] as const;
 }
 
-export type BotPanelTab = "computer" | "routines" | "pages" | "settings";
+export type BotPanelTab = "computer" | "routines" | "pages" | "settings" | "persona";
 
 /** A bot's profile above its Computer, Routines, Pages and Advanced tabs. */
 export function BotSettings({
@@ -79,6 +80,8 @@ export function BotSettings({
   onClear,
   focusModel = 0,
   onOpenConnections,
+  onBotUpdated,
+  onOpenTemplateLibrary,
 }: {
   bot: Bot;
   tab?: BotPanelTab;
@@ -88,6 +91,10 @@ export function BotSettings({
   packageTools?: ReactNode;
   focusModel?: number;
   onOpenConnections?: () => void;
+  /** After a persona switch, so the roster and the header follow the updated bot. */
+  onBotUpdated?: (bot: Bot) => void;
+  /** Opens the prompt template library in settings. */
+  onOpenTemplateLibrary?: () => void;
   /** Unused: the skill sections read and save the shared cached skill list. */
   onSkillsChange?: (skills: AgentSkillCatalogEntry[]) => void;
   memoryProviderConfigured: boolean;
@@ -540,6 +547,9 @@ export function BotSettings({
           <TabsTrigger value="pages">
             <Trans>Pages</Trans>
           </TabsTrigger>
+          <TabsTrigger value="persona">
+            <Trans>Persona</Trans>
+          </TabsTrigger>
           <TabsTrigger value="settings">
             <Trans>Advanced</Trans>
           </TabsTrigger>
@@ -552,6 +562,15 @@ export function BotSettings({
         </TabsContent>
         <TabsContent value="pages" className="pt-4">
           {tab === "pages" ? <PagesList botId={bot.id} /> : null}
+        </TabsContent>
+        <TabsContent value="persona" className="pt-4">
+          {tab === "persona" ? (
+            <BotPersonaSection
+              bot={bot}
+              onBotUpdated={(updated) => onBotUpdated?.(updated)}
+              onManageTemplates={() => onOpenTemplateLibrary?.()}
+            />
+          ) : null}
         </TabsContent>
         {/* Stays mounted so scratchpad and knowledge drafts survive a tab switch. */}
         <TabsContent value="settings" keepMounted data-testid="bot-settings-advanced">

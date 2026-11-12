@@ -1,5 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
-import type { BotAvatarSet, SpaceMemoryConfig, UsageSummary } from "@rakazo/contracts";
+import type { Bot, BotAvatarSet, SpaceMemoryConfig, UsageSummary } from "@rakazo/contracts";
 import {
   Button,
   Dialog,
@@ -12,6 +12,7 @@ import { ChevronLeft, ChevronRight, XIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApprovalRulesSettings } from "../components/ApprovalRulesSettings";
 import { computersAreUnavailable } from "../components/ComputersUnavailableHint";
+import { PromptTemplatesLibrary } from "../components/prompt-templates/PromptTemplatesLibrary";
 import { SETTINGS_CONTENT_WIDTH, SettingsGroup, SettingsRow } from "../components/SettingsRows";
 import { VaultSettings } from "../components/VaultSettings";
 import { canChooseOwnComputer } from "../lib/computer-sandbox";
@@ -70,6 +71,9 @@ export function SettingsOverlay({
   onVoiceStatusMaybeChanged,
   onLeftSpace,
   shellRpc,
+  /** The chat open behind settings, when one is; the template library acts on it. */
+  activeBot,
+  onBotUpdated,
 }: {
   /** The space the Space page edits; it need not be the selected space. */
   space?: SettingsSpace | null;
@@ -109,6 +113,8 @@ export function SettingsOverlay({
   onLeftSpace?: (spaceId: string, activeSpaceId: string) => void;
   /** Pinned to the space this window shows; billing acts on it. */
   shellRpc: RpcClient;
+  activeBot?: Bot | null;
+  onBotUpdated?: (bot: Bot) => void;
 }) {
   const { t, i18n } = useLingui();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -467,6 +473,9 @@ export function SettingsOverlay({
                   {section === "updates" && showUpdates ? <UpdatesSettingsPanel /> : null}
                   {section === "models" ? (
                     <ModelSettingsOverlay embedded scope="account" onClose={requestClose} />
+                  ) : null}
+                  {section === "prompt-templates" ? (
+                    <PromptTemplatesLibrary bot={activeBot} onBotUpdated={onBotUpdated} />
                   ) : null}
                   {section === "memory" ? (
                     <MemorySettingsOverlay
