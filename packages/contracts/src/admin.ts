@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { SecurityEventSchema } from "./security-events.js";
 
 /**
  * Super-admin backend contracts: registration controls, invite codes, user management,
@@ -114,3 +115,24 @@ export const IpRegistrationStatListInputSchema = z.object({
   limit: z.number().int().min(1).max(100).default(50),
 });
 export type IpRegistrationStatListInput = z.infer<typeof IpRegistrationStatListInputSchema>;
+
+/** One day of the overview's seven-day registration trend, oldest first. */
+export const AdminOverviewDaySchema = z.object({
+  date: z.string(),
+  count: z.number().int().min(0),
+});
+export type AdminOverviewDay = z.infer<typeof AdminOverviewDaySchema>;
+
+/** Registration and account-safety totals for the admin overview page. */
+export const AdminOverviewSchema = z.object({
+  totalUsers: z.number().int().min(0),
+  todayNew: z.number().int().min(0),
+  weekNew: z.number().int().min(0),
+  disabledCount: z.number().int().min(0),
+  blacklistedCount: z.number().int().min(0),
+  collectiveBanCount: z.number().int().min(0),
+  collectiveBanAccounts: z.number().int().min(0),
+  dailyNew: z.array(AdminOverviewDaySchema),
+  recentEvents: z.array(SecurityEventSchema),
+});
+export type AdminOverview = z.infer<typeof AdminOverviewSchema>;

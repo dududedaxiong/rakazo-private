@@ -51,6 +51,7 @@ const fieldMatches = (value: unknown, condition: unknown): boolean => {
   if (typeof condition !== "object") return value === condition;
   const cond = condition as Record<string, unknown>;
   if ("not" in cond) return !fieldMatches(value, cond.not);
+  if ("in" in cond) return (cond.in as unknown[]).includes(value);
   if ("contains" in cond) {
     const text = String(value ?? "");
     const needle = String(cond.contains);
@@ -107,6 +108,17 @@ function adminDeps() {
       deletedAt: null,
       ip: "203.0.113.2",
     },
+    {
+      id: "user-3",
+      name: "Carol",
+      email: "carol@rakazo.test",
+      emailVerified: true,
+      createdAt: new Date(),
+      deactivatedAt: null,
+      blacklistedAt: null,
+      deletedAt: null,
+      ip: "203.0.113.3",
+    },
   ];
   const codes: FakeCode[] = [];
   let settings: Record<string, unknown> | null = null;
@@ -116,8 +128,35 @@ function adminDeps() {
     { ip: "203.0.113.2", createdAt: new Date() },
   ];
   const sessionDeleteMany = vi.fn(async () => ({ count: 0 }));
+  const events = [
+    {
+      id: "event-1",
+      type: "admin.user.blacklisted",
+      userId: "user-1",
+      spaceId: null,
+      ip: null,
+      userAgent: null,
+      metadata: {},
+      createdAt: new Date(),
+    },
+    {
+      id: "event-2",
+      type: "admin.ip_collective_ban",
+      userId: null,
+      spaceId: null,
+      ip: "203.0.113.9",
+      userAgent: null,
+      metadata: { banned: 2, skipped: 0, failed: 0 },
+      createdAt: new Date(),
+    },
+  ];
   const prisma = {
     user: {
+      count: vi.fn(
+        async ({ where = {} }: { where?: Record<string, unknown> } = {}) =>
+          users.filter((row) => whereMatches(row as unknown as Record<string, unknown>, where))
+            .length,
+      ),
       findUnique: vi.fn(async ({ where }: { where: { id: string } }) => {
         const user = users.find((row) => row.id === where.id);
         return user ? userRow(user) : null;
@@ -229,6 +268,17 @@ function adminDeps() {
       findMany: vi.fn(async () => records),
     },
     session: { deleteMany: sessionDeleteMany },
+    securityEvent: {
+      findMany: vi.fn(
+        async ({ where = {}, take }: { where?: Record<string, unknown>; take?: number }) =>
+          events
+            .filter((row) => whereMatches(row as unknown as Record<string, unknown>, where))
+            .sort(
+              (a, b) => b.createdAt.getTime() - a.createdAt.getTime() || b.id.localeCompare(a.id),
+            )
+            .slice(0, take),
+      ),
+    },
     callPushDevice: { deleteMany: vi.fn(async () => ({ count: 0 })) },
     messagingLinkCode: { deleteMany: vi.fn(async () => ({ count: 0 })) },
     bot: { updateMany: vi.fn(async () => ({ count: 0 })) },
@@ -262,6 +312,29 @@ function adminDeps() {
   const anonymous = createRouterClient(createRouter(deps), { context: {} as never });
   return { deps, users, codes, admin, user, anonymous, sessionDeleteMany };
 }
+
+describe("admin overview", () => {
+  it("returns totals, the seven-day trend, and recent events", async () => {
+    const { admin } = adminDeps();
+    const overview = await admin.admin.overview.get();
+    expect(overview.totalUsers).toBe(4);
+    expect(overview.todayNew).toBe(1);
+    expect(overview.weekNew).toBe(1);
+    expect(overview.disabledCount).toBe(1);
+    expect(overview.blacklistedCount).toBe(0);
+    expect(overview.collectiveBanCount).toBe(1);
+    expect(overview.collectiveBanAccounts).toBe(2);
+    expect(overview.dailyNew).toHaveLength(7);
+    expect(overview.dailyNew[6].count).toBe(1);
+    expect(overview.dailyNew.slice(0, 6).every((day) => day.count === 0)).toBe(true);
+    expect(overview.recentEvents.map((event) => event.id)).toEqual(["event-2", "event-1"]);
+  });
+
+  it("refuses non-admins", async () => {
+    const { user } = adminDeps();
+    await expect(user.admin.overview.get()).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+});
 
 describe("admin registration settings", () => {
   it("returns defaults when no settings row exists", async () => {
@@ -315,15 +388,15 @@ describe("admin users", () => {
   it("lists with query and status filters", async () => {
     const { admin } = adminDeps();
     const all = await admin.admin.users.list({});
-    expect(all.map((row) => row.id)).toEqual(["user-2", "user-1", "admin-1"]);
-    expect(all[0].status).toBe("disabled");
+    expect(all.map((row) => row.id)).toEqual(["user-3", "user-2", "user-1", "admin-1"]);
+    expect(all[1].status).toBe("disabled");
     await expect(admin.admin.users.list({ query: "alice" })).resolves.toEqual([
       expect.objectContaining({ id: "user-1", status: "active" }),
     ]);
     await expect(admin.admin.users.list({ status: "disabled" })).resolves.toEqual([
       expect.objectContaining({ id: "user-2" }),
     ]);
-    await expect(admin.admin.users.list({ status: "active" })).resolves.toHaveLength(2);
+    await expect(admin.admin.users.list({ status: "active" })).resolves.toHaveLength(3);
   });
 
   it("disables and restores an account and ends its sessions", async () => {

@@ -6,6 +6,7 @@ import type {
 import { eventIterator, oc } from "@orpc/contract";
 import * as z from "zod";
 import {
+  AdminOverviewSchema,
   AdminUserListInputSchema,
   AdminUserSchema,
   InviteCodeCreateInputSchema,
@@ -509,6 +510,9 @@ export const appContract = {
   },
   /** Super-admin backend: registration controls, invite codes, user management, IP limits. */
   admin: {
+    overview: {
+      get: oc.output(AdminOverviewSchema),
+    },
     registrationSettings: {
       get: oc.output(RegistrationSettingsSchema),
       update: oc.input(RegistrationSettingsUpdateSchema).output(RegistrationSettingsSchema),

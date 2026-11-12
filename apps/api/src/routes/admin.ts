@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { DEFAULT_REGISTRATION_SETTINGS, generateInviteCode } from "@rakazo/auth";
 import type {
+  AdminOverviewDay,
   AdminUser,
   AdminUserStatus,
   InviteCode,
@@ -10,7 +11,7 @@ import type {
 } from "@rakazo/contracts";
 import { parseAllowlist, signupsOpen } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
-import { runAsSystem } from "@rakazo/db";
+import { listSecurityEvents, runAsSystem } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { deleteAccountContent } from "../account-deletion.js";
 import type { AccountStatusDeps } from "../account-status.js";
@@ -169,6 +170,58 @@ export function adminRoutes(ctx: RouterContext) {
 
   return {
     admin: {
+      overview: {
+        get: authed.admin.overview.get.handler(async ({ context }) => {
+          await requireAdmin(deps, context.actor.userId);
+          return runAsSystem("read the admin overview", async () => {
+            const now = new Date();
+            const dayStart = new Date(now);
+            dayStart.setUTCHours(0, 0, 0, 0);
+            const weekStart = new Date(dayStart.getTime() - 6 * 24 * 60 * 60 * 1000);
+            const [totalUsers, todayNew, weekNew, disabledCount, blacklistedCount, weekUsers] =
+              await Promise.all([
+                prisma.user.count(),
+                prisma.user.count({ where: { createdAt: { gte: dayStart } } }),
+                prisma.user.count({ where: { createdAt: { gte: weekStart } } }),
+                prisma.user.count({ where: { deactivatedAt: { not: null }, deletedAt: null } }),
+                prisma.user.count({ where: { blacklistedAt: { not: null }, deletedAt: null } }),
+                prisma.user.findMany({
+                  where: { createdAt: { gte: weekStart } },
+                  select: { createdAt: true },
+                }),
+              ]);
+            const dailyNew: AdminOverviewDay[] = [];
+            for (let offset = 6; offset >= 0; offset -= 1) {
+              const date = new Date(dayStart.getTime() - offset * 24 * 60 * 60 * 1000);
+              const next = new Date(date.getTime() + 24 * 60 * 60 * 1000);
+              dailyNew.push({
+                date: date.toISOString().slice(0, 10),
+                count: weekUsers.filter((user) => user.createdAt >= date && user.createdAt < next)
+                  .length,
+              });
+            }
+            const bans = await prisma.securityEvent.findMany({
+              where: { type: "admin.ip_collective_ban" },
+              select: { metadata: true },
+            });
+            const collectiveBanAccounts = bans.reduce((sum, ban) => {
+              const metadata = ban.metadata as { banned?: unknown } | null;
+              return sum + (typeof metadata?.banned === "number" ? metadata.banned : 0);
+            }, 0);
+            return {
+              totalUsers,
+              todayNew,
+              weekNew,
+              disabledCount,
+              blacklistedCount,
+              collectiveBanCount: bans.length,
+              collectiveBanAccounts,
+              dailyNew,
+              recentEvents: await listSecurityEvents(prisma, { limit: 8 }),
+            };
+          });
+        }),
+      },
       registrationSettings: {
         get: authed.admin.registrationSettings.get.handler(async ({ context }) => {
           await requireAdmin(deps, context.actor.userId);
