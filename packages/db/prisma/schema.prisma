@@ -784,13 +784,13 @@ model DeploymentSettings {
   id                              String   @id @default("default")
   /// Deprecated: retained for rolling-release compatibility; never authorizes app users.
   ownerUserId                     String?
+  /// The admin's email-registration switch, seeded from SIGNUPS_ENABLED on first boot; the
+  /// environment master switch still wins when it is off. The admin backend owns this row.
   signupsEnabled                  Boolean  @default(true)
   signupAllowlist                 String   @default("")
   signupPolicyInitialized         Boolean  @default(false)
   /// Registration requires a valid invite code while true; the master switch still wins.
   inviteCodeEnabled               Boolean  @default(false)
-  /// Email registration switch; the SIGNUPS_ENABLED master switch still wins when off.
-  emailSignupEnabled              Boolean  @default(true)
   /// Max accounts ever registered from one IP; 0 means no cap.
   ipRegistrationLimit             Int      @default(5)
   /// Max accounts registered from one IP within an hour before the IP is throttled.

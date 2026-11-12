@@ -39,10 +39,11 @@ export async function readSignupSettings(
     const row = await prisma.deploymentSettings.findUnique({ where: { id: "default" } });
     if (!row) return null;
     // A row written before the new columns existed, or a test double without them,
-    // degrades to the defaults instead of closing registration.
+    // degrades to the defaults instead of closing registration. The stored
+    // signupsEnabled column is the admin's email-registration switch.
     return {
       inviteCodeEnabled: row.inviteCodeEnabled ?? false,
-      emailSignupEnabled: row.emailSignupEnabled ?? true,
+      emailSignupEnabled: row.signupsEnabled ?? true,
       signupAllowlist: row.signupAllowlist ?? "",
       ipRegistrationLimit: row.ipRegistrationLimit ?? 5,
       ipRegistrationHourlyThreshold: row.ipRegistrationHourlyThreshold ?? 10,

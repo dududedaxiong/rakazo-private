@@ -45,7 +45,7 @@ describe("registration limits", () => {
   it("reads the settings row and falls back when there is none", async () => {
     const { prisma } = fakePrisma([], {
       inviteCodeEnabled: true,
-      emailSignupEnabled: false,
+      signupsEnabled: false,
       signupAllowlist: "@example.com",
       ipRegistrationLimit: 3,
       ipRegistrationHourlyThreshold: 4,

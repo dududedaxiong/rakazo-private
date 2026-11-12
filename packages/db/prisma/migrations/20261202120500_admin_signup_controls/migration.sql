@@ -4,7 +4,6 @@ ALTER TABLE "user" ADD COLUMN "blacklistedAt" TIMESTAMP(3);
 ALTER TABLE "user" ADD COLUMN "deletedAt" TIMESTAMP(3);
 
 ALTER TABLE "deployment_settings" ADD COLUMN "inviteCodeEnabled" BOOLEAN NOT NULL DEFAULT false;
-ALTER TABLE "deployment_settings" ADD COLUMN "emailSignupEnabled" BOOLEAN NOT NULL DEFAULT true;
 ALTER TABLE "deployment_settings" ADD COLUMN "ipRegistrationLimit" INTEGER NOT NULL DEFAULT 5;
 ALTER TABLE "deployment_settings" ADD COLUMN "ipRegistrationHourlyThreshold" INTEGER NOT NULL DEFAULT 10;
 ALTER TABLE "deployment_settings" ADD COLUMN "ipCollectiveBanEnabled" BOOLEAN NOT NULL DEFAULT false;
