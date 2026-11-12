@@ -28,6 +28,9 @@ vi.mock("@rakazo/adapters", async (original) => {
 
 const actor = { userId: "user-1", spaceId: "space-1" } as Actor;
 
+/** A route handler, unwrapped from its oRPC procedure for direct calls. */
+type Handler = (args: { context: { actor: Actor }; input: unknown }) => Promise<unknown>;
+
 const template = (overrides: Record<string, unknown> = {}) => ({
   id: "tpl-1",
   name: "翻译助手",
@@ -107,7 +110,7 @@ describe("prompt template routes", () => {
   it("lists the account's templates", async () => {
     const { routes } = setup();
     mockedDb.listPromptTemplates.mockResolvedValueOnce([template()]);
-    const listed = await (routes.promptTemplates.list as never)({
+    const listed = await (routes.promptTemplates.list as unknown as Handler)({
       context: { actor },
       input: undefined,
     });
@@ -119,7 +122,7 @@ describe("prompt template routes", () => {
     const { routes } = setup();
     mockedDb.createPromptTemplate.mockRejectedValueOnce(new PromptTemplateNameConflictError());
     await expect(
-      (routes.promptTemplates.create as never)({
+      (routes.promptTemplates.create as unknown as Handler)({
         context: { actor },
         input: { name: "翻译助手", content: "Translate." },
       }),
@@ -128,7 +131,7 @@ describe("prompt template routes", () => {
 
   it("applying a template writes its content and links the bot, then returns the bot", async () => {
     const { routes, ctx } = setup();
-    const applied = await (routes.promptTemplates.apply as never)({
+    const applied = await (routes.promptTemplates.apply as unknown as Handler)({
       context: { actor },
       input: { templateId: "tpl-1", botId: "bot-1" },
     });
@@ -147,9 +150,9 @@ describe("prompt template routes", () => {
 
   it("applying a template the account does not own fails", async () => {
     const { routes, ctx } = setup();
-    ctx.deps.prisma.promptTemplate.findFirst.mockResolvedValueOnce(null);
+    ctx.deps.prisma.promptTemplate.findFirst.mockResolvedValueOnce(null as never);
     await expect(
-      (routes.promptTemplates.apply as never)({
+      (routes.promptTemplates.apply as unknown as Handler)({
         context: { actor },
         input: { templateId: "tpl-9", botId: "bot-1" },
       }),
@@ -165,7 +168,7 @@ describe("prompt template routes", () => {
       thread: { id: "thread-1" },
     });
     await expect(
-      (routes.promptTemplates.saveCurrentAsTemplate as never)({
+      (routes.promptTemplates.saveCurrentAsTemplate as unknown as Handler)({
         context: { actor },
         input: { botId: "bot-1" },
       }),
@@ -176,7 +179,7 @@ describe("prompt template routes", () => {
   it("confirming an import applies the template the bot already uses", async () => {
     const { routes } = setup();
     mockedDb.upsertPromptTemplate.mockResolvedValueOnce(template());
-    await (routes.promptTemplates.confirmImport as never)({
+    await (routes.promptTemplates.confirmImport as unknown as Handler)({
       context: { actor },
       input: { templates: [{ name: "翻译助手", content: "Translate." }], botId: "bot-1" },
     });
@@ -195,7 +198,7 @@ describe("prompt template routes", () => {
       promptTemplateId: "tpl-1",
       thread: { id: "thread-1" },
     });
-    await (routes.promptTemplates.confirmImport as never)({
+    await (routes.promptTemplates.confirmImport as unknown as Handler)({
       context: { actor },
       input: { templates: [{ name: "翻译助手", content: "Translate." }], botId: "bot-1" },
     });
@@ -205,7 +208,7 @@ describe("prompt template routes", () => {
   it("fetching a subscription refuses plain http", async () => {
     const { routes } = setup();
     await expect(
-      (routes.promptTemplates.fetchFromUrl as never)({
+      (routes.promptTemplates.fetchFromUrl as unknown as Handler)({
         context: { actor },
         input: { url: "http://example.test/a.txt" },
       }),
@@ -218,7 +221,7 @@ describe("prompt template routes", () => {
     const safeFetch = vi.fn(async () => new Response("Translate everything.", { status: 200 }));
     (safeFetch as unknown as { close: unknown }).close = vi.fn();
     vi.mocked(createSafeRemoteFetch).mockReturnValueOnce(safeFetch as never);
-    const fetched = await (routes.promptTemplates.fetchFromUrl as never)({
+    const fetched = await (routes.promptTemplates.fetchFromUrl as unknown as Handler)({
       context: { actor },
       input: { url: "https://example.test/prompts.txt" },
     });
@@ -238,7 +241,7 @@ describe("prompt template routes", () => {
     (safeFetch as unknown as { close: unknown }).close = vi.fn();
     vi.mocked(createSafeRemoteFetch).mockReturnValueOnce(safeFetch as never);
     await expect(
-      (routes.promptTemplates.fetchFromUrl as never)({
+      (routes.promptTemplates.fetchFromUrl as unknown as Handler)({
         context: { actor },
         input: { url: "https://example.test/a.txt" },
       }),
