@@ -115,6 +115,9 @@ vi.mock("../components/native-action-button", () => ({
     </button>
   ),
 }));
+vi.mock("../components/human-verification", () => ({
+  HumanVerification: () => null,
+}));
 vi.mock("./native", () => ({ useMobileTokens: () => tokensForAppearance("light") }));
 vi.mock("./i18n", () => ({
   useI18n: () => ({
@@ -245,6 +248,31 @@ it.each(["in", "up"])(
   },
 );
 
+it("shows the invite code field when sign-up requires one", async () => {
+  route.mode = "up";
+  vi.mocked(passwordResetCapabilities).mockResolvedValue({
+    ...capabilities,
+    inviteCodeRequired: true,
+  });
+  await render();
+  expect(host.querySelector('input[aria-label="Invite code"]')).not.toBeNull();
+});
+
+it("shows the closed state instead of the sign-up form when registration is closed", async () => {
+  route.mode = "up";
+  vi.mocked(passwordResetCapabilities).mockResolvedValue({
+    ...capabilities,
+    signupsEnabled: false,
+  });
+  await render();
+  expect(
+    [...host.querySelectorAll("span")].find(
+      (span) => span.textContent === "Registration is closed on this server",
+    ),
+  ).not.toBeUndefined();
+  expect(host.querySelector('input[aria-label="Email"]')).toBeNull();
+});
+
 it("hides SSO when switching to password recovery", async () => {
   await render();
   const forgot = [...host.querySelectorAll("button")].find(
@@ -294,7 +322,7 @@ it.each(["in", "up"])("signs in with an emailed code by default in %s mode", asy
   if (mode === "up") await type(input("Name")!, "Ada");
   await type(input("Email")!, " ada@example.test ");
   await press("Continue");
-  expect(sendSignInCode).toHaveBeenCalledWith("ada@example.test");
+  expect(sendSignInCode).toHaveBeenCalledWith("ada@example.test", {});
   expect(host.textContent).toContain("Check your email");
 
   const code = input("Code")!;
@@ -310,6 +338,7 @@ it.each(["in", "up"])("signs in with an emailed code by default in %s mode", asy
     "ada@example.test",
     "123456",
     mode === "up" ? "Ada" : undefined,
+    {},
   );
   expect(router.replace).toHaveBeenCalledWith("/");
 });
@@ -355,7 +384,7 @@ it("verifies the code even if a password was typed while it was sent", async () 
   await type(input("Password")!, "example-password");
   await act(async () => sent());
   await type(input("Code")!, "123456");
-  expect(signInWithCode).toHaveBeenCalledWith("ada@example.test", "123456", undefined);
+  expect(signInWithCode).toHaveBeenCalledWith("ada@example.test", "123456", undefined, {});
   expect(signIn).not.toHaveBeenCalled();
 });
 
@@ -390,7 +419,7 @@ it("opens the app after code sign-in without server setup", async () => {
   await type(input("Email")!, "ada@example.test");
   await press("Continue");
   await type(input("Code")!, "123456");
-  expect(signInWithCode).toHaveBeenCalledWith("ada@example.test", "123456", undefined);
+  expect(signInWithCode).toHaveBeenCalledWith("ada@example.test", "123456", undefined, {});
   expect(rpc).not.toHaveBeenCalledWith("integrationSetup/get");
   expect(router.replace).toHaveBeenCalledWith("/");
 });
