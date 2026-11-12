@@ -102,7 +102,10 @@ type ThreadComposerProps = {
 /** One press-and-hold dictation on the waveform button. */
 type HoldDictation = {
   controller: AbortController;
-  deps: Pick<VoiceChatDeps, "dictate" | "finishDictation" | "stopDictation"> | null;
+  deps: Pick<
+    VoiceChatDeps,
+    "dictate" | "finishDictation" | "stopDictation" | "isServerDictationActive"
+  > | null;
   /** Latest interim or final text; the turn's words so far. */
   heard: string;
   /** The recognizer finished on its own, so no final is coming. */
@@ -293,6 +296,13 @@ export function ThreadComposer({
       return;
     }
     if (!hold.heard.trim()) {
+      // The server path has no interim text: a recording in progress may
+      // still hold the whole turn, so finish it and wait for the
+      // transcript instead of discarding the clip.
+      if (hold.deps?.isServerDictationActive?.()) {
+        hold.deps.finishDictation();
+        return;
+      }
       hold.deps?.stopDictation();
       settleHold();
       return;

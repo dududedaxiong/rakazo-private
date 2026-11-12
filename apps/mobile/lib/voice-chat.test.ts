@@ -38,6 +38,7 @@ vi.mock("./server-dictation", () => ({
   listenServerDictation: vi.fn(),
   finishServerDictation: vi.fn(),
   stopServerDictation: vi.fn(),
+  isServerDictationActive: vi.fn(() => false),
 }));
 vi.mock("./user-error", () => ({ errorText: (_error: unknown, fallback: string) => fallback }));
 vi.mock("./voice", () => ({
@@ -677,5 +678,86 @@ describe("production voice chat dictation", () => {
     expect(dictation.listen).toHaveBeenCalledOnce();
     expect(onDeviceSpeech.listenOnDeviceSpeech).not.toHaveBeenCalled();
     expect(serverDictation.listenServerDictation).not.toHaveBeenCalled();
+  });
+
+  it("falls back to server transcription when on-device recognition fails mid-turn", async () => {
+    vi.mocked(onDeviceSpeech.onDeviceSpeechAvailable).mockResolvedValueOnce(true);
+    vi.mocked(onDeviceSpeech.listenOnDeviceSpeech).mockImplementationOnce(async (opts) => {
+      opts.onGiveUp?.("failed");
+    });
+    vi.mocked(serverDictation.serverTranscribeAvailable).mockResolvedValueOnce(true);
+    const onGiveUp = vi.fn();
+    const started = await productionVoiceChatDeps().dictate(
+      { onInterim: () => undefined, onFinal: () => undefined, onGiveUp },
+      signal,
+    );
+    expect(started).toBe(true);
+    await flush();
+    expect(serverDictation.listenServerDictation).toHaveBeenCalledOnce();
+    expect(onGiveUp).not.toHaveBeenCalled();
+  });
+
+  it("reports the failure when the server cannot transcribe either", async () => {
+    vi.mocked(onDeviceSpeech.onDeviceSpeechAvailable).mockResolvedValueOnce(true);
+    vi.mocked(onDeviceSpeech.listenOnDeviceSpeech).mockImplementationOnce(async (opts) => {
+      opts.onGiveUp?.("failed");
+    });
+    vi.mocked(serverDictation.serverTranscribeAvailable).mockResolvedValueOnce(false);
+    const onGiveUp = vi.fn();
+    const started = await productionVoiceChatDeps().dictate(
+      { onInterim: () => undefined, onFinal: () => undefined, onGiveUp },
+      signal,
+    );
+    expect(started).toBe(true);
+    await flush();
+    expect(serverDictation.listenServerDictation).not.toHaveBeenCalled();
+    expect(onGiveUp).toHaveBeenCalledOnce();
+    expect(onGiveUp).toHaveBeenCalledWith("failed");
+  });
+
+  it("does not fall back when on-device recognition ends idle", async () => {
+    vi.mocked(onDeviceSpeech.onDeviceSpeechAvailable).mockResolvedValueOnce(true);
+    vi.mocked(onDeviceSpeech.listenOnDeviceSpeech).mockImplementationOnce(async (opts) => {
+      opts.onGiveUp?.("idle");
+    });
+    const onGiveUp = vi.fn();
+    const started = await productionVoiceChatDeps().dictate(
+      { onInterim: () => undefined, onFinal: () => undefined, onGiveUp },
+      signal,
+    );
+    expect(started).toBe(true);
+    await flush();
+    expect(serverDictation.listenServerDictation).not.toHaveBeenCalled();
+    expect(onGiveUp).toHaveBeenCalledOnce();
+    expect(onGiveUp).toHaveBeenCalledWith("idle");
+  });
+
+  it("does not fall back once words were already heard", async () => {
+    vi.mocked(onDeviceSpeech.onDeviceSpeechAvailable).mockResolvedValueOnce(true);
+    vi.mocked(onDeviceSpeech.listenOnDeviceSpeech).mockImplementationOnce(async (opts) => {
+      opts.onInterim?.("你好");
+      opts.onGiveUp?.("failed");
+    });
+    const onGiveUp = vi.fn();
+    const started = await productionVoiceChatDeps().dictate(
+      { onInterim: () => undefined, onFinal: () => undefined, onGiveUp },
+      signal,
+    );
+    expect(started).toBe(true);
+    await flush();
+    expect(serverDictation.listenServerDictation).not.toHaveBeenCalled();
+    expect(onGiveUp).toHaveBeenCalledOnce();
+    expect(onGiveUp).toHaveBeenCalledWith("failed");
+  });
+
+  it("falls through to server transcription when on-device recognition never starts", async () => {
+    vi.mocked(onDeviceSpeech.onDeviceSpeechAvailable).mockResolvedValueOnce(true);
+    vi.mocked(onDeviceSpeech.listenOnDeviceSpeech).mockRejectedValueOnce(new Error("boom"));
+    vi.mocked(dictation.available).mockResolvedValueOnce(false);
+    vi.mocked(serverDictation.serverTranscribeAvailable).mockResolvedValueOnce(true);
+    const started = await productionVoiceChatDeps().dictate(handlers, signal);
+    expect(started).toBe(true);
+    expect(dictation.listen).not.toHaveBeenCalled();
+    expect(serverDictation.listenServerDictation).toHaveBeenCalledOnce();
   });
 });

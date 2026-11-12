@@ -31,6 +31,7 @@ import {
 } from "./on-device-speech";
 import {
   finishServerDictation,
+  isServerDictationActive,
   listenServerDictation,
   serverTranscribeAvailable,
   stopServerDictation,
@@ -88,6 +89,8 @@ export type VoiceChatDeps = {
   /** Delivers the utterance heard so far as the finished turn. */
   finishDictation: () => void;
   stopDictation: () => void;
+  /** True while a server dictation turn is recording, so a hold can finish it instead of discarding the clip. */
+  isServerDictationActive?: () => boolean;
   /** Resolves with the run the message started, so only that run's reply is spoken. */
   send: (botId: string, text: string) => Promise<string | undefined>;
   /** Calls onReply for each new bot reply; onLost when the feed ends for good. */
@@ -648,9 +651,52 @@ async function dictateTurn(
   }
   // On-device speech first: it needs neither the system recognizer nor a
   // server, so it is the only path that works on a phone without either.
+  // When it starts and then fails (a broken engine or microphone), the
+  // hold keeps going on the server instead of dying silently — the same
+  // record-then-transcribe fallback the call loop already uses. A turn
+  // that ends idle (nothing said) is not a failure and stays put.
   if (await onDeviceSpeechAvailable()) {
-    await listenOnDeviceSpeech({ ...handlers, signal });
-    return true;
+    let heard = false;
+    const fallBackToServer = async () => {
+      try {
+        if (signal.aborted) return;
+        if (!(await serverTranscribeAvailable())) {
+          handlers.onGiveUp?.("failed");
+          return;
+        }
+        if (signal.aborted) return;
+        await listenServerDictation({
+          onFinal: (text) => handlers.onFinal?.(text),
+          onGiveUp: (reason) => handlers.onGiveUp?.(reason),
+          signal,
+        });
+      } catch {
+        if (!signal.aborted) handlers.onGiveUp?.("failed");
+      }
+    };
+    try {
+      await listenOnDeviceSpeech({
+        onInterim: (text) => {
+          if (text.trim()) heard = true;
+          handlers.onInterim?.(text);
+        },
+        onFinal: (text) => {
+          if (text.trim()) heard = true;
+          handlers.onFinal?.(text);
+        },
+        onGiveUp: (reason) => {
+          if (reason === "failed" && !heard && !signal.aborted) {
+            void fallBackToServer();
+            return;
+          }
+          handlers.onGiveUp?.(reason);
+        },
+        signal,
+      });
+      return true;
+    } catch {
+      // The engine never started: fall through to the next path below.
+    }
   }
   if (await dictation.available()) {
     const lang = recognitionLocaleTag(getActiveUiLocale(), await deviceLanguage());
@@ -680,6 +726,7 @@ export function productionVoiceChatDeps(): VoiceChatDeps {
       stopServerDictation();
       stopOnDeviceSpeech();
     },
+    isServerDictationActive,
     send: async (botId, text) => {
       const sent = await rpc("threads/send", { botId, clientNonce: newClientId(), text });
       return sent.runId;

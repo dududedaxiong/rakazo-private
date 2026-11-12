@@ -69,6 +69,11 @@ export function stopServerDictation(): void {
   session.controller.abort();
 }
 
+/** True while a server dictation turn is recording. */
+export function isServerDictationActive(): boolean {
+  return active !== null;
+}
+
 export function finishServerDictation(): void {
   const session = active;
   if (!session) return;

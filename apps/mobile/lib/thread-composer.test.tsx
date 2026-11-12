@@ -25,6 +25,7 @@ const holdDictation = vi.hoisted(() => ({
   dictate: vi.fn(),
   finishDictation: vi.fn(),
   stopDictation: vi.fn(),
+  isServerDictationActive: vi.fn(() => false),
   handlers: null as {
     onInterim: (text: string) => void;
     onFinal: (text: string) => void;
@@ -36,6 +37,7 @@ vi.mock("./voice-chat", () => ({
     dictate: holdDictation.dictate,
     finishDictation: holdDictation.finishDictation,
     stopDictation: holdDictation.stopDictation,
+    isServerDictationActive: holdDictation.isServerDictationActive,
   }),
 }));
 const routerPush = vi.hoisted(() => vi.fn());
@@ -383,6 +385,7 @@ describe("thread composer isolation", () => {
     });
     holdDictation.finishDictation.mockReset();
     holdDictation.stopDictation.mockReset();
+    holdDictation.isServerDictationActive.mockReset().mockImplementation(() => false);
     holdDictation.handlers = null;
     container = document.createElement("div");
     document.body.append(container);
@@ -1395,6 +1398,23 @@ describe("thread composer isolation", () => {
     await flush();
     expect(props.send).not.toHaveBeenCalled();
     expect(field().value).toBe("");
+  });
+
+  it("finishes the server recording on release when nothing was heard yet", async () => {
+    // Server transcription has no interim text: the clip may hold the
+    // whole turn, so release finishes it instead of discarding it.
+    holdDictation.isServerDictationActive.mockReturnValueOnce(true);
+    holdDictation.finishDictation.mockImplementation(() => {
+      holdDictation.handlers?.onFinal("你好世界");
+    });
+    await holdStart();
+    holdEnd();
+    expect(holdDictation.finishDictation).toHaveBeenCalledOnce();
+    expect(holdDictation.stopDictation).not.toHaveBeenCalled();
+    expect(props.send).not.toHaveBeenCalled();
+    await flush();
+    expect(props.send).toHaveBeenCalledOnce();
+    expect(composer.current!.snapshot().promptText).toBe("你好世界");
   });
 
   it("does nothing when no recognizer is available", async () => {
