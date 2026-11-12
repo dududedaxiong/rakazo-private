@@ -27,6 +27,7 @@ function bot(id = "bot-1"): Bot {
     spaceId: "space-1",
     description: "",
     instructions: "",
+    promptTemplateId: null,
     parentBotId: null,
     memoryScope: null,
     createdAt: "2026-01-01T00:00:00.000Z",

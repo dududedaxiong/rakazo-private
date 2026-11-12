@@ -532,6 +532,10 @@ function LayoutContent() {
                     />
                     <Stack.Screen name="bot-model" options={glassHeaderOptions(t("Model"))} />
                     <Stack.Screen
+                      name="prompt-templates"
+                      options={glassHeaderOptions(t("Prompt templates"))}
+                    />
+                    <Stack.Screen
                       name="thread"
                       options={({ route }) => ({
                         title: t("Thread"),

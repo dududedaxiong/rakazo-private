@@ -48,27 +48,42 @@ export function chatTitleHeroHeight(titleFontSize: number): number {
  * its name under it. Solid background (the thread screen paints it), never transparent:
  * a see-through hero lets the scrolling conversation show through above the avatar.
  * No live process line here — the top bar shows no real-time process. Tapping the avatar
- * opens the bot menu.
+ * opens the bot menu. The line under the avatar shows the bot's persona — its linked
+ * template's name, or Custom — and tapping it opens the persona switcher.
  */
 export function ChatTitleHero({
   bot,
   status,
   composing,
   name,
+  personaName,
   onAvatarPress,
+  onNamePress,
   userId,
 }: {
   bot: MobileBot | SpaceBot | undefined;
   status: string | undefined;
   composing: boolean;
   name: string | undefined;
+  /** The persona to show under the avatar; the bot name until it is known. */
+  personaName?: string | null;
   /** Opens the bot menu. */
   onAvatarPress?: () => void;
+  /** Opens the persona switcher. */
+  onNamePress?: () => void;
   /** The account whose interface settings style the name. */
   userId?: string;
 }) {
   const styles = useThemedStyles(createThreadHeaderStyles);
   const customSettings = useCustomSettings(userId ?? "");
+  const displayName = personaName ?? name;
+  const label = (
+    <ChatTitleLabel
+      label={displayName ?? ""}
+      placeholder={!displayName}
+      style={[styles.title, customTitleTextStyle(customSettings)]}
+    />
+  );
   return (
     <View
       style={{
@@ -92,11 +107,20 @@ export function ChatTitleHero({
           userId={userId}
         />
       </Pressable>
-      <ChatTitleLabel
-        label={name ?? ""}
-        placeholder={!name}
-        style={[styles.title, customTitleTextStyle(customSettings)]}
-      />
+      {onNamePress ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={displayName ?? ""}
+          onPress={onNamePress}
+          // No padding here: the hero's reserved height is avatar + one name
+          // line + bottom padding, so padding would push the list down.
+          hitSlop={{ top: 0, bottom: 8, left: 8, right: 8 }}
+        >
+          {label}
+        </Pressable>
+      ) : (
+        label
+      )}
     </View>
   );
 }

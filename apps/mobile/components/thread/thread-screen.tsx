@@ -39,6 +39,8 @@ import type { MobileModel, MobileModelCredential } from "../../lib/mobile-types"
 import { useThemedStyles } from "../../lib/native";
 import { getOverlaySpeakingMessageIds, subscribeOverlaySpeech } from "../../lib/overlay-speech";
 import { useChatOnScreen } from "../../lib/page-card-detail";
+import { currentPersonaName } from "../../lib/prompt-template-display";
+import { usePromptTemplates } from "../../lib/prompt-templates";
 import { useInboxBot } from "../../lib/search-inbox";
 import { useSplitView } from "../../lib/split-view";
 import { useIncomingShareImport, useThreadAttachments } from "../../lib/thread-attachments";
@@ -96,6 +98,7 @@ import { LoadEarlierButton, ThreadWorkingFooter } from "./thread-list-controls";
 import { ThreadMessageList } from "./thread-message-list";
 import type { ThreadModelPickerRole, ThreadModelSave } from "./thread-model-picker-sheet";
 import { ThreadModelPickerSheet } from "./thread-model-picker-sheet";
+import { ThreadPersonaSheet } from "./thread-persona-sheet";
 import { useLatestRowActions, useThreadRows } from "./thread-rows";
 import { useThreadRunError } from "./thread-run-error";
 
@@ -154,6 +157,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   const [computerChoice, setComputerChoice] = useState<ModelRoleChoice | null>(null);
   const [sheetRole, setSheetRole] = useState<ThreadModelPickerRole | null>(null);
   const [botMenuOpen, setBotMenuOpen] = useState(false);
+  const [personaOpen, setPersonaOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [backgroundOpen, setBackgroundOpen] = useState(false);
   const [customSettingsOpen, setCustomSettingsOpen] = useState(false);
@@ -317,6 +321,8 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     [groupId, inGroup, locale, mentionBots, mentionConnectors, mentionGroups, mentionRoutines],
   );
   const currentBot = botId ? mentionBots.find((bot) => bot.id === botId) : undefined;
+  const templatesQuery = usePromptTemplates();
+  const personaName = currentPersonaName(currentBot, templatesQuery.data);
   useEffect(() => {
     setMainOverride(null);
   }, [currentBot?.modelProvider, currentBot?.modelId]);
@@ -752,11 +758,11 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     ) : null;
 
   // The big title hero, at the top of a one-to-one chat: the 88pt state-linked avatar with
-  // the bot's name under it. Groups keep only their native title. It floats above the message list
+  // the bot's persona under it. Groups keep only their native title. It floats above the message list
   // instead of scrolling with it, so it stays visible; the list's top clearance makes room
   // for it, and the capsule in the native bar stays as the title when scrolled. No live
   // process line here — the top bar shows no real-time process. Tapping the avatar opens
-  // the bot menu.
+  // the bot menu; tapping the persona name opens the persona switcher.
   const titleComposing = Boolean(botId) && composingBots.split(",").includes(botId ?? "");
   const chatHero =
     !inGroup && botId ? (
@@ -765,7 +771,9 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
         status={currentBotStatus}
         composing={titleComposing}
         name={titleName}
+        personaName={personaName}
         onAvatarPress={() => setBotMenuOpen(true)}
+        onNamePress={() => setPersonaOpen(true)}
         userId={userId}
       />
     ) : null;
@@ -1076,6 +1084,18 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
           onClose={() => setBotMenuOpen(false)}
           onPickModel={setSheetRole}
         />
+        {botId ? (
+          <ThreadPersonaSheet
+            visible={personaOpen}
+            botId={botId}
+            currentTemplateId={currentBot?.promptTemplateId ?? null}
+            onClose={() => setPersonaOpen(false)}
+            onManageTemplates={() =>
+              router.push({ pathname: "/prompt-templates", params: { botId } })
+            }
+            onApplied={() => void refreshMentionBots()}
+          />
+        ) : null}
         <ThreadFavoritesSheet
           visible={favoritesOpen}
           threadKey={threadKey}
