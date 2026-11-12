@@ -20,6 +20,10 @@ export interface DirectoryAccountChange {
 /** Shared with the main auth config so both read and write the same user field. */
 export const DEACTIVATED_AT_FIELD = {
   deactivatedAt: { type: "date", required: false, input: false },
+  // Admin account states, read with every session so a blacklisted or deleted account is
+  // refused even before its sessions are removed.
+  blacklistedAt: { type: "date", required: false, input: false },
+  deletedAt: { type: "date", required: false, input: false },
 } as const satisfies NonNullable<BetterAuthOptions["user"]>["additionalFields"];
 
 /**

@@ -65,11 +65,21 @@ function fixture({
     signupAllowlist: string;
     signupPolicyInitialized: boolean;
     ownerUserId: string | null;
+    inviteCodeEnabled: boolean;
+    emailSignupEnabled: boolean;
+    ipRegistrationLimit: number;
+    ipRegistrationHourlyThreshold: number;
+    ipCollectiveBanEnabled: boolean;
   } = {
     signupsEnabled: true,
     signupAllowlist: allowlist,
     signupPolicyInitialized: true,
     ownerUserId: null,
+    inviteCodeEnabled: false,
+    emailSignupEnabled: true,
+    ipRegistrationLimit: 5,
+    ipRegistrationHourlyThreshold: 10,
+    ipCollectiveBanEnabled: false,
   };
   const messages: TransactionalEmail[] = [];
   const members = new Set<string>();

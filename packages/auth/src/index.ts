@@ -8,6 +8,7 @@ import {
   MAX_PASSWORD_LENGTH,
   MESSAGING_EMAIL_SUFFIX,
   MIN_PASSWORD_LENGTH,
+  parseAllowlist,
   signupPolicyFromEnv,
 } from "@rakazo/core";
 import type { PrismaClient, SecurityEventType } from "@rakazo/db";
@@ -39,10 +40,21 @@ import { breachedPasswordCheck, isPasswordBreached } from "./breached-password.j
 import { DEACTIVATED_AT_FIELD } from "./directory.js";
 import type { EmailLocaleOf } from "./email.js";
 import { emailLocale, passwordResetEmail, signInCodeEmail, verificationEmail } from "./email.js";
+import type { HumanVerification } from "./human-verification.js";
 import { hasRecentIdentityConfirmation, identityConfirmation } from "./identity-confirmation.js";
+import { checkInviteCode, holdInviteCode, linkInviteCodeRedemption } from "./invite-codes.js";
 import type { OidcConfig } from "./oidc.js";
 import { isCurrentOidcAccount, oidcDiscovery } from "./oidc.js";
 import { passkeyRelyingParty } from "./passkey.js";
+import {
+  CLIENT_IP_HEADER,
+  DEFAULT_REGISTRATION_SETTINGS,
+  enforceRegistrationIpLimit,
+  ipFromHeaders,
+  RegistrationIpLimitError,
+  readSignupSettings,
+  recordRegistration,
+} from "./registration-limits.js";
 import type { TokenKey } from "./token-storage.js";
 import { encryptStoredOAuthTokens, openIdToken, sealIdToken } from "./token-storage.js";
 
@@ -56,6 +68,8 @@ export {
 } from "./email.js";
 export type { HomeDeletionReason } from "./home-deletion-email.js";
 export { homeDeletionEmail } from "./home-deletion-email.js";
+export type { HumanVerification } from "./human-verification.js";
+export { humanVerificationFromSecret } from "./human-verification.js";
 export type { OidcConfig } from "./oidc.js";
 export { passkeyRelyingParty } from "./passkey.js";
 export {
@@ -65,6 +79,8 @@ export {
   pluginSubmissionReviewedEmail,
 } from "./plugin-submission-email.js";
 export { referralEmail } from "./referral-email.js";
+export type { RegistrationSettings } from "./registration-limits.js";
+export { CLIENT_IP_HEADER, RegistrationIpLimitError } from "./registration-limits.js";
 export { welcomeEmail } from "./welcome-email.js";
 
 export interface AuthEnv {
@@ -93,6 +109,13 @@ export interface AuthEnv {
   afterReplaceSession?: (previous: AuthSession, session: AuthSession) => Promise<void>;
   /** Runs after each sign-in, with the headers of the request that signed in. */
   afterSignIn?: (userId: string, headers?: Headers) => Promise<void>;
+  /** Human verification for registration, composed from the server's secret. Absent: off. */
+  humanVerification?: HumanVerification;
+  /**
+   * Disables every account that registered from an address that crossed the hourly
+   * registration threshold. Runs only when the collective-ban switch is on.
+   */
+  banRegistrationIpAccounts?: (ip: string, userIds: string[]) => Promise<void>;
   /** The operator provisions accounts from a directory over SCIM (see `createDirectory`). */
   directoryProvisioning?: boolean;
 }
@@ -121,12 +144,6 @@ function isUnusedEmailCodePath(path: string, body: { type?: unknown } | undefine
   if (path === SEND_SIGN_IN_CODE_PATH) return body?.type !== "sign-in";
   return path.startsWith("/email-otp/") || path === "/forget-password/email-otp";
 }
-
-/**
- * The only header Better Auth reads a client IP from. The API sets it from the socket peer and its
- * trusted proxies and drops any client-supplied copy, so a caller cannot choose its own address.
- */
-export const CLIENT_IP_HEADER = "x-rakazo-client-ip";
 
 /** Routes that end sessions other than the caller's own sign-out. Recorded per deleted session. */
 const REVOCATION_PATHS = new Set(["/revoke-session", "/revoke-sessions", "/revoke-other-sessions"]);
@@ -194,11 +211,53 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
       )
     );
   };
+  /**
+   * The registration policy in force: the environment master switch, then the admin's
+   * settings row when it exists (the server seeds it from the environment once, then
+   * the admin backend owns it). The master switch off closes every route, including
+   * invite-code registration; the allowlist and the invite-code switch stack.
+   */
+  const effectiveSignupPolicy = async (): Promise<{
+    enabled: boolean;
+    allowlist: string[];
+    inviteCodeRequired: boolean;
+  }> => {
+    const envPolicy = signupPolicyFromEnv(env);
+    const settings = await readSignupSettings(prisma);
+    if (!settings) return { ...envPolicy, inviteCodeRequired: false };
+    return {
+      enabled: envPolicy.enabled && settings.emailSignupEnabled,
+      allowlist: parseAllowlist(settings.signupAllowlist),
+      inviteCodeRequired: settings.inviteCodeEnabled,
+    };
+  };
   /** Refuses a new account early, before creating it, once a single-person deployment has one. */
   const admission = async () => {
-    const policy = signupPolicyFromEnv(env);
+    const policy = await effectiveSignupPolicy();
     if (!env.singleAccount || !policy.enabled) return policy;
     return (await hasAdmittedAccount(prisma)) ? { ...policy, enabled: false } : policy;
+  };
+  /** Refuses an address that hit the registration caps; a missing address is never refused. */
+  const enforceIpLimit = async (ip: string | null) => {
+    if (!ip) return;
+    const settings = (await readSignupSettings(prisma)) ?? DEFAULT_REGISTRATION_SETTINGS;
+    await enforceRegistrationIpLimit(prisma, ip, settings, env.banRegistrationIpAccounts);
+  };
+  /** Whether the address hit the registration caps; any other failure still fails signup. */
+  const ipLimitRefused = async (ip: string | null): Promise<boolean> => {
+    try {
+      await enforceIpLimit(ip);
+      return false;
+    } catch (error) {
+      if (error instanceof RegistrationIpLimitError) return true;
+      throw error;
+    }
+  };
+  /** Checks the human-verification token when verification is configured; off means pass. */
+  const verifyHuman = async (token: unknown, ip: string | null): Promise<boolean> => {
+    if (!env.humanVerification) return true;
+    if (typeof token !== "string" || !token) return false;
+    return env.humanVerification.verify(token, ip ?? undefined);
   };
   /** Admits the sole account one at a time, so two first signups cannot both get in. */
   const admitSoleAccount = (userId: string) =>
@@ -225,10 +284,19 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
     const [subject, membership, user] = await Promise.all([
       prisma.scimSubject.findUnique({ where: { userId }, select: { profileSourceId: true } }),
       prisma.spaceMember.findFirst({ where: { userId }, select: { userId: true } }),
-      prisma.user.findUnique({ where: { id: userId }, select: { deactivatedAt: true } }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { deactivatedAt: true, blacklistedAt: true, deletedAt: true },
+      }),
     ]);
     // A deactivated account takes no new login, so nothing is linked while it is off.
-    return Boolean(subject?.profileSourceId) && !membership && !user?.deactivatedAt;
+    return (
+      Boolean(subject?.profileSourceId) &&
+      !membership &&
+      !user?.deactivatedAt &&
+      !user?.blacklistedAt &&
+      !user?.deletedAt
+    );
   };
   // SSO-only deployments keep every email credential closed, codes included.
   const emailCodeSignIn = Boolean(env.email) && env.passwordAuth !== false;
@@ -514,10 +582,43 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
             .trim()
             .toLowerCase();
           if (!(await ctx.context.internalAdapter.findUserByEmail(email))) {
+            const send = ctx.path === SEND_SIGN_IN_CODE_PATH;
             const policy = await admission();
+            const ip = ipFromHeaders(ctx.headers);
+            const refuse = (code: string, message: string): never => {
+              if (send) return ctx.json({ success: true }) as never;
+              throw new APIError("BAD_REQUEST", { code, message });
+            };
             if (!policy.enabled || !emailAllowed(email, policy.allowlist)) {
-              if (ctx.path === SEND_SIGN_IN_CODE_PATH) return ctx.json({ success: true });
-              throw new APIError("BAD_REQUEST", { code: "INVALID_OTP", message: "Invalid OTP" });
+              return refuse("INVALID_OTP", "Invalid OTP");
+            }
+            if (await ipLimitRefused(ip)) {
+              return refuse("IP_REGISTRATION_LIMIT", "Too many registrations from this address");
+            }
+            if (
+              send &&
+              policy.inviteCodeRequired &&
+              (await checkInviteCode(prisma, ctx.body?.inviteCode)) !== "valid"
+            ) {
+              return ctx.json({ success: true });
+            }
+            if (send && !(await verifyHuman(ctx.body?.humanVerificationToken, ip))) {
+              return ctx.json({ success: true });
+            }
+            // The send step only checks the code; the verify step holds it, so a
+            // code is never spent on an email that never arrives.
+            if (!send && policy.inviteCodeRequired) {
+              const held = await holdInviteCode(prisma, {
+                code: ctx.body?.inviteCode,
+                email,
+                ip,
+              });
+              if (held !== "held") {
+                throw new APIError("BAD_REQUEST", {
+                  code: "INVALID_INVITE_CODE",
+                  message: "Invalid invite code",
+                });
+              }
             }
           }
         }
@@ -525,7 +626,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
           ctx.path === "/sign-up/email"
             ? await admission()
             : ctx.path === "/sign-in/email"
-              ? signupPolicyFromEnv(env)
+              ? { ...signupPolicyFromEnv(env), inviteCodeRequired: false }
               : undefined;
         let requireEmailVerification = false;
         if (ctx.path === "/sign-up/email") {
@@ -546,6 +647,32 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
             throw new APIError("BAD_REQUEST", {
               message: "Registration requires email delivery",
             });
+          }
+          const ip = ipFromHeaders(ctx.headers);
+          if (await ipLimitRefused(ip)) {
+            throw new APIError("BAD_REQUEST", {
+              code: "IP_REGISTRATION_LIMIT",
+              message: "Too many registrations from this address",
+            });
+          }
+          if (!(await verifyHuman(ctx.body?.humanVerificationToken, ip))) {
+            throw new APIError("BAD_REQUEST", {
+              code: "HUMAN_VERIFICATION_FAILED",
+              message: "Human verification failed",
+            });
+          }
+          if (policy.inviteCodeRequired) {
+            const held = await holdInviteCode(prisma, {
+              code: ctx.body?.inviteCode,
+              email,
+              ip,
+            });
+            if (held !== "held") {
+              throw new APIError("BAD_REQUEST", {
+                code: "INVALID_INVITE_CODE",
+                message: "Invalid invite code",
+              });
+            }
           }
           requireEmailVerification = policy.allowlist.length > 0;
         } else if (policy) {
@@ -594,7 +721,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
                 findSession: async (token: string) => {
                   const session = await findSession(token);
                   if (!session || isMessagingEmail(session.user.email)) return null;
-                  if (deactivated(session.user)) return null;
+                  if (deactivated(session.user) || accessBlocked(session.user)) return null;
                   if (session.user.emailVerified) return session;
                   if (env.oidc?.allowSignupBypass) {
                     const accounts = await ctx.context.internalAdapter.findAccounts(
@@ -602,7 +729,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
                     );
                     if (accounts.some((account) => account.providerId === "oidc")) return session;
                   }
-                  policy ??= signupPolicyFromEnv(env);
+                  policy ??= await effectiveSignupPolicy();
                   return policy.allowlist.length === 0 ? session : null;
                 },
               },
@@ -659,7 +786,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
           before: async (session, ctx) => {
             // The auth adapter can still be inside the signup transaction.
             const user = await ctx?.context.internalAdapter.findUserById(session.userId);
-            const policy = signupPolicyFromEnv(env);
+            const policy = await admission();
             const oidcSignIn = isOidcCallback(ctx);
             const bypassAllowlist = oidcSignIn && env.oidc?.allowSignupBypass;
             if (!user || isMessagingEmail(user.email)) {
@@ -668,7 +795,7 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
                 message: "Email verification required",
               });
             }
-            if (deactivated(user)) {
+            if (deactivated(user) || accessBlocked(user)) {
               throw new APIError("FORBIDDEN", {
                 code: "ACCOUNT_DEACTIVATED",
                 message: "This account is deactivated",
@@ -769,6 +896,18 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
               userId: user.id,
               metadata: { via: ctx?.path ?? null },
             });
+            // Email signups only: record the registration address and attach the
+            // account to the invite code held for its email. Bookkeeping must never
+            // fail the signup itself, so a failed write is logged and dropped.
+            if (ctx?.path === "/sign-up/email" || ctx?.path === CODE_SIGN_IN_PATH) {
+              try {
+                const ip = ipFromHeaders(ctx?.headers);
+                await recordRegistration(prisma, user.id, ip);
+                await linkInviteCodeRedemption(prisma, user.email, user.id);
+              } catch (error) {
+                env.logger?.log?.("error", "signup bookkeeping failed", error);
+              }
+            }
           },
           before: async (user) => {
             if (isMessagingEmail(user.email)) {
@@ -995,6 +1134,14 @@ export function isBlockedAuthPath(path: string): boolean {
 /** Set while the directory has turned the account off. */
 function deactivated(user: object): boolean {
   return "deactivatedAt" in user && Boolean(user.deactivatedAt);
+}
+
+/** Set while an admin has blacklisted or soft-deleted the account. */
+function accessBlocked(user: object): boolean {
+  return (
+    ("blacklistedAt" in user && Boolean(user.blacklistedAt)) ||
+    ("deletedAt" in user && Boolean(user.deletedAt))
+  );
 }
 
 function isOidcCallback(
