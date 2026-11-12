@@ -51,6 +51,10 @@ model User {
   byokTrialCheckoutExpiresAt      DateTime?
   /// Set while the account may not sign in or run work; its content stays. Cleared to reactivate.
   deactivatedAt               DateTime?
+  /// Set by an admin to block sign-in and re-registration; cleared to unblock.
+  blacklistedAt               DateTime?
+  /// Set by an admin soft-delete; the account stays until a hard delete removes it.
+  deletedAt                   DateTime?
   sessions                    Session[]
   accounts                    Account[]
   scimSubject                 ScimSubject?
@@ -93,6 +97,9 @@ model User {
   signupSurvey                SignupSurvey?
   computerRuns                ComputerRun[]
   devices                     UserDevice[]
+  inviteCodesCreated          InviteCode[]               @relation("InviteCodeCreator")
+  inviteCodeRedemptions       InviteCodeRedemption[]
+  signupRecord                SignupRecord?
 
   @@unique([email])
   @@map("user")
@@ -111,6 +118,55 @@ model SignupSurvey {
   createdAt DateTime @default(now())
 
   @@map("signup_surveys")
+}
+
+/// An admin-issued registration code. A code stays usable until it expires, is revoked, or
+/// reaches its use cap; each use is recorded as a redemption so a reused code can be traced.
+model InviteCode {
+  id          String                 @id @default(cuid())
+  code        String                 @unique
+  createdById String
+  createdBy   User                   @relation("InviteCodeCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime               @default(now())
+  expiresAt   DateTime?
+  maxUses     Int                    @default(1)
+  usedCount   Int                    @default(0)
+  revokedAt   DateTime?
+  redemptions InviteCodeRedemption[]
+
+  @@map("invite_codes")
+}
+
+/// One row per account that redeemed a code, keyed by the email it was held for: a signup
+/// that fails after the code is held (wrong one-time code, weak password) retries with the
+/// same email without burning the code, while another email cannot take the held use.
+model InviteCodeRedemption {
+  id        String     @id @default(cuid())
+  codeId    String
+  code      InviteCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  email     String
+  userId    String?
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip        String?
+  createdAt DateTime   @default(now())
+
+  @@unique([codeId, email])
+  @@index([codeId])
+  @@index([userId])
+  @@map("invite_code_redemptions")
+}
+
+/// One row per account, written at registration: the IP the account registered from, for the
+/// per-IP registration limits and the admin IP stats. Never backfilled for older accounts.
+model SignupRecord {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+  @@map("signup_records")
 }
 
 model Session {
@@ -731,6 +787,16 @@ model DeploymentSettings {
   signupsEnabled                  Boolean  @default(true)
   signupAllowlist                 String   @default("")
   signupPolicyInitialized         Boolean  @default(false)
+  /// Registration requires a valid invite code while true; the master switch still wins.
+  inviteCodeEnabled               Boolean  @default(false)
+  /// Email registration switch; the SIGNUPS_ENABLED master switch still wins when off.
+  emailSignupEnabled              Boolean  @default(true)
+  /// Max accounts ever registered from one IP; 0 means no cap.
+  ipRegistrationLimit             Int      @default(5)
+  /// Max accounts registered from one IP within an hour before the IP is throttled.
+  ipRegistrationHourlyThreshold   Int      @default(10)
+  /// Ban every account from an IP that crosses the hourly threshold while true.
+  ipCollectiveBanEnabled          Boolean  @default(false)
   defaultModelProvider            String?
   defaultModelId                  String?
   deploymentModelCredentialCipher String?
