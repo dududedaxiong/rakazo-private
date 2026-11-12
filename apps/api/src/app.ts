@@ -78,6 +78,7 @@ import {
   CLIENT_IP_HEADER,
   createAuth,
   createDirectory,
+  humanVerificationFromSecret,
   isBlockedAuthPath,
 } from "@rakazo/auth";
 import type { Actor, AuthCapabilities } from "@rakazo/contracts";
@@ -86,7 +87,7 @@ import {
   PLUGIN_SUBMISSIONS_PATH,
   SERVER_BUILD_HEADER,
 } from "@rakazo/contracts";
-import { encryptionKeyWarning, signupPolicyFromEnv } from "@rakazo/core";
+import { encryptionKeyWarning, signupPolicyFromEnv, signupsOpen } from "@rakazo/core";
 import type { Pool, PrismaClient } from "@rakazo/db";
 import {
   configureProviderTransactionPool,
@@ -120,6 +121,7 @@ import { cors } from "hono/cors";
 import { deleteAccountContent, finishStalledOrganizationDeletions } from "./account-deletion.js";
 import { mountAccountExportRoute } from "./account-export.js";
 import { mountAccountImportRoute } from "./account-import.js";
+import type { AccountStatusDeps } from "./account-status.js";
 import { settleDirectoryChange } from "./account-status.js";
 import { mountAppAssociation, nativePasskeys } from "./app-association.js";
 import { storeInboundAttachment } from "./artifacts.js";
@@ -150,6 +152,7 @@ import { startMessagingRuntime } from "./messaging-runtime.js";
 import { monitoringRoutes } from "./monitoring.js";
 import { pluginSubmissionRoutes } from "./plugin-submissions.js";
 import { sendReferralEmails } from "./referral-email.js";
+import { banRegistrationIpAccounts } from "./registration-limits.js";
 import { mountApiRequestBodyLimits, rpcBodyLimit } from "./request-body-limit.js";
 import { createRouter } from "./router.js";
 import { handleRpcError } from "./rpc-errors.js";
@@ -309,7 +312,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const ticketBoardEnabled = env.ticketBoardEnabled;
   const boardEvents = createBoardEvents(realtime);
   const environmentSignupPolicy = signupPolicyFromEnv(env);
-  // Mirror the env policy for the previous release during a rolling deploy.
+  // Seed the admin's settings row from the environment once; after that the admin backend
+  // owns it, so a restart never overwrites an admin's change. The stored switch is the
+  // admin's email-registration switch; the environment master switch still wins when off.
   await prisma.deploymentSettings.upsert({
     where: { id: "default" },
     create: {
@@ -318,11 +323,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       signupAllowlist: environmentSignupPolicy.allowlist.join(","),
       signupPolicyInitialized: true,
     },
-    update: {
-      signupsEnabled: environmentSignupPolicy.enabled,
-      signupAllowlist: environmentSignupPolicy.allowlist.join(","),
-      signupPolicyInitialized: true,
-    },
+    update: { signupPolicyInitialized: true },
   });
 
   const jobKind = env.wakeupDriver;
@@ -472,6 +473,15 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     prisma,
     devices: userDevices ?? new UserDevices({ prisma, forwardSecret: userDeviceSecret }),
   };
+  // Account state changes (admin backend, IP collective ban) share one deps object.
+  const accountStatus: AccountStatusDeps = {
+    prisma,
+    pushTokens,
+    devices: deviceSessions,
+    events,
+    afterDeparture: (actor, departure) =>
+      afterSpaceDeparture({ prisma, sandbox, jobs, events }, actor, departure),
+  };
   // A SCIM request records the accounts it turned off or on; the route settles them after commit.
   const directoryChanges = new AsyncLocalStorage<DirectoryAccountChange[]>();
   const directory = env.scimBearerToken
@@ -496,6 +506,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     analytics,
     passwordAuth: env.passwordAuth,
     breachedPasswordCheck: env.breachedPasswordCheck,
+    humanVerification: humanVerificationFromSecret(env.humanVerificationSecret ?? undefined),
+    banRegistrationIpAccounts: (ip, userIds) =>
+      banRegistrationIpAccounts(accountStatus, ip, userIds, Boolean(directory)),
     oidc: env.oidc,
     secret: env.authSecret,
     baseURL: env.authUrl,
@@ -703,6 +716,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     paymentWallet,
     codexCatalog,
     prisma,
+    accountStatus,
     notifications,
     pushTokens,
     events,
@@ -748,6 +762,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       ticketBoardEnabled,
       navLinks: env.navLinks,
       adminEmails: env.adminEmails,
+      signupsEnabled: env.signupsEnabled,
+      directoryProvisioning: Boolean(directory),
       maxUploadSizeBytes: env.maxUploadSizeBytes,
       maxAttachmentsPerMessage: env.maxAttachmentsPerMessage,
       agentRuntime: env.agentRuntime,
@@ -798,7 +814,10 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       c.header("cache-control", "no-store");
     });
   }
-  app.get("/api/auth/capabilities", (c) => {
+  app.get("/api/auth/capabilities", async (c) => {
+    const settings = await prisma.deploymentSettings
+      .findUnique({ where: { id: "default" } })
+      .catch(() => null);
     return c.json({
       sso: env.oidc
         ? { name: env.oidc.name, availability: auth.ssoAvailability() ?? "checking" }
@@ -812,6 +831,9 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       passkeyRpId: auth.passkeyRpId,
       nativePasskeys: nativePasskeys(env, auth.passkeyRpId),
       crispWebsiteId: billing ? (env.crispWebsiteId ?? null) : null,
+      signupsEnabled: signupsOpen(env.signupsEnabled) && (settings?.signupsEnabled ?? true),
+      inviteCodeRequired: settings?.inviteCodeEnabled ?? false,
+      humanVerificationSiteKey: env.humanVerificationSiteKey ?? null,
     } satisfies AuthCapabilities);
   });
   mountAppAssociation(app, env);

@@ -181,6 +181,9 @@ export interface AppEnv {
     | undefined;
   /** Crisp chat on the paywall, for the hosted service; self-hosted installs leave it unset. */
   crispWebsiteId?: string | null;
+  /** Human verification for registration; unset means registration skips the challenge. */
+  humanVerificationSecret?: string | null;
+  humanVerificationSiteKey?: string | null;
 }
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
@@ -359,6 +362,8 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     minimumClientBuilds: parseMinimumClientBuilds(source.RAKAZO_MIN_CLIENT_BUILD),
     browserMonitoring: browserMonitoringFromEnv(source),
     crispWebsiteId: parseCrispWebsiteId(source.CRISP_WEBSITE_ID),
+    humanVerificationSecret: optional(source.HUMAN_VERIFICATION_SECRET_KEY),
+    humanVerificationSiteKey: optional(source.HUMAN_VERIFICATION_SITE_KEY),
   };
 }
 

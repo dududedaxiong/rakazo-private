@@ -70,6 +70,7 @@ export type { HomeDeletionReason } from "./home-deletion-email.js";
 export { homeDeletionEmail } from "./home-deletion-email.js";
 export type { HumanVerification } from "./human-verification.js";
 export { humanVerificationFromSecret } from "./human-verification.js";
+export { generateInviteCode } from "./invite-codes.js";
 export type { OidcConfig } from "./oidc.js";
 export { passkeyRelyingParty } from "./passkey.js";
 export {
@@ -80,7 +81,11 @@ export {
 } from "./plugin-submission-email.js";
 export { referralEmail } from "./referral-email.js";
 export type { RegistrationSettings } from "./registration-limits.js";
-export { CLIENT_IP_HEADER, RegistrationIpLimitError } from "./registration-limits.js";
+export {
+  CLIENT_IP_HEADER,
+  DEFAULT_REGISTRATION_SETTINGS,
+  RegistrationIpLimitError,
+} from "./registration-limits.js";
 export { welcomeEmail } from "./welcome-email.js";
 
 export interface AuthEnv {
@@ -581,8 +586,9 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
           const email = String(ctx.body?.email ?? "")
             .trim()
             .toLowerCase();
-          if (!(await ctx.context.internalAdapter.findUserByEmail(email))) {
-            const send = ctx.path === SEND_SIGN_IN_CODE_PATH;
+          const send = ctx.path === SEND_SIGN_IN_CODE_PATH;
+          const existing = await ctx.context.internalAdapter.findUserByEmail(email);
+          if (!existing) {
             const policy = await admission();
             const ip = ipFromHeaders(ctx.headers);
             const refuse = (code: string, message: string): never => {
@@ -620,6 +626,11 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
                 });
               }
             }
+          } else if (accessBlocked(existing)) {
+            // A blacklisted or deleted account gets no code; the session hook
+            // would refuse it anyway, and sending the email only leaks the ban.
+            if (send) return ctx.json({ success: true });
+            throw new APIError("BAD_REQUEST", { code: "INVALID_OTP", message: "Invalid OTP" });
           }
         }
         let policy =

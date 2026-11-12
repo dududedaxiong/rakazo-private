@@ -33,8 +33,10 @@ import type {
 import type { Auth } from "@rakazo/auth";
 import type { NavLink } from "@rakazo/contracts";
 import type { BoardEvents, PrismaClient, ThreadEvents } from "@rakazo/db";
+import type { AccountStatusDeps } from "./account-status.js";
 import type { BillingService } from "./billing.js";
 import { accountRoutes } from "./routes/account.js";
+import { adminRoutes } from "./routes/admin.js";
 import { availabilityRoutes } from "./routes/availability.js";
 import { boardsRoutes } from "./routes/boards.js";
 import { botPackagesRoutes } from "./routes/bot-packages.js";
@@ -66,6 +68,8 @@ export { callMarkerClientNonce } from "./routes/threads.js";
 
 export interface RouterDeps {
   pushTokens: PushTokenStore;
+  /** Account state changes (admin backend, IP collective ban); absent disables them. */
+  accountStatus?: AccountStatusDeps;
   /** Stops a call's ring on the owner's other devices once it is settled. */
   notifications?: NotificationProvider;
   analytics?: ProductAnalytics;
@@ -128,6 +132,10 @@ export interface RouterDeps {
     ticketBoardEnabled?: boolean;
     navLinks?: NavLink[];
     adminEmails?: string[];
+    /** Environment master switch for registration; the admin switch lives in settings. */
+    signupsEnabled?: string;
+    /** Whether the directory owns provisioned accounts; the admin cannot change those. */
+    directoryProvisioning?: boolean;
     phoneCallsEnabled?: boolean;
     phoneCallRingSeconds?: number;
     maxUploadSizeBytes?: number;
@@ -159,6 +167,7 @@ export function createRouter(deps: RouterDeps) {
 
   return os.router({
     ...accountRoutes(ctx),
+    ...adminRoutes(ctx),
     ...spacesRoutes(ctx),
     ...organizationsRoutes(ctx),
     ...modelsRoutes(ctx),

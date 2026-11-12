@@ -67,6 +67,21 @@ export const AUDITED_PROCEDURES: Record<string, AuditedProcedure> = {
     type: "deployment.settings.changed",
     fields: ["signupsEnabled", "computerHost"],
   },
+  "admin.registrationSettings.update": {
+    type: "admin.registration_settings.changed",
+    kind: "admin",
+  },
+  "admin.inviteCodes.create": { type: "admin.invite_code.created", kind: "admin" },
+  "admin.inviteCodes.revoke": { type: "admin.invite_code.revoked", kind: "admin", fields: ["id"] },
+  "admin.users.blacklist": { type: "admin.user.blacklisted", kind: "admin", fields: ["id"] },
+  "admin.users.unblacklist": {
+    type: "admin.user.unblacklisted",
+    kind: "admin",
+    fields: ["id"],
+  },
+  "admin.users.softDelete": { type: "admin.user.soft_deleted", kind: "admin", fields: ["id"] },
+  "admin.users.restoreDeleted": { type: "admin.user.restored", kind: "admin", fields: ["id"] },
+  "admin.users.hardDelete": { type: "admin.user.hard_deleted", kind: "admin", fields: ["id"] },
   "computerProvider.update": {
     type: "credential.changed",
     kind: "computer_provider",
@@ -151,7 +166,7 @@ export function procedureSecurityEvent(
     if (typeof value === "string" || typeof value === "boolean" || value === null)
       metadata[field.split(".").at(-1)!] = value;
   }
-  if (procedure === "deployment.update") {
+  if (procedure === "deployment.update" || procedure === "admin.registrationSettings.update") {
     metadata.changed = Object.keys(fields)
       .filter((key) => fields[key] !== undefined)
       .sort()
