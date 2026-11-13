@@ -4387,6 +4387,10 @@ msgstr "Ignore"
 msgid "Image generation model"
 msgstr "Image generation model"
 
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Image generation persona"
+msgstr "Image generation persona"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Image input is not configured for this model."
@@ -4954,6 +4958,10 @@ msgstr "Made by bots"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "Main model"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Main persona"
+msgstr "Main persona"
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -6393,6 +6401,10 @@ msgstr "React"
 msgid "Reactions"
 msgstr "Reactions"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Read conversation"
+msgstr "Read conversation"
+
 #: src/components/AskCard.tsx
 msgid "Read from the page, not checked"
 msgstr "Read from the page, not checked"
@@ -7818,6 +7830,10 @@ msgstr "Stop"
 msgid "Stop computer"
 msgstr "Stop computer"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Stop reading"
+msgstr "Stop reading"
+
 #: src/pages/shell/message-view.tsx
 msgid "Stop speaking"
 msgstr "Stop speaking"
@@ -7924,6 +7940,7 @@ msgstr "Switch to yearly"
 msgid "Switch to yearly?"
 msgstr "Switch to yearly?"
 
+#. placeholder {0}: kind === "image" ? imageLabel : videoLabel
 #. placeholder {0}: saved.name
 #. placeholder {0}: template.name
 #: src/components/prompt-templates/BotPersonaSection.tsx
@@ -7931,6 +7948,10 @@ msgstr "Switch to yearly?"
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switched to {0}"
 msgstr "Switched to {0}"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switched to {mainLabel}"
+msgstr "Switched to {mainLabel}"
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
 msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
@@ -8902,6 +8923,10 @@ msgstr "Version"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"
 msgstr "Video generation model"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Video generation persona"
+msgstr "Video generation persona"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video prompt preset"

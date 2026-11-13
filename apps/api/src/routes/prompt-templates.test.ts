@@ -50,7 +50,7 @@ const bot = (overrides: Record<string, unknown> = {}) => ({
   description: "",
   instructions: "Translate.",
   instructionHistory: [],
-  promptTemplateId: "tpl-1",
+  promptTemplateId: "tpl-1" as string | null,
   color: "blue",
   avatarSet: "organic",
   notifyOnFinish: false,
@@ -65,6 +65,10 @@ const bot = (overrides: Record<string, unknown> = {}) => ({
   status: "idle",
   runErrorId: null,
   computerMode: "team",
+  imagePromptPresets: [] as { name: string; prompt: string }[],
+  videoPromptPresets: [] as { name: string; prompt: string }[],
+  activeImagePromptPreset: null as string | null,
+  activeVideoPromptPreset: null as string | null,
   createdAt: "2026-01-02T03:04:05.000Z",
   updatedAt: "2026-01-02T03:04:05.000Z",
   incomingCall: null,
@@ -82,6 +86,7 @@ function setup() {
         "update",
         "remove",
         "apply",
+        "applyPreset",
         "saveCurrentAsTemplate",
         "restoreDefaults",
         "fetchFromUrl",
@@ -157,6 +162,48 @@ describe("prompt template routes", () => {
         input: { templateId: "tpl-9", botId: "bot-1" },
       }),
     ).rejects.toBeInstanceOf(IsolationError);
+    expect(mockedDb.commitBotUpdate).not.toHaveBeenCalled();
+  });
+
+  it("applying the active image preset writes its prompt and clears the template link", async () => {
+    const { routes, ctx } = setup();
+    ctx.repos.getBot.mockResolvedValueOnce({
+      ...bot(),
+      promptTemplateId: null,
+      imagePromptPresets: [{ name: "Ghibli", prompt: "Ghibli style." }],
+      activeImagePromptPreset: "Ghibli",
+      thread: { id: "thread-1" },
+    });
+    const applied = await (routes.promptTemplates.applyPreset as unknown as Handler)({
+      context: { actor },
+      input: { botId: "bot-1", kind: "image" },
+    });
+    expect(mockedDb.commitBotUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botId: "bot-1",
+        threadId: "thread-1",
+        data: { instructions: "Ghibli style.", promptTemplateId: null },
+        reason: "Apply image preset",
+        promptTemplateId: null,
+      }),
+    );
+    expect(applied).toMatchObject({ id: "bot-1" });
+  });
+
+  it("applying a preset with none active fails without writing", async () => {
+    const { routes, ctx } = setup();
+    ctx.repos.getBot.mockResolvedValueOnce({
+      ...bot(),
+      imagePromptPresets: [],
+      activeImagePromptPreset: null,
+      thread: { id: "thread-1" },
+    });
+    await expect(
+      (routes.promptTemplates.applyPreset as unknown as Handler)({
+        context: { actor },
+        input: { botId: "bot-1", kind: "image" },
+      }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(mockedDb.commitBotUpdate).not.toHaveBeenCalled();
   });
 

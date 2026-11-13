@@ -4387,6 +4387,10 @@ msgstr "忽略"
 msgid "Image generation model"
 msgstr "图片生成模型"
 
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Image generation persona"
+msgstr "图片生成人设"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Image input is not configured for this model."
@@ -4954,6 +4958,10 @@ msgstr "由 Bot 创建"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "主模型"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Main persona"
+msgstr "主人设"
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -6393,6 +6401,10 @@ msgstr "回应"
 msgid "Reactions"
 msgstr "表情回应"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Read conversation"
+msgstr "朗读整个对话"
+
 #: src/components/AskCard.tsx
 msgid "Read from the page, not checked"
 msgstr "读取自页面，未核实"
@@ -7818,6 +7830,10 @@ msgstr "停止"
 msgid "Stop computer"
 msgstr "停止电脑"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Stop reading"
+msgstr "停止朗读"
+
 #: src/pages/shell/message-view.tsx
 msgid "Stop speaking"
 msgstr "停止朗读"
@@ -7924,6 +7940,7 @@ msgstr "切换为按年"
 msgid "Switch to yearly?"
 msgstr "切换为按年付费？"
 
+#. placeholder {0}: kind === "image" ? imageLabel : videoLabel
 #. placeholder {0}: saved.name
 #. placeholder {0}: template.name
 #: src/components/prompt-templates/BotPersonaSection.tsx
@@ -7931,6 +7948,10 @@ msgstr "切换为按年付费？"
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switched to {0}"
 msgstr "已切换到 {0}"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switched to {mainLabel}"
+msgstr "已切换到 {mainLabel}"
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
 msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
@@ -8902,6 +8923,10 @@ msgstr "版本"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"
 msgstr "视频生成模型"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Video generation persona"
+msgstr "视频生成人设"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video prompt preset"

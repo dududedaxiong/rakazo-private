@@ -1,7 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 import type { Bot, Group, ThreadSnapshot } from "@rakazo/contracts";
 import { BotAvatar, Button, GroupAvatar } from "@rakazo/ui-web";
-import { Gift, Menu, Phone } from "lucide-react";
+import { Gift, Menu, Phone, Square, Volume2 } from "lucide-react";
 import { useState } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
@@ -17,6 +17,9 @@ export function ChatHeader({
   phoneCallsEnabled,
   voiceReady,
   inCall,
+  readingConversation,
+  canReadConversation,
+  onReadConversation,
   panelOpen,
   onOpenNavigation,
   onTogglePanel,
@@ -31,6 +34,11 @@ export function ChatHeader({
   /** False while the voice status loads or no voice is connected; the button then opens voice settings. */
   voiceReady: boolean;
   inCall: boolean;
+  /** A conversation read is playing; the entry then stops it. */
+  readingConversation: boolean;
+  /** False when the chat has nothing speakable to read. */
+  canReadConversation: boolean;
+  onReadConversation: () => void;
   panelOpen: boolean;
   onOpenNavigation: () => void;
   onTogglePanel: () => void;
@@ -83,6 +91,26 @@ export function ChatHeader({
       <div className="flex items-center justify-self-end gap-2">
         {!inGroup && active ? (
           <ChatPersonaSwitcher bot={active} onBotUpdated={(bot) => onBotUpdated?.(bot)} />
+        ) : null}
+        {!inGroup && active && voiceReady && canReadConversation ? (
+          <IconTooltip label={readingConversation ? t`Stop reading` : t`Read conversation`}>
+            <Button
+              variant="floating"
+              size="icon-lg"
+              data-testid="read-conversation-button"
+              aria-label={readingConversation ? t`Stop reading` : t`Read conversation`}
+              onClick={onReadConversation}
+              disabled={inCall}
+              data-active={readingConversation ? "" : undefined}
+              className="app-no-drag"
+            >
+              {readingConversation ? (
+                <Square strokeWidth={1.6} className="size-[17px]" />
+              ) : (
+                <Volume2 strokeWidth={1.6} className="size-[17px]" />
+              )}
+            </Button>
+          </IconTooltip>
         ) : null}
         {phoneCallsEnabled && !inGroup && active ? (
           <IconTooltip label={inCall ? t`Open call` : t`Call`}>

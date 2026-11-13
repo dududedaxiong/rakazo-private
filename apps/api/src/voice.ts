@@ -488,6 +488,8 @@ export async function prepareVoice(
     botId?: string;
     scope?: SettingsScope;
     provider?: string;
+    /** Read the whole text instead of a spoken summary. */
+    full?: boolean;
     signal?: AbortSignal;
   },
 ) {
@@ -505,11 +507,11 @@ export async function prepareVoice(
 async function spokenUtterances(
   deps: VoiceDeps,
   actor: Actor,
-  input: { text: string; botId?: string; signal?: AbortSignal },
+  input: { text: string; botId?: string; full?: boolean; signal?: AbortSignal },
 ): Promise<string[]> {
   const full = toUtterances(input.text);
   const summary = deps.speechSummary;
-  if (!input.botId || !summary) return full;
+  if (!input.botId || !summary || input.full) return full;
   if (speakable(input.text).length <= summary.minChars) return full;
   const spoken = await summary.summarize(actor, input.botId, input.text, input.signal);
   const utterances = spoken ? toUtterances(spoken) : [];

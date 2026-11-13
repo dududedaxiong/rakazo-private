@@ -4388,6 +4388,10 @@ msgstr "忽略"
 msgid "Image generation model"
 msgstr "圖片生成模型"
 
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Image generation persona"
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Image input is not configured for this model."
@@ -4955,6 +4959,10 @@ msgstr "由機器人建立"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "主模型"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Main persona"
+msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -6394,6 +6402,10 @@ msgstr "回應"
 msgid "Reactions"
 msgstr "表情回應"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Read conversation"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Read from the page, not checked"
 msgstr "讀取自頁面，未核實"
@@ -7819,6 +7831,10 @@ msgstr "停止"
 msgid "Stop computer"
 msgstr "停止電腦"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Stop reading"
+msgstr ""
+
 #: src/pages/shell/message-view.tsx
 msgid "Stop speaking"
 msgstr "停止朗讀"
@@ -7925,6 +7941,7 @@ msgstr "切換為按年"
 msgid "Switch to yearly?"
 msgstr "切換為按年付費？"
 
+#. placeholder {0}: kind === "image" ? imageLabel : videoLabel
 #. placeholder {0}: saved.name
 #. placeholder {0}: template.name
 #: src/components/prompt-templates/BotPersonaSection.tsx
@@ -7932,6 +7949,10 @@ msgstr "切換為按年付費？"
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switched to {0}"
 msgstr "已切換到 {0}"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switched to {mainLabel}"
+msgstr ""
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
 msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
@@ -8903,6 +8924,10 @@ msgstr "版本"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"
 msgstr "影片生成模型"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Video generation persona"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video prompt preset"

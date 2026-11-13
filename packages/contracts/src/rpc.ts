@@ -231,6 +231,7 @@ import {
   SpendingStatusSchema,
 } from "./payments.js";
 import {
+  ApplyPromptPresetInput,
   ApplyPromptTemplateInput,
   ConfirmPromptTemplateImportInput,
   CreatePromptTemplateInput,
@@ -742,6 +743,7 @@ export const appContract = {
     update: oc.input(UpdatePromptTemplateInput).output(PromptTemplateSchema),
     remove: oc.input(PromptTemplateIdInput).output(z.object({ ok: z.literal(true) })),
     apply: oc.input(ApplyPromptTemplateInput).output(BotSchema),
+    applyPreset: oc.input(ApplyPromptPresetInput).output(BotSchema),
     saveCurrentAsTemplate: oc.input(SaveCurrentAsTemplateInput).output(PromptTemplateSchema),
     restoreDefaults: oc.output(z.array(PromptTemplateSchema)),
     fetchFromUrl: oc.input(FetchPromptTemplatesInput).output(FetchedPromptTemplatesSchema),
@@ -1740,6 +1742,8 @@ export const appContract = {
           scope: SettingsScopeSchema.optional(),
           /** The connection to speak with; omitted uses the default voice. */
           provider: z.string().optional(),
+          /** Read the whole text instead of a spoken summary. */
+          full: z.boolean().optional(),
         }),
       )
       .output(z.object({ ready: z.boolean(), utterances: z.array(z.string()) })),

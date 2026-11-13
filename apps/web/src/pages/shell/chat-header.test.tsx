@@ -41,8 +41,10 @@ vi.mock("@rakazo/ui-web", async (importOriginal) => {
     DialogTitle: Plain,
     DropdownMenu: ({ children }: { children?: ReactNode }) => <>{children}</>,
     DropdownMenuContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    DropdownMenuGroup: Plain,
     DropdownMenuItem: Plain,
     DropdownMenuLabel: Plain,
+    DropdownMenuSeparator: () => <hr />,
     DropdownMenuTrigger: ({ render, children }: { render?: ReactNode; children?: ReactNode }) => (
       <>
         {render}
@@ -79,7 +81,13 @@ afterEach(() => {
   writeText.mockClear();
 });
 
-function renderHeader({ inGroup = false } = {}) {
+function renderHeader({
+  inGroup = false,
+  voiceReady = false,
+  readingConversation = false,
+  canReadConversation = false,
+  onReadConversation = () => undefined,
+} = {}) {
   act(() =>
     root.render(
       <ChatHeader
@@ -90,8 +98,11 @@ function renderHeader({ inGroup = false } = {}) {
         activeGroup={undefined}
         activeSnapshot={null}
         phoneCallsEnabled={false}
-        voiceReady={false}
+        voiceReady={voiceReady}
         inCall={false}
+        readingConversation={readingConversation}
+        canReadConversation={canReadConversation}
+        onReadConversation={onReadConversation}
         panelOpen={false}
         onOpenNavigation={() => undefined}
         onTogglePanel={() => undefined}
@@ -101,6 +112,9 @@ function renderHeader({ inGroup = false } = {}) {
   );
 }
 
+const readConversationButton = () =>
+  container.querySelector<HTMLButtonElement>('[data-testid="read-conversation-button"]');
+
 const gift = () => container.querySelector<HTMLButtonElement>('[aria-label="Invite a friend"]');
 
 it("shows the persona switcher in a bot chat and not in a group", () => {
@@ -109,6 +123,39 @@ it("shows the persona switcher in a bot chat and not in a group", () => {
   expect(container.querySelector('[data-testid="persona-switcher"]')).not.toBeNull();
   renderHeader({ inGroup: true });
   expect(container.querySelector('[data-testid="persona-switcher"]')).toBeNull();
+});
+
+it("shows the read-conversation entry when voice is ready and the chat has something to read", () => {
+  renderHeader({ voiceReady: true, canReadConversation: true });
+  const button = readConversationButton();
+  expect(button).not.toBeNull();
+  expect(button?.getAttribute("aria-label")).toBe("Read conversation");
+});
+
+it("hides the read-conversation entry when voice is not ready or nothing is speakable", () => {
+  renderHeader({ voiceReady: false, canReadConversation: true });
+  expect(readConversationButton()).toBeNull();
+  renderHeader({ voiceReady: true, canReadConversation: false });
+  expect(readConversationButton()).toBeNull();
+});
+
+it("hides the read-conversation entry in a group", () => {
+  renderHeader({ inGroup: true, voiceReady: true, canReadConversation: true });
+  expect(readConversationButton()).toBeNull();
+});
+
+it("toggles the read-conversation entry while reading", () => {
+  const onReadConversation = vi.fn();
+  renderHeader({
+    voiceReady: true,
+    canReadConversation: true,
+    readingConversation: true,
+    onReadConversation,
+  });
+  const button = readConversationButton()!;
+  expect(button.getAttribute("aria-label")).toBe("Stop reading");
+  act(() => button.click());
+  expect(onReadConversation).toHaveBeenCalledTimes(1);
 });
 
 it("shows no gift when the account cannot invite", () => {

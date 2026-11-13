@@ -1,7 +1,15 @@
 import { ORPCError } from "@orpc/server";
 import { createSafeRemoteFetch } from "@rakazo/adapters";
 import type { PromptTemplate } from "@rakazo/contracts";
-import { PromptTemplateImportError, parsePromptTemplateImport } from "@rakazo/contracts";
+import {
+  APPLY_IMAGE_PRESET_REASON,
+  APPLY_TEMPLATE_REASON,
+  APPLY_VIDEO_PRESET_REASON,
+  activeBotPromptPreset,
+  PromptTemplateImportError,
+  parseBotPromptPresets,
+  parsePromptTemplateImport,
+} from "@rakazo/contracts";
 import { cancelResponseBody } from "@rakazo/core";
 import {
   commitBotUpdate,
@@ -113,8 +121,45 @@ export function promptTemplatesRoutes(ctx: RouterContext) {
           threadId: bot.thread.id,
           botId: input.botId,
           data: { instructions: template.content, promptTemplateId: template.id },
-          reason: "Apply template",
+          reason: APPLY_TEMPLATE_REASON,
           promptTemplateId: template.id,
+          emitBotUpdated: false,
+        });
+        if (!committed) {
+          throw new ORPCError("CONFLICT", { message: "机器人的人设刚被改过，请再试一次" });
+        }
+        const updated = (await repos.listBots(context.actor)).find((bot) => bot.id === input.botId);
+        if (!updated) throw new IsolationError();
+        return updated;
+      }),
+      applyPreset: authed.promptTemplates.applyPreset.handler(async ({ context, input }) => {
+        const bot = await repos.getBot(context.actor, input.botId);
+        if (!bot.thread) throw new IsolationError();
+        const preset = activeBotPromptPreset(
+          parseBotPromptPresets(
+            input.kind === "image" ? bot.imagePromptPresets : bot.videoPromptPresets,
+          ),
+          input.kind === "image" ? bot.activeImagePromptPreset : bot.activeVideoPromptPreset,
+        );
+        if (!preset) {
+          throw new ORPCError("BAD_REQUEST", {
+            message:
+              input.kind === "image"
+                ? "这个机器人没有图片提示词预设，先在机器人设置里添加一个"
+                : "这个机器人没有视频提示词预设，先在机器人设置里添加一个",
+          });
+        }
+        const committed = await commitBotUpdate({
+          prisma: deps.prisma,
+          notify: (threadId, seq) => deps.events.notify(threadId, seq),
+          spaceId: context.actor.spaceId,
+          threadId: bot.thread.id,
+          botId: input.botId,
+          // A preset persona is not a template: the write clears the template
+          // link, and the previous instructions stay in history to undo it.
+          data: { instructions: preset.prompt, promptTemplateId: null },
+          reason: input.kind === "image" ? APPLY_IMAGE_PRESET_REASON : APPLY_VIDEO_PRESET_REASON,
+          promptTemplateId: null,
           emitBotUpdated: false,
         });
         if (!committed) {
@@ -204,7 +249,7 @@ export function promptTemplatesRoutes(ctx: RouterContext) {
               threadId: bot.thread.id,
               botId: input.botId,
               data: { instructions: linked.content, promptTemplateId: linked.id },
-              reason: "Apply template",
+              reason: APPLY_TEMPLATE_REASON,
               promptTemplateId: linked.id,
               emitBotUpdated: false,
             });

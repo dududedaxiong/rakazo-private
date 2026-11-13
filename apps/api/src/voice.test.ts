@@ -515,6 +515,19 @@ describe("prepareVoice", () => {
     });
   });
 
+  it("reads a long reply in full when asked, instead of a summary", async () => {
+    const summarize = vi.fn().mockResolvedValue("Deploy done.");
+    const result = await prepareVoice(depsWith(summarize), actor, {
+      text: long,
+      botId: "bot-1",
+      full: true,
+    });
+    expect(summarize).not.toHaveBeenCalled();
+    expect(result.ready).toBe(true);
+    expect(result.utterances.length).toBeGreaterThan(1);
+    expect(result.utterances.join(" ")).toContain("every check passed");
+  });
+
   it.each([
     ["Chinese", "中".repeat(2400)],
     ["Japanese", "あ".repeat(2400)],

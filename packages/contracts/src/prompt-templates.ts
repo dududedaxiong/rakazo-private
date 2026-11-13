@@ -1,6 +1,47 @@
 import * as z from "zod";
-import { BOT_INSTRUCTIONS_MAX_LENGTH } from "./domain.js";
+import { BOT_INSTRUCTIONS_MAX_LENGTH, InstructionVersionSchema } from "./domain.js";
 import { Id, IsoDate } from "./ids.js";
+
+type InstructionVersion = z.infer<typeof InstructionVersionSchema>;
+
+export const ApplyPromptPresetInput = z.object({
+  botId: Id,
+  kind: z.enum(["image", "video"]),
+});
+export type ApplyPromptPresetInput = z.infer<typeof ApplyPromptPresetInput>;
+
+/**
+ * History reasons for writes that replace the bot's own persona with a
+ * template or a media preset. The persona switcher matches on these to find
+ * the persona to restore; keep them in sync with the API routes that write
+ * them.
+ */
+export const APPLY_TEMPLATE_REASON = "Apply template";
+export const APPLY_IMAGE_PRESET_REASON = "Apply image preset";
+export const APPLY_VIDEO_PRESET_REASON = "Apply video preset";
+export const PERSONA_OVERRIDE_REASONS = [
+  APPLY_TEMPLATE_REASON,
+  APPLY_IMAGE_PRESET_REASON,
+  APPLY_VIDEO_PRESET_REASON,
+] as const;
+
+/**
+ * The bot's own persona before the current run of template/preset overrides:
+ * walk the newest-first history while each write replaced the persona, and
+ * take the last such version. Null when the newest write did not replace the
+ * persona, so the current instructions already are its own.
+ */
+export function mainPersonaVersion(
+  history: readonly InstructionVersion[] | null | undefined,
+): InstructionVersion | null {
+  if (!history) return null;
+  let found: InstructionVersion | null = null;
+  for (const version of history) {
+    if (!(PERSONA_OVERRIDE_REASONS as readonly string[]).includes(version.reason)) break;
+    found = version;
+  }
+  return found;
+}
 
 /** Template names stay short enough to read in a list row. */
 export const PROMPT_TEMPLATE_NAME_MAX_LENGTH = 80;

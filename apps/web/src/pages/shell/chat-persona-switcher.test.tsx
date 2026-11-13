@@ -8,9 +8,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const api = vi.hoisted(() => ({
   list: vi.fn(),
   apply: vi.fn(),
+  applyPreset: vi.fn(),
+}));
+const botsApi = vi.hoisted(() => ({
+  restoreInstructions: vi.fn(),
 }));
 const toast = vi.hoisted(() => vi.fn());
-vi.mock("../../lib/rpc", () => ({ rpc: { promptTemplates: api } }));
+vi.mock("../../lib/rpc", () => ({ rpc: { promptTemplates: api, bots: botsApi } }));
 vi.mock("../../lib/user-error", () => ({
   errorText: (err: unknown) => (err instanceof Error ? err.message : String(err)),
 }));
@@ -51,6 +55,7 @@ vi.mock("@rakazo/ui-web", async () => {
     }) => <MenuContext.Provider value={{ open, onOpenChange }}>{children}</MenuContext.Provider>,
     DropdownMenuContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
     DropdownMenuGroup: Plain,
+    DropdownMenuSeparator: () => null,
     DropdownMenuItem: (props: ComponentProps<"button">) => <button type="button" {...props} />,
     DropdownMenuLabel: Plain,
     DropdownMenuTrigger: ({ render, children }: { render?: ReactNode; children?: ReactNode }) => {
@@ -89,6 +94,11 @@ const bot = (overrides: Partial<Bot> = {}): Bot =>
     name: "New Bot",
     instructions: "You are a helpful assistant.",
     promptTemplateId: "tpl-1",
+    instructionHistory: [],
+    imagePromptPresets: null,
+    activeImagePromptPreset: null,
+    videoPromptPresets: null,
+    activeVideoPromptPreset: null,
     ...overrides,
   }) as Bot;
 
@@ -109,10 +119,15 @@ afterEach(async () => {
   vi.clearAllMocks();
 });
 
-async function renderSwitcher(props: { onBotUpdated?: (bot: Bot) => void } = {}) {
+async function renderSwitcher(
+  props: { onBotUpdated?: (bot: Bot) => void; bot?: Bot } = {},
+) {
   await act(async () =>
     root.render(
-      <ChatPersonaSwitcher bot={bot()} onBotUpdated={props.onBotUpdated ?? (() => undefined)} />,
+      <ChatPersonaSwitcher
+        bot={props.bot ?? bot()}
+        onBotUpdated={props.onBotUpdated ?? (() => undefined)}
+      />,
     ),
   );
 }
@@ -228,5 +243,138 @@ describe("ChatPersonaSwitcher", () => {
     expect(onBotUpdated).not.toHaveBeenCalled();
     expect(toast).not.toHaveBeenCalled();
     expect(container.querySelector('[data-testid="persona-switcher"]')).not.toBeNull();
+  });
+
+  it("restores the main persona from before the template was applied", async () => {
+    const onBotUpdated = vi.fn();
+    const current = bot({
+      promptTemplateId: "tpl-1",
+      instructions: "Translate.",
+      instructionHistory: [
+        {
+          id: "v-2",
+          instructions: "Translate.",
+          reason: "Apply template",
+          createdAt: "2026-11-13T00:00:00Z",
+        },
+        {
+          id: "v-1",
+          instructions: "You are a helpful assistant.",
+          reason: "Apply template",
+          createdAt: "2026-11-12T00:00:00Z",
+        },
+      ],
+    });
+    const updated = bot({ promptTemplateId: null, instructions: "You are a helpful assistant." });
+    api.list.mockResolvedValue([template()]);
+    botsApi.restoreInstructions.mockResolvedValue(updated);
+    await renderSwitcher({ onBotUpdated, bot: current });
+    await openMenu();
+    expect(container.textContent).toContain("Main persona");
+    await act(async () => menuItem("Main persona").click());
+    await act(async () => {});
+    // The oldest template apply pushed the bot's own persona, so restoring it
+    // undoes both applies at once.
+    expect(botsApi.restoreInstructions).toHaveBeenCalledWith({
+      botId: "bot-1",
+      versionId: "v-1",
+      expectedInstructions: "Translate.",
+    });
+    expect(onBotUpdated).toHaveBeenCalledWith(updated);
+    expect(toast).toHaveBeenCalledWith("Switched to Main persona");
+  });
+
+  it("applies the active image preset and checks it while its prompt is the persona", async () => {
+    const onBotUpdated = vi.fn();
+    const current = bot({
+      promptTemplateId: null,
+      instructions: "Ghibli style.",
+      imagePromptPresets: [{ name: "Ghibli", prompt: "Ghibli style." }],
+      activeImagePromptPreset: "Ghibli",
+    });
+    const updated = bot({
+      promptTemplateId: null,
+      instructions: "Ghibli style.",
+      imagePromptPresets: [{ name: "Ghibli", prompt: "Ghibli style." }],
+      activeImagePromptPreset: "Ghibli",
+    });
+    api.list.mockResolvedValue([template()]);
+    api.applyPreset.mockResolvedValue(updated);
+    await renderSwitcher({ onBotUpdated, bot: current });
+    await openMenu();
+    expect(container.textContent).toContain("Image generation persona");
+    // The preset's prompt is the current persona, so it carries the check mark.
+    expect(menuItem("Image generation persona").querySelector("svg")).not.toBeNull();
+    // Clicking the current persona is a no-op.
+    await act(async () => menuItem("Image generation persona").click());
+    await act(async () => {});
+    expect(api.applyPreset).not.toHaveBeenCalled();
+    expect(onBotUpdated).not.toHaveBeenCalled();
+  });
+
+  it("applies the active video preset when it is not the current persona", async () => {
+    const onBotUpdated = vi.fn();
+    const current = bot({
+      promptTemplateId: null,
+      instructions: "You are a helpful assistant.",
+      videoPromptPresets: [{ name: "Cinematic", prompt: "Cinematic look." }],
+      activeVideoPromptPreset: "Cinematic",
+    });
+    const updated = bot({
+      promptTemplateId: null,
+      instructions: "Cinematic look.",
+      videoPromptPresets: [{ name: "Cinematic", prompt: "Cinematic look." }],
+      activeVideoPromptPreset: "Cinematic",
+    });
+    api.list.mockResolvedValue([template()]);
+    api.applyPreset.mockResolvedValue(updated);
+    await renderSwitcher({ onBotUpdated, bot: current });
+    await openMenu();
+    expect(menuItem("Video generation persona").querySelector("svg")).toBeNull();
+    await act(async () => menuItem("Video generation persona").click());
+    await act(async () => {});
+    expect(api.applyPreset).toHaveBeenCalledWith({ botId: "bot-1", kind: "video" });
+    expect(onBotUpdated).toHaveBeenCalledWith(updated);
+    expect(toast).toHaveBeenCalledWith("Switched to Video generation persona");
+  });
+
+  it("hides the media personas when the bot has no presets, and keeps the main one", async () => {
+    api.list.mockResolvedValue([template()]);
+    await renderSwitcher();
+    await openMenu();
+    expect(container.textContent).toContain("Main persona");
+    expect(container.textContent).not.toContain("Image generation persona");
+    expect(container.textContent).not.toContain("Video generation persona");
+  });
+
+  it("marks the main persona when no template or preset override is active", async () => {
+    api.list.mockResolvedValue([template()]);
+    await renderSwitcher({
+      bot: bot({ promptTemplateId: null, instructions: "Custom persona." }),
+    });
+    await openMenu();
+    expect(menuItem("Main persona").querySelector("svg")).not.toBeNull();
+    expect(menuItem("Main persona").hasAttribute("disabled")).toBe(true);
+  });
+
+  it("shows a failed preset apply inside the menu and keeps the switcher usable", async () => {
+    const onBotUpdated = vi.fn();
+    api.list.mockResolvedValue([template()]);
+    api.applyPreset.mockRejectedValue(new Error("preset boom"));
+    await renderSwitcher({
+      onBotUpdated,
+      bot: bot({
+        promptTemplateId: null,
+        instructions: "You are a helpful assistant.",
+        imagePromptPresets: [{ name: "Ghibli", prompt: "Ghibli style." }],
+        activeImagePromptPreset: "Ghibli",
+      }),
+    });
+    await openMenu();
+    await act(async () => menuItem("Image generation persona").click());
+    await act(async () => {});
+    expect(container.textContent).toContain("preset boom");
+    expect(onBotUpdated).not.toHaveBeenCalled();
+    expect(toast).not.toHaveBeenCalled();
   });
 });

@@ -20,6 +20,7 @@ import {
   memberName,
   newClientId,
   otherAuthor,
+  speechFromBlocks,
   workingRoutineName,
 } from "@rakazo/core";
 import { writeSaved } from "@rakazo/core/query";
@@ -438,7 +439,14 @@ function SpaceShell() {
       },
     },
   );
-  const { speakingMessageId, speakMessage, speakText, callHoldsSpeaker } = useReadAloud({
+  const {
+    speakingMessageId,
+    speakMessage,
+    speakText,
+    callHoldsSpeaker,
+    readingConversation,
+    readConversation,
+  } = useReadAloud({
     active,
     snapshot,
     callBotId: call?.botId,
@@ -567,6 +575,9 @@ function SpaceShell() {
       ? snapshot
       : null;
   const currentRuns = activeThreadRuns(activeSnapshot);
+  const canReadConversation = Boolean(
+    activeSnapshot?.messages.some((message) => speechFromBlocks(message.blocks)),
+  );
   const answerableAskIds = useMemo(() => answerableAskMessageIds(activeSnapshot), [activeSnapshot]);
   const dismissableAskIds = useMemo(
     () => dismissableAskMessageIds(activeSnapshot, userId),
@@ -1011,6 +1022,9 @@ function SpaceShell() {
             phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
             voiceReady={Boolean(voiceStatus?.ready)}
             inCall={Boolean(active) && call?.botId === active?.id}
+            readingConversation={readingConversation}
+            canReadConversation={canReadConversation}
+            onReadConversation={readConversation}
             panelOpen={chatPanelOpen}
             onOpenNavigation={() => setMobileSidebarOpen(true)}
             onTogglePanel={toggleChatPanel}

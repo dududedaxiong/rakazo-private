@@ -4387,6 +4387,10 @@ msgstr "игнорировать"
 msgid "Image generation model"
 msgstr ""
 
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Image generation persona"
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Image input is not configured for this model."
@@ -4954,6 +4958,10 @@ msgstr "Созданные ботами"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Main model"
 msgstr "Основная модель"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Main persona"
+msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/SettingsOverlay.tsx
@@ -6393,6 +6401,10 @@ msgstr "Отреагировать"
 msgid "Reactions"
 msgstr "Реакции"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Read conversation"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Read from the page, not checked"
 msgstr "Прочитано со страницы, не проверено"
@@ -7818,6 +7830,10 @@ msgstr "Остановить"
 msgid "Stop computer"
 msgstr "Остановить компьютер"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Stop reading"
+msgstr ""
+
 #: src/pages/shell/message-view.tsx
 msgid "Stop speaking"
 msgstr "Остановить озвучивание"
@@ -7924,6 +7940,7 @@ msgstr "Перейти на годовой план"
 msgid "Switch to yearly?"
 msgstr "Перейти на годовой план?"
 
+#. placeholder {0}: kind === "image" ? imageLabel : videoLabel
 #. placeholder {0}: saved.name
 #. placeholder {0}: template.name
 #: src/components/prompt-templates/BotPersonaSection.tsx
@@ -7931,6 +7948,10 @@ msgstr "Перейти на годовой план?"
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switched to {0}"
 msgstr "Переключено на {0}"
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switched to {mainLabel}"
+msgstr ""
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
 msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
@@ -8901,6 +8922,10 @@ msgstr "Версия"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"
+msgstr ""
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Video generation persona"
 msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx

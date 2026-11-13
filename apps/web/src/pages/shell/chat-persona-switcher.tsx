@@ -1,5 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
 import type { Bot, PromptTemplate } from "@rakazo/contracts";
+import { activeBotPromptPreset, mainPersonaVersion } from "@rakazo/contracts";
 import {
   Button,
   DropdownMenu,
@@ -7,6 +8,7 @@ import {
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
   toast,
 } from "@rakazo/ui-web";
@@ -85,6 +87,61 @@ function PersonaSwitchList({ bot, onBotUpdated }: { bot: Bot; onBotUpdated: (bot
     };
   }, []);
 
+  const mainLabel = t`Main persona`;
+  const imageLabel = t`Image generation persona`;
+  const videoLabel = t`Video generation persona`;
+  // The bot's own persona is current unless a template or a media preset
+  // override sits on top of it; the override's pre-state is in history.
+  const mainVersion = mainPersonaVersion(bot.instructionHistory);
+  const imagePreset = activeBotPromptPreset(bot.imagePromptPresets, bot.activeImagePromptPreset);
+  const videoPreset = activeBotPromptPreset(bot.videoPromptPresets, bot.activeVideoPromptPreset);
+  const isImagePersona =
+    bot.promptTemplateId === null &&
+    imagePreset !== null &&
+    bot.instructions === imagePreset.prompt;
+  const isVideoPersona =
+    bot.promptTemplateId === null &&
+    videoPreset !== null &&
+    bot.instructions === videoPreset.prompt;
+  // The bot's own persona is current when no template and no media preset
+  // persona sits on top of it; whether it can be restored is mainVersion.
+  const isMainPersona =
+    bot.promptTemplateId === null && !isImagePersona && !isVideoPersona;
+
+  async function applyMain() {
+    if (applyingId || isMainPersona || !mainVersion) return;
+    setApplyingId("main");
+    try {
+      const updated = await rpc.bots.restoreInstructions({
+        botId: bot.id,
+        versionId: mainVersion.id,
+        expectedInstructions: bot.instructions,
+      });
+      toast(t`Switched to ${mainLabel}`);
+      onBotUpdated(updated);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setApplyingId(null);
+    }
+  }
+
+  async function applyPreset(kind: "image" | "video") {
+    if (applyingId) return;
+    if (kind === "image" && isImagePersona) return;
+    if (kind === "video" && isVideoPersona) return;
+    setApplyingId(kind);
+    try {
+      const updated = await rpc.promptTemplates.applyPreset({ botId: bot.id, kind });
+      toast(t`Switched to ${kind === "image" ? imageLabel : videoLabel}`);
+      onBotUpdated(updated);
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setApplyingId(null);
+    }
+  }
+
   async function apply(template: PromptTemplate) {
     if (applyingId || bot.promptTemplateId === template.id) return;
     setApplyingId(template.id);
@@ -99,21 +156,86 @@ function PersonaSwitchList({ bot, onBotUpdated }: { bot: Bot; onBotUpdated: (bot
     }
   }
 
-  if (error) return <DropdownMenuItem disabled>{error}</DropdownMenuItem>;
-  if (templates === null) return <DropdownMenuItem disabled>{t`Loading…`}</DropdownMenuItem>;
-  if (templates.length === 0)
-    return <DropdownMenuItem disabled>{t`No templates yet`}</DropdownMenuItem>;
-  return templates.map((template) => {
-    const isCurrent = bot.promptTemplateId === template.id;
-    return (
+  const personaEntries = (
+    <>
       <DropdownMenuItem
-        key={template.id}
-        disabled={applyingId !== null}
-        onClick={() => void apply(template)}
+        disabled={applyingId !== null || isMainPersona || !mainVersion}
+        onClick={() => void applyMain()}
       >
-        {isCurrent ? <Check className="size-4" /> : <span className="size-4" aria-hidden="true" />}
-        <span className="truncate">{template.name}</span>
+        {isMainPersona ? <Check className="size-4" /> : <span className="size-4" aria-hidden="true" />}
+        <span className="truncate">{mainLabel}</span>
       </DropdownMenuItem>
+      {imagePreset ? (
+        <DropdownMenuItem
+          disabled={applyingId !== null || isImagePersona}
+          onClick={() => void applyPreset("image")}
+        >
+          {isImagePersona ? (
+            <Check className="size-4" />
+          ) : (
+            <span className="size-4" aria-hidden="true" />
+          )}
+          <span className="truncate">{imageLabel}</span>
+        </DropdownMenuItem>
+      ) : null}
+      {videoPreset ? (
+        <DropdownMenuItem
+          disabled={applyingId !== null || isVideoPersona}
+          onClick={() => void applyPreset("video")}
+        >
+          {isVideoPersona ? (
+            <Check className="size-4" />
+          ) : (
+            <span className="size-4" aria-hidden="true" />
+          )}
+          <span className="truncate">{videoLabel}</span>
+        </DropdownMenuItem>
+      ) : null}
+      <DropdownMenuSeparator />
+    </>
+  );
+
+  if (error)
+    return (
+      <>
+        {personaEntries}
+        <DropdownMenuItem disabled>{error}</DropdownMenuItem>
+      </>
     );
-  });
+  if (templates === null)
+    return (
+      <>
+        {personaEntries}
+        <DropdownMenuItem disabled>{t`Loading…`}</DropdownMenuItem>
+      </>
+    );
+  if (templates.length === 0)
+    return (
+      <>
+        {personaEntries}
+        <DropdownMenuItem disabled>{t`No templates yet`}</DropdownMenuItem>
+      </>
+    );
+  return (
+    <>
+      {personaEntries}
+      {templates.map((template) => {
+        const isCurrent = bot.promptTemplateId === template.id;
+        return (
+          <DropdownMenuItem
+            key={template.id}
+            disabled={applyingId !== null}
+            onClick={() => void apply(template)}
+          >
+            {isCurrent ? (
+              <Check className="size-4" />
+            ) : (
+              <span className="size-4" aria-hidden="true" />
+            )}
+            <span className="truncate">{template.name}</span>
+          </DropdownMenuItem>
+        );
+      })}
+    </>
+  );
 }

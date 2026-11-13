@@ -27,6 +27,8 @@ interface SpeakOptions {
   voiceId?: string;
   botId?: string;
   messageId?: string;
+  /** Read the whole text instead of a spoken summary. */
+  full?: boolean;
 }
 
 const IDLE: SpeechSnapshot = { status: "idle" };
@@ -164,7 +166,7 @@ export class Speaker {
     spaceId: string | null,
   ): Promise<string[]> {
     const body = await rpc.voice.prepare(
-      { text, voiceId: opts.voiceId, botId: opts.botId, scope: opts.scope },
+      { text, voiceId: opts.voiceId, botId: opts.botId, scope: opts.scope, full: opts.full },
       { signal, context: { spaceId } },
     );
     if (!body.ready) {
