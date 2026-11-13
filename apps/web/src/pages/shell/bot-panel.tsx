@@ -4,12 +4,15 @@ import type {
   Bot,
   BotAvatarSet,
   BotModelEntry,
+  BotPromptPreset,
   ComputerMode,
   ModelCatalogEntry,
   ReplyMode,
   ThinkingLevel,
 } from "@rakazo/contracts";
 import {
+  activeBotPromptPreset,
+  BOT_MODEL_LIST_MAX,
   BOT_NAME_MAX_LENGTH,
   isBuiltinToolName,
   moveBotModelToFront,
@@ -37,6 +40,7 @@ import { BotPersonaSection } from "../../components/prompt-templates/BotPersonaS
 import { botProfilePatch } from "../../lib/bot-profile-patch";
 import { lazyComponent } from "../../lib/preload-recovery";
 import { useSpaceQueries } from "../../lib/query";
+import { rpc } from "../../lib/rpc";
 import type { TranslationSourceLanguage, TranslationTargetLanguage } from "../../lib/translation";
 import {
   botTranslationSettings,
@@ -45,7 +49,7 @@ import {
 } from "../../lib/translation";
 import { errorText } from "../../lib/user-error";
 import { AvatarStudioPopover } from "./avatar-studio-popover";
-import type { MediaModelFallback } from "./bot-settings-sections";
+import type { MediaModelFallback, MediaModelTestState } from "./bot-settings-sections";
 import {
   ComputerGroup,
   DescriptionGroup,
@@ -87,6 +91,8 @@ function advancedValues(bot: Bot) {
     JSON.stringify(bot.imageModels ?? []),
     bot.activeVideoPromptPreset ?? "",
     bot.activeImagePromptPreset ?? "",
+    JSON.stringify(bot.videoPromptPresets ?? []),
+    JSON.stringify(bot.imagePromptPresets ?? []),
   ] as const;
 }
 
@@ -149,6 +155,8 @@ export function BotSettings({
     autoTranslate?: boolean;
     videoModels?: BotModelEntry[] | null;
     imageModels?: BotModelEntry[] | null;
+    videoPromptPresets?: BotPromptPreset[] | null;
+    imagePromptPresets?: BotPromptPreset[] | null;
     activeVideoPromptPreset?: string | null;
     activeImagePromptPreset?: string | null;
     disabledBuiltinTools?: string[];
@@ -230,6 +238,14 @@ export function BotSettings({
   const [activeImagePreset, setActiveImagePreset] = useState<string | null>(
     () => bot.activeImagePromptPreset ?? null,
   );
+  const [videoPresets, setVideoPresets] = useState<BotPromptPreset[]>(
+    () => bot.videoPromptPresets ?? [],
+  );
+  const [imagePresets, setImagePresets] = useState<BotPromptPreset[]>(
+    () => bot.imagePromptPresets ?? [],
+  );
+  const [videoTest, setVideoTest] = useState<MediaModelTestState>({ status: "idle" });
+  const [imageTest, setImageTest] = useState<MediaModelTestState>({ status: "idle" });
   const [disabledBuiltinTools, setDisabledBuiltinTools] = useState<string[]>(
     bot.disabledBuiltinTools ?? [],
   );
@@ -278,6 +294,8 @@ export function BotSettings({
     JSON.stringify(imageModels),
     activeVideoPreset ?? "",
     activeImagePreset ?? "",
+    JSON.stringify(videoPresets),
+    JSON.stringify(imagePresets),
   ]);
   const dirty =
     name.trim() !== savedNameRef.current.trim() ||
@@ -346,6 +364,10 @@ export function BotSettings({
       setImageModels(JSON.parse(next[12] as string) as BotModelEntry[]);
     if ((activeVideoPreset ?? "") === saved[13]) setActiveVideoPreset((next[13] as string) || null);
     if ((activeImagePreset ?? "") === saved[14]) setActiveImagePreset((next[14] as string) || null);
+    if (JSON.stringify(videoPresets) === saved[15])
+      setVideoPresets(JSON.parse(next[15] as string) as BotPromptPreset[]);
+    if (JSON.stringify(imagePresets) === saved[16])
+      setImagePresets(JSON.parse(next[16] as string) as BotPromptPreset[]);
     setSavedAdvanced(JSON.stringify(next));
   }, [bot]);
 
@@ -442,6 +464,92 @@ export function BotSettings({
           ) !== key,
       ),
     );
+  }
+
+  function addMediaFallback(role: "video" | "image", key: string) {
+    const setList = role === "video" ? setVideoModels : setImageModels;
+    const parsed = parseModelOptionKey(key);
+    if (!parsed) return;
+    const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
+    setList((current) => {
+      if (
+        current.length >= BOT_MODEL_LIST_MAX ||
+        current.some((item) => item.provider === entry.provider && item.model === entry.model)
+      )
+        return current;
+      return [...current, entry];
+    });
+  }
+
+  function moveMediaFallback(role: "video" | "image", key: string, delta: -1 | 1) {
+    const setList = role === "video" ? setVideoModels : setImageModels;
+    setList((current) => {
+      const index = current.findIndex(
+        (entry) =>
+          modelOptionKey(
+            entry.provider,
+            resolveSelectableModelId(catalog, entry.provider, entry.model),
+          ) === key,
+      );
+      const target = index + delta;
+      if (index < 0 || target < 0 || target >= current.length) return current;
+      const next = [...current];
+      const item = next[index]!;
+      next[index] = next[target]!;
+      next[target] = item;
+      return next;
+    });
+  }
+
+  /** Probes one media model with the role's active preset, so the test reflects real usage. */
+  async function testMediaModel(role: "video" | "image", key: string) {
+    const parsed = parseModelOptionKey(key);
+    if (!parsed) return;
+    const setTest = role === "video" ? setVideoTest : setImageTest;
+    const started = Date.now();
+    const seconds = () => Math.round(((Date.now() - started) / 1000) * 10) / 10;
+    setTest({ status: "testing", modelKey: key });
+    try {
+      const preset =
+        role === "video"
+          ? activeBotPromptPreset(videoPresets, activeVideoPreset)
+          : activeBotPromptPreset(imagePresets, activeImagePreset);
+      const result = await rpc.bots.testMediaModel({
+        botId: bot.id,
+        kind: role,
+        provider: parsed.provider,
+        modelId: resolveSelectableModelId(catalog, parsed.provider, parsed.modelId),
+        ...(preset?.prompt.trim() ? { presetPrompt: preset.prompt } : {}),
+      });
+      setTest({
+        status: "done",
+        supported: result.supported,
+        seconds: result.seconds,
+        detail: result.detail,
+        modelKey: key,
+        modelId: parsed.modelId,
+      });
+    } catch (err) {
+      setTest({
+        status: "done",
+        supported: false,
+        seconds: seconds(),
+        detail: errorText(err, t`Could not test this model`),
+        modelKey: key,
+        modelId: parsed.modelId,
+      });
+    }
+  }
+
+  /** Applies a tested model in one tap: it moves to primary, the rest stay as fallbacks. */
+  function applyTestedMediaModel(role: "video" | "image") {
+    const test = role === "video" ? videoTest : imageTest;
+    if (test.status !== "done" || !test.supported) return;
+    const parsed = parseModelOptionKey(test.modelKey);
+    if (!parsed) return;
+    const setList = role === "video" ? setVideoModels : setImageModels;
+    const list = role === "video" ? videoModels : imageModels;
+    setList(moveBotModelToFront(list, { provider: parsed.provider, model: parsed.modelId }));
   }
 
   const defaultEntry = me?.defaultModel
@@ -547,6 +655,8 @@ export function BotSettings({
         showTranslationActions,
         videoModels,
         imageModels,
+        videoPromptPresets: videoPresets,
+        imagePromptPresets: imagePresets,
         activeVideoPromptPreset: activeVideoPreset,
         activeImagePromptPreset: activeImagePreset,
         ...(modelMetaReady &&
@@ -616,6 +726,8 @@ export function BotSettings({
           JSON.stringify(imageModels),
           activeVideoPreset ?? "",
           activeImagePreset ?? "",
+          JSON.stringify(videoPresets),
+          JSON.stringify(imagePresets),
         ]),
       );
     } catch (err) {
@@ -823,16 +935,28 @@ export function BotSettings({
               videoValue={videoValue}
               onVideoModelChange={(key) => changeMediaModel("video", key)}
               videoFallbacks={videoFallbacks}
+              onAddVideoFallback={(key) => addMediaFallback("video", key)}
+              onMoveVideoFallback={(key, delta) => moveMediaFallback("video", key, delta)}
               onRemoveVideoFallback={(key) => removeMediaFallback("video", key)}
+              videoTest={videoTest}
+              onTestVideoModel={(key) => void testMediaModel("video", key)}
+              onApplyVideoTestedModel={() => applyTestedMediaModel("video")}
               imageChoices={imageChoices}
               imageValue={imageValue}
               onImageModelChange={(key) => changeMediaModel("image", key)}
               imageFallbacks={imageFallbacks}
+              onAddImageFallback={(key) => addMediaFallback("image", key)}
+              onMoveImageFallback={(key, delta) => moveMediaFallback("image", key, delta)}
               onRemoveImageFallback={(key) => removeMediaFallback("image", key)}
-              videoPresets={bot.videoPromptPresets ?? []}
+              imageTest={imageTest}
+              onTestImageModel={(key) => void testMediaModel("image", key)}
+              onApplyImageTestedModel={() => applyTestedMediaModel("image")}
+              videoPresets={videoPresets}
+              onVideoPresetsChange={setVideoPresets}
               activeVideoPreset={activeVideoPreset}
               onVideoPresetChange={setActiveVideoPreset}
-              imagePresets={bot.imagePromptPresets ?? []}
+              imagePresets={imagePresets}
+              onImagePresetsChange={setImagePresets}
               activeImagePreset={activeImagePreset}
               onImagePresetChange={setActiveImagePreset}
             />

@@ -293,6 +293,93 @@ describe("BotMediaGenerationProvider", () => {
     expect(fallbackCall).toHaveBeenCalledTimes(1);
   });
 
+  it("notifies each failed model and keeps trying until one succeeds", async () => {
+    const primary = vi.fn(async () => {
+      throw new MediaGenerationError("authentication");
+    });
+    const fallbackCall = vi.fn(async () => ({ bytes: tinyPng, mimeType: "image/png" as const }));
+    const provider = new BotMediaGenerationProvider(
+      {
+        calls: [
+          { modelId: "primary-model", call: primary },
+          { modelId: "fallback-model", call: fallbackCall },
+        ],
+        failures: [],
+      },
+      noCalls,
+      undefined,
+    );
+    const onModelFailed = vi.fn();
+    provider.onModelFailed = onModelFailed;
+    const media = await provider.generateImage({ prompt: "x" }, context);
+    expect(media.modelId).toBe("fallback-model");
+    expect(fallbackCall).toHaveBeenCalledTimes(1);
+    expect(onModelFailed).toHaveBeenCalledTimes(1);
+    expect(onModelFailed).toHaveBeenCalledWith({
+      modelId: "primary-model",
+      reason: "authentication failed",
+      nextModelId: "fallback-model",
+    });
+  });
+
+  it("notifies every failure when all models fail", async () => {
+    const fail = (code: "authentication" | "timeout") =>
+      vi.fn(async () => {
+        throw new MediaGenerationError(code);
+      });
+    const provider = new BotMediaGenerationProvider(
+      {
+        calls: [
+          { modelId: "primary-model", call: fail("authentication") },
+          { modelId: "fallback-model", call: fail("timeout") },
+        ],
+        failures: [],
+      },
+      noCalls,
+      undefined,
+    );
+    const onModelFailed = vi.fn();
+    provider.onModelFailed = onModelFailed;
+    await expect(provider.generateImage({ prompt: "x" }, context)).rejects.toThrow(
+      "primary-model (authentication failed), fallback-model (timed out)",
+    );
+    expect(onModelFailed).toHaveBeenCalledTimes(2);
+    expect(onModelFailed).toHaveBeenNthCalledWith(1, {
+      modelId: "primary-model",
+      reason: "authentication failed",
+      nextModelId: "fallback-model",
+    });
+    expect(onModelFailed).toHaveBeenNthCalledWith(2, {
+      modelId: "fallback-model",
+      reason: "timed out",
+      nextModelId: undefined,
+    });
+  });
+
+  it("keeps trying when the failure callback itself throws", async () => {
+    const primary = vi.fn(async () => {
+      throw new MediaGenerationError("provider_failure");
+    });
+    const fallbackCall = vi.fn(async () => ({ bytes: tinyPng, mimeType: "image/png" as const }));
+    const provider = new BotMediaGenerationProvider(
+      {
+        calls: [
+          { modelId: "primary-model", call: primary },
+          { modelId: "fallback-model", call: fallbackCall },
+        ],
+        failures: [],
+      },
+      noCalls,
+      undefined,
+    );
+    provider.onModelFailed = () => {
+      throw new Error("notifier broke");
+    };
+    const media = await provider.generateImage({ prompt: "x" }, context);
+    expect(media.modelId).toBe("fallback-model");
+    expect(fallbackCall).toHaveBeenCalledTimes(1);
+  });
+
   it("lists every model's failure reason when all fail", async () => {
     const fail = (code: "authentication" | "timeout") =>
       vi.fn(async () => {

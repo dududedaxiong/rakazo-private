@@ -296,6 +296,9 @@ export type BotMediaCallEntry = {
 /** One bot-configured model that could not even be reached, with why. */
 export type BotMediaFailure = { modelId: string; reason: string };
 
+/** One tried model that failed, and the next model the chain will try, if any. */
+export type BotMediaModelFailure = BotMediaFailure & { nextModelId?: string };
+
 /** One kind's ordered tries: the calls that resolved, plus the entries that did not. */
 export type BotMediaKindCalls = {
   calls: BotMediaCallEntry[];
@@ -312,6 +315,8 @@ export type BotMediaKindCalls = {
 export class BotMediaGenerationProvider implements MediaGenerationProvider {
   readonly id: string;
   readonly capabilities: { images: boolean; video: boolean; offline: boolean };
+  /** Called for each tried model that fails; never breaks the fallback chain. */
+  onModelFailed?: (failure: BotMediaModelFailure) => void;
   constructor(
     private readonly image: BotMediaKindCalls,
     private readonly video: BotMediaKindCalls,
@@ -330,16 +335,23 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
     signal: AbortSignal,
   ): Promise<GeneratedMedia> {
     const failures: BotMediaFailure[] = [...kind.failures];
-    for (const entry of kind.calls) {
+    for (let index = 0; index < kind.calls.length; index++) {
+      const entry = kind.calls[index]!;
       try {
         const output = await entry.call(input.prompt, signal);
         return { ...output, modelId: entry.modelId };
       } catch (error) {
         signal.throwIfAborted();
-        failures.push({
+        const failure: BotMediaFailure = {
           modelId: entry.modelId,
           reason: mediaGenerationFailureReason(error),
-        });
+        };
+        failures.push(failure);
+        try {
+          this.onModelFailed?.({ ...failure, nextModelId: kind.calls[index + 1]?.modelId });
+        } catch {
+          // A failing notifier must never break the fallback chain.
+        }
       }
     }
     throw allMediaModelsFailedError(failures);

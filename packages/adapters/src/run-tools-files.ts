@@ -10,6 +10,7 @@ import { getLogger } from "@rakazo/logging";
 import { resolveBotWorkspacePath } from "./computer-support.js";
 import { desktopGuardApplies, desktopProtectionGuardMessage } from "./desktop-command-guard.js";
 import { protectedActivateScriptWriteRefusal } from "./desktop-guard-words.js";
+import { BotMediaGenerationProvider } from "./media-generation-provider.js";
 import { generateMediaFromTool } from "./media-generation-tools.js";
 import { mediaDelivery, scheduleMediaPoll } from "./media-video-poll.js";
 import type { RunContext } from "./run-context.js";
@@ -62,6 +63,28 @@ export async function callMediaTool(ctx: RunContext, call: ToolCall, recoverOnly
         },
       })
       .catch(() => undefined);
+  }
+  // A model that fails mid-chain says so and names the backup it falls back
+  // to; the notice is fire-and-forget, so it can never stall the switch.
+  // The provider is built fresh for this run, so hanging the callback on the
+  // instance stays inside it.
+  if (run.trigger !== "routine" && mediaGeneration instanceof BotMediaGenerationProvider) {
+    mediaGeneration.onModelFailed = (failure) => {
+      if (!failure.nextModelId) return;
+      void deps.events
+        .append({
+          spaceId: run.spaceId,
+          threadId: thread.id,
+          botId: ctx.bot.id,
+          type: "thread.progress",
+          runId: ctx.runId,
+          payload: {
+            text: `${failure.modelId} 失败，正在尝试备用模型 ${failure.nextModelId}`,
+            activity: true,
+          },
+        })
+        .catch(() => undefined);
+    };
   }
   const result = await generateMediaFromTool({
     name,

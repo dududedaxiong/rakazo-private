@@ -4,6 +4,7 @@ import { BOT_PACKAGE_MAX_SKILLS } from "@rakazo/contracts";
 import {
   createBotPackageExport,
   createBotPackageSkills,
+  displayName,
   initialBotPackageExport,
   initialBotPackageSkills,
 } from "@rakazo/core";
@@ -198,7 +199,7 @@ function PackageExport({ botId, spaceId, isCurrent }: Props) {
           key={skill.id}
           className="flex items-center justify-between gap-3 text-body"
         >
-          <span dir="auto">{skill.name}</span>
+          <span dir="auto">{displayName(skill.name, t`Skill`)}</span>
           <Switch
             id={`${ids}-${skill.id}`}
             checked={selection.has(skill.id)}

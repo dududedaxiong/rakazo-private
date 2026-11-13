@@ -442,6 +442,36 @@ describe("message translation", () => {
     );
   });
 
+  it("shows a generic label when the translation model id is an opaque code", async () => {
+    renderTranslated({}, { ...translated, modelId: "Ff1dE9" });
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const panel = translationPanel();
+    expect(panel?.textContent).toContain("Translated with Model · English to 中文");
+    expect(panel?.textContent).not.toContain("Ff1dE9");
+  });
+
+  it("drops a lone opaque code the model echoed as the translation's first line", async () => {
+    renderTranslated(
+      {},
+      {
+        ...translated,
+        translatedText: "Ff1dE9\n검색했어요. 이제 세부 사항(가격과 평판) 두 편을 더 볼게요.",
+      },
+    );
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const panel = translationPanel();
+    expect(panel?.textContent).toContain(
+      "검색했어요. 이제 세부 사항(가격과 평판) 두 편을 더 볼게요.",
+    );
+    expect(panel?.textContent).not.toContain("Ff1dE9");
+  });
+
   it("translates a reply with other blocks through the same panel", async () => {
     const mixed: ThreadMessage["blocks"] = [
       { kind: "text", text: "Hark AI is a new AI search product." },

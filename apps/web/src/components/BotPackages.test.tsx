@@ -431,3 +431,57 @@ it("reviews the export and omissions before delivery and invalidates the review 
   expect(api.request.mock.calls.filter(([method]) => method === "export")).toHaveLength(2);
   expect(button("Download package")).toBeUndefined();
 });
+
+it("never shows a code-like package document name bare in the export preview", async () => {
+  const opaqueDocument: BotPackageDocument = {
+    ...documentFixture,
+    profile: { ...documentFixture.profile, name: "7C3irl" },
+    skills: [{ ...documentFixture.skills[0]!, name: "Ff1dE9" }],
+    routines: [
+      { name: "7C3irl", prompt: "Review sources", crons: ["0 9 * * 1-5"], timezone: "UTC" },
+    ],
+    connections: [{ name: "Ff1dE9", note: "Connect your own account" }],
+  };
+  const normal = api.request.getMockImplementation()!;
+  api.request.mockImplementation((method, input) =>
+    method === "export"
+      ? Promise.resolve({
+          json: "{}",
+          filename: "bot.json",
+          document: opaqueDocument,
+          leftOut: [],
+        })
+      : normal(method, input),
+  );
+  await act(async () =>
+    root.render(<BotPackageTools botId="bot-old" spaceId="space-a" isCurrent={current} />),
+  );
+  await click("Export package");
+  await click("Preview package");
+  const document = node.querySelector('[data-testid="bot-package-document"]');
+  expect(document).not.toBeNull();
+  expect(document?.textContent).not.toContain("7C3irl");
+  expect(document?.textContent).not.toContain("Ff1dE9");
+  expect(document?.querySelector("h2")?.textContent).toBe("Bot");
+  const summaries = [...document!.querySelectorAll("summary")].map((entry) => entry.textContent);
+  expect(summaries).toContain("Skill");
+  expect(summaries).toContain("Routine");
+  expect(summaries).not.toContain("7C3irl");
+  expect(summaries).not.toContain("Ff1dE9");
+  expect(document?.textContent).toContain("Connection");
+});
+
+it("never shows a code-like shared skill name bare in the export list", async () => {
+  const normal = api.request.getMockImplementation()!;
+  api.request.mockImplementation((method, input) =>
+    method === "skills"
+      ? Promise.resolve([{ id: "owned-skill", name: "7C3irl", source: "user" }])
+      : normal(method, input),
+  );
+  await act(async () =>
+    root.render(<BotPackageTools botId="bot-old" spaceId="space-a" isCurrent={current} />),
+  );
+  await click("Export package");
+  expect(node.textContent).not.toContain("7C3irl");
+  expect(node.textContent).toContain("Skill");
+});

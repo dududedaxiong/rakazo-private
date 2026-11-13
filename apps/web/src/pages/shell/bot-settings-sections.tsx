@@ -3,12 +3,15 @@ import type { BotPromptPreset, ComputerMode, ReplyMode, ThinkingLevel } from "@r
 import {
   BOT_COMPUTER_MODES,
   BOT_DESCRIPTION_MAX_LENGTH,
+  BOT_MODEL_LIST_MAX,
+  BOT_PROMPT_PRESET_MAX,
   BUILTIN_TOOL_NAMES,
 } from "@rakazo/contracts";
 import type { ChatModelChoice } from "@rakazo/core";
 import { displayName } from "@rakazo/core";
 import {
   Button,
+  Input,
   NativeSelect,
   NativeSelectOption,
   SectionHeading,
@@ -16,8 +19,9 @@ import {
   Textarea,
   Toggle,
 } from "@rakazo/ui-web";
-import { Download, Settings, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Download, Pencil, Settings, X } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
+import { useState } from "react";
 import { thinkingLevelLabel } from "../../lib/model-catalog";
 import type { TranslationSourceLanguage, TranslationTargetLanguage } from "../../lib/translation";
 import {
@@ -427,12 +431,25 @@ export type MediaModelFallback = {
   label: string;
 };
 
+/** One media-capability probe: idle until tested, then the inline result. */
+export type MediaModelTestState =
+  | { status: "idle" }
+  | { status: "testing"; modelKey: string }
+  | {
+      status: "done";
+      supported: boolean;
+      seconds: number;
+      detail: string;
+      modelKey: string;
+      modelId: string;
+    };
+
 /**
- * A bot's image and video generation models: one picker per role, the
- * ordered fallbacks under it, and the active prompt preset for each role.
+ * A bot's image and video generation models, one block per role: the primary
+ * picker with a test button, the ordered fallbacks with add, reorder and
+ * remove, and the prompt presets with create, edit, delete and activate.
  * Picking a model moves it to the front of that role's list; the rest stay
- * as fallbacks, tried in order. A preset row only shows when the bot has
- * presets for that role.
+ * as fallbacks, tried in order.
  */
 export function MediaModelGroup({
   ids,
@@ -440,16 +457,28 @@ export function MediaModelGroup({
   videoValue,
   onVideoModelChange,
   videoFallbacks,
+  onAddVideoFallback,
+  onMoveVideoFallback,
   onRemoveVideoFallback,
+  videoTest,
+  onTestVideoModel,
+  onApplyVideoTestedModel,
   imageChoices,
   imageValue,
   onImageModelChange,
   imageFallbacks,
+  onAddImageFallback,
+  onMoveImageFallback,
   onRemoveImageFallback,
+  imageTest,
+  onTestImageModel,
+  onApplyImageTestedModel,
   videoPresets,
+  onVideoPresetsChange,
   activeVideoPreset,
   onVideoPresetChange,
   imagePresets,
+  onImagePresetsChange,
   activeImagePreset,
   onImagePresetChange,
 }: {
@@ -458,138 +487,459 @@ export function MediaModelGroup({
   videoValue: string;
   onVideoModelChange: (key: string) => void;
   videoFallbacks: readonly MediaModelFallback[];
+  onAddVideoFallback: (key: string) => void;
+  onMoveVideoFallback: (key: string, delta: -1 | 1) => void;
   onRemoveVideoFallback: (key: string) => void;
+  videoTest: MediaModelTestState;
+  onTestVideoModel: (key: string) => void;
+  onApplyVideoTestedModel: () => void;
   imageChoices: readonly ChatModelChoice[];
   imageValue: string;
   onImageModelChange: (key: string) => void;
   imageFallbacks: readonly MediaModelFallback[];
+  onAddImageFallback: (key: string) => void;
+  onMoveImageFallback: (key: string, delta: -1 | 1) => void;
   onRemoveImageFallback: (key: string) => void;
+  imageTest: MediaModelTestState;
+  onTestImageModel: (key: string) => void;
+  onApplyImageTestedModel: () => void;
   videoPresets: readonly BotPromptPreset[];
+  onVideoPresetsChange: (presets: BotPromptPreset[]) => void;
   activeVideoPreset: string | null;
   onVideoPresetChange: (name: string | null) => void;
   imagePresets: readonly BotPromptPreset[];
+  onImagePresetsChange: (presets: BotPromptPreset[]) => void;
   activeImagePreset: string | null;
   onImagePresetChange: (name: string | null) => void;
 }) {
   const { t } = useLingui();
   return (
     <BotPanelGroup label={t`Media model`}>
-      <div className="flex min-h-11 items-center justify-between gap-3">
-        <label htmlFor={`${ids}-video-model`} className={rowLabelClass}>
-          <Trans>Video generation model</Trans>
-        </label>
-        <div className="min-w-0 w-full max-w-2/3 [&>div]:mt-0 [&>button]:mt-0">
-          <ChatModelPicker
-            id={`${ids}-video-model`}
-            choices={videoChoices}
-            value={videoValue}
-            onChange={onVideoModelChange}
-          />
-        </div>
-      </div>
-      {videoFallbacks.length > 0 ? (
-        <MediaModelFallbackList
-          label={t`Fallback models`}
-          fallbacks={videoFallbacks}
-          onRemove={onRemoveVideoFallback}
-        />
-      ) : null}
-      <div className="flex min-h-11 items-center justify-between gap-3">
-        <label htmlFor={`${ids}-image-model`} className={rowLabelClass}>
-          <Trans>Image generation model</Trans>
-        </label>
-        <div className="min-w-0 w-full max-w-2/3 [&>div]:mt-0 [&>button]:mt-0">
-          <ChatModelPicker
-            id={`${ids}-image-model`}
-            choices={imageChoices}
-            value={imageValue}
-            onChange={onImageModelChange}
-          />
-        </div>
-      </div>
-      {imageFallbacks.length > 0 ? (
-        <MediaModelFallbackList
-          label={t`Fallback models`}
-          fallbacks={imageFallbacks}
-          onRemove={onRemoveImageFallback}
-        />
-      ) : null}
-      {videoPresets.length > 0 ? (
-        <label
-          htmlFor={`${ids}-video-preset`}
-          className="flex min-h-11 items-center justify-between gap-3 text-body text-foreground"
-        >
-          <Trans>Video prompt preset</Trans>
-          <NativeSelect
-            id={`${ids}-video-preset`}
-            className="max-w-2/3"
-            value={activeVideoPreset ?? ""}
-            onChange={(event) => onVideoPresetChange(event.target.value || null)}
-          >
-            <NativeSelectOption value="">{t`No preset`}</NativeSelectOption>
-            {videoPresets.map((preset) => (
-              <NativeSelectOption key={preset.name} value={preset.name}>
-                {preset.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </label>
-      ) : null}
-      {imagePresets.length > 0 ? (
-        <label
-          htmlFor={`${ids}-image-preset`}
-          className="flex min-h-11 items-center justify-between gap-3 text-body text-foreground"
-        >
-          <Trans>Image prompt preset</Trans>
-          <NativeSelect
-            id={`${ids}-image-preset`}
-            className="max-w-2/3"
-            value={activeImagePreset ?? ""}
-            onChange={(event) => onImagePresetChange(event.target.value || null)}
-          >
-            <NativeSelectOption value="">{t`No preset`}</NativeSelectOption>
-            {imagePresets.map((preset) => (
-              <NativeSelectOption key={preset.name} value={preset.name}>
-                {preset.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        </label>
-      ) : null}
+      <MediaRoleSection
+        ids={ids}
+        kind="video"
+        modelLabel={t`Video generation model`}
+        choices={videoChoices}
+        value={videoValue}
+        onModelChange={onVideoModelChange}
+        fallbacks={videoFallbacks}
+        onAddFallback={onAddVideoFallback}
+        onMoveFallback={onMoveVideoFallback}
+        onRemoveFallback={onRemoveVideoFallback}
+        test={videoTest}
+        onTestModel={onTestVideoModel}
+        onApplyTestedModel={onApplyVideoTestedModel}
+        presetsLabel={t`Video prompt preset`}
+        presets={videoPresets}
+        onPresetsChange={onVideoPresetsChange}
+        activePreset={activeVideoPreset}
+        onPresetChange={onVideoPresetChange}
+      />
+      <MediaRoleSection
+        ids={ids}
+        kind="image"
+        modelLabel={t`Image generation model`}
+        choices={imageChoices}
+        value={imageValue}
+        onModelChange={onImageModelChange}
+        fallbacks={imageFallbacks}
+        onAddFallback={onAddImageFallback}
+        onMoveFallback={onMoveImageFallback}
+        onRemoveFallback={onRemoveImageFallback}
+        test={imageTest}
+        onTestModel={onTestImageModel}
+        onApplyTestedModel={onApplyImageTestedModel}
+        presetsLabel={t`Image prompt preset`}
+        presets={imagePresets}
+        onPresetsChange={onImagePresetsChange}
+        activePreset={activeImagePreset}
+        onPresetChange={onImagePresetChange}
+      />
     </BotPanelGroup>
+  );
+}
+
+function MediaRoleSection({
+  ids,
+  kind,
+  modelLabel,
+  choices,
+  value,
+  onModelChange,
+  fallbacks,
+  onAddFallback,
+  onMoveFallback,
+  onRemoveFallback,
+  test,
+  onTestModel,
+  onApplyTestedModel,
+  presetsLabel,
+  presets,
+  onPresetsChange,
+  activePreset,
+  onPresetChange,
+}: {
+  ids: string;
+  kind: "video" | "image";
+  modelLabel: string;
+  choices: readonly ChatModelChoice[];
+  value: string;
+  onModelChange: (key: string) => void;
+  fallbacks: readonly MediaModelFallback[];
+  onAddFallback: (key: string) => void;
+  onMoveFallback: (key: string, delta: -1 | 1) => void;
+  onRemoveFallback: (key: string) => void;
+  test: MediaModelTestState;
+  onTestModel: (key: string) => void;
+  onApplyTestedModel: () => void;
+  presetsLabel: string;
+  presets: readonly BotPromptPreset[];
+  onPresetsChange: (presets: BotPromptPreset[]) => void;
+  activePreset: string | null;
+  onPresetChange: (name: string | null) => void;
+}) {
+  const { t } = useLingui();
+  const usedKeys = new Set([value, ...fallbacks.map((fallback) => fallback.key)]);
+  const addChoices = choices.filter((choice) => choice.key !== "" && !usedKeys.has(choice.key));
+  const canAdd = value !== "" && fallbacks.length + 1 < BOT_MODEL_LIST_MAX && addChoices.length > 0;
+  const primaryTest = test.status === "done" && test.modelKey === value ? test : null;
+  const testingPrimary = test.status === "testing" && test.modelKey === value;
+  return (
+    <>
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <label htmlFor={`${ids}-${kind}-model`} className={rowLabelClass}>
+          {modelLabel}
+        </label>
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <div className="min-w-0 flex-1 [&>div]:mt-0 [&>button]:mt-0">
+            <ChatModelPicker
+              id={`${ids}-${kind}-model`}
+              choices={choices}
+              value={value}
+              onChange={onModelChange}
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!value || testingPrimary}
+            onClick={() => onTestModel(value)}
+          >
+            {testingPrimary ? t`Testing…` : t`Test`}
+          </Button>
+        </div>
+      </div>
+      {primaryTest ? <MediaModelTestResult test={primaryTest} kind={kind} /> : null}
+      {value && (fallbacks.length > 0 || canAdd) ? (
+        <MediaModelFallbackList
+          label={t`Fallback models`}
+          fallbacks={fallbacks}
+          addChoices={addChoices}
+          canAdd={canAdd}
+          onAdd={onAddFallback}
+          onMove={onMoveFallback}
+          onRemove={onRemoveFallback}
+          kind={kind}
+          test={test}
+          onTest={onTestModel}
+          onApplyTestedModel={onApplyTestedModel}
+        />
+      ) : null}
+      <PromptPresetSection
+        label={presetsLabel}
+        presets={presets}
+        active={activePreset}
+        onPresetsChange={onPresetsChange}
+        onActiveChange={onPresetChange}
+      />
+    </>
+  );
+}
+
+function MediaModelTestResult({
+  test,
+  kind,
+  onApplyPrimary,
+}: {
+  test: Extract<MediaModelTestState, { status: "done" }>;
+  kind: "video" | "image";
+  /** Shown when the tested model supports the kind and is not already primary. */
+  onApplyPrimary?: () => void;
+}) {
+  const { t } = useLingui();
+  return (
+    <div>
+      <p className={test.supported ? "text-body-sm text-success" : "text-body-sm text-destructive"}>
+        {test.supported
+          ? kind === "video"
+            ? t`✓ ${test.modelId} supports video generation · ${test.seconds}s`
+            : t`✓ ${test.modelId} supports image generation · ${test.seconds}s`
+          : kind === "video"
+            ? t`✗ Does not support video generation · ${test.detail}`
+            : t`✗ Does not support image generation · ${test.detail}`}
+      </p>
+      {test.supported && onApplyPrimary ? (
+        <Button variant="link" size="sm" className="px-0" onClick={onApplyPrimary}>
+          <Trans>Set as primary</Trans>
+        </Button>
+      ) : null}
+    </div>
   );
 }
 
 function MediaModelFallbackList({
   label,
   fallbacks,
+  addChoices,
+  canAdd,
+  onAdd,
+  onMove,
   onRemove,
+  kind,
+  test,
+  onTest,
+  onApplyTestedModel,
 }: {
   label: string;
   fallbacks: readonly MediaModelFallback[];
+  addChoices: readonly ChatModelChoice[];
+  canAdd: boolean;
+  onAdd: (key: string) => void;
+  onMove: (key: string, delta: -1 | 1) => void;
   onRemove: (key: string) => void;
+  kind: "video" | "image";
+  test: MediaModelTestState;
+  onTest: (key: string) => void;
+  onApplyTestedModel: () => void;
 }) {
   const { t } = useLingui();
   return (
     <div>
       <span className={rowLabelClass}>{label}</span>
       <ul className="mt-1 space-y-1">
-        {fallbacks.map((fallback) => (
-          <li key={fallback.key} className="flex min-h-9 items-center justify-between gap-3">
-            <span className="min-w-0 truncate text-body text-muted-foreground" dir="auto">
-              {displayName(fallback.label, t`Model`)}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t`Remove fallback model`}
-              onClick={() => onRemove(fallback.key)}
-            >
-              <X className="size-4" />
-            </Button>
-          </li>
-        ))}
+        {fallbacks.map((fallback, index) => {
+          const testing = test.status === "testing" && test.modelKey === fallback.key;
+          const tested = test.status === "done" && test.modelKey === fallback.key ? test : null;
+          return (
+            <li key={fallback.key}>
+              <div className="flex min-h-9 items-center gap-2">
+                <span
+                  className="min-w-0 flex-1 truncate text-body text-muted-foreground"
+                  dir="auto"
+                >
+                  {displayName(fallback.label, t`Model`)}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={testing}
+                  onClick={() => onTest(fallback.key)}
+                >
+                  {testing ? t`Testing…` : t`Test`}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t`Move fallback model up`}
+                  onClick={() => onMove(fallback.key, -1)}
+                >
+                  <ChevronUp className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t`Move fallback model down`}
+                  disabled={index === fallbacks.length - 1}
+                  onClick={() => onMove(fallback.key, 1)}
+                >
+                  <ChevronDown className="size-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t`Remove fallback model`}
+                  onClick={() => onRemove(fallback.key)}
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+              {tested ? (
+                <MediaModelTestResult
+                  test={tested}
+                  kind={kind}
+                  onApplyPrimary={onApplyTestedModel}
+                />
+              ) : null}
+            </li>
+          );
+        })}
       </ul>
+      {canAdd ? (
+        <NativeSelect
+          aria-label={t`Add fallback model`}
+          className="mt-1 w-full"
+          value=""
+          onChange={(event) => {
+            if (event.target.value) onAdd(event.target.value);
+          }}
+        >
+          <NativeSelectOption value="">{t`Add fallback model`}</NativeSelectOption>
+          {addChoices.map((choice) => (
+            <NativeSelectOption key={choice.key} value={choice.key}>
+              {choice.label}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * The prompt presets for one media kind: tap a preset to make it active, edit
+ * or delete per row, add a new one. The editor is inline: name plus prompt.
+ */
+function PromptPresetSection({
+  label,
+  presets,
+  active,
+  onPresetsChange,
+  onActiveChange,
+}: {
+  label: string;
+  presets: readonly BotPromptPreset[];
+  active: string | null;
+  onPresetsChange: (presets: BotPromptPreset[]) => void;
+  onActiveChange: (name: string | null) => void;
+}) {
+  const { t } = useLingui();
+  const [editing, setEditing] = useState<{
+    originalName: string | null;
+    name: string;
+    prompt: string;
+    error: string | null;
+  } | null>(null);
+
+  function saveEditing() {
+    if (!editing) return;
+    const name = editing.name.trim();
+    const prompt = editing.prompt.trim();
+    if (!name) {
+      setEditing({ ...editing, error: t`Enter a preset name` });
+      return;
+    }
+    if (!prompt) {
+      setEditing({ ...editing, error: t`Enter a prompt` });
+      return;
+    }
+    if (presets.some((preset) => preset.name === name && preset.name !== editing.originalName)) {
+      setEditing({ ...editing, error: t`A preset with this name already exists` });
+      return;
+    }
+    const next = [...presets];
+    const wasActive = editing.originalName !== null && editing.originalName === active;
+    if (editing.originalName === null) {
+      next.push({ name, prompt });
+    } else {
+      const index = next.findIndex((preset) => preset.name === editing.originalName);
+      if (index === -1) return;
+      next[index] = { name, prompt };
+    }
+    onPresetsChange(next);
+    if (wasActive) onActiveChange(name);
+    if (editing.originalName === null && next.length === 1) onActiveChange(name);
+    setEditing(null);
+  }
+
+  return (
+    <div>
+      <span className={rowLabelClass}>{label}</span>
+      <ul className="mt-1 space-y-1">
+        {presets.map((preset) => {
+          const isActive = active === preset.name;
+          return (
+            <li key={preset.name} className="flex min-h-9 items-start gap-2">
+              <button
+                type="button"
+                className="min-w-0 flex-1 text-start"
+                aria-pressed={isActive}
+                onClick={() => onActiveChange(isActive ? null : preset.name)}
+              >
+                <span
+                  className={`block truncate text-body text-foreground ${isActive ? "font-medium" : ""}`}
+                >
+                  {isActive ? `✓ ${preset.name}` : preset.name}
+                </span>
+                <span className="mt-0.5 line-clamp-2 block text-body-sm text-muted-foreground">
+                  {preset.prompt}
+                </span>
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t`Edit preset`}
+                onClick={() =>
+                  setEditing({
+                    originalName: preset.name,
+                    name: preset.name,
+                    prompt: preset.prompt,
+                    error: null,
+                  })
+                }
+              >
+                <Pencil className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t`Delete preset`}
+                onClick={() => {
+                  onPresetsChange(presets.filter((entry) => entry.name !== preset.name));
+                  if (isActive) onActiveChange(null);
+                }}
+              >
+                <X className="size-4" />
+              </Button>
+            </li>
+          );
+        })}
+      </ul>
+      {editing ? (
+        <div className="mt-2 space-y-2">
+          <Input
+            aria-label={t`Preset name`}
+            placeholder={t`Preset name`}
+            value={editing.name}
+            onChange={(event) => setEditing({ ...editing, name: event.target.value, error: null })}
+          />
+          <Textarea
+            aria-label={t`Preset prompt`}
+            placeholder={t`Preset prompt`}
+            value={editing.prompt}
+            onChange={(event) =>
+              setEditing({ ...editing, prompt: event.target.value, error: null })
+            }
+            rows={3}
+          />
+          {editing.error ? <p className="text-body-sm text-destructive">{editing.error}</p> : null}
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setEditing(null)}>
+              <Trans>Cancel</Trans>
+            </Button>
+            <Button size="sm" onClick={saveEditing}>
+              <Trans>Save</Trans>
+            </Button>
+          </div>
+        </div>
+      ) : presets.length < BOT_PROMPT_PRESET_MAX ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setEditing({ originalName: null, name: "", prompt: "", error: null })}
+        >
+          <Trans>New preset</Trans>
+        </Button>
+      ) : null}
     </div>
   );
 }

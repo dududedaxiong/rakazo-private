@@ -1,5 +1,6 @@
-import { Trans } from "@lingui/react/macro";
+import { Trans, useLingui } from "@lingui/react/macro";
 import type { BotPackageDocument, BotPackageLeftOut } from "@rakazo/contracts";
+import { displayName } from "@rakazo/core";
 
 const rawClass =
   "mt-2 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted p-3 font-mono text-label";
@@ -27,10 +28,11 @@ export function BotPackageLeftOutList({ items }: { items: BotPackageLeftOut[] })
 
 /** External prompts remain selectable plain text throughout review. */
 export function BotPackageDocumentView({ document }: { document: BotPackageDocument }) {
+  const { t } = useLingui();
   return (
     <section className="space-y-3 text-body" data-testid="bot-package-document">
       <h2 className="text-heading3 font-medium" dir="auto">
-        {document.profile.name}
+        {displayName(document.profile.name, t`Bot`)}
       </h2>
       {document.profile.title ? <p dir="auto">{document.profile.title}</p> : null}
       {document.profile.description ? (
@@ -53,7 +55,7 @@ export function BotPackageDocumentView({ document }: { document: BotPackageDocum
         {document.skills.map((skill, index) => (
           <details key={`${skill.name}:${index}`} className="mt-2 ps-3">
             <summary className="cursor-pointer" dir="auto">
-              {skill.name}
+              {displayName(skill.name, t`Skill`)}
             </summary>
             <pre className={rawClass} dir="auto">
               {skill.content}
@@ -68,7 +70,7 @@ export function BotPackageDocumentView({ document }: { document: BotPackageDocum
         {document.routines.map((routine, index) => (
           <details key={`${routine.name}:${index}`} className="mt-2 ps-3">
             <summary className="cursor-pointer" dir="auto">
-              {routine.name}
+              {displayName(routine.name, t`Routine`)}
             </summary>
             <p className="mt-2 text-muted-foreground">
               {routine.crons.join("; ")} · {routine.timezone}
@@ -86,7 +88,7 @@ export function BotPackageDocumentView({ document }: { document: BotPackageDocum
         <ul className="mt-2 space-y-2 ps-3">
           {document.connections.map((connection, index) => (
             <li key={`${connection.name}:${index}`} dir="auto">
-              {connection.name}
+              {displayName(connection.name, t`Connection`)}
               <p className="text-muted-foreground">{connection.note}</p>
             </li>
           ))}

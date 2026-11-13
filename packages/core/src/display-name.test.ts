@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { accountDisplay, displayMessageBlock, displayName } from "./display-name.js";
+import {
+  accountDisplay,
+  displayMessageBlock,
+  displayName,
+  stripLeadingOpaqueCodeLine,
+} from "./display-name.js";
 
 const email = "demo@example.com";
 const opaque = [
@@ -86,4 +91,32 @@ it("guards identity metadata without changing literal message text", () => {
   });
   const text = { kind: "text" as const, text: "__TestTok1__" };
   expect(displayMessageBlock(text)).toBe(text);
+});
+
+describe("stripLeadingOpaqueCodeLine", () => {
+  it("drops a lone opaque code on the first line when real text follows", () => {
+    expect(
+      stripLeadingOpaqueCodeLine(
+        "Ff1dE9\n검색했어요. 이제 세부 사항(가격과 평판) 두 편을 더 볼게요.",
+      ),
+    ).toBe("검색했어요. 이제 세부 사항(가격과 평판) 두 편을 더 볼게요.");
+    expect(stripLeadingOpaqueCodeLine("7C3irl\n\nReal text.")).toBe("Real text.");
+  });
+
+  it("leaves the text alone when the first line is not an isolated opaque code", () => {
+    expect(stripLeadingOpaqueCodeLine("Hello\nWorld")).toBe("Hello\nWorld");
+    expect(stripLeadingOpaqueCodeLine("Gpt4o\nReal text.")).toBe("Gpt4o\nReal text.");
+    expect(stripLeadingOpaqueCodeLine("deepseek-v4.1-flash\nReal text.")).toBe(
+      "deepseek-v4.1-flash\nReal text.",
+    );
+    expect(stripLeadingOpaqueCodeLine("Ff1dE9 is a code inline\nReal text.")).toBe(
+      "Ff1dE9 is a code inline\nReal text.",
+    );
+  });
+
+  it("keeps a lone code when nothing follows it", () => {
+    expect(stripLeadingOpaqueCodeLine("Ff1dE9")).toBe("Ff1dE9");
+    expect(stripLeadingOpaqueCodeLine("Ff1dE9\n")).toBe("Ff1dE9\n");
+    expect(stripLeadingOpaqueCodeLine("Ff1dE9\n\n")).toBe("Ff1dE9\n\n");
+  });
 });

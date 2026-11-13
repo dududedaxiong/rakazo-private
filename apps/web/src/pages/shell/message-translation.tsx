@@ -1,5 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { TranslateOutput } from "@rakazo/contracts";
+import { displayName, stripLeadingOpaqueCodeLine } from "@rakazo/core";
 import { Button, CopyTextFallback, toast, useCopyText } from "@rakazo/ui-web";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -57,7 +58,10 @@ export function useMessageTranslation({
   const [copied, copy, copyFailed, resetCopy, copyFailedText] = useCopyText();
   /** The bot's switch for the read-aloud, share, and favorite actions; on by default. */
   const showActions = settings?.showTranslationActions ?? true;
-  const translatedText = state.status === "done" ? state.result.translatedText : "";
+  // A model sometimes echoes its own short id as a lone first line; that line
+  // is not content, so the displayed (and copied, shared, favorited) text drops it.
+  const translatedText =
+    state.status === "done" ? stripLeadingOpaqueCodeLine(state.result.translatedText) : "";
   // A translation saves under its own id, so favoriting it never toggles the original.
   const translationFavorite = useMessageFavorite({
     rpc,
@@ -124,7 +128,7 @@ export function useMessageTranslation({
   // dismissed sheet copies nothing.
   const shareTranslation = useCallback(async () => {
     if (state.status !== "done") return;
-    const text = state.result.translatedText;
+    const text = translatedText;
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({ text });
@@ -134,7 +138,7 @@ export function useMessageTranslation({
       }
     }
     await copy(text);
-  }, [copy, state]);
+  }, [copy, state.status, translatedText]);
 
   if (!expanded) return { actions, panel: null };
 
@@ -163,16 +167,16 @@ export function useMessageTranslation({
         <>
           <p className="text-body-sm text-link">
             {state.result.usedFallback
-              ? t`Translated with ${state.result.modelId} (backup) · ${translationLanguageLabel(state.result.sourceLanguage)} to ${translationLanguageLabel(targetLanguage)}`
-              : t`Translated with ${state.result.modelId} · ${translationLanguageLabel(state.result.sourceLanguage)} to ${translationLanguageLabel(targetLanguage)}`}
+              ? t`Translated with ${displayName(state.result.modelId, t`Model`)} (backup) · ${translationLanguageLabel(state.result.sourceLanguage)} to ${translationLanguageLabel(targetLanguage)}`
+              : t`Translated with ${displayName(state.result.modelId, t`Model`)} · ${translationLanguageLabel(state.result.sourceLanguage)} to ${translationLanguageLabel(targetLanguage)}`}
           </p>
           <p className="mt-1.5 text-body whitespace-pre-wrap text-foreground" dir="auto">
-            {state.result.translatedText}
+            {translatedText}
           </p>
           <div className="mt-2 flex gap-4">
             <button
               type="button"
-              onClick={() => void copy(state.result.translatedText)}
+              onClick={() => void copy(translatedText)}
               className="text-body text-link"
               aria-label={t`Copy translation`}
             >
@@ -181,7 +185,7 @@ export function useMessageTranslation({
             {showActions && speakText ? (
               <button
                 type="button"
-                onClick={() => speakText(state.result.translatedText)}
+                onClick={() => speakText(translatedText)}
                 disabled={speakDisabled && !speaking}
                 className="text-body text-link"
                 aria-label={speaking ? t`Stop` : t`Speak`}

@@ -984,10 +984,12 @@ describe("BotSettings media model settings", () => {
     return select;
   }
 
-  function videoPresetSelect() {
-    const select = container.querySelector<HTMLSelectElement>('[id$="-video-preset"]');
-    if (!select) throw new Error("Missing video preset select");
-    return select;
+  function presetRowButton(name: string) {
+    const button = [...container.querySelectorAll("button")].find((node) =>
+      node.textContent?.includes(name),
+    );
+    if (!button) throw new Error(`Missing preset row "${name}"`);
+    return button;
   }
 
   async function setSelect(select: HTMLSelectElement, value: string) {
@@ -1021,8 +1023,8 @@ describe("BotSettings media model settings", () => {
     } as Partial<Bot>);
     expect(videoModelSelect().value).toBe("deepseek::deepseek-flash");
     expect(imageModelSelect().value).toBe("deepseek::deepseek-flash");
-    expect(videoPresetSelect().value).toBe("水彩");
-    expect(container.querySelector<HTMLSelectElement>('[id$="-image-preset"]')!.value).toBe("赛博");
+    expect(container.textContent).toContain("✓ 水彩");
+    expect(container.textContent).toContain("✓ 赛博");
   });
 
   it("saves the chosen video model at the front of its list and the active preset", async () => {
@@ -1040,7 +1042,9 @@ describe("BotSettings media model settings", () => {
       "deepseek::deepseek-flash",
     );
     await setSelect(videoModelSelect(), "deepseek::deepseek-flash");
-    await setSelect(videoPresetSelect(), "赛博");
+    await act(async () => {
+      presetRowButton("赛博").click();
+    });
     await clickSave();
     expect(onSave.mock.lastCall?.[0]).toMatchObject({
       videoModels: [
@@ -1048,6 +1052,39 @@ describe("BotSettings media model settings", () => {
         { provider: "other", model: "other-model" },
       ],
       activeVideoPromptPreset: "赛博",
+    });
+  });
+
+  it("saves a newly created preset and activates the first one", async () => {
+    await render("Billing", {} as Partial<Bot>);
+    await act(async () => {
+      [...container.querySelectorAll("button")]
+        .find((node) => node.textContent === "New preset")!
+        .click();
+    });
+    const nameInput = container.querySelector<HTMLInputElement>('[aria-label="Preset name"]');
+    const promptInput = container.querySelector<HTMLTextAreaElement>(
+      '[aria-label="Preset prompt"]',
+    );
+    if (!nameInput || !promptInput) throw new Error("Missing preset editor");
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set?.call(
+        nameInput,
+        "水彩",
+      );
+      nameInput.dispatchEvent(new Event("input", { bubbles: true }));
+      Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value")?.set?.call(
+        promptInput,
+        "用水彩风格画",
+      );
+      promptInput.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    // The first Save closes the editor; the second saves the panel.
+    await clickSave();
+    await clickSave();
+    expect(onSave.mock.lastCall?.[0]).toMatchObject({
+      videoPromptPresets: [{ name: "水彩", prompt: "用水彩风格画" }],
+      activeVideoPromptPreset: "水彩",
     });
   });
 

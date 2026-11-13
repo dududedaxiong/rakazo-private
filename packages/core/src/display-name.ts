@@ -26,6 +26,20 @@ export function displayName(name: string | null | undefined, fallback: string): 
   return trimmed && /[\p{L}\p{N}]/u.test(trimmed) && !isOpaqueName(trimmed) ? trimmed : fallback;
 }
 
+/**
+ * A model sometimes echoes its own short id as a lone first line of a
+ * translation; that line is not content. Drop it only when it is an isolated
+ * opaque code and real text follows — a lone code with nothing after it, or a
+ * first line that is a real word, stays untouched.
+ */
+export function stripLeadingOpaqueCodeLine(text: string): string {
+  const newline = text.indexOf("\n");
+  if (newline === -1) return text;
+  if (!isOpaqueName(text.slice(0, newline).trim())) return text;
+  const rest = text.slice(newline + 1).replace(/^\n+/, "");
+  return rest.trim() ? rest : text;
+}
+
 export function accountDisplay(
   account: { name?: string | null; email?: string | null; image?: string | null },
   fallback: string,
