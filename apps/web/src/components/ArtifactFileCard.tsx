@@ -22,6 +22,9 @@ type ArtifactFileCardProps = {
   name: string;
   mimeType: string;
   size: number;
+  /** Controlled preview; when absent the card opens its own preview on click. */
+  previewOpen?: boolean;
+  onPreviewOpenChange?: (open: boolean) => void;
 };
 
 function isTextPreview(mimeType: string) {
@@ -42,7 +45,9 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
   const previewable = isPreviewable(props.mimeType);
   const previewButton = useRef<HTMLButtonElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [internalPreviewOpen, setInternalPreviewOpen] = useState(false);
+  const previewOpen = props.previewOpen ?? internalPreviewOpen;
+  const setPreviewOpen = props.onPreviewOpenChange ?? setInternalPreviewOpen;
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   async function startDownload() {

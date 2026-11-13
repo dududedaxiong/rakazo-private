@@ -4,6 +4,7 @@ import { ChatMarkdown, LinkifiedText, withBlockMentions } from "@rakazo/chat-ui/
 import type {
   BotAvatarSet,
   BotModelEntry,
+  BotPromptPreset,
   LoginFieldInput,
   MessageReaction,
   ThreadMessage,
@@ -17,7 +18,8 @@ import {
 } from "@rakazo/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@rakazo/ui-web";
 import { UserRound } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import type { ComponentProps } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
@@ -35,6 +37,7 @@ import {
 import { SkillDraftCard } from "../../components/teach/SkillDraftCard";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { favoriteSnippet, useMessageFavorite } from "../../lib/favorites";
+import { parseMediaMark } from "../../lib/media-mark";
 import { messageProviderLabel } from "../../lib/messaging";
 import type { PageBlock } from "../../lib/page-cards";
 import { useOpenPage } from "../../lib/pages";
@@ -51,6 +54,7 @@ import { ReplyLine } from "./chat-context";
 import { FALLBACK_BOT_COLOR, previewMessageText } from "./chat-shared";
 import type { ImportSetupTarget } from "./import-setup-card";
 import { ImportSetupCard } from "./import-setup-card";
+import { MediaResult } from "./media-result";
 import {
   AppConnectCard,
   ArtifactImage,
@@ -60,6 +64,50 @@ import {
 } from "./message-cards";
 import { MessageHoverActions } from "./message-hover-actions";
 import { useMessageTranslation } from "./message-translation";
+
+/** A bot reply longer than this folds to a preview until expanded. */
+const LONG_MESSAGE_CHARS = 800;
+
+/**
+ * A bot reply over the length threshold folds to a clamped preview with an
+ * expand button; the full Markdown renders either way, so nothing breaks
+ * mid-syntax. User messages never fold.
+ */
+function CollapsibleBotText({
+  text,
+  renderMention,
+  openPage,
+}: {
+  text: string;
+  renderMention: ComponentProps<typeof ChatMarkdown>["renderMention"];
+  openPage: ComponentProps<typeof ChatMarkdown>["onOpenPage"];
+}) {
+  const [expanded, setExpanded] = useState(false);
+  if (text.length <= LONG_MESSAGE_CHARS) {
+    return (
+      <ChatMarkdown renderMention={renderMention} onOpenPage={openPage}>
+        {text}
+      </ChatMarkdown>
+    );
+  }
+  return (
+    <div>
+      <div className={expanded ? undefined : "max-h-48 overflow-hidden"}>
+        <ChatMarkdown renderMention={renderMention} onOpenPage={openPage}>
+          {text}
+        </ChatMarkdown>
+      </div>
+      <Button
+        variant="text"
+        size="xs"
+        onClick={() => setExpanded((current) => !current)}
+        className="mt-1 font-normal"
+      >
+        {expanded ? <Trans>Collapse</Trans> : <Trans>Expand</Trans>}
+      </Button>
+    </div>
+  );
+}
 
 export const MessageView = memo(function MessageView({
   artifactTarget,
@@ -82,6 +130,8 @@ export const MessageView = memo(function MessageView({
   onRefresh,
   onBotChanged,
   onAddRoutine,
+  onRegenerate,
+  regenerateDisabled,
   voiceReady,
   speaking,
   callHoldsSpeaker,
@@ -128,11 +178,18 @@ export const MessageView = memo(function MessageView({
         color: string;
         status?: string;
         avatarSet?: BotAvatarSet;
+        voiceId?: string | null;
         translationModels?: readonly BotModelEntry[] | null;
         translationSourceLanguage?: string;
         translationTargetLanguage?: string | null;
         autoTranslate?: boolean;
         showTranslationActions?: boolean;
+        imageModels?: readonly BotModelEntry[] | null;
+        videoModels?: readonly BotModelEntry[] | null;
+        imagePromptPresets?: readonly BotPromptPreset[] | null;
+        activeImagePromptPreset?: string | null;
+        videoPromptPresets?: readonly BotPromptPreset[] | null;
+        activeVideoPromptPreset?: string | null;
       }
     | undefined;
   replyParent?: ThreadMessage;
@@ -140,6 +197,10 @@ export const MessageView = memo(function MessageView({
   onRefresh: () => Promise<void>;
   onBotChanged: () => Promise<void>;
   onAddRoutine: (name: string, prompt: string) => void;
+  /** Re-sends the user message that produced a generated result. */
+  onRegenerate?: (messageId: string) => Promise<void>;
+  /** A send or a run is in progress, so a regenerate would wait. */
+  regenerateDisabled?: boolean;
   voiceReady: boolean;
   speaking: boolean;
   /** An active call owns the speaker, so new reads wait until it ends. */
@@ -216,6 +277,9 @@ export const MessageView = memo(function MessageView({
     return bot ? botTranslationSettings(bot) : undefined;
   }, [message.botId, message.role, peerBot]);
   const translatableText = useMemo(() => copyableMessageText(message), [message]);
+  // A bot's own voice counts even when the account default has none: the
+  // account status only tracks the default credential.
+  const messageVoiceReady = voiceReady || Boolean(message.botId && peerBot(message.botId)?.voiceId);
   // A translation reads under its own message's id, so the row's Speak button
   // shows Stop while it sounds and stops it; voice reads stay hidden until ready.
   const speakTranslation = useCallback(
@@ -229,11 +293,16 @@ export const MessageView = memo(function MessageView({
     text: translatableText,
     botId: message.botId,
     settings: translationSettings,
+    translationModels:
+      message.role === "bot" && message.botId
+        ? peerBot(message.botId)?.translationModels
+        : undefined,
     rpc,
     isLastMessage,
-    speakText: voiceReady ? speakTranslation : undefined,
+    speakText: messageVoiceReady ? speakTranslation : undefined,
     speaking,
     speakDisabled: callHoldsSpeaker,
+    onBotChanged,
   });
   const favorite = useMessageFavorite({
     rpc,
@@ -369,13 +438,21 @@ export const MessageView = memo(function MessageView({
                         key={i}
                         data-quote-message-id={block.kind === "text" ? quoteMessageId : undefined}
                       >
-                        <ChatMarkdown
-                          streaming={block.kind === "progress"}
-                          renderMention={renderMention}
-                          onOpenPage={openPage}
-                        >
-                          {block.text}
-                        </ChatMarkdown>
+                        {block.kind === "text" ? (
+                          <CollapsibleBotText
+                            text={block.text}
+                            renderMention={renderMention}
+                            openPage={openPage}
+                          />
+                        ) : (
+                          <ChatMarkdown
+                            streaming
+                            renderMention={renderMention}
+                            onOpenPage={openPage}
+                          >
+                            {block.text}
+                          </ChatMarkdown>
+                        )}
                       </div>
                     );
                   }
@@ -383,7 +460,7 @@ export const MessageView = memo(function MessageView({
                 })}
                 {!isLive && message.blocks.some((block) => block.kind === "text") ? (
                   <div className="flex flex-wrap items-center gap-1">
-                    {voiceReady ? (
+                    {messageVoiceReady ? (
                       <Button
                         variant="text"
                         size="xs"
@@ -610,32 +687,80 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "image") {
+            const nextBlock = blocks[i + 1];
+            const mark = nextBlock?.kind === "text" ? parseMediaMark(nextBlock.text) : null;
+            const bot = message.botId ? peerBot(message.botId) : undefined;
             return (
               <div
                 key={i}
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                <ArtifactImage
-                  target={artifactTarget}
-                  artifactId={block.artifactId}
-                  name={block.name}
-                />
+                {mark && message.role !== "user" ? (
+                  <MediaResult
+                    kind="image"
+                    target={artifactTarget}
+                    artifactId={block.artifactId}
+                    name={block.name}
+                    mimeType={block.mimeType}
+                    mark={mark}
+                    botId={message.botId}
+                    rpc={rpc}
+                    onBotChanged={onBotChanged}
+                    models={bot?.imageModels}
+                    presets={bot?.imagePromptPresets}
+                    activePreset={bot?.activeImagePromptPreset}
+                    favorite={favorite}
+                    onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}
+                    regenerateDisabled={regenerateDisabled}
+                  />
+                ) : (
+                  <ArtifactImage
+                    target={artifactTarget}
+                    artifactId={block.artifactId}
+                    name={block.name}
+                  />
+                )}
               </div>
             );
           }
           if (block.kind === "file") {
+            const nextBlock = blocks[i + 1];
+            const mark = nextBlock?.kind === "text" ? parseMediaMark(nextBlock.text) : null;
+            const isVideo = block.mimeType.startsWith("video/");
+            const bot = message.botId ? peerBot(message.botId) : undefined;
             return (
               <div
                 key={i}
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                <ArtifactFileCard
-                  target={artifactTarget}
-                  artifactId={block.artifactId}
-                  name={block.name}
-                  mimeType={block.mimeType}
-                  size={block.size}
-                />
+                {mark && isVideo && message.role !== "user" ? (
+                  <MediaResult
+                    kind="video"
+                    target={artifactTarget}
+                    artifactId={block.artifactId}
+                    name={block.name}
+                    mimeType={block.mimeType}
+                    size={block.size}
+                    mark={mark}
+                    botId={message.botId}
+                    rpc={rpc}
+                    onBotChanged={onBotChanged}
+                    models={bot?.videoModels}
+                    presets={bot?.videoPromptPresets}
+                    activePreset={bot?.activeVideoPromptPreset}
+                    favorite={favorite}
+                    onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}
+                    regenerateDisabled={regenerateDisabled}
+                  />
+                ) : (
+                  <ArtifactFileCard
+                    target={artifactTarget}
+                    artifactId={block.artifactId}
+                    name={block.name}
+                    mimeType={block.mimeType}
+                    size={block.size}
+                  />
+                )}
               </div>
             );
           }
@@ -666,6 +791,14 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "text") {
+            // A media mark directly after an image or video block is rendered
+            // inside the MediaResult, not as its own bubble.
+            const prevBlock = blocks[i - 1];
+            if (
+              (prevBlock?.kind === "image" || prevBlock?.kind === "file") &&
+              parseMediaMark(block.text)
+            )
+              return null;
             const firstText = i === textAnchorIndex;
             return (
               <div
@@ -679,14 +812,16 @@ export const MessageView = memo(function MessageView({
                     dir="auto"
                   >
                     <div data-quote-message-id={quoteMessageId}>
-                      <ChatMarkdown renderMention={renderMention} onOpenPage={openPage}>
-                        {block.text}
-                      </ChatMarkdown>
+                      <CollapsibleBotText
+                        text={block.text}
+                        renderMention={renderMention}
+                        openPage={openPage}
+                      />
                     </div>
-                    {voiceReady ||
+                    {messageVoiceReady ||
                     (firstText && !isLive && (translationSettings || showFavorite)) ? (
                       <div className="mt-2 flex flex-wrap items-center gap-1">
-                        {voiceReady ? (
+                        {messageVoiceReady ? (
                           <Button
                             variant="text"
                             size="xs"

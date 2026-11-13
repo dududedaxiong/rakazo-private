@@ -1,5 +1,5 @@
 import type { MediaGenerationProvider } from "@rakazo/adapter-kit";
-import type { BotModelEntry } from "@rakazo/contracts";
+import type { BotModelEntry, BotPromptPreset } from "@rakazo/contracts";
 import {
   activeBotPromptPreset,
   parseBotModelList,
@@ -34,7 +34,7 @@ async function resolveBotMediaKind(
   scope: { userId: string; spaceId: string },
   entries: readonly BotModelEntry[] | null,
   kind: "image" | "video",
-  presetPrompt: string | null,
+  preset: BotPromptPreset | null,
 ): Promise<BotMediaKindCalls> {
   const calls: BotMediaCallEntry[] = [];
   const failures: { modelId: string; reason: string }[] = [];
@@ -48,6 +48,7 @@ async function resolveBotMediaKind(
       }
       calls.push({
         modelId: entry.model,
+        ...(preset ? { presetName: preset.name } : {}),
         call: (prompt, signal) =>
           generateMediaWithChatModel(
             {
@@ -58,7 +59,7 @@ async function resolveBotMediaKind(
               authMode: resolved.authMode,
               model: entry.model,
               kind,
-              prompt: withPromptPreset(presetPrompt, prompt),
+              prompt: withPromptPreset(preset?.prompt ?? null, prompt),
             },
             undefined,
             signal,
@@ -87,16 +88,14 @@ export async function resolveBotMediaGenerationProvider(
   const imageEntries = parseBotModelList(bot.imageModels);
   const videoEntries = parseBotModelList(bot.videoModels);
   if (!imageEntries && !videoEntries) return fallback;
-  const imagePreset =
-    activeBotPromptPreset(
-      parseBotPromptPresets(bot.imagePromptPresets),
-      bot.activeImagePromptPreset,
-    )?.prompt ?? null;
-  const videoPreset =
-    activeBotPromptPreset(
-      parseBotPromptPresets(bot.videoPromptPresets),
-      bot.activeVideoPromptPreset,
-    )?.prompt ?? null;
+  const imagePreset = activeBotPromptPreset(
+    parseBotPromptPresets(bot.imagePromptPresets),
+    bot.activeImagePromptPreset,
+  );
+  const videoPreset = activeBotPromptPreset(
+    parseBotPromptPresets(bot.videoPromptPresets),
+    bot.activeVideoPromptPreset,
+  );
   const [image, video] = await Promise.all([
     resolveBotMediaKind(deps, scope, imageEntries, "image", imagePreset),
     resolveBotMediaKind(deps, scope, videoEntries, "video", videoPreset),

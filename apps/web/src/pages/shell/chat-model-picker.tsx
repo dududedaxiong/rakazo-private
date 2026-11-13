@@ -17,7 +17,9 @@ import {
 import { ChevronDownIcon } from "lucide-react";
 import { useId, useMemo, useState } from "react";
 import { TextOnlyMark } from "../../components/TextOnlyMark";
+import { readModelStatus } from "../../lib/model-status";
 import { useListSearch } from "../../lib/use-list-search";
+import { ModelStatusBadge } from "./model-switch-menu";
 
 /** A chat's model: a native select, or a searchable list once there are too many to scan. */
 export function ChatModelPicker({
@@ -127,6 +129,7 @@ export function ChatModelPicker({
                       <span className="min-w-0 flex-1 truncate">
                         {choice.title ?? choice.label}
                       </span>
+                      <ModelStatusBadge status={readModelStatus(choice.key)} />
                       {choice.images === false ? (
                         <span className="shrink-0 text-muted-foreground">
                           <TextOnlyMark />

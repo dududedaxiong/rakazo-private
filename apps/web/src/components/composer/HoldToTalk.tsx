@@ -15,9 +15,9 @@ const HINT_MS = 2_500;
 type Recording = { locked: boolean; startedAt: number } | null;
 
 /**
- * Telegram-style dictation: hold to talk and release to send the text; slide up
- * while holding to lock, then send or discard by hand. Keyboard activation starts
- * locked, since a key cannot be held and slid.
+ * Telegram-style dictation: hold to talk and release to transcribe the text into the
+ * input; slide up while holding to lock, then insert or discard by hand. Keyboard
+ * activation starts locked, since a key cannot be held and slid.
  */
 export function useHoldToTalk({
   transcribe,
@@ -160,7 +160,7 @@ export function useHoldToTalk({
         if (!hold || !recordingRef.current || recordingRef.current.locked) return;
         if (Date.now() - hold.startedAt < TAP_MS) {
           cancel();
-          showNotice(t`Hold to talk, release to send`);
+          showNotice(t`Hold to talk, release to transcribe`);
           return;
         }
         submit();
@@ -246,7 +246,7 @@ export function HoldToTalkControls({
         </Button>
         <Button
           size="icon"
-          aria-label={t`Send recording`}
+          aria-label={t`Insert transcript`}
           disabled={talk.transcribing}
           onClick={talk.submit}
           className="size-8 shrink-0 rounded-full shadow-sm"
@@ -276,7 +276,7 @@ export function HoldToTalkControls({
           {talk.notice}
         </span>
       ) : null}
-      <IconTooltip label={t`Hold to talk, release to send`}>
+      <IconTooltip label={t`Hold to talk, release to transcribe`}>
         <Button
           variant="outline"
           size="icon"

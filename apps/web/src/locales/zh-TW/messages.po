@@ -196,6 +196,10 @@ msgstr "{count} 個月"
 msgid "{count} more"
 msgstr "還有 {count} 項"
 
+#: src/pages/shell/message-selection.tsx
+msgid "{count} selected"
+msgstr ""
+
 #: src/lib/billing.ts
 msgid "{count} weeks"
 msgstr "{count} 週"
@@ -844,6 +848,10 @@ msgstr "新增伺服器網址"
 msgid "Add skills"
 msgstr "新增技能"
 
+#: src/pages/shell/media-result.tsx
+msgid "Add to favorites"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Add to routine"
 msgstr "加入例行任務"
@@ -1327,6 +1335,7 @@ msgstr "頭像工作室"
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/McpServerForm.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/plugins/connector-detail.tsx
@@ -1444,6 +1453,7 @@ msgstr "機器人"
 #: src/lib/identity-display.ts
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/Shell.tsx
@@ -1603,6 +1613,7 @@ msgstr "無法讀取影像"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-selection.tsx
 msgid "Cancel"
 msgstr "取消"
 
@@ -1951,6 +1962,7 @@ msgid "Close panel"
 msgstr "關閉面板"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Close preview"
 msgstr "關閉預覽"
 
@@ -1985,7 +1997,9 @@ msgctxt "email sign-in"
 msgid "Code"
 msgstr "驗證碼"
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Collapse"
 msgstr "收起"
 
@@ -2566,12 +2580,15 @@ msgstr "無法關閉"
 msgid "Could not dismiss this server"
 msgstr "無法關閉此伺服器項目"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Could not download {0}. Try again."
 msgstr "無法下載 {0}。請重試。"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Could not download {name}. Try again."
 msgstr "無法下載 {name}。請重試。"
 
@@ -2585,6 +2602,10 @@ msgstr "無法啟用工具"
 
 #: src/components/BotPackageTools.tsx
 msgid "Could not export this package."
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Could not forward"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
@@ -2646,6 +2667,10 @@ msgstr "無法載入憑證。"
 msgid "Could not load favorites."
 msgstr ""
 
+#: src/pages/Gallery.tsx
+msgid "Could not load gallery."
+msgstr ""
+
 #: src/components/HumanVerification.tsx
 msgid "Could not load human verification"
 msgstr "人機驗證載入失敗"
@@ -2703,6 +2728,7 @@ msgid "Could not load this chat."
 msgstr "無法載入此對話。"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Could not load this file."
 msgstr "無法載入此檔案。"
 
@@ -2941,6 +2967,10 @@ msgstr "無法傳送重設郵件"
 msgid "Could not send that"
 msgstr "無法傳送"
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not share {name}"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 msgid "Could not show the credential"
 msgstr "無法顯示憑證"
@@ -2969,6 +2999,22 @@ msgstr "無法提交此回答"
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Could not switch {failedNames}. Try again."
 msgstr "無法切換 {failedNames}，請再試一次。"
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not switch generation model"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not switch prompt preset"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Could not switch translation language"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Could not switch translation model"
+msgstr ""
 
 #: src/pages/shell/use-computer.tsx
 msgid "Could not take control"
@@ -3585,15 +3631,19 @@ msgstr "下次續訂時降級"
 
 #: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Download"
 msgstr "下載"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Download {0}"
 msgstr "下載 {0}"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Download {name}"
 msgstr "下載 {name}"
 
@@ -3879,6 +3929,7 @@ msgid "Everyone in this bot's space can read the chats it gets from {linkApp}."
 msgstr "此機器人所在空間的每個人都能閱讀它從 {linkApp} 收到的聊天。"
 
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Expand"
 msgstr "展開"
 
@@ -3914,12 +3965,17 @@ msgstr "到期日"
 #: src/components/AccountDataSettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-selection.tsx
 msgid "Export"
 msgstr "匯出"
 
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "Export all"
 msgstr "匯出全部"
+
+#: src/pages/shell/chat-header.tsx
+msgid "Export conversation"
+msgstr ""
 
 #: src/components/AccountDataSettings.tsx
 msgid "Export data"
@@ -3987,6 +4043,7 @@ msgstr "失敗處理"
 msgid "Fallback models"
 msgstr "備選模型"
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Favorite"
@@ -4000,6 +4057,7 @@ msgstr ""
 msgid "Favorite translation"
 msgstr ""
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Favorited"
@@ -4115,6 +4173,14 @@ msgstr "移至訊息欄"
 msgid "Forgot password?"
 msgstr "忘記密碼？"
 
+#: src/pages/shell/message-selection.tsx
+msgid "Forward"
+msgstr ""
+
+#: src/pages/shell/message-selection.tsx
+msgid "Forward to"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Free"
 msgstr "免費"
@@ -4162,6 +4228,11 @@ msgstr "全名"
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "全螢幕"
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/Gallery.tsx
+msgid "Gallery"
+msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -4324,8 +4395,8 @@ msgid "Hold to talk"
 msgstr "按住說話"
 
 #: src/components/composer/HoldToTalk.tsx
-msgid "Hold to talk, release to send"
-msgstr "按住說話，放開傳送"
+msgid "Hold to talk, release to transcribe"
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Home"
@@ -4400,6 +4471,10 @@ msgstr "此模型尚未設定圖片輸入。"
 #: src/lib/user-error.ts
 msgid "Image input is not configured for this model."
 msgstr "此模型尚未設定圖片輸入。"
+
+#: src/pages/shell/media-result.tsx
+msgid "Image model"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image prompt preset"
@@ -4510,6 +4585,10 @@ msgstr "輸入"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
 msgstr "輸入"
+
+#: src/components/composer/HoldToTalk.tsx
+msgid "Insert transcript"
+msgstr ""
 
 #: src/components/SidebarFooter.tsx
 msgid "Install update"
@@ -4837,6 +4916,7 @@ msgstr "載入更早的訊息"
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/Gallery.tsx
 msgid "Load more"
 msgstr "載入更多"
 
@@ -4870,6 +4950,7 @@ msgid "Loading plugins…"
 msgstr "正在載入外掛…"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Loading preview…"
 msgstr "正在載入預覽…"
 
@@ -4898,6 +4979,7 @@ msgstr "正在載入語音供應商…"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Invite.tsx
 #: src/pages/PeerMessagesOverlay.tsx
@@ -5222,6 +5304,7 @@ msgstr "模式"
 #: src/pages/routine-editor/model-settings.tsx
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Model"
 msgstr "模型"
@@ -5606,8 +5689,16 @@ msgstr "沒有機器人"
 msgid "No bots match"
 msgstr "沒有符合的機器人"
 
+#: src/pages/Shell.tsx
+msgid "No earlier message to regenerate from"
+msgstr ""
+
 #: src/pages/Favorites.tsx
 msgid "No favorites yet"
+msgstr ""
+
+#: src/pages/Gallery.tsx
+msgid "No generated images or videos yet"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
@@ -5725,6 +5816,10 @@ msgstr "還沒有模板。新增一個，或還原預設模板。"
 msgid "No tickets yet"
 msgstr "尚無工作項目"
 
+#: src/pages/Shell.tsx
+msgid "No translation model"
+msgstr ""
+
 #: src/pages/RoutineList.tsx
 msgid "No trigger"
 msgstr "無觸發器"
@@ -5742,6 +5837,7 @@ msgstr "無"
 
 #: src/components/admin/AdminIpLimits.tsx
 #: src/lib/ticket-priority.ts
+#: src/pages/shell/model-switch-menu.tsx
 msgid "Normal"
 msgstr "一般"
 
@@ -6286,13 +6382,20 @@ msgstr ""
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/pages/plugins/github-import.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Preview"
 msgstr "預覽"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Preview {0}"
 msgstr "預覽 {0}"
+
+#: src/pages/shell/media-result.tsx
+msgid "Preview {name}"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
@@ -6341,6 +6444,10 @@ msgstr "程式：{name}"
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "Prompt"
 msgstr "提示詞"
+
+#: src/pages/shell/media-result.tsx
+msgid "Prompt preset"
+msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Prompt templates"
@@ -6559,6 +6666,10 @@ msgstr "重新整理畫面"
 msgid "Refreshing…"
 msgstr "重新整理中…"
 
+#: src/pages/shell/media-result.tsx
+msgid "Regenerate"
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Region"
 msgstr "區域"
@@ -6701,6 +6812,10 @@ msgstr "取消拉黑"
 #: src/pages/plugins/manage-view.tsx
 msgid "Remove from every space?"
 msgstr "從所有空間移除？"
+
+#: src/pages/shell/media-result.tsx
+msgid "Remove from favorites"
+msgstr ""
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove Git event"
@@ -7257,6 +7372,10 @@ msgstr "依網域搜尋"
 msgid "Search by email or name"
 msgstr "按信箱或使用者名稱搜尋"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Search in conversation"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "搜尋 integrations.sh"
@@ -7319,6 +7438,10 @@ msgstr "安全碼"
 msgid "Select a bot"
 msgstr "選擇機器人"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Select messages"
+msgstr ""
+
 #. placeholder {0}: selection.size
 #: src/components/BotPackageTools.tsx
 msgid "Selected skills: {0}"
@@ -7355,10 +7478,6 @@ msgstr "傳送刪除驗證碼"
 #: src/components/AskCard.tsx
 msgid "Send it"
 msgstr "傳送"
-
-#: src/components/composer/HoldToTalk.tsx
-msgid "Send recording"
-msgstr "傳送錄製內容"
 
 #: src/pages/Auth.tsx
 msgid "Send reset link"
@@ -7457,6 +7576,7 @@ msgstr "形狀 {0}"
 
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Share"
 msgstr "分享"
@@ -7485,6 +7605,7 @@ msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Show"
 msgstr "顯示"
 
@@ -7662,6 +7783,10 @@ msgstr "未啟用 Slack"
 msgid "Slide up to lock"
 msgstr "向上滑動以鎖定"
 
+#: src/pages/shell/model-switch-menu.tsx
+msgid "Slow"
+msgstr ""
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Some plugins could not be loaded."
@@ -7707,6 +7832,7 @@ msgid "Sorts new email and drafts the replies"
 msgstr "分類新郵件並草擬回覆"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Source language"
 msgstr "來源語言"
 
@@ -7981,6 +8107,7 @@ msgid "Target"
 msgstr "目標"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Target language"
 msgstr "目標語言"
 
@@ -8504,6 +8631,7 @@ msgstr "轉錄請求逾時。"
 msgid "Transcription response is too large."
 msgstr "轉錄回應過大。"
 
+#: src/pages/shell/message-selection.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Translate"
 msgstr "翻譯"
@@ -8512,18 +8640,12 @@ msgstr "翻譯"
 msgid "Translate this reply"
 msgstr "翻譯這則回覆"
 
-#. placeholder {0}: displayName(state.result.modelId, t`Model`)
-#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
-#. placeholder {2}: translationLanguageLabel(targetLanguage)
 #: src/pages/shell/message-translation.tsx
-msgid "Translated with {0} · {1} to {2}"
+msgid "Translated with {modelMenu} · {languageMenu}"
 msgstr ""
 
-#. placeholder {0}: displayName(state.result.modelId, t`Model`)
-#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
-#. placeholder {2}: translationLanguageLabel(targetLanguage)
 #: src/pages/shell/message-translation.tsx
-msgid "Translated with {0} (backup) · {1} to {2}"
+msgid "Translated with {modelMenu} (backup) · {languageMenu}"
 msgstr ""
 
 #: src/pages/shell/message-translation.tsx
@@ -8542,13 +8664,19 @@ msgstr ""
 msgid "Translation"
 msgstr "翻譯"
 
+#: src/pages/Shell.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Translation failed"
 msgstr "翻譯失敗"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Translation model"
 msgstr "翻譯模型"
+
+#: src/pages/shell/message-selection.tsx
+msgid "Translations"
+msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Treat like a person"
@@ -8620,6 +8748,10 @@ msgstr "輸入你的回答"
 #: src/pages/Shell.tsx
 msgid "Unassigned"
 msgstr "未分配"
+
+#: src/pages/shell/model-switch-menu.tsx
+msgid "Unavailable"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Undo"
@@ -8921,12 +9053,20 @@ msgstr "正在驗證…"
 msgid "Version"
 msgstr "版本"
 
+#: src/pages/shell/media-result.tsx
+msgid "Via"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"
 msgstr "影片生成模型"
 
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Video generation persona"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Video model"
 msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx

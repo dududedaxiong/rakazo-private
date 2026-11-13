@@ -12,6 +12,7 @@ import {
   answerableAskMessageIds,
   channelMessageSender,
   chatUserBubbleColors,
+  copyableMessageText,
   dismissableAskMessageIds,
   foldPeerReplies,
   groupBotsForSidebar,
@@ -25,7 +26,7 @@ import {
 } from "@rakazo/core";
 import { writeSaved } from "@rakazo/core/query";
 import type { GroupAvatarMember } from "@rakazo/ui-web";
-import { Button } from "@rakazo/ui-web";
+import { Button, toast } from "@rakazo/ui-web";
 import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -53,6 +54,7 @@ import { setCallMinimized, startCall, useCallSession } from "../lib/call-session
 import { composerEnterToSendPreference } from "../lib/composer-enter-to-send-pref";
 import { computersAreUnavailable } from "../lib/computer-sandbox";
 import { desktopBridge } from "../lib/desktop";
+import { downloadConversationMarkdown } from "../lib/export-conversation";
 import { hasOpenDialog } from "../lib/has-open-dialog";
 import { PagesProvider, usePagesForChat } from "../lib/pages";
 import { markAfterPaint, markOnce } from "../lib/performance";
@@ -63,6 +65,12 @@ import { rightPanelStorageKey } from "../lib/right-panel-state";
 import { createSpaceRpc, selectedSpaceId } from "../lib/rpc";
 import { markShellReady, useSpaceEpoch } from "../lib/space-switch";
 import { toolActivityPreference } from "../lib/tool-activity-preference";
+import {
+  botTranslationSettings,
+  hasTranslationModel,
+  resolveTranslationTargetLanguage,
+  translateBotMessage,
+} from "../lib/translation";
 import { useDesktopBadge } from "../lib/use-desktop-badge";
 import { errorText } from "../lib/user-error";
 import { HostComputerPrompt } from "./HostComputerPrompt";
@@ -78,6 +86,12 @@ import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotDialogInput } from "./shell/create-bot-dialog";
 import type { ImportSetupTarget } from "./shell/import-setup-card";
 import { KeyboardShortcutsDialog } from "./shell/keyboard-shortcuts-dialog";
+import type { BatchTranslateResult } from "./shell/message-selection";
+import {
+  BatchTranslateDialog,
+  ForwardTargetDialog,
+  MessageSelectionBar,
+} from "./shell/message-selection";
 import { ShellDialogs, useShellDialogs } from "./shell/shell-dialogs";
 import { AppOverlays, SettingsOverlays } from "./shell/shell-overlays";
 import { cycleBotId, isApplePlatform, useShellShortcuts } from "./shell/shell-shortcuts";
@@ -273,6 +287,9 @@ function SpaceShell() {
     inGroup || routeChat?.groupId
       ? undefined
       : (bots.find((b) => b.id === (botId ?? routeChat?.botId)) ?? bots[0]);
+  // A bot's own voice counts even when the account default has none: the
+  // account status only tracks the default credential.
+  const voiceReady = Boolean(voiceStatus?.ready) || Boolean(active?.voiceId);
   const selectBot = useCallback(
     (id: string) => {
       setMobileSidebarOpen(false);
@@ -314,6 +331,24 @@ function SpaceShell() {
   const chatColumnRef = useRef<HTMLDivElement>(null);
   // Matches belong to the chat they were found in.
   useEffect(() => setFindOpen(false), [botId, groupId]);
+  /** Opens the in-conversation search bar and focuses its input. */
+  const openFind = useCallback(() => {
+    if (!active && !activeGroup) return false;
+    // On a narrow window the drawer makes the chat inert and a side panel covers it, so
+    // either would hide the bar. A panel holding a form keeps its input instead.
+    if (isMobileSidebar && panel) {
+      if (!chatPanelOpen) return false;
+      setPanel(null);
+    }
+    setMobileSidebarOpen(false);
+    setFindOpen(true);
+    // A bar already open may have lost focus; a new one focuses itself as it mounts.
+    requestAnimationFrame(() => {
+      findInputRef.current?.focus();
+      findInputRef.current?.select();
+    });
+    return true;
+  }, [active, activeGroup, chatPanelOpen, isMobileSidebar, panel, setPanel]);
   useShellShortcuts({
     run: (shortcut) => {
       switch (shortcut.type) {
@@ -363,21 +398,7 @@ function SpaceShell() {
         case "focus-composer":
           return focusComposer();
         case "find":
-          if (!active && !activeGroup) return false;
-          // On a narrow window the drawer makes the chat inert and a side panel covers it, so
-          // either would hide the bar. A panel holding a form keeps its input instead.
-          if (isMobileSidebar && panel) {
-            if (!chatPanelOpen) return false;
-            setPanel(null);
-          }
-          setMobileSidebarOpen(false);
-          setFindOpen(true);
-          // A bar already open may have lost focus; a new one focuses itself as it mounts.
-          requestAnimationFrame(() => {
-            findInputRef.current?.focus();
-            findInputRef.current?.select();
-          });
-          return true;
+          return openFind();
       }
       const botId =
         shortcut.type === "bot"
@@ -706,6 +727,132 @@ function SpaceShell() {
     flushPendingBrowserNotifications,
   });
   const { sending, sendError, stopRun } = composer;
+  /**
+   * Re-sends the nearest user message before a generated result, with the
+   * same prompt and the bot's current model and preset. The generation
+   * progress shows exactly as it does for a fresh send.
+   */
+  const regenerateFromMessage = useCallback(
+    async (messageId: string) => {
+      const messages = transcript.messages;
+      const index = messages.findIndex((entry) => entry.id === messageId);
+      if (index === -1) return;
+      for (let i = index - 1; i >= 0; i--) {
+        const prior = messages[i];
+        if (prior?.role !== "user") continue;
+        const text = copyableMessageText(prior);
+        if (!text.trim()) continue;
+        await composer.sendMessage(text, [], crypto.randomUUID());
+        return;
+      }
+      toast(t`No earlier message to regenerate from`);
+    },
+    [composer, t, transcript],
+  );
+
+  /** Multi-select: the picked message ids, and the dialogs the batch actions open. */
+  const [selecting, setSelecting] = useState(false);
+  const [selectedMessageIds, setSelectedMessageIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [forwardDialogOpen, setForwardDialogOpen] = useState(false);
+  const [translateResults, setTranslateResults] = useState<readonly BatchTranslateResult[]>([]);
+  const [translateDialogOpen, setTranslateDialogOpen] = useState(false);
+  const [selectionBusy, setSelectionBusy] = useState(false);
+
+  const toggleSelectMessage = useCallback((messageId: string) => {
+    setSelectedMessageIds((current) => {
+      const next = new Set(current);
+      if (next.has(messageId)) next.delete(messageId);
+      else next.add(messageId);
+      return next;
+    });
+  }, []);
+  const exitSelection = useCallback(() => {
+    setSelecting(false);
+    setSelectedMessageIds(new Set());
+  }, []);
+  /** The selected messages, in transcript order. */
+  const selectedMessages = useMemo(
+    () => transcript.messages.filter((message) => selectedMessageIds.has(message.id)),
+    [transcript, selectedMessageIds],
+  );
+
+  const exportSelected = useCallback(() => {
+    if (selectedMessages.length === 0) return;
+    const name = inGroup
+      ? (activeGroup?.name ?? activeSnapshot?.groupName ?? "Group")
+      : (active?.name ?? "Bot");
+    downloadConversationMarkdown({ title: name, messages: selectedMessages, botName: name });
+    exitSelection();
+  }, [active, activeGroup, activeSnapshot, exitSelection, inGroup, selectedMessages]);
+
+  const translateSelected = useCallback(async () => {
+    if (selectedMessages.length === 0 || selectionBusy) return;
+    setSelectionBusy(true);
+    try {
+      const results: BatchTranslateResult[] = [];
+      for (const message of selectedMessages) {
+        const text = copyableMessageText(message);
+        if (!text.trim()) continue;
+        const botId = message.botId;
+        const bot = botId ? bots.find((candidate) => candidate.id === botId) : undefined;
+        const settings = bot ? botTranslationSettings(bot) : undefined;
+        if (!botId || !settings || !hasTranslationModel(settings)) {
+          results.push({ messageId: message.id, original: text, error: t`No translation model` });
+          continue;
+        }
+        try {
+          const result = await translateBotMessage(rpc, {
+            botId,
+            text,
+            sourceLanguage: settings.translationSourceLanguage,
+            targetLanguage: resolveTranslationTargetLanguage(settings),
+          });
+          results.push({
+            messageId: message.id,
+            original: text,
+            translated: result.translatedText,
+          });
+        } catch (err) {
+          results.push({
+            messageId: message.id,
+            original: text,
+            error: errorText(err, t`Translation failed`),
+          });
+        }
+      }
+      setTranslateResults(results);
+      setTranslateDialogOpen(true);
+      exitSelection();
+    } finally {
+      setSelectionBusy(false);
+    }
+  }, [bots, exitSelection, rpc, selectedMessages, selectionBusy, t]);
+
+  /** Re-sends the selected messages' text to another bot, then opens that chat. */
+  const forwardSelected = useCallback(
+    async (targetBotId: string) => {
+      if (selectedMessages.length === 0 || selectionBusy) return;
+      const text = selectedMessages
+        .map((message) => copyableMessageText(message))
+        .filter((entry) => entry.trim())
+        .join("\n\n");
+      if (!text.trim()) return;
+      setSelectionBusy(true);
+      try {
+        await rpc.threads.send({ botId: targetBotId, clientNonce: crypto.randomUUID(), text });
+        setForwardDialogOpen(false);
+        exitSelection();
+        navigate(`/app/${targetBotId}`);
+      } catch (err) {
+        toast(errorText(err, t`Could not forward`));
+      } finally {
+        setSelectionBusy(false);
+      }
+    },
+    [exitSelection, navigate, rpc, selectedMessages, selectionBusy, t],
+  );
   function openChatSettings(kind: "bot" | "group", id: string) {
     const destKey =
       userId && bootstrapMe?.spaceId
@@ -1020,7 +1167,7 @@ function SpaceShell() {
             activeGroup={activeGroup}
             activeSnapshot={activeSnapshot}
             phoneCallsEnabled={Boolean(bootstrapMe?.phoneCallsEnabled)}
-            voiceReady={Boolean(voiceStatus?.ready)}
+            voiceReady={voiceReady}
             inCall={Boolean(active) && call?.botId === active?.id}
             readingConversation={readingConversation}
             canReadConversation={canReadConversation}
@@ -1028,6 +1175,20 @@ function SpaceShell() {
             panelOpen={chatPanelOpen}
             onOpenNavigation={() => setMobileSidebarOpen(true)}
             onTogglePanel={toggleChatPanel}
+            onFind={() => {
+              openFind();
+            }}
+            onExportConversation={() => {
+              const name = inGroup
+                ? (activeGroup?.name ?? activeSnapshot?.groupName ?? "Group")
+                : (active?.name ?? "Bot");
+              downloadConversationMarkdown({
+                title: name,
+                messages: transcript.messages,
+                botName: name,
+              });
+            }}
+            onSelectMessages={() => setSelecting(true)}
             onBotUpdated={(updated) =>
               setBots((current) =>
                 current.map((entry) => (entry.id === updated.id ? updated : entry)),
@@ -1068,6 +1229,11 @@ function SpaceShell() {
               running={transcriptRunning}
               workingBots={workingBots}
               workingRoutine={workingRoutineName(workingRuns)}
+              onRegenerate={regenerateFromMessage}
+              regenerateDisabled={sending || transcriptRunning}
+              selecting={selecting}
+              selectedMessageIds={selectedMessageIds}
+              onToggleSelectMessage={toggleSelectMessage}
               userBubble={userBubble}
               onCallBack={
                 bootstrapMe?.phoneCallsEnabled && !inGroup && active
@@ -1088,7 +1254,7 @@ function SpaceShell() {
               onRefresh={refreshActiveThread}
               onBotChanged={refreshBots}
               onAddRoutine={addSkillRoutine}
-              voiceReady={Boolean(voiceStatus?.ready)}
+              voiceReady={voiceReady}
               speakingMessageId={speakingMessageId}
               callHoldsSpeaker={callHoldsSpeaker}
               onSpeak={speakMessage}
@@ -1107,71 +1273,94 @@ function SpaceShell() {
                 <Trans>Teaching in progress. Stop teaching before sending a new message.</Trans>
               </div>
             ) : null}
-            <Composer
-              key={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
-              draftKey={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
-              enterToSend={enterToSend}
-              sendColors={userBubble}
-              activeName={inGroup ? (activeGroup?.name ?? activeSnapshot?.groupName) : active?.name}
-              running={composerRunning}
-              disabled={Boolean(recordingSkill)}
-              pendingAttachments={composer.activePendingAttachments}
-              attachmentNotice={composer.attachmentNotice}
-              sendError={sendError}
-              imageConfirmation={composer.imageConfirmation}
-              onDraftEdited={composer.clearImageConfirmation}
-              onOpenModels={() => {
-                // A group's failed run belongs to one member; change that bot's model.
-                const failedBotId =
-                  inGroup && composer.displayedRunError ? activeSnapshot?.run?.botId : null;
-                if (active && !inGroup) {
-                  setPanel("settings");
-                  setModelFocusRequest(Date.now());
-                } else if (failedBotId) {
-                  openChatSettings("bot", failedBotId);
-                  setModelFocusRequest(Date.now());
-                } else openSettings("models");
-              }}
-              onOpenConnections={() => openSettings("models")}
-              runError={composer.displayedRunError}
-              runErrorId={composer.displayedRunErrorId}
-              onRunErrorPresented={composer.handleRunErrorPresented}
-              onDismissError={composer.dismissComposerError}
-              sending={sending}
-              fileInputRef={composer.fileInputRef}
-              onAttachmentPick={composer.onAttachmentPick}
-              onRemoveAttachment={composer.removeAttachment}
-              onSend={composer.sendMessage}
-              onStop={stopRun}
-              phoneCallsEnabled={bootstrapMe?.phoneCallsEnabled === true}
-              dictationTranscribe={voiceStatus ? Boolean(voiceStatus.transcribe) : undefined}
-              artifactTarget={transcriptArtifactTarget}
-              replyTarget={composer.replyTarget}
-              replyQuote={composer.replyQuote}
-              replyTargetName={replyTargetName}
-              onClearReply={composer.clearReply}
-              mentionTargets={composerMentionTargets}
-              agentSkills={agentSkills}
-              onSlashOpen={refreshAgentSkills}
-              onSlashAction={(action) => {
-                if (action === "chat-settings") {
-                  setPanel(inGroup ? "group-settings" : "settings");
-                  return;
+            {selecting ? (
+              <MessageSelectionBar
+                count={selectedMessageIds.size}
+                busy={selectionBusy}
+                onExport={exportSelected}
+                onTranslate={() => void translateSelected()}
+                onForward={() => setForwardDialogOpen(true)}
+                onCancel={exitSelection}
+              />
+            ) : (
+              <Composer
+                key={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
+                draftKey={inGroup ? `group:${groupId}` : `bot:${active?.id}`}
+                enterToSend={enterToSend}
+                sendColors={userBubble}
+                activeName={
+                  inGroup ? (activeGroup?.name ?? activeSnapshot?.groupName) : active?.name
                 }
-                if (action === "settings-general") {
-                  openSettings("general");
-                  return;
-                }
-                if (action === "settings-usage") {
-                  openSettings("usage");
-                }
-              }}
-            />
+                running={composerRunning}
+                disabled={Boolean(recordingSkill)}
+                pendingAttachments={composer.activePendingAttachments}
+                attachmentNotice={composer.attachmentNotice}
+                sendError={sendError}
+                imageConfirmation={composer.imageConfirmation}
+                onDraftEdited={composer.clearImageConfirmation}
+                onOpenModels={() => {
+                  // A group's failed run belongs to one member; change that bot's model.
+                  const failedBotId =
+                    inGroup && composer.displayedRunError ? activeSnapshot?.run?.botId : null;
+                  if (active && !inGroup) {
+                    setPanel("settings");
+                    setModelFocusRequest(Date.now());
+                  } else if (failedBotId) {
+                    openChatSettings("bot", failedBotId);
+                    setModelFocusRequest(Date.now());
+                  } else openSettings("models");
+                }}
+                onOpenConnections={() => openSettings("models")}
+                runError={composer.displayedRunError}
+                runErrorId={composer.displayedRunErrorId}
+                onRunErrorPresented={composer.handleRunErrorPresented}
+                onDismissError={composer.dismissComposerError}
+                sending={sending}
+                fileInputRef={composer.fileInputRef}
+                onAttachmentPick={composer.onAttachmentPick}
+                onRemoveAttachment={composer.removeAttachment}
+                onSend={composer.sendMessage}
+                onStop={stopRun}
+                dictationTranscribe={voiceStatus ? Boolean(voiceStatus.transcribe) : undefined}
+                artifactTarget={transcriptArtifactTarget}
+                replyTarget={composer.replyTarget}
+                replyQuote={composer.replyQuote}
+                replyTargetName={replyTargetName}
+                onClearReply={composer.clearReply}
+                mentionTargets={composerMentionTargets}
+                agentSkills={agentSkills}
+                onSlashOpen={refreshAgentSkills}
+                onSlashAction={(action) => {
+                  if (action === "chat-settings") {
+                    setPanel(inGroup ? "group-settings" : "settings");
+                    return;
+                  }
+                  if (action === "settings-general") {
+                    openSettings("general");
+                    return;
+                  }
+                  if (action === "settings-usage") {
+                    openSettings("usage");
+                  }
+                }}
+              />
+            )}
           </div>
         ) : null}
       </main>
 
       <PageViewHost />
+      <ForwardTargetDialog
+        bots={bots}
+        open={forwardDialogOpen}
+        onOpenChange={setForwardDialogOpen}
+        onSelect={(botId) => void forwardSelected(botId)}
+      />
+      <BatchTranslateDialog
+        results={translateResults}
+        open={translateDialogOpen}
+        onOpenChange={setTranslateDialogOpen}
+      />
       <CallCard onSettings={() => openSettings("voice")} />
       <IncomingCall
         bots={bootstrapMe?.phoneCallsEnabled ? bots : []}

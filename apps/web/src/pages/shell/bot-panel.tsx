@@ -38,6 +38,7 @@ import { InstructionSettings } from "../../components/InstructionSettings";
 import { PagesList } from "../../components/pages/PagesList";
 import { BotPersonaSection } from "../../components/prompt-templates/BotPersonaSection";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
+import { modelStatusFromProbe, recordModelStatus } from "../../lib/model-status";
 import { lazyComponent } from "../../lib/preload-recovery";
 import { useSpaceQueries } from "../../lib/query";
 import { rpc } from "../../lib/rpc";
@@ -521,6 +522,7 @@ export function BotSettings({
         modelId: resolveSelectableModelId(catalog, parsed.provider, parsed.modelId),
         ...(preset?.prompt.trim() ? { presetPrompt: preset.prompt } : {}),
       });
+      recordModelStatus(key, modelStatusFromProbe(result));
       setTest({
         status: "done",
         supported: result.supported,
@@ -530,6 +532,7 @@ export function BotSettings({
         modelId: parsed.modelId,
       });
     } catch (err) {
+      recordModelStatus(key, { state: "unavailable", seconds: seconds() });
       setTest({
         status: "done",
         supported: false,

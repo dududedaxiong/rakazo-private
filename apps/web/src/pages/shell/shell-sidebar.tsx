@@ -412,6 +412,11 @@ function ShellSidebarFooter({
           closeMobileSidebar();
           navigate("/app/favorites");
         }}
+        onGallery={() => {
+          setMenuOpen(false);
+          closeMobileSidebar();
+          navigate("/app/gallery");
+        }}
         onSettings={() => {
           setMenuOpen(false);
           openSettings("general");

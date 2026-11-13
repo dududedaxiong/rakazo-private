@@ -103,7 +103,7 @@ describe("hold to talk", () => {
     act(() => emit({ status: "listening", transcript: text }));
   }
 
-  it("sends what was said when the hold is released", () => {
+  it("inserts what was said when the hold is released", () => {
     const mic = button("Hold to talk");
     pointer(mic, "pointerdown");
     expect(dictation.listen).toHaveBeenCalledWith(expect.objectContaining({ mode: "hold" }));
@@ -118,7 +118,7 @@ describe("hold to talk", () => {
     expect(container?.querySelector('[data-testid="hold-to-talk-strip"]')).toBeNull();
   });
 
-  it("treats a quick tap as a tap: nothing is sent and the hint shows", () => {
+  it("treats a quick tap as a tap: nothing is inserted and the hint shows", () => {
     const mic = button("Hold to talk");
     pointer(mic, "pointerdown");
     pointer(mic, "pointerup");
@@ -126,10 +126,10 @@ describe("hold to talk", () => {
     expect(dictation.submitHold).not.toHaveBeenCalled();
     expect(dictation.stop).toHaveBeenCalledWith("cancel");
     expect(onText).not.toHaveBeenCalled();
-    expect(container?.textContent).toContain("Hold to talk, release to send");
+    expect(container?.textContent).toContain("Hold to talk, release to transcribe");
   });
 
-  it("locks when the hold slides up, then sends only on Send", () => {
+  it("locks when the hold slides up, then inserts only on Insert transcript", () => {
     const mic = button("Hold to talk");
     pointer(mic, "pointerdown", 400);
     pointer(mic, "pointermove", 400 - LOCK_DISTANCE_PX - 1);
@@ -140,7 +140,7 @@ describe("hold to talk", () => {
     expect(dictation.submitHold).not.toHaveBeenCalled();
     expect(container?.textContent).toContain("call the plumber");
 
-    act(() => button("Send recording").click());
+    act(() => button("Insert transcript").click());
     expect(onText).toHaveBeenCalledWith("call the plumber");
   });
 
@@ -163,7 +163,7 @@ describe("hold to talk", () => {
     });
 
     expect(dictation.listen).toHaveBeenCalledOnce();
-    expect(button("Send recording")).toBeTruthy();
+    expect(button("Insert transcript")).toBeTruthy();
   });
 
   it("keeps the solid red under the held pointer in both themes", () => {

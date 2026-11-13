@@ -6,6 +6,8 @@ export type GeneratedMedia = {
   mimeType: "image/png" | "video/mp4";
   /** The bot-configured model that produced this media; absent for the global provider. */
   modelId?: string;
+  /** The prompt preset applied to this media; absent when no preset was active. */
+  presetName?: string;
 };
 export type MediaVideoJob =
   | { id: string; status: "queued" | "running"; progress?: number }

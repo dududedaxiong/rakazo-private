@@ -1,7 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
 import type { Bot, Group, ThreadSnapshot } from "@rakazo/contracts";
 import { BotAvatar, Button, GroupAvatar } from "@rakazo/ui-web";
-import { Gift, Menu, Phone, Square, Volume2 } from "lucide-react";
+import { Download, Gift, ListChecks, Menu, Phone, Search, Square, Volume2 } from "lucide-react";
 import { useState } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
@@ -25,6 +25,9 @@ export function ChatHeader({
   onTogglePanel,
   onCall,
   onBotUpdated,
+  onFind,
+  onExportConversation,
+  onSelectMessages,
 }: {
   inGroup: boolean;
   active: Bot | undefined;
@@ -45,6 +48,12 @@ export function ChatHeader({
   onCall: (bot: Bot) => void;
   /** After a persona switch from the header, so the roster follows the updated bot. */
   onBotUpdated?: (bot: Bot) => void;
+  /** Opens the in-conversation search bar. */
+  onFind: () => void;
+  /** Downloads the current conversation as a Markdown file. */
+  onExportConversation: () => void;
+  /** Enters multi-select mode for the current conversation. */
+  onSelectMessages: () => void;
 }) {
   const { t } = useLingui();
   const referral = useBilling().status?.referral;
@@ -89,6 +98,48 @@ export function ChatHeader({
         </span>
       </Button>
       <div className="flex items-center justify-self-end gap-2">
+        {(active || activeGroup) && (
+          <IconTooltip label={t`Search in conversation`}>
+            <Button
+              variant="floating"
+              size="icon-lg"
+              data-testid="search-in-conversation-button"
+              aria-label={t`Search in conversation`}
+              onClick={onFind}
+              className="app-no-drag"
+            >
+              <Search strokeWidth={1.6} className="size-[17px]" />
+            </Button>
+          </IconTooltip>
+        )}
+        {(active || activeGroup) && (
+          <IconTooltip label={t`Select messages`}>
+            <Button
+              variant="floating"
+              size="icon-lg"
+              data-testid="select-messages-button"
+              aria-label={t`Select messages`}
+              onClick={onSelectMessages}
+              className="app-no-drag"
+            >
+              <ListChecks strokeWidth={1.6} className="size-[17px]" />
+            </Button>
+          </IconTooltip>
+        )}
+        {(active || activeGroup) && (
+          <IconTooltip label={t`Export conversation`}>
+            <Button
+              variant="floating"
+              size="icon-lg"
+              data-testid="export-conversation-button"
+              aria-label={t`Export conversation`}
+              onClick={onExportConversation}
+              className="app-no-drag"
+            >
+              <Download strokeWidth={1.6} className="size-[17px]" />
+            </Button>
+          </IconTooltip>
+        )}
         {!inGroup && active ? (
           <ChatPersonaSwitcher bot={active} onBotUpdated={(bot) => onBotUpdated?.(bot)} />
         ) : null}

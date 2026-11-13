@@ -5,6 +5,7 @@ import {
   Check,
   Download,
   FolderOpen,
+  Images,
   Link2,
   LogOut,
   Plug,
@@ -38,6 +39,7 @@ type Props = {
   onLink?: (link: NavLink) => void;
   onArtifacts: () => void;
   onFavorites?: () => void;
+  onGallery?: () => void;
   onSettings: () => void;
   onInvite?: () => void;
   onLogOut: () => void;
@@ -71,6 +73,7 @@ export function SidebarFooter({
   onLink,
   onArtifacts,
   onFavorites,
+  onGallery,
   onSettings,
   onInvite,
   onLogOut,
@@ -211,6 +214,16 @@ export function SidebarFooter({
               >
                 <Star className="text-muted-foreground" strokeWidth={1.75} />
                 <Trans>Favorites</Trans>
+              </Button>
+            ) : null}
+            {onGallery ? (
+              <Button
+                variant="ghost"
+                className="h-9 w-full justify-start gap-2.5 font-normal"
+                onClick={onGallery}
+              >
+                <Images className="text-muted-foreground" strokeWidth={1.75} />
+                <Trans>Gallery</Trans>
               </Button>
             ) : null}
             {onBoard ? (

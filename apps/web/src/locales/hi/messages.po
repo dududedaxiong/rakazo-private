@@ -195,6 +195,10 @@ msgstr "{count} महीने"
 msgid "{count} more"
 msgstr "{count} और"
 
+#: src/pages/shell/message-selection.tsx
+msgid "{count} selected"
+msgstr ""
+
 #: src/lib/billing.ts
 msgid "{count} weeks"
 msgstr "{count} सप्ताह"
@@ -843,6 +847,10 @@ msgstr "सर्वर URL जोड़ें"
 msgid "Add skills"
 msgstr "स्किल जोड़ें"
 
+#: src/pages/shell/media-result.tsx
+msgid "Add to favorites"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Add to routine"
 msgstr "रूटीन में जोड़ें"
@@ -1326,6 +1334,7 @@ msgstr "अवतार स्टूडियो"
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/McpServerForm.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/plugins/connector-detail.tsx
@@ -1443,6 +1452,7 @@ msgstr "बॉट"
 #: src/lib/identity-display.ts
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/Shell.tsx
@@ -1602,6 +1612,7 @@ msgstr "तस्वीरें नहीं पढ़ सकता"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-selection.tsx
 msgid "Cancel"
 msgstr "रद्द करें"
 
@@ -1950,6 +1961,7 @@ msgid "Close panel"
 msgstr "पैनल बंद करें"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Close preview"
 msgstr "प्रीव्यू बंद करें"
 
@@ -1984,7 +1996,9 @@ msgctxt "email sign-in"
 msgid "Code"
 msgstr "कोड"
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Collapse"
 msgstr ""
 
@@ -2565,12 +2579,15 @@ msgstr "खारिज नहीं किया जा सका"
 msgid "Could not dismiss this server"
 msgstr "यह सर्वर खारिज नहीं किया जा सका"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Could not download {0}. Try again."
 msgstr "{0} डाउनलोड नहीं हो सका। पुनः प्रयास करें।"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Could not download {name}. Try again."
 msgstr "{name} डाउनलोड नहीं हो सका। पुनः प्रयास करें।"
 
@@ -2584,6 +2601,10 @@ msgstr "टूल सक्षम नहीं हो सके"
 
 #: src/components/BotPackageTools.tsx
 msgid "Could not export this package."
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Could not forward"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
@@ -2645,6 +2666,10 @@ msgstr "क्रेडेंशियल लोड नहीं हो सक�
 msgid "Could not load favorites."
 msgstr ""
 
+#: src/pages/Gallery.tsx
+msgid "Could not load gallery."
+msgstr ""
+
 #: src/components/HumanVerification.tsx
 msgid "Could not load human verification"
 msgstr ""
@@ -2702,6 +2727,7 @@ msgid "Could not load this chat."
 msgstr "यह चैट लोड नहीं हो सकी."
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Could not load this file."
 msgstr "यह फ़ाइल लोड नहीं हो सकी।"
 
@@ -2940,6 +2966,10 @@ msgstr "रीसेट ईमेल नहीं भेजा जा सका"
 msgid "Could not send that"
 msgstr "वह भेजा नहीं जा सका"
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not share {name}"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 msgid "Could not show the credential"
 msgstr "क्रेडेंशियल नहीं दिखाया जा सका"
@@ -2968,6 +2998,22 @@ msgstr "यह उत्तर सबमिट नहीं किया जा 
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Could not switch {failedNames}. Try again."
 msgstr "{failedNames} को बदला नहीं जा सका। फिर कोशिश करें।"
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not switch generation model"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not switch prompt preset"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Could not switch translation language"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Could not switch translation model"
+msgstr ""
 
 #: src/pages/shell/use-computer.tsx
 msgid "Could not take control"
@@ -3584,15 +3630,19 @@ msgstr "नवीनीकरण पर डाउनग्रेड करें
 
 #: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Download"
 msgstr "डाउनलोड करें"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Download {0}"
 msgstr "{0} डाउनलोड करें"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Download {name}"
 msgstr "{name} डाउनलोड करें"
 
@@ -3878,6 +3928,7 @@ msgid "Everyone in this bot's space can read the chats it gets from {linkApp}."
 msgstr "इस बॉट के स्पेस में हर कोई {linkApp} से आने वाली इसकी चैट पढ़ सकता है।"
 
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Expand"
 msgstr "विस्तृत करें"
 
@@ -3913,12 +3964,17 @@ msgstr "समाप्ति तिथि"
 #: src/components/AccountDataSettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-selection.tsx
 msgid "Export"
 msgstr "एक्सपोर्ट करें"
 
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "Export all"
 msgstr "सभी निर्यात करें"
+
+#: src/pages/shell/chat-header.tsx
+msgid "Export conversation"
+msgstr ""
 
 #: src/components/AccountDataSettings.tsx
 msgid "Export data"
@@ -3986,6 +4042,7 @@ msgstr "विफलता प्रबंधन"
 msgid "Fallback models"
 msgstr ""
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Favorite"
@@ -3999,6 +4056,7 @@ msgstr ""
 msgid "Favorite translation"
 msgstr ""
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Favorited"
@@ -4114,6 +4172,14 @@ msgstr "संदेश पर जाएं"
 msgid "Forgot password?"
 msgstr "पासवर्ड भूल गए?"
 
+#: src/pages/shell/message-selection.tsx
+msgid "Forward"
+msgstr ""
+
+#: src/pages/shell/message-selection.tsx
+msgid "Forward to"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Free"
 msgstr "मुफ़्त"
@@ -4161,6 +4227,11 @@ msgstr "पूरा नाम"
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "फ़ुलस्क्रीन"
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/Gallery.tsx
+msgid "Gallery"
+msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -4323,8 +4394,8 @@ msgid "Hold to talk"
 msgstr "बोलने के लिए दबाए रखें"
 
 #: src/components/composer/HoldToTalk.tsx
-msgid "Hold to talk, release to send"
-msgstr "बोलने के लिए दबाए रखें, भेजने के लिए छोड़ें"
+msgid "Hold to talk, release to transcribe"
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Home"
@@ -4399,6 +4470,10 @@ msgstr "इस मॉडल के लिए चित्र इनपुट क
 #: src/lib/user-error.ts
 msgid "Image input is not configured for this model."
 msgstr "इस मॉडल के लिए चित्र इनपुट कॉन्फ़िगर नहीं है।"
+
+#: src/pages/shell/media-result.tsx
+msgid "Image model"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image prompt preset"
@@ -4509,6 +4584,10 @@ msgstr "इनपुट"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
 msgstr "इनपुट"
+
+#: src/components/composer/HoldToTalk.tsx
+msgid "Insert transcript"
+msgstr ""
 
 #: src/components/SidebarFooter.tsx
 msgid "Install update"
@@ -4836,6 +4915,7 @@ msgstr "पुराने संदेश लोड करें"
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/Gallery.tsx
 msgid "Load more"
 msgstr "और लोड करें"
 
@@ -4869,6 +4949,7 @@ msgid "Loading plugins…"
 msgstr "प्लगइन लोड हो रहे हैं…"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Loading preview…"
 msgstr "प्रीव्यू लोड हो रहा है…"
 
@@ -4897,6 +4978,7 @@ msgstr "आवाज़ प्रोवाइडर्स लोड हो र�
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Invite.tsx
 #: src/pages/PeerMessagesOverlay.tsx
@@ -5221,6 +5303,7 @@ msgstr "मोड"
 #: src/pages/routine-editor/model-settings.tsx
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Model"
 msgstr "मॉडल"
@@ -5605,8 +5688,16 @@ msgstr "कोई बॉट नहीं"
 msgid "No bots match"
 msgstr "कोई बॉट मेल नहीं खाता"
 
+#: src/pages/Shell.tsx
+msgid "No earlier message to regenerate from"
+msgstr ""
+
 #: src/pages/Favorites.tsx
 msgid "No favorites yet"
+msgstr ""
+
+#: src/pages/Gallery.tsx
+msgid "No generated images or videos yet"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
@@ -5724,6 +5815,10 @@ msgstr "अभी कोई टेम्पलेट नहीं है। ए�
 msgid "No tickets yet"
 msgstr "अभी तक कोई टिकट नहीं"
 
+#: src/pages/Shell.tsx
+msgid "No translation model"
+msgstr ""
+
 #: src/pages/RoutineList.tsx
 msgid "No trigger"
 msgstr "कोई ट्रिगर नहीं"
@@ -5741,6 +5836,7 @@ msgstr "कोई नहीं"
 
 #: src/components/admin/AdminIpLimits.tsx
 #: src/lib/ticket-priority.ts
+#: src/pages/shell/model-switch-menu.tsx
 msgid "Normal"
 msgstr "सामान्य"
 
@@ -6285,13 +6381,20 @@ msgstr ""
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/pages/plugins/github-import.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Preview"
 msgstr "प्रीव्यू"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Preview {0}"
 msgstr "{0} का प्रीव्यू"
+
+#: src/pages/shell/media-result.tsx
+msgid "Preview {name}"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
@@ -6340,6 +6443,10 @@ msgstr "प्रोग्राम: {name}"
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "Prompt"
 msgstr "प्रॉम्प्ट"
+
+#: src/pages/shell/media-result.tsx
+msgid "Prompt preset"
+msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Prompt templates"
@@ -6558,6 +6665,10 @@ msgstr "व्यू रीफ़्रेश करें"
 msgid "Refreshing…"
 msgstr "रीफ़्रेश हो रहा है…"
 
+#: src/pages/shell/media-result.tsx
+msgid "Regenerate"
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Region"
 msgstr "क्षेत्र"
@@ -6700,6 +6811,10 @@ msgstr ""
 #: src/pages/plugins/manage-view.tsx
 msgid "Remove from every space?"
 msgstr "हर स्पेस से हटाएँ?"
+
+#: src/pages/shell/media-result.tsx
+msgid "Remove from favorites"
+msgstr ""
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove Git event"
@@ -7256,6 +7371,10 @@ msgstr "डोमेन से खोजें"
 msgid "Search by email or name"
 msgstr ""
 
+#: src/pages/shell/chat-header.tsx
+msgid "Search in conversation"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "integrations.sh खोजें"
@@ -7318,6 +7437,10 @@ msgstr "सुरक्षा कोड"
 msgid "Select a bot"
 msgstr "एक बॉट चुनें"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Select messages"
+msgstr ""
+
 #. placeholder {0}: selection.size
 #: src/components/BotPackageTools.tsx
 msgid "Selected skills: {0}"
@@ -7354,10 +7477,6 @@ msgstr "हटाने का कोड भेजें"
 #: src/components/AskCard.tsx
 msgid "Send it"
 msgstr "इसे भेजें"
-
-#: src/components/composer/HoldToTalk.tsx
-msgid "Send recording"
-msgstr "रिकॉर्डिंग भेजें"
 
 #: src/pages/Auth.tsx
 msgid "Send reset link"
@@ -7456,6 +7575,7 @@ msgstr "आकार {0}"
 
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Share"
 msgstr "शेयर करें"
@@ -7484,6 +7604,7 @@ msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Show"
 msgstr "दिखाएँ"
 
@@ -7661,6 +7782,10 @@ msgstr "Slack सक्षम नहीं है"
 msgid "Slide up to lock"
 msgstr "लॉक करने के लिए ऊपर खिसकाएँ"
 
+#: src/pages/shell/model-switch-menu.tsx
+msgid "Slow"
+msgstr ""
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Some plugins could not be loaded."
@@ -7706,6 +7831,7 @@ msgid "Sorts new email and drafts the replies"
 msgstr "नए ईमेल छांटता है और जवाबों के ड्राफ़्ट बनाता है"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Source language"
 msgstr ""
 
@@ -7980,6 +8106,7 @@ msgid "Target"
 msgstr "लक्ष्य"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Target language"
 msgstr ""
 
@@ -8503,6 +8630,7 @@ msgstr "ट्रांसक्रिप्शन अनुरोध का स
 msgid "Transcription response is too large."
 msgstr "ट्रांसक्रिप्शन प्रतिक्रिया बहुत बड़ी है।"
 
+#: src/pages/shell/message-selection.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Translate"
 msgstr ""
@@ -8511,18 +8639,12 @@ msgstr ""
 msgid "Translate this reply"
 msgstr ""
 
-#. placeholder {0}: displayName(state.result.modelId, t`Model`)
-#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
-#. placeholder {2}: translationLanguageLabel(targetLanguage)
 #: src/pages/shell/message-translation.tsx
-msgid "Translated with {0} · {1} to {2}"
+msgid "Translated with {modelMenu} · {languageMenu}"
 msgstr ""
 
-#. placeholder {0}: displayName(state.result.modelId, t`Model`)
-#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
-#. placeholder {2}: translationLanguageLabel(targetLanguage)
 #: src/pages/shell/message-translation.tsx
-msgid "Translated with {0} (backup) · {1} to {2}"
+msgid "Translated with {modelMenu} (backup) · {languageMenu}"
 msgstr ""
 
 #: src/pages/shell/message-translation.tsx
@@ -8541,12 +8663,18 @@ msgstr ""
 msgid "Translation"
 msgstr ""
 
+#: src/pages/Shell.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Translation failed"
 msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Translation model"
+msgstr ""
+
+#: src/pages/shell/message-selection.tsx
+msgid "Translations"
 msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
@@ -8619,6 +8747,10 @@ msgstr "अपना उत्तर लिखें"
 #: src/pages/Shell.tsx
 msgid "Unassigned"
 msgstr "असाइन नहीं किया गया"
+
+#: src/pages/shell/model-switch-menu.tsx
+msgid "Unavailable"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Undo"
@@ -8920,12 +9052,20 @@ msgstr "पुष्टि की जा रही है…"
 msgid "Version"
 msgstr "संस्करण"
 
+#: src/pages/shell/media-result.tsx
+msgid "Via"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"
 msgstr ""
 
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Video generation persona"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Video model"
 msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx

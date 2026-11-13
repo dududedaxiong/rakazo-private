@@ -19,11 +19,13 @@ const savedJob = z.object({
   artifactId: z.string().optional(),
   /** The bot-configured model that produced the media, for the "经 X" mark on recovery. */
   modelId: z.string().optional(),
+  /** The prompt preset applied to the media, for the mark on recovery. */
+  presetName: z.string().optional(),
 });
 
-/** The mark under a generated image or video: which model made it. */
-function mediaModelMark(modelId: string): MessageBlock {
-  return { kind: "text", text: `经 ${modelId}` };
+/** The mark under a generated image or video: which model made it, and which preset. */
+function mediaModelMark(modelId: string, presetName?: string): MessageBlock {
+  return { kind: "text", text: presetName ? `经 ${modelId} · ${presetName}` : `经 ${modelId}` };
 }
 export async function generateMediaFromTool(options: {
   name: "generate_image" | "generate_video";
@@ -48,6 +50,8 @@ export async function generateMediaFromTool(options: {
     artifactId: string,
     /** The bot-configured model that produced the media; kept in the saved job for recovery. */
     modelId?: string,
+    /** The prompt preset applied to the media; kept in the saved job for recovery. */
+    presetName?: string,
   ) => Promise<unknown>;
   /** Commits with a video's provider failure, so whatever follows it cannot be lost. */
   onSettled?: (tx: Prisma.TransactionClient, status: "failed") => Promise<void>;
@@ -159,10 +163,11 @@ export async function generateMediaFromTool(options: {
       if (!artifact) return { error: "Generated attachment is unavailable." };
       const block = messageBlockForArtifact(artifact);
       await options.publish(
-        saved.modelId ? [block, mediaModelMark(saved.modelId)] : [block],
+        saved.modelId ? [block, mediaModelMark(saved.modelId, saved.presetName)] : [block],
         reservation.id,
         artifact.id,
         saved.modelId,
+        saved.presetName,
       );
       return {
         status: "completed",
@@ -262,11 +267,13 @@ export async function generateMediaFromTool(options: {
       throw error;
     }
     const modelId = output.output.modelId ?? undefined;
+    const presetName = output.output.presetName ?? undefined;
     await options.publish(
-      modelId ? [attached.block, mediaModelMark(modelId)] : [attached.block],
+      modelId ? [attached.block, mediaModelMark(modelId, presetName)] : [attached.block],
       reservation.id,
       attached.artifactId,
       modelId,
+      presetName,
     );
     return {
       status: "completed",

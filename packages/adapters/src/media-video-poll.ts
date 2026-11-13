@@ -111,6 +111,7 @@ export function mediaDelivery(
       jobId: string,
       artifactId: string,
       modelId?: string,
+      presetName?: string,
     ) => {
       const committed = await deps.prisma.$transaction(async (tx) => {
         // Commit completion with the message so a restarted poll cannot post twice, and a job
@@ -123,6 +124,7 @@ export function mediaDelivery(
               provider: options.providerId,
               artifactId,
               ...(modelId ? { modelId } : {}),
+              ...(presetName ? { presetName } : {}),
             },
           },
         });

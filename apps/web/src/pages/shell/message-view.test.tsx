@@ -833,3 +833,149 @@ it("stops a background helper from its saved running card, never a turn's live o
     messageId: "card-1",
   });
 });
+
+describe("generated media result", () => {
+  const mediaBot: PeerBot = () => ({
+    color: "orange",
+    imageModels: [
+      { provider: "p1", model: "model-a" },
+      { provider: "p2", model: "model-b" },
+    ],
+    imagePromptPresets: [
+      { name: "水彩", prompt: "watercolor" },
+      { name: "油画", prompt: "oil painting" },
+    ],
+    activeImagePromptPreset: "水彩",
+  });
+  const flush = () =>
+    act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  const buttonByText = (text: string) =>
+    [...container.querySelectorAll("button")].find((button) => button.textContent === text);
+  // The switch menus render their items as menuitem roles (in a portal), not buttons.
+  const menuItem = (text: string) =>
+    [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+      (el) => el.textContent?.trim() === text,
+    );
+
+  function renderMedia() {
+    const update = vi.fn(async () => ({}));
+    const onRegenerate = vi.fn(async () => undefined);
+    const favorites = {
+      list: vi.fn(async () => []),
+      add: vi.fn(async () => ({})),
+      remove: vi.fn(async () => ({ ok: true as const })),
+    };
+    resetFavoritesCache();
+    vi.mocked(rpc.artifacts.get).mockRejectedValue(new Error("no image"));
+    renderView("bot", [], {
+      message: {
+        id: "message-media",
+        threadId: "thread",
+        seq: 1,
+        role: "bot",
+        botId: "bot-1",
+        createdAt: new Date().toISOString(),
+        blocks: [
+          { kind: "image", artifactId: "art-1", mimeType: "image/png", name: "generated-1.png" },
+          { kind: "text", text: "经 model-a · 水彩" },
+        ],
+      },
+      peerBot: mediaBot,
+      rpc: { bots: { update }, favorites } as never,
+      onRegenerate,
+    });
+    return { update, onRegenerate };
+  }
+
+  it("renders the result with its mark and action row, not a mark bubble", async () => {
+    renderMedia();
+    await flush();
+    expect(container.querySelector('[data-testid="message-bot-bubble"]')).toBeNull();
+    expect(buttonByText("model-a")).not.toBeUndefined();
+    expect(buttonByText("水彩")).not.toBeUndefined();
+    for (const label of ["Preview", "Download", "Share", "Favorite", "Regenerate", "Collapse"]) {
+      expect(buttonByText(label)).not.toBeUndefined();
+    }
+  });
+
+  it("regenerates from the message that produced the result", async () => {
+    const { onRegenerate } = renderMedia();
+    await flush();
+    await act(async () => {
+      buttonByText("Regenerate")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(onRegenerate).toHaveBeenCalledExactlyOnceWith("message-media");
+  });
+
+  it("switches the image model from the mark and moves it to the front", async () => {
+    const { update } = renderMedia();
+    await flush();
+    act(() => buttonByText("model-a")?.click());
+    await act(async () => {});
+    await act(async () => {
+      menuItem("model-b")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(update).toHaveBeenCalledExactlyOnceWith({
+      botId: "bot-1",
+      imageModels: [
+        { provider: "p2", model: "model-b" },
+        { provider: "p1", model: "model-a" },
+      ],
+    });
+  });
+
+  it("switches the prompt preset from the mark", async () => {
+    const { update } = renderMedia();
+    await flush();
+    act(() => buttonByText("水彩")?.click());
+    await act(async () => {});
+    await act(async () => {
+      menuItem("油画")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(update).toHaveBeenCalledExactlyOnceWith({
+      botId: "bot-1",
+      activeImagePromptPreset: "油画",
+    });
+  });
+
+  it("collapses the result and shows it again", async () => {
+    renderMedia();
+    await flush();
+    act(() => buttonByText("Collapse")?.click());
+    expect(buttonByText("Preview")).toBeUndefined();
+    expect(buttonByText("Show")).not.toBeUndefined();
+    act(() => buttonByText("Show")?.click());
+    expect(buttonByText("Preview")).not.toBeUndefined();
+  });
+});
+
+describe("long bot replies", () => {
+  const longText = "word ".repeat(300);
+  const buttonByText = (text: string) =>
+    [...container.querySelectorAll("button")].find((button) => button.textContent === text);
+
+  it("folds a long bot reply until expanded, and never folds a short one", () => {
+    renderView("bot", [{ kind: "text", text: longText }]);
+    const bubble = container.querySelector('[data-testid="message-bot-bubble"]')!;
+    expect(bubble.querySelector(".max-h-48")).not.toBeNull();
+    expect(buttonByText("Expand")).not.toBeUndefined();
+    act(() => buttonByText("Expand")?.click());
+    expect(bubble.querySelector(".max-h-48")).toBeNull();
+    expect(buttonByText("Collapse")).not.toBeUndefined();
+    act(() => buttonByText("Collapse")?.click());
+    expect(bubble.querySelector(".max-h-48")).not.toBeNull();
+
+    renderView("bot", [{ kind: "text", text: "Short reply." }]);
+    expect(buttonByText("Expand")).toBeUndefined();
+  });
+
+  it("never folds a long user message", () => {
+    renderView("user", [{ kind: "text", text: longText }]);
+    expect(buttonByText("Expand")).toBeUndefined();
+  });
+});

@@ -50,6 +50,7 @@ import { TRANSCRIPT_CONTENT_PADDING } from "../../lib/transcript-layout";
 import { transcriptIsNearEnd, transcriptMovedDown } from "../../lib/transcript-scroll";
 import { TimeSeparator, UnreadDivider } from "./chat-context";
 import type { ImportSetupTarget } from "./import-setup-card";
+import { MessageSelectCheckbox } from "./message-selection";
 import { MessageView } from "./message-view";
 import { QuoteSelectionButton } from "./quote-selection-button";
 
@@ -94,6 +95,11 @@ export const Transcript = memo(function Transcript({
   onRefresh,
   onBotChanged,
   onAddRoutine,
+  onRegenerate,
+  regenerateDisabled,
+  selecting,
+  selectedMessageIds,
+  onToggleSelectMessage,
   voiceReady,
   speakingMessageId,
   callHoldsSpeaker,
@@ -158,6 +164,14 @@ export const Transcript = memo(function Transcript({
   onRefresh: () => Promise<void>;
   onBotChanged: () => Promise<void>;
   onAddRoutine: (name: string, prompt: string) => void;
+  /** Re-sends the user message that produced a generated result. */
+  onRegenerate?: (messageId: string) => Promise<void>;
+  /** A send or a run is in progress, so a regenerate would wait. */
+  regenerateDisabled?: boolean;
+  /** Selection mode is on: every bubble gets a checkbox. */
+  selecting?: boolean;
+  selectedMessageIds?: ReadonlySet<string>;
+  onToggleSelectMessage?: (messageId: string) => void;
   voiceReady: boolean;
   speakingMessageId: string | null;
   callHoldsSpeaker: boolean;
@@ -600,9 +614,15 @@ export const Transcript = memo(function Transcript({
                   className={
                     peerReceipt
                       ? undefined
-                      : `relative flex ${message.role === "user" ? "justify-end" : "justify-start"}`
+                      : `relative flex items-center gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`
                   }
                 >
+                  {selecting && !peerReceipt && onToggleSelectMessage ? (
+                    <MessageSelectCheckbox
+                      selected={selectedMessageIds?.has(message.id) ?? false}
+                      onToggle={() => onToggleSelectMessage(message.id)}
+                    />
+                  ) : null}
                   <div
                     data-testid={peerReceipt ? undefined : "message-bubble-frame"}
                     className={
@@ -647,6 +667,8 @@ export const Transcript = memo(function Transcript({
                       onRefresh={onRefresh}
                       onBotChanged={onBotChanged}
                       onAddRoutine={onAddRoutine}
+                      onRegenerate={onRegenerate}
+                      regenerateDisabled={regenerateDisabled}
                       voiceReady={voiceReady}
                       speaking={speakingMessageId === message.id}
                       callHoldsSpeaker={callHoldsSpeaker}

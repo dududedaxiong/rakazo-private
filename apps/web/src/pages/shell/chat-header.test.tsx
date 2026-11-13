@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { BillingStatus, Bot } from "@rakazo/contracts";
+import type { BillingStatus, Bot, Group } from "@rakazo/contracts";
 import { BOT_COLORS } from "@rakazo/contracts";
 import type * as UiWeb from "@rakazo/ui-web";
 import type { ComponentProps, ReactNode } from "react";
@@ -95,7 +95,9 @@ function renderHeader({
         active={
           inGroup ? undefined : ({ id: "bot-1", name: "Helper", color: BOT_COLORS[0] } as Bot)
         }
-        activeGroup={undefined}
+        activeGroup={
+          inGroup ? ({ id: "group-1", name: "Team", members: [] } as unknown as Group) : undefined
+        }
         activeSnapshot={null}
         phoneCallsEnabled={false}
         voiceReady={voiceReady}
@@ -107,6 +109,9 @@ function renderHeader({
         onOpenNavigation={() => undefined}
         onTogglePanel={() => undefined}
         onCall={() => undefined}
+        onFind={() => undefined}
+        onExportConversation={() => undefined}
+        onSelectMessages={() => undefined}
       />,
     ),
   );
@@ -114,6 +119,15 @@ function renderHeader({
 
 const readConversationButton = () =>
   container.querySelector<HTMLButtonElement>('[data-testid="read-conversation-button"]');
+
+const searchButton = () =>
+  container.querySelector<HTMLButtonElement>('[data-testid="search-in-conversation-button"]');
+
+const exportButton = () =>
+  container.querySelector<HTMLButtonElement>('[data-testid="export-conversation-button"]');
+
+const selectButton = () =>
+  container.querySelector<HTMLButtonElement>('[data-testid="select-messages-button"]');
 
 const gift = () => container.querySelector<HTMLButtonElement>('[aria-label="Invite a friend"]');
 
@@ -191,4 +205,25 @@ it("opens the invite with both rewards and copies the link", async () => {
   await act(async () => copy.click());
   expect(writeText).toHaveBeenCalledWith("https://example.test/sign-up?ref=abc");
   expect(dialog.textContent).toContain("Copied");
+});
+
+it("shows the search button in a bot chat and in a group", () => {
+  renderHeader();
+  expect(searchButton()).not.toBeNull();
+  renderHeader({ inGroup: true });
+  expect(searchButton()).not.toBeNull();
+});
+
+it("shows the export button in a bot chat and in a group", () => {
+  renderHeader();
+  expect(exportButton()).not.toBeNull();
+  renderHeader({ inGroup: true });
+  expect(exportButton()).not.toBeNull();
+});
+
+it("shows the select-messages button in a bot chat and in a group", () => {
+  renderHeader();
+  expect(selectButton()).not.toBeNull();
+  renderHeader({ inGroup: true });
+  expect(selectButton()).not.toBeNull();
 });

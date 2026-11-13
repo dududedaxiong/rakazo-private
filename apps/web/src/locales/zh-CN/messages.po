@@ -195,6 +195,10 @@ msgstr "{count} 个月"
 msgid "{count} more"
 msgstr "还有 {count} 项"
 
+#: src/pages/shell/message-selection.tsx
+msgid "{count} selected"
+msgstr "已选 {count} 条"
+
 #: src/lib/billing.ts
 msgid "{count} weeks"
 msgstr "{count} 周"
@@ -843,6 +847,10 @@ msgstr "添加服务器 URL"
 msgid "Add skills"
 msgstr "添加技能"
 
+#: src/pages/shell/media-result.tsx
+msgid "Add to favorites"
+msgstr "加入收藏"
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Add to routine"
 msgstr "加入例行任务"
@@ -1326,6 +1334,7 @@ msgstr "头像工作室"
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/McpServerForm.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/plugins/connector-detail.tsx
@@ -1443,6 +1452,7 @@ msgstr "Bot"
 #: src/lib/identity-display.ts
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/Shell.tsx
@@ -1602,6 +1612,7 @@ msgstr "无法读取图像"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-selection.tsx
 msgid "Cancel"
 msgstr "取消"
 
@@ -1749,7 +1760,7 @@ msgstr "报到。"
 #: src/components/BotPackageImport.tsx
 #: src/components/BotPackageSkillsView.tsx
 msgid "Check status"
-msgstr ""
+msgstr "查看状态"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
@@ -1882,7 +1893,7 @@ msgstr "清除筛选"
 
 #: src/components/BotPackageTools.tsx
 msgid "Clear selection"
-msgstr ""
+msgstr "清除选择"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
@@ -1950,6 +1961,7 @@ msgid "Close panel"
 msgstr "关闭面板"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Close preview"
 msgstr "关闭预览"
 
@@ -1984,7 +1996,9 @@ msgctxt "email sign-in"
 msgid "Code"
 msgstr "验证码"
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Collapse"
 msgstr "收起"
 
@@ -2249,7 +2263,7 @@ msgstr "与 {0} 的连接仍在等待。可以关闭此窗口稍后再看。"
 
 #: src/components/BotPackageDocumentView.tsx
 msgid "Connections"
-msgstr ""
+msgstr "连接"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Connector"
@@ -2565,18 +2579,21 @@ msgstr "无法忽略"
 msgid "Could not dismiss this server"
 msgstr "无法忽略此服务器"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Could not download {0}. Try again."
 msgstr "无法下载 {0}。请重试。"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Could not download {name}. Try again."
 msgstr "无法下载 {name}。请重试。"
 
 #: src/components/BotPackageSkillsView.tsx
 msgid "Could not enable skill. Check status or choose another name."
-msgstr ""
+msgstr "无法启用技能。请查看状态或换个名字。"
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not enable tools"
@@ -2585,6 +2602,10 @@ msgstr "无法启用工具"
 #: src/components/BotPackageTools.tsx
 msgid "Could not export this package."
 msgstr "无法导出此软件包。"
+
+#: src/pages/Shell.tsx
+msgid "Could not forward"
+msgstr "转发失败"
 
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Could not generate invite codes"
@@ -2645,6 +2666,10 @@ msgstr "无法加载凭据。"
 msgid "Could not load favorites."
 msgstr "无法加载收藏。"
 
+#: src/pages/Gallery.tsx
+msgid "Could not load gallery."
+msgstr "无法加载画廊。"
+
 #: src/components/HumanVerification.tsx
 msgid "Could not load human verification"
 msgstr "人机验证加载失败"
@@ -2702,6 +2727,7 @@ msgid "Could not load this chat."
 msgstr "无法加载此对话。"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Could not load this file."
 msgstr "无法加载此文件。"
 
@@ -2940,6 +2966,10 @@ msgstr "无法发送重置邮件"
 msgid "Could not send that"
 msgstr "无法发送"
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not share {name}"
+msgstr "无法分享 {name}"
+
 #: src/components/VaultSettings.tsx
 msgid "Could not show the credential"
 msgstr "无法显示凭据"
@@ -2968,6 +2998,22 @@ msgstr "无法提交此回答"
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Could not switch {failedNames}. Try again."
 msgstr "无法切换 {failedNames}。请重试。"
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not switch generation model"
+msgstr "切换生成模型失败"
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not switch prompt preset"
+msgstr "切换提示词预设失败"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Could not switch translation language"
+msgstr "切换翻译语言失败"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Could not switch translation model"
+msgstr "切换翻译模型失败"
 
 #: src/pages/shell/use-computer.tsx
 msgid "Could not take control"
@@ -3584,15 +3630,19 @@ msgstr "续订时降级"
 
 #: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Download"
 msgstr "下载"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Download {0}"
 msgstr "下载 {0}"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Download {name}"
 msgstr "下载 {name}"
 
@@ -3712,15 +3762,15 @@ msgstr "启用 {0}"
 
 #: src/components/BotPackageSkillsView.tsx
 msgid "Enable shared skill"
-msgstr ""
+msgstr "启用共享技能"
 
 #: src/components/BotPackageSkillsView.tsx
 msgid "Enabled"
-msgstr ""
+msgstr "已启用"
 
 #: src/components/BotPackageSkillsView.tsx
 msgid "Enabling a skill shares it with your bots in this space."
-msgstr ""
+msgstr "启用技能会将其共享给此空间中的机器人。"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
@@ -3878,6 +3928,7 @@ msgid "Everyone in this bot's space can read the chats it gets from {linkApp}."
 msgstr "此 Bot 所在工作区的所有人都能读取它从 {linkApp} 收到的对话。"
 
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Expand"
 msgstr "展开"
 
@@ -3913,12 +3964,17 @@ msgstr "有效期"
 #: src/components/AccountDataSettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-selection.tsx
 msgid "Export"
 msgstr "导出"
 
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "Export all"
 msgstr "导出全部"
+
+#: src/pages/shell/chat-header.tsx
+msgid "Export conversation"
+msgstr "导出对话"
 
 #: src/components/AccountDataSettings.tsx
 msgid "Export data"
@@ -3938,7 +3994,7 @@ msgstr "导出文件以模板名命名。在应用外改好后，用同名重新
 
 #: src/components/BotPackageTools.tsx
 msgid "Exporting…"
-msgstr ""
+msgstr "导出中…"
 
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -3986,6 +4042,7 @@ msgstr "失败处理"
 msgid "Fallback models"
 msgstr "备选模型"
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Favorite"
@@ -3999,6 +4056,7 @@ msgstr "收藏这条回复"
 msgid "Favorite translation"
 msgstr "收藏译文"
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Favorited"
@@ -4114,6 +4172,14 @@ msgstr "聚焦消息框"
 msgid "Forgot password?"
 msgstr "忘记密码？"
 
+#: src/pages/shell/message-selection.tsx
+msgid "Forward"
+msgstr "转发"
+
+#: src/pages/shell/message-selection.tsx
+msgid "Forward to"
+msgstr "转发给"
+
 #: src/components/ModelCredits.tsx
 msgid "Free"
 msgstr "免费"
@@ -4161,6 +4227,11 @@ msgstr "全名"
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "全屏"
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/Gallery.tsx
+msgid "Gallery"
+msgstr "画廊"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -4323,8 +4394,8 @@ msgid "Hold to talk"
 msgstr "按住说话"
 
 #: src/components/composer/HoldToTalk.tsx
-msgid "Hold to talk, release to send"
-msgstr "按住说话，松开发送"
+msgid "Hold to talk, release to transcribe"
+msgstr "按住说话，松开转写"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Home"
@@ -4399,6 +4470,10 @@ msgstr "此模型尚未配置图片输入。"
 #: src/lib/user-error.ts
 msgid "Image input is not configured for this model."
 msgstr "此模型尚未配置图片输入。"
+
+#: src/pages/shell/media-result.tsx
+msgid "Image model"
+msgstr "图片模型"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image prompt preset"
@@ -4492,7 +4567,7 @@ msgstr "包含 API 密钥"
 #: src/components/BotPackageImport.tsx
 #: src/components/BotPackageTools.tsx
 msgid "Include memory"
-msgstr ""
+msgstr "包含记忆"
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
@@ -4509,6 +4584,10 @@ msgstr "输入"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
 msgstr "输入"
+
+#: src/components/composer/HoldToTalk.tsx
+msgid "Insert transcript"
+msgstr "插入转写文本"
 
 #: src/components/SidebarFooter.tsx
 msgid "Install update"
@@ -4836,6 +4915,7 @@ msgstr "加载更早的消息"
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/Gallery.tsx
 msgid "Load more"
 msgstr "加载更多"
 
@@ -4869,6 +4949,7 @@ msgid "Loading plugins…"
 msgstr "正在加载插件…"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Loading preview…"
 msgstr "正在加载预览…"
 
@@ -4897,6 +4978,7 @@ msgstr "正在加载语音提供方…"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Invite.tsx
 #: src/pages/PeerMessagesOverlay.tsx
@@ -5221,6 +5303,7 @@ msgstr "模式"
 #: src/pages/routine-editor/model-settings.tsx
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Model"
 msgstr "模型"
@@ -5264,7 +5347,7 @@ msgstr "模型列表正常。{modelCount, plural, one {# 个模型} other {# 个
 
 #: src/components/BotPackageImport.tsx
 msgid "Models, credentials, files, and chat history are not imported."
-msgstr ""
+msgstr "模型、凭证、文件和聊天记录不会被导入。"
 
 #: src/lib/cron.ts
 msgid "Monday"
@@ -5605,9 +5688,17 @@ msgstr "没有机器人"
 msgid "No bots match"
 msgstr "没有匹配的 Bot"
 
+#: src/pages/Shell.tsx
+msgid "No earlier message to regenerate from"
+msgstr "没有更早的消息可重新生成"
+
 #: src/pages/Favorites.tsx
 msgid "No favorites yet"
 msgstr "还没有收藏"
+
+#: src/pages/Gallery.tsx
+msgid "No generated images or videos yet"
+msgstr "还没有生成的图片或视频"
 
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "No invite codes yet"
@@ -5724,6 +5815,10 @@ msgstr "还没有模板。新建一个，或恢复默认模板。"
 msgid "No tickets yet"
 msgstr "还没有工单"
 
+#: src/pages/Shell.tsx
+msgid "No translation model"
+msgstr "未设置翻译模型"
+
 #: src/pages/RoutineList.tsx
 msgid "No trigger"
 msgstr "无触发器"
@@ -5741,6 +5836,7 @@ msgstr "无"
 
 #: src/components/admin/AdminIpLimits.tsx
 #: src/lib/ticket-priority.ts
+#: src/pages/shell/model-switch-menu.tsx
 msgid "Normal"
 msgstr "普通"
 
@@ -5917,7 +6013,7 @@ msgstr "打开 <0>{0}</0>，输入这个验证码："
 
 #: src/components/BotPackageImport.tsx
 msgid "Open bot"
-msgstr ""
+msgstr "打开机器人"
 
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
@@ -6285,13 +6381,20 @@ msgstr "预设提示词"
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/pages/plugins/github-import.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Preview"
 msgstr "预览"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Preview {0}"
 msgstr "预览 {0}"
+
+#: src/pages/shell/media-result.tsx
+msgid "Preview {name}"
+msgstr "预览 {name}"
 
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
@@ -6299,11 +6402,11 @@ msgstr "这种文件无法预览，请下载后查看。"
 
 #: src/components/BotPackageTools.tsx
 msgid "Preview package"
-msgstr ""
+msgstr "预览软件包"
 
 #: src/components/BotPackageImport.tsx
 msgid "Previewing…"
-msgstr ""
+msgstr "预览中…"
 
 #: src/pages/shell/chat-find-bar.tsx
 msgid "Previous match"
@@ -6340,6 +6443,10 @@ msgstr "程序：{name}"
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "Prompt"
 msgstr "提示词"
+
+#: src/pages/shell/media-result.tsx
+msgid "Prompt preset"
+msgstr "提示词预设"
 
 #: src/pages/settings-nav.ts
 msgid "Prompt templates"
@@ -6452,7 +6559,7 @@ msgstr "最近操作"
 
 #: src/components/BotPackageImport.tsx
 msgid "Recent imports"
-msgstr ""
+msgstr "最近导入"
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "Recent payments"
@@ -6557,6 +6664,10 @@ msgstr "刷新画面"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refreshing…"
 msgstr "正在刷新…"
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerate"
+msgstr "重新生成"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Region"
@@ -6701,6 +6812,10 @@ msgstr "取消拉黑"
 msgid "Remove from every space?"
 msgstr "从所有工作区移除？"
 
+#: src/pages/shell/media-result.tsx
+msgid "Remove from favorites"
+msgstr "取消收藏"
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove Git event"
 msgstr "移除 Git 事件"
@@ -6732,7 +6847,7 @@ msgstr "移除 Webhook"
 
 #: src/components/BotPackageSkillsView.tsx
 msgid "Removed"
-msgstr ""
+msgstr "已移除"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Removed, but list refresh failed"
@@ -6919,7 +7034,7 @@ msgstr "正在恢复工作区"
 
 #: src/components/BotPackageImport.tsx
 msgid "Resume import"
-msgstr ""
+msgstr "继续导入"
 
 #: src/components/AccountAccess.tsx
 #: src/components/admin/AdminAppDownloadSettings.tsx
@@ -6978,7 +7093,7 @@ msgstr "可反复用的人设，供机器人使用。"
 
 #: src/components/BotPackageImport.tsx
 msgid "Review import"
-msgstr ""
+msgstr "检查导入"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
@@ -7256,6 +7371,10 @@ msgstr "按域名搜索"
 msgid "Search by email or name"
 msgstr "按邮箱或用户名搜索"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Search in conversation"
+msgstr "搜索对话"
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "搜索 integrations.sh"
@@ -7277,7 +7396,7 @@ msgstr "搜索运行记录"
 
 #: src/components/BotPackageTools.tsx
 msgid "Search shared skills"
-msgstr ""
+msgstr "搜索共享技能"
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Search skills"
@@ -7318,10 +7437,14 @@ msgstr "安全码"
 msgid "Select a bot"
 msgstr "选择 Bot"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Select messages"
+msgstr "选择消息"
+
 #. placeholder {0}: selection.size
 #: src/components/BotPackageTools.tsx
 msgid "Selected skills: {0}"
-msgstr ""
+msgstr "已选技能：{0}"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Self-hosted"
@@ -7354,10 +7477,6 @@ msgstr "发送删除验证码"
 #: src/components/AskCard.tsx
 msgid "Send it"
 msgstr "发送"
-
-#: src/components/composer/HoldToTalk.tsx
-msgid "Send recording"
-msgstr "发送录音"
 
 #: src/pages/Auth.tsx
 msgid "Send reset link"
@@ -7408,7 +7527,7 @@ msgstr "设为主模型"
 
 #: src/components/BotPackageImport.tsx
 msgid "Set up connections"
-msgstr ""
+msgstr "设置连接"
 
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
@@ -7456,6 +7575,7 @@ msgstr "形状 {0}"
 
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Share"
 msgstr "共享"
@@ -7480,10 +7600,11 @@ msgstr "共享记忆"
 
 #: src/components/BotPackageTools.tsx
 msgid "Shared skills (optional)"
-msgstr ""
+msgstr "共享技能（可选）"
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Show"
 msgstr "显示"
 
@@ -7611,7 +7732,7 @@ msgstr "技能 {position}"
 
 #: src/components/BotPackageSkillsView.tsx
 msgid "Skill name"
-msgstr ""
+msgstr "技能名称"
 
 #: src/components/BotPackageDocumentView.tsx
 #: src/components/integrations/plugin-marketplace.tsx
@@ -7628,7 +7749,7 @@ msgstr "技能会加入所有 Bot 共享的技能库。"
 
 #: src/components/BotPackageImport.tsx
 msgid "Skills stay off. Routines stay paused. Connections need setup."
-msgstr ""
+msgstr "技能保持关闭。例行程序保持暂停。连接需要设置。"
 
 #: src/pages/shell/computer-release-actions.tsx
 msgid "Skip"
@@ -7660,6 +7781,10 @@ msgstr "未启用 Slack"
 #: src/components/composer/HoldToTalk.tsx
 msgid "Slide up to lock"
 msgstr "上滑锁定"
+
+#: src/pages/shell/model-switch-menu.tsx
+msgid "Slow"
+msgstr "慢"
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/plugins/plugin-browse.tsx
@@ -7706,6 +7831,7 @@ msgid "Sorts new email and drafts the replies"
 msgstr "分拣新邮件并起草回复"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Source language"
 msgstr "源语言"
 
@@ -7980,6 +8106,7 @@ msgid "Target"
 msgstr "目标"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Target language"
 msgstr "目标语言"
 
@@ -8272,7 +8399,7 @@ msgstr "此导入已使用过。请重新选择文件。"
 
 #: src/components/BotPackageImport.tsx
 msgid "This imported bot was removed."
-msgstr ""
+msgstr "此导入的机器人已被移除。"
 
 #: src/pages/Invite.tsx
 msgid "This invite link is no longer valid."
@@ -8503,6 +8630,7 @@ msgstr "转写请求超时。"
 msgid "Transcription response is too large."
 msgstr "转写响应过大。"
 
+#: src/pages/shell/message-selection.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Translate"
 msgstr "翻译"
@@ -8511,19 +8639,13 @@ msgstr "翻译"
 msgid "Translate this reply"
 msgstr "翻译这条回复"
 
-#. placeholder {0}: displayName(state.result.modelId, t`Model`)
-#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
-#. placeholder {2}: translationLanguageLabel(targetLanguage)
 #: src/pages/shell/message-translation.tsx
-msgid "Translated with {0} · {1} to {2}"
-msgstr "翻译 · 用 {0} 翻译 · {1}译{2}"
+msgid "Translated with {modelMenu} · {languageMenu}"
+msgstr "翻译 · 用 {modelMenu} 翻译 · {languageMenu}"
 
-#. placeholder {0}: displayName(state.result.modelId, t`Model`)
-#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
-#. placeholder {2}: translationLanguageLabel(targetLanguage)
 #: src/pages/shell/message-translation.tsx
-msgid "Translated with {0} (backup) · {1} to {2}"
-msgstr "翻译 · 用 {0} 翻译（备用）· {1}译{2}"
+msgid "Translated with {modelMenu} (backup) · {languageMenu}"
+msgstr "翻译 · 用 {modelMenu} 翻译（备用）· {languageMenu}"
 
 #: src/pages/shell/message-translation.tsx
 msgid "Translating"
@@ -8541,13 +8663,19 @@ msgstr "译文"
 msgid "Translation"
 msgstr "翻译"
 
+#: src/pages/Shell.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Translation failed"
 msgstr "翻译失败"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Translation model"
 msgstr "翻译模型"
+
+#: src/pages/shell/message-selection.tsx
+msgid "Translations"
+msgstr "翻译结果"
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Treat like a person"
@@ -8619,6 +8747,10 @@ msgstr "输入你的回答"
 #: src/pages/Shell.tsx
 msgid "Unassigned"
 msgstr "未分配"
+
+#: src/pages/shell/model-switch-menu.tsx
+msgid "Unavailable"
+msgstr "不可用"
 
 #: src/components/AskCard.tsx
 msgid "Undo"
@@ -8920,6 +9052,10 @@ msgstr "正在校验…"
 msgid "Version"
 msgstr "版本"
 
+#: src/pages/shell/media-result.tsx
+msgid "Via"
+msgstr "经"
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"
 msgstr "视频生成模型"
@@ -8927,6 +9063,10 @@ msgstr "视频生成模型"
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Video generation persona"
 msgstr "视频生成人设"
+
+#: src/pages/shell/media-result.tsx
+msgid "Video model"
+msgstr "视频模型"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video prompt preset"

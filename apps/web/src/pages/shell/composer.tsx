@@ -38,7 +38,6 @@ import {
   readComposerDraft,
   readComposerDraftBindings,
   readComposerRetryNonce,
-  replaceComposerDraft,
   settleComposerDraftSubmission,
   subscribeComposerDraftAccepted,
   subscribeComposerDraftReplaced,
@@ -89,7 +88,6 @@ const ComposerBody = memo(function Composer({
   onRemoveAttachment,
   onSend,
   onStop,
-  phoneCallsEnabled,
   dictationTranscribe,
   replyTarget,
   replyQuote,
@@ -129,7 +127,6 @@ const ComposerBody = memo(function Composer({
     imageHandling?: "file",
   ) => Promise<boolean>;
   onStop: () => Promise<void>;
-  phoneCallsEnabled?: boolean;
   /** Hold-to-talk falls back to the voice provider's transcription; undefined while unknown. */
   dictationTranscribe?: boolean;
   artifactTarget: ArtifactTarget;
@@ -224,21 +221,10 @@ const ComposerBody = memo(function Composer({
   const onCall = useCallSession() !== null;
   const talk = useHoldToTalk({
     transcribe: dictationTranscribe,
-    disabled: disabled || onCall || !phoneCallsEnabled,
+    disabled: disabled || onCall,
     onText: (text) => {
-      // Dictation rides the typed-message path: the words land in the draft and
-      // the normal send carries them, with its nonce, edit guards and recovery.
-      // Words added to a draft, a skill or attachments wait for the user to review
-      // and send; an armed reply or an open page is context and still sends.
-      const reviewFirst =
-        compositionRef.current.text.trim().length > 0 ||
-        selectedSkill !== null ||
-        pendingAttachments.length > 0;
-      if (!appendDictation(text) || reviewFirst) return;
-      const clientNonce = newClientId();
-      retryNonce.current = clientNonce;
-      queuedDictation.current = editRevision.current;
-      setDictationSendDue(editRevision.current);
+      // Dictation lands in the draft for the user to review and send; it never sends itself.
+      appendDictation(text);
     },
   });
 
@@ -298,21 +284,6 @@ const ComposerBody = memo(function Composer({
       previousReply.current = { id: replyId, quote };
     }
   }, [replyId, quote, onDraftEdited]);
-  // The words must reach the committed draft before send() reads it, so the
-  // send waits one render for the state appendDictation just queued.
-  // The due send holds the edit revision the dictation left.
-  const [dictationSendDue, setDictationSendDue] = useState<number | null>(null);
-  // The same due revision for send(), which reads it after its own await.
-  const queuedDictation = useRef<number | null>(null);
-  // A dictation that finishes while an earlier send is in flight waits for it;
-  // any edit in the meantime cancels the automatic send. It runs after the
-  // reply effect above, so a reply armed in the same commit counts as an edit.
-  useEffect(() => {
-    if (dictationSendDue === null || sending) return;
-    setDictationSendDue(null);
-    queuedDictation.current = null;
-    if (editRevision.current === dictationSendDue) void send();
-  }, [dictationSendDue, sending]);
   const {
     textareaRef,
     mirrorRef,
@@ -323,11 +294,11 @@ const ComposerBody = memo(function Composer({
     expanded,
   } = useComposerLayout(draft, selectedSkill !== null);
   // Cmd/Ctrl+D in the message field dictates hands-free, like a keyboard press on the mic button,
-  // and sends once pressed again. The field hides while recording, so the key is heard window-wide.
+  // and submits the recording once pressed again. The field hides while recording, so the key is heard window-wide.
   const dictateKey = useRef({ talk, available: false });
   dictateKey.current = {
     talk,
-    available: Boolean(phoneCallsEnabled) && !disabled && !onCall && draft.trim().length === 0,
+    available: !disabled && !onCall && draft.trim().length === 0,
   };
   useEffect(() => {
     const apple = isApplePlatform();
@@ -490,30 +461,6 @@ const ComposerBody = memo(function Composer({
       // text send keeps its nonce with them, so the retry is not mistaken for
       // a reply-linked or otherwise different message.
       if (nonceRecoverable) keepComposerRetryNonce(draftKey, submission, clientNonce);
-      return;
-    }
-    // A dictation queued behind this send, and no other edit since, joins the failed
-    // words instead of going out alone; the send's error stays.
-    if (queuedDictation.current === revision + 1 && editRevision.current === revision + 1) {
-      queuedDictation.current = null;
-      setDictationSendDue(null);
-      retryNonce.current = null;
-      const queued = compositionRef.current;
-      const words = queued.text;
-      const restored = { text: `${submitted.text} ${words}`, bindings: submitted.bindings };
-      if (mountedRef.current && draftKeyRef.current === draftKey) {
-        commitComposition(restored);
-        setSelectedSkill(selectedSkill);
-        return;
-      }
-      // Once the chat was left, a composer reopened for it owns the saved draft; only a draft
-      // still holding just these words, mentions included, is this send's to restore, and the
-      // reopened field follows it. The same spelling bound to a mention there is a newer edit.
-      if (
-        readComposerDraft(draftKey) === words &&
-        JSON.stringify(readComposerDraftBindings(draftKey)) === JSON.stringify(queued.bindings)
-      )
-        replaceComposerDraft(draftKey, restored.text, restored.bindings);
       return;
     }
     // Restore only an untouched draft, retaining its nonce for an unchanged retry.
@@ -843,7 +790,7 @@ const ComposerBody = memo(function Composer({
           expanded={expanded}
           talk={talk}
           running={running}
-          showTalk={Boolean(phoneCallsEnabled) && draft.trim().length === 0}
+          showTalk={draft.trim().length === 0}
           talkDisabled={disabled || onCall}
           sendDisabled={sending || !canSend || disabled}
           stopDisabled={sending}

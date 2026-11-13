@@ -195,6 +195,10 @@ msgstr "{count} חודשים"
 msgid "{count} more"
 msgstr "עוד {count}"
 
+#: src/pages/shell/message-selection.tsx
+msgid "{count} selected"
+msgstr ""
+
 #: src/lib/billing.ts
 msgid "{count} weeks"
 msgstr "{count} שבועות"
@@ -843,6 +847,10 @@ msgstr "הוספת URL של שרת"
 msgid "Add skills"
 msgstr "הוספת מיומנויות"
 
+#: src/pages/shell/media-result.tsx
+msgid "Add to favorites"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Add to routine"
 msgstr "הוספה לרוטינה"
@@ -1326,6 +1334,7 @@ msgstr "Avatar Studio"
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/McpServerForm.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/plugins/connector-detail.tsx
@@ -1443,6 +1452,7 @@ msgstr "בוט"
 #: src/lib/identity-display.ts
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/Shell.tsx
@@ -1602,6 +1612,7 @@ msgstr "לא ניתן לקרוא תמונות"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-selection.tsx
 msgid "Cancel"
 msgstr "ביטול"
 
@@ -1950,6 +1961,7 @@ msgid "Close panel"
 msgstr "סגירת החלונית"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Close preview"
 msgstr "סגירת התצוגה המקדימה"
 
@@ -1984,7 +1996,9 @@ msgctxt "email sign-in"
 msgid "Code"
 msgstr "קוד"
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Collapse"
 msgstr ""
 
@@ -2565,12 +2579,15 @@ msgstr "לא ניתן לסגור"
 msgid "Could not dismiss this server"
 msgstr "לא ניתן לדחות את השרת הזה"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Could not download {0}. Try again."
 msgstr "לא ניתן להוריד את {0}. אפשר לנסות שוב."
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Could not download {name}. Try again."
 msgstr "לא ניתן להוריד את {name}. אפשר לנסות שוב."
 
@@ -2584,6 +2601,10 @@ msgstr "לא ניתן להפעיל את הכלים"
 
 #: src/components/BotPackageTools.tsx
 msgid "Could not export this package."
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Could not forward"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
@@ -2645,6 +2666,10 @@ msgstr "לא ניתן לטעון את פרטי הגישה."
 msgid "Could not load favorites."
 msgstr ""
 
+#: src/pages/Gallery.tsx
+msgid "Could not load gallery."
+msgstr ""
+
 #: src/components/HumanVerification.tsx
 msgid "Could not load human verification"
 msgstr ""
@@ -2702,6 +2727,7 @@ msgid "Could not load this chat."
 msgstr "לא ניתן לטעון את הצ׳אט הזה."
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Could not load this file."
 msgstr "לא ניתן לטעון את הקובץ הזה."
 
@@ -2940,6 +2966,10 @@ msgstr "לא ניתן לשלוח אימייל לאיפוס"
 msgid "Could not send that"
 msgstr "לא ניתן לשלוח את זה"
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not share {name}"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 msgid "Could not show the credential"
 msgstr "לא ניתן היה להציג את פרטי הגישה"
@@ -2968,6 +2998,22 @@ msgstr "לא ניתן לשלוח את התשובה"
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Could not switch {failedNames}. Try again."
 msgstr "לא ניתן להחליף את {failedNames}. אפשר לנסות שוב."
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not switch generation model"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not switch prompt preset"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Could not switch translation language"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Could not switch translation model"
+msgstr ""
 
 #: src/pages/shell/use-computer.tsx
 msgid "Could not take control"
@@ -3584,15 +3630,19 @@ msgstr "שנמוך בחידוש"
 
 #: src/pages/Artifacts.tsx
 #: src/pages/KnowledgeSection.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Download"
 msgstr "הורדה"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Download {0}"
 msgstr "הורדת {0}"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Download {name}"
 msgstr "הורדת {name}"
 
@@ -3878,6 +3928,7 @@ msgid "Everyone in this bot's space can read the chats it gets from {linkApp}."
 msgstr "כל מי שבמרחב של הבוט הזה יכול לקרוא את הצ׳אטים שהוא מקבל מ-{linkApp}."
 
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Expand"
 msgstr "הרחבה"
 
@@ -3913,12 +3964,17 @@ msgstr "תוקף"
 #: src/components/AccountDataSettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-selection.tsx
 msgid "Export"
 msgstr "ייצוא"
 
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "Export all"
 msgstr "ייצוא הכל"
+
+#: src/pages/shell/chat-header.tsx
+msgid "Export conversation"
+msgstr ""
 
 #: src/components/AccountDataSettings.tsx
 msgid "Export data"
@@ -3986,6 +4042,7 @@ msgstr "טיפול בכשלים"
 msgid "Fallback models"
 msgstr ""
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Favorite"
@@ -3999,6 +4056,7 @@ msgstr ""
 msgid "Favorite translation"
 msgstr ""
 
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Favorited"
@@ -4114,6 +4172,14 @@ msgstr "מעבר להודעה"
 msgid "Forgot password?"
 msgstr "שכחת סיסמה?"
 
+#: src/pages/shell/message-selection.tsx
+msgid "Forward"
+msgstr ""
+
+#: src/pages/shell/message-selection.tsx
+msgid "Forward to"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Free"
 msgstr "חינם"
@@ -4161,6 +4227,11 @@ msgstr "שם מלא"
 #: src/pages/WindowChrome.tsx
 msgid "Fullscreen"
 msgstr "מסך מלא"
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/Gallery.tsx
+msgid "Gallery"
+msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -4323,8 +4394,8 @@ msgid "Hold to talk"
 msgstr "לחיצה ארוכה לדיבור"
 
 #: src/components/composer/HoldToTalk.tsx
-msgid "Hold to talk, release to send"
-msgstr "לחיצה ארוכה לדיבור, שחרור לשליחה"
+msgid "Hold to talk, release to transcribe"
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Home"
@@ -4399,6 +4470,10 @@ msgstr "קלט תמונה לא מוגדר עבור המודל הזה."
 #: src/lib/user-error.ts
 msgid "Image input is not configured for this model."
 msgstr "קלט תמונה לא מוגדר עבור המודל הזה."
+
+#: src/pages/shell/media-result.tsx
+msgid "Image model"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image prompt preset"
@@ -4509,6 +4584,10 @@ msgstr "קלט"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
 msgstr "קלטים"
+
+#: src/components/composer/HoldToTalk.tsx
+msgid "Insert transcript"
+msgstr ""
 
 #: src/components/SidebarFooter.tsx
 msgid "Install update"
@@ -4836,6 +4915,7 @@ msgstr "טעינת הודעות קודמות"
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/Gallery.tsx
 msgid "Load more"
 msgstr "טעינת עוד"
 
@@ -4869,6 +4949,7 @@ msgid "Loading plugins…"
 msgstr "טוען תוספים…"
 
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Loading preview…"
 msgstr "טוען תצוגה מקדימה…"
 
@@ -4897,6 +4978,7 @@ msgstr "טוען ספקי קול…"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/Favorites.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Invite.tsx
 #: src/pages/PeerMessagesOverlay.tsx
@@ -5221,6 +5303,7 @@ msgstr "מצב"
 #: src/pages/routine-editor/model-settings.tsx
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Model"
 msgstr "מודל"
@@ -5605,8 +5688,16 @@ msgstr "אין בוטים"
 msgid "No bots match"
 msgstr "אין בוטים תואמים"
 
+#: src/pages/Shell.tsx
+msgid "No earlier message to regenerate from"
+msgstr ""
+
 #: src/pages/Favorites.tsx
 msgid "No favorites yet"
+msgstr ""
+
+#: src/pages/Gallery.tsx
+msgid "No generated images or videos yet"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
@@ -5724,6 +5815,10 @@ msgstr "אין עדיין תבניות. צרו אחת או שחזרו את תב�
 msgid "No tickets yet"
 msgstr "עדיין אין כרטיסים"
 
+#: src/pages/Shell.tsx
+msgid "No translation model"
+msgstr ""
+
 #: src/pages/RoutineList.tsx
 msgid "No trigger"
 msgstr "ללא טריגר"
@@ -5741,6 +5836,7 @@ msgstr "ללא"
 
 #: src/components/admin/AdminIpLimits.tsx
 #: src/lib/ticket-priority.ts
+#: src/pages/shell/model-switch-menu.tsx
 msgid "Normal"
 msgstr "רגיל"
 
@@ -6285,13 +6381,20 @@ msgstr ""
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/pages/plugins/github-import.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Preview"
 msgstr "תצוגה מקדימה"
 
+#. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Gallery.tsx
 msgid "Preview {0}"
 msgstr "תצוגה מקדימה של {0}"
+
+#: src/pages/shell/media-result.tsx
+msgid "Preview {name}"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
@@ -6340,6 +6443,10 @@ msgstr "תוכנה: {name}"
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "Prompt"
 msgstr "הנחיה"
+
+#: src/pages/shell/media-result.tsx
+msgid "Prompt preset"
+msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Prompt templates"
@@ -6558,6 +6665,10 @@ msgstr "רענון התצוגה"
 msgid "Refreshing…"
 msgstr "מרענן…"
 
+#: src/pages/shell/media-result.tsx
+msgid "Regenerate"
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 msgid "Region"
 msgstr "אזור"
@@ -6700,6 +6811,10 @@ msgstr ""
 #: src/pages/plugins/manage-view.tsx
 msgid "Remove from every space?"
 msgstr "להסיר מכל המרחבים?"
+
+#: src/pages/shell/media-result.tsx
+msgid "Remove from favorites"
+msgstr ""
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove Git event"
@@ -7256,6 +7371,10 @@ msgstr "חיפוש לפי דומיין"
 msgid "Search by email or name"
 msgstr ""
 
+#: src/pages/shell/chat-header.tsx
+msgid "Search in conversation"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "חיפוש ב-integrations.sh"
@@ -7318,6 +7437,10 @@ msgstr "קוד אבטחה"
 msgid "Select a bot"
 msgstr "בחירת בוט"
 
+#: src/pages/shell/chat-header.tsx
+msgid "Select messages"
+msgstr ""
+
 #. placeholder {0}: selection.size
 #: src/components/BotPackageTools.tsx
 msgid "Selected skills: {0}"
@@ -7354,10 +7477,6 @@ msgstr "שליחת קוד מחיקה"
 #: src/components/AskCard.tsx
 msgid "Send it"
 msgstr "שליחה"
-
-#: src/components/composer/HoldToTalk.tsx
-msgid "Send recording"
-msgstr "שליחת ההקלטה"
 
 #: src/pages/Auth.tsx
 msgid "Send reset link"
@@ -7456,6 +7575,7 @@ msgstr "צורה {0}"
 
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Share"
 msgstr "שיתוף"
@@ -7484,6 +7604,7 @@ msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Show"
 msgstr "הצגה"
 
@@ -7661,6 +7782,10 @@ msgstr "Slack לא מופעל"
 msgid "Slide up to lock"
 msgstr "החלקה למעלה לנעילה"
 
+#: src/pages/shell/model-switch-menu.tsx
+msgid "Slow"
+msgstr ""
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Some plugins could not be loaded."
@@ -7706,6 +7831,7 @@ msgid "Sorts new email and drafts the replies"
 msgstr "ממיין אימיילים חדשים ומנסח טיוטות לתשובות"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Source language"
 msgstr ""
 
@@ -7980,6 +8106,7 @@ msgid "Target"
 msgstr "יעד"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Target language"
 msgstr ""
 
@@ -8503,6 +8630,7 @@ msgstr "תם הזמן לבקשת התמלול."
 msgid "Transcription response is too large."
 msgstr "תשובת התמלול גדולה מדי."
 
+#: src/pages/shell/message-selection.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Translate"
 msgstr ""
@@ -8511,18 +8639,12 @@ msgstr ""
 msgid "Translate this reply"
 msgstr ""
 
-#. placeholder {0}: displayName(state.result.modelId, t`Model`)
-#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
-#. placeholder {2}: translationLanguageLabel(targetLanguage)
 #: src/pages/shell/message-translation.tsx
-msgid "Translated with {0} · {1} to {2}"
+msgid "Translated with {modelMenu} · {languageMenu}"
 msgstr ""
 
-#. placeholder {0}: displayName(state.result.modelId, t`Model`)
-#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
-#. placeholder {2}: translationLanguageLabel(targetLanguage)
 #: src/pages/shell/message-translation.tsx
-msgid "Translated with {0} (backup) · {1} to {2}"
+msgid "Translated with {modelMenu} (backup) · {languageMenu}"
 msgstr ""
 
 #: src/pages/shell/message-translation.tsx
@@ -8541,12 +8663,18 @@ msgstr ""
 msgid "Translation"
 msgstr ""
 
+#: src/pages/Shell.tsx
 #: src/pages/shell/message-translation.tsx
 msgid "Translation failed"
 msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Translation model"
+msgstr ""
+
+#: src/pages/shell/message-selection.tsx
+msgid "Translations"
 msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
@@ -8619,6 +8747,10 @@ msgstr "יש להקליד תשובה"
 #: src/pages/Shell.tsx
 msgid "Unassigned"
 msgstr "ללא שיוך"
+
+#: src/pages/shell/model-switch-menu.tsx
+msgid "Unavailable"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Undo"
@@ -8920,12 +9052,20 @@ msgstr "מאמת…"
 msgid "Version"
 msgstr "גרסה"
 
+#: src/pages/shell/media-result.tsx
+msgid "Via"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"
 msgstr ""
 
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Video generation persona"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Video model"
 msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx

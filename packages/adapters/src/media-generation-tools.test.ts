@@ -216,9 +216,37 @@ describe("bot media tools", () => {
         row.id,
         artifact.id,
         undefined,
+        undefined,
       );
     },
   );
+  it("recovers the model and preset mark from the saved job", async () => {
+    const { options, externalEffect, row, publish } = setup();
+    externalEffect.findFirst.mockResolvedValue({
+      ...row,
+      result: { ...row.result, artifactId: "artifact", modelId: "model-a", presetName: "水彩" },
+    });
+    const artifact = {
+      id: "artifact",
+      name: "generated.png",
+      mimeType: "image/png",
+      size: 4,
+    };
+    vi.mocked(options.prisma.artifact.findFirst).mockResolvedValue(artifact as never);
+    expect(
+      await generateMediaFromTool({ ...options, name: "generate_image", args: { prompt: "draw" } }),
+    ).toEqual({ status: "completed", artifactId: "artifact", modelId: "model-a" });
+    expect(publish).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({ artifactId: artifact.id }),
+        { kind: "text", text: "经 model-a · 水彩" },
+      ],
+      row.id,
+      artifact.id,
+      "model-a",
+      "水彩",
+    );
+  });
   it("never submits or reserves new work in recovery-only mode", async () => {
     const { options, externalEffect, provider } = setup();
     const submit = vi.spyOn(provider, "generateImage");

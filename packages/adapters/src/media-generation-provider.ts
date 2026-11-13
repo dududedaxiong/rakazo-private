@@ -290,6 +290,8 @@ export const CHAT_MEDIA_VIDEO_JOB_ID = "chat-media-video";
 /** One bot-configured model to try, in list order. */
 export type BotMediaCallEntry = {
   modelId: string;
+  /** The prompt preset applied by this call; absent when no preset was active. */
+  presetName?: string;
   call: (prompt: string, signal: AbortSignal) => Promise<GeneratedMedia>;
 };
 
@@ -339,7 +341,11 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
       const entry = kind.calls[index]!;
       try {
         const output = await entry.call(input.prompt, signal);
-        return { ...output, modelId: entry.modelId };
+        return {
+          ...output,
+          modelId: entry.modelId,
+          ...(entry.presetName ? { presetName: entry.presetName } : {}),
+        };
       } catch (error) {
         signal.throwIfAborted();
         const failure: BotMediaFailure = {

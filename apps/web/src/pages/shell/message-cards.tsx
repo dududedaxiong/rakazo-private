@@ -514,13 +514,20 @@ export function ArtifactImage({
   target,
   artifactId,
   name,
+  previewOpen,
+  onPreviewOpenChange,
 }: {
   target: ArtifactTarget;
   artifactId: string;
   name: string;
+  /** Controlled preview; when absent the image opens its own lightbox on click. */
+  previewOpen?: boolean;
+  onPreviewOpenChange?: (open: boolean) => void;
 }) {
   const { t } = useLingui();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = previewOpen ?? internalOpen;
+  const setOpen = onPreviewOpenChange ?? setInternalOpen;
   const [visible, setVisible] = useState(false);
   const container = useRef<HTMLDivElement>(null);
   const src = useArtifactImage(target, artifactId, visible);
