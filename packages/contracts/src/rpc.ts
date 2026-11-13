@@ -181,6 +181,13 @@ import {
   VoiceStatusSchema,
 } from "./domain.js";
 import { ComputerCommandSchema, ProductEventSchema } from "./events.js";
+import {
+  AddFavoriteInputSchema,
+  ListFavoritesInputSchema,
+  MessageFavoriteSchema,
+  RemoveFavoriteInputSchema,
+  SyncFavoritesInputSchema,
+} from "./favorites.js";
 import { Id, IsoDate, ThinkingLevelSchema } from "./ids.js";
 import {
   IntegrationProviderConfigSchema,
@@ -715,6 +722,12 @@ export const appContract = {
     confirmImport: oc
       .input(ConfirmPromptTemplateImportInput)
       .output(z.object({ templates: z.array(PromptTemplateSchema) })),
+  },
+  favorites: {
+    list: oc.input(ListFavoritesInputSchema).output(z.array(MessageFavoriteSchema)),
+    add: oc.input(AddFavoriteInputSchema).output(MessageFavoriteSchema),
+    remove: oc.input(RemoveFavoriteInputSchema).output(z.object({ ok: z.literal(true) })),
+    sync: oc.input(SyncFavoritesInputSchema).output(z.array(MessageFavoriteSchema)),
   },
   groups: {
     create: oc.input(CreateGroupInput).output(GroupSchema),

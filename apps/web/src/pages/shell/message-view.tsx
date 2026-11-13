@@ -33,6 +33,7 @@ import {
 } from "../../components/ToolActivityDisclosure";
 import { SkillDraftCard } from "../../components/teach/SkillDraftCard";
 import type { ArtifactTarget } from "../../lib/artifact-open";
+import { favoriteSnippet, useMessageFavorite } from "../../lib/favorites";
 import { messageProviderLabel } from "../../lib/messaging";
 import type { PageBlock } from "../../lib/page-cards";
 import { useOpenPage } from "../../lib/pages";
@@ -234,6 +235,28 @@ export const MessageView = memo(function MessageView({
     speaking,
     speakDisabled: callHoldsSpeaker,
   });
+  const favorite = useMessageFavorite({
+    rpc,
+    botId: message.role === "bot" ? message.botId : undefined,
+    messageId: message.id,
+    snippet: favoriteSnippet(translatableText),
+    text: translatableText,
+  });
+  const showFavorite =
+    message.role === "bot" && Boolean(message.botId) && translatableText.trim().length > 0;
+  const favoriteButton = showFavorite ? (
+    <Button
+      variant="text"
+      size="xs"
+      aria-label={favorite.favorited ? t`Remove favorite` : t`Favorite this reply`}
+      aria-pressed={favorite.favorited}
+      disabled={favorite.busy}
+      onClick={() => void favorite.toggle()}
+      className="font-normal"
+    >
+      {favorite.favorited ? <Trans>Favorited</Trans> : <Trans>Favorite</Trans>}
+    </Button>
+  ) : null;
   const replyBotId = message.replyPreview?.botId ?? replyParent?.botId;
   const author = message.role === "user" ? otherAuthor(message.author, meId) : undefined;
   const replyAuthor = otherAuthor(message.replyPreview?.author ?? replyParent?.author, meId);
@@ -374,6 +397,7 @@ export const MessageView = memo(function MessageView({
                       </Button>
                     ) : null}
                     {translationSettings ? translation.actions : null}
+                    {favoriteButton}
                   </div>
                 ) : null}
               </div>
@@ -659,7 +683,8 @@ export const MessageView = memo(function MessageView({
                         {block.text}
                       </ChatMarkdown>
                     </div>
-                    {voiceReady || (firstText && translationSettings && !isLive) ? (
+                    {voiceReady ||
+                    (firstText && !isLive && (translationSettings || showFavorite)) ? (
                       <div className="mt-2 flex flex-wrap items-center gap-1">
                         {voiceReady ? (
                           <Button
@@ -674,6 +699,7 @@ export const MessageView = memo(function MessageView({
                             {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
                           </Button>
                         ) : null}
+                        {firstText && !isLive ? favoriteButton : null}
                         {firstText && translationSettings && !isLive ? translation.actions : null}
                       </div>
                     ) : null}

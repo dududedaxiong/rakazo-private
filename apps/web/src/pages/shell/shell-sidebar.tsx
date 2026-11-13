@@ -400,6 +400,11 @@ function ShellSidebarFooter({
           closeMobileSidebar();
           navigate("/app/artifacts");
         }}
+        onFavorites={() => {
+          setMenuOpen(false);
+          closeMobileSidebar();
+          navigate("/app/favorites");
+        }}
         onSettings={() => {
           setMenuOpen(false);
           openSettings("general");

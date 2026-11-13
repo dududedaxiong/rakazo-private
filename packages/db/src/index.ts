@@ -29,6 +29,7 @@ export { eventsAfter, followThreadEvents, notifyRealtime } from "./event-stream.
 export * from "./events.js";
 export * from "./expire-stuck-run.js";
 export * from "./external-conversations.js";
+export * from "./favorites.js";
 export * from "./groups.js";
 export * from "./history-retrieval.js";
 export * from "./memory-config.js";

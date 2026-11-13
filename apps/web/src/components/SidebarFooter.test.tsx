@@ -34,6 +34,7 @@ async function render(
   onIntegrations = vi.fn(),
   onBoard?: () => void,
   logos?: Array<{ name: string; logo?: string }>,
+  onFavorites = vi.fn(),
 ) {
   const email = "account@rakazo.test";
   await act(async () =>
@@ -56,6 +57,7 @@ async function render(
           onSkills={vi.fn()}
           onBoard={onBoard}
           onArtifacts={() => {}}
+          onFavorites={onFavorites}
           onSettings={() => {}}
           onLogOut={() => {}}
           signingOut={false}
@@ -143,6 +145,7 @@ it("opens integrations and keeps the existing account actions and links", async 
     "Settings",
     "Skills",
     "Artifacts",
+    "Favorites",
     "Board",
     "Get the mobile app",
     "Docs",
@@ -157,6 +160,16 @@ it("omits Board when unavailable", async () => {
   expect(document.querySelector('[data-slot="popover-content"]')?.textContent).not.toContain(
     "Board",
   );
+});
+
+it("opens favorites from the account menu", async () => {
+  const onFavorites = vi.fn();
+  await render("Demo User", undefined, vi.fn(), vi.fn(), undefined, onFavorites);
+  const favorites = [...document.querySelectorAll("button")].find(
+    (button) => button.textContent === "Favorites",
+  )!;
+  await act(async () => favorites.click());
+  expect(onFavorites).toHaveBeenCalledOnce();
 });
 
 it("offers Google Play on Android", async () => {

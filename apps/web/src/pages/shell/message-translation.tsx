@@ -3,6 +3,7 @@ import type { TranslateOutput } from "@rakazo/contracts";
 import { Button, CopyTextFallback, toast, useCopyText } from "@rakazo/ui-web";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { favoriteSnippet, translationFavoriteId, useMessageFavorite } from "../../lib/favorites";
 import type { createSpaceRpc } from "../../lib/rpc";
 import type { BotTranslationSettings } from "../../lib/translation";
 import {
@@ -56,6 +57,15 @@ export function useMessageTranslation({
   const [copied, copy, copyFailed, resetCopy, copyFailedText] = useCopyText();
   /** The bot's switch for the read-aloud, share, and favorite actions; on by default. */
   const showActions = settings?.showTranslationActions ?? true;
+  const translatedText = state.status === "done" ? state.result.translatedText : "";
+  // A translation saves under its own id, so favoriting it never toggles the original.
+  const translationFavorite = useMessageFavorite({
+    rpc,
+    botId,
+    messageId: translationFavoriteId(messageId),
+    snippet: favoriteSnippet(translatedText),
+    text: translatedText,
+  });
 
   useEffect(() => {
     setState({ status: "idle" });
@@ -110,8 +120,8 @@ export function useMessageTranslation({
     </Button>
   );
 
-  // The web has no message favorites; share falls back to copying when the
-  // browser has no share sheet, and a dismissed sheet copies nothing.
+  // Share falls back to copying when the browser has no share sheet, and a
+  // dismissed sheet copies nothing.
   const shareTranslation = useCallback(async () => {
     if (state.status !== "done") return;
     const text = state.result.translatedText;
@@ -185,6 +195,20 @@ export function useMessageTranslation({
                 aria-label={t`Share`}
               >
                 <Trans>Share</Trans>
+              </button>
+            ) : null}
+            {showActions ? (
+              <button
+                type="button"
+                onClick={() => void translationFavorite.toggle()}
+                disabled={translationFavorite.busy}
+                className="text-body text-link"
+                aria-label={
+                  translationFavorite.favorited ? t`Remove favorite` : t`Favorite translation`
+                }
+                aria-pressed={translationFavorite.favorited}
+              >
+                {translationFavorite.favorited ? <Trans>Favorited</Trans> : <Trans>Favorite</Trans>}
               </button>
             ) : null}
             <button

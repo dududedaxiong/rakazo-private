@@ -5,6 +5,7 @@ import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { resetFavoritesCache } from "../../lib/favorites";
 import { rpc } from "../../lib/rpc";
 import { MessageView } from "./message-view";
 
@@ -382,7 +383,17 @@ describe("message translation", () => {
 
   function renderTranslated(props: Partial<ComponentProps<typeof MessageView>> = {}) {
     const translate = vi.fn(async () => translated);
-    const spaceRpc = { bots: { translate } };
+    const favorites = {
+      list: vi.fn(async () => []),
+      add: vi.fn(async (input: { botId: string; messageId: string; snippet: string }) => ({
+        id: "fav-1",
+        ...input,
+        text: null,
+        createdAt: new Date().toISOString(),
+      })),
+      remove: vi.fn(async () => ({ ok: true as const })),
+    };
+    const spaceRpc = { bots: { translate }, favorites };
     renderView("bot", textBlocks, {
       message: botMessage(textBlocks),
       peerBot: translatingBot,
@@ -487,7 +498,14 @@ describe("message translation", () => {
     renderView("bot", textBlocks, {
       message: botMessage(textBlocks),
       peerBot: translatingBot,
-      rpc: { bots: { translate } } as never,
+      rpc: {
+        bots: { translate },
+        favorites: {
+          list: vi.fn(async () => []),
+          add: vi.fn(async () => ({})),
+          remove: vi.fn(async () => ({ ok: true as const })),
+        },
+      } as never,
     });
     await act(async () => {
       translateButton()?.click();
@@ -550,6 +568,146 @@ describe("message translation", () => {
     expect(panel?.textContent).not.toContain("Speak");
     expect(panel?.textContent).not.toContain("Share");
   });
+
+  it("favorites a translation under its own id", async () => {
+    const { spaceRpc } = renderTranslated();
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const panel = translationPanel();
+    expect(panel?.textContent).toContain("Favorite");
+    const favoriteTranslation = panel?.querySelector<HTMLButtonElement>(
+      'button[aria-label="Favorite translation"]',
+    );
+    expect(favoriteTranslation).not.toBeNull();
+    await act(async () => {
+      favoriteTranslation?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(spaceRpc.favorites.add).toHaveBeenCalledExactlyOnceWith({
+      botId: "bot-1",
+      messageId: "message:translation",
+      snippet: "Hark AI 是一款新的 AI 搜索产品。",
+      text: "Hark AI 是一款新的 AI 搜索产品。",
+    });
+    expect(
+      panel?.querySelector<HTMLButtonElement>('button[aria-label="Remove favorite"]'),
+    ).not.toBeNull();
+  });
+
+  it("hides the translation favorite when the bot turns its actions off", async () => {
+    renderTranslated({
+      peerBot: () => ({
+        color: "orange",
+        translationModelProvider: "deepseek",
+        translationModelId: "deepseek-v4.1-flash",
+        translationSourceLanguage: "en",
+        translationTargetLanguage: null,
+        autoTranslate: false,
+        showTranslationActions: false,
+      }),
+      voiceReady: true,
+      onSpeakText: vi.fn(),
+    });
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const panel = translationPanel();
+    expect(panel?.textContent).not.toContain("Favorite");
+  });
+});
+
+describe("message favorites", () => {
+  const favoriteButton = () =>
+    container.querySelector<HTMLButtonElement>('button[aria-label="Favorite this reply"]');
+  const favoritedButton = () =>
+    container.querySelector<HTMLButtonElement>('button[aria-label="Remove favorite"]');
+  const flush = () =>
+    act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  function renderFavoritable(list: unknown[] = []) {
+    const favorites = {
+      list: vi.fn(async () => list),
+      add: vi.fn(async (input: { botId: string; messageId: string; snippet: string }) => ({
+        id: "fav-1",
+        ...input,
+        text: "Hello",
+        createdAt: new Date().toISOString(),
+      })),
+      remove: vi.fn(async () => ({ ok: true as const })),
+    };
+    resetFavoritesCache();
+    renderView("bot", [{ kind: "text", text: "Hello" }], {
+      message: {
+        id: "message-9",
+        threadId: "thread",
+        seq: 1,
+        role: "bot",
+        botId: "bot-9",
+        createdAt: new Date().toISOString(),
+        blocks: [{ kind: "text", text: "Hello" }],
+      },
+      peerBot: existingBot,
+      rpc: { favorites } as never,
+    });
+    return favorites;
+  }
+
+  it("favorites a bot reply and shows the saved state", async () => {
+    const favorites = renderFavoritable();
+    await flush();
+    expect(favoriteButton()).not.toBeNull();
+    await act(async () => {
+      favoriteButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(favorites.add).toHaveBeenCalledExactlyOnceWith({
+      botId: "bot-9",
+      messageId: "message-9",
+      snippet: "Hello",
+      text: "Hello",
+    });
+    expect(favoritedButton()).not.toBeNull();
+  });
+
+  it("shows a saved reply as favorited and removes it on click", async () => {
+    const favorites = renderFavoritable([
+      {
+        id: "fav-1",
+        botId: "bot-9",
+        messageId: "message-9",
+        snippet: "Hello",
+        text: "Hello",
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    await flush();
+    expect(favoritedButton()).not.toBeNull();
+    await act(async () => {
+      favoritedButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(favorites.remove).toHaveBeenCalledExactlyOnceWith({
+      botId: "bot-9",
+      messageId: "message-9",
+    });
+    expect(favoriteButton()).not.toBeNull();
+  });
+
+  it("rolls back when saving fails", async () => {
+    const favorites = renderFavoritable();
+    favorites.add.mockRejectedValueOnce(new Error("offline"));
+    await flush();
+    await act(async () => {
+      favoriteButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(favorites.add).toHaveBeenCalledTimes(1);
+    expect(favoriteButton()).not.toBeNull();
+  });
 });
 
 it("opens one counted peer line without an inline reply toggle", () => {
@@ -597,8 +755,15 @@ it("sends a settings Undo through the chat's space client", async () => {
   expect(spaceRpc.bots.update).toHaveBeenCalledTimes(1);
 });
 
-it("stops a background helper from its saved running card, never a turn's live one", () => {
-  const spaceRpc = { threads: { stopHelper: vi.fn(async () => ({ ok: true })) } };
+it("stops a background helper from its saved running card, never a turn's live one", async () => {
+  const spaceRpc = {
+    threads: { stopHelper: vi.fn(async () => ({ ok: true })) },
+    favorites: {
+      list: vi.fn(async () => []),
+      add: vi.fn(async () => ({})),
+      remove: vi.fn(async () => ({ ok: true as const })),
+    },
+  };
   const helper = (id: string): ThreadMessage => ({
     id,
     threadId: "thread",
@@ -611,8 +776,14 @@ it("stops a background helper from its saved running card, never a turn's live o
   const stopButton = () =>
     [...container.querySelectorAll("button")].find((button) => button.textContent === "Stop");
   renderView("bot", [], { message: helper("subagent:live"), rpc: spaceRpc as never });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
   expect(stopButton()).toBeUndefined();
   renderView("bot", [], { message: helper("card-1"), rpc: spaceRpc as never });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
   act(() => stopButton()?.click());
   expect(spaceRpc.threads.stopHelper).toHaveBeenCalledExactlyOnceWith({
     botId: "bot-1",

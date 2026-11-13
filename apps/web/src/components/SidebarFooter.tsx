@@ -21,6 +21,7 @@ import {
   Settings,
   Smartphone,
   SquareKanban,
+  Star,
   UserPlus,
   UserRound,
 } from "lucide-react";
@@ -44,6 +45,7 @@ type Props = {
   links?: NavLink[];
   onLink?: (link: NavLink) => void;
   onArtifacts: () => void;
+  onFavorites?: () => void;
   onSettings: () => void;
   onInvite?: () => void;
   onLogOut: () => void;
@@ -74,6 +76,7 @@ export function SidebarFooter({
   links = [],
   onLink,
   onArtifacts,
+  onFavorites,
   onSettings,
   onInvite,
   onLogOut,
@@ -204,6 +207,16 @@ export function SidebarFooter({
               <FolderOpen className="text-muted-foreground" strokeWidth={1.75} />
               <Trans>Artifacts</Trans>
             </Button>
+            {onFavorites ? (
+              <Button
+                variant="ghost"
+                className="h-9 w-full justify-start gap-2.5 font-normal"
+                onClick={onFavorites}
+              >
+                <Star className="text-muted-foreground" strokeWidth={1.75} />
+                <Trans>Favorites</Trans>
+              </Button>
+            ) : null}
             {onBoard ? (
               <Button
                 variant="ghost"

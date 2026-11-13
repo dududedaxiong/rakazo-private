@@ -2859,6 +2859,10 @@ msgstr "无法加载电脑设置"
 msgid "Could not load credentials."
 msgstr "无法加载凭据。"
 
+#: src/pages/Favorites.tsx
+msgid "Could not load favorites."
+msgstr "无法加载收藏。"
+
 #: src/pages/plugins/use-plugin-connections.ts
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not load integrations"
@@ -2991,6 +2995,10 @@ msgstr "无法移除技能"
 #: src/components/VaultSettings.tsx
 msgid "Could not remove the credential"
 msgstr "无法移除凭据"
+
+#: src/pages/Favorites.tsx
+msgid "Could not remove this favorite."
+msgstr "无法删除这条收藏。"
 
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/plugins/use-plugin-connections.ts
@@ -3965,6 +3973,29 @@ msgstr "失败。"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "失败处理"
+
+#: src/pages/shell/message-view.tsx
+#: src/pages/shell/message-translation.tsx
+msgid "Favorite"
+msgstr "收藏"
+
+#: src/pages/shell/message-view.tsx
+msgid "Favorite this reply"
+msgstr "收藏这条回复"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Favorite translation"
+msgstr "收藏译文"
+
+#: src/pages/shell/message-view.tsx
+#: src/pages/shell/message-translation.tsx
+msgid "Favorited"
+msgstr "已收藏"
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/Favorites.tsx
+msgid "Favorites"
+msgstr "收藏"
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Fields that mark a change"
@@ -5301,6 +5332,10 @@ msgstr "没有机器人"
 msgid "No bots match"
 msgstr "没有匹配的 Bot"
 
+#: src/pages/Favorites.tsx
+msgid "No favorites yet"
+msgstr "还没有收藏"
+
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 msgid "No longer active"
@@ -6213,6 +6248,11 @@ msgstr "移除变化触发器"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove email trigger"
 msgstr "移除邮件触发器"
+
+#: src/pages/shell/message-view.tsx
+#: src/pages/shell/message-translation.tsx
+msgid "Remove favorite"
+msgstr "取消收藏"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -8759,3 +8799,7 @@ msgstr "请先在该机器人的高级设置里选择翻译模型"
 #: src/pages/shell/message-translation.tsx
 msgid "Translated with {modelId} · {source} to {target}"
 msgstr "翻译 · 用 {modelId} 翻译 · {source}译{target}"
+
+#: src/pages/Favorites.tsx
+msgid "translation"
+msgstr "译文"

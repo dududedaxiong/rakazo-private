@@ -77,6 +77,7 @@ model User {
   mcpServers                  McpServer[]
   botSections                 BotSection[]
   promptTemplates             PromptTemplate[]
+  messageFavorites            MessageFavorite[]
   botPackagePreviews          BotPackagePreview[]
   botPackageImports           BotPackageImport[]
   actionApprovalRules         ActionApprovalRule[]
@@ -141,6 +142,32 @@ model PromptTemplate {
   @@unique([userId, name])
   @@index([userId, updatedAt])
   @@map("prompt_templates")
+}
+
+/// A message or message translation the user saved. Web and mobile share the
+/// same rows, so a favorite made on one shows up on the other. One row per
+/// message per bot; a translation favorite keeps the same message id with a
+/// `:translation` suffix, so favoriting a translation never toggles the
+/// original, and jumping back strips the suffix to the message it translates.
+model MessageFavorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  botId     String
+  bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+  /// The message id, or `{messageId}:translation` for a translation favorite.
+  messageId String
+  /// The first 64 characters of the favorited text, shown in the favorites list.
+  snippet   String
+  /// The full favorited text, for in-place translation; null when not stored.
+  text      String?
+  createdAt DateTime @default(now())
+
+  @@unique([userId, spaceId, botId, messageId])
+  @@index([userId, spaceId, botId, createdAt])
+  @@map("message_favorites")
 }
 
 /// An admin-issued registration code. A code stays usable until it expires, is revoked, or
@@ -712,6 +739,7 @@ model Space {
   secrets                     Secret[]
   chatGroups                  ChatGroup[]
   botSecrets                  BotSecret[]
+  messageFavorites            MessageFavorite[]
   vaultCredentials            VaultCredential[]
   externalConversations       ExternalConversation[]
   agentSecrets                AgentSecret[]
@@ -1088,6 +1116,7 @@ model Bot {
   @@map("bots")
   messagingInstallations MessagingInstallation[]
   messagingInstallSessions MessagingInstallSession[]
+  messageFavorites  MessageFavorite[]
 }
 
 model BotPackagePreview {
