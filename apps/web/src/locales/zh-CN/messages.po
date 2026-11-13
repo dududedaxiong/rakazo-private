@@ -13,128 +13,39 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#. placeholder {0}: data.collectiveBanAccounts
-#: src/components/admin/AdminOverview.tsx
-msgid "{0} accounts affected"
-msgstr "{0} 个账号受影响"
-
 #: src/pages/shell/sidebar-roster.tsx
 msgid " (unread)"
 msgstr "（未读）"
-
-#: src/pages/model-settings/use-model-settings.ts
-msgid "Could not save models"
-msgstr "无法保存模型"
-
-#: src/pages/model-settings/use-model-settings.ts
-msgid "Could not test models"
-msgstr "无法测试这些模型"
-
-#: src/pages/model-settings/model-health-dialog.tsx
-msgid "Empty reply"
-msgstr "空回复"
-
-#: src/pages/model-settings/model-health-dialog.tsx
-msgid "Keep only usable models"
-msgstr "只保留可用模型"
-
-#: src/pages/model-settings/model-health-dialog.tsx
-msgid "Keeping…"
-msgstr "保留中…"
-
-#: src/pages/model-settings/model-health-dialog.tsx
-msgid "No models to test"
-msgstr "没有可测试的模型"
-
-#: src/pages/model-settings/model-health-dialog.tsx
-msgid "No permission"
-msgstr "无权限"
-
-#: src/pages/model-settings/model-health-dialog.tsx
-msgid "Not found"
-msgstr "不存在"
-
-#: src/pages/model-settings/model-health-dialog.tsx
-msgid "Only the first 50 models were tested."
-msgstr "只测了前 50 个。"
-
-#: src/pages/model-settings/model-health-dialog.tsx
-msgid "Rate limited"
-msgstr "限流"
-
-#: src/pages/model-settings/compatible-model-fields.tsx
-msgid "Test all models"
-msgstr "测试全部模型"
-
-#: src/pages/model-settings/model-health-dialog.tsx
-msgid "Test results · {label}"
-msgstr "测试结果 · {label}"
-
-#: src/pages/model-settings/model-health-dialog.tsx
-msgid "Timed out"
-msgstr "超时"
-
-#: src/pages/model-settings/model-health-dialog.tsx
-msgid "Usable"
-msgstr "可用"
-
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "{amount} invite codes generated"
-msgstr "已生成 {amount} 个邀请码"
 
 #. placeholder {0}: servers.length
 #: src/pages/plugins/manage-view.tsx
 msgid "{0, plural, one {# connector} other {# connectors}}"
 msgstr "{0, plural, one {# 个连接器} other {# 个连接器}}"
 
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "90 days"
-msgstr "90 天"
-
 #. placeholder {0}: skill.files.length
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, one {# 个文件} other {# 个文件}}"
-
-#: src/pages/AdminPage.tsx
-msgid "Admin"
-msgstr "管理员"
 
 #. placeholder {0}: referral.rewards
 #: src/components/InviteDialog.tsx
 msgid "{0, plural, one {# free month earned} other {# free months earned}}"
 msgstr "{0, plural, one {已获得 # 个月免费} other {已获得 # 个月免费}}"
 
-#: src/pages/AdminPage.tsx
-msgid "Admin sections"
-msgstr "管理栏目"
-
 #. placeholder {0}: item.freeMonths
 #: src/pages/AdminAccessPage.tsx
 msgid "{0, plural, one {# free month} other {# free months}}"
 msgstr "{0, plural, other {# 个月免费使用期}}"
-
-#: src/components/admin/AdminAuditLog.tsx
-msgid "All types"
-msgstr "全部类型"
 
 #. placeholder {0}: skills.length - shownSkills.length
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{0, plural, one {# more} other {# more}}"
 msgstr "{0, plural, one {还有 # 个} other {还有 # 个}}"
 
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "Allowed email domains, one per line"
-msgstr "允许的邮箱域名，每行一个"
-
 #. placeholder {0}: skillCount(install)
 #: src/components/integrations/skills-dialog.tsx
 msgid "{0, plural, one {# skill} other {# skills}}"
 msgstr "{0, plural, one {# 个技能} other {# 个技能}}"
-
-#: src/pages/AdminPage.tsx
-msgid "Audit log"
-msgstr "审计日志"
 
 #. placeholder {0}: availability.spaceIds.length
 #. placeholder {0}: chosen.length
@@ -142,19 +53,15 @@ msgstr "审计日志"
 msgid "{0, plural, one {# space} other {# spaces}}"
 msgstr "{0, plural, one {# 个工作区} other {# 个工作区}}"
 
-#: src/components/admin/AdminUsers.tsx
-msgid "Blacklist"
-msgstr "拉黑"
-
 #. placeholder {0}: server.health.toolCount
 #: src/pages/McpServersOverlay.tsx
 msgid "{0, plural, one {# tool} other {# tools}}"
 msgstr "{0, plural, other {# 个工具}}"
 
-#: src/components/admin/AdminOverview.tsx
-#: src/components/admin/AdminUsers.tsx
-msgid "Blacklisted"
-msgstr "已拉黑"
+#. placeholder {0}: items.length
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "{0, plural, one {Import 1 template} other {Import # templates}}"
+msgstr "{0, plural, one {导入 1 个模板} other {导入 # 个模板}}"
 
 #. placeholder {0}: Math.ceil(oauth.expiresInSeconds / 60)
 #: src/pages/model-settings/connection-controls.tsx
@@ -162,28 +69,16 @@ msgstr "已拉黑"
 msgid "{0, plural, one {Waiting for sign-in — the code expires in about # minute.} other {Waiting for sign-in — the code expires in about # minutes.}}"
 msgstr "{0, plural, one {正在等待登录，验证码大约 # 分钟后过期。} other {正在等待登录，验证码大约 # 分钟后过期。}}"
 
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Collective ban on excess"
-msgstr "超量集体禁用"
-
 #. placeholder {0}: Math.ceil(oauth.expiresInSeconds / 60)
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "{0, plural, one {Waiting for sign-in — the link expires in about # minute.} other {Waiting for sign-in — the link expires in about # minutes.}}"
 msgstr "{0, plural, one {正在等待登录，链接大约 # 分钟后过期。} other {正在等待登录，链接大约 # 分钟后过期。}}"
 
-#: src/components/admin/AdminUsers.tsx
-msgid "Could not delete the user"
-msgstr "无法删除该用户"
-
 #. placeholder {0}: file.name
 #: src/pages/shell/use-composer-actions.ts
 msgid "{0} (max {ATTACHMENT_MAX_COUNT} attachments)"
 msgstr "{0}（最多 {ATTACHMENT_MAX_COUNT} 个附件）"
-
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Could not generate invite codes"
-msgstr "无法生成邀请码"
 
 #. placeholder {0}: file.name
 #. placeholder {1}: attachmentSizeLabel(attachmentMaxBytes(bootstrapMe))
@@ -191,706 +86,377 @@ msgstr "无法生成邀请码"
 msgid "{0} (over {1})"
 msgstr "{0}（超过 {1}）"
 
-#: src/components/HumanVerification.tsx
-msgid "Could not load human verification"
-msgstr "人机验证加载失败"
-
 #. placeholder {0}: preset.n
 #: src/lib/cron.ts
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
 
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Could not revoke the code"
-msgstr "无法作废该邀请码"
-
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Could not save IP limits"
-msgstr "无法保存 IP 限制"
+#. placeholder {0}: data.collectiveBanAccounts
+#: src/components/admin/AdminOverview.tsx
+msgid "{0} accounts affected"
+msgstr "{0} 个账号受影响"
 
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"
 msgstr "{0} 连接"
 
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "Could not save settings"
-msgstr "无法保存设置"
-
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} GB"
 msgstr "{0} GB"
-
-#: src/components/admin/AdminUsers.tsx
-msgid "Could not update the user"
-msgstr "无法更新该用户"
 
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} handling"
 msgstr "如何处理 {0}"
 
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Couldn't load invite codes"
-msgstr "邀请码加载失败"
-
 #. placeholder {0}: bot.name
 #: src/components/call/IncomingCall.tsx
 msgid "{0} is calling you"
 msgstr "{0} 正在呼叫你"
-
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Couldn't load IP limits"
-msgstr "IP 限制加载失败"
 
 #. placeholder {0}: updated.name
 #: src/pages/McpServersOverlay.tsx
 msgid "{0} is not working"
 msgstr "{0} 无法正常工作"
 
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Couldn't load IP stats"
-msgstr "IP 统计加载失败"
-
 #. placeholder {0}: updated.name
 #: src/pages/McpServersOverlay.tsx
 msgid "{0} is running"
 msgstr "{0} 正在运行"
-
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "Couldn't load registration settings"
-msgstr "注册设置加载失败"
 
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} KB"
 msgstr "{0} KB"
 
-#: src/components/admin/AdminAuditLog.tsx
-msgid "Couldn't load the audit log"
-msgstr "审计日志加载失败"
-
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} MB"
 msgstr "{0} MB"
-
-#: src/components/admin/AdminOverview.tsx
-msgid "Couldn't load the overview"
-msgstr "总览加载失败"
 
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} rollup hours"
 msgstr "{0} 的合并间隔（小时）"
 
-#: src/components/admin/AdminUsers.tsx
-msgid "Couldn't load users"
-msgstr "用户列表加载失败"
-
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} TB"
 msgstr "{0} TB"
-
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Count"
-msgstr "数量"
 
 #. placeholder {0}: schedule(routine.crons)
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "{0}, paused until you turn it on"
 msgstr "{0}，开启前保持暂停"
 
-#: src/components/admin/AdminUsers.tsx
-msgid "Delete permanently"
-msgstr "永久删除"
-
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
 
-#: src/components/admin/AdminUsers.tsx
-msgid "Delete this user permanently?"
-msgstr "要永久删除该用户吗？"
-
-#: src/components/admin/AdminUsers.tsx
-msgid "Deleted"
-msgstr "已删除"
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "{amount} invite codes generated"
+msgstr "已生成 {amount} 个邀请码"
 
 #: src/pages/shell/dialogs.tsx
 msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
 msgstr "{botCount, plural, other {删除 {name} 及其 # 个机器人？}}"
 
-#: src/components/admin/AdminUsers.tsx
-msgid "Disable"
-msgstr "禁用"
-
 #: src/pages/shell/computer-view.tsx
 msgid "{botName}’s computer"
 msgstr "{botName} 的电脑"
-
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Each code works once and stops working after use."
-msgstr "每个邀请码只能使用一次，使用后自动失效。"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "{commandVariable} is reserved and cannot be used as a command variable. Choose another name."
 msgstr "{commandVariable} 是保留名称，不能用作命令变量。请选择其他名称。"
 
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "Email domain allowlist"
-msgstr "邮箱域名白名单"
-
 #: src/pages/PluginsOverlay.tsx
 msgid "{connectedCount, plural, one {# connected} other {# connected}}"
 msgstr "{connectedCount, plural, one {# 个已连接} other {# 个已连接}}"
-
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "Email registration"
-msgstr "邮箱注册"
 
 #: src/pages/shell/message-view.tsx
 msgid "{count, plural, one {# message with {peer}} other {# messages with {peer}}}"
 msgstr "{count, plural, other {与 {peer} 的 # 条消息}}"
 
-#: src/components/admin/AdminAuditLog.tsx
-msgid "Every admin and system action is recorded here and cannot be changed."
-msgstr "所有管理员与系统操作都会记录在这里，不可修改。"
-
 #: src/components/markdown-copy.tsx
 msgid "{count, plural, one {# row} other {# rows}}"
 msgstr "{count, plural, one {# 行} other {# 行}}"
-
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Expired"
-msgstr "已过期"
 
 #: src/lib/billing.ts
 msgid "{count} days"
 msgstr "{count} 天"
 
-#: src/components/admin/AdminAuditLog.tsx
-msgid "Filter by type"
-msgstr "按类型筛选"
-
 #: src/lib/billing.ts
 msgid "{count} months"
 msgstr "{count} 个月"
-
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Generate"
-msgstr "生成"
 
 #: src/components/AskCard.tsx
 msgid "{count} more"
 msgstr "还有 {count} 项"
 
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Generate invite codes"
-msgstr "生成邀请码"
-
 #: src/lib/billing.ts
 msgid "{count} weeks"
 msgstr "{count} 周"
-
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Generating…"
-msgstr "生成中…"
 
 #: src/lib/billing.ts
 msgid "{count} years"
 msgstr "{count} 年"
 
-#: src/lib/user-error.ts
-msgid "Human verification failed. Try again."
-msgstr "人机验证失败，请重试。"
-
 #: src/lib/relative-time.ts
 msgid "{days}d ago"
 msgstr "{days} 天前"
-
-#: src/lib/user-error.ts
-msgid "Invalid invite code"
-msgstr "邀请码无效"
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
 msgstr "第 {from}–{to} 行，共 {total} 行"
 
-#: src/pages/Auth.tsx
-msgid "Invite code"
-msgstr "邀请码"
-
 #: src/lib/cron.ts
 msgid "{fromName} to {toName}"
 msgstr "{fromName}至{toName}"
-
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "Invite code registration"
-msgstr "邀请码注册"
 
 #: src/components/markdown-copy.tsx
 msgid "{header}, column {index}"
 msgstr "{header}，第 {index} 列"
 
-#: src/components/admin/admin-shared.tsx
-msgid "Invite code revoked"
-msgstr "邀请码已作废"
-
 #: src/components/ToolActivityDisclosure.tsx
 msgid "{hidden, plural, one {+# earlier step} other {+# earlier steps}}"
 msgstr "{hidden, plural, one {+# 个更早的步骤} other {+# 个更早的步骤}}"
-
-#: src/pages/AdminPage.tsx
-msgid "Invite codes"
-msgstr "邀请码"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "{hiddenSelectedCount, plural, one {# selected model is hidden by your search.} other {# selected models are hidden by your search.}}"
 msgstr "{hiddenSelectedCount, plural, other {搜索结果未显示 # 个已选模型。}}"
 
-#: src/components/admin/admin-shared.tsx
-msgid "Invite codes generated"
-msgstr "已生成邀请码"
-
 #: src/lib/relative-time.ts
 msgid "{hours}h ago"
 msgstr "{hours} 小时前"
-
-#: src/components/admin/admin-shared.tsx
-msgid "IP collective ban"
-msgstr "IP 集体禁用"
 
 #: src/pages/Invite.tsx
 msgid "{inviterName} invited you"
 msgstr "{inviterName} 邀请了你"
 
-#: src/components/admin/AdminOverview.tsx
-msgid "IP collective bans"
-msgstr "IP 集体禁用"
-
 #: src/components/markdown-copy.tsx
 msgid "{label}, empty"
 msgstr "{label}，空"
-
-#: src/pages/AdminPage.tsx
-msgid "IP limits"
-msgstr "IP 限制"
 
 #: src/lib/relative-time.ts
 msgid "{minutes}m ago"
 msgstr "{minutes} 分钟前"
 
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Limited"
-msgstr "受限"
-
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{name} (same name as a built-in skill)"
 msgstr "{name}（与内置技能同名）"
-
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Limits"
-msgstr "限制规则"
 
 #: src/lib/activity-list-filters.ts
 msgid "{name} asked"
 msgstr "{name} 问"
 
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Never expires"
-msgstr "永不过期"
-
 #: src/lib/activity-list-filters.ts
 msgid "{name} asked: {text}"
 msgstr "{name} 问：{text}"
-
-#: src/components/admin/AdminIpLimits.tsx
-msgid "New registrations are limited right away; existing accounts are unaffected."
-msgstr "限制对新注册立即生效，已注册账号不受影响。"
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
 msgid "{name} failed"
 msgstr "{name} 失败"
 
-#: src/components/admin/AdminOverview.tsx
-msgid "New registrations, last 7 days"
-msgstr "近 7 天新注册"
-
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
 msgid "{name} finished"
 msgstr "{name} 已完成"
 
-#: src/components/admin/AdminOverview.tsx
-msgid "New this week"
-msgstr "本周新增"
-
 #: src/pages/ModelRoleSettings.tsx
 msgid "{name} options"
 msgstr "{name} 选项"
-
-#: src/components/admin/AdminOverview.tsx
-msgid "New today"
-msgstr "今日新增"
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
 msgid "{name} stopped"
 msgstr "{name} 已停止"
 
-#: src/components/admin/AdminOverview.tsx
-msgid "No admin activity yet"
-msgstr "暂无管理操作"
-
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{names} keep their own model"
 msgstr "{names} 保留自己的模型"
 
-#: src/components/admin/AdminAuditLog.tsx
-msgid "No audit events yet"
-msgstr "暂无审计记录"
-
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "{names} keeps its own model"
 msgstr "{names} 保留自己的模型"
-
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "No invite codes yet"
-msgstr "暂无邀请码"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} can't run this model."
 msgstr "{provider}无法运行此模型。"
 
-#: src/components/admin/AdminIpLimits.tsx
-msgid "No registrations recorded yet"
-msgstr "暂无注册记录"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} couldn't be reached. Check that it's running."
 msgstr "无法连接到{provider}。请检查它是否正在运行。"
-
-#: src/components/admin/AdminUsers.tsx
-msgid "No users match"
-msgstr "没有匹配的用户"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} denied access to this model."
 msgstr "{provider}拒绝了对此模型的访问。"
 
-#: src/pages/AdminPage.tsx
-msgid "Overview"
-msgstr "总览"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} is overloaded right now. Try again in a moment."
 msgstr "{provider}当前负载过高。请稍后再试。"
-
-#: src/components/admin/AdminOverview.tsx
-msgid "Recent activity"
-msgstr "最近操作"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} is rate limiting requests. Try again shortly."
 msgstr "{provider}正在限制请求频率。请稍后重试。"
 
-#: src/components/admin/AdminUsers.tsx
-msgid "Registered"
-msgstr "注册时间"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} key hit its daily limit."
 msgstr "{provider}的密钥已达到每日限额。"
-
-#: src/components/admin/AdminUsers.tsx
-msgid "Registration IP"
-msgstr "注册 IP"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} key hit its limit."
 msgstr "{provider}的密钥已达到限额。"
 
-#: src/pages/Auth.tsx
-msgid "Registration is closed on this server"
-msgstr "该服务器已关闭注册"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} key hit its monthly limit."
 msgstr "{provider}的密钥已达到每月限额。"
-
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "Registration method"
-msgstr "注册方式"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} key hit its weekly limit."
 msgstr "{provider}的密钥已达到每周限额。"
 
-#: src/pages/AdminPage.tsx
-msgid "Registration settings"
-msgstr "注册设置"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its credit limit."
 msgstr "{provider}已达到额度上限。"
-
-#: src/components/admin/admin-shared.tsx
-msgid "Registration settings changed"
-msgstr "注册设置已修改"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its daily credit limit."
 msgstr "{provider}已达到每日额度上限。"
 
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Registrations by IP"
-msgstr "IP 注册统计"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its daily spending limit."
 msgstr "{provider}已达到每日支出限额。"
-
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Registrations per IP"
-msgstr "每个 IP 限注册数"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its monthly credit limit."
 msgstr "{provider}已达到每月额度上限。"
 
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Registrations per IP per hour"
-msgstr "每小时每个 IP 限注册数"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its monthly spending limit."
 msgstr "{provider}已达到每月支出限额。"
-
-#: src/components/admin/AdminUsers.tsx
-msgid "Remove from blacklist"
-msgstr "取消拉黑"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its spending limit."
 msgstr "{provider}已达到支出限额。"
 
-#: src/components/admin/AdminUsers.tsx
-msgid "Restore deleted"
-msgstr "恢复已删除"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its weekly credit limit."
 msgstr "{provider}已达到每周额度上限。"
-
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Revoking…"
-msgstr "作废中…"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} reached its weekly spending limit."
 msgstr "{provider}已达到每周支出限额。"
 
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Save limits"
-msgstr "保存规则"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} rejected the API key. Check your connection settings."
 msgstr "{provider}拒绝了 API 密钥。请检查连接设置。"
-
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "Save settings"
-msgstr "保存设置"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{provider} took too long to respond. Try again."
 msgstr "{provider}响应超时。请重试。"
 
-#: src/components/admin/AdminUsers.tsx
-msgid "Search by email or name"
-msgstr "按邮箱或用户名搜索"
-
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "{remaining} left"
 msgstr "剩余 {remaining}"
-
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "The environment master switch is off, so registration stays closed no matter what is set here."
-msgstr "环境总开关已关闭，注册保持关闭，这里改什么都没用。"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "{seats, plural, one {# seat} other {# seats}}"
 msgstr "{seats, plural, one {# 个席位} other {# 个席位}}"
 
-#: src/components/admin/AdminUsers.tsx
-msgid "This removes the account and everything it created. This cannot be undone."
-msgstr "这会删除该账号及其创建的全部内容，无法撤销。"
-
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} a day"
 msgstr "每天 {shown}"
-
-#. placeholder {0}: stat.todayCount
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Today: {0}"
-msgstr "今日：{0}"
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} a month"
 msgstr "每月 {shown}"
 
-#: src/lib/user-error.ts
-msgid "Too many registrations from this network"
-msgstr "该网络注册次数过多"
-
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} a week"
 msgstr "每周 {shown}"
-
-#: src/components/admin/AdminOverview.tsx
-msgid "Total users"
-msgstr "注册用户总数"
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} in total"
 msgstr "总计 {shown}"
 
-#. placeholder {0}: stat.totalCount
-#: src/components/admin/AdminIpLimits.tsx
-msgid "Total: {0}"
-msgstr "累计：{0}"
-
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} spent"
 msgstr "已花费 {shown}"
-
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Used up"
-msgstr "已用完"
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} spent this month"
 msgstr "本月已花费 {shown}"
 
-#: src/components/admin/admin-shared.tsx
-msgid "User blacklisted"
-msgstr "用户已拉黑"
-
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} spent this week"
 msgstr "本周已花费 {shown}"
-
-#: src/components/admin/admin-shared.tsx
-msgid "User deleted"
-msgstr "用户已删除"
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "{shown} spent today"
 msgstr "今天已花费 {shown}"
 
-#: src/components/admin/admin-shared.tsx
-msgid "User disabled"
-msgstr "用户已禁用"
-
 #: src/components/ArtifactFileCard.tsx
 msgid "{size} B"
 msgstr "{size} B"
-
-#: src/components/admin/admin-shared.tsx
-msgid "User permanently deleted"
-msgstr "用户已永久删除"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{summary} Backup models failed or were unavailable for this request."
 msgstr "{summary} 备用模型失败或无法用于此请求。"
 
-#: src/components/admin/admin-shared.tsx
-msgid "User removed from blacklist"
-msgstr "用户已取消拉黑"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{summary} No backup model was usable for this request."
 msgstr "{summary} 没有可用于此请求的备用模型。"
-
-#: src/components/admin/admin-shared.tsx
-msgid "User restored"
-msgstr "用户已恢复"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{summary} Resets {date}."
 msgstr "{summary} 将于{date}重置。"
 
-#: src/pages/AdminPage.tsx
-msgid "Users"
-msgstr "用户管理"
-
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "{summary} Your backup models also failed."
 msgstr "{summary} 备用模型也失败了。"
 
-#: src/components/admin/AdminInviteCodes.tsx
-msgid "Valid for"
-msgstr "有效期"
-
 #: src/pages/ActivityList.tsx
 msgid "{title}, {label}"
 msgstr "{title}，{label}"
 
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "When off, no new accounts can register by email."
-msgstr "关闭后，不再接受邮箱注册新账号。"
-
 #: src/pages/shell/agent-import-plan.tsx
 msgid "{title}, saved as {savedAs}"
 msgstr "{title}，保存为 {savedAs}"
-
-#: src/components/admin/AdminIpLimits.tsx
-msgid "When on, an IP that passes the hourly threshold has all its accounts disabled at once."
-msgstr "开启后，同一 IP 一小时内注册数超过阈值时，该 IP 下的全部账号会被批量禁用。"
 
 #: src/components/ToolActivityDisclosure.tsx
 #: src/pages/plugins/connector-detail.tsx
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# 个工具} other {# 个工具}}"
 
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "When on, only emails from the domains below can register."
-msgstr "开启后，只有使用下方白名单域名的邮箱才能注册。"
-
 #: src/pages/model-settings/model-health-dialog.tsx
 msgid "{usable} of {total} models work"
 msgstr "{total} 个里 {usable} 个能用"
-
-#: src/components/admin/AdminRegistrationSettings.tsx
-msgid "When on, registration requires a valid invite code."
-msgstr "开启后，注册时必须填写一个有效邀请码。"
 
 #: src/components/ModelCredits.tsx
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
@@ -999,6 +565,28 @@ msgstr "**星期四**\n"
 msgid "/ month"
 msgstr "/ 月"
 
+#. placeholder {0}: test.modelId
+#. placeholder {1}: test.seconds
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✓ {0} supports image generation · {1}s"
+msgstr "✓ {0} 支持图片生成 · {1} 秒"
+
+#. placeholder {0}: test.modelId
+#. placeholder {1}: test.seconds
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✓ {0} supports video generation · {1}s"
+msgstr "✓ {0} 支持视频生成 · {1} 秒"
+
+#. placeholder {0}: test.detail
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✗ Does not support image generation · {0}"
+msgstr "✗ 不支持图片生成 · {0}"
+
+#. placeholder {0}: test.detail
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✗ Does not support video generation · {0}"
+msgstr "✗ 不支持视频生成 · {0}"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "1 day"
 msgstr "1 天"
@@ -1007,13 +595,19 @@ msgstr "1 天"
 msgid "1 space"
 msgstr "1 个工作区"
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
 msgstr "30 天"
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "7 days"
 msgstr "7 天"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "90 days"
+msgstr "90 天"
 
 #: src/pages/shell/message-cards.tsx
 msgid "A bit of everything"
@@ -1026,6 +620,18 @@ msgstr "命令的输出"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "A model approves routine actions and asks you about the rest."
 msgstr "由模型批准常规操作，其余操作会询问你。"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "A name for this persona"
+msgstr "给这个人设起个名字"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "A parent directory is missing on the server."
+msgstr "服务器上缺少父目录。"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "A preset with this name already exists"
+msgstr "已存在同名预设"
 
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/model-settings/connection-controls.tsx
@@ -1101,6 +707,8 @@ msgstr "{name} 的操作"
 msgid "Actions for space"
 msgstr "工作区操作"
 
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Active"
@@ -1183,6 +791,10 @@ msgstr "添加自定义"
 
 #: src/pages/ModelRoleSettings.tsx
 msgid "Add fallback"
+msgstr "添加备用模型"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Add fallback model"
 msgstr "添加备用模型"
 
 #: src/components/vault/LoginFieldsInput.tsx
@@ -1268,6 +880,14 @@ msgstr "地址第 2 行"
 msgid "Adds"
 msgstr "将添加"
 
+#: src/pages/AdminPage.tsx
+msgid "Admin"
+msgstr "管理员"
+
+#: src/pages/AdminPage.tsx
+msgid "Admin sections"
+msgstr "管理栏目"
+
 #: src/pages/McpServerForm.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -1286,6 +906,8 @@ msgstr "高级..."
 msgid "Agent from another app"
 msgstr "其他应用中的智能体"
 
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "All"
@@ -1318,6 +940,10 @@ msgstr "全部状态"
 msgid "All time"
 msgstr "全部时间"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "All types"
+msgstr "全部类型"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "允许"
@@ -1341,6 +967,10 @@ msgstr "请在系统设置中允许 Rakazo 使用语音识别和麦克风。"
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
 msgstr "允许写入"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Allowed email domains, one per line"
+msgstr "允许的邮箱域名，每行一个"
 
 #: src/components/AskCard.tsx
 msgid "Allowed in this space"
@@ -1405,6 +1035,14 @@ msgstr "无法使用导入的 API 密钥。取消勾选后重试。"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "An integration tool"
 msgstr "集成工具"
+
+#: src/components/AppDownloadDialog.tsx
+msgid "Android"
+msgstr "安卓"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Android download link"
+msgstr "安卓下载地址"
 
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
@@ -1483,6 +1121,14 @@ msgstr "API 令牌"
 #: src/components/ComputerProviderSettings.tsx
 msgid "API URL"
 msgstr "API URL"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "App download"
+msgstr "App 下载"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "App download links saved"
+msgstr "App 下载地址已保存"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Appearance"
@@ -1594,6 +1240,10 @@ msgstr "附加文件"
 msgid "Attachment"
 msgstr "附件"
 
+#: src/pages/AdminPage.tsx
+msgid "Audit log"
+msgstr "审计日志"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Auth method"
@@ -1636,6 +1286,10 @@ msgstr "授权此服务器后，Agent 才能使用其工具。将打开弹窗。
 msgid "Auto"
 msgstr "自动"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Auto-translate replies"
+msgstr "自动翻译回复"
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Automated senders"
 msgstr "自动发送者"
@@ -1663,12 +1317,15 @@ msgstr "头像工作室"
 #: src/components/bot-templates/bot-templates-dialog.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/components/vault/VaultPageHeader.tsx
 #: src/pages/AdminAccessPage.tsx
+#: src/pages/AdminPage.tsx
 #: src/pages/AdminPluginsPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
+#: src/pages/Favorites.tsx
 #: src/pages/McpServerForm.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/plugins/connector-detail.tsx
@@ -1691,9 +1348,31 @@ msgstr "返回聊天"
 msgid "Back to sign in"
 msgstr "返回登录"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Back up now"
+msgstr "立即备份"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backed up"
+msgstr "已备份"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup directory"
+msgstr "备份目录"
+
 #: src/components/AccountDataSettings.tsx
 msgid "Backup password"
 msgstr "备份密码"
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup passwords do not match"
+msgstr "两次备份密码不一致"
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup passwords need an HTTPS connection"
+msgstr "备份密码需要 HTTPS 连接"
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
@@ -1727,6 +1406,15 @@ msgstr "账单地址"
 msgid "Billing period"
 msgstr "账单周期"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Blacklist"
+msgstr "拉黑"
+
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminUsers.tsx
+msgid "Blacklisted"
+msgstr "已拉黑"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Block"
 msgstr "阻止"
@@ -1750,8 +1438,11 @@ msgstr "正在启动实时桌面…"
 msgid "bot"
 msgstr "Bot"
 
+#: src/components/BotPackageDocumentView.tsx
+#: src/components/BotPackageImport.tsx
 #: src/lib/identity-display.ts
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Favorites.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/Shell.tsx
@@ -1770,9 +1461,17 @@ msgstr "Bot"
 msgid "Bot email addresses"
 msgstr "Bot 的邮箱地址"
 
+#: src/components/BotPackageImport.tsx
+msgid "Bot imported"
+msgstr "机器人已导入"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
 msgstr "Bot 只看不操作"
+
+#: src/components/BotPackageImport.tsx
+msgid "Bot package or Grok JSON"
+msgstr "机器人软件包或 Grok JSON"
 
 #: src/pages/shell/computer-overlay.tsx
 msgid "Bot screen"
@@ -1830,6 +1529,8 @@ msgstr "浏览"
 msgid "Browse MCP servers"
 msgstr "浏览 MCP 服务器"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Built-in"
@@ -1881,12 +1582,14 @@ msgstr "无法连接服务器。"
 msgid "Can't read images"
 msgstr "无法读取图像"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/AskCard.tsx
 #: src/components/ConfirmDialog.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/ModelCredits.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -1896,10 +1599,15 @@ msgstr "无法读取图像"
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Cancel"
 msgstr "取消"
+
+#: src/components/BotPackageImport.tsx
+msgid "Cancel import"
+msgstr "取消导入"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new bot"
@@ -2030,13 +1738,26 @@ msgstr "检查失败：{0}"
 msgid "Check for updates"
 msgstr "检查更新"
 
+#: src/components/BotPackageTools.tsx
+msgid "Check imported skills"
+msgstr "检查已导入技能"
+
 #: src/pages/shell/use-routine-editor.ts
 msgid "Check in."
 msgstr "报到。"
 
+#: src/components/BotPackageImport.tsx
+#: src/components/BotPackageSkillsView.tsx
+msgid "Check status"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
 msgstr "请检查 API 密钥或登录，然后重新测试。"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Check the names and content, then import."
+msgstr "核对名称和内容，然后导入。"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Check the server URL and network, then test again."
@@ -2073,6 +1794,10 @@ msgstr "正在检查…"
 msgid "Choose a bot shape, color, or upload an image"
 msgstr "选择机器人形状和颜色，或上传图片"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Choose a file"
+msgstr "选择文件"
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
@@ -2089,6 +1814,10 @@ msgstr "设置新密码"
 #: src/pages/onboarding/model-step.tsx
 msgid "Choose a provider"
 msgstr "选择提供方"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Choose a translation model in this bot's Advanced settings"
+msgstr "请先在该机器人的高级设置里选择翻译模型"
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose backup"
@@ -2107,6 +1836,10 @@ msgstr "选择文件夹"
 #: src/components/SubscriptionGate.tsx
 msgid "Choose how to use Rakazo"
 msgstr "选择如何使用 Rakazo"
+
+#: src/components/BotPackageImport.tsx
+msgid "Choose package file"
+msgstr "选择软件包文件"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "City"
@@ -2147,13 +1880,19 @@ msgstr "清除筛选 {label}"
 msgid "Clear filters"
 msgstr "清除筛选"
 
+#: src/components/BotPackageTools.tsx
+msgid "Clear selection"
+msgstr ""
+
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "正在清空…"
 
+#: src/components/BotPackageImport.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsPanel.tsx
+#: src/pages/model-settings/model-health-dialog.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineEditor.tsx
@@ -2245,10 +1984,22 @@ msgctxt "email sign-in"
 msgid "Code"
 msgstr "验证码"
 
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse"
+msgstr "收起"
+
 #. placeholder {0}: headerName(group)
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Collapse {0}"
 msgstr "折叠 {0}"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse translation"
+msgstr "收起译文"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Collective ban on excess"
+msgstr "超量集体禁用"
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
@@ -2453,6 +2204,7 @@ msgstr "请在“模型”中连接你自己的 API 密钥，或在“账单”�
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/plugins/parts.tsx
@@ -2476,6 +2228,7 @@ msgstr "已连接 {0}。"
 msgid "Connecting…"
 msgstr "正在连接…"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Connection"
 msgstr "连接"
@@ -2493,6 +2246,10 @@ msgstr "连接测试失败。"
 #: src/pages/plugins/use-plugin-connections.ts
 msgid "Connection to {0} is still pending. You can close this and check again."
 msgstr "与 {0} 的连接仍在等待。可以关闭此窗口稍后再看。"
+
+#: src/components/BotPackageDocumentView.tsx
+msgid "Connections"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Connector"
@@ -2556,6 +2313,7 @@ msgstr "对话"
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/message-hover-actions.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Copied"
 msgstr "已复制"
 
@@ -2596,6 +2354,10 @@ msgstr "复制提示词"
 #: src/components/markdown-copy.tsx
 msgid "Copy rows"
 msgstr "复制行"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Copy translation"
+msgstr "复制译文"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Cost"
@@ -2668,6 +2430,10 @@ msgstr "无法完成 OAuth"
 #: src/components/DesktopUpdates.tsx
 msgid "Could not complete the update. Try again."
 msgstr "无法完成更新。请重试。"
+
+#: src/components/BotPackageImport.tsx
+msgid "Could not confirm import. Check status before trying again."
+msgstr "无法确认导入。请先检查状态再重试。"
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/plugins/use-plugin-connections.ts
@@ -2767,6 +2533,10 @@ msgstr "无法删除技能"
 msgid "Could not delete space"
 msgstr "无法删除工作区"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Could not delete the user"
+msgstr "无法删除该用户"
+
 #: src/pages/Artifacts.tsx
 msgid "Could not delete this artifact."
 msgstr "无法删除此产物。"
@@ -2804,9 +2574,21 @@ msgstr "无法下载 {0}。请重试。"
 msgid "Could not download {name}. Try again."
 msgstr "无法下载 {name}。请重试。"
 
+#: src/components/BotPackageSkillsView.tsx
+msgid "Could not enable skill. Check status or choose another name."
+msgstr ""
+
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not enable tools"
 msgstr "无法启用工具"
+
+#: src/components/BotPackageTools.tsx
+msgid "Could not export this package."
+msgstr "无法导出此软件包。"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Could not generate invite codes"
+msgstr "无法生成邀请码"
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Could not grant access"
@@ -2863,6 +2645,10 @@ msgstr "无法加载凭据。"
 msgid "Could not load favorites."
 msgstr "无法加载收藏。"
 
+#: src/components/HumanVerification.tsx
+msgid "Could not load human verification"
+msgstr "人机验证加载失败"
+
 #: src/pages/plugins/use-plugin-connections.ts
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not load integrations"
@@ -2881,6 +2667,10 @@ msgstr "无法加载成员"
 msgid "Could not load model settings"
 msgstr "无法加载模型设置"
 
+#: src/components/BotPackageImport.tsx
+msgid "Could not load recent imports."
+msgstr "无法加载最近的导入。"
+
 #: src/pages/RoutineRunHistory.tsx
 msgid "Could not load run history"
 msgstr "无法加载运行历史记录"
@@ -2894,6 +2684,10 @@ msgstr "无法加载登录选项"
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not load skill"
 msgstr "无法加载技能"
+
+#: src/components/BotPackageTools.tsx
+msgid "Could not load skills."
+msgstr "无法加载技能。"
 
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "Could not load templates"
@@ -2942,6 +2736,10 @@ msgstr "无法播放测试片段"
 msgid "Could not preview plugin"
 msgstr "无法预览插件"
 
+#: src/components/BotPackageImport.tsx
+msgid "Could not preview this package."
+msgstr "无法预览此软件包。"
+
 #: src/lib/model-connection-preflight.ts
 msgid "Could not reach the model server."
 msgstr "无法连接到模型服务器。"
@@ -2949,6 +2747,7 @@ msgstr "无法连接到模型服务器。"
 #: src/components/AccountDataSettings.tsx
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/lib/computer-sandbox.ts
 #: src/lib/user-error.ts
 #: src/pages/AccountSettingsOverlay.tsx
@@ -2960,6 +2759,10 @@ msgstr "无法连接服务器"
 #: src/pages/shell/use-agent-import-source.ts
 msgid "Could not read these files"
 msgstr "无法读取这些文件"
+
+#: src/components/BotPackageImport.tsx
+msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
+msgstr "无法读取此软件包。请使用 UTF-8 编码、最大 4 MiB 的 JSON 文件。"
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not reject plugin"
@@ -3026,6 +2829,10 @@ msgstr "无法渲染图表"
 msgid "Could not reset password"
 msgstr "无法重置密码"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Could not reset usage"
+msgstr "无法重置用量"
+
 #: src/pages/plugins/use-plugin-connections.ts
 msgid "Could not revoke connection"
 msgstr "无法撤销连接"
@@ -3033,6 +2840,10 @@ msgstr "无法撤销连接"
 #: src/pages/AdminAccessPage.tsx
 msgid "Could not revoke grant"
 msgstr "无法撤销授权"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Could not revoke the code"
+msgstr "无法作废该邀请码"
 
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not run routine"
@@ -3047,6 +2858,10 @@ msgstr "无法运行例行任务"
 msgid "Could not save"
 msgstr "无法保存"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Could not save app download links"
+msgstr "无法保存 App 下载地址"
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not save Auto Review"
 msgstr "无法保存自动审核"
@@ -3059,8 +2874,16 @@ msgstr "无法保存电脑设置"
 msgid "Could not save group"
 msgstr "无法保存群组"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Could not save IP limits"
+msgstr "无法保存 IP 限制"
+
 #: src/pages/onboarding/use-onboarding-model.ts
 msgid "Could not save model"
+msgstr "无法保存模型"
+
+#: src/pages/model-settings/use-model-settings.ts
+msgid "Could not save models"
 msgstr "无法保存模型"
 
 #: src/pages/shell/use-routine-editor.ts
@@ -3070,6 +2893,10 @@ msgstr "无法保存例行任务"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not save rule"
 msgstr "无法保存规则"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Could not save settings"
+msgstr "无法保存设置"
 
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -3150,6 +2977,14 @@ msgstr "无法接管"
 msgid "Could not test MCP server"
 msgstr "无法测试 MCP 服务器"
 
+#: src/pages/model-settings/use-model-settings.ts
+msgid "Could not test models"
+msgstr "无法测试这些模型"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Could not test this model"
+msgstr "无法测试此模型"
+
 #: src/lib/dictation.ts
 msgid "Could not transcribe that recording."
 msgstr "无法转写这段录音。"
@@ -3182,6 +3017,10 @@ msgstr "无法更新反应"
 msgid "Could not update the default memory scope"
 msgstr "无法更新默认记忆范围"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Could not update the user"
+msgstr "无法更新该用户"
+
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "无法确认电脑是否就绪（{failureMessage}）。请修复连接后再检查一次。"
@@ -3190,9 +3029,25 @@ msgstr "无法确认电脑是否就绪（{failureMessage}）。请修复连接�
 msgid "Couldn't copy. Select the link and copy it."
 msgstr "无法复制。请选中链接后复制。"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Couldn't load app download links"
+msgstr "无法加载 App 下载地址"
+
 #: src/pages/AdminAccessPage.tsx
 msgid "Couldn't load grants"
 msgstr "无法加载授权记录"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Couldn't load invite codes"
+msgstr "邀请码加载失败"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Couldn't load IP limits"
+msgstr "IP 限制加载失败"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Couldn't load IP stats"
+msgstr "IP 统计加载失败"
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Couldn't load messaging settings"
@@ -3202,13 +3057,29 @@ msgstr "无法加载消息设置"
 msgid "Couldn't load pages."
 msgstr "无法加载页面。"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Couldn't load registration settings"
+msgstr "注册设置加载失败"
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Couldn't load submissions"
 msgstr "无法加载提交记录"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Couldn't load the audit log"
+msgstr "审计日志加载失败"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "Couldn't load the overview"
+msgstr "总览加载失败"
+
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this page. Try again."
 msgstr "无法加载此页面。请重试。"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Couldn't load users"
+msgstr "用户列表加载失败"
 
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't load your wallet"
@@ -3229,6 +3100,10 @@ msgstr "无法更新你的时区"
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't update your wallet"
 msgstr "无法更新钱包"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Count"
+msgstr "数量"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Country"
@@ -3330,6 +3205,18 @@ msgstr "币种"
 msgid "Current password"
 msgstr "当前密码"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Current persona"
+msgstr "当前人设"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Custom"
+msgstr "自定义"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Custom app download"
+msgstr "自定义 App 下载"
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Custom header"
 msgstr "自定义请求头"
@@ -3417,9 +3304,15 @@ msgstr "OpenClaw 默认内容"
 msgid "Default scope"
 msgstr "默认范围"
 
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Default templates restored"
+msgstr "已恢复默认模板"
+
 #: src/components/AccountAccess.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -3450,6 +3343,7 @@ msgstr "删除 {0}"
 #. placeholder {0}: bot.name
 #. placeholder {0}: deleting.name
 #. placeholder {0}: item.name
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3473,6 +3367,14 @@ msgstr "同时删除记忆"
 msgid "Delete organization"
 msgstr "删除组织"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Delete permanently"
+msgstr "永久删除"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Delete preset"
+msgstr "删除预设"
+
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Delete section"
 msgstr "删除分组"
@@ -3486,14 +3388,23 @@ msgstr "删除工作区"
 msgid "Delete this Space's credentials?"
 msgstr "要删除此工作区的凭据吗？"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Delete this user permanently?"
+msgstr "要永久删除该用户吗？"
+
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
+msgstr "已删除"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Deleted"
 msgstr "已删除"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Deleted bot"
 msgstr "已删除的机器人"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
@@ -3534,6 +3445,7 @@ msgstr "桌面 ID"
 msgid "Desktop update"
 msgstr "桌面更新"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Details"
@@ -3567,10 +3479,16 @@ msgstr "你是不是想输入 <0>{emailSuggestion}</0>？"
 msgid "Didn't catch that."
 msgstr "没听清。"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Disable"
+msgstr "禁用"
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Disable a tool"
 msgstr "禁用工具"
 
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/plugins/parts.tsx
 msgid "Disabled"
 msgstr "已禁用"
@@ -3642,10 +3560,6 @@ msgstr "Docker"
 msgid "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
 msgstr "Docker 限制对你电脑的访问，以提高安全性。使用{hostLabel}时，Bot 可以处理你的本地文件并使用本地工具。"
 
-#: src/components/SidebarFooter.tsx
-msgid "Docs"
-msgstr "文档"
-
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "文档已更改。请重新打开以编辑最新版本。"
@@ -3686,11 +3600,16 @@ msgstr "下载 {name}"
 msgid "Download CSV"
 msgstr "下载 CSV"
 
+#: src/components/BotPackageTools.tsx
+msgid "Download package"
+msgstr "下载软件包"
+
 #: src/components/pages/DownloadPdfButton.tsx
 msgid "Download PDF"
 msgstr "下载 PDF"
 
 #: src/components/DesktopUpdates.tsx
+#: src/components/WebdavBackupSettings.tsx
 msgid "Downloading…"
 msgstr "正在下载…"
 
@@ -3706,11 +3625,16 @@ msgstr "拖放或粘贴图片"
 msgid "Duplicate"
 msgstr "复制"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Each code works once and stops working after use."
+msgstr "每个邀请码只能使用一次，使用后自动失效。"
+
 #: src/pages/McpServerForm.tsx
 msgid "Each name can be used once."
 msgstr "每个名称只能使用一次。"
 
 #: src/components/AskCard.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3726,10 +3650,20 @@ msgstr "先编辑"
 msgid "Edit name"
 msgstr "编辑名称"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Edit preset"
+msgstr "编辑预设"
+
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
 msgstr "编辑资料"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Edit template"
+msgstr "编辑模板"
+
+#: src/components/admin/AdminUsers.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -3747,6 +3681,10 @@ msgstr "邮件"
 msgid "Email address"
 msgstr "邮箱地址"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Email domain allowlist"
+msgstr "邮箱域名白名单"
+
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "该邮箱不允许注册"
@@ -3755,14 +3693,34 @@ msgstr "该邮箱不允许注册"
 msgid "Email me a code"
 msgstr "把验证码发到我的邮箱"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Email registration"
+msgstr "邮箱注册"
+
 #: src/lib/user-error.ts
 msgid "Email verification required"
 msgstr "需要验证邮箱"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Empty reply"
+msgstr "空回复"
 
 #. placeholder {0}: humanizeTool(toolName)
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Enable {0}"
 msgstr "启用 {0}"
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Enable shared skill"
+msgstr ""
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Enabled"
+msgstr ""
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Enabling a skill shares it with your bots in this space."
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
@@ -3780,9 +3738,21 @@ msgstr "喜欢 Rakazo 吗？"
 msgid "Enter a password"
 msgstr "请输入密码"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Enter a preset name"
+msgstr "请输入预设名称"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Enter a prompt"
+msgstr "请输入提示词"
+
 #: src/lib/user-error.ts
 msgid "Enter a valid email"
 msgstr "请输入有效的电子邮件地址"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Enter a valid link, or leave it empty to hide that platform."
+msgstr "请填写有效链接，留空则不显示该平台。"
 
 #: src/pages/model-settings/use-model-settings.ts
 #: src/pages/onboarding/use-onboarding-model.ts
@@ -3802,6 +3772,18 @@ msgstr "请输入 1 到 1000 之间的整数作为图像限制。"
 #: src/lib/model-connection-preflight.ts
 msgid "Enter an API key before testing."
 msgstr "测试前请输入 API 密钥。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the backup password to restore"
+msgstr "输入备份密码以恢复"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the username."
+msgstr "请输入用户名。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the WebDAV password."
+msgstr "请输入 WebDAV 密码。"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Environment ID"
@@ -3843,6 +3825,10 @@ msgstr "每 {intervalAmountSelect} {intervalUnitSelect}"
 #: src/lib/cron.ts
 msgid "Every {n} hours at :{minute}"
 msgstr "每{n}小时{minute}分"
+
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Every admin and system action is recorded here and cannot be changed."
+msgstr "所有管理员与系统操作都会记录在这里，不可修改。"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Every bot in this space reads these notes and keeps them up to date."
@@ -3908,6 +3894,10 @@ msgstr "展开表格"
 msgid "expired"
 msgstr "已过期"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Expired"
+msgstr "已过期"
+
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr "到期"
@@ -3921,17 +3911,34 @@ msgid "Expiry"
 msgstr "有效期"
 
 #: src/components/AccountDataSettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Export"
 msgstr "导出"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Export all"
+msgstr "导出全部"
 
 #: src/components/AccountDataSettings.tsx
 msgid "Export data"
 msgstr "导出数据"
 
+#: src/components/BotPackageTools.tsx
+msgid "Export package"
+msgstr "导出软件包"
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Export this week's list from the CRM and drop it in the shared folder"
 msgstr "从 CRM 导出本周名单并放到共享文件夹"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Exported files are named after the template. Edit one outside the app and import it again under the same name to update it; a template in use applies right away."
+msgstr "导出文件以模板名命名。在应用外改好后，用同名重新导入即可更新；正在用的模板会立刻应用。"
+
+#: src/components/BotPackageTools.tsx
+msgid "Exporting…"
+msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -3954,6 +3961,7 @@ msgstr "失败"
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/model-settings/model-health-dialog.tsx
 msgid "Failed"
 msgstr "失败"
 
@@ -3974,8 +3982,12 @@ msgstr "失败。"
 msgid "Failure handling"
 msgstr "失败处理"
 
-#: src/pages/shell/message-view.tsx
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Fallback models"
+msgstr "备选模型"
+
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Favorite"
 msgstr "收藏"
 
@@ -3987,8 +3999,8 @@ msgstr "收藏这条回复"
 msgid "Favorite translation"
 msgstr "收藏译文"
 
-#: src/pages/shell/message-view.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Favorited"
 msgstr "已收藏"
 
@@ -3996,6 +4008,10 @@ msgstr "已收藏"
 #: src/pages/Favorites.tsx
 msgid "Favorites"
 msgstr "收藏"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Fetch and preview"
+msgstr "拉取并预览"
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Fields that mark a change"
@@ -4033,6 +4049,10 @@ msgstr "按机器人筛选"
 #: src/pages/Artifacts.tsx
 msgid "Filter by date"
 msgstr "按日期筛选"
+
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Filter by type"
+msgstr "按类型筛选"
 
 #: src/pages/Artifacts.tsx
 msgid "Filter by who made it"
@@ -4129,6 +4149,10 @@ msgstr "从 {0}"
 msgid "From GitHub"
 msgstr "来自 GitHub"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "From this bot"
+msgstr "从当前机器人导入"
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Full name"
@@ -4156,10 +4180,23 @@ msgstr "网关 URL"
 msgid "General"
 msgstr "通用"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate"
+msgstr "生成"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate invite codes"
+msgstr "生成邀请码"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generating…"
+msgstr "生成中…"
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Get an email address"
 msgstr "获取邮箱地址"
 
+#: src/components/AppDownloadDialog.tsx
 #: src/components/SidebarFooter.tsx
 msgid "Get the mobile app"
 msgstr "获取移动应用"
@@ -4326,6 +4363,10 @@ msgstr "如何检查"
 msgid "How will you use Rakazo?"
 msgstr "你会如何使用 Rakazo？"
 
+#: src/lib/user-error.ts
+msgid "Human verification failed. Try again."
+msgstr "人机验证失败，请重试。"
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "我做完了"
@@ -4342,6 +4383,10 @@ msgstr "如果听到了，说明语音已就绪。"
 msgid "Ignore"
 msgstr "忽略"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image generation model"
+msgstr "图片生成模型"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Image input is not configured for this model."
@@ -4351,11 +4396,16 @@ msgstr "此模型尚未配置图片输入。"
 msgid "Image input is not configured for this model."
 msgstr "此模型尚未配置图片输入。"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image prompt preset"
+msgstr "图片提示词预设"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Image upload area"
 msgstr "图片上传区域"
 
 #: src/components/AccountDataSettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "Import"
 msgstr "导入"
 
@@ -4364,9 +4414,43 @@ msgstr "导入"
 msgid "Import an agent"
 msgstr "导入 Agent"
 
+#: src/components/BotPackageImport.tsx
+msgid "Import another bot"
+msgstr "导入另一个机器人"
+
+#: src/components/BotPackageImport.tsx
+msgid "Import as new bot"
+msgstr "作为新机器人导入"
+
+#: src/components/BotPackageImport.tsx
+#: src/pages/shell/bot-picker.tsx
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Import bot"
+msgstr "导入机器人"
+
+#: src/components/BotPackageImport.tsx
+msgid "Import cancelled."
+msgstr "导入已取消。"
+
 #: src/components/AccountDataSettings.tsx
 msgid "Import data"
 msgstr "导入数据"
+
+#: src/components/BotPackageImport.tsx
+msgid "Import needs attention."
+msgstr "导入需要注意。"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Import templates"
+msgstr "导入模板"
+
+#: src/components/BotPackageImport.tsx
+msgid "Imported bot name"
+msgstr "导入的机器人名称"
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Imported skills"
+msgstr "已导入技能"
 
 #: src/lib/ticket-status.ts
 msgid "In progress"
@@ -4379,6 +4463,11 @@ msgstr "审核中"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "In this bot"
 msgstr "已在此 Bot"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "In use"
+msgstr "使用中"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Inactive"
@@ -4395,6 +4484,11 @@ msgstr "收件箱整理"
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Include API keys"
 msgstr "包含 API 密钥"
+
+#: src/components/BotPackageImport.tsx
+#: src/components/BotPackageTools.tsx
+msgid "Include memory"
+msgstr ""
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
@@ -4434,6 +4528,7 @@ msgstr "指令历史"
 
 #: src/components/AskCard.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageDocumentView.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Instructions"
@@ -4481,6 +4576,10 @@ msgstr "间隔单位"
 msgid "Invalid code"
 msgstr "验证码无效"
 
+#: src/lib/user-error.ts
+msgid "Invalid invite code"
+msgstr "邀请码无效"
+
 #: src/components/SpaceMembersSettings.tsx
 msgid "Invite"
 msgstr "邀请"
@@ -4488,6 +4587,26 @@ msgstr "邀请"
 #: src/pages/shell/chat-header.tsx
 msgid "Invite a friend"
 msgstr "邀请朋友"
+
+#: src/pages/Auth.tsx
+msgid "Invite code"
+msgstr "邀请码"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Invite code registration"
+msgstr "邀请码注册"
+
+#: src/components/admin/admin-shared.tsx
+msgid "Invite code revoked"
+msgstr "邀请码已作废"
+
+#: src/pages/AdminPage.tsx
+msgid "Invite codes"
+msgstr "邀请码"
+
+#: src/components/admin/admin-shared.tsx
+msgid "Invite codes generated"
+msgstr "已生成邀请码"
 
 #: src/components/SidebarFooter.tsx
 msgid "Invite friends"
@@ -4501,6 +4620,26 @@ msgstr "邀请链接"
 #: src/components/SpaceMembersSettings.tsx
 msgid "Invite link copied"
 msgstr "邀请链接已复制"
+
+#: src/components/AppDownloadDialog.tsx
+msgid "iOS"
+msgstr "iOS"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "iOS download link"
+msgstr "iOS 下载地址"
+
+#: src/components/admin/admin-shared.tsx
+msgid "IP collective ban"
+msgstr "IP 集体禁用"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "IP collective bans"
+msgstr "IP 集体禁用"
+
+#: src/pages/AdminPage.tsx
+msgid "IP limits"
+msgstr "IP 限制"
 
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-settings-sections.tsx
@@ -4551,9 +4690,17 @@ msgstr "刚刚"
 msgid "Keep memories"
 msgstr "保留记忆"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Keep only usable models"
+msgstr "只保留可用模型"
+
 #: src/pages/McpServerForm.tsx
 msgid "Keep tool results whole"
 msgstr "保留完整工具结果"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Keeping…"
+msgstr "保留中…"
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "key"
@@ -4584,6 +4731,11 @@ msgstr "最近 30 天"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Last 7 days"
 msgstr "最近 7 天"
+
+#. placeholder {0}: new Date(lastBackup.exportedAt).toLocaleString()
+#: src/components/WebdavBackupSettings.tsx
+msgid "Last backup: {0}"
+msgstr "上次备份：{0}"
 
 #. placeholder {0}: new Date(state.checkedAt).toLocaleString()
 #: src/pages/routine-editor/trigger-cards.tsx
@@ -4630,6 +4782,14 @@ msgstr "让机器人在 MEMORY.md 之外，按语义保存和回忆事实。"
 msgid "Light"
 msgstr "浅色"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Limited"
+msgstr "受限"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Limits"
+msgstr "限制规则"
+
 #: src/pages/SpaceSearch.tsx
 msgid "Link"
 msgstr "链接"
@@ -4647,6 +4807,10 @@ msgstr "关联私信"
 msgid "Link SSO"
 msgstr "关联 SSO"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Links shown by “Get the mobile app” in the account menu. Leave a platform empty to hide it."
+msgstr "用户菜单里「获取移动应用」显示的下载地址。某个平台留空即不显示该平台。"
+
 #: src/pages/Artifacts.tsx
 msgid "List view"
 msgstr "列表视图"
@@ -4663,6 +4827,10 @@ msgstr "正在聆听…"
 msgid "Load earlier messages"
 msgstr "加载更早的消息"
 
+#: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/Artifacts.tsx
 msgid "Load more"
 msgstr "加载更多"
@@ -4704,18 +4872,33 @@ msgstr "正在加载预览…"
 msgid "Loading voice providers…"
 msgstr "正在加载语音提供方…"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminUsers.tsx
+#: src/components/AppDownloadDialog.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageImport.tsx
+#: src/components/BotPackageTools.tsx
+#: src/components/HumanVerification.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PageLoading.tsx
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/components/SpaceMembersSettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/Favorites.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Invite.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Loading…"
 msgstr "加载中…"
@@ -4727,6 +4910,10 @@ msgstr "本地访问权限允许 Bot 无需询问就执行命令。请勿在共�
 #: src/pages/HostComputerPrompt.tsx
 msgid "Local computer access requires the latest desktop app."
 msgstr "访问本机电脑需要最新版桌面应用。"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Local file"
+msgstr "本地文件"
 
 #: src/components/AccountMenu.tsx
 #: src/components/SidebarFooter.tsx
@@ -4793,6 +4980,10 @@ msgstr "管理 MCP 服务器"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Manage other bots"
 msgstr "管理其他机器人"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Manage templates"
+msgstr "管理模板"
 
 #: src/pages/plugins/domain-search.tsx
 msgid "Manual"
@@ -4861,6 +5052,10 @@ msgstr "MCP 服务器"
 msgid "MCP servers"
 msgstr "MCP 服务器"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Media model"
+msgstr "影图模型"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Medium"
@@ -4884,6 +5079,7 @@ msgstr "成员"
 msgid "Members ({0})"
 msgstr "成员（{0}）"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
@@ -5017,6 +5213,7 @@ msgstr "模式"
 #: src/pages/routine-editor/model-settings.tsx
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Model"
 msgstr "模型"
 
@@ -5056,6 +5253,10 @@ msgstr "来自服务器的模型"
 #: src/lib/model-connection-preflight.ts
 msgid "Models list OK. {modelCount, plural, one {# model} other {# models}} available. Chat was not tested."
 msgstr "模型列表正常。{modelCount, plural, one {# 个模型} other {# 个模型}}可用。未测试聊天。"
+
+#: src/components/BotPackageImport.tsx
+msgid "Models, credentials, files, and chat history are not imported."
+msgstr ""
 
 #: src/lib/cron.ts
 msgid "Monday"
@@ -5102,6 +5303,14 @@ msgstr "晨间简报"
 msgid "Move down"
 msgstr "下移"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Move fallback model down"
+msgstr "下移备用模型"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Move fallback model up"
+msgstr "上移备用模型"
+
 #: src/pages/shell/dialogs.tsx
 msgid "Move them to your shared memory."
 msgstr "把它们移到共享记忆。"
@@ -5131,7 +5340,14 @@ msgstr "我的电脑"
 msgid "My subscription"
 msgstr "我的订阅"
 
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "My template"
+msgstr "我的模板"
+
+#: src/components/BotPackageImport.tsx
 #: src/components/CreateOrganizationDialog.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -5213,6 +5429,10 @@ msgstr "需要：{names}"
 msgid "Never ask"
 msgstr "从不询问"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Never expires"
+msgstr "永不过期"
+
 #: src/components/VaultSettings.tsx
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
@@ -5269,10 +5489,22 @@ msgstr "新的待办"
 msgid "New password"
 msgstr "新密码"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "New preset"
+msgstr "新建预设"
+
 #: src/pages/shell/bot-picker.tsx
 #: src/pages/shell/use-palette-actions.ts
 msgid "New private space"
 msgstr "新建私人空间"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "New registrations are limited right away; existing accounts are unaffected."
+msgstr "限制对新注册立即生效，已注册账号不受影响。"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "New registrations, last 7 days"
+msgstr "近 7 天新注册"
 
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/dialogs.tsx
@@ -5287,9 +5519,22 @@ msgstr "新建技能"
 msgid "New space"
 msgstr "新建工作区"
 
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "New template"
+msgstr "新建模板"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "New this week"
+msgstr "本周新增"
+
 #: src/pages/Board.tsx
 msgid "New ticket"
 msgstr "新建工单"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "New today"
+msgstr "今日新增"
 
 #: src/components/VaultSettings.tsx
 msgid "New variable"
@@ -5311,6 +5556,14 @@ msgstr "下一页"
 msgid "Next settings sections"
 msgstr "下一组设置项"
 
+#: src/components/admin/AdminOverview.tsx
+msgid "No admin activity yet"
+msgstr "暂无管理操作"
+
+#: src/components/AppDownloadDialog.tsx
+msgid "No app downloads are set up yet."
+msgstr "暂未设置 App 下载地址。"
+
 #: src/pages/plugins/plugin-browse.tsx
 msgid "No apps match your search."
 msgstr "没有匹配的应用。"
@@ -5319,9 +5572,21 @@ msgstr "没有匹配的应用。"
 msgid "No artifacts yet"
 msgstr "还没有产物"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "No audit events yet"
+msgstr "暂无审计记录"
+
 #: src/pages/plugins/source-form.tsx
 msgid "No authentication"
 msgstr "无认证"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "No backup found on the server."
+msgstr "服务器上没有备份。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "No backup yet"
+msgstr "还没有备份"
 
 #: src/components/integrations/agent-access.tsx
 msgid "No bots"
@@ -5335,6 +5600,10 @@ msgstr "没有匹配的 Bot"
 #: src/pages/Favorites.tsx
 msgid "No favorites yet"
 msgstr "还没有收藏"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "No invite codes yet"
+msgstr "暂无邀请码"
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
@@ -5376,6 +5645,10 @@ msgstr "没有可用的模型目录。"
 msgid "No models listed."
 msgstr "未列出模型。"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "No models to test"
+msgstr "没有可测试的模型"
+
 #: src/pages/shell/use-agent-import-source.ts
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "未找到 OpenClaw、Hermes 或 Agent 文档。"
@@ -5383,6 +5656,14 @@ msgstr "未找到 OpenClaw、Hermes 或 Agent 文档。"
 #: src/components/pages/PagesList.tsx
 msgid "No pages match “{query}”."
 msgstr "没有与“{query}”匹配的页面。"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "No permission"
+msgstr "无权限"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "No registrations recorded yet"
+msgstr "暂无注册记录"
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
@@ -5423,6 +5704,14 @@ msgstr "暂无技能"
 msgid "No submissions"
 msgstr "暂无提交"
 
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "No templates yet"
+msgstr "还没有模板"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "No templates yet. Create one or restore the defaults."
+msgstr "还没有模板。新建一个，或恢复默认模板。"
+
 #: src/pages/Board.tsx
 msgid "No tickets yet"
 msgstr "还没有工单"
@@ -5431,6 +5720,10 @@ msgstr "还没有工单"
 msgid "No trigger"
 msgstr "无触发器"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "No users match"
+msgstr "没有匹配的用户"
+
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -5438,6 +5731,7 @@ msgstr "无触发器"
 msgid "None"
 msgstr "无"
 
+#: src/components/admin/AdminIpLimits.tsx
 #: src/lib/ticket-priority.ts
 msgid "Normal"
 msgstr "普通"
@@ -5459,6 +5753,11 @@ msgstr "尚未检查"
 msgid "Not connected"
 msgstr "未连接"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Not found"
+msgstr "不存在"
+
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Not imported"
 msgstr "未导入"
@@ -5471,10 +5770,18 @@ msgstr "不在 Rakazo 目录中"
 msgid "Not in the plugin catalog"
 msgstr "不在插件目录中"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Not linked to a template"
+msgstr "未关联模板"
+
 #: src/components/GitHubStarPrompt.tsx
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "暂不"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Not selected"
+msgstr "未选择"
 
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/import-status.ts
@@ -5493,6 +5800,10 @@ msgstr "无法正常工作"
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "暂无记忆"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Nothing to import at that address"
+msgstr "这个地址没有可导入的内容"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Notifications"
@@ -5559,6 +5870,10 @@ msgstr "仅我"
 msgid "Only provider keys are encrypted; the backup file itself is not. If you lose this password, the keys are gone for good."
 msgstr "只有供应商密钥会被加密；备份文件本身不会加密。如果丢失此密码，密钥将永久丢失。"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Only the first 50 models were tested."
+msgstr "只测了前 50 个。"
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "仅自己"
@@ -5591,6 +5906,10 @@ msgstr "打开 {title}"
 #: src/pages/onboarding/model-step.tsx
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "打开 <0>{0}</0>，输入这个验证码："
+
+#: src/components/BotPackageImport.tsx
+msgid "Open bot"
+msgstr ""
 
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
@@ -5691,6 +6010,10 @@ msgstr "其他模型…"
 msgid "Output"
 msgstr "输出"
 
+#: src/pages/AdminPage.tsx
+msgid "Overview"
+msgstr "总览"
+
 #: src/components/pages/SharePopover.tsx
 #: src/components/SpaceMembersSettings.tsx
 #: src/lib/identity-display.ts
@@ -5766,6 +6089,7 @@ msgstr "通行密钥"
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 msgid "Password"
@@ -5778,6 +6102,10 @@ msgstr "密码不能超过 {MAX_PASSWORD_LENGTH} 个字符"
 #: src/pages/Auth.tsx
 msgid "Password recovery is not configured for this server"
 msgstr "此服务器未配置密码恢复"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Password set"
+msgstr "已设置密码"
 
 #: src/lib/user-error.ts
 msgid "Password sign-in is turned off on this server"
@@ -5797,10 +6125,18 @@ msgstr "两次密码不一致"
 msgid "Past due"
 msgstr "逾期未付"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste a prompt, or JSON like {\"name\": \"...\", \"content\": \"...\"}"
+msgstr "粘贴一段提示词，或像 {\"name\": \"...\", \"content\": \"...\"} 这样的 JSON"
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Paste a replacement key"
 msgstr "粘贴替换密钥"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste text"
+msgstr "粘贴文本"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
@@ -5823,6 +6159,7 @@ msgstr "请粘贴你的 API 密钥，然后重新测试。"
 msgid "Paused"
 msgstr "已暂停"
 
+#: src/components/BotPackageSkillsView.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
@@ -5834,6 +6171,8 @@ msgid "Permissions"
 msgstr "权限"
 
 #: src/pages/shell/agent-import-plan.tsx
+#: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
 msgid "Persona"
 msgstr "人设"
 
@@ -5926,7 +6265,17 @@ msgstr "PR 审查员"
 msgid "Preferences"
 msgstr "偏好设置"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Preset name"
+msgstr "预设名称"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Preset prompt"
+msgstr "预设提示词"
+
+#: src/components/BotPackageImport.tsx
 #: src/components/integrations/skills-dialog.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/pages/plugins/github-import.tsx
 msgid "Preview"
 msgstr "预览"
@@ -5939,6 +6288,14 @@ msgstr "预览 {0}"
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr "这种文件无法预览，请下载后查看。"
+
+#: src/components/BotPackageTools.tsx
+msgid "Preview package"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+msgid "Previewing…"
+msgstr ""
 
 #: src/pages/shell/chat-find-bar.tsx
 msgid "Previous match"
@@ -5972,6 +6329,14 @@ msgstr "效率"
 msgid "Program: {name}"
 msgstr "程序：{name}"
 
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Prompt"
+msgstr "提示词"
+
+#: src/pages/settings-nav.ts
+msgid "Prompt templates"
+msgstr "提示词模板"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Protected input"
 msgstr "受保护输入"
@@ -5995,6 +6360,10 @@ msgstr "提供方"
 msgid "Pull request"
 msgstr "拉取请求"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Put the account and password in their own fields, not in the address."
+msgstr "账号和密码请填在各自的输入框里，不要写在地址里。"
+
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "排队中"
@@ -6011,6 +6380,10 @@ msgstr "Rakazo 额度"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
 msgstr "rakazo-shared 和以 bot- 开头的 ID 保留给 Rakazo 使用。"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Rate limited"
+msgstr "限流"
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -6060,6 +6433,14 @@ msgstr "已收到"
 #: src/pages/ActivityList.tsx
 msgid "Recent"
 msgstr "最近"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "Recent activity"
+msgstr "最近操作"
+
+#: src/components/BotPackageImport.tsx
+msgid "Recent imports"
+msgstr ""
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "Recent payments"
@@ -6169,9 +6550,45 @@ msgstr "正在刷新…"
 msgid "Region"
 msgstr "区域"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Registered"
+msgstr "注册时间"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Registration IP"
+msgstr "注册 IP"
+
 #: src/lib/user-error.ts
 msgid "Registration is closed"
 msgstr "注册已关闭"
+
+#: src/pages/Auth.tsx
+msgid "Registration is closed on this server"
+msgstr "该服务器已关闭注册"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Registration method"
+msgstr "注册方式"
+
+#: src/pages/AdminPage.tsx
+msgid "Registration settings"
+msgstr "注册设置"
+
+#: src/components/admin/admin-shared.tsx
+msgid "Registration settings changed"
+msgstr "注册设置已修改"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations by IP"
+msgstr "IP 注册统计"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations per IP"
+msgstr "每个 IP 限注册数"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations per IP per hour"
+msgstr "每小时每个 IP 限注册数"
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Reject"
@@ -6215,7 +6632,9 @@ msgstr "移除"
 
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
+#. placeholder {0}: item.name
 #: src/components/ComputerDeviceSettings.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/pages/shell/composer-parts.tsx
 msgid "Remove {0}"
 msgstr "移除 {0}"
@@ -6249,10 +6668,19 @@ msgstr "移除变化触发器"
 msgid "Remove email trigger"
 msgstr "移除邮件触发器"
 
-#: src/pages/shell/message-view.tsx
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Remove fallback model"
+msgstr "移除备选模型"
+
+#: src/pages/Favorites.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
 msgid "Remove favorite"
 msgstr "取消收藏"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Remove from blacklist"
+msgstr "取消拉黑"
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -6289,6 +6717,10 @@ msgstr "移除技能"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove webhook"
 msgstr "移除 Webhook"
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Removed"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Removed, but list refresh failed"
@@ -6375,6 +6807,7 @@ msgid "Research & writing"
 msgstr "调研和写作"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -6395,6 +6828,14 @@ msgstr "重置电脑？"
 #: src/pages/Auth.tsx
 msgid "Reset password"
 msgstr "重置密码"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Reset usage"
+msgstr "一键重置"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Reset usage?"
+msgstr "确认重置用量？"
 
 #: src/pages/Auth.tsx
 msgid "Reset your password"
@@ -6425,10 +6866,23 @@ msgstr "Responses"
 msgid "Restart to update"
 msgstr "重启后更新"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "恢复"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Restore defaults"
+msgstr "恢复默认模板"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Restore deleted"
+msgstr "恢复已删除"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Restore from WebDAV"
+msgstr "从 WebDAV 恢复"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -6439,6 +6893,7 @@ msgid "Restore the last saved workspace. Unsaved work on the computer is lost."
 msgstr "还原上次保存的工作区。电脑上未保存的工作会丢失。"
 
 #: src/components/AskCard.tsx
+#: src/components/WebdavBackupSettings.tsx
 msgid "Restored"
 msgstr "已恢复"
 
@@ -6450,11 +6905,25 @@ msgstr "恢复会导入新副本，绝不覆盖。在此输入相同密码以恢
 msgid "Restoring your workspace"
 msgstr "正在恢复工作区"
 
+#: src/components/BotPackageImport.tsx
+msgid "Resume import"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageTools.tsx
+#: src/components/HumanVerification.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Invite.tsx
@@ -6463,6 +6932,7 @@ msgstr "正在恢复工作区"
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/shell/message-translation.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "重试"
@@ -6476,6 +6946,10 @@ msgstr "立即重试"
 msgid "Retry screen"
 msgstr "重新连接屏幕"
 
+#: src/pages/shell/message-translation.tsx
+msgid "Retry translation"
+msgstr "重试翻译"
+
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
 msgid "Return to call with {0}"
@@ -6486,6 +6960,14 @@ msgstr "返回与 {0} 的通话"
 msgid "Return to Rakazo"
 msgstr "返回 Rakazo"
 
+#: src/pages/settings-nav.ts
+msgid "Reusable personas for your bots."
+msgstr "可反复用的人设，供机器人使用。"
+
+#: src/components/BotPackageImport.tsx
+msgid "Review import"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
 msgstr "请检查提供方设置并重新测试。"
@@ -6494,14 +6976,20 @@ msgstr "请检查提供方设置并重新测试。"
 msgid "Reviews pull requests waiting on you"
 msgstr "审查等你处理的拉取请求"
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Revoke"
 msgstr "撤销"
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AdminAccessPage.tsx
 msgid "Revoked"
 msgstr "已撤销"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Revoking…"
+msgstr "作废中…"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Root filesystem"
@@ -6511,6 +6999,7 @@ msgstr "根文件系统"
 msgid "Rotate key"
 msgstr "轮换密钥"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/lib/identity-display.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -6518,6 +7007,7 @@ msgstr "轮换密钥"
 msgid "Routine"
 msgstr "例行任务"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Routines"
@@ -6587,10 +7077,12 @@ msgstr "周六"
 
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Board.tsx
 #: src/pages/ExternalConversationSettings.tsx
@@ -6602,9 +7094,28 @@ msgstr "周六"
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Save"
 msgstr "保存"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Save and apply to this bot"
+msgstr "保存并应用到当前机器人"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Save current persona as template"
+msgstr "保存当前人设为模板"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Save limits"
+msgstr "保存规则"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Save settings"
+msgstr "保存设置"
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -6614,12 +7125,22 @@ msgstr "保存工作区并安装最新软件。"
 msgid "Save to Vault"
 msgstr "保存到保管库"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Save WebDAV account"
+msgstr "保存 WebDAV 账号"
+
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Saved"
 msgstr "已保存"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Saved as template"
+msgstr "已保存为模板"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
@@ -6641,6 +7162,9 @@ msgstr "正在保存工作区"
 msgid "Saving..."
 msgstr "正在保存…"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -6716,6 +7240,10 @@ msgstr "搜索机器人、操作和设置"
 msgid "Search by domain"
 msgstr "按域名搜索"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Search by email or name"
+msgstr "按邮箱或用户名搜索"
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "搜索 integrations.sh"
@@ -6734,6 +7262,10 @@ msgstr "搜索模型"
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Search runs"
 msgstr "搜索运行记录"
+
+#: src/components/BotPackageTools.tsx
+msgid "Search shared skills"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Search skills"
@@ -6773,6 +7305,11 @@ msgstr "安全码"
 #: src/pages/shell/chat-header.tsx
 msgid "Select a bot"
 msgstr "选择 Bot"
+
+#. placeholder {0}: selection.size
+#: src/components/BotPackageTools.tsx
+msgid "Selected skills: {0}"
+msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Self-hosted"
@@ -6833,6 +7370,10 @@ msgstr "已发送"
 msgid "Serenity endpoint is required."
 msgstr "请填写 Serenity 端点。"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Server address"
+msgstr "服务器地址"
+
 #: src/pages/McpServerForm.tsx
 msgid "Server name"
 msgstr "服务器名称"
@@ -6848,6 +7389,14 @@ msgstr "服务器 URL"
 #: src/components/SpendingLimitSettings.tsx
 msgid "Set"
 msgstr "设置"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Set as primary"
+msgstr "设为主模型"
+
+#: src/components/BotPackageImport.tsx
+msgid "Set up connections"
+msgstr ""
 
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
@@ -6895,6 +7444,7 @@ msgstr "形状 {0}"
 
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Share"
 msgstr "共享"
 
@@ -6916,6 +7466,10 @@ msgstr "共享"
 msgid "Shared memory"
 msgstr "共享记忆"
 
+#: src/components/BotPackageTools.tsx
+msgid "Shared skills (optional)"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -6934,6 +7488,7 @@ msgstr "显示 Bot"
 msgid "Show list"
 msgstr "显示列表"
 
+#: src/components/BotPackageTools.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/plugins/plugin-browse.tsx
@@ -6944,6 +7499,10 @@ msgstr "显示更多"
 #: src/components/I18nBootstrap.tsx
 msgid "Show password"
 msgstr "显示密码"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Show read-aloud, share, and favorite on translations"
+msgstr "译文显示朗读、分享、收藏"
 
 #: src/pages/GroupPanel.tsx
 msgid "Show selected"
@@ -7009,6 +7568,10 @@ msgstr "注册"
 msgid "Sign-in cancelled. Try again."
 msgstr "登录已取消。请重试。"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Signed in, but the backup directory does not exist yet."
+msgstr "已登录，但备份目录还不存在。"
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Site"
@@ -7019,6 +7582,9 @@ msgid "Sites you sign in to stay signed in for everyone in this space"
 msgstr "你登录的网站会对此工作区的所有人保持登录"
 
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageDocumentView.tsx
+#: src/components/BotPackageSkillsView.tsx
+#: src/components/BotPackageTools.tsx
 msgid "Skill"
 msgstr "技能"
 
@@ -7031,6 +7597,11 @@ msgstr "技能 {0}"
 msgid "Skill {position}"
 msgstr "技能 {position}"
 
+#: src/components/BotPackageSkillsView.tsx
+msgid "Skill name"
+msgstr ""
+
+#: src/components/BotPackageDocumentView.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/SidebarFooter.tsx
@@ -7042,6 +7613,10 @@ msgstr "技能"
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Skills join the library all your bots share."
 msgstr "技能会加入所有 Bot 共享的技能库。"
+
+#: src/components/BotPackageImport.tsx
+msgid "Skills stay off. Routines stay paused. Connections need setup."
+msgstr ""
 
 #: src/pages/shell/computer-release-actions.tsx
 msgid "Skip"
@@ -7084,7 +7659,9 @@ msgid "Some settings are not imported"
 msgstr "部分设置不会导入"
 
 #: src/App.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/lib/user-error.ts
+#: src/pages/shell/chat-persona-switcher.tsx
 msgid "Something went wrong. Try again."
 msgstr "出了点问题。请重试。"
 
@@ -7116,6 +7693,10 @@ msgstr "按 {column} 排序，降序"
 msgid "Sorts new email and drafts the replies"
 msgstr "分拣新邮件并起草回复"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Source language"
+msgstr "源语言"
+
 #: src/lib/identity-display.ts
 #: src/pages/SettingsOverlay.tsx
 msgid "Space"
@@ -7129,6 +7710,7 @@ msgstr "工作区默认"
 msgid "Spaces"
 msgstr "工作区"
 
+#: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
 msgstr "朗读"
@@ -7213,6 +7795,7 @@ msgstr "正在开始…"
 msgid "State or region"
 msgstr "州/省/地区"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
 msgid "Status"
@@ -7226,6 +7809,7 @@ msgstr "步骤"
 #: src/pages/RoutineList.tsx
 #: src/pages/shell/composer-parts.tsx
 #: src/pages/shell/computer-overlay.tsx
+#: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "停止"
@@ -7301,6 +7885,10 @@ msgstr "使用自己的 AI 订阅"
 msgid "Subscription required"
 msgstr "需要订阅"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Subscription URL"
+msgstr "订阅地址"
+
 #: src/lib/cron.ts
 msgid "Sunday"
 msgstr "周日"
@@ -7319,6 +7907,11 @@ msgstr "支持思考"
 msgid "Switch"
 msgstr "切换"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switch persona"
+msgstr "切换人设"
+
 #: src/components/ModelCredits.tsx
 msgid "Switch to {tierTargetName}?"
 msgstr "切换到 {tierTargetName}？"
@@ -7331,10 +7924,23 @@ msgstr "切换为按年"
 msgid "Switch to yearly?"
 msgstr "切换为按年付费？"
 
+#. placeholder {0}: saved.name
+#. placeholder {0}: template.name
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switched to {0}"
+msgstr "已切换到 {0}"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
+msgstr "切换立刻生效，下一条消息就用新提示词，之前的消息不变。直接改机器人的人设内容会变成「自定义」。"
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Switching…"
 msgstr "正在切换…"
 
+#: src/components/admin/AdminAuditLog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/use-palette-actions.ts
 msgid "System"
@@ -7351,6 +7957,10 @@ msgstr "接管控制权"
 #: src/components/ComputerProviderSettings.tsx
 msgid "Target"
 msgstr "目标"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Target language"
+msgstr "目标语言"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
@@ -7377,39 +7987,67 @@ msgstr "Teams 消息"
 msgid "Template"
 msgstr "模板"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Template name"
+msgstr "模板名称"
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Templates"
 msgstr "模板"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Test"
 msgstr "测试"
+
+#: src/pages/model-settings/compatible-model-fields.tsx
+msgid "Test all models"
+msgstr "测试全部模型"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
 msgid "Test API key"
 msgstr "测试 API 密钥"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/McpServersOverlay.tsx
 msgid "Test connection"
 msgstr "测试连接"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Test results · {label}"
+msgstr "测试结果 · {label}"
+
 #: src/pages/RoutineEditor.tsx
 msgid "Test run"
 msgstr "测试运行"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Test WebDAV connection"
+msgstr "测试 WebDAV 连接"
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Testing"
 msgstr "测试"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
+#: src/pages/model-settings/compatible-model-fields.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Testing…"
 msgstr "正在测试…"
 
 #: src/components/BotEmailAddressField.tsx
 msgid "That address isn't available"
 msgstr "该地址不可用"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "That server address is not valid."
+msgstr "服务器地址无效。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The backup password is wrong."
+msgstr "备份密码错误。"
 
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
@@ -7430,6 +8068,18 @@ msgstr "你的 Bot 工作所用的电脑。"
 #: src/lib/model-connection-preflight.ts
 msgid "The connection timed out."
 msgstr "连接超时。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The directory is not valid."
+msgstr "目录无效。"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "The environment master switch is off, so registration stays closed no matter what is set here."
+msgstr "环境总开关已关闭，注册保持关闭，这里改什么都没用。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The export link expired. Try again."
+msgstr "导出链接已过期，请重试。"
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -7469,6 +8119,10 @@ msgstr "屏幕链接已过期。"
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "The selected memory provider is not available in this build."
 msgstr "所选记忆提供方在此构建中不可用。"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The server answered with an error."
+msgstr "服务器返回错误。"
 
 #: src/components/pages/SharePopover.tsx
 msgid "The shared link stops working"
@@ -7528,6 +8182,14 @@ msgstr "无法读取此备份。"
 msgid "This bot"
 msgstr "此 Bot"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "This bot has no persona yet."
+msgstr "这个机器人还没有人设。"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "This bot keeps its current persona, but stops following this template."
+msgstr "机器人会保留当前的人设内容，只是不再跟随这个模板。"
+
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "此 Bot 运行在这台电脑上，而不是 Linux 桌面。Shell 和文件使用你的主目录。"
@@ -7556,6 +8218,10 @@ msgstr "此操作无法撤销。"
 msgid "This cannot be undone."
 msgstr "此操作无法撤销。"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "This clears all usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
+msgstr "将清空当前空间的全部用量——运行次数、Token、费用，以及各模型和各 Bot 的用量记录。此操作不可恢复。"
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "这台电脑"
@@ -7582,6 +8248,10 @@ msgstr "这个文件不是有效的 UTF-8 文本。"
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "此导入已使用过。请重新选择文件。"
+
+#: src/components/BotPackageImport.tsx
+msgid "This imported bot was removed."
+msgstr ""
 
 #: src/pages/Invite.tsx
 msgid "This invite link is no longer valid."
@@ -7624,6 +8294,11 @@ msgstr "无法加载此页面"
 msgid "This page isn't available"
 msgstr "此页面不可用"
 
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "This password appeared in a data breach. Choose another."
+msgstr "这个密码曾在数据泄露中出现过，请换一个。"
+
 #: src/components/AccountAccess.tsx
 msgid "This permanently deletes your account and data."
 msgstr "此操作将永久删除您的账户和数据。"
@@ -7639,6 +8314,10 @@ msgstr "此提供方必须先保存才能测试。"
 #: src/lib/model-connection-preflight.ts
 msgid "This provider is not connected yet."
 msgstr "此提供方尚未连接。"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "This removes the account and everything it created. This cannot be undone."
+msgstr "这会删除该账号及其创建的全部内容，无法撤销。"
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "This removes the connection from every space."
@@ -7669,6 +8348,10 @@ msgstr "此服务器的工具结果超出模型容量。请关闭该服务器的
 msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
 msgstr "此订阅登录在 Rakazo 中尚不可用。请使用部署凭据或选择其他提供方。"
 
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "This template is in use on this bot. Saving alone only changes the template."
+msgstr "这个模板正在当前机器人上使用。只保存会改模板内容，机器人仍用旧人设。"
+
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "This template was just updated. Check it again."
 msgstr "此模板刚刚更新，请重新查看。"
@@ -7684,6 +8367,10 @@ msgstr "周四"
 #: src/pages/RoutineSchedule.tsx
 msgid "Time of day"
 msgstr "时间"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Timed out"
+msgstr "超时"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Timezone"
@@ -7719,6 +8406,11 @@ msgstr "至:"
 msgid "Today"
 msgstr "今天"
 
+#. placeholder {0}: stat.todayCount
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Today: {0}"
+msgstr "今日：{0}"
+
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Toggle sidebar"
 msgstr "显示或隐藏侧边栏"
@@ -7726,6 +8418,10 @@ msgstr "显示或隐藏侧边栏"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Tokens"
 msgstr "Token"
+
+#: src/lib/user-error.ts
+msgid "Too many registrations from this network"
+msgstr "该网络注册次数过多"
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Tool arguments (JSON)"
@@ -7757,6 +8453,15 @@ msgstr "话题追踪"
 msgid "Total"
 msgstr "合计"
 
+#: src/components/admin/AdminOverview.tsx
+msgid "Total users"
+msgstr "注册用户总数"
+
+#. placeholder {0}: stat.totalCount
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Total: {0}"
+msgstr "累计：{0}"
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
 msgstr "正在转写…"
@@ -7776,6 +8481,52 @@ msgstr "转写请求超时。"
 #: src/lib/dictation.ts
 msgid "Transcription response is too large."
 msgstr "转写响应过大。"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate"
+msgstr "翻译"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate this reply"
+msgstr "翻译这条回复"
+
+#. placeholder {0}: displayName(state.result.modelId, t`Model`)
+#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
+#. placeholder {2}: translationLanguageLabel(targetLanguage)
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {0} · {1} to {2}"
+msgstr "翻译 · 用 {0} 翻译 · {1}译{2}"
+
+#. placeholder {0}: displayName(state.result.modelId, t`Model`)
+#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
+#. placeholder {2}: translationLanguageLabel(targetLanguage)
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {0} (backup) · {1} to {2}"
+msgstr "翻译 · 用 {0} 翻译（备用）· {1}译{2}"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating"
+msgstr "翻译中"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating…"
+msgstr "翻译中…"
+
+#: src/pages/Favorites.tsx
+msgid "translation"
+msgstr "译文"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation"
+msgstr "翻译"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translation failed"
+msgstr "翻译失败"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation model"
+msgstr "翻译模型"
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Treat like a person"
@@ -7944,9 +8695,17 @@ msgstr "立即升级"
 msgid "Upload"
 msgstr "上传"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Uploading…"
+msgstr "上传中…"
+
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "紧急"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Usable"
+msgstr "可用"
 
 #: src/pages/settings-nav.ts
 msgid "Usage"
@@ -7955,6 +8714,10 @@ msgstr "用量"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Usage range"
 msgstr "用量范围"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Use"
+msgstr "使用"
 
 #. Switches the saved timezone to this device's, e.g. 'Use Pacific/Auckland'
 #. placeholder {0}: deviceTimezone.replaceAll("_", " ")
@@ -7974,10 +8737,23 @@ msgstr "访问令牌请使用 {oauthEnvReference}。"
 msgid "Use 2 to 64 characters"
 msgstr "请使用 2 到 64 个字符"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use a different password from your account password."
+msgstr "不要和账号密码相同。"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Use a found model"
 msgstr "使用找到的模型"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use an https address."
+msgstr "请用 https 地址。"
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
+msgstr "备份密码至少 {BACKUP_PASSWORD_MIN_LENGTH} 个字符"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
@@ -8019,15 +8795,48 @@ msgstr "使用 Rakazo 额度"
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "最多 512 个字母、数字、_ 或 -。"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Used up"
+msgstr "已用完"
+
+#: src/components/admin/admin-shared.tsx
+msgid "User blacklisted"
+msgstr "用户已拉黑"
+
+#: src/components/admin/admin-shared.tsx
+msgid "User deleted"
+msgstr "用户已删除"
+
+#: src/components/admin/admin-shared.tsx
+msgid "User disabled"
+msgstr "用户已禁用"
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
 msgstr "用户 peer"
 
+#: src/components/admin/admin-shared.tsx
+msgid "User permanently deleted"
+msgstr "用户已永久删除"
+
+#: src/components/admin/admin-shared.tsx
+msgid "User removed from blacklist"
+msgstr "用户已取消拉黑"
+
+#: src/components/admin/admin-shared.tsx
+msgid "User restored"
+msgstr "用户已恢复"
+
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/components/WebdavBackupSettings.tsx
 msgid "Username"
 msgstr "用户名"
+
+#: src/pages/AdminPage.tsx
+msgid "Users"
+msgstr "用户管理"
 
 #: src/pages/shell/import-status.ts
 msgid "Uses files that are not imported"
@@ -8048,6 +8857,10 @@ msgstr "使用你的 API 密钥"
 #: src/components/ModelCredits.tsx
 msgid "Using your API key. Free plan ends {freeUntil}."
 msgstr "正在使用你的 API 密钥。免费方案将于 {freeUntil} 结束。"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Valid for"
+msgstr "有效期"
 
 #: src/components/vault/LoginFieldsInput.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -8085,6 +8898,14 @@ msgstr "正在校验…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "版本"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video generation model"
+msgstr "视频生成模型"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video prompt preset"
+msgstr "视频提示词预设"
 
 #: src/pages/plugins/plugin-browse.tsx
 msgid "View all"
@@ -8132,6 +8953,10 @@ msgstr "Web、桌面和移动端"
 #: src/pages/Paywall.tsx
 msgid "Web, desktop and mobile apps"
 msgstr "Web、桌面和移动应用"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "WebDAV backup"
+msgstr "WebDAV 备份"
 
 #: src/pages/routine-editor/add-trigger-menu.tsx
 msgid "Webhook"
@@ -8220,6 +9045,22 @@ msgstr "Bot 何时在行动前先征求你的确认。"
 msgid "When it finishes or needs input"
 msgstr "完成任务或需要输入时"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When off, no new accounts can register by email."
+msgstr "关闭后，不再接受邮箱注册新账号。"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "When on, an IP that passes the hourly threshold has all its accounts disabled at once."
+msgstr "开启后，同一 IP 一小时内注册数超过阈值时，该 IP 下的全部账号会被批量禁用。"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, only emails from the domains below can register."
+msgstr "开启后，只有使用下方白名单域名的邮箱才能注册。"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, registration requires a valid invite code."
+msgstr "开启后，注册时必须填写一个有效邀请码。"
+
 #: src/pages/routine-editor/add-trigger-menu.tsx
 #: src/pages/routine-editor/trigger-cards.tsx
 #: src/pages/RoutineList.tsx
@@ -8272,6 +9113,7 @@ msgstr "工作中"
 msgid "Working instructions"
 msgstr "工作指令"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts
 #: src/pages/Auth.tsx
@@ -8290,6 +9132,10 @@ msgstr "可使用你的 ChatGPT 或 Claude 套餐。"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Workspace"
 msgstr "工作区"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Wrong password"
+msgstr "密码错误"
 
 #: src/lib/billing.ts
 msgid "year"
@@ -8428,478 +9274,3 @@ msgstr "你的语音提供方拒绝了该密钥。"
 #: src/components/vault/VaultItemEditor.tsx
 msgid "ZIP or postal code"
 msgstr "邮政编码"
-
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "A parent directory is missing on the server."
-msgstr "服务器上缺少父目录。"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Back up now"
-msgstr "立即备份"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backed up"
-msgstr "已备份"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backup directory"
-msgstr "备份目录"
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backup passwords do not match"
-msgstr "两次备份密码不一致"
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backup passwords need an HTTPS connection"
-msgstr "备份密码需要 HTTPS 连接"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Enter the backup password to restore"
-msgstr "输入备份密码以恢复"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Enter the username."
-msgstr "请输入用户名。"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Enter the WebDAV password."
-msgstr "请输入 WebDAV 密码。"
-
-#. placeholder {0}: new Date(lastBackup.exportedAt).toLocaleString()
-#: src/components/WebdavBackupSettings.tsx
-msgid "Last backup: {0}"
-msgstr "上次备份：{0}"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "No backup found on the server."
-msgstr "服务器上没有备份。"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "No backup yet"
-msgstr "还没有备份"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Password set"
-msgstr "已设置密码"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Put the account and password in their own fields, not in the address."
-msgstr "账号和密码请填在各自的输入框里，不要写在地址里。"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Restore from WebDAV"
-msgstr "从 WebDAV 恢复"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Save WebDAV account"
-msgstr "保存 WebDAV 账号"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Server address"
-msgstr "服务器地址"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Signed in, but the backup directory does not exist yet."
-msgstr "已登录，但备份目录还不存在。"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Test WebDAV connection"
-msgstr "测试 WebDAV 连接"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "That server address is not valid."
-msgstr "服务器地址无效。"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The backup password is wrong."
-msgstr "备份密码错误。"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The directory is not valid."
-msgstr "目录无效。"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The export link expired. Try again."
-msgstr "导出链接已过期，请重试。"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The server answered with an error."
-msgstr "服务器返回错误。"
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "This password appeared in a data breach. Choose another."
-msgstr "这个密码曾在数据泄露中出现过，请换一个。"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Uploading…"
-msgstr "上传中…"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Use a different password from your account password."
-msgstr "不要和账号密码相同。"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Use an https address."
-msgstr "请用 https 地址。"
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
-msgstr "备份密码至少 {BACKUP_PASSWORD_MIN_LENGTH} 个字符"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "WebDAV backup"
-msgstr "WebDAV 备份"
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Wrong password"
-msgstr "密码错误"
-
-#. placeholder {0}: items.length
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "{0, plural, one {Import 1 template} other {Import # templates}}"
-msgstr "{0, plural, one {导入 1 个模板} other {导入 # 个模板}}"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "A name for this persona"
-msgstr "给这个人设起个名字"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Check the names and content, then import."
-msgstr "核对名称和内容，然后导入。"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Choose a file"
-msgstr "选择文件"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Current persona"
-msgstr "当前人设"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Custom"
-msgstr "自定义"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Default templates restored"
-msgstr "已恢复默认模板"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "Edit template"
-msgstr "编辑模板"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Export all"
-msgstr "导出全部"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Exported files are named after the template. Edit one outside the app and import it again under the same name to update it; a template in use applies right away."
-msgstr "导出文件以模板名命名。在应用外改好后，用同名重新导入即可更新；正在用的模板会立刻应用。"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Fetch and preview"
-msgstr "拉取并预览"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "From this bot"
-msgstr "从当前机器人导入"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Import templates"
-msgstr "导入模板"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "In use"
-msgstr "使用中"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Local file"
-msgstr "本地文件"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Manage templates"
-msgstr "管理模板"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "My template"
-msgstr "我的模板"
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "New template"
-msgstr "新建模板"
-
-#: src/pages/shell/chat-persona-switcher.tsx
-msgid "No templates yet"
-msgstr "还没有模板"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "No templates yet. Create one or restore the defaults."
-msgstr "还没有模板。新建一个，或恢复默认模板。"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Not linked to a template"
-msgstr "未关联模板"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Nothing to import at that address"
-msgstr "这个地址没有可导入的内容"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Paste a prompt, or JSON like {\"name\": \"...\", \"content\": \"...\"}"
-msgstr "粘贴一段提示词，或像 {\"name\": \"...\", \"content\": \"...\"} 这样的 JSON"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Paste text"
-msgstr "粘贴文本"
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "Prompt"
-msgstr "提示词"
-
-#: src/pages/settings-nav.ts
-msgid "Prompt templates"
-msgstr "提示词模板"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Restore defaults"
-msgstr "恢复默认模板"
-
-#: src/pages/settings-nav.ts
-msgid "Reusable personas for your bots."
-msgstr "可反复用的人设，供机器人使用。"
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "Save and apply to this bot"
-msgstr "保存并应用到当前机器人"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Save current persona as template"
-msgstr "保存当前人设为模板"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Saved as template"
-msgstr "已保存为模板"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Subscription URL"
-msgstr "订阅地址"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/pages/shell/chat-persona-switcher.tsx
-msgid "Switch persona"
-msgstr "切换人设"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-#: src/pages/shell/chat-persona-switcher.tsx
-msgid "Switched to {0}"
-msgstr "已切换到 {0}"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
-msgstr "切换立刻生效，下一条消息就用新提示词，之前的消息不变。直接改机器人的人设内容会变成「自定义」。"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Template name"
-msgstr "模板名称"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "This bot has no persona yet."
-msgstr "这个机器人还没有人设。"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "This bot keeps its current persona, but stops following this template."
-msgstr "机器人会保留当前的人设内容，只是不再跟随这个模板。"
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "This template is in use on this bot. Saving alone only changes the template."
-msgstr "这个模板正在当前机器人上使用。只保存会改模板内容，机器人仍用旧人设。"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Use"
-msgstr "使用"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translate"
-msgstr "翻译"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translating"
-msgstr "翻译中"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Translation"
-msgstr "翻译"
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Not selected"
-msgstr "未选择"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Source language"
-msgstr "源语言"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Target language"
-msgstr "目标语言"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Auto-translate replies"
-msgstr "自动翻译回复"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Show read-aloud, share, and favorite on translations"
-msgstr "译文显示朗读、分享、收藏"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Translation model"
-msgstr "翻译模型"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translate this reply"
-msgstr "翻译这条回复"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translating…"
-msgstr "翻译中…"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Copy translation"
-msgstr "复制译文"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Collapse"
-msgstr "收起"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Collapse translation"
-msgstr "收起译文"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Retry translation"
-msgstr "重试翻译"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translation failed"
-msgstr "翻译失败"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Choose a translation model in this bot's Advanced settings"
-msgstr "请先在该机器人的高级设置里选择翻译模型"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translated with {modelId} · {source} to {target}"
-msgstr "翻译 · 用 {modelId} 翻译 · {source}译{target}"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translated with {modelId} (backup) · {source} to {target}"
-msgstr "翻译 · 用 {modelId}（备选）翻译 · {source}译{target}"
-
-#: src/pages/Favorites.tsx
-msgid "translation"
-msgstr "译文"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Media model"
-msgstr "影图模型"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Video generation model"
-msgstr "视频生成模型"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Image generation model"
-msgstr "图片生成模型"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Video prompt preset"
-msgstr "视频提示词预设"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Image prompt preset"
-msgstr "图片提示词预设"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "No preset"
-msgstr "无预设"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Fallback models"
-msgstr "备选模型"
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Remove fallback model"
-msgstr "移除备选模型"
-
-#: src/components/AppDownloadDialog.tsx
-msgid "Android"
-msgstr "安卓"
-
-#: src/components/AppDownloadDialog.tsx
-msgid "iOS"
-msgstr "iOS"
-
-#: src/components/AppDownloadDialog.tsx
-msgid "No app downloads are set up yet."
-msgstr "暂未设置 App 下载地址。"
-
-#: src/components/admin/AdminAppDownloadSettings.tsx
-msgid "Custom app download"
-msgstr "自定义 App 下载"
-
-#: src/components/admin/AdminAppDownloadSettings.tsx
-msgid "Links shown by “Get the mobile app” in the account menu. Leave a platform empty to hide it."
-msgstr "用户菜单里「获取移动应用」显示的下载地址。某个平台留空即不显示该平台。"
-
-#: src/components/admin/AdminAppDownloadSettings.tsx
-msgid "Android download link"
-msgstr "安卓下载地址"
-
-#: src/components/admin/AdminAppDownloadSettings.tsx
-msgid "iOS download link"
-msgstr "iOS 下载地址"
-
-#: src/components/admin/AdminAppDownloadSettings.tsx
-msgid "Enter a valid link, or leave it empty to hide that platform."
-msgstr "请填写有效链接，留空则不显示该平台。"
-
-#: src/components/admin/AdminAppDownloadSettings.tsx
-msgid "App download links saved"
-msgstr "App 下载地址已保存"
-
-#: src/components/admin/AdminAppDownloadSettings.tsx
-msgid "Couldn't load app download links"
-msgstr "无法加载 App 下载地址"
-
-#: src/components/admin/AdminAppDownloadSettings.tsx
-msgid "Could not save app download links"
-msgstr "无法保存 App 下载地址"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "App download"
-msgstr "App 下载"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Reset usage"
-msgstr "一键重置"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Reset usage?"
-msgstr "确认重置用量？"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "This clears all usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
-msgstr "将清空当前空间的全部用量——运行次数、Token、费用，以及各模型和各 Bot 的用量记录。此操作不可恢复。"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Could not reset usage"
-msgstr "无法重置用量"

@@ -286,9 +286,21 @@ describe("MediaModelGroup", () => {
         { key: "provider-a::video-b", label: "Video B" },
         { key: "provider-a::video-c", label: "Video C" },
       ],
+      imageValue: "provider-a::image-a",
     });
     expect(container.textContent).toContain("Fallback models");
     expect(container.querySelector('select[aria-label="Add fallback model"]')).toBeNull();
+  });
+
+  it("offers a fallback add before a primary model is picked", async () => {
+    await renderGroup();
+    const add = selectByLabel("Add fallback model");
+    const options = [...add.options].map((option) => option.value);
+    expect(options).toContain("provider-a::video-a");
+    expect(options).toContain("provider-a::video-b");
+    expect(options).toContain("provider-a::video-c");
+    await setSelect(add, "provider-a::video-a");
+    expect(onAddVideoFallback).toHaveBeenCalledWith("provider-a::video-a");
   });
 
   it("moves a fallback up and down", async () => {

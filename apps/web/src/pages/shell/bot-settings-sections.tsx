@@ -601,7 +601,10 @@ function MediaRoleSection({
   const { t } = useLingui();
   const usedKeys = new Set([value, ...fallbacks.map((fallback) => fallback.key)]);
   const addChoices = choices.filter((choice) => choice.key !== "" && !usedKeys.has(choice.key));
-  const canAdd = value !== "" && fallbacks.length + 1 < BOT_MODEL_LIST_MAX && addChoices.length > 0;
+  // The list is primary-first: the first model added becomes the primary, so
+  // the fallback section stays visible even before one is picked.
+  const totalModels = (value ? 1 : 0) + fallbacks.length;
+  const canAdd = totalModels < BOT_MODEL_LIST_MAX && addChoices.length > 0;
   const primaryTest = test.status === "done" && test.modelKey === value ? test : null;
   const testingPrimary = test.status === "testing" && test.modelKey === value;
   return (
@@ -630,7 +633,7 @@ function MediaRoleSection({
         </div>
       </div>
       {primaryTest ? <MediaModelTestResult test={primaryTest} kind={kind} /> : null}
-      {value && (fallbacks.length > 0 || canAdd) ? (
+      {fallbacks.length > 0 || canAdd ? (
         <MediaModelFallbackList
           label={t`Fallback models`}
           fallbacks={fallbacks}

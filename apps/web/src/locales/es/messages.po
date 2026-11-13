@@ -58,6 +58,11 @@ msgstr "{0, plural, one {# espacio} other {# espacios}}"
 msgid "{0, plural, one {# tool} other {# tools}}"
 msgstr "{0, plural, one {# herramienta} other {# herramientas}}"
 
+#. placeholder {0}: items.length
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "{0, plural, one {Import 1 template} other {Import # templates}}"
+msgstr "{0, plural, one {Importar 1 plantilla} other {Importar # plantillas}}"
+
 #. placeholder {0}: Math.ceil(oauth.expiresInSeconds / 60)
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -85,6 +90,11 @@ msgstr "{0} (más de {1})"
 #: src/lib/cron.ts
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
+
+#. placeholder {0}: data.collectiveBanAccounts
+#: src/components/admin/AdminOverview.tsx
+msgid "{0} accounts affected"
+msgstr ""
 
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
@@ -144,6 +154,10 @@ msgstr "{0}, en pausa hasta que la actives"
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "{amount} invite codes generated"
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
@@ -440,6 +454,10 @@ msgstr "{title}, guardado como {savedAs}"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# herramienta} other {# herramientas}}"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "{usable} of {total} models work"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 msgstr "{vcpus} vCPU, {memoryGb} GB, {hours} horas de computadora al mes"
@@ -547,6 +565,28 @@ msgstr "**Jueves**\n"
 msgid "/ month"
 msgstr "/ mes"
 
+#. placeholder {0}: test.modelId
+#. placeholder {1}: test.seconds
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✓ {0} supports image generation · {1}s"
+msgstr ""
+
+#. placeholder {0}: test.modelId
+#. placeholder {1}: test.seconds
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✓ {0} supports video generation · {1}s"
+msgstr ""
+
+#. placeholder {0}: test.detail
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✗ Does not support image generation · {0}"
+msgstr ""
+
+#. placeholder {0}: test.detail
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✗ Does not support video generation · {0}"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "1 day"
 msgstr ""
@@ -555,12 +595,18 @@ msgstr ""
 msgid "1 space"
 msgstr "1 espacio"
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
 msgstr ""
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "7 days"
+msgstr ""
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "90 days"
 msgstr ""
 
 #: src/pages/shell/message-cards.tsx
@@ -574,6 +620,18 @@ msgstr "La salida de un comando"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "A model approves routine actions and asks you about the rest."
 msgstr "Un modelo aprueba las acciones rutinarias y te pregunta por el resto."
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "A name for this persona"
+msgstr "Un nombre para esta persona"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "A parent directory is missing on the server."
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "A preset with this name already exists"
+msgstr ""
 
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/model-settings/connection-controls.tsx
@@ -649,6 +707,8 @@ msgstr "Acciones para {name}"
 msgid "Actions for space"
 msgstr "Acciones del espacio"
 
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Active"
@@ -733,6 +793,10 @@ msgstr "Agregar personalizada"
 msgid "Add fallback"
 msgstr "Añadir alternativo"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Add fallback model"
+msgstr ""
+
 #: src/components/vault/LoginFieldsInput.tsx
 msgid "Add field"
 msgstr "Añadir campo"
@@ -816,6 +880,14 @@ msgstr "Línea de dirección 2"
 msgid "Adds"
 msgstr "Incluye"
 
+#: src/pages/AdminPage.tsx
+msgid "Admin"
+msgstr ""
+
+#: src/pages/AdminPage.tsx
+msgid "Admin sections"
+msgstr ""
+
 #: src/pages/McpServerForm.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -834,6 +906,8 @@ msgstr "Avanzado..."
 msgid "Agent from another app"
 msgstr "Agente de otra app"
 
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "All"
@@ -866,6 +940,10 @@ msgstr "Todos los estados"
 msgid "All time"
 msgstr "Todo el tiempo"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "All types"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "Permitir"
@@ -889,6 +967,10 @@ msgstr "Permite que Rakazo use el reconocimiento de voz y el micrófono en Ajust
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
 msgstr "Permitir escritura"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Allowed email domains, one per line"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Allowed in this space"
@@ -953,6 +1035,14 @@ msgstr "No se pudo usar una clave de API importada. Desmárcala y vuelve a inten
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "An integration tool"
 msgstr "Una herramienta de integración"
+
+#: src/components/AppDownloadDialog.tsx
+msgid "Android"
+msgstr ""
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Android download link"
+msgstr ""
 
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
@@ -1031,6 +1121,14 @@ msgstr "Token de API"
 #: src/components/ComputerProviderSettings.tsx
 msgid "API URL"
 msgstr "URL de la API"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "App download"
+msgstr ""
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "App download links saved"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Appearance"
@@ -1142,6 +1240,10 @@ msgstr "Adjuntar archivo"
 msgid "Attachment"
 msgstr "Archivo adjunto"
 
+#: src/pages/AdminPage.tsx
+msgid "Audit log"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Auth method"
@@ -1184,6 +1286,10 @@ msgstr "Autoriza este servidor para que tus agentes usen sus herramientas. Se ab
 msgid "Auto"
 msgstr "Auto"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Auto-translate replies"
+msgstr ""
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Automated senders"
 msgstr "Remitentes automáticos"
@@ -1211,12 +1317,15 @@ msgstr "Estudio de avatares"
 #: src/components/bot-templates/bot-templates-dialog.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/components/vault/VaultPageHeader.tsx
 #: src/pages/AdminAccessPage.tsx
+#: src/pages/AdminPage.tsx
 #: src/pages/AdminPluginsPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
+#: src/pages/Favorites.tsx
 #: src/pages/McpServerForm.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/plugins/connector-detail.tsx
@@ -1239,8 +1348,30 @@ msgstr "Volver al chat"
 msgid "Back to sign in"
 msgstr "Volver a iniciar sesión"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Back up now"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backed up"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup directory"
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 msgid "Backup password"
+msgstr ""
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup passwords do not match"
+msgstr ""
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup passwords need an HTTPS connection"
 msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
@@ -1275,6 +1406,15 @@ msgstr "Dirección de facturación"
 msgid "Billing period"
 msgstr "Periodo de facturación"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Blacklist"
+msgstr ""
+
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminUsers.tsx
+msgid "Blacklisted"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Block"
 msgstr "Bloquear"
@@ -1298,8 +1438,11 @@ msgstr "Iniciando escritorio en vivo…"
 msgid "bot"
 msgstr "bot"
 
+#: src/components/BotPackageDocumentView.tsx
+#: src/components/BotPackageImport.tsx
 #: src/lib/identity-display.ts
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Favorites.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/Shell.tsx
@@ -1318,9 +1461,17 @@ msgstr "Bot"
 msgid "Bot email addresses"
 msgstr "Direcciones de correo de los bots"
 
+#: src/components/BotPackageImport.tsx
+msgid "Bot imported"
+msgstr ""
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
 msgstr "El bot observa, no actúa"
+
+#: src/components/BotPackageImport.tsx
+msgid "Bot package or Grok JSON"
+msgstr ""
 
 #: src/pages/shell/computer-overlay.tsx
 msgid "Bot screen"
@@ -1378,6 +1529,8 @@ msgstr "Explorar"
 msgid "Browse MCP servers"
 msgstr "Explorar servidores MCP"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Built-in"
@@ -1429,12 +1582,14 @@ msgstr "No se puede alcanzar el servidor."
 msgid "Can't read images"
 msgstr "No puede leer imágenes"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/AskCard.tsx
 #: src/components/ConfirmDialog.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/ModelCredits.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -1444,10 +1599,15 @@ msgstr "No puede leer imágenes"
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Cancel"
 msgstr "Cancelar"
+
+#: src/components/BotPackageImport.tsx
+msgid "Cancel import"
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new bot"
@@ -1578,13 +1738,26 @@ msgstr "Error al comprobar: {0}"
 msgid "Check for updates"
 msgstr "Buscar actualizaciones"
 
+#: src/components/BotPackageTools.tsx
+msgid "Check imported skills"
+msgstr ""
+
 #: src/pages/shell/use-routine-editor.ts
 msgid "Check in."
 msgstr "Regístrate."
 
+#: src/components/BotPackageImport.tsx
+#: src/components/BotPackageSkillsView.tsx
+msgid "Check status"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
 msgstr "Revisa la clave de API o el inicio de sesión y vuelve a probar."
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Check the names and content, then import."
+msgstr "Revisa los nombres y el contenido y luego importa."
 
 #: src/lib/model-connection-preflight.ts
 msgid "Check the server URL and network, then test again."
@@ -1621,6 +1794,10 @@ msgstr "Comprobando…"
 msgid "Choose a bot shape, color, or upload an image"
 msgstr "Elige una forma y color del bot, o sube una imagen"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Choose a file"
+msgstr "Elegir un archivo"
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
@@ -1637,6 +1814,10 @@ msgstr "Elige una contraseña nueva"
 #: src/pages/onboarding/model-step.tsx
 msgid "Choose a provider"
 msgstr "Elige un proveedor"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Choose a translation model in this bot's Advanced settings"
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose backup"
@@ -1655,6 +1836,10 @@ msgstr "Elegir carpeta"
 #: src/components/SubscriptionGate.tsx
 msgid "Choose how to use Rakazo"
 msgstr "Elige cómo usar Rakazo"
+
+#: src/components/BotPackageImport.tsx
+msgid "Choose package file"
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "City"
@@ -1695,13 +1880,19 @@ msgstr "Quitar el filtro {label}"
 msgid "Clear filters"
 msgstr "Borrar filtros"
 
+#: src/components/BotPackageTools.tsx
+msgid "Clear selection"
+msgstr ""
+
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "Borrando…"
 
+#: src/components/BotPackageImport.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsPanel.tsx
+#: src/pages/model-settings/model-health-dialog.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1793,10 +1984,22 @@ msgctxt "email sign-in"
 msgid "Code"
 msgstr "Código"
 
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse"
+msgstr ""
+
 #. placeholder {0}: headerName(group)
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Collapse {0}"
 msgstr "Contraer {0}"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse translation"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Collective ban on excess"
+msgstr ""
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
@@ -2001,6 +2204,7 @@ msgstr "Conecta tu propia clave de API en Modelos o elige créditos de Rakazo en
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/plugins/parts.tsx
@@ -2024,6 +2228,7 @@ msgstr "Se conectó {0}."
 msgid "Connecting…"
 msgstr "Conectando…"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Connection"
 msgstr "Conexión"
@@ -2041,6 +2246,10 @@ msgstr "La prueba de conexión falló."
 #: src/pages/plugins/use-plugin-connections.ts
 msgid "Connection to {0} is still pending. You can close this and check again."
 msgstr "La conexión con {0} sigue pendiente. Puedes cerrar esto y volver a comprobar."
+
+#: src/components/BotPackageDocumentView.tsx
+msgid "Connections"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Connector"
@@ -2104,6 +2313,7 @@ msgstr "Conversaciones"
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/message-hover-actions.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Copied"
 msgstr "Copiado"
 
@@ -2144,6 +2354,10 @@ msgstr "Copiar prompt"
 #: src/components/markdown-copy.tsx
 msgid "Copy rows"
 msgstr "Copiar filas"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Copy translation"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Cost"
@@ -2216,6 +2430,10 @@ msgstr "No se pudo completar OAuth"
 #: src/components/DesktopUpdates.tsx
 msgid "Could not complete the update. Try again."
 msgstr "No se pudo completar la actualización. Vuelve a intentarlo."
+
+#: src/components/BotPackageImport.tsx
+msgid "Could not confirm import. Check status before trying again."
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/plugins/use-plugin-connections.ts
@@ -2315,6 +2533,10 @@ msgstr "No se pudo eliminar la habilidad"
 msgid "Could not delete space"
 msgstr "No se pudo eliminar el espacio"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Could not delete the user"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Could not delete this artifact."
 msgstr "No se pudo eliminar este artefacto."
@@ -2352,9 +2574,21 @@ msgstr "No se pudo descargar {0}. Inténtalo de nuevo."
 msgid "Could not download {name}. Try again."
 msgstr "No se pudo descargar {name}. Inténtalo de nuevo."
 
+#: src/components/BotPackageSkillsView.tsx
+msgid "Could not enable skill. Check status or choose another name."
+msgstr ""
+
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not enable tools"
 msgstr "No se pudieron activar las herramientas"
+
+#: src/components/BotPackageTools.tsx
+msgid "Could not export this package."
+msgstr ""
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Could not generate invite codes"
+msgstr ""
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Could not grant access"
@@ -2407,6 +2641,14 @@ msgstr "No se pudo cargar la configuración de la computadora"
 msgid "Could not load credentials."
 msgstr "No se pudieron cargar las credenciales."
 
+#: src/pages/Favorites.tsx
+msgid "Could not load favorites."
+msgstr ""
+
+#: src/components/HumanVerification.tsx
+msgid "Could not load human verification"
+msgstr ""
+
 #: src/pages/plugins/use-plugin-connections.ts
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not load integrations"
@@ -2425,6 +2667,10 @@ msgstr "No se pudieron cargar los miembros"
 msgid "Could not load model settings"
 msgstr "No se pudo cargar la configuración de modelos"
 
+#: src/components/BotPackageImport.tsx
+msgid "Could not load recent imports."
+msgstr ""
+
 #: src/pages/RoutineRunHistory.tsx
 msgid "Could not load run history"
 msgstr "No se pudo cargar el historial de ejecuciones"
@@ -2438,6 +2684,10 @@ msgstr "No se pudieron cargar las opciones de inicio de sesión"
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not load skill"
 msgstr "No se pudo cargar la habilidad"
+
+#: src/components/BotPackageTools.tsx
+msgid "Could not load skills."
+msgstr ""
 
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "Could not load templates"
@@ -2486,6 +2736,10 @@ msgstr "No se pudo reproducir un clip de prueba"
 msgid "Could not preview plugin"
 msgstr "No se pudo previsualizar el plugin"
 
+#: src/components/BotPackageImport.tsx
+msgid "Could not preview this package."
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Could not reach the model server."
 msgstr "No se pudo acceder al servidor del modelo."
@@ -2493,6 +2747,7 @@ msgstr "No se pudo acceder al servidor del modelo."
 #: src/components/AccountDataSettings.tsx
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/lib/computer-sandbox.ts
 #: src/lib/user-error.ts
 #: src/pages/AccountSettingsOverlay.tsx
@@ -2504,6 +2759,10 @@ msgstr "No se pudo alcanzar el servidor"
 #: src/pages/shell/use-agent-import-source.ts
 msgid "Could not read these files"
 msgstr "No se pudieron leer estos archivos"
+
+#: src/components/BotPackageImport.tsx
+msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
+msgstr ""
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not reject plugin"
@@ -2540,6 +2799,10 @@ msgstr "No se pudieron quitar las habilidades"
 msgid "Could not remove the credential"
 msgstr "No se pudo quitar la credencial"
 
+#: src/pages/Favorites.tsx
+msgid "Could not remove this favorite."
+msgstr ""
+
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/plugins/use-plugin-connections.ts
 msgid "Could not rename connection"
@@ -2566,6 +2829,10 @@ msgstr "No se pudo renderizar el gráfico"
 msgid "Could not reset password"
 msgstr "No se pudo restablecer la contraseña"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Could not reset usage"
+msgstr ""
+
 #: src/pages/plugins/use-plugin-connections.ts
 msgid "Could not revoke connection"
 msgstr "No se pudo revocar la conexión"
@@ -2573,6 +2840,10 @@ msgstr "No se pudo revocar la conexión"
 #: src/pages/AdminAccessPage.tsx
 msgid "Could not revoke grant"
 msgstr "No se pudo revocar la concesión"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Could not revoke the code"
+msgstr ""
 
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not run routine"
@@ -2587,6 +2858,10 @@ msgstr "No se pudo ejecutar la rutina"
 msgid "Could not save"
 msgstr "No se pudo guardar"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Could not save app download links"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not save Auto Review"
 msgstr "No se pudo guardar Auto Review"
@@ -2599,9 +2874,17 @@ msgstr "No se pudo guardar la configuración de la computadora"
 msgid "Could not save group"
 msgstr "No se pudo guardar el grupo"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Could not save IP limits"
+msgstr ""
+
 #: src/pages/onboarding/use-onboarding-model.ts
 msgid "Could not save model"
 msgstr "No se pudo guardar el modelo"
+
+#: src/pages/model-settings/use-model-settings.ts
+msgid "Could not save models"
+msgstr ""
 
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not save routine"
@@ -2610,6 +2893,10 @@ msgstr "No se pudo guardar la rutina"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not save rule"
 msgstr "No se pudo guardar la regla"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Could not save settings"
+msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -2690,6 +2977,14 @@ msgstr "No se pudo tomar el control"
 msgid "Could not test MCP server"
 msgstr "No se pudo probar el servidor MCP"
 
+#: src/pages/model-settings/use-model-settings.ts
+msgid "Could not test models"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Could not test this model"
+msgstr ""
+
 #: src/lib/dictation.ts
 msgid "Could not transcribe that recording."
 msgstr "No se pudo transcribir esa grabación."
@@ -2722,6 +3017,10 @@ msgstr "No se pudo actualizar la reacción"
 msgid "Could not update the default memory scope"
 msgstr "No se pudo actualizar el alcance de memoria predeterminado"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Could not update the user"
+msgstr ""
+
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "No se pudo verificar la configuración de la computadora ({failureMessage}). Corrige la conexión y vuelve a comprobar."
@@ -2730,9 +3029,25 @@ msgstr "No se pudo verificar la configuración de la computadora ({failureMessag
 msgid "Couldn't copy. Select the link and copy it."
 msgstr "No se pudo copiar. Selecciona el enlace y cópialo."
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Couldn't load app download links"
+msgstr ""
+
 #: src/pages/AdminAccessPage.tsx
 msgid "Couldn't load grants"
 msgstr "No se pudieron cargar las concesiones"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Couldn't load invite codes"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Couldn't load IP limits"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Couldn't load IP stats"
+msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Couldn't load messaging settings"
@@ -2742,13 +3057,29 @@ msgstr "No se pudo cargar la configuración de mensajería"
 msgid "Couldn't load pages."
 msgstr "No se pudieron cargar las páginas."
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Couldn't load registration settings"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Couldn't load submissions"
 msgstr "No se pudieron cargar los envíos"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Couldn't load the audit log"
+msgstr ""
+
+#: src/components/admin/AdminOverview.tsx
+msgid "Couldn't load the overview"
+msgstr ""
+
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this page. Try again."
 msgstr "No se pudo cargar esta página. Inténtalo de nuevo."
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Couldn't load users"
+msgstr ""
 
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't load your wallet"
@@ -2769,6 +3100,10 @@ msgstr "No se pudo actualizar tu zona horaria"
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't update your wallet"
 msgstr "No se pudo actualizar tu billetera"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Count"
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Country"
@@ -2870,6 +3205,18 @@ msgstr "Moneda"
 msgid "Current password"
 msgstr "Contraseña actual"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Current persona"
+msgstr "Persona actual"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Custom"
+msgstr "Personalizado"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Custom app download"
+msgstr ""
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Custom header"
 msgstr "Encabezado personalizado"
@@ -2957,9 +3304,15 @@ msgstr "Predeterminado de OpenClaw"
 msgid "Default scope"
 msgstr "Alcance predeterminado"
 
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Default templates restored"
+msgstr "Plantillas predeterminadas restauradas"
+
 #: src/components/AccountAccess.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -2990,6 +3343,7 @@ msgstr "Eliminar {0}"
 #. placeholder {0}: bot.name
 #. placeholder {0}: deleting.name
 #. placeholder {0}: item.name
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3013,6 +3367,14 @@ msgstr "Eliminar también las memorias"
 msgid "Delete organization"
 msgstr "Eliminar organización"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Delete permanently"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Delete preset"
+msgstr ""
+
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Delete section"
 msgstr "Eliminar sección"
@@ -3026,14 +3388,23 @@ msgstr "Eliminar espacio"
 msgid "Delete this Space's credentials?"
 msgstr "¿Eliminar las credenciales de este espacio?"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Delete this user permanently?"
+msgstr ""
+
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
 msgstr "eliminado"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Deleted"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Deleted bot"
 msgstr ""
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
@@ -3074,6 +3445,7 @@ msgstr "ID de escritorio"
 msgid "Desktop update"
 msgstr "Actualización de escritorio"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Details"
@@ -3107,10 +3479,16 @@ msgstr "¿Quisiste decir <0>{emailSuggestion}</0>?"
 msgid "Didn't catch that."
 msgstr "No te entendí."
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Disable"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Disable a tool"
 msgstr "Desactivar una herramienta"
 
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/plugins/parts.tsx
 msgid "Disabled"
 msgstr "Desactivado"
@@ -3182,10 +3560,6 @@ msgstr "Docker"
 msgid "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
 msgstr "Docker limita el acceso a tu computadora para mayor seguridad. Usar {hostLabel} permite que los bots trabajen con tus archivos y herramientas locales."
 
-#: src/components/SidebarFooter.tsx
-msgid "Docs"
-msgstr "Documentación"
-
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "El documento ha cambiado. Vuelve a abrirlo para editar la última versión."
@@ -3226,11 +3600,16 @@ msgstr "Descargar {name}"
 msgid "Download CSV"
 msgstr "Descargar CSV"
 
+#: src/components/BotPackageTools.tsx
+msgid "Download package"
+msgstr ""
+
 #: src/components/pages/DownloadPdfButton.tsx
 msgid "Download PDF"
 msgstr "Descargar PDF"
 
 #: src/components/DesktopUpdates.tsx
+#: src/components/WebdavBackupSettings.tsx
 msgid "Downloading…"
 msgstr "Descargando…"
 
@@ -3246,11 +3625,16 @@ msgstr "Arrastra, suelta o pega una imagen"
 msgid "Duplicate"
 msgstr "Duplicar"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Each code works once and stops working after use."
+msgstr ""
+
 #: src/pages/McpServerForm.tsx
 msgid "Each name can be used once."
 msgstr "Cada nombre solo se puede usar una vez."
 
 #: src/components/AskCard.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3266,10 +3650,20 @@ msgstr "Editar primero"
 msgid "Edit name"
 msgstr "Editar nombre"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Edit preset"
+msgstr ""
+
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
 msgstr "Editar perfil"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Edit template"
+msgstr "Editar plantilla"
+
+#: src/components/admin/AdminUsers.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -3287,6 +3681,10 @@ msgstr "Correo"
 msgid "Email address"
 msgstr "Dirección de correo"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Email domain allowlist"
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "Este correo no está autorizado para registrarse"
@@ -3295,14 +3693,34 @@ msgstr "Este correo no está autorizado para registrarse"
 msgid "Email me a code"
 msgstr "Enviarme un código por correo"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Email registration"
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Email verification required"
 msgstr "Se requiere verificar el correo"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Empty reply"
+msgstr ""
 
 #. placeholder {0}: humanizeTool(toolName)
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Enable {0}"
 msgstr "Activar {0}"
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Enable shared skill"
+msgstr ""
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Enabled"
+msgstr ""
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Enabling a skill shares it with your bots in this space."
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
@@ -3320,9 +3738,21 @@ msgstr "¿Te gusta Rakazo?"
 msgid "Enter a password"
 msgstr "Introduce una contraseña"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Enter a preset name"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Enter a prompt"
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Enter a valid email"
 msgstr "Introduce un correo electrónico válido"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Enter a valid link, or leave it empty to hide that platform."
+msgstr ""
 
 #: src/pages/model-settings/use-model-settings.ts
 #: src/pages/onboarding/use-onboarding-model.ts
@@ -3342,6 +3772,18 @@ msgstr "Introduce un número entero del 1 al 1000 para el límite de imágenes."
 #: src/lib/model-connection-preflight.ts
 msgid "Enter an API key before testing."
 msgstr "Introduce una clave de API antes de probar."
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the backup password to restore"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the username."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the WebDAV password."
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Environment ID"
@@ -3383,6 +3825,10 @@ msgstr "cada {intervalAmountSelect} {intervalUnitSelect}"
 #: src/lib/cron.ts
 msgid "Every {n} hours at :{minute}"
 msgstr "Cada {n} horas en el minuto :{minute}"
+
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Every admin and system action is recorded here and cannot be changed."
+msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Every bot in this space reads these notes and keeps them up to date."
@@ -3448,6 +3894,10 @@ msgstr "Expandir tabla"
 msgid "expired"
 msgstr "caducado"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Expired"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr "Caduca"
@@ -3461,17 +3911,34 @@ msgid "Expiry"
 msgstr "Caducidad"
 
 #: src/components/AccountDataSettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Export"
 msgstr "Exportar"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Export all"
+msgstr "Exportar todo"
 
 #: src/components/AccountDataSettings.tsx
 msgid "Export data"
 msgstr "Exportar datos"
 
+#: src/components/BotPackageTools.tsx
+msgid "Export package"
+msgstr ""
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Export this week's list from the CRM and drop it in the shared folder"
 msgstr "Exporta la lista de esta semana desde el CRM y déjala en la carpeta compartida"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Exported files are named after the template. Edit one outside the app and import it again under the same name to update it; a template in use applies right away."
+msgstr "Los archivos exportados llevan el nombre de la plantilla. Edita uno fuera de la app e impórtalo de nuevo con el mismo nombre para actualizarlo; una plantilla en uso se aplica de inmediato."
+
+#: src/components/BotPackageTools.tsx
+msgid "Exporting…"
+msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -3494,6 +3961,7 @@ msgstr "fallido"
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/model-settings/model-health-dialog.tsx
 msgid "Failed"
 msgstr "Falló"
 
@@ -3513,6 +3981,37 @@ msgstr "Falló."
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "Manejo de fallos"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Fallback models"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
+msgid "Favorite"
+msgstr ""
+
+#: src/pages/shell/message-view.tsx
+msgid "Favorite this reply"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Favorite translation"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
+msgid "Favorited"
+msgstr ""
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/Favorites.tsx
+msgid "Favorites"
+msgstr ""
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Fetch and preview"
+msgstr "Obtener y previsualizar"
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Fields that mark a change"
@@ -3550,6 +4049,10 @@ msgstr "Filtrar por bot"
 #: src/pages/Artifacts.tsx
 msgid "Filter by date"
 msgstr "Filtrar por fecha"
+
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Filter by type"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Filter by who made it"
@@ -3646,6 +4149,10 @@ msgstr "Desde {0}"
 msgid "From GitHub"
 msgstr "Desde GitHub"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "From this bot"
+msgstr "De este bot"
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Full name"
@@ -3673,10 +4180,23 @@ msgstr "URL de gateway"
 msgid "General"
 msgstr "General"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate"
+msgstr ""
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate invite codes"
+msgstr ""
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generating…"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Get an email address"
 msgstr "Obtener una dirección de correo"
 
+#: src/components/AppDownloadDialog.tsx
 #: src/components/SidebarFooter.tsx
 msgid "Get the mobile app"
 msgstr "Obtener la aplicación móvil"
@@ -3843,6 +4363,10 @@ msgstr "Cómo comprobar"
 msgid "How will you use Rakazo?"
 msgstr "¿Cómo usarás Rakazo?"
 
+#: src/lib/user-error.ts
+msgid "Human verification failed. Try again."
+msgstr ""
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "Listo"
@@ -3859,6 +4383,10 @@ msgstr "Si escuchaste eso, la voz está lista."
 msgid "Ignore"
 msgstr "Ignorar"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image generation model"
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Image input is not configured for this model."
@@ -3868,11 +4396,16 @@ msgstr "La entrada de imágenes no está configurada para este modelo."
 msgid "Image input is not configured for this model."
 msgstr "La entrada de imágenes no está configurada para este modelo."
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image prompt preset"
+msgstr ""
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Image upload area"
 msgstr "Área de carga de imagen"
 
 #: src/components/AccountDataSettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "Import"
 msgstr "Importar"
 
@@ -3881,9 +4414,43 @@ msgstr "Importar"
 msgid "Import an agent"
 msgstr "Importar un agente"
 
+#: src/components/BotPackageImport.tsx
+msgid "Import another bot"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+msgid "Import as new bot"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+#: src/pages/shell/bot-picker.tsx
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Import bot"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+msgid "Import cancelled."
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 msgid "Import data"
 msgstr "Importar datos"
+
+#: src/components/BotPackageImport.tsx
+msgid "Import needs attention."
+msgstr ""
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Import templates"
+msgstr "Importar plantillas"
+
+#: src/components/BotPackageImport.tsx
+msgid "Imported bot name"
+msgstr ""
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Imported skills"
+msgstr ""
 
 #: src/lib/ticket-status.ts
 msgid "In progress"
@@ -3896,6 +4463,11 @@ msgstr "En revisión"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "In this bot"
 msgstr "En este bot"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "In use"
+msgstr "En uso"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Inactive"
@@ -3912,6 +4484,11 @@ msgstr "Clasificación del correo"
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Include API keys"
 msgstr "Incluir claves de API"
+
+#: src/components/BotPackageImport.tsx
+#: src/components/BotPackageTools.tsx
+msgid "Include memory"
+msgstr ""
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
@@ -3951,6 +4528,7 @@ msgstr "Historial de instrucciones"
 
 #: src/components/AskCard.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageDocumentView.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Instructions"
@@ -3998,6 +4576,10 @@ msgstr "Unidad del intervalo"
 msgid "Invalid code"
 msgstr "Código no válido"
 
+#: src/lib/user-error.ts
+msgid "Invalid invite code"
+msgstr ""
+
 #: src/components/SpaceMembersSettings.tsx
 msgid "Invite"
 msgstr "Invitar"
@@ -4005,6 +4587,26 @@ msgstr "Invitar"
 #: src/pages/shell/chat-header.tsx
 msgid "Invite a friend"
 msgstr "Invitar a un amigo"
+
+#: src/pages/Auth.tsx
+msgid "Invite code"
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Invite code registration"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "Invite code revoked"
+msgstr ""
+
+#: src/pages/AdminPage.tsx
+msgid "Invite codes"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "Invite codes generated"
+msgstr ""
 
 #: src/components/SidebarFooter.tsx
 msgid "Invite friends"
@@ -4018,6 +4620,26 @@ msgstr "Enlace de invitación"
 #: src/components/SpaceMembersSettings.tsx
 msgid "Invite link copied"
 msgstr "Enlace de invitación copiado"
+
+#: src/components/AppDownloadDialog.tsx
+msgid "iOS"
+msgstr ""
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "iOS download link"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "IP collective ban"
+msgstr ""
+
+#: src/components/admin/AdminOverview.tsx
+msgid "IP collective bans"
+msgstr ""
+
+#: src/pages/AdminPage.tsx
+msgid "IP limits"
+msgstr ""
 
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-settings-sections.tsx
@@ -4068,9 +4690,17 @@ msgstr "ahora mismo"
 msgid "Keep memories"
 msgstr "Conservar memorias"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Keep only usable models"
+msgstr ""
+
 #: src/pages/McpServerForm.tsx
 msgid "Keep tool results whole"
 msgstr "Mantener completos los resultados de herramientas"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Keeping…"
+msgstr ""
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "key"
@@ -4100,6 +4730,11 @@ msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Last 7 days"
+msgstr ""
+
+#. placeholder {0}: new Date(lastBackup.exportedAt).toLocaleString()
+#: src/components/WebdavBackupSettings.tsx
+msgid "Last backup: {0}"
 msgstr ""
 
 #. placeholder {0}: new Date(state.checkedAt).toLocaleString()
@@ -4147,6 +4782,14 @@ msgstr "Permite a los bots guardar y recordar datos por significado, además de 
 msgid "Light"
 msgstr "Claro"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Limited"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Limits"
+msgstr ""
+
 #: src/pages/SpaceSearch.tsx
 msgid "Link"
 msgstr "Enlace"
@@ -4164,6 +4807,10 @@ msgstr "Vincular mensajes privados"
 msgid "Link SSO"
 msgstr "Vincular SSO"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Links shown by “Get the mobile app” in the account menu. Leave a platform empty to hide it."
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "List view"
 msgstr "Vista de lista"
@@ -4180,6 +4827,10 @@ msgstr "Escuchando…"
 msgid "Load earlier messages"
 msgstr "Cargar mensajes anteriores"
 
+#: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/Artifacts.tsx
 msgid "Load more"
 msgstr "Cargar más"
@@ -4221,18 +4872,33 @@ msgstr "Cargando vista previa…"
 msgid "Loading voice providers…"
 msgstr "Cargando proveedores de voz…"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminUsers.tsx
+#: src/components/AppDownloadDialog.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageImport.tsx
+#: src/components/BotPackageTools.tsx
+#: src/components/HumanVerification.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PageLoading.tsx
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/components/SpaceMembersSettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/Favorites.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Invite.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Loading…"
 msgstr "Cargando…"
@@ -4244,6 +4910,10 @@ msgstr "El acceso local permite que los bots ejecuten comandos sin preguntar. Ev
 #: src/pages/HostComputerPrompt.tsx
 msgid "Local computer access requires the latest desktop app."
 msgstr "El acceso a la computadora local requiere la versión más reciente de la app de escritorio."
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Local file"
+msgstr "Archivo local"
 
 #: src/components/AccountMenu.tsx
 #: src/components/SidebarFooter.tsx
@@ -4310,6 +4980,10 @@ msgstr "Gestionar servidores MCP"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Manage other bots"
 msgstr "Gestionar otros bots"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Manage templates"
+msgstr "Gestionar plantillas"
 
 #: src/pages/plugins/domain-search.tsx
 msgid "Manual"
@@ -4378,6 +5052,10 @@ msgstr "Servidor MCP"
 msgid "MCP servers"
 msgstr "Servidores MCP"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Media model"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Medium"
@@ -4401,6 +5079,7 @@ msgstr "Miembros"
 msgid "Members ({0})"
 msgstr "Miembros ({0})"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
@@ -4534,6 +5213,7 @@ msgstr "Modo"
 #: src/pages/routine-editor/model-settings.tsx
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Model"
 msgstr "Modelo"
 
@@ -4573,6 +5253,10 @@ msgstr "Modelos del servidor"
 #: src/lib/model-connection-preflight.ts
 msgid "Models list OK. {modelCount, plural, one {# model} other {# models}} available. Chat was not tested."
 msgstr "Lista de modelos correcta. {modelCount, plural, one {# modelo disponible} other {# modelos disponibles}}. No se probó el chat."
+
+#: src/components/BotPackageImport.tsx
+msgid "Models, credentials, files, and chat history are not imported."
+msgstr ""
 
 #: src/lib/cron.ts
 msgid "Monday"
@@ -4619,6 +5303,14 @@ msgstr "Resumen matutino"
 msgid "Move down"
 msgstr "Bajar"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Move fallback model down"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Move fallback model up"
+msgstr ""
+
 #: src/pages/shell/dialogs.tsx
 msgid "Move them to your shared memory."
 msgstr "Muévelas a tu memoria compartida."
@@ -4648,7 +5340,14 @@ msgstr "Mis computadoras"
 msgid "My subscription"
 msgstr ""
 
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "My template"
+msgstr "Mi plantilla"
+
+#: src/components/BotPackageImport.tsx
 #: src/components/CreateOrganizationDialog.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -4730,6 +5429,10 @@ msgstr "Necesita: {names}"
 msgid "Never ask"
 msgstr "No preguntar nunca"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Never expires"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
@@ -4786,10 +5489,22 @@ msgstr "Nuevo elemento de trabajo abierto"
 msgid "New password"
 msgstr "Nueva contraseña"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "New preset"
+msgstr ""
+
 #: src/pages/shell/bot-picker.tsx
 #: src/pages/shell/use-palette-actions.ts
 msgid "New private space"
 msgstr "Nuevo espacio privado"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "New registrations are limited right away; existing accounts are unaffected."
+msgstr ""
+
+#: src/components/admin/AdminOverview.tsx
+msgid "New registrations, last 7 days"
+msgstr ""
 
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/dialogs.tsx
@@ -4804,9 +5519,22 @@ msgstr "Nueva habilidad"
 msgid "New space"
 msgstr "Nuevo space"
 
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "New template"
+msgstr "Nueva plantilla"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "New this week"
+msgstr ""
+
 #: src/pages/Board.tsx
 msgid "New ticket"
 msgstr "Nuevo ticket"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "New today"
+msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "New variable"
@@ -4828,6 +5556,14 @@ msgstr "Página siguiente"
 msgid "Next settings sections"
 msgstr "Siguientes secciones de configuración"
 
+#: src/components/admin/AdminOverview.tsx
+msgid "No admin activity yet"
+msgstr ""
+
+#: src/components/AppDownloadDialog.tsx
+msgid "No app downloads are set up yet."
+msgstr ""
+
 #: src/pages/plugins/plugin-browse.tsx
 msgid "No apps match your search."
 msgstr "Ninguna app coincide con tu búsqueda."
@@ -4836,9 +5572,21 @@ msgstr "Ninguna app coincide con tu búsqueda."
 msgid "No artifacts yet"
 msgstr "Aún no hay artefactos"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "No audit events yet"
+msgstr ""
+
 #: src/pages/plugins/source-form.tsx
 msgid "No authentication"
 msgstr "Sin autenticación"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "No backup found on the server."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "No backup yet"
+msgstr ""
 
 #: src/components/integrations/agent-access.tsx
 msgid "No bots"
@@ -4848,6 +5596,14 @@ msgstr "Sin bots"
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr "Ningún bot coincide"
+
+#: src/pages/Favorites.tsx
+msgid "No favorites yet"
+msgstr ""
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "No invite codes yet"
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
@@ -4889,6 +5645,10 @@ msgstr "No hay un catálogo de modelos disponible."
 msgid "No models listed."
 msgstr "No hay modelos en la lista."
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "No models to test"
+msgstr ""
+
 #: src/pages/shell/use-agent-import-source.ts
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "No se encontraron archivos de OpenClaw, Hermes ni un documento de agente."
@@ -4896,6 +5656,14 @@ msgstr "No se encontraron archivos de OpenClaw, Hermes ni un documento de agente
 #: src/components/pages/PagesList.tsx
 msgid "No pages match “{query}”."
 msgstr "Ninguna página coincide con «{query}»."
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "No permission"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "No registrations recorded yet"
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
@@ -4936,6 +5704,14 @@ msgstr "Aún no hay habilidades"
 msgid "No submissions"
 msgstr "No hay envíos"
 
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "No templates yet"
+msgstr "Aún no hay plantillas"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "No templates yet. Create one or restore the defaults."
+msgstr "Aún no hay plantillas. Crea una o restaura las predeterminadas."
+
 #: src/pages/Board.tsx
 msgid "No tickets yet"
 msgstr "Aún no hay tickets"
@@ -4944,6 +5720,10 @@ msgstr "Aún no hay tickets"
 msgid "No trigger"
 msgstr "Sin disparador"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "No users match"
+msgstr ""
+
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -4951,6 +5731,7 @@ msgstr "Sin disparador"
 msgid "None"
 msgstr "Ninguno"
 
+#: src/components/admin/AdminIpLimits.tsx
 #: src/lib/ticket-priority.ts
 msgid "Normal"
 msgstr "Normal"
@@ -4972,6 +5753,11 @@ msgstr "Aún no comprobado"
 msgid "Not connected"
 msgstr "No conectado"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Not found"
+msgstr ""
+
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Not imported"
 msgstr "No importado"
@@ -4984,10 +5770,18 @@ msgstr "No está en el catálogo de Rakazo"
 msgid "Not in the plugin catalog"
 msgstr "No está en el catálogo de plugins"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Not linked to a template"
+msgstr "No vinculado a una plantilla"
+
 #: src/components/GitHubStarPrompt.tsx
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "Ahora no"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Not selected"
+msgstr ""
 
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/import-status.ts
@@ -5006,6 +5800,10 @@ msgstr "No funciona"
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "Aún no hay recuerdos"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Nothing to import at that address"
+msgstr "No hay nada que importar en esa dirección."
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Notifications"
@@ -5072,6 +5870,10 @@ msgstr "Solo yo"
 msgid "Only provider keys are encrypted; the backup file itself is not. If you lose this password, the keys are gone for good."
 msgstr ""
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Only the first 50 models were tested."
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "Solo tú"
@@ -5104,6 +5906,10 @@ msgstr "Abrir {title}"
 #: src/pages/onboarding/model-step.tsx
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "Abre <0>{0}</0> e introduce este código:"
+
+#: src/components/BotPackageImport.tsx
+msgid "Open bot"
+msgstr ""
 
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
@@ -5204,6 +6010,10 @@ msgstr "Otro modelo…"
 msgid "Output"
 msgstr "Salida"
 
+#: src/pages/AdminPage.tsx
+msgid "Overview"
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 #: src/components/SpaceMembersSettings.tsx
 #: src/lib/identity-display.ts
@@ -5279,6 +6089,7 @@ msgstr "Llaves de acceso"
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 msgid "Password"
@@ -5291,6 +6102,10 @@ msgstr "La contraseña debe tener {MAX_PASSWORD_LENGTH} caracteres o menos"
 #: src/pages/Auth.tsx
 msgid "Password recovery is not configured for this server"
 msgstr "La recuperación de contraseña no está configurada para este servidor"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Password set"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Password sign-in is turned off on this server"
@@ -5310,10 +6125,18 @@ msgstr "Las contraseñas no coinciden"
 msgid "Past due"
 msgstr "Pago vencido"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste a prompt, or JSON like {\"name\": \"...\", \"content\": \"...\"}"
+msgstr "Pega un prompt o JSON como {\"name\": \"...\", \"content\": \"...\"}"
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Paste a replacement key"
 msgstr "Pega una clave de reemplazo"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste text"
+msgstr "Pegar texto"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
@@ -5336,6 +6159,7 @@ msgstr "Pega tu clave de API y vuelve a probar."
 msgid "Paused"
 msgstr "En pausa"
 
+#: src/components/BotPackageSkillsView.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
@@ -5347,6 +6171,8 @@ msgid "Permissions"
 msgstr "Permisos"
 
 #: src/pages/shell/agent-import-plan.tsx
+#: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
 msgid "Persona"
 msgstr "Personalidad"
 
@@ -5439,7 +6265,17 @@ msgstr "Revisor de PR"
 msgid "Preferences"
 msgstr "Preferencias"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Preset name"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Preset prompt"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
 #: src/components/integrations/skills-dialog.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/pages/plugins/github-import.tsx
 msgid "Preview"
 msgstr "Vista previa"
@@ -5452,6 +6288,14 @@ msgstr "Vista previa de {0}"
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr "La vista previa no está disponible para este tipo de archivo; descárgalo para verlo."
+
+#: src/components/BotPackageTools.tsx
+msgid "Preview package"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+msgid "Previewing…"
+msgstr ""
 
 #: src/pages/shell/chat-find-bar.tsx
 msgid "Previous match"
@@ -5485,6 +6329,14 @@ msgstr "Productividad"
 msgid "Program: {name}"
 msgstr "Programa: {name}"
 
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Prompt"
+msgstr "Prompt"
+
+#: src/pages/settings-nav.ts
+msgid "Prompt templates"
+msgstr "Plantillas de prompts"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Protected input"
 msgstr "Entrada protegida"
@@ -5508,6 +6360,10 @@ msgstr "Proveedores"
 msgid "Pull request"
 msgstr "Solicitud de incorporación"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Put the account and password in their own fields, not in the address."
+msgstr ""
+
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "En cola"
@@ -5524,6 +6380,10 @@ msgstr "Créditos de Rakazo"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
 msgstr "rakazo-shared y los ID que empiezan con bot- están reservados para Rakazo."
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Rate limited"
+msgstr ""
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -5573,6 +6433,14 @@ msgstr "Recibido"
 #: src/pages/ActivityList.tsx
 msgid "Recent"
 msgstr "Recientes"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "Recent activity"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+msgid "Recent imports"
+msgstr ""
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "Recent payments"
@@ -5682,9 +6550,45 @@ msgstr "Actualizando…"
 msgid "Region"
 msgstr "Región"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Registered"
+msgstr ""
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Registration IP"
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Registration is closed"
 msgstr "El registro está cerrado"
+
+#: src/pages/Auth.tsx
+msgid "Registration is closed on this server"
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Registration method"
+msgstr ""
+
+#: src/pages/AdminPage.tsx
+msgid "Registration settings"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "Registration settings changed"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations by IP"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations per IP"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations per IP per hour"
+msgstr ""
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Reject"
@@ -5728,7 +6632,9 @@ msgstr "Quitar"
 
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
+#. placeholder {0}: item.name
 #: src/components/ComputerDeviceSettings.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/pages/shell/composer-parts.tsx
 msgid "Remove {0}"
 msgstr "Quitar {0}"
@@ -5761,6 +6667,20 @@ msgstr "Eliminar activador de cambios"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove email trigger"
 msgstr "Quitar disparador de correo"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Remove fallback model"
+msgstr ""
+
+#: src/pages/Favorites.tsx
+#: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
+msgid "Remove favorite"
+msgstr ""
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Remove from blacklist"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -5797,6 +6717,10 @@ msgstr "Quitar habilidades"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove webhook"
 msgstr "Quitar webhook"
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Removed"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Removed, but list refresh failed"
@@ -5883,6 +6807,7 @@ msgid "Research & writing"
 msgstr "Investigación y redacción"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -5903,6 +6828,14 @@ msgstr "¿Restablecer computadora?"
 #: src/pages/Auth.tsx
 msgid "Reset password"
 msgstr "Restablecer contraseña"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Reset usage"
+msgstr ""
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Reset usage?"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Reset your password"
@@ -5933,10 +6866,23 @@ msgstr "Responses"
 msgid "Restart to update"
 msgstr "Reiniciar para actualizar"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Restaurar"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Restore defaults"
+msgstr "Restaurar predeterminados"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Restore deleted"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Restore from WebDAV"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5947,6 +6893,7 @@ msgid "Restore the last saved workspace. Unsaved work on the computer is lost."
 msgstr "Restaura el último espacio de trabajo guardado. Se pierde el trabajo sin guardar en la computadora."
 
 #: src/components/AskCard.tsx
+#: src/components/WebdavBackupSettings.tsx
 msgid "Restored"
 msgstr "Restaurado"
 
@@ -5958,11 +6905,25 @@ msgstr ""
 msgid "Restoring your workspace"
 msgstr "Restaurando tu espacio de trabajo"
 
+#: src/components/BotPackageImport.tsx
+msgid "Resume import"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageTools.tsx
+#: src/components/HumanVerification.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Invite.tsx
@@ -5971,6 +6932,7 @@ msgstr "Restaurando tu espacio de trabajo"
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/shell/message-translation.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "Reintentar"
@@ -5984,6 +6946,10 @@ msgstr "Reintentar ahora"
 msgid "Retry screen"
 msgstr "Reintentar pantalla"
 
+#: src/pages/shell/message-translation.tsx
+msgid "Retry translation"
+msgstr ""
+
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
 msgid "Return to call with {0}"
@@ -5994,6 +6960,14 @@ msgstr "Volver a la llamada con {0}"
 msgid "Return to Rakazo"
 msgstr "Volver a Rakazo"
 
+#: src/pages/settings-nav.ts
+msgid "Reusable personas for your bots."
+msgstr "Personas reutilizables para tus bots."
+
+#: src/components/BotPackageImport.tsx
+msgid "Review import"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
 msgstr "Revisa la configuración del proveedor y vuelve a probar."
@@ -6002,14 +6976,20 @@ msgstr "Revisa la configuración del proveedor y vuelve a probar."
 msgid "Reviews pull requests waiting on you"
 msgstr "Revisa las solicitudes de incorporación que te esperan"
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Revoke"
 msgstr "Revocar"
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AdminAccessPage.tsx
 msgid "Revoked"
 msgstr "Revocado"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Revoking…"
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Root filesystem"
@@ -6019,6 +6999,7 @@ msgstr "Sistema de archivos raíz"
 msgid "Rotate key"
 msgstr "Rotar clave"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/lib/identity-display.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -6026,6 +7007,7 @@ msgstr "Rotar clave"
 msgid "Routine"
 msgstr "Rutina"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Routines"
@@ -6095,10 +7077,12 @@ msgstr "sábado"
 
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Board.tsx
 #: src/pages/ExternalConversationSettings.tsx
@@ -6110,9 +7094,28 @@ msgstr "sábado"
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Save"
 msgstr "Guardar"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Save and apply to this bot"
+msgstr "Guardar y aplicar a este bot"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Save current persona as template"
+msgstr "Guardar la persona actual como plantilla"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Save limits"
+msgstr ""
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Save settings"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -6122,12 +7125,22 @@ msgstr "Guardar el espacio de trabajo e instalar el software actual."
 msgid "Save to Vault"
 msgstr "Guardar en la bóveda"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Save WebDAV account"
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Saved"
 msgstr "Guardado"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Saved as template"
+msgstr "Guardado como plantilla"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
@@ -6149,6 +7162,9 @@ msgstr "Guardando tu espacio de trabajo"
 msgid "Saving..."
 msgstr "Guardando..."
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -6224,6 +7240,10 @@ msgstr "Buscar bots, acciones y configuración"
 msgid "Search by domain"
 msgstr "Buscar por dominio"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Search by email or name"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "Buscar en integrations.sh"
@@ -6242,6 +7262,10 @@ msgstr "Buscar modelos"
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Search runs"
 msgstr "Buscar ejecuciones"
+
+#: src/components/BotPackageTools.tsx
+msgid "Search shared skills"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Search skills"
@@ -6281,6 +7305,11 @@ msgstr "Código de seguridad"
 #: src/pages/shell/chat-header.tsx
 msgid "Select a bot"
 msgstr "Selecciona un bot"
+
+#. placeholder {0}: selection.size
+#: src/components/BotPackageTools.tsx
+msgid "Selected skills: {0}"
+msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Self-hosted"
@@ -6341,6 +7370,10 @@ msgstr "Enviado"
 msgid "Serenity endpoint is required."
 msgstr "El endpoint de Serenity es obligatorio."
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Server address"
+msgstr ""
+
 #: src/pages/McpServerForm.tsx
 msgid "Server name"
 msgstr "Nombre del servidor"
@@ -6356,6 +7389,14 @@ msgstr "URL del servidor"
 #: src/components/SpendingLimitSettings.tsx
 msgid "Set"
 msgstr "Establecer"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Set as primary"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+msgid "Set up connections"
+msgstr ""
 
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
@@ -6403,6 +7444,7 @@ msgstr "Forma {0}"
 
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Share"
 msgstr "Compartir"
 
@@ -6424,6 +7466,10 @@ msgstr "Compartido"
 msgid "Shared memory"
 msgstr "Memoria compartida"
 
+#: src/components/BotPackageTools.tsx
+msgid "Shared skills (optional)"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -6442,6 +7488,7 @@ msgstr "Mostrar bots"
 msgid "Show list"
 msgstr "Mostrar lista"
 
+#: src/components/BotPackageTools.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/plugins/plugin-browse.tsx
@@ -6452,6 +7499,10 @@ msgstr "Mostrar más"
 #: src/components/I18nBootstrap.tsx
 msgid "Show password"
 msgstr "Mostrar contraseña"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Show read-aloud, share, and favorite on translations"
+msgstr ""
 
 #: src/pages/GroupPanel.tsx
 msgid "Show selected"
@@ -6517,6 +7568,10 @@ msgstr "Registrarse"
 msgid "Sign-in cancelled. Try again."
 msgstr "Se canceló el inicio de sesión. Vuelve a intentarlo."
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Signed in, but the backup directory does not exist yet."
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Site"
@@ -6527,6 +7582,9 @@ msgid "Sites you sign in to stay signed in for everyone in this space"
 msgstr "Los sitios en los que inicias sesión siguen con la sesión iniciada para todos en este espacio"
 
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageDocumentView.tsx
+#: src/components/BotPackageSkillsView.tsx
+#: src/components/BotPackageTools.tsx
 msgid "Skill"
 msgstr "Habilidad"
 
@@ -6539,6 +7597,11 @@ msgstr "Habilidad {0}"
 msgid "Skill {position}"
 msgstr "Habilidad {position}"
 
+#: src/components/BotPackageSkillsView.tsx
+msgid "Skill name"
+msgstr ""
+
+#: src/components/BotPackageDocumentView.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/SidebarFooter.tsx
@@ -6550,6 +7613,10 @@ msgstr "Habilidades"
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Skills join the library all your bots share."
 msgstr "Las habilidades se añaden a la biblioteca que comparten todos tus bots."
+
+#: src/components/BotPackageImport.tsx
+msgid "Skills stay off. Routines stay paused. Connections need setup."
+msgstr ""
 
 #: src/pages/shell/computer-release-actions.tsx
 msgid "Skip"
@@ -6592,7 +7659,9 @@ msgid "Some settings are not imported"
 msgstr "Algunos ajustes no se importan"
 
 #: src/App.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/lib/user-error.ts
+#: src/pages/shell/chat-persona-switcher.tsx
 msgid "Something went wrong. Try again."
 msgstr "Algo salió mal. Inténtalo de nuevo."
 
@@ -6624,6 +7693,10 @@ msgstr "Ordenado por {column}, descendente"
 msgid "Sorts new email and drafts the replies"
 msgstr "Ordena el correo nuevo y redacta las respuestas"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Source language"
+msgstr ""
+
 #: src/lib/identity-display.ts
 #: src/pages/SettingsOverlay.tsx
 msgid "Space"
@@ -6637,6 +7710,7 @@ msgstr "Predeterminado del Space"
 msgid "Spaces"
 msgstr "Espacios"
 
+#: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
 msgstr "Hablar"
@@ -6721,6 +7795,7 @@ msgstr "Iniciando…"
 msgid "State or region"
 msgstr "Estado o región"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
 msgid "Status"
@@ -6734,6 +7809,7 @@ msgstr "Pasos"
 #: src/pages/RoutineList.tsx
 #: src/pages/shell/composer-parts.tsx
 #: src/pages/shell/computer-overlay.tsx
+#: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "Detener"
@@ -6809,6 +7885,10 @@ msgstr "Suscribirse con tu propia IA"
 msgid "Subscription required"
 msgstr "Se requiere una suscripción"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Subscription URL"
+msgstr "URL de suscripción"
+
 #: src/lib/cron.ts
 msgid "Sunday"
 msgstr "domingo"
@@ -6827,6 +7907,11 @@ msgstr "Admite razonamiento"
 msgid "Switch"
 msgstr "Cambiar"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switch persona"
+msgstr "Cambiar persona"
+
 #: src/components/ModelCredits.tsx
 msgid "Switch to {tierTargetName}?"
 msgstr "¿Cambiar a {tierTargetName}?"
@@ -6839,10 +7924,23 @@ msgstr "Cambiar a anual"
 msgid "Switch to yearly?"
 msgstr "¿Cambiar a anual?"
 
+#. placeholder {0}: saved.name
+#. placeholder {0}: template.name
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switched to {0}"
+msgstr "Cambiado a {0}"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
+msgstr "El cambio es inmediato. El próximo mensaje usa el nuevo prompt; los mensajes anteriores no cambian. Editar las instrucciones directamente convierte la persona en personalizada."
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Switching…"
 msgstr "Cambiando…"
 
+#: src/components/admin/AdminAuditLog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/use-palette-actions.ts
 msgid "System"
@@ -6859,6 +7957,10 @@ msgstr "Tomar el control"
 #: src/components/ComputerProviderSettings.tsx
 msgid "Target"
 msgstr "Destino"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Target language"
+msgstr ""
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
@@ -6885,39 +7987,67 @@ msgstr "Mensaje de Teams"
 msgid "Template"
 msgstr "Plantilla"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Template name"
+msgstr "Nombre de la plantilla"
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Templates"
 msgstr "Plantillas"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Test"
 msgstr "Probar"
+
+#: src/pages/model-settings/compatible-model-fields.tsx
+msgid "Test all models"
+msgstr ""
 
 #: src/components/ModelConnectionPreflightNotice.tsx
 msgid "Test API key"
 msgstr "Probar clave de API"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/McpServersOverlay.tsx
 msgid "Test connection"
 msgstr "Probar conexión"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Test results · {label}"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Test run"
 msgstr "Ejecución de prueba"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Test WebDAV connection"
+msgstr ""
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Testing"
 msgstr "Pruebas"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
+#: src/pages/model-settings/compatible-model-fields.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Testing…"
 msgstr "Probando…"
 
 #: src/components/BotEmailAddressField.tsx
 msgid "That address isn't available"
 msgstr "Esa dirección no está disponible"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "That server address is not valid."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The backup password is wrong."
+msgstr ""
 
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
@@ -6938,6 +8068,18 @@ msgstr "La computadora en la que trabajan tus bots."
 #: src/lib/model-connection-preflight.ts
 msgid "The connection timed out."
 msgstr "Se agotó el tiempo de conexión."
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The directory is not valid."
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "The environment master switch is off, so registration stays closed no matter what is set here."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The export link expired. Try again."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6977,6 +8119,10 @@ msgstr "El enlace de la pantalla caducó."
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "The selected memory provider is not available in this build."
 msgstr "El proveedor de memoria seleccionado no está disponible en esta build."
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The server answered with an error."
+msgstr ""
 
 #: src/components/pages/SharePopover.tsx
 msgid "The shared link stops working"
@@ -7036,6 +8182,14 @@ msgstr "No se pudo leer esta copia de seguridad."
 msgid "This bot"
 msgstr "Este bot"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "This bot has no persona yet."
+msgstr "Este bot aún no tiene persona."
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "This bot keeps its current persona, but stops following this template."
+msgstr "Este bot conserva su persona actual, pero deja de seguir esta plantilla."
+
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "Este bot se ejecuta en esta computadora, no en un escritorio Linux. El shell y los archivos usan tu carpeta de inicio."
@@ -7064,6 +8218,10 @@ msgstr "Esta acción no se puede deshacer."
 msgid "This cannot be undone."
 msgstr "Esto no se puede deshacer."
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "This clears all usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "esta computadora"
@@ -7090,6 +8248,10 @@ msgstr "Este archivo no es texto UTF-8 válido."
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "Esta importación ya se usó. Vuelve a elegir los archivos."
+
+#: src/components/BotPackageImport.tsx
+msgid "This imported bot was removed."
+msgstr ""
 
 #: src/pages/Invite.tsx
 msgid "This invite link is no longer valid."
@@ -7132,6 +8294,11 @@ msgstr "No se pudo cargar esta página"
 msgid "This page isn't available"
 msgstr "Esta página no está disponible"
 
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "This password appeared in a data breach. Choose another."
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 msgid "This permanently deletes your account and data."
 msgstr "Esto elimina permanentemente tu cuenta y tus datos."
@@ -7147,6 +8314,10 @@ msgstr "Este proveedor no se puede probar sin guardar."
 #: src/lib/model-connection-preflight.ts
 msgid "This provider is not connected yet."
 msgstr "Este proveedor aún no está conectado."
+
+#: src/components/admin/AdminUsers.tsx
+msgid "This removes the account and everything it created. This cannot be undone."
+msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "This removes the connection from every space."
@@ -7177,6 +8348,10 @@ msgstr "El resultado de la herramienta de este servidor no cabe en el modelo. De
 msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
 msgstr "Este inicio de sesión por suscripción aún no está disponible en Rakazo. Usa una credencial de despliegue o elige otro proveedor."
 
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "This template is in use on this bot. Saving alone only changes the template."
+msgstr "Esta plantilla está en uso en este bot. Guardar solo cambia la plantilla."
+
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "This template was just updated. Check it again."
 msgstr "Esta plantilla se acaba de actualizar. Revísala de nuevo."
@@ -7192,6 +8367,10 @@ msgstr "jueves"
 #: src/pages/RoutineSchedule.tsx
 msgid "Time of day"
 msgstr "Hora del día"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Timed out"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Timezone"
@@ -7227,6 +8406,11 @@ msgstr "Para:"
 msgid "Today"
 msgstr "Hoy"
 
+#. placeholder {0}: stat.todayCount
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Today: {0}"
+msgstr ""
+
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Toggle sidebar"
 msgstr "Mostrar u ocultar barra lateral"
@@ -7234,6 +8418,10 @@ msgstr "Mostrar u ocultar barra lateral"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Tokens"
 msgstr "Tokens"
+
+#: src/lib/user-error.ts
+msgid "Too many registrations from this network"
+msgstr ""
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Tool arguments (JSON)"
@@ -7265,6 +8453,15 @@ msgstr "Radar de temas"
 msgid "Total"
 msgstr "Total"
 
+#: src/components/admin/AdminOverview.tsx
+msgid "Total users"
+msgstr ""
+
+#. placeholder {0}: stat.totalCount
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Total: {0}"
+msgstr ""
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
 msgstr "Transcribiendo…"
@@ -7284,6 +8481,52 @@ msgstr "Se agotó el tiempo de la solicitud de transcripción."
 #: src/lib/dictation.ts
 msgid "Transcription response is too large."
 msgstr "La respuesta de la transcripción es demasiado grande."
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate this reply"
+msgstr ""
+
+#. placeholder {0}: displayName(state.result.modelId, t`Model`)
+#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
+#. placeholder {2}: translationLanguageLabel(targetLanguage)
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {0} · {1} to {2}"
+msgstr ""
+
+#. placeholder {0}: displayName(state.result.modelId, t`Model`)
+#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
+#. placeholder {2}: translationLanguageLabel(targetLanguage)
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {0} (backup) · {1} to {2}"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating…"
+msgstr ""
+
+#: src/pages/Favorites.tsx
+msgid "translation"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translation failed"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation model"
+msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Treat like a person"
@@ -7452,9 +8695,17 @@ msgstr "Aumentar ahora"
 msgid "Upload"
 msgstr "Subir"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Uploading…"
+msgstr ""
+
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "Urgente"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Usable"
+msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Usage"
@@ -7463,6 +8714,10 @@ msgstr "Uso"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Usage range"
 msgstr ""
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Use"
+msgstr "Usar"
 
 #. Switches the saved timezone to this device's, e.g. 'Use Pacific/Auckland'
 #. placeholder {0}: deviceTimezone.replaceAll("_", " ")
@@ -7482,10 +8737,23 @@ msgstr "Usa {oauthEnvReference} para el token de acceso."
 msgid "Use 2 to 64 characters"
 msgstr "Usa de 2 a 64 caracteres"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use a different password from your account password."
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Use a found model"
 msgstr "Usar un modelo encontrado"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use an https address."
+msgstr ""
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
@@ -7527,15 +8795,48 @@ msgstr "Usar créditos de Rakazo"
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Usa hasta 512 letras, dígitos, _ o -."
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Used up"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "User blacklisted"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "User deleted"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "User disabled"
+msgstr ""
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
 msgstr "Peer del usuario"
 
+#: src/components/admin/admin-shared.tsx
+msgid "User permanently deleted"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "User removed from blacklist"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "User restored"
+msgstr ""
+
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/components/WebdavBackupSettings.tsx
 msgid "Username"
 msgstr "Nombre de usuario"
+
+#: src/pages/AdminPage.tsx
+msgid "Users"
+msgstr ""
 
 #: src/pages/shell/import-status.ts
 msgid "Uses files that are not imported"
@@ -7556,6 +8857,10 @@ msgstr "Usando tu clave de API"
 #: src/components/ModelCredits.tsx
 msgid "Using your API key. Free plan ends {freeUntil}."
 msgstr "Usando tu clave de API. El plan gratuito termina el {freeUntil}."
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Valid for"
+msgstr ""
 
 #: src/components/vault/LoginFieldsInput.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -7593,6 +8898,14 @@ msgstr "Verificando…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Versión"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video generation model"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video prompt preset"
+msgstr ""
 
 #: src/pages/plugins/plugin-browse.tsx
 msgid "View all"
@@ -7640,6 +8953,10 @@ msgstr "Web, escritorio y móvil"
 #: src/pages/Paywall.tsx
 msgid "Web, desktop and mobile apps"
 msgstr "Apps web, de escritorio y móviles"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "WebDAV backup"
+msgstr ""
 
 #: src/pages/routine-editor/add-trigger-menu.tsx
 msgid "Webhook"
@@ -7728,6 +9045,22 @@ msgstr "Cuándo te consultan los bots antes de actuar."
 msgid "When it finishes or needs input"
 msgstr "Cuando termine o necesite una respuesta"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When off, no new accounts can register by email."
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "When on, an IP that passes the hourly threshold has all its accounts disabled at once."
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, only emails from the domains below can register."
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, registration requires a valid invite code."
+msgstr ""
+
 #: src/pages/routine-editor/add-trigger-menu.tsx
 #: src/pages/routine-editor/trigger-cards.tsx
 #: src/pages/RoutineList.tsx
@@ -7780,6 +9113,7 @@ msgstr "Trabajando"
 msgid "Working instructions"
 msgstr "Instrucciones de trabajo"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts
 #: src/pages/Auth.tsx
@@ -7798,6 +9132,10 @@ msgstr "Funciona con tu plan de ChatGPT o Claude."
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Workspace"
 msgstr "Espacio de trabajo"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Wrong password"
+msgstr ""
 
 #: src/lib/billing.ts
 msgid "year"
@@ -7936,370 +9274,3 @@ msgstr "Tu proveedor de voz rechazó la clave."
 #: src/components/vault/VaultItemEditor.tsx
 msgid "ZIP or postal code"
 msgstr "Código postal"
-
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "A parent directory is missing on the server."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Back up now"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backed up"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backup directory"
-msgstr ""
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backup passwords do not match"
-msgstr ""
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backup passwords need an HTTPS connection"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Enter the backup password to restore"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Enter the username."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Enter the WebDAV password."
-msgstr ""
-
-#. placeholder {0}: new Date(lastBackup.exportedAt).toLocaleString()
-#: src/components/WebdavBackupSettings.tsx
-msgid "Last backup: {0}"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "No backup found on the server."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "No backup yet"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Password set"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Put the account and password in their own fields, not in the address."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Restore from WebDAV"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Save WebDAV account"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Server address"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Signed in, but the backup directory does not exist yet."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Test WebDAV connection"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "That server address is not valid."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The backup password is wrong."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The directory is not valid."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The export link expired. Try again."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The server answered with an error."
-msgstr ""
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "This password appeared in a data breach. Choose another."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Uploading…"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Use a different password from your account password."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Use an https address."
-msgstr ""
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "WebDAV backup"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Wrong password"
-msgstr ""
-
-#. placeholder {0}: items.length
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "{0, plural, one {Import 1 template} other {Import # templates}}"
-msgstr "{0, plural, one {Importar 1 plantilla} other {Importar # plantillas}}"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "A name for this persona"
-msgstr "Un nombre para esta persona"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Check the names and content, then import."
-msgstr "Revisa los nombres y el contenido y luego importa."
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Choose a file"
-msgstr "Elegir un archivo"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Current persona"
-msgstr "Persona actual"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Custom"
-msgstr "Personalizado"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Default templates restored"
-msgstr "Plantillas predeterminadas restauradas"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "Edit template"
-msgstr "Editar plantilla"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Export all"
-msgstr "Exportar todo"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Exported files are named after the template. Edit one outside the app and import it again under the same name to update it; a template in use applies right away."
-msgstr "Los archivos exportados llevan el nombre de la plantilla. Edita uno fuera de la app e impórtalo de nuevo con el mismo nombre para actualizarlo; una plantilla en uso se aplica de inmediato."
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Fetch and preview"
-msgstr "Obtener y previsualizar"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "From this bot"
-msgstr "De este bot"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Import templates"
-msgstr "Importar plantillas"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "In use"
-msgstr "En uso"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Local file"
-msgstr "Archivo local"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Manage templates"
-msgstr "Gestionar plantillas"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "My template"
-msgstr "Mi plantilla"
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "New template"
-msgstr "Nueva plantilla"
-
-#: src/pages/shell/chat-persona-switcher.tsx
-msgid "No templates yet"
-msgstr "Aún no hay plantillas"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "No templates yet. Create one or restore the defaults."
-msgstr "Aún no hay plantillas. Crea una o restaura las predeterminadas."
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Not linked to a template"
-msgstr "No vinculado a una plantilla"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Nothing to import at that address"
-msgstr "No hay nada que importar en esa dirección."
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Paste a prompt, or JSON like {\"name\": \"...\", \"content\": \"...\"}"
-msgstr "Pega un prompt o JSON como {\"name\": \"...\", \"content\": \"...\"}"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Paste text"
-msgstr "Pegar texto"
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "Prompt"
-msgstr "Prompt"
-
-#: src/pages/settings-nav.ts
-msgid "Prompt templates"
-msgstr "Plantillas de prompts"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Restore defaults"
-msgstr "Restaurar predeterminados"
-
-#: src/pages/settings-nav.ts
-msgid "Reusable personas for your bots."
-msgstr "Personas reutilizables para tus bots."
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "Save and apply to this bot"
-msgstr "Guardar y aplicar a este bot"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Save current persona as template"
-msgstr "Guardar la persona actual como plantilla"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Saved as template"
-msgstr "Guardado como plantilla"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Subscription URL"
-msgstr "URL de suscripción"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/pages/shell/chat-persona-switcher.tsx
-msgid "Switch persona"
-msgstr "Cambiar persona"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-#: src/pages/shell/chat-persona-switcher.tsx
-msgid "Switched to {0}"
-msgstr "Cambiado a {0}"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
-msgstr "El cambio es inmediato. El próximo mensaje usa el nuevo prompt; los mensajes anteriores no cambian. Editar las instrucciones directamente convierte la persona en personalizada."
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Template name"
-msgstr "Nombre de la plantilla"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "This bot has no persona yet."
-msgstr "Este bot aún no tiene persona."
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "This bot keeps its current persona, but stops following this template."
-msgstr "Este bot conserva su persona actual, pero deja de seguir esta plantilla."
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "This template is in use on this bot. Saving alone only changes the template."
-msgstr "Esta plantilla está en uso en este bot. Guardar solo cambia la plantilla."
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Use"
-msgstr "Usar"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translate"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translating"
-msgstr ""
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Translation"
-msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Not selected"
-msgstr ""
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Source language"
-msgstr ""
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Target language"
-msgstr ""
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Auto-translate replies"
-msgstr ""
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Translation model"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translate this reply"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translating…"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Copy translation"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Collapse"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Collapse translation"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Retry translation"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translation failed"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Choose a translation model in this bot's Advanced settings"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translated with {modelId} · {source} to {target}"
-msgstr ""

@@ -58,6 +58,11 @@ msgstr "{0, plural, one {# स्पेस} other {# स्पेस}}"
 msgid "{0, plural, one {# tool} other {# tools}}"
 msgstr "{0, plural, one {# टूल} other {# टूल}}"
 
+#. placeholder {0}: items.length
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "{0, plural, one {Import 1 template} other {Import # templates}}"
+msgstr "{0, plural, one {1 टेम्पलेट आयात करें} other {# टेम्पलेट आयात करें}}"
+
 #. placeholder {0}: Math.ceil(oauth.expiresInSeconds / 60)
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -85,6 +90,11 @@ msgstr "{0} ({1} से अधिक)"
 #: src/lib/cron.ts
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
+
+#. placeholder {0}: data.collectiveBanAccounts
+#: src/components/admin/AdminOverview.tsx
+msgid "{0} accounts affected"
+msgstr ""
 
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
@@ -144,6 +154,10 @@ msgstr "{0}, आपके चालू करने तक रुका रह�
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
 msgstr "{amount} / {period}"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "{amount} invite codes generated"
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "{botCount, plural, one {Delete {name} and its # bot?} other {Delete {name} and its # bots?}}"
@@ -440,6 +454,10 @@ msgstr "{title}, {savedAs} नाम से सेव होगा"
 msgid "{toolCount, plural, one {# tool} other {# tools}}"
 msgstr "{toolCount, plural, one {# टूल} other {# टूल}}"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "{usable} of {total} models work"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 msgstr "{vcpus} vCPU, {memoryGb} GB, हर महीने {hours} कंप्यूटर घंटे"
@@ -547,6 +565,28 @@ msgstr "**गुरुवार**\n"
 msgid "/ month"
 msgstr "/ महीना"
 
+#. placeholder {0}: test.modelId
+#. placeholder {1}: test.seconds
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✓ {0} supports image generation · {1}s"
+msgstr ""
+
+#. placeholder {0}: test.modelId
+#. placeholder {1}: test.seconds
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✓ {0} supports video generation · {1}s"
+msgstr ""
+
+#. placeholder {0}: test.detail
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✗ Does not support image generation · {0}"
+msgstr ""
+
+#. placeholder {0}: test.detail
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✗ Does not support video generation · {0}"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "1 day"
 msgstr ""
@@ -555,12 +595,18 @@ msgstr ""
 msgid "1 space"
 msgstr "1 स्पेस"
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
 msgstr ""
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "7 days"
+msgstr ""
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "90 days"
 msgstr ""
 
 #: src/pages/shell/message-cards.tsx
@@ -574,6 +620,18 @@ msgstr "कमांड का आउटपुट"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "A model approves routine actions and asks you about the rest."
 msgstr "एक मॉडल सामान्य कार्यों को अनुमोदित करता है और बाकी के बारे में आपसे पूछता है।"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "A name for this persona"
+msgstr "इस पर्सोना के लिए एक नाम"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "A parent directory is missing on the server."
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "A preset with this name already exists"
+msgstr ""
 
 #. placeholder {0}: oauth.verificationUri.replace(/^https:\/\//, "")
 #: src/pages/model-settings/connection-controls.tsx
@@ -649,6 +707,8 @@ msgstr "{name} के लिए कार्रवाइयाँ"
 msgid "Actions for space"
 msgstr "स्पेस के लिए कार्रवाइयाँ"
 
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/BillingSettingsPanel.tsx
 #: src/pages/RoutineEditor.tsx
 msgid "Active"
@@ -733,6 +793,10 @@ msgstr "कस्टम जोड़ें"
 msgid "Add fallback"
 msgstr "फ़ॉलबैक जोड़ें"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Add fallback model"
+msgstr ""
+
 #: src/components/vault/LoginFieldsInput.tsx
 msgid "Add field"
 msgstr "फ़ील्ड जोड़ें"
@@ -816,6 +880,14 @@ msgstr "पता पंक्ति 2"
 msgid "Adds"
 msgstr "क्या जोड़ा जाएगा"
 
+#: src/pages/AdminPage.tsx
+msgid "Admin"
+msgstr ""
+
+#: src/pages/AdminPage.tsx
+msgid "Admin sections"
+msgstr ""
+
 #: src/pages/McpServerForm.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/ModelSettingsOverlay.tsx
@@ -834,6 +906,8 @@ msgstr "उन्नत..."
 msgid "Agent from another app"
 msgstr "दूसरे ऐप का एजेंट"
 
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/components/VaultSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "All"
@@ -866,6 +940,10 @@ msgstr "सभी स्थितियाँ"
 msgid "All time"
 msgstr "अब तक"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "All types"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Allow"
 msgstr "अनुमति दें"
@@ -889,6 +967,10 @@ msgstr "सिस्टम सेटिंग्स में Rakazo को स�
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
 msgstr "लिखने की अनुमति दें"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Allowed email domains, one per line"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Allowed in this space"
@@ -953,6 +1035,14 @@ msgstr "इंपोर्ट की गई एक API कुंजी इस्
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "An integration tool"
 msgstr "एक इंटीग्रेशन टूल"
+
+#: src/components/AppDownloadDialog.tsx
+msgid "Android"
+msgstr ""
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Android download link"
+msgstr ""
 
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
@@ -1031,6 +1121,14 @@ msgstr "API टोकन"
 #: src/components/ComputerProviderSettings.tsx
 msgid "API URL"
 msgstr "API URL"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "App download"
+msgstr ""
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "App download links saved"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Appearance"
@@ -1142,6 +1240,10 @@ msgstr "फ़ाइल संलग्न करें"
 msgid "Attachment"
 msgstr "अटैचमेंट"
 
+#: src/pages/AdminPage.tsx
+msgid "Audit log"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Auth method"
@@ -1184,6 +1286,10 @@ msgstr "एजेंटों को इसके टूल का उपयो�
 msgid "Auto"
 msgstr "ऑटो"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Auto-translate replies"
+msgstr ""
+
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Automated senders"
 msgstr "स्वचालित प्रेषक"
@@ -1211,12 +1317,15 @@ msgstr "अवतार स्टूडियो"
 #: src/components/bot-templates/bot-templates-dialog.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/components/vault/VaultPageHeader.tsx
 #: src/pages/AdminAccessPage.tsx
+#: src/pages/AdminPage.tsx
 #: src/pages/AdminPluginsPage.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Board.tsx
+#: src/pages/Favorites.tsx
 #: src/pages/McpServerForm.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/plugins/connector-detail.tsx
@@ -1239,8 +1348,30 @@ msgstr "चैट पर वापस जाएँ"
 msgid "Back to sign in"
 msgstr "साइन इन पर वापस जाएँ"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Back up now"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backed up"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup directory"
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 msgid "Backup password"
+msgstr ""
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup passwords do not match"
+msgstr ""
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Backup passwords need an HTTPS connection"
 msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
@@ -1275,6 +1406,15 @@ msgstr "बिलिंग पता"
 msgid "Billing period"
 msgstr "बिलिंग अवधि"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Blacklist"
+msgstr ""
+
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminUsers.tsx
+msgid "Blacklisted"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Block"
 msgstr "ब्लॉक करें"
@@ -1298,8 +1438,11 @@ msgstr "लाइव डेस्कटॉप शुरू हो रहा ह�
 msgid "bot"
 msgstr "बॉट"
 
+#: src/components/BotPackageDocumentView.tsx
+#: src/components/BotPackageImport.tsx
 #: src/lib/identity-display.ts
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Favorites.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/Shell.tsx
@@ -1318,9 +1461,17 @@ msgstr "बॉट"
 msgid "Bot email addresses"
 msgstr "बॉट के ईमेल पते"
 
+#: src/components/BotPackageImport.tsx
+msgid "Bot imported"
+msgstr ""
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Bot is watching, not acting"
 msgstr "बॉट देख रहा है, कार्रवाई नहीं कर रहा"
+
+#: src/components/BotPackageImport.tsx
+msgid "Bot package or Grok JSON"
+msgstr ""
 
 #: src/pages/shell/computer-overlay.tsx
 msgid "Bot screen"
@@ -1378,6 +1529,8 @@ msgstr "ब्राउज़ करें"
 msgid "Browse MCP servers"
 msgstr "MCP सर्वर ब्राउज़ करें"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Built-in"
@@ -1429,12 +1582,14 @@ msgstr "सर्वर तक नहीं पहुंचा जा सका�
 msgid "Can't read images"
 msgstr "तस्वीरें नहीं पढ़ सकता"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/AskCard.tsx
 #: src/components/ConfirmDialog.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/markdown-link-prompt.tsx
 #: src/components/ModelCredits.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -1444,10 +1599,15 @@ msgstr "तस्वीरें नहीं पढ़ सकता"
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Cancel"
 msgstr "रद्द करें"
+
+#: src/components/BotPackageImport.tsx
+msgid "Cancel import"
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Cancel new bot"
@@ -1578,13 +1738,26 @@ msgstr "जाँच विफल: {0}"
 msgid "Check for updates"
 msgstr "अपडेट की जाँच करें"
 
+#: src/components/BotPackageTools.tsx
+msgid "Check imported skills"
+msgstr ""
+
 #: src/pages/shell/use-routine-editor.ts
 msgid "Check in."
 msgstr "जांच करें।"
 
+#: src/components/BotPackageImport.tsx
+#: src/components/BotPackageSkillsView.tsx
+msgid "Check status"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Check the API key or sign-in, then test again."
 msgstr "API कुंजी या साइन-इन जाँचें, फिर फिर से परीक्षण करें।"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Check the names and content, then import."
+msgstr "नाम और सामग्री जाँचें, फिर आयात करें।"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Check the server URL and network, then test again."
@@ -1621,6 +1794,10 @@ msgstr "जांच हो रही है…"
 msgid "Choose a bot shape, color, or upload an image"
 msgstr "बॉट का आकार और रंग चुनें, या छवि अपलोड करें"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Choose a file"
+msgstr "फ़ाइल चुनें"
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
@@ -1637,6 +1814,10 @@ msgstr "नया पासवर्ड चुनें"
 #: src/pages/onboarding/model-step.tsx
 msgid "Choose a provider"
 msgstr "एक प्रोवाइडर चुनें"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Choose a translation model in this bot's Advanced settings"
+msgstr ""
 
 #: src/pages/shell/agent-import.tsx
 msgid "Choose backup"
@@ -1655,6 +1836,10 @@ msgstr "फ़ोल्डर चुनें"
 #: src/components/SubscriptionGate.tsx
 msgid "Choose how to use Rakazo"
 msgstr "चुनें कि Rakazo का उपयोग कैसे करें"
+
+#: src/components/BotPackageImport.tsx
+msgid "Choose package file"
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "City"
@@ -1695,13 +1880,19 @@ msgstr "फ़िल्टर {label} हटाएँ"
 msgid "Clear filters"
 msgstr "फ़िल्टर हटाएँ"
 
+#: src/components/BotPackageTools.tsx
+msgid "Clear selection"
+msgstr ""
+
 #: src/pages/shell/dialogs.tsx
 msgid "Clearing…"
 msgstr "साफ़ किया जा रहा है…"
 
+#: src/components/BotPackageImport.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsPanel.tsx
+#: src/pages/model-settings/model-health-dialog.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineEditor.tsx
@@ -1793,10 +1984,22 @@ msgctxt "email sign-in"
 msgid "Code"
 msgstr "कोड"
 
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse"
+msgstr ""
+
 #. placeholder {0}: headerName(group)
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Collapse {0}"
 msgstr "{0} संक्षिप्त करें"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse translation"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Collective ban on excess"
+msgstr ""
 
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color"
@@ -2001,6 +2204,7 @@ msgstr "मॉडल्स में अपनी API कुंजी कने�
 #: src/components/ComputerDeviceSettings.tsx
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/components/integrations/plugin-marketplace.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/plugins/parts.tsx
@@ -2024,6 +2228,7 @@ msgstr "{0} कनेक्ट किया गया।"
 msgid "Connecting…"
 msgstr "कनेक्ट हो रहा है…"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Connection"
 msgstr "कनेक्शन"
@@ -2041,6 +2246,10 @@ msgstr "कनेक्शन परीक्षण विफल रहा।"
 #: src/pages/plugins/use-plugin-connections.ts
 msgid "Connection to {0} is still pending. You can close this and check again."
 msgstr "{0} से कनेक्शन अभी लंबित है। आप इसे बंद करके बाद में जांच सकते हैं।"
+
+#: src/components/BotPackageDocumentView.tsx
+msgid "Connections"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Connector"
@@ -2104,6 +2313,7 @@ msgstr "बातचीत"
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/agent-import.tsx
 #: src/pages/shell/message-hover-actions.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Copied"
 msgstr "कॉपी किया गया"
 
@@ -2144,6 +2354,10 @@ msgstr "प्रॉम्प्ट कॉपी करें"
 #: src/components/markdown-copy.tsx
 msgid "Copy rows"
 msgstr "पंक्तियाँ कॉपी करें"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Copy translation"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Cost"
@@ -2216,6 +2430,10 @@ msgstr "OAuth पूरा नहीं हो सका"
 #: src/components/DesktopUpdates.tsx
 msgid "Could not complete the update. Try again."
 msgstr "अपडेट पूरा नहीं हो सका। फिर कोशिश करें।"
+
+#: src/components/BotPackageImport.tsx
+msgid "Could not confirm import. Check status before trying again."
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/plugins/use-plugin-connections.ts
@@ -2315,6 +2533,10 @@ msgstr "स्किल हटाई नहीं जा सकी"
 msgid "Could not delete space"
 msgstr "स्पेस डिलीट नहीं किया जा सका"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Could not delete the user"
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Could not delete this artifact."
 msgstr "यह आर्टिफ़ैक्ट डिलीट नहीं किया जा सका।"
@@ -2352,9 +2574,21 @@ msgstr "{0} डाउनलोड नहीं हो सका। पुनः 
 msgid "Could not download {name}. Try again."
 msgstr "{name} डाउनलोड नहीं हो सका। पुनः प्रयास करें।"
 
+#: src/components/BotPackageSkillsView.tsx
+msgid "Could not enable skill. Check status or choose another name."
+msgstr ""
+
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Could not enable tools"
 msgstr "टूल सक्षम नहीं हो सके"
+
+#: src/components/BotPackageTools.tsx
+msgid "Could not export this package."
+msgstr ""
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Could not generate invite codes"
+msgstr ""
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Could not grant access"
@@ -2407,6 +2641,14 @@ msgstr "कंप्यूटर सेटिंग्स लोड नहीं
 msgid "Could not load credentials."
 msgstr "क्रेडेंशियल लोड नहीं हो सके।"
 
+#: src/pages/Favorites.tsx
+msgid "Could not load favorites."
+msgstr ""
+
+#: src/components/HumanVerification.tsx
+msgid "Could not load human verification"
+msgstr ""
+
 #: src/pages/plugins/use-plugin-connections.ts
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not load integrations"
@@ -2425,6 +2667,10 @@ msgstr "सदस्य लोड नहीं हो सके"
 msgid "Could not load model settings"
 msgstr "मॉडल सेटिंग्स लोड नहीं हो सकीं"
 
+#: src/components/BotPackageImport.tsx
+msgid "Could not load recent imports."
+msgstr ""
+
 #: src/pages/RoutineRunHistory.tsx
 msgid "Could not load run history"
 msgstr "रन का इतिहास लोड नहीं हो सका"
@@ -2438,6 +2684,10 @@ msgstr "साइन इन के विकल्प लोड नहीं ह
 #: src/pages/KnowledgeSection.tsx
 msgid "Could not load skill"
 msgstr "स्किल लोड नहीं हो सकी"
+
+#: src/components/BotPackageTools.tsx
+msgid "Could not load skills."
+msgstr ""
 
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "Could not load templates"
@@ -2486,6 +2736,10 @@ msgstr "टेस्ट क्लिप नहीं चलाई जा सक�
 msgid "Could not preview plugin"
 msgstr "प्लगइन का प्रीव्यू नहीं हो सका"
 
+#: src/components/BotPackageImport.tsx
+msgid "Could not preview this package."
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Could not reach the model server."
 msgstr "मॉडल सर्वर तक नहीं पहुँच सके।"
@@ -2493,6 +2747,7 @@ msgstr "मॉडल सर्वर तक नहीं पहुँच सक�
 #: src/components/AccountDataSettings.tsx
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/lib/computer-sandbox.ts
 #: src/lib/user-error.ts
 #: src/pages/AccountSettingsOverlay.tsx
@@ -2504,6 +2759,10 @@ msgstr "सर्वर से संपर्क नहीं हो सका"
 #: src/pages/shell/use-agent-import-source.ts
 msgid "Could not read these files"
 msgstr "ये फ़ाइलें पढ़ी नहीं जा सकीं"
+
+#: src/components/BotPackageImport.tsx
+msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
+msgstr ""
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not reject plugin"
@@ -2540,6 +2799,10 @@ msgstr "स्किल हटाए नहीं जा सके"
 msgid "Could not remove the credential"
 msgstr "क्रेडेंशियल हटाया नहीं जा सका"
 
+#: src/pages/Favorites.tsx
+msgid "Could not remove this favorite."
+msgstr ""
+
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/plugins/use-plugin-connections.ts
 msgid "Could not rename connection"
@@ -2566,6 +2829,10 @@ msgstr "चार्ट रेंडर नहीं हो सका"
 msgid "Could not reset password"
 msgstr "पासवर्ड रीसेट नहीं किया जा सका"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Could not reset usage"
+msgstr ""
+
 #: src/pages/plugins/use-plugin-connections.ts
 msgid "Could not revoke connection"
 msgstr "कनेक्शन रद्द नहीं किया जा सका"
@@ -2573,6 +2840,10 @@ msgstr "कनेक्शन रद्द नहीं किया जा स�
 #: src/pages/AdminAccessPage.tsx
 msgid "Could not revoke grant"
 msgstr "अनुमति रद्द नहीं की जा सकी"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Could not revoke the code"
+msgstr ""
 
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not run routine"
@@ -2587,6 +2858,10 @@ msgstr "रूटीन चलाया नहीं जा सका"
 msgid "Could not save"
 msgstr "सहेजा नहीं जा सका"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Could not save app download links"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not save Auto Review"
 msgstr "ऑटो रिव्यू सहेजा नहीं जा सका"
@@ -2599,9 +2874,17 @@ msgstr "कंप्यूटर सेटिंग्स सहेजी नह
 msgid "Could not save group"
 msgstr "समूह सहेजा नहीं जा सका"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Could not save IP limits"
+msgstr ""
+
 #: src/pages/onboarding/use-onboarding-model.ts
 msgid "Could not save model"
 msgstr "मॉडल सहेजा नहीं जा सका"
+
+#: src/pages/model-settings/use-model-settings.ts
+msgid "Could not save models"
+msgstr ""
 
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not save routine"
@@ -2610,6 +2893,10 @@ msgstr "रूटीन सहेजा नहीं जा सका"
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Could not save rule"
 msgstr "नियम सहेजा नहीं जा सका"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Could not save settings"
+msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -2690,6 +2977,14 @@ msgstr "नियंत्रण नहीं लिया जा सका"
 msgid "Could not test MCP server"
 msgstr "MCP सर्वर का परीक्षण नहीं हो सका"
 
+#: src/pages/model-settings/use-model-settings.ts
+msgid "Could not test models"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Could not test this model"
+msgstr ""
+
 #: src/lib/dictation.ts
 msgid "Could not transcribe that recording."
 msgstr "उस रिकॉर्डिंग को ट्रांसक्राइब नहीं किया जा सका।"
@@ -2722,6 +3017,10 @@ msgstr "प्रतिक्रिया अपडेट नहीं हो �
 msgid "Could not update the default memory scope"
 msgstr "डिफ़ॉल्ट मेमोरी स्कोप अपडेट नहीं हो सका"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Could not update the user"
+msgstr ""
+
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "कंप्यूटर सेटअप की जांच नहीं हो सकी ({failureMessage})। कनेक्शन ठीक करें, फिर से जांचें।"
@@ -2730,9 +3029,25 @@ msgstr "कंप्यूटर सेटअप की जांच नही�
 msgid "Couldn't copy. Select the link and copy it."
 msgstr "कॉपी नहीं हो सका। लिंक चुनें और उसे कॉपी करें।"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Couldn't load app download links"
+msgstr ""
+
 #: src/pages/AdminAccessPage.tsx
 msgid "Couldn't load grants"
 msgstr "अनुमतियाँ लोड नहीं हो सकीं"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Couldn't load invite codes"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Couldn't load IP limits"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Couldn't load IP stats"
+msgstr ""
 
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Couldn't load messaging settings"
@@ -2742,13 +3057,29 @@ msgstr "मैसेजिंग सेटिंग्स लोड नहीं
 msgid "Couldn't load pages."
 msgstr "पेज लोड नहीं हो सके।"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Couldn't load registration settings"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Couldn't load submissions"
 msgstr "सबमिशन लोड नहीं हो सके"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Couldn't load the audit log"
+msgstr ""
+
+#: src/components/admin/AdminOverview.tsx
+msgid "Couldn't load the overview"
+msgstr ""
+
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this page. Try again."
 msgstr "यह पेज लोड नहीं हो सका। फिर से कोशिश करें।"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Couldn't load users"
+msgstr ""
 
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't load your wallet"
@@ -2769,6 +3100,10 @@ msgstr "आपका टाइमज़ोन अपडेट नहीं ह�
 #: src/pages/PaymentWalletSettingsPanel.tsx
 msgid "Couldn't update your wallet"
 msgstr "आपका वॉलेट अपडेट नहीं हो सका"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Count"
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Country"
@@ -2870,6 +3205,18 @@ msgstr "मुद्रा"
 msgid "Current password"
 msgstr "वर्तमान पासवर्ड"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Current persona"
+msgstr "वर्तमान पर्सोना"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Custom"
+msgstr "कस्टम"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Custom app download"
+msgstr ""
+
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Custom header"
 msgstr "कस्टम हेडर"
@@ -2957,9 +3304,15 @@ msgstr "OpenClaw का डिफ़ॉल्ट"
 msgid "Default scope"
 msgstr "डिफ़ॉल्ट स्कोप"
 
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Default templates restored"
+msgstr "डिफ़ॉल्ट टेम्पलेट पुनर्स्थापित"
+
 #: src/components/AccountAccess.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -2990,6 +3343,7 @@ msgstr "{0} डिलीट करें"
 #. placeholder {0}: bot.name
 #. placeholder {0}: deleting.name
 #. placeholder {0}: item.name
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/shell/dialogs.tsx
@@ -3013,6 +3367,14 @@ msgstr "मेमोरी भी डिलीट करें"
 msgid "Delete organization"
 msgstr "संगठन हटाएँ"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Delete permanently"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Delete preset"
+msgstr ""
+
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Delete section"
 msgstr "अनुभाग हटाएँ"
@@ -3026,14 +3388,23 @@ msgstr "स्पेस डिलीट करें"
 msgid "Delete this Space's credentials?"
 msgstr "इस कार्यस्थान के क्रेडेंशियल डिलीट करें?"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Delete this user permanently?"
+msgstr ""
+
 #: src/pages/shell/message-view.tsx
 msgid "deleted"
 msgstr "डिलीट किया गया"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Deleted"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Deleted bot"
 msgstr ""
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
@@ -3074,6 +3445,7 @@ msgstr "डेस्कटॉप ID"
 msgid "Desktop update"
 msgstr "डेस्कटॉप अपडेट"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/shell/composer-error.tsx
 msgid "Details"
@@ -3107,10 +3479,16 @@ msgstr "क्या आपका मतलब <0>{emailSuggestion}</0> था?"
 msgid "Didn't catch that."
 msgstr "समझ नहीं आया।"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Disable"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Disable a tool"
 msgstr "टूल अक्षम करें"
 
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/plugins/parts.tsx
 msgid "Disabled"
 msgstr "अक्षम"
@@ -3182,10 +3560,6 @@ msgstr "Docker"
 msgid "Docker limits access to your computer for added security. Using {hostLabel} lets bots work with your local files and tools."
 msgstr "Docker अतिरिक्त सुरक्षा के लिए आपके कंप्यूटर तक पहुँच सीमित करता है। {hostLabel} चुनने पर बॉट्स आपकी स्थानीय फ़ाइलों और टूल्स के साथ काम कर सकते हैं।"
 
-#: src/components/SidebarFooter.tsx
-msgid "Docs"
-msgstr "दस्तावेज़"
-
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "दस्तावेज़ बदल गया है। नवीनतम संस्करण संपादित करने के लिए फिर से खोलें।"
@@ -3226,11 +3600,16 @@ msgstr "{name} डाउनलोड करें"
 msgid "Download CSV"
 msgstr "CSV डाउनलोड करें"
 
+#: src/components/BotPackageTools.tsx
+msgid "Download package"
+msgstr ""
+
 #: src/components/pages/DownloadPdfButton.tsx
 msgid "Download PDF"
 msgstr "PDF डाउनलोड करें"
 
 #: src/components/DesktopUpdates.tsx
+#: src/components/WebdavBackupSettings.tsx
 msgid "Downloading…"
 msgstr "डाउनलोड हो रहा है…"
 
@@ -3246,11 +3625,16 @@ msgstr "छवि खींचें, छोड़ें या पेस्ट 
 msgid "Duplicate"
 msgstr "डुप्लिकेट"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Each code works once and stops working after use."
+msgstr ""
+
 #: src/pages/McpServerForm.tsx
 msgid "Each name can be used once."
 msgstr "हर नाम का उपयोग केवल एक बार किया जा सकता है।"
 
 #: src/components/AskCard.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3266,10 +3650,20 @@ msgstr "पहले संपादित करें"
 msgid "Edit name"
 msgstr "नाम संपादित करें"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Edit preset"
+msgstr ""
+
 #: src/pages/BotContextMenu.tsx
 msgid "Edit Profile"
 msgstr "प्रोफ़ाइल संपादित करें"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Edit template"
+msgstr "टेम्पलेट संपादित करें"
+
+#: src/components/admin/AdminUsers.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AdminAccessPage.tsx
@@ -3287,6 +3681,10 @@ msgstr "ईमेल"
 msgid "Email address"
 msgstr "ईमेल पता"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Email domain allowlist"
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Email is not allowed to register"
 msgstr "इस ईमेल को पंजीकरण की अनुमति नहीं है"
@@ -3295,14 +3693,34 @@ msgstr "इस ईमेल को पंजीकरण की अनुमत�
 msgid "Email me a code"
 msgstr "मुझे कोड ईमेल करें"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Email registration"
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Email verification required"
 msgstr "ईमेल सत्यापन आवश्यक है"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Empty reply"
+msgstr ""
 
 #. placeholder {0}: humanizeTool(toolName)
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Enable {0}"
 msgstr "{0} सक्षम करें"
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Enable shared skill"
+msgstr ""
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Enabled"
+msgstr ""
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Enabling a skill shares it with your bots in this space."
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
@@ -3320,9 +3738,21 @@ msgstr "Rakazo पसंद आ रहा है?"
 msgid "Enter a password"
 msgstr "पासवर्ड दर्ज करें"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Enter a preset name"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Enter a prompt"
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Enter a valid email"
 msgstr "मान्य ईमेल दर्ज करें"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Enter a valid link, or leave it empty to hide that platform."
+msgstr ""
 
 #: src/pages/model-settings/use-model-settings.ts
 #: src/pages/onboarding/use-onboarding-model.ts
@@ -3342,6 +3772,18 @@ msgstr "इमेज सीमा के लिए 1 से 1000 के बी�
 #: src/lib/model-connection-preflight.ts
 msgid "Enter an API key before testing."
 msgstr "परीक्षण से पहले API कुंजी दर्ज करें।"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the backup password to restore"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the username."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Enter the WebDAV password."
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Environment ID"
@@ -3383,6 +3825,10 @@ msgstr "हर {intervalAmountSelect} {intervalUnitSelect}"
 #: src/lib/cron.ts
 msgid "Every {n} hours at :{minute}"
 msgstr "हर {n} घंटे :{minute} मिनट पर"
+
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Every admin and system action is recorded here and cannot be changed."
+msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Every bot in this space reads these notes and keeps them up to date."
@@ -3448,6 +3894,10 @@ msgstr "तालिका बड़ी करें"
 msgid "expired"
 msgstr "समाप्त"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Expired"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr "समाप्ति"
@@ -3461,17 +3911,34 @@ msgid "Expiry"
 msgstr "समाप्ति तिथि"
 
 #: src/components/AccountDataSettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Export"
 msgstr "एक्सपोर्ट करें"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Export all"
+msgstr "सभी निर्यात करें"
 
 #: src/components/AccountDataSettings.tsx
 msgid "Export data"
 msgstr "डेटा निर्यात करें"
 
+#: src/components/BotPackageTools.tsx
+msgid "Export package"
+msgstr ""
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Export this week's list from the CRM and drop it in the shared folder"
 msgstr "CRM से इस सप्ताह की सूची एक्सपोर्ट करें और उसे साझा फ़ोल्डर में डालें"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Exported files are named after the template. Edit one outside the app and import it again under the same name to update it; a template in use applies right away."
+msgstr "निर्यात की गई फ़ाइलों का नाम टेम्पलेट के नाम पर रखा जाता है। किसी फ़ाइल को ऐप के बाहर संपादित करें और उसी नाम से फिर से आयात करके अपडेट करें; उपयोग में आने वाला टेम्पलेट तुरंत लागू होता है।"
+
+#: src/components/BotPackageTools.tsx
+msgid "Exporting…"
+msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -3494,6 +3961,7 @@ msgstr "असफल"
 
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/model-settings/model-health-dialog.tsx
 msgid "Failed"
 msgstr "विफल"
 
@@ -3513,6 +3981,37 @@ msgstr "विफल।"
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Failure handling"
 msgstr "विफलता प्रबंधन"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Fallback models"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
+msgid "Favorite"
+msgstr ""
+
+#: src/pages/shell/message-view.tsx
+msgid "Favorite this reply"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Favorite translation"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
+msgid "Favorited"
+msgstr ""
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/Favorites.tsx
+msgid "Favorites"
+msgstr ""
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Fetch and preview"
+msgstr "लाएँ और पूर्वावलोकन करें"
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Fields that mark a change"
@@ -3550,6 +4049,10 @@ msgstr "बॉट के अनुसार फ़िल्टर करें"
 #: src/pages/Artifacts.tsx
 msgid "Filter by date"
 msgstr "तारीख के अनुसार फ़िल्टर करें"
+
+#: src/components/admin/AdminAuditLog.tsx
+msgid "Filter by type"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Filter by who made it"
@@ -3646,6 +4149,10 @@ msgstr "{0} से"
 msgid "From GitHub"
 msgstr "GitHub से"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "From this bot"
+msgstr "इस बॉट से"
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Full name"
@@ -3673,10 +4180,23 @@ msgstr "गेटवे URL"
 msgid "General"
 msgstr "सामान्य"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate"
+msgstr ""
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate invite codes"
+msgstr ""
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generating…"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Get an email address"
 msgstr "ईमेल पता पाएँ"
 
+#: src/components/AppDownloadDialog.tsx
 #: src/components/SidebarFooter.tsx
 msgid "Get the mobile app"
 msgstr "मोबाइल ऐप पाएँ"
@@ -3843,6 +4363,10 @@ msgstr "जांच कैसे करें"
 msgid "How will you use Rakazo?"
 msgstr "आप Rakazo का उपयोग कैसे करेंगे?"
 
+#: src/lib/user-error.ts
+msgid "Human verification failed. Try again."
+msgstr ""
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "मेरा काम हो गया"
@@ -3859,6 +4383,10 @@ msgstr "अगर आपने वह सुना, तो आवाज़ त�
 msgid "Ignore"
 msgstr "अनदेखा करें"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image generation model"
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Image input is not configured for this model."
@@ -3868,11 +4396,16 @@ msgstr "इस मॉडल के लिए चित्र इनपुट क
 msgid "Image input is not configured for this model."
 msgstr "इस मॉडल के लिए चित्र इनपुट कॉन्फ़िगर नहीं है।"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image prompt preset"
+msgstr ""
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Image upload area"
 msgstr "छवि अपलोड क्षेत्र"
 
 #: src/components/AccountDataSettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "Import"
 msgstr "इम्पोर्ट करें"
 
@@ -3881,9 +4414,43 @@ msgstr "इम्पोर्ट करें"
 msgid "Import an agent"
 msgstr "एजेंट इंपोर्ट करें"
 
+#: src/components/BotPackageImport.tsx
+msgid "Import another bot"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+msgid "Import as new bot"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+#: src/pages/shell/bot-picker.tsx
+#: src/pages/shell/shell-dialogs.tsx
+msgid "Import bot"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+msgid "Import cancelled."
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 msgid "Import data"
 msgstr "डेटा आयात करें"
+
+#: src/components/BotPackageImport.tsx
+msgid "Import needs attention."
+msgstr ""
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Import templates"
+msgstr "टेम्पलेट आयात करें"
+
+#: src/components/BotPackageImport.tsx
+msgid "Imported bot name"
+msgstr ""
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Imported skills"
+msgstr ""
 
 #: src/lib/ticket-status.ts
 msgid "In progress"
@@ -3896,6 +4463,11 @@ msgstr "समीक्षा में"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "In this bot"
 msgstr "इस बॉट में"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "In use"
+msgstr "उपयोग में"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Inactive"
@@ -3912,6 +4484,11 @@ msgstr "इनबॉक्स छंटाई"
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Include API keys"
 msgstr "API कुंजियाँ शामिल करें"
+
+#: src/components/BotPackageImport.tsx
+#: src/components/BotPackageTools.tsx
+msgid "Include memory"
+msgstr ""
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
@@ -3951,6 +4528,7 @@ msgstr "निर्देशों का इतिहास"
 
 #: src/components/AskCard.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageDocumentView.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Instructions"
@@ -3998,6 +4576,10 @@ msgstr "अंतराल इकाई"
 msgid "Invalid code"
 msgstr "अमान्य कोड"
 
+#: src/lib/user-error.ts
+msgid "Invalid invite code"
+msgstr ""
+
 #: src/components/SpaceMembersSettings.tsx
 msgid "Invite"
 msgstr "आमंत्रित करें"
@@ -4005,6 +4587,26 @@ msgstr "आमंत्रित करें"
 #: src/pages/shell/chat-header.tsx
 msgid "Invite a friend"
 msgstr "किसी दोस्त को आमंत्रित करें"
+
+#: src/pages/Auth.tsx
+msgid "Invite code"
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Invite code registration"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "Invite code revoked"
+msgstr ""
+
+#: src/pages/AdminPage.tsx
+msgid "Invite codes"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "Invite codes generated"
+msgstr ""
 
 #: src/components/SidebarFooter.tsx
 msgid "Invite friends"
@@ -4018,6 +4620,26 @@ msgstr "आमंत्रण लिंक"
 #: src/components/SpaceMembersSettings.tsx
 msgid "Invite link copied"
 msgstr "आमंत्रण लिंक कॉपी किया गया"
+
+#: src/components/AppDownloadDialog.tsx
+msgid "iOS"
+msgstr ""
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "iOS download link"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "IP collective ban"
+msgstr ""
+
+#: src/components/admin/AdminOverview.tsx
+msgid "IP collective bans"
+msgstr ""
+
+#: src/pages/AdminPage.tsx
+msgid "IP limits"
+msgstr ""
 
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/shell/bot-settings-sections.tsx
@@ -4068,9 +4690,17 @@ msgstr "अभी-अभी"
 msgid "Keep memories"
 msgstr "मेमोरी रखें"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Keep only usable models"
+msgstr ""
+
 #: src/pages/McpServerForm.tsx
 msgid "Keep tool results whole"
 msgstr "टूल परिणाम पूरे रखें"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Keeping…"
+msgstr ""
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "key"
@@ -4100,6 +4730,11 @@ msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Last 7 days"
+msgstr ""
+
+#. placeholder {0}: new Date(lastBackup.exportedAt).toLocaleString()
+#: src/components/WebdavBackupSettings.tsx
+msgid "Last backup: {0}"
 msgstr ""
 
 #. placeholder {0}: new Date(state.checkedAt).toLocaleString()
@@ -4147,6 +4782,14 @@ msgstr "बॉट्स को MEMORY.md के साथ-साथ अर्थ
 msgid "Light"
 msgstr "लाइट"
 
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Limited"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Limits"
+msgstr ""
+
 #: src/pages/SpaceSearch.tsx
 msgid "Link"
 msgstr "लिंक"
@@ -4164,6 +4807,10 @@ msgstr "निजी संदेश लिंक करें"
 msgid "Link SSO"
 msgstr "SSO लिंक करें"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Links shown by “Get the mobile app” in the account menu. Leave a platform empty to hide it."
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "List view"
 msgstr "सूची व्यू"
@@ -4180,6 +4827,10 @@ msgstr "सुन रहा है…"
 msgid "Load earlier messages"
 msgstr "पुराने संदेश लोड करें"
 
+#: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/Artifacts.tsx
 msgid "Load more"
 msgstr "और लोड करें"
@@ -4221,18 +4872,33 @@ msgstr "प्रीव्यू लोड हो रहा है…"
 msgid "Loading voice providers…"
 msgstr "आवाज़ प्रोवाइडर्स लोड हो रहे हैं…"
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminUsers.tsx
+#: src/components/AppDownloadDialog.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageImport.tsx
+#: src/components/BotPackageTools.tsx
+#: src/components/HumanVerification.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PageLoading.tsx
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/components/SpaceMembersSettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/Favorites.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Invite.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Loading…"
 msgstr "लोड हो रहा है…"
@@ -4244,6 +4910,10 @@ msgstr "स्थानीय पहुँच मिलने पर बॉट�
 #: src/pages/HostComputerPrompt.tsx
 msgid "Local computer access requires the latest desktop app."
 msgstr "स्थानीय कंप्यूटर पहुँच के लिए नवीनतम डेस्कटॉप ऐप आवश्यक है।"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Local file"
+msgstr "स्थानीय फ़ाइल"
 
 #: src/components/AccountMenu.tsx
 #: src/components/SidebarFooter.tsx
@@ -4310,6 +4980,10 @@ msgstr "MCP सर्वर प्रबंधित करें"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Manage other bots"
 msgstr "अन्य बॉट प्रबंधित करें"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Manage templates"
+msgstr "टेम्पलेट प्रबंधित करें"
 
 #: src/pages/plugins/domain-search.tsx
 msgid "Manual"
@@ -4378,6 +5052,10 @@ msgstr "MCP सर्वर"
 msgid "MCP servers"
 msgstr "MCP सर्वर"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Media model"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Medium"
@@ -4401,6 +5079,7 @@ msgstr "सदस्य"
 msgid "Members ({0})"
 msgstr "सदस्य ({0})"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/settings-nav.ts
@@ -4534,6 +5213,7 @@ msgstr "मोड"
 #: src/pages/routine-editor/model-settings.tsx
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Model"
 msgstr "मॉडल"
 
@@ -4573,6 +5253,10 @@ msgstr "सर्वर से मॉडल"
 #: src/lib/model-connection-preflight.ts
 msgid "Models list OK. {modelCount, plural, one {# model} other {# models}} available. Chat was not tested."
 msgstr "मॉडल सूची ठीक है। {modelCount, plural, one {# मॉडल} other {# मॉडल}} उपलब्ध है। चैट का परीक्षण नहीं हुआ।"
+
+#: src/components/BotPackageImport.tsx
+msgid "Models, credentials, files, and chat history are not imported."
+msgstr ""
 
 #: src/lib/cron.ts
 msgid "Monday"
@@ -4619,6 +5303,14 @@ msgstr "सुबह की ब्रीफ़िंग"
 msgid "Move down"
 msgstr "नीचे ले जाएँ"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Move fallback model down"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Move fallback model up"
+msgstr ""
+
 #: src/pages/shell/dialogs.tsx
 msgid "Move them to your shared memory."
 msgstr "उन्हें अपनी साझा मेमोरी में ले जाएं।"
@@ -4648,7 +5340,14 @@ msgstr "मेरे कंप्यूटर"
 msgid "My subscription"
 msgstr ""
 
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "My template"
+msgstr "मेरा टेम्पलेट"
+
+#: src/components/BotPackageImport.tsx
 #: src/components/CreateOrganizationDialog.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -4730,6 +5429,10 @@ msgstr "ज़रूरी: {names}"
 msgid "Never ask"
 msgstr "कभी न पूछें"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Never expires"
+msgstr ""
+
 #: src/components/VaultSettings.tsx
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
@@ -4786,10 +5489,22 @@ msgstr "नया खुला-कार्य आइटम"
 msgid "New password"
 msgstr "नया पासवर्ड"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "New preset"
+msgstr ""
+
 #: src/pages/shell/bot-picker.tsx
 #: src/pages/shell/use-palette-actions.ts
 msgid "New private space"
 msgstr "नया निजी स्पेस"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "New registrations are limited right away; existing accounts are unaffected."
+msgstr ""
+
+#: src/components/admin/AdminOverview.tsx
+msgid "New registrations, last 7 days"
+msgstr ""
 
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/dialogs.tsx
@@ -4804,9 +5519,22 @@ msgstr "नई स्किल"
 msgid "New space"
 msgstr "नया स्पेस"
 
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "New template"
+msgstr "नया टेम्पलेट"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "New this week"
+msgstr ""
+
 #: src/pages/Board.tsx
 msgid "New ticket"
 msgstr "नया टिकट"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "New today"
+msgstr ""
 
 #: src/components/VaultSettings.tsx
 msgid "New variable"
@@ -4828,6 +5556,14 @@ msgstr "अगला पृष्ठ"
 msgid "Next settings sections"
 msgstr "अगले सेटिंग्स अनुभाग"
 
+#: src/components/admin/AdminOverview.tsx
+msgid "No admin activity yet"
+msgstr ""
+
+#: src/components/AppDownloadDialog.tsx
+msgid "No app downloads are set up yet."
+msgstr ""
+
 #: src/pages/plugins/plugin-browse.tsx
 msgid "No apps match your search."
 msgstr "आपकी खोज से कोई ऐप मेल नहीं खाता।"
@@ -4836,9 +5572,21 @@ msgstr "आपकी खोज से कोई ऐप मेल नहीं �
 msgid "No artifacts yet"
 msgstr "अभी तक कोई आर्टिफ़ैक्ट नहीं"
 
+#: src/components/admin/AdminAuditLog.tsx
+msgid "No audit events yet"
+msgstr ""
+
 #: src/pages/plugins/source-form.tsx
 msgid "No authentication"
 msgstr "कोई प्रमाणीकरण नहीं"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "No backup found on the server."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "No backup yet"
+msgstr ""
 
 #: src/components/integrations/agent-access.tsx
 msgid "No bots"
@@ -4848,6 +5596,14 @@ msgstr "कोई बॉट नहीं"
 #: src/pages/shell/bot-picker.tsx
 msgid "No bots match"
 msgstr "कोई बॉट मेल नहीं खाता"
+
+#: src/pages/Favorites.tsx
+msgid "No favorites yet"
+msgstr ""
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "No invite codes yet"
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
@@ -4889,6 +5645,10 @@ msgstr "कोई मॉडल कैटलॉग उपलब्ध नही�
 msgid "No models listed."
 msgstr "कोई मॉडल सूचीबद्ध नहीं।"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "No models to test"
+msgstr ""
+
 #: src/pages/shell/use-agent-import-source.ts
 msgid "No OpenClaw, Hermes or agent document found."
 msgstr "कोई OpenClaw, Hermes या एजेंट दस्तावेज़ नहीं मिला।"
@@ -4896,6 +5656,14 @@ msgstr "कोई OpenClaw, Hermes या एजेंट दस्तावे�
 #: src/components/pages/PagesList.tsx
 msgid "No pages match “{query}”."
 msgstr "“{query}” से कोई पेज मेल नहीं खाता।"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "No permission"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "No registrations recorded yet"
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "No remote MCP servers found"
@@ -4936,6 +5704,14 @@ msgstr "अभी तक कोई स्किल नहीं"
 msgid "No submissions"
 msgstr "कोई सबमिशन नहीं"
 
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "No templates yet"
+msgstr "अभी कोई टेम्पलेट नहीं है"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "No templates yet. Create one or restore the defaults."
+msgstr "अभी कोई टेम्पलेट नहीं है। एक बनाएँ या डिफ़ॉल्ट पुनर्स्थापित करें।"
+
 #: src/pages/Board.tsx
 msgid "No tickets yet"
 msgstr "अभी तक कोई टिकट नहीं"
@@ -4944,6 +5720,10 @@ msgstr "अभी तक कोई टिकट नहीं"
 msgid "No trigger"
 msgstr "कोई ट्रिगर नहीं"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "No users match"
+msgstr ""
+
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -4951,6 +5731,7 @@ msgstr "कोई ट्रिगर नहीं"
 msgid "None"
 msgstr "कोई नहीं"
 
+#: src/components/admin/AdminIpLimits.tsx
 #: src/lib/ticket-priority.ts
 msgid "Normal"
 msgstr "सामान्य"
@@ -4972,6 +5753,11 @@ msgstr "अभी तक जाँच नहीं हुई"
 msgid "Not connected"
 msgstr "कनेक्ट नहीं है"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Not found"
+msgstr ""
+
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Not imported"
 msgstr "इंपोर्ट नहीं हुआ"
@@ -4984,10 +5770,18 @@ msgstr "Rakazo के कैटलॉग में नहीं"
 msgid "Not in the plugin catalog"
 msgstr "प्लगइन कैटलॉग में नहीं"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Not linked to a template"
+msgstr "किसी टेम्पलेट से जुड़ा नहीं है"
+
 #: src/components/GitHubStarPrompt.tsx
 #: src/pages/shell/message-cards.tsx
 msgid "Not now"
 msgstr "अभी नहीं"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Not selected"
+msgstr ""
 
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/import-status.ts
@@ -5006,6 +5800,10 @@ msgstr "काम नहीं कर रहा"
 #: src/pages/KnowledgeSection.tsx
 msgid "Nothing remembered yet"
 msgstr "अभी तक कुछ याद नहीं किया गया"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Nothing to import at that address"
+msgstr "उस पते पर आयात करने के लिए कुछ नहीं है।"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Notifications"
@@ -5072,6 +5870,10 @@ msgstr "सिर्फ़ मैं"
 msgid "Only provider keys are encrypted; the backup file itself is not. If you lose this password, the keys are gone for good."
 msgstr ""
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Only the first 50 models were tested."
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "सिर्फ़ आप"
@@ -5104,6 +5906,10 @@ msgstr "{title} खोलें"
 #: src/pages/onboarding/model-step.tsx
 msgid "Open <0>{0}</0> and enter this code:"
 msgstr "<0>{0}</0> खोलें और यह कोड दर्ज करें:"
+
+#: src/components/BotPackageImport.tsx
+msgid "Open bot"
+msgstr ""
 
 #: src/pages/shell/chat-header.tsx
 msgid "Open call"
@@ -5204,6 +6010,10 @@ msgstr "अन्य मॉडल…"
 msgid "Output"
 msgstr "आउटपुट"
 
+#: src/pages/AdminPage.tsx
+msgid "Overview"
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 #: src/components/SpaceMembersSettings.tsx
 #: src/lib/identity-display.ts
@@ -5279,6 +6089,7 @@ msgstr "पासकी"
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 msgid "Password"
@@ -5291,6 +6102,10 @@ msgstr "पासवर्ड {MAX_PASSWORD_LENGTH} या उससे कम �
 #: src/pages/Auth.tsx
 msgid "Password recovery is not configured for this server"
 msgstr "इस सर्वर के लिए पासवर्ड पुनर्प्राप्ति कॉन्फ़िगर नहीं है"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Password set"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Password sign-in is turned off on this server"
@@ -5310,10 +6125,18 @@ msgstr "पासवर्ड मेल नहीं खाते"
 msgid "Past due"
 msgstr "बकाया"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste a prompt, or JSON like {\"name\": \"...\", \"content\": \"...\"}"
+msgstr "कोई प्रॉम्प्ट चिपकाएँ, या {\"name\": \"...\", \"content\": \"...\"} जैसा JSON"
+
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Paste a replacement key"
 msgstr "बदलने के लिए नई कुंजी पेस्ट करें"
+
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Paste text"
+msgstr "टेक्स्ट चिपकाएँ"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
@@ -5336,6 +6159,7 @@ msgstr "अपनी API कुंजी पेस्ट करें, फिर
 msgid "Paused"
 msgstr "रोका गया"
 
+#: src/components/BotPackageSkillsView.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
@@ -5347,6 +6171,8 @@ msgid "Permissions"
 msgstr "अनुमतियाँ"
 
 #: src/pages/shell/agent-import-plan.tsx
+#: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
 msgid "Persona"
 msgstr "व्यक्तित्व"
 
@@ -5439,7 +6265,17 @@ msgstr "PR रिव्यूअर"
 msgid "Preferences"
 msgstr "प्राथमिकताएँ"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Preset name"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Preset prompt"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
 #: src/components/integrations/skills-dialog.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/pages/plugins/github-import.tsx
 msgid "Preview"
 msgstr "प्रीव्यू"
@@ -5452,6 +6288,14 @@ msgstr "{0} का प्रीव्यू"
 #: src/pages/Artifacts.tsx
 msgid "Preview isn't available for this file type — download it to view it."
 msgstr "इस फ़ाइल प्रकार के लिए प्रीव्यू उपलब्ध नहीं है — देखने के लिए इसे डाउनलोड करें।"
+
+#: src/components/BotPackageTools.tsx
+msgid "Preview package"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+msgid "Previewing…"
+msgstr ""
 
 #: src/pages/shell/chat-find-bar.tsx
 msgid "Previous match"
@@ -5485,6 +6329,14 @@ msgstr "उत्पादकता"
 msgid "Program: {name}"
 msgstr "प्रोग्राम: {name}"
 
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Prompt"
+msgstr "प्रॉम्प्ट"
+
+#: src/pages/settings-nav.ts
+msgid "Prompt templates"
+msgstr "प्रॉम्प्ट टेम्पलेट"
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Protected input"
 msgstr "सुरक्षित इनपुट"
@@ -5508,6 +6360,10 @@ msgstr "प्रोवाइडर"
 msgid "Pull request"
 msgstr "पुल अनुरोध"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Put the account and password in their own fields, not in the address."
+msgstr ""
+
 #: src/pages/ActivityList.tsx
 msgid "Queued"
 msgstr "कतार में"
@@ -5524,6 +6380,10 @@ msgstr "Rakazo क्रेडिट"
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
 msgstr "rakazo-shared और bot- से शुरू होने वाली ID, Rakazo के लिए आरक्षित हैं।"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Rate limited"
+msgstr ""
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "React"
@@ -5573,6 +6433,14 @@ msgstr "प्राप्त"
 #: src/pages/ActivityList.tsx
 msgid "Recent"
 msgstr "हाल के"
+
+#: src/components/admin/AdminOverview.tsx
+msgid "Recent activity"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+msgid "Recent imports"
+msgstr ""
 
 #: src/components/SpendingLimitSettings.tsx
 msgid "Recent payments"
@@ -5682,9 +6550,45 @@ msgstr "रीफ़्रेश हो रहा है…"
 msgid "Region"
 msgstr "क्षेत्र"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Registered"
+msgstr ""
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Registration IP"
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Registration is closed"
 msgstr "पंजीकरण बंद है"
+
+#: src/pages/Auth.tsx
+msgid "Registration is closed on this server"
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Registration method"
+msgstr ""
+
+#: src/pages/AdminPage.tsx
+msgid "Registration settings"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "Registration settings changed"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations by IP"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations per IP"
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Registrations per IP per hour"
+msgstr ""
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Reject"
@@ -5728,7 +6632,9 @@ msgstr "हटाएं"
 
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
+#. placeholder {0}: item.name
 #: src/components/ComputerDeviceSettings.tsx
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 #: src/pages/shell/composer-parts.tsx
 msgid "Remove {0}"
 msgstr "{0} हटाएं"
@@ -5761,6 +6667,20 @@ msgstr "बदलाव ट्रिगर हटाएँ"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove email trigger"
 msgstr "ईमेल ट्रिगर हटाएँ"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Remove fallback model"
+msgstr ""
+
+#: src/pages/Favorites.tsx
+#: src/pages/shell/message-translation.tsx
+#: src/pages/shell/message-view.tsx
+msgid "Remove favorite"
+msgstr ""
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Remove from blacklist"
+msgstr ""
 
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -5797,6 +6717,10 @@ msgstr "स्किल हटाएँ"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove webhook"
 msgstr "वेबहुक हटाएँ"
+
+#: src/components/BotPackageSkillsView.tsx
+msgid "Removed"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Removed, but list refresh failed"
@@ -5883,6 +6807,7 @@ msgid "Research & writing"
 msgstr "रिसर्च और लेखन"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Reset"
@@ -5903,6 +6828,14 @@ msgstr "कंप्यूटर रीसेट करें?"
 #: src/pages/Auth.tsx
 msgid "Reset password"
 msgstr "पासवर्ड रीसेट करें"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Reset usage"
+msgstr ""
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Reset usage?"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Reset your password"
@@ -5933,10 +6866,23 @@ msgstr "Responses"
 msgid "Restart to update"
 msgstr "अपडेट के लिए रीस्टार्ट करें"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/InstructionSettings.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "बहाल करें"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Restore defaults"
+msgstr "डिफ़ॉल्ट पुनर्स्थापित करें"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "Restore deleted"
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Restore from WebDAV"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Restore the last saved workspace."
@@ -5947,6 +6893,7 @@ msgid "Restore the last saved workspace. Unsaved work on the computer is lost."
 msgstr "अंतिम सहेजे गए वर्कस्पेस को बहाल करें। कंप्यूटर पर बिना सहेजा काम खो जाएगा।"
 
 #: src/components/AskCard.tsx
+#: src/components/WebdavBackupSettings.tsx
 msgid "Restored"
 msgstr "बहाल किया गया"
 
@@ -5958,11 +6905,25 @@ msgstr ""
 msgid "Restoring your workspace"
 msgstr "आपका वर्कस्पेस बहाल हो रहा है"
 
+#: src/components/BotPackageImport.tsx
+msgid "Resume import"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminInviteCodes.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminOverview.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminUsers.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageTools.tsx
+#: src/components/HumanVerification.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Invite.tsx
@@ -5971,6 +6932,7 @@ msgstr "आपका वर्कस्पेस बहाल हो रहा �
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/shell/message-translation.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "फिर कोशिश करें"
@@ -5984,6 +6946,10 @@ msgstr "अभी पुनः प्रयास करें"
 msgid "Retry screen"
 msgstr "स्क्रीन फिर से लोड करें"
 
+#: src/pages/shell/message-translation.tsx
+msgid "Retry translation"
+msgstr ""
+
 #. placeholder {0}: call.botName
 #: src/components/call/CallCard.tsx
 msgid "Return to call with {0}"
@@ -5994,6 +6960,14 @@ msgstr "{0} के साथ कॉल पर लौटें"
 msgid "Return to Rakazo"
 msgstr "Rakazo पर लौटें"
 
+#: src/pages/settings-nav.ts
+msgid "Reusable personas for your bots."
+msgstr "आपके बॉट्स के लिए पुन: प्रयोज्य पर्सोना।"
+
+#: src/components/BotPackageImport.tsx
+msgid "Review import"
+msgstr ""
+
 #: src/lib/model-connection-preflight.ts
 msgid "Review provider settings and test again."
 msgstr "प्रोवाइडर सेटिंग्स की समीक्षा करें और फिर से परीक्षण करें।"
@@ -6002,14 +6976,20 @@ msgstr "प्रोवाइडर सेटिंग्स की समीक
 msgid "Reviews pull requests waiting on you"
 msgstr "आपका इंतज़ार कर रहे पुल अनुरोधों की समीक्षा करता है"
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Revoke"
 msgstr "रद्द करें"
 
+#: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AdminAccessPage.tsx
 msgid "Revoked"
 msgstr "रद्द किया गया"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Revoking…"
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Root filesystem"
@@ -6019,6 +6999,7 @@ msgstr "रूट फ़ाइल सिस्टम"
 msgid "Rotate key"
 msgstr "कुंजी बदलें"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/lib/identity-display.ts
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/use-routine-editor.ts
@@ -6026,6 +7007,7 @@ msgstr "कुंजी बदलें"
 msgid "Routine"
 msgstr "रूटीन"
 
+#: src/components/BotPackageDocumentView.tsx
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/bot-panel.tsx
 msgid "Routines"
@@ -6095,10 +7077,12 @@ msgstr "शनिवार"
 
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/PasskeySettings.tsx
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Board.tsx
 #: src/pages/ExternalConversationSettings.tsx
@@ -6110,9 +7094,28 @@ msgstr "शनिवार"
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Save"
 msgstr "सहेजें"
+
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "Save and apply to this bot"
+msgstr "सहेजें और इस बॉट पर लागू करें"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Save current persona as template"
+msgstr "वर्तमान पर्सोना को टेम्पलेट के रूप में सहेजें"
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Save limits"
+msgstr ""
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Save settings"
+msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
@@ -6122,12 +7125,22 @@ msgstr "कार्यक्षेत्र सहेजें और नवी
 msgid "Save to Vault"
 msgstr "वॉल्ट में सहेजें"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Save WebDAV account"
+msgstr ""
+
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Saved"
 msgstr "सहेजा गया"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Saved as template"
+msgstr "टेम्पलेट के रूप में सहेजा गया"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
@@ -6149,6 +7162,9 @@ msgstr "आपका वर्कस्पेस सहेजा जा रह�
 msgid "Saving..."
 msgstr "सहेजा जा रहा है..."
 
+#: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminIpLimits.tsx
+#: src/components/admin/AdminRegistrationSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -6224,6 +7240,10 @@ msgstr "बॉट, कार्रवाइयाँ और सेटिंग�
 msgid "Search by domain"
 msgstr "डोमेन से खोजें"
 
+#: src/components/admin/AdminUsers.tsx
+msgid "Search by email or name"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Search integrations.sh"
 msgstr "integrations.sh खोजें"
@@ -6242,6 +7262,10 @@ msgstr "मॉडल खोजें"
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Search runs"
 msgstr "रन खोजें"
+
+#: src/components/BotPackageTools.tsx
+msgid "Search shared skills"
+msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
 msgid "Search skills"
@@ -6281,6 +7305,11 @@ msgstr "सुरक्षा कोड"
 #: src/pages/shell/chat-header.tsx
 msgid "Select a bot"
 msgstr "एक बॉट चुनें"
+
+#. placeholder {0}: selection.size
+#: src/components/BotPackageTools.tsx
+msgid "Selected skills: {0}"
+msgstr ""
 
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Self-hosted"
@@ -6341,6 +7370,10 @@ msgstr "भेजा गया"
 msgid "Serenity endpoint is required."
 msgstr "Serenity एंडपॉइंट आवश्यक है।"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Server address"
+msgstr ""
+
 #: src/pages/McpServerForm.tsx
 msgid "Server name"
 msgstr "सर्वर का नाम"
@@ -6356,6 +7389,14 @@ msgstr "सर्वर URL"
 #: src/components/SpendingLimitSettings.tsx
 msgid "Set"
 msgstr "सेट करें"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Set as primary"
+msgstr ""
+
+#: src/components/BotPackageImport.tsx
+msgid "Set up connections"
+msgstr ""
 
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
@@ -6403,6 +7444,7 @@ msgstr "आकार {0}"
 
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Share"
 msgstr "शेयर करें"
 
@@ -6424,6 +7466,10 @@ msgstr "साझा"
 msgid "Shared memory"
 msgstr "साझा मेमोरी"
 
+#: src/components/BotPackageTools.tsx
+msgid "Shared skills (optional)"
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/VaultSettings.tsx
 msgid "Show"
@@ -6442,6 +7488,7 @@ msgstr "बॉट दिखाएँ"
 msgid "Show list"
 msgstr "सूची दिखाएँ"
 
+#: src/components/BotPackageTools.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/plugins/plugin-browse.tsx
@@ -6452,6 +7499,10 @@ msgstr "और दिखाएँ"
 #: src/components/I18nBootstrap.tsx
 msgid "Show password"
 msgstr "पासवर्ड दिखाएँ"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Show read-aloud, share, and favorite on translations"
+msgstr ""
 
 #: src/pages/GroupPanel.tsx
 msgid "Show selected"
@@ -6517,6 +7568,10 @@ msgstr "साइन अप करें"
 msgid "Sign-in cancelled. Try again."
 msgstr "साइन-इन रद्द हुआ। फिर कोशिश करें।"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Signed in, but the backup directory does not exist yet."
+msgstr ""
+
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Site"
@@ -6527,6 +7582,9 @@ msgid "Sites you sign in to stay signed in for everyone in this space"
 msgstr "जिन साइटों में आप साइन इन करते हैं, वे इस स्पेस में सभी के लिए साइन इन रहती हैं"
 
 #: src/components/bot-templates/bot-templates-dialog.tsx
+#: src/components/BotPackageDocumentView.tsx
+#: src/components/BotPackageSkillsView.tsx
+#: src/components/BotPackageTools.tsx
 msgid "Skill"
 msgstr "स्किल"
 
@@ -6539,6 +7597,11 @@ msgstr "स्किल {0}"
 msgid "Skill {position}"
 msgstr "स्किल {position}"
 
+#: src/components/BotPackageSkillsView.tsx
+msgid "Skill name"
+msgstr ""
+
+#: src/components/BotPackageDocumentView.tsx
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/SidebarFooter.tsx
@@ -6550,6 +7613,10 @@ msgstr "स्किल्स"
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Skills join the library all your bots share."
 msgstr "स्किल्स उस लाइब्रेरी में जुड़ती हैं जिसे आपके सभी बॉट साझा करते हैं।"
+
+#: src/components/BotPackageImport.tsx
+msgid "Skills stay off. Routines stay paused. Connections need setup."
+msgstr ""
 
 #: src/pages/shell/computer-release-actions.tsx
 msgid "Skip"
@@ -6592,7 +7659,9 @@ msgid "Some settings are not imported"
 msgstr "कुछ सेटिंग्स इंपोर्ट नहीं होतीं"
 
 #: src/App.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/lib/user-error.ts
+#: src/pages/shell/chat-persona-switcher.tsx
 msgid "Something went wrong. Try again."
 msgstr "कुछ गलत हो गया। फिर से कोशिश करें।"
 
@@ -6624,6 +7693,10 @@ msgstr "{column} के अनुसार क्रमबद्ध, अवर�
 msgid "Sorts new email and drafts the replies"
 msgstr "नए ईमेल छांटता है और जवाबों के ड्राफ़्ट बनाता है"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Source language"
+msgstr ""
+
 #: src/lib/identity-display.ts
 #: src/pages/SettingsOverlay.tsx
 msgid "Space"
@@ -6637,6 +7710,7 @@ msgstr "स्पेस डिफ़ॉल्ट"
 msgid "Spaces"
 msgstr "कार्यस्थान"
 
+#: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Speak"
 msgstr "बोलें"
@@ -6721,6 +7795,7 @@ msgstr "शुरू हो रहा है…"
 msgid "State or region"
 msgstr "राज्य या क्षेत्र"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
 msgid "Status"
@@ -6734,6 +7809,7 @@ msgstr "चरण"
 #: src/pages/RoutineList.tsx
 #: src/pages/shell/composer-parts.tsx
 #: src/pages/shell/computer-overlay.tsx
+#: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Stop"
 msgstr "रोकें"
@@ -6809,6 +7885,10 @@ msgstr "अपने AI के साथ सदस्यता लें"
 msgid "Subscription required"
 msgstr "सब्सक्रिप्शन आवश्यक"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Subscription URL"
+msgstr "सदस्यता URL"
+
 #: src/lib/cron.ts
 msgid "Sunday"
 msgstr "रविवार"
@@ -6827,6 +7907,11 @@ msgstr "सोचने की क्षमता का समर्थन क�
 msgid "Switch"
 msgstr "बदलें"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switch persona"
+msgstr "पर्सोना बदलें"
+
 #: src/components/ModelCredits.tsx
 msgid "Switch to {tierTargetName}?"
 msgstr "{tierTargetName} पर स्विच करें?"
@@ -6839,10 +7924,23 @@ msgstr "वार्षिक पर जाएं"
 msgid "Switch to yearly?"
 msgstr "वार्षिक पर जाएं?"
 
+#. placeholder {0}: saved.name
+#. placeholder {0}: template.name
+#: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Switched to {0}"
+msgstr "{0} पर स्विच किया गया"
+
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
+msgstr "स्विच तुरंत प्रभावी होता है। अगला संदेश नए प्रॉम्प्ट का उपयोग करता है; पहले के संदेश जैसे हैं वैसे ही रहते हैं। निर्देश सीधे संपादित करने से पर्सोना कस्टम हो जाता है।"
+
 #: src/pages/model-settings/space-bots-model.tsx
 msgid "Switching…"
 msgstr "बदला जा रहा है…"
 
+#: src/components/admin/AdminAuditLog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/use-palette-actions.ts
 msgid "System"
@@ -6859,6 +7957,10 @@ msgstr "नियंत्रण लें"
 #: src/components/ComputerProviderSettings.tsx
 msgid "Target"
 msgstr "लक्ष्य"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Target language"
+msgstr ""
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
@@ -6885,39 +7987,67 @@ msgstr "Teams संदेश"
 msgid "Template"
 msgstr "टेम्पलेट"
 
+#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
+msgid "Template name"
+msgstr "टेम्पलेट का नाम"
+
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Templates"
 msgstr "टेम्पलेट"
 
 #: src/components/teach/SkillDraftCard.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Test"
 msgstr "टेस्ट करें"
+
+#: src/pages/model-settings/compatible-model-fields.tsx
+msgid "Test all models"
+msgstr ""
 
 #: src/components/ModelConnectionPreflightNotice.tsx
 msgid "Test API key"
 msgstr "API कुंजी का परीक्षण करें"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
+#: src/components/WebdavBackupSettings.tsx
 #: src/pages/McpServersOverlay.tsx
 msgid "Test connection"
 msgstr "कनेक्शन का परीक्षण करें"
 
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Test results · {label}"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Test run"
 msgstr "टेस्ट रन"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Test WebDAV connection"
+msgstr ""
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Testing"
 msgstr "परीक्षण हो रहा है"
 
 #: src/components/ModelConnectionPreflightNotice.tsx
+#: src/pages/model-settings/compatible-model-fields.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Testing…"
 msgstr "परीक्षण हो रहा है…"
 
 #: src/components/BotEmailAddressField.tsx
 msgid "That address isn't available"
 msgstr "यह पता उपलब्ध नहीं है"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "That server address is not valid."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The backup password is wrong."
+msgstr ""
 
 #: src/pages/shell/composer-error.tsx
 msgid "The bot can use the file but won't see the picture."
@@ -6938,6 +8068,18 @@ msgstr "वह कंप्यूटर जिस पर आपके बॉट 
 #: src/lib/model-connection-preflight.ts
 msgid "The connection timed out."
 msgstr "कनेक्शन का समय समाप्त हो गया।"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The directory is not valid."
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "The environment master switch is off, so registration stays closed no matter what is set here."
+msgstr ""
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The export link expired. Try again."
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -6977,6 +8119,10 @@ msgstr "स्क्रीन लिंक की समय सीमा सम�
 #: src/pages/MemorySettingsOverlay.tsx
 msgid "The selected memory provider is not available in this build."
 msgstr "चयनित मेमोरी प्रोवाइडर इस बिल्ड में उपलब्ध नहीं है।"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "The server answered with an error."
+msgstr ""
 
 #: src/components/pages/SharePopover.tsx
 msgid "The shared link stops working"
@@ -7036,6 +8182,14 @@ msgstr "यह बैकअप पढ़ा नहीं जा सका।"
 msgid "This bot"
 msgstr "यह बॉट"
 
+#: src/components/prompt-templates/BotPersonaSection.tsx
+msgid "This bot has no persona yet."
+msgstr "इस बॉट की अभी कोई पर्सोना नहीं है।"
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "This bot keeps its current persona, but stops following this template."
+msgstr "यह बॉट अपनी वर्तमान पर्सोना बनाए रखता है, लेकिन इस टेम्पलेट का पालन करना बंद कर देता है।"
+
 #: src/pages/shell/computer-view.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "यह बॉट इसी कंप्यूटर पर चलता है, किसी Linux डेस्कटॉप पर नहीं। शेल और फ़ाइलें आपके होम फ़ोल्डर का उपयोग करती हैं।"
@@ -7064,6 +8218,10 @@ msgstr "इसे पूर्ववत नहीं किया जा सक�
 msgid "This cannot be undone."
 msgstr "इसे पूर्ववत नहीं किया जा सकता।"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "This clears all usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
 msgstr "यह कंप्यूटर"
@@ -7090,6 +8248,10 @@ msgstr "यह फ़ाइल मान्य UTF-8 टेक्स्ट न�
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
 msgstr "यह इंपोर्ट पहले ही इस्तेमाल हो चुका है। फ़ाइलें फिर से चुनें।"
+
+#: src/components/BotPackageImport.tsx
+msgid "This imported bot was removed."
+msgstr ""
 
 #: src/pages/Invite.tsx
 msgid "This invite link is no longer valid."
@@ -7132,6 +8294,11 @@ msgstr "यह पेज लोड नहीं हो सका"
 msgid "This page isn't available"
 msgstr "यह पेज उपलब्ध नहीं है"
 
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "This password appeared in a data breach. Choose another."
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 msgid "This permanently deletes your account and data."
 msgstr "इससे आपका खाता और डेटा स्थायी रूप से हट जाएगा।"
@@ -7147,6 +8314,10 @@ msgstr "इस प्रोवाइडर का परीक्षण सह�
 #: src/lib/model-connection-preflight.ts
 msgid "This provider is not connected yet."
 msgstr "यह प्रोवाइडर अभी कनेक्ट नहीं है।"
+
+#: src/components/admin/AdminUsers.tsx
+msgid "This removes the account and everything it created. This cannot be undone."
+msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "This removes the connection from every space."
@@ -7177,6 +8348,10 @@ msgstr "इस सर्वर का टूल परिणाम मॉडल 
 msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
 msgstr "यह सब्सक्रिप्शन साइन-इन अभी Rakazo में उपलब्ध नहीं है। किसी डिप्लॉयमेंट क्रेडेंशियल का उपयोग करें या दूसरा प्रोवाइडर चुनें।"
 
+#: src/components/prompt-templates/PromptTemplateEditor.tsx
+msgid "This template is in use on this bot. Saving alone only changes the template."
+msgstr "यह टेम्पलेट इस बॉट पर उपयोग में है। केवल सहेजने से टेम्पलेट बदलता है।"
+
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "This template was just updated. Check it again."
 msgstr "यह टेम्पलेट अभी-अभी अपडेट हुआ है। इसे फिर से देखें।"
@@ -7192,6 +8367,10 @@ msgstr "गुरुवार"
 #: src/pages/RoutineSchedule.tsx
 msgid "Time of day"
 msgstr "दिन का समय"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Timed out"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Timezone"
@@ -7227,6 +8406,11 @@ msgstr "प्रति:"
 msgid "Today"
 msgstr "आज"
 
+#. placeholder {0}: stat.todayCount
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Today: {0}"
+msgstr ""
+
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Toggle sidebar"
 msgstr "साइडबार दिखाएं या छिपाएं"
@@ -7234,6 +8418,10 @@ msgstr "साइडबार दिखाएं या छिपाएं"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Tokens"
 msgstr "टोकन"
+
+#: src/lib/user-error.ts
+msgid "Too many registrations from this network"
+msgstr ""
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Tool arguments (JSON)"
@@ -7265,6 +8453,15 @@ msgstr "विषय निगरानी"
 msgid "Total"
 msgstr "कुल"
 
+#: src/components/admin/AdminOverview.tsx
+msgid "Total users"
+msgstr ""
+
+#. placeholder {0}: stat.totalCount
+#: src/components/admin/AdminIpLimits.tsx
+msgid "Total: {0}"
+msgstr ""
+
 #: src/components/composer/HoldToTalk.tsx
 msgid "Transcribing…"
 msgstr "लिप्यंतरण हो रहा है…"
@@ -7284,6 +8481,52 @@ msgstr "ट्रांसक्रिप्शन अनुरोध का स
 #: src/lib/dictation.ts
 msgid "Transcription response is too large."
 msgstr "ट्रांसक्रिप्शन प्रतिक्रिया बहुत बड़ी है।"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate this reply"
+msgstr ""
+
+#. placeholder {0}: displayName(state.result.modelId, t`Model`)
+#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
+#. placeholder {2}: translationLanguageLabel(targetLanguage)
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {0} · {1} to {2}"
+msgstr ""
+
+#. placeholder {0}: displayName(state.result.modelId, t`Model`)
+#. placeholder {1}: translationLanguageLabel(state.result.sourceLanguage)
+#. placeholder {2}: translationLanguageLabel(targetLanguage)
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {0} (backup) · {1} to {2}"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating…"
+msgstr ""
+
+#: src/pages/Favorites.tsx
+msgid "translation"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translation failed"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation model"
+msgstr ""
 
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Treat like a person"
@@ -7452,9 +8695,17 @@ msgstr "अभी अपग्रेड करें"
 msgid "Upload"
 msgstr "अपलोड"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Uploading…"
+msgstr ""
+
 #: src/lib/ticket-priority.ts
 msgid "Urgent"
 msgstr "अत्यावश्यक"
+
+#: src/pages/model-settings/model-health-dialog.tsx
+msgid "Usable"
+msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Usage"
@@ -7463,6 +8714,10 @@ msgstr "उपयोग"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Usage range"
 msgstr ""
+
+#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+msgid "Use"
+msgstr "उपयोग करें"
 
 #. Switches the saved timezone to this device's, e.g. 'Use Pacific/Auckland'
 #. placeholder {0}: deviceTimezone.replaceAll("_", " ")
@@ -7482,10 +8737,23 @@ msgstr "एक्सेस टोकन के लिए {oauthEnvReference} क
 msgid "Use 2 to 64 characters"
 msgstr "2 से 64 अक्षर इस्तेमाल करें"
 
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use a different password from your account password."
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Use a found model"
 msgstr "मिला हुआ मॉडल उपयोग करें"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use an https address."
+msgstr ""
+
+#: src/components/AccountDataSettings.tsx
+#: src/components/WebdavBackupSettings.tsx
+msgid "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
@@ -7527,15 +8795,48 @@ msgstr "Rakazo क्रेडिट उपयोग करें"
 msgid "Use up to 512 letters, digits, _ or -."
 msgstr "अधिकतम 512 अक्षर, अंक, _ या - उपयोग करें।"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Used up"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "User blacklisted"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "User deleted"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "User disabled"
+msgstr ""
+
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "User peer"
 msgstr "यूज़र पीयर"
 
+#: src/components/admin/admin-shared.tsx
+msgid "User permanently deleted"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "User removed from blacklist"
+msgstr ""
+
+#: src/components/admin/admin-shared.tsx
+msgid "User restored"
+msgstr ""
+
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
+#: src/components/WebdavBackupSettings.tsx
 msgid "Username"
 msgstr "यूज़रनेम"
+
+#: src/pages/AdminPage.tsx
+msgid "Users"
+msgstr ""
 
 #: src/pages/shell/import-status.ts
 msgid "Uses files that are not imported"
@@ -7556,6 +8857,10 @@ msgstr "आपकी API कुंजी का उपयोग हो रहा
 #: src/components/ModelCredits.tsx
 msgid "Using your API key. Free plan ends {freeUntil}."
 msgstr "आपकी API कुंजी इस्तेमाल हो रही है। मुफ़्त प्लान {freeUntil} को खत्म होगा।"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Valid for"
+msgstr ""
 
 #: src/components/vault/LoginFieldsInput.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -7593,6 +8898,14 @@ msgstr "पुष्टि की जा रही है…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "संस्करण"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video generation model"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video prompt preset"
+msgstr ""
 
 #: src/pages/plugins/plugin-browse.tsx
 msgid "View all"
@@ -7640,6 +8953,10 @@ msgstr "वेब, डेस्कटॉप और मोबाइल"
 #: src/pages/Paywall.tsx
 msgid "Web, desktop and mobile apps"
 msgstr "वेब, डेस्कटॉप और मोबाइल ऐप्स"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "WebDAV backup"
+msgstr ""
 
 #: src/pages/routine-editor/add-trigger-menu.tsx
 msgid "Webhook"
@@ -7728,6 +9045,22 @@ msgstr "बॉट कार्रवाई से पहले आपसे क�
 msgid "When it finishes or needs input"
 msgstr "जब काम पूरा हो या आपकी जानकारी चाहिए"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When off, no new accounts can register by email."
+msgstr ""
+
+#: src/components/admin/AdminIpLimits.tsx
+msgid "When on, an IP that passes the hourly threshold has all its accounts disabled at once."
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, only emails from the domains below can register."
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, registration requires a valid invite code."
+msgstr ""
+
 #: src/pages/routine-editor/add-trigger-menu.tsx
 #: src/pages/routine-editor/trigger-cards.tsx
 #: src/pages/RoutineList.tsx
@@ -7780,6 +9113,7 @@ msgstr "काम जारी"
 msgid "Working instructions"
 msgstr "काम के निर्देश"
 
+#: src/components/admin/AdminUsers.tsx
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts
 #: src/pages/Auth.tsx
@@ -7798,6 +9132,10 @@ msgstr "आपके ChatGPT या Claude प्लान के साथ क�
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Workspace"
 msgstr "वर्कस्पेस"
+
+#: src/components/WebdavBackupSettings.tsx
+msgid "Wrong password"
+msgstr ""
 
 #: src/lib/billing.ts
 msgid "year"
@@ -7936,370 +9274,3 @@ msgstr "आपके आवाज़ प्रोवाइडर ने कु�
 #: src/components/vault/VaultItemEditor.tsx
 msgid "ZIP or postal code"
 msgstr "ZIP या पिन कोड"
-
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "A parent directory is missing on the server."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Back up now"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backed up"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backup directory"
-msgstr ""
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backup passwords do not match"
-msgstr ""
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "Backup passwords need an HTTPS connection"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Enter the backup password to restore"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Enter the username."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Enter the WebDAV password."
-msgstr ""
-
-#. placeholder {0}: new Date(lastBackup.exportedAt).toLocaleString()
-#: src/components/WebdavBackupSettings.tsx
-msgid "Last backup: {0}"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "No backup found on the server."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "No backup yet"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Password set"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Put the account and password in their own fields, not in the address."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Restore from WebDAV"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Save WebDAV account"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Server address"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Signed in, but the backup directory does not exist yet."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Test WebDAV connection"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "That server address is not valid."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The backup password is wrong."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The directory is not valid."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The export link expired. Try again."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "The server answered with an error."
-msgstr ""
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "This password appeared in a data breach. Choose another."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Uploading…"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Use a different password from your account password."
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Use an https address."
-msgstr ""
-
-#: src/components/AccountDataSettings.tsx
-#: src/components/WebdavBackupSettings.tsx
-msgid "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "WebDAV backup"
-msgstr ""
-
-#: src/components/WebdavBackupSettings.tsx
-msgid "Wrong password"
-msgstr ""
-
-#. placeholder {0}: items.length
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "{0, plural, one {Import 1 template} other {Import # templates}}"
-msgstr "{0, plural, one {1 टेम्पलेट आयात करें} other {# टेम्पलेट आयात करें}}"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "A name for this persona"
-msgstr "इस पर्सोना के लिए एक नाम"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Check the names and content, then import."
-msgstr "नाम और सामग्री जाँचें, फिर आयात करें।"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Choose a file"
-msgstr "फ़ाइल चुनें"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Current persona"
-msgstr "वर्तमान पर्सोना"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Custom"
-msgstr "कस्टम"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Default templates restored"
-msgstr "डिफ़ॉल्ट टेम्पलेट पुनर्स्थापित"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "Edit template"
-msgstr "टेम्पलेट संपादित करें"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Export all"
-msgstr "सभी निर्यात करें"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Exported files are named after the template. Edit one outside the app and import it again under the same name to update it; a template in use applies right away."
-msgstr "निर्यात की गई फ़ाइलों का नाम टेम्पलेट के नाम पर रखा जाता है। किसी फ़ाइल को ऐप के बाहर संपादित करें और उसी नाम से फिर से आयात करके अपडेट करें; उपयोग में आने वाला टेम्पलेट तुरंत लागू होता है।"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Fetch and preview"
-msgstr "लाएँ और पूर्वावलोकन करें"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "From this bot"
-msgstr "इस बॉट से"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Import templates"
-msgstr "टेम्पलेट आयात करें"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "In use"
-msgstr "उपयोग में"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Local file"
-msgstr "स्थानीय फ़ाइल"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Manage templates"
-msgstr "टेम्पलेट प्रबंधित करें"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "My template"
-msgstr "मेरा टेम्पलेट"
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "New template"
-msgstr "नया टेम्पलेट"
-
-#: src/pages/shell/chat-persona-switcher.tsx
-msgid "No templates yet"
-msgstr "अभी कोई टेम्पलेट नहीं है"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "No templates yet. Create one or restore the defaults."
-msgstr "अभी कोई टेम्पलेट नहीं है। एक बनाएँ या डिफ़ॉल्ट पुनर्स्थापित करें।"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Not linked to a template"
-msgstr "किसी टेम्पलेट से जुड़ा नहीं है"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Nothing to import at that address"
-msgstr "उस पते पर आयात करने के लिए कुछ नहीं है।"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Paste a prompt, or JSON like {\"name\": \"...\", \"content\": \"...\"}"
-msgstr "कोई प्रॉम्प्ट चिपकाएँ, या {\"name\": \"...\", \"content\": \"...\"} जैसा JSON"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Paste text"
-msgstr "टेक्स्ट चिपकाएँ"
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "Prompt"
-msgstr "प्रॉम्प्ट"
-
-#: src/pages/settings-nav.ts
-msgid "Prompt templates"
-msgstr "प्रॉम्प्ट टेम्पलेट"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Restore defaults"
-msgstr "डिफ़ॉल्ट पुनर्स्थापित करें"
-
-#: src/pages/settings-nav.ts
-msgid "Reusable personas for your bots."
-msgstr "आपके बॉट्स के लिए पुन: प्रयोज्य पर्सोना।"
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "Save and apply to this bot"
-msgstr "सहेजें और इस बॉट पर लागू करें"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Save current persona as template"
-msgstr "वर्तमान पर्सोना को टेम्पलेट के रूप में सहेजें"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Saved as template"
-msgstr "टेम्पलेट के रूप में सहेजा गया"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Subscription URL"
-msgstr "सदस्यता URL"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/pages/shell/chat-persona-switcher.tsx
-msgid "Switch persona"
-msgstr "पर्सोना बदलें"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-#: src/pages/shell/chat-persona-switcher.tsx
-msgid "Switched to {0}"
-msgstr "{0} पर स्विच किया गया"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "Switching takes effect at once. The next message uses the new prompt; earlier messages stay as they are. Editing the instructions directly makes the persona custom."
-msgstr "स्विच तुरंत प्रभावी होता है। अगला संदेश नए प्रॉम्प्ट का उपयोग करता है; पहले के संदेश जैसे हैं वैसे ही रहते हैं। निर्देश सीधे संपादित करने से पर्सोना कस्टम हो जाता है।"
-
-#: src/components/prompt-templates/PromptTemplateImportDialog.tsx
-msgid "Template name"
-msgstr "टेम्पलेट का नाम"
-
-#: src/components/prompt-templates/BotPersonaSection.tsx
-msgid "This bot has no persona yet."
-msgstr "इस बॉट की अभी कोई पर्सोना नहीं है।"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "This bot keeps its current persona, but stops following this template."
-msgstr "यह बॉट अपनी वर्तमान पर्सोना बनाए रखता है, लेकिन इस टेम्पलेट का पालन करना बंद कर देता है।"
-
-#: src/components/prompt-templates/PromptTemplateEditor.tsx
-msgid "This template is in use on this bot. Saving alone only changes the template."
-msgstr "यह टेम्पलेट इस बॉट पर उपयोग में है। केवल सहेजने से टेम्पलेट बदलता है।"
-
-#: src/components/prompt-templates/PromptTemplatesLibrary.tsx
-msgid "Use"
-msgstr "उपयोग करें"
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translate"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translating"
-msgstr ""
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Translation"
-msgstr ""
-
-#: src/pages/shell/bot-panel.tsx
-msgid "Not selected"
-msgstr ""
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Source language"
-msgstr ""
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Target language"
-msgstr ""
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Auto-translate replies"
-msgstr ""
-
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Translation model"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translate this reply"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translating…"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Copy translation"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Collapse"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Collapse translation"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Retry translation"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translation failed"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Choose a translation model in this bot's Advanced settings"
-msgstr ""
-
-#: src/pages/shell/message-translation.tsx
-msgid "Translated with {modelId} · {source} to {target}"
-msgstr ""
