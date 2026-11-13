@@ -42,6 +42,23 @@ export const RegistrationSettingsUpdateSchema = z
   );
 export type RegistrationSettingsUpdate = z.infer<typeof RegistrationSettingsUpdateSchema>;
 
+/** Admin-set custom app download addresses, one per platform; null means unset. */
+export const AppDownloadLinksSchema = z.object({
+  androidUrl: z.string().nullable(),
+  iosUrl: z.string().nullable(),
+});
+export type AppDownloadLinks = z.infer<typeof AppDownloadLinksSchema>;
+
+export const AppDownloadLinksUpdateSchema = z
+  .object({
+    androidUrl: z.string().url().max(2048).nullable().optional(),
+    iosUrl: z.string().url().max(2048).nullable().optional(),
+  })
+  .refine((input) => input.androidUrl !== undefined || input.iosUrl !== undefined, {
+    message: "Nothing to update",
+  });
+export type AppDownloadLinksUpdate = z.infer<typeof AppDownloadLinksUpdateSchema>;
+
 export const InviteCodeStatusSchema = z.enum(["active", "expired", "revoked", "exhausted"]);
 export type InviteCodeStatus = z.infer<typeof InviteCodeStatusSchema>;
 

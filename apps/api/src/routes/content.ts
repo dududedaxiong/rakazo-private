@@ -4,7 +4,7 @@ import { resolveBotWorkspacePath } from "@rakazo/adapters";
 import type { ExportManifest } from "@rakazo/contracts";
 import { attachmentMaxBytes, resolveBotAvatarSet } from "@rakazo/contracts";
 import { AttachmentValidationError } from "@rakazo/core";
-import { IsolationError, LISTED_ARTIFACT, parseComputerMode } from "@rakazo/db";
+import { IsolationError, LISTED_ARTIFACT, parseComputerMode, runAsSystem } from "@rakazo/db";
 import {
   ArtifactListCursorError,
   createOwnedArtifact,
@@ -282,6 +282,24 @@ export function contentRoutes(ctx: RouterContext) {
               (a, b) => (b.totalTokens ?? 0) - (a.totalTokens ?? 0) || b.modelCalls - a.modelCalls,
             ),
           daily,
+        };
+      }),
+      reset: authed.usage.reset.handler(async ({ context }) => {
+        // Same scope as the summary: this user's records in this space.
+        const result = await deps.prisma.usageRecord.deleteMany({
+          where: { spaceId: context.actor.spaceId, userId: context.actor.userId },
+        });
+        return { deleted: result.count };
+      }),
+    },
+    appDownloads: {
+      get: authed.appDownloads.get.handler(async () => {
+        const row = await runAsSystem("read the app download links", () =>
+          deps.prisma.deploymentSettings.findUnique({ where: { id: "default" } }),
+        );
+        return {
+          androidUrl: row?.androidAppDownloadUrl ?? null,
+          iosUrl: row?.iosAppDownloadUrl ?? null,
         };
       }),
     },

@@ -197,6 +197,7 @@ export function SettingsOverlays({
           usageDays={usageDays}
           onUsageDaysChange={setUsageDays}
           onUsageOpen={refreshUsage}
+          onUsageReset={refreshUsage}
           section={overlay.section}
           onSectionChange={(section) => setOverlay({ ...overlay, section })}
           activeBot={active}
@@ -205,6 +206,7 @@ export function SettingsOverlays({
           sandboxProvider={bootstrapMe?.sandboxProvider}
           computerSettingsEnabled={bootstrapMe?.computerSettingsEnabled === true}
           canConfigureComputers={bootstrapMe?.isAdmin === true}
+          isAdmin={bootstrapMe?.isAdmin === true}
           onSandboxProviderChange={(sandboxProvider) =>
             setBootstrapMe((prev) => (prev ? { ...prev, sandboxProvider } : prev))
           }

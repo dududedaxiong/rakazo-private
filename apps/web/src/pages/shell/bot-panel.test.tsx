@@ -949,6 +949,137 @@ describe("BotSettings translation settings", () => {
   });
 });
 
+describe("BotSettings media model settings", () => {
+  const deepseekCredential = {
+    id: "cred-deepseek",
+    provider: "deepseek",
+    label: "DeepSeek",
+    hasKey: true,
+    isDefault: true,
+    modelId: "DeepSeek-V4.1-Flash",
+  };
+  const deepseekCatalog = [
+    {
+      provider: "deepseek",
+      providerName: "DeepSeek",
+      id: "deepseek-flash",
+      label: "DeepSeek V4.1 Flash",
+      billing: "",
+    },
+  ];
+  const videoPresets = [
+    { name: "水彩", prompt: "用水彩风格画" },
+    { name: "赛博", prompt: "赛博朋克风格" },
+  ];
+
+  function videoModelSelect() {
+    const select = container.querySelector<HTMLSelectElement>('[id$="-video-model"]');
+    if (!select) throw new Error("Missing video model select");
+    return select;
+  }
+
+  function imageModelSelect() {
+    const select = container.querySelector<HTMLSelectElement>('[id$="-image-model"]');
+    if (!select) throw new Error("Missing image model select");
+    return select;
+  }
+
+  function videoPresetSelect() {
+    const select = container.querySelector<HTMLSelectElement>('[id$="-video-preset"]');
+    if (!select) throw new Error("Missing video preset select");
+    return select;
+  }
+
+  async function setSelect(select: HTMLSelectElement, value: string) {
+    await act(async () => {
+      select.value = value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  }
+
+  it("shows the media model section above translation with no models set", async () => {
+    await render();
+    const advanced = container.querySelector('[data-testid="bot-settings-advanced"]')!;
+    expect(advanced.textContent).toContain("Media model");
+    expect(advanced.textContent!.indexOf("Media model")).toBeLessThan(
+      advanced.textContent!.indexOf("Translation"),
+    );
+    expect(videoModelSelect().value).toBe("");
+    expect(imageModelSelect().value).toBe("");
+    expect(container.querySelector('[id$="-video-preset"]')).toBeNull();
+    expect(container.querySelector('[id$="-image-preset"]')).toBeNull();
+  });
+
+  it("shows stored video and image models with their active presets", async () => {
+    await render("Billing", {
+      videoModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
+      imageModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
+      videoPromptPresets: videoPresets,
+      activeVideoPromptPreset: "水彩",
+      imagePromptPresets: videoPresets,
+      activeImagePromptPreset: "赛博",
+    } as Partial<Bot>);
+    expect(videoModelSelect().value).toBe("deepseek::deepseek-flash");
+    expect(imageModelSelect().value).toBe("deepseek::deepseek-flash");
+    expect(videoPresetSelect().value).toBe("水彩");
+    expect(container.querySelector<HTMLSelectElement>('[id$="-image-preset"]')!.value).toBe("赛博");
+  });
+
+  it("saves the chosen video model at the front of its list and the active preset", async () => {
+    vi.mocked(rpc.models.credentials).mockResolvedValueOnce([deepseekCredential]);
+    vi.mocked(rpc.models.list).mockResolvedValueOnce(deepseekCatalog);
+    await render("Billing", {
+      videoModels: [{ provider: "other", model: "other-model" }],
+      videoPromptPresets: videoPresets,
+      activeVideoPromptPreset: "水彩",
+    } as Partial<Bot>);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect([...videoModelSelect().options].map((option) => option.value)).toContain(
+      "deepseek::deepseek-flash",
+    );
+    await setSelect(videoModelSelect(), "deepseek::deepseek-flash");
+    await setSelect(videoPresetSelect(), "赛博");
+    await clickSave();
+    expect(onSave.mock.lastCall?.[0]).toMatchObject({
+      videoModels: [
+        { provider: "deepseek", model: "deepseek-flash" },
+        { provider: "other", model: "other-model" },
+      ],
+      activeVideoPromptPreset: "赛博",
+    });
+  });
+
+  it("clears the video model list when the model is unset", async () => {
+    await render("Billing", {
+      videoModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
+    } as Partial<Bot>);
+    await setSelect(videoModelSelect(), "");
+    await clickSave();
+    expect(onSave.mock.lastCall?.[0]).toMatchObject({ videoModels: [] });
+  });
+
+  it("removes a fallback model from the list", async () => {
+    await render("Billing", {
+      videoModels: [
+        { provider: "deepseek", model: "deepseek-v4.1-flash" },
+        { provider: "other", model: "other-model" },
+      ],
+    } as Partial<Bot>);
+    expect(container.textContent).toContain("Fallback models");
+    expect(container.textContent).toContain("other-model");
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[aria-label="Remove fallback model"]')!.click();
+    });
+    expect(container.textContent).not.toContain("other-model");
+    await clickSave();
+    expect(onSave.mock.lastCall?.[0]).toMatchObject({
+      videoModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
+    });
+  });
+});
+
 describe("BotSettings cached data", () => {
   it("shows cached voices at once and refreshes them in the background", async () => {
     queryClient.setQueryData(spaceQueries(null, null).voice.voices.queryKey({ input: {} }), [

@@ -35,6 +35,7 @@ async function render(
   onBoard?: () => void,
   logos?: Array<{ name: string; logo?: string }>,
   onFavorites = vi.fn(),
+  appDownloads?: { androidUrl: string | null; iosUrl: string | null } | null,
 ) {
   const email = "account@rakazo.test";
   await act(async () =>
@@ -62,6 +63,7 @@ async function render(
           onLogOut={() => {}}
           signingOut={false}
           logOutError={null}
+          appDownloads={appDownloads}
         />
         <Toaster />
       </DesktopUpdatesProvider>,
@@ -148,7 +150,6 @@ it("opens integrations and keeps the existing account actions and links", async 
     "Favorites",
     "Board",
     "Get the mobile app",
-    "Docs",
     "Log out",
   ]);
   expect(host.querySelector('[data-testid="user-menu-trigger"]')?.getAttribute("aria-label")).toBe(
@@ -172,13 +173,36 @@ it("opens favorites from the account menu", async () => {
   expect(onFavorites).toHaveBeenCalledOnce();
 });
 
-it("offers Google Play on Android", async () => {
-  vi.spyOn(navigator, "userAgent", "get").mockReturnValue("Android");
-  await render();
-  const mobile = [...document.querySelectorAll("a")].find(
-    (link) => link.textContent === "Get the mobile app",
+it("opens the custom app download dialog instead of the store", async () => {
+  await render("Demo User", undefined, vi.fn(), vi.fn(), undefined, vi.fn(), {
+    androidUrl: "https://example.com/app.apk",
+    iosUrl: "https://example.com/app.ipa",
+  });
+  const mobile = [...document.querySelectorAll("button")].find(
+    (button) => button.textContent === "Get the mobile app",
   )!;
-  expect(mobile.href).toBe("https://play.google.com/store/apps/details?id=com.rakazo.app");
+  await act(async () => mobile.click());
+  await act(async () => {});
+  const links = [...document.querySelectorAll("a")].filter((link) =>
+    link.href.startsWith("https://example.com/app."),
+  );
+  expect(links.map((link) => link.href)).toEqual([
+    "https://example.com/app.apk",
+    "https://example.com/app.ipa",
+  ]);
+});
+
+it("shows the not-configured note when no download link is set", async () => {
+  await render("Demo User", undefined, vi.fn(), vi.fn(), undefined, vi.fn(), {
+    androidUrl: null,
+    iosUrl: null,
+  });
+  const mobile = [...document.querySelectorAll("button")].find(
+    (button) => button.textContent === "Get the mobile app",
+  )!;
+  await act(async () => mobile.click());
+  await act(async () => {});
+  expect(document.body.textContent).toContain("No app downloads are set up yet.");
 });
 
 it("falls back when app artwork fails and accepts replacement artwork", async () => {

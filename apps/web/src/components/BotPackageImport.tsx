@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import { BOT_NAME_MAX_LENGTH, BOT_PACKAGE_MAX_BYTES } from "@rakazo/contracts";
 import type { BotPackageImportState } from "@rakazo/core";
-import { createBotPackageImport, newClientId } from "@rakazo/core";
+import { createBotPackageImport, displayName, newClientId } from "@rakazo/core";
 import { Button, Input, Switch, Textarea } from "@rakazo/ui-web";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { readBotPackageFile } from "../lib/bot-package-file";
@@ -227,7 +227,7 @@ export function BotPackageImport({
       {receipt ? (
         <section className="space-y-3" data-testid="bot-package-receipt">
           <h3 className="font-medium" dir="auto">
-            {receipt.botName}
+            {displayName(receipt.botName, t`Bot`)}
           </h3>
           <p>
             {receipt.status === "completed"
@@ -299,7 +299,7 @@ export function BotPackageImport({
           ) : null}
           {state?.recent.map((item) => (
             <div key={item.importId} className="flex items-center justify-between gap-3">
-              <span dir="auto">{item.botName}</span>
+              <span dir="auto">{displayName(item.botName, t`Bot`)}</span>
               <Button
                 variant="outline"
                 disabled={locked}

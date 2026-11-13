@@ -1,11 +1,12 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { ComputerMode, ReplyMode, ThinkingLevel } from "@rakazo/contracts";
+import type { BotPromptPreset, ComputerMode, ReplyMode, ThinkingLevel } from "@rakazo/contracts";
 import {
   BOT_COMPUTER_MODES,
   BOT_DESCRIPTION_MAX_LENGTH,
   BUILTIN_TOOL_NAMES,
 } from "@rakazo/contracts";
 import type { ChatModelChoice } from "@rakazo/core";
+import { displayName } from "@rakazo/core";
 import {
   Button,
   NativeSelect,
@@ -418,6 +419,178 @@ export function TranslationGroup({
         />
       </label>
     </BotPanelGroup>
+  );
+}
+
+export type MediaModelFallback = {
+  key: string;
+  label: string;
+};
+
+/**
+ * A bot's image and video generation models: one picker per role, the
+ * ordered fallbacks under it, and the active prompt preset for each role.
+ * Picking a model moves it to the front of that role's list; the rest stay
+ * as fallbacks, tried in order. A preset row only shows when the bot has
+ * presets for that role.
+ */
+export function MediaModelGroup({
+  ids,
+  videoChoices,
+  videoValue,
+  onVideoModelChange,
+  videoFallbacks,
+  onRemoveVideoFallback,
+  imageChoices,
+  imageValue,
+  onImageModelChange,
+  imageFallbacks,
+  onRemoveImageFallback,
+  videoPresets,
+  activeVideoPreset,
+  onVideoPresetChange,
+  imagePresets,
+  activeImagePreset,
+  onImagePresetChange,
+}: {
+  ids: string;
+  videoChoices: readonly ChatModelChoice[];
+  videoValue: string;
+  onVideoModelChange: (key: string) => void;
+  videoFallbacks: readonly MediaModelFallback[];
+  onRemoveVideoFallback: (key: string) => void;
+  imageChoices: readonly ChatModelChoice[];
+  imageValue: string;
+  onImageModelChange: (key: string) => void;
+  imageFallbacks: readonly MediaModelFallback[];
+  onRemoveImageFallback: (key: string) => void;
+  videoPresets: readonly BotPromptPreset[];
+  activeVideoPreset: string | null;
+  onVideoPresetChange: (name: string | null) => void;
+  imagePresets: readonly BotPromptPreset[];
+  activeImagePreset: string | null;
+  onImagePresetChange: (name: string | null) => void;
+}) {
+  const { t } = useLingui();
+  return (
+    <BotPanelGroup label={t`Media model`}>
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <label htmlFor={`${ids}-video-model`} className={rowLabelClass}>
+          <Trans>Video generation model</Trans>
+        </label>
+        <div className="min-w-0 w-full max-w-2/3 [&>div]:mt-0 [&>button]:mt-0">
+          <ChatModelPicker
+            id={`${ids}-video-model`}
+            choices={videoChoices}
+            value={videoValue}
+            onChange={onVideoModelChange}
+          />
+        </div>
+      </div>
+      {videoFallbacks.length > 0 ? (
+        <MediaModelFallbackList
+          label={t`Fallback models`}
+          fallbacks={videoFallbacks}
+          onRemove={onRemoveVideoFallback}
+        />
+      ) : null}
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <label htmlFor={`${ids}-image-model`} className={rowLabelClass}>
+          <Trans>Image generation model</Trans>
+        </label>
+        <div className="min-w-0 w-full max-w-2/3 [&>div]:mt-0 [&>button]:mt-0">
+          <ChatModelPicker
+            id={`${ids}-image-model`}
+            choices={imageChoices}
+            value={imageValue}
+            onChange={onImageModelChange}
+          />
+        </div>
+      </div>
+      {imageFallbacks.length > 0 ? (
+        <MediaModelFallbackList
+          label={t`Fallback models`}
+          fallbacks={imageFallbacks}
+          onRemove={onRemoveImageFallback}
+        />
+      ) : null}
+      {videoPresets.length > 0 ? (
+        <label
+          htmlFor={`${ids}-video-preset`}
+          className="flex min-h-11 items-center justify-between gap-3 text-body text-foreground"
+        >
+          <Trans>Video prompt preset</Trans>
+          <NativeSelect
+            id={`${ids}-video-preset`}
+            className="max-w-2/3"
+            value={activeVideoPreset ?? ""}
+            onChange={(event) => onVideoPresetChange(event.target.value || null)}
+          >
+            <NativeSelectOption value="">{t`No preset`}</NativeSelectOption>
+            {videoPresets.map((preset) => (
+              <NativeSelectOption key={preset.name} value={preset.name}>
+                {preset.name}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </label>
+      ) : null}
+      {imagePresets.length > 0 ? (
+        <label
+          htmlFor={`${ids}-image-preset`}
+          className="flex min-h-11 items-center justify-between gap-3 text-body text-foreground"
+        >
+          <Trans>Image prompt preset</Trans>
+          <NativeSelect
+            id={`${ids}-image-preset`}
+            className="max-w-2/3"
+            value={activeImagePreset ?? ""}
+            onChange={(event) => onImagePresetChange(event.target.value || null)}
+          >
+            <NativeSelectOption value="">{t`No preset`}</NativeSelectOption>
+            {imagePresets.map((preset) => (
+              <NativeSelectOption key={preset.name} value={preset.name}>
+                {preset.name}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </label>
+      ) : null}
+    </BotPanelGroup>
+  );
+}
+
+function MediaModelFallbackList({
+  label,
+  fallbacks,
+  onRemove,
+}: {
+  label: string;
+  fallbacks: readonly MediaModelFallback[];
+  onRemove: (key: string) => void;
+}) {
+  const { t } = useLingui();
+  return (
+    <div>
+      <span className={rowLabelClass}>{label}</span>
+      <ul className="mt-1 space-y-1">
+        {fallbacks.map((fallback) => (
+          <li key={fallback.key} className="flex min-h-9 items-center justify-between gap-3">
+            <span className="min-w-0 truncate text-body text-muted-foreground" dir="auto">
+              {displayName(fallback.label, t`Model`)}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t`Remove fallback model`}
+              onClick={() => onRemove(fallback.key)}
+            >
+              <X className="size-4" />
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

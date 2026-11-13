@@ -325,7 +325,7 @@ describe("admin overview", () => {
     expect(overview.collectiveBanCount).toBe(1);
     expect(overview.collectiveBanAccounts).toBe(2);
     expect(overview.dailyNew).toHaveLength(7);
-    expect(overview.dailyNew[6].count).toBe(1);
+    expect(overview.dailyNew[6]!.count).toBe(1);
     expect(overview.dailyNew.slice(0, 6).every((day) => day.count === 0)).toBe(true);
     expect(overview.recentEvents.map((event) => event.id)).toEqual(["event-2", "event-1"]);
   });
@@ -366,19 +366,37 @@ describe("admin registration settings", () => {
   });
 });
 
+describe("admin app download settings", () => {
+  it("updates links and refuses non-admins", async () => {
+    const { admin, user } = adminDeps();
+    await expect(
+      admin.admin.appDownloadSettings.update({ androidUrl: "https://example.com/app.apk" }),
+    ).resolves.toEqual({ androidUrl: "https://example.com/app.apk", iosUrl: null });
+    await expect(
+      admin.admin.appDownloadSettings.update({
+        androidUrl: null,
+        iosUrl: "https://example.com/app.ipa",
+      }),
+    ).resolves.toEqual({ androidUrl: null, iosUrl: "https://example.com/app.ipa" });
+    await expect(
+      user.admin.appDownloadSettings.update({ androidUrl: "https://example.com/x.apk" }),
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+});
+
 describe("admin invite codes", () => {
   it("creates, lists, and revokes codes", async () => {
     const { admin, codes } = adminDeps();
     const created = await admin.admin.inviteCodes.create({ count: 2 });
     expect(created).toHaveLength(2);
     expect(new Set(created.map((code) => code.code)).size).toBe(2);
-    expect(created[0].status).toBe("active");
+    expect(created[0]!.status).toBe("active");
     const listed = await admin.admin.inviteCodes.list({});
     expect(listed.map((code) => code.id)).toEqual(created.map((code) => code.id).reverse());
-    const revoked = await admin.admin.inviteCodes.revoke({ id: created[0].id });
+    const revoked = await admin.admin.inviteCodes.revoke({ id: created[0]!.id });
     expect(revoked.status).toBe("revoked");
-    expect(codes[0].revokedAt).not.toBeNull();
-    await expect(admin.admin.inviteCodes.revoke({ id: created[0].id })).rejects.toMatchObject({
+    expect(codes[0]!.revokedAt).not.toBeNull();
+    await expect(admin.admin.inviteCodes.revoke({ id: created[0]!.id })).rejects.toMatchObject({
       code: "NOT_FOUND",
     });
   });
@@ -389,7 +407,7 @@ describe("admin users", () => {
     const { admin } = adminDeps();
     const all = await admin.admin.users.list({});
     expect(all.map((row) => row.id)).toEqual(["user-3", "user-2", "user-1", "admin-1"]);
-    expect(all[1].status).toBe("disabled");
+    expect(all[1]!.status).toBe("disabled");
     await expect(admin.admin.users.list({ query: "alice" })).resolves.toEqual([
       expect.objectContaining({ id: "user-1", status: "active" }),
     ]);

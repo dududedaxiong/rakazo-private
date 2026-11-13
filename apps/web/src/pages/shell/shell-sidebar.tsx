@@ -9,6 +9,7 @@ import {
   InputGroupInput,
   Sidebar,
 } from "@rakazo/ui-web";
+import { useQuery } from "@tanstack/react-query";
 import { Search, SlidersHorizontal } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -19,7 +20,7 @@ import { useBilling } from "../../components/SubscriptionGate";
 import { formatBillingDate } from "../../lib/billing";
 import type { BotsSidebarDensity } from "../../lib/bots-sidebar-density-pref";
 import { switchOrganization, useOrganizations } from "../../lib/organizations";
-import { useQueryUserId } from "../../lib/query";
+import { useQueryUserId, useSpaceQueries } from "../../lib/query";
 import type { Panel } from "../../lib/right-panel-state";
 import { useSignOut } from "../../lib/sign-out";
 import { ActivityList } from "../ActivityList";
@@ -337,6 +338,12 @@ function ShellSidebarFooter({
       : null;
   const [menuOpen, setMenuOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const spaceQueries = useSpaceQueries();
+  // Read when the account menu opens; a reopened menu shows the last links while it refreshes.
+  const downloadsQuery = useQuery({
+    ...spaceQueries.appDownloads.get.queryOptions(),
+    enabled: menuOpen,
+  });
   const referral = billing?.referral;
   const [logOutError, setLogOutError] = useState<string | null>(null);
   const { signingOut, logOut } = useSignOut("/sign-in", (message) => {
@@ -425,6 +432,7 @@ function ShellSidebarFooter({
         logOutError={logOutError}
         organizations={organizations}
         activeOrganizationId={activeOrganizationId}
+        appDownloads={downloadsQuery.data}
         onSwitchOrganization={(organization) => {
           setMenuOpen(false);
           if (organization.id !== activeOrganizationId)

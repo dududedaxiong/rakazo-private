@@ -1,16 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { NavLink } from "@rakazo/contracts";
-import { ANDROID_APP_STORE_URL, IOS_APP_STORE_URL } from "@rakazo/contracts";
+import type { AppDownloadLinks, NavLink } from "@rakazo/contracts";
+import { AppMarkStack, Button, Popover, PopoverContent, PopoverTrigger } from "@rakazo/ui-web";
 import {
-  AppMarkStack,
-  Button,
-  buttonVariants,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@rakazo/ui-web";
-import {
-  BookOpen,
   Check,
   Download,
   FolderOpen,
@@ -27,6 +18,7 @@ import {
 } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import type { Organization } from "../lib/organizations";
+import { AppDownloadDialog } from "./AppDownloadDialog";
 import { useSidebarUpdate } from "./DesktopUpdates";
 import { IconTooltip } from "./IconTooltip";
 
@@ -54,6 +46,8 @@ type Props = {
   organizations?: Organization[];
   activeOrganizationId?: string | null;
   onSwitchOrganization?: (organization: Organization) => void;
+  /** Admin-set app download links; undefined while they load. */
+  appDownloads?: AppDownloadLinks | null;
 };
 
 // Marks are 24px wide, overlap by 2px, and need 2px for the outer ring.
@@ -85,9 +79,11 @@ export function SidebarFooter({
   organizations = [],
   activeOrganizationId,
   onSwitchOrganization,
+  appDownloads,
 }: Props) {
   const { t } = useLingui();
   const update = useSidebarUpdate();
+  const [downloadOpen, setDownloadOpen] = useState(false);
   const [failedImage, setFailedImage] = useState<string | null>(null);
   const pillRef = useRef<HTMLButtonElement>(null);
   const labelRef = useRef<HTMLSpanElement>(null);
@@ -239,17 +235,17 @@ export function SidebarFooter({
               </Button>
             ))}
             <div className="my-1 border-t border-border" />
-            <a
-              className={`${buttonVariants({ variant: "ghost" })} h-9 w-full justify-start gap-2.5 font-normal`}
-              href={
-                /Android/i.test(navigator.userAgent) ? ANDROID_APP_STORE_URL : IOS_APP_STORE_URL
-              }
-              target="_blank"
-              rel="noreferrer"
+            <Button
+              variant="ghost"
+              className="h-9 w-full justify-start gap-2.5 font-normal"
+              onClick={() => {
+                onOpenChange(false);
+                setDownloadOpen(true);
+              }}
             >
               <Smartphone className="text-muted-foreground" strokeWidth={1.75} />
               <Trans>Get the mobile app</Trans>
-            </a>
+            </Button>
             {onInvite ? (
               <Button
                 variant="ghost"
@@ -260,15 +256,6 @@ export function SidebarFooter({
                 <Trans>Invite friends</Trans>
               </Button>
             ) : null}
-            <a
-              className={`${buttonVariants({ variant: "ghost" })} h-9 w-full justify-start gap-2.5 font-normal`}
-              href="https://github.com/elie222/rakazo/blob/main/docs/self-host.md"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <BookOpen className="text-muted-foreground" strokeWidth={1.75} />
-              <Trans>Docs</Trans>
-            </a>
             <div className="my-1 border-t border-border" />
             <Button
               variant="ghost"
@@ -313,6 +300,11 @@ export function SidebarFooter({
           </Button>
         </IconTooltip>
       ) : null}
+      <AppDownloadDialog
+        open={downloadOpen}
+        onOpenChange={setDownloadOpen}
+        downloads={appDownloads}
+      />
     </div>
   );
 }

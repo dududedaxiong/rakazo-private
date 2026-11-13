@@ -856,6 +856,10 @@ model DeploymentSettings {
   computerProvider                String?
   /// That provider's encrypted connection settings, owned by the deployment rather than a user.
   computerProviderCipher          String?
+  /// Admin-set download address for the custom Android app; null means unset.
+  androidAppDownloadUrl           String?
+  /// Admin-set download address for the custom iOS app; null means unset.
+  iosAppDownloadUrl               String?
   createdAt                       DateTime @default(now())
   updatedAt                       DateTime @updatedAt
 

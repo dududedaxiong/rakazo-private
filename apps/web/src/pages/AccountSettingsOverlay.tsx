@@ -33,6 +33,7 @@ import type { RefObject } from "react";
 import { useId, useRef, useState } from "react";
 import { AccountAccess, LinkSsoRow } from "../components/AccountAccess";
 import { AccountDataSettings } from "../components/AccountDataSettings";
+import { AdminAppDownloadSettings } from "../components/admin/AdminAppDownloadSettings";
 import { SuccessPop } from "../components/ai/primitives";
 import { ComputerDeviceSettings } from "../components/ComputerDeviceSettings";
 import { ComputerProviderSettings } from "../components/ComputerProviderSettings";
@@ -40,6 +41,7 @@ import {
   ComputersUnavailableHint,
   computersAreUnavailable,
 } from "../components/ComputersUnavailableHint";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { DesktopUpdateSection } from "../components/DesktopUpdates";
 import { PasskeySettings } from "../components/PasskeySettings";
 import { SettingsGroup, SettingsRow } from "../components/SettingsRows";
@@ -53,12 +55,13 @@ import { localTimezone, sameTimeZone, timezoneOptions } from "../lib/local-timez
 import { usePasskeysSupported } from "../lib/passkeys";
 import { remoteImagesPreference } from "../lib/remote-images-preference";
 import { responseStreamingPreference } from "../lib/response-streaming";
+import { rpc } from "../lib/rpc";
 import { toolActivityPreference } from "../lib/tool-activity-preference";
 import type { AppearancePreference } from "../lib/ui-appearance";
 import { getUiAppearancePreference, setUiAppearance } from "../lib/ui-appearance";
 import type { UiLocale } from "../lib/ui-locale";
 import { UI_LOCALES } from "../lib/ui-locale";
-import { authErrorText } from "../lib/user-error";
+import { authErrorText, errorText } from "../lib/user-error";
 
 export type SettingsGeneralProps = {
   email?: string | null;
@@ -72,6 +75,8 @@ export type SettingsGeneralProps = {
   onBotAvatarSetChange?: (set: BotAvatarSet) => Promise<void>;
   onAccountImported?: () => Promise<void>;
   onImportAgent?: () => void;
+  /** Admins set the custom app download links; hidden for everyone else. */
+  isAdmin?: boolean;
 };
 
 export function GeneralSettingsPanels({
@@ -84,6 +89,7 @@ export function GeneralSettingsPanels({
   onBotAvatarSetChange,
   onAccountImported,
   onImportAgent,
+  isAdmin = false,
 }: SettingsGeneralProps) {
   const { t } = useLingui();
   const account = accountDisplay({ name, email }, t`You`);
@@ -482,6 +488,12 @@ export function GeneralSettingsPanels({
         <AccountDataSettings onImported={onAccountImported} onImportAgent={onImportAgent} />
         <AccountAccess onSecurity={setAccountSecurity} />
       </SettingsGroup>
+
+      {isAdmin ? (
+        <SettingsGroup title={<Trans>App download</Trans>} data-testid="app-download-settings">
+          <AdminAppDownloadSettings />
+        </SettingsGroup>
+      ) : null}
     </div>
   );
 }
@@ -490,14 +502,34 @@ export function UsageSettingsPanel({
   usage,
   usageDays,
   onUsageDaysChange,
+  onUsageReset,
   panelRef,
 }: {
   usage?: UsageSummary | null;
   usageDays?: number | undefined;
   onUsageDaysChange?: (days: number | undefined) => void;
+  /** Refetches the summary after a successful reset. */
+  onUsageReset?: () => void;
   panelRef?: RefObject<HTMLDivElement | null>;
 }) {
   const { t, i18n } = useLingui();
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+
+  async function resetUsage() {
+    setResetBusy(true);
+    setResetError(null);
+    try {
+      await rpc.usage.reset();
+      setResetOpen(false);
+      onUsageReset?.();
+    } catch (err) {
+      setResetError(errorText(err, t`Could not reset usage`));
+    } finally {
+      setResetBusy(false);
+    }
+  }
   const count = new Intl.NumberFormat(i18n.locale);
   const usd = new Intl.NumberFormat(i18n.locale, {
     style: "currency",
@@ -514,7 +546,7 @@ export function UsageSettingsPanel({
   return (
     <div ref={panelRef} tabIndex={-1} data-testid="usage-settings" className="outline-none">
       {onUsageDaysChange ? (
-        <div className="mb-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <ToggleGroup
             value={[rangeValue]}
             onValueChange={([next]) => {
@@ -537,7 +569,34 @@ export function UsageSettingsPanel({
               <Trans>All time</Trans>
             </ToggleGroupItem>
           </ToggleGroup>
+          <Button
+            variant="destructive"
+            data-testid="usage-reset"
+            onClick={() => {
+              setResetError(null);
+              setResetOpen(true);
+            }}
+          >
+            <Trans>Reset usage</Trans>
+          </Button>
         </div>
+      ) : null}
+      {resetOpen ? (
+        <ConfirmDialog
+          open={resetOpen}
+          onCancel={() => setResetOpen(false)}
+          title={<Trans>Reset usage?</Trans>}
+          description={
+            <Trans>
+              This clears all usage in this space — runs, tokens, cost, and per-model and per-bot
+              records. This cannot be undone.
+            </Trans>
+          }
+          confirmLabel={<Trans>Reset</Trans>}
+          onConfirm={() => void resetUsage()}
+          busy={resetBusy}
+          error={resetError}
+        />
       ) : null}
       {usage ? (
         <dl className="grid grid-cols-3 gap-3">

@@ -49,6 +49,7 @@ export function SettingsOverlay({
   usageDays,
   onUsageDaysChange,
   onUsageOpen,
+  onUsageReset,
   section: requestedSection,
   onSectionChange,
   onNameSaved,
@@ -62,6 +63,7 @@ export function SettingsOverlay({
   sandboxProvider,
   onSandboxProviderChange,
   canConfigureComputers = false,
+  isAdmin = false,
   computerSettingsEnabled = false,
   messagingEnabled = false,
   paymentWalletProvider = null,
@@ -87,6 +89,8 @@ export function SettingsOverlay({
   usageDays?: number | undefined;
   onUsageDaysChange?: (days: number | undefined) => void;
   onUsageOpen: () => void;
+  /** Refetches the usage summary after the usage panel resets it. */
+  onUsageReset?: () => void;
   section: SettingsSection;
   onSectionChange: (section: SettingsSection) => void;
   onNameSaved?: () => Promise<void>;
@@ -101,6 +105,8 @@ export function SettingsOverlay({
   onSandboxProviderChange?: (sandboxProvider: string) => void;
   /** Admins choose where new computers run. */
   canConfigureComputers?: boolean;
+  /** Admins set the custom app download links in General. */
+  isAdmin?: boolean;
   computerSettingsEnabled?: boolean;
   messagingEnabled?: boolean;
   /** The wallet this deployment lets bots spend from; none hides Wallet. */
@@ -402,6 +408,7 @@ export function SettingsOverlay({
                         onBotAvatarSetChange={onBotAvatarSetChange}
                         onAccountImported={onAccountImported}
                         onImportAgent={onImportAgent}
+                        isAdmin={isAdmin}
                       />
                       {/* One space is just the app, so there is nothing to tell apart or manage. */}
                       {spaces.length > 1 && onOpenSpace ? (
@@ -452,6 +459,7 @@ export function SettingsOverlay({
                       usage={usage}
                       usageDays={usageDays}
                       onUsageDaysChange={onUsageDaysChange}
+                      onUsageReset={onUsageReset}
                       panelRef={usageRef}
                     />
                   ) : null}

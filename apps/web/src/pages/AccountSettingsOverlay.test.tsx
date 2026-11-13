@@ -116,6 +116,40 @@ vi.mock("../lib/ui-appearance", () => ({
   setUiAppearance: vi.fn(),
 }));
 
+const usageReset = vi.hoisted(() => vi.fn());
+vi.mock("../lib/rpc", () => ({ rpc: { usage: { reset: usageReset } } }));
+vi.mock("../components/ConfirmDialog", () => ({
+  ConfirmDialog: ({
+    title,
+    description,
+    onCancel,
+    onConfirm,
+    busy,
+    confirmLabel,
+    error,
+  }: {
+    title?: ReactNode;
+    description?: ReactNode;
+    onCancel: () => void;
+    onConfirm: () => void;
+    busy?: boolean;
+    confirmLabel?: ReactNode;
+    error?: ReactNode;
+  }) => (
+    <div data-testid="confirm-dialog">
+      <div>{title}</div>
+      <div>{description}</div>
+      {error ? <p role="alert">{error}</p> : null}
+      <button type="button" onClick={onCancel}>
+        Cancel
+      </button>
+      <button type="button" disabled={busy} onClick={onConfirm}>
+        {confirmLabel}
+      </button>
+    </div>
+  ),
+}));
+
 import { authClient } from "../lib/auth";
 import {
   COMPOSER_ENTER_TO_SEND_STORAGE_KEY,
@@ -343,6 +377,92 @@ it("shows usage totals and a per-model breakdown", async () => {
   } finally {
     await act(async () => root.unmount());
     vi.unstubAllGlobals();
+  }
+});
+
+it("resets usage only after confirmation", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  usageReset.mockResolvedValue({ deleted: 5 });
+  const onUsageReset = vi.fn();
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () =>
+      root.render(
+        <UsageSettingsPanel
+          usage={{
+            runs: 2,
+            inputTokens: 1200,
+            outputTokens: 34,
+            totalTokens: 1234,
+            costUsd: 0.5,
+            modelCalls: 3,
+            models: [],
+          }}
+          onUsageDaysChange={() => {}}
+          onUsageReset={onUsageReset}
+        />,
+      ),
+    );
+    const resetButton = container.querySelector<HTMLButtonElement>('[data-testid="usage-reset"]')!;
+    expect(resetButton).not.toBeNull();
+    await act(async () => resetButton.click());
+    expect(usageReset).not.toHaveBeenCalled();
+    expect(document.body.querySelector('[data-testid="confirm-dialog"]')).not.toBeNull();
+    const confirm = [...document.querySelectorAll("button")].find(
+      (button) => button.textContent === "Reset",
+    )!;
+    await act(async () => confirm.click());
+    await act(async () => {});
+    expect(usageReset).toHaveBeenCalledTimes(1);
+    expect(onUsageReset).toHaveBeenCalledTimes(1);
+    expect(document.body.querySelector('[data-testid="confirm-dialog"]')).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  }
+});
+
+it("cancelling the reset confirmation does nothing", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const onUsageReset = vi.fn();
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () =>
+      root.render(
+        <UsageSettingsPanel
+          usage={{
+            runs: 2,
+            inputTokens: 1200,
+            outputTokens: 34,
+            totalTokens: 1234,
+            costUsd: 0.5,
+            modelCalls: 3,
+            models: [],
+          }}
+          onUsageDaysChange={() => {}}
+          onUsageReset={onUsageReset}
+        />,
+      ),
+    );
+    const resetButton = container.querySelector<HTMLButtonElement>('[data-testid="usage-reset"]')!;
+    await act(async () => resetButton.click());
+    const cancel = [...document.querySelectorAll("button")].find(
+      (button) => button.textContent === "Cancel",
+    )!;
+    await act(async () => cancel.click());
+    expect(usageReset).not.toHaveBeenCalled();
+    expect(onUsageReset).not.toHaveBeenCalled();
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   }
 });
 

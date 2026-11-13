@@ -3,12 +3,19 @@ import type {
   AgentSkillCatalogEntry,
   Bot,
   BotAvatarSet,
+  BotModelEntry,
   ComputerMode,
   ModelCatalogEntry,
   ReplyMode,
   ThinkingLevel,
 } from "@rakazo/contracts";
-import { BOT_NAME_MAX_LENGTH, isBuiltinToolName, resolveBotAvatarSet } from "@rakazo/contracts";
+import {
+  BOT_NAME_MAX_LENGTH,
+  isBuiltinToolName,
+  moveBotModelToFront,
+  primaryBotModel,
+  resolveBotAvatarSet,
+} from "@rakazo/contracts";
 import {
   chatModelChoices,
   connectedModelChoices,
@@ -38,10 +45,12 @@ import {
 } from "../../lib/translation";
 import { errorText } from "../../lib/user-error";
 import { AvatarStudioPopover } from "./avatar-studio-popover";
+import type { MediaModelFallback } from "./bot-settings-sections";
 import {
   ComputerGroup,
   DescriptionGroup,
   ExportAndClear,
+  MediaModelGroup,
   ModelSection,
   NotificationsSection,
   PermissionsGroup,
@@ -74,6 +83,10 @@ function advancedValues(bot: Bot) {
     translation.translationTargetLanguage ?? DEFAULT_TRANSLATION_TARGET_LANGUAGE,
     translation.autoTranslate,
     translation.showTranslationActions,
+    JSON.stringify(bot.videoModels ?? []),
+    JSON.stringify(bot.imageModels ?? []),
+    bot.activeVideoPromptPreset ?? "",
+    bot.activeImagePromptPreset ?? "",
   ] as const;
 }
 
@@ -134,6 +147,10 @@ export function BotSettings({
     translationSourceLanguage?: TranslationSourceLanguage;
     translationTargetLanguage?: TranslationTargetLanguage | null;
     autoTranslate?: boolean;
+    videoModels?: BotModelEntry[] | null;
+    imageModels?: BotModelEntry[] | null;
+    activeVideoPromptPreset?: string | null;
+    activeImagePromptPreset?: string | null;
     disabledBuiltinTools?: string[];
   }) => Promise<void>;
   onExport: () => Promise<void>;
@@ -205,6 +222,14 @@ export function BotSettings({
   const [showTranslationActions, setShowTranslationActions] = useState(
     () => botTranslationSettings(bot).showTranslationActions,
   );
+  const [videoModels, setVideoModels] = useState<BotModelEntry[]>(() => bot.videoModels ?? []);
+  const [imageModels, setImageModels] = useState<BotModelEntry[]>(() => bot.imageModels ?? []);
+  const [activeVideoPreset, setActiveVideoPreset] = useState<string | null>(
+    () => bot.activeVideoPromptPreset ?? null,
+  );
+  const [activeImagePreset, setActiveImagePreset] = useState<string | null>(
+    () => bot.activeImagePromptPreset ?? null,
+  );
   const [disabledBuiltinTools, setDisabledBuiltinTools] = useState<string[]>(
     bot.disabledBuiltinTools ?? [],
   );
@@ -249,6 +274,10 @@ export function BotSettings({
     translationTargetLanguage,
     autoTranslate,
     showTranslationActions,
+    JSON.stringify(videoModels),
+    JSON.stringify(imageModels),
+    activeVideoPreset ?? "",
+    activeImagePreset ?? "",
   ]);
   const dirty =
     name.trim() !== savedNameRef.current.trim() ||
@@ -311,6 +340,12 @@ export function BotSettings({
       setTranslationTargetLanguage(next[8] as TranslationTargetLanguage);
     if (autoTranslate === saved[9]) setAutoTranslate(next[9] as boolean);
     if (showTranslationActions === saved[10]) setShowTranslationActions(next[10] as boolean);
+    if (JSON.stringify(videoModels) === saved[11])
+      setVideoModels(JSON.parse(next[11] as string) as BotModelEntry[]);
+    if (JSON.stringify(imageModels) === saved[12])
+      setImageModels(JSON.parse(next[12] as string) as BotModelEntry[]);
+    if ((activeVideoPreset ?? "") === saved[13]) setActiveVideoPreset((next[13] as string) || null);
+    if ((activeImagePreset ?? "") === saved[14]) setActiveImagePreset((next[14] as string) || null);
     setSavedAdvanced(JSON.stringify(next));
   }, [bot]);
 
@@ -345,6 +380,69 @@ export function BotSettings({
     selectedTranslationModelKey,
     t`Not selected`,
   );
+
+  const videoPrimary = primaryBotModel(videoModels);
+  const videoValue = videoPrimary
+    ? modelOptionKey(
+        videoPrimary.provider,
+        resolveSelectableModelId(catalog, videoPrimary.provider, videoPrimary.model),
+      )
+    : "";
+  const videoChoices = chatModelChoices(connectedOptions, videoValue, t`Not selected`);
+  const videoFallbacks: MediaModelFallback[] = videoModels.slice(1).map((entry) => {
+    const key = modelOptionKey(
+      entry.provider,
+      resolveSelectableModelId(catalog, entry.provider, entry.model),
+    );
+    return {
+      key,
+      label: videoChoices.find((choice) => choice.key === key)?.label ?? entry.model,
+    };
+  });
+  const imagePrimary = primaryBotModel(imageModels);
+  const imageValue = imagePrimary
+    ? modelOptionKey(
+        imagePrimary.provider,
+        resolveSelectableModelId(catalog, imagePrimary.provider, imagePrimary.model),
+      )
+    : "";
+  const imageChoices = chatModelChoices(connectedOptions, imageValue, t`Not selected`);
+  const imageFallbacks: MediaModelFallback[] = imageModels.slice(1).map((entry) => {
+    const key = modelOptionKey(
+      entry.provider,
+      resolveSelectableModelId(catalog, entry.provider, entry.model),
+    );
+    return {
+      key,
+      label: imageChoices.find((choice) => choice.key === key)?.label ?? entry.model,
+    };
+  });
+
+  /** Picking a media model moves it to the front of that role's list; the rest stay as fallbacks. */
+  function changeMediaModel(role: "video" | "image", key: string) {
+    const setList = role === "video" ? setVideoModels : setImageModels;
+    if (!key) {
+      setList([]);
+      return;
+    }
+    const parsed = parseModelOptionKey(key);
+    if (!parsed) return;
+    const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
+    setList((current) => moveBotModelToFront(current, entry));
+  }
+
+  function removeMediaFallback(role: "video" | "image", key: string) {
+    const setList = role === "video" ? setVideoModels : setImageModels;
+    setList((current) =>
+      current.filter(
+        (entry) =>
+          modelOptionKey(
+            entry.provider,
+            resolveSelectableModelId(catalog, entry.provider, entry.model),
+          ) !== key,
+      ),
+    );
+  }
 
   const defaultEntry = me?.defaultModel
     ? catalogEntry(catalog, me.defaultProvider, me.defaultModel)
@@ -447,6 +545,10 @@ export function BotSettings({
         translationTargetLanguage,
         autoTranslate,
         showTranslationActions,
+        videoModels,
+        imageModels,
+        activeVideoPromptPreset: activeVideoPreset,
+        activeImagePromptPreset: activeImagePreset,
         ...(modelMetaReady &&
         (thinkingOptions.length > 0 ||
           (selected?.provider ?? null) !== bot.modelProvider ||
@@ -510,6 +612,10 @@ export function BotSettings({
           translationTargetLanguage,
           autoTranslate,
           showTranslationActions,
+          JSON.stringify(videoModels),
+          JSON.stringify(imageModels),
+          activeVideoPreset ?? "",
+          activeImagePreset ?? "",
         ]),
       );
     } catch (err) {
@@ -710,6 +816,25 @@ export function BotSettings({
               voices={voices}
               voiceId={voiceId}
               onVoiceIdChange={setVoiceId}
+            />
+            <MediaModelGroup
+              ids={ids}
+              videoChoices={videoChoices}
+              videoValue={videoValue}
+              onVideoModelChange={(key) => changeMediaModel("video", key)}
+              videoFallbacks={videoFallbacks}
+              onRemoveVideoFallback={(key) => removeMediaFallback("video", key)}
+              imageChoices={imageChoices}
+              imageValue={imageValue}
+              onImageModelChange={(key) => changeMediaModel("image", key)}
+              imageFallbacks={imageFallbacks}
+              onRemoveImageFallback={(key) => removeMediaFallback("image", key)}
+              videoPresets={bot.videoPromptPresets ?? []}
+              activeVideoPreset={activeVideoPreset}
+              onVideoPresetChange={setActiveVideoPreset}
+              imagePresets={bot.imagePromptPresets ?? []}
+              activeImagePreset={activeImagePreset}
+              onImagePresetChange={setActiveImagePreset}
             />
             <TranslationGroup
               ids={ids}

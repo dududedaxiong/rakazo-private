@@ -4,6 +4,7 @@ import {
   Button,
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
@@ -33,7 +34,11 @@ export function ChatPersonaSwitcher({
         <Sparkles strokeWidth={1.6} className="size-[17px]" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>{t`Persona`}</DropdownMenuLabel>
+        {/* Base UI's GroupLabel needs a Menu.Group ancestor; bare it throws
+            "MenuGroupContext is missing" on open and trips the app-wide boundary. */}
+        <DropdownMenuGroup>
+          <DropdownMenuLabel>{t`Persona`}</DropdownMenuLabel>
+        </DropdownMenuGroup>
         {open ? <PersonaSwitchList bot={bot} onBotUpdated={onBotUpdated} /> : null}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -65,6 +70,7 @@ function PersonaSwitchList({ bot, onBotUpdated }: { bot: Bot; onBotUpdated: (bot
         if (cancelled) return;
         if (!Array.isArray(loaded)) {
           // A non-list reply must never reach `templates.map` below.
+          console.error("promptTemplates.list returned a non-array reply");
           setError(t`Something went wrong. Try again.`);
           return;
         }

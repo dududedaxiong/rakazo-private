@@ -9,6 +9,8 @@ import {
   AdminOverviewSchema,
   AdminUserListInputSchema,
   AdminUserSchema,
+  AppDownloadLinksSchema,
+  AppDownloadLinksUpdateSchema,
   InviteCodeCreateInputSchema,
   InviteCodeListInputSchema,
   InviteCodeSchema,
@@ -535,6 +537,9 @@ export const appContract = {
     registrationSettings: {
       get: oc.output(RegistrationSettingsSchema),
       update: oc.input(RegistrationSettingsUpdateSchema).output(RegistrationSettingsSchema),
+    },
+    appDownloadSettings: {
+      update: oc.input(AppDownloadLinksUpdateSchema).output(AppDownloadLinksSchema),
     },
     inviteCodes: {
       list: oc.input(InviteCodeListInputSchema).output(z.array(InviteCodeSchema)),
@@ -1570,6 +1575,12 @@ export const appContract = {
   usage: {
     list: oc.output(z.array(UsageRecordSchema)),
     summary: oc.input(UsageSummaryInputSchema.optional()).output(UsageSummarySchema),
+    /** Deletes the caller's usage records in this space; the summary then reads zero. */
+    reset: oc.output(z.object({ deleted: z.number().int() })),
+  },
+  /** Admin-set custom app download addresses; any signed-in user may read them. */
+  appDownloads: {
+    get: oc.output(AppDownloadLinksSchema),
   },
   export: {
     bot: oc.input(botId).output(ExportManifestSchema),

@@ -50,6 +50,7 @@ vi.mock("@rakazo/ui-web", async () => {
       children?: ReactNode;
     }) => <MenuContext.Provider value={{ open, onOpenChange }}>{children}</MenuContext.Provider>,
     DropdownMenuContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+    DropdownMenuGroup: Plain,
     DropdownMenuItem: (props: ComponentProps<"button">) => <button type="button" {...props} />,
     DropdownMenuLabel: Plain,
     DropdownMenuTrigger: ({ render, children }: { render?: ReactNode; children?: ReactNode }) => {

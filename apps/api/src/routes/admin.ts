@@ -264,6 +264,26 @@ export function adminRoutes(ctx: RouterContext) {
           return toRegistrationSettings(row, masterSwitchEnabled);
         }),
       },
+      appDownloadSettings: {
+        update: authed.admin.appDownloadSettings.update.handler(async ({ context, input }) => {
+          await requireAdmin(deps, context.actor.userId);
+          const data: { androidAppDownloadUrl?: string | null; iosAppDownloadUrl?: string | null } =
+            {};
+          if (input.androidUrl !== undefined) data.androidAppDownloadUrl = input.androidUrl;
+          if (input.iosUrl !== undefined) data.iosAppDownloadUrl = input.iosUrl;
+          const row = await runAsSystem("update the app download links", () =>
+            prisma.deploymentSettings.upsert({
+              where: { id: "default" },
+              create: { id: "default", ...data },
+              update: data,
+            }),
+          );
+          return {
+            androidUrl: row.androidAppDownloadUrl ?? null,
+            iosUrl: row.iosAppDownloadUrl ?? null,
+          };
+        }),
+      },
       inviteCodes: {
         list: authed.admin.inviteCodes.list.handler(async ({ context, input }) => {
           await requireAdmin(deps, context.actor.userId);

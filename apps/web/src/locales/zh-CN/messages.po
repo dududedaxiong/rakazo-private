@@ -8807,3 +8807,99 @@ msgstr "翻译 · 用 {modelId}（备选）翻译 · {source}译{target}"
 #: src/pages/Favorites.tsx
 msgid "translation"
 msgstr "译文"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Media model"
+msgstr "影图模型"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video generation model"
+msgstr "视频生成模型"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image generation model"
+msgstr "图片生成模型"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video prompt preset"
+msgstr "视频提示词预设"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image prompt preset"
+msgstr "图片提示词预设"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "No preset"
+msgstr "无预设"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Fallback models"
+msgstr "备选模型"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Remove fallback model"
+msgstr "移除备选模型"
+
+#: src/components/AppDownloadDialog.tsx
+msgid "Android"
+msgstr "安卓"
+
+#: src/components/AppDownloadDialog.tsx
+msgid "iOS"
+msgstr "iOS"
+
+#: src/components/AppDownloadDialog.tsx
+msgid "No app downloads are set up yet."
+msgstr "暂未设置 App 下载地址。"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Custom app download"
+msgstr "自定义 App 下载"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Links shown by “Get the mobile app” in the account menu. Leave a platform empty to hide it."
+msgstr "用户菜单里「获取移动应用」显示的下载地址。某个平台留空即不显示该平台。"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Android download link"
+msgstr "安卓下载地址"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "iOS download link"
+msgstr "iOS 下载地址"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Enter a valid link, or leave it empty to hide that platform."
+msgstr "请填写有效链接，留空则不显示该平台。"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "App download links saved"
+msgstr "App 下载地址已保存"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Couldn't load app download links"
+msgstr "无法加载 App 下载地址"
+
+#: src/components/admin/AdminAppDownloadSettings.tsx
+msgid "Could not save app download links"
+msgstr "无法保存 App 下载地址"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "App download"
+msgstr "App 下载"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Reset usage"
+msgstr "一键重置"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Reset usage?"
+msgstr "确认重置用量？"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "This clears all usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
+msgstr "将清空当前空间的全部用量——运行次数、Token、费用，以及各模型和各 Bot 的用量记录。此操作不可恢复。"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Could not reset usage"
+msgstr "无法重置用量"
