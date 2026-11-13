@@ -352,6 +352,7 @@ describe("message translation", () => {
     sourceLanguage: "en",
     targetLanguage: "zh",
     modelId: "deepseek-v4.1-flash",
+    usedFallback: false,
   };
   const botMessage = (blocks: ThreadMessage["blocks"]): ThreadMessage => ({
     id: "message",
@@ -367,8 +368,7 @@ describe("message translation", () => {
   ];
   const translatingBot: PeerBot = () => ({
     color: "orange",
-    translationModelProvider: "deepseek",
-    translationModelId: "deepseek-v4.1-flash",
+    translationModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
     translationSourceLanguage: "en",
     translationTargetLanguage: null,
     autoTranslate: false,
@@ -381,8 +381,11 @@ describe("message translation", () => {
     container.querySelector<HTMLButtonElement>('button[aria-label="Translate this reply"]');
   const translationPanel = () => container.querySelector('[data-testid="message-translation"]');
 
-  function renderTranslated(props: Partial<ComponentProps<typeof MessageView>> = {}) {
-    const translate = vi.fn(async () => translated);
+  function renderTranslated(
+    props: Partial<ComponentProps<typeof MessageView>> = {},
+    result = translated,
+  ) {
+    const translate = vi.fn(async () => result);
     const favorites = {
       list: vi.fn(async () => []),
       add: vi.fn(async (input: { botId: string; messageId: string; snippet: string }) => ({
@@ -424,6 +427,18 @@ describe("message translation", () => {
     // The original stays as sent.
     expect(container.querySelector('[data-testid="message-bot-bubble"]')?.textContent).toContain(
       "Hark AI is a new AI search product.",
+    );
+  });
+
+  it("marks a translation that came from a fallback model", async () => {
+    renderTranslated({}, { ...translated, usedFallback: true });
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const panel = translationPanel();
+    expect(panel?.textContent).toContain(
+      "Translated with deepseek-v4.1-flash (backup) · English to 中文",
     );
   });
 
@@ -548,8 +563,7 @@ describe("message translation", () => {
     renderTranslated({
       peerBot: () => ({
         color: "orange",
-        translationModelProvider: "deepseek",
-        translationModelId: "deepseek-v4.1-flash",
+        translationModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
         translationSourceLanguage: "en",
         translationTargetLanguage: null,
         autoTranslate: false,
@@ -600,8 +614,7 @@ describe("message translation", () => {
     renderTranslated({
       peerBot: () => ({
         color: "orange",
-        translationModelProvider: "deepseek",
-        translationModelId: "deepseek-v4.1-flash",
+        translationModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
         translationSourceLanguage: "en",
         translationTargetLanguage: null,
         autoTranslate: false,

@@ -17,7 +17,14 @@ const savedJob = z.object({
   provider: z.string(),
   jobId: z.string().optional(),
   artifactId: z.string().optional(),
+  /** The bot-configured model that produced the media, for the "经 X" mark on recovery. */
+  modelId: z.string().optional(),
 });
+
+/** The mark under a generated image or video: which model made it. */
+function mediaModelMark(modelId: string): MessageBlock {
+  return { kind: "text", text: `经 ${modelId}` };
+}
 export async function generateMediaFromTool(options: {
   name: "generate_image" | "generate_video";
   args: Record<string, unknown>;
@@ -35,7 +42,13 @@ export async function generateMediaFromTool(options: {
     name: string,
     job: { id: string; result: { provider: string; jobId?: string } },
   ) => Promise<{ artifactId: string; block: MessageBlock }>;
-  publish: (block: MessageBlock, jobId: string, artifactId: string) => Promise<unknown>;
+  publish: (
+    blocks: MessageBlock[],
+    jobId: string,
+    artifactId: string,
+    /** The bot-configured model that produced the media; kept in the saved job for recovery. */
+    modelId?: string,
+  ) => Promise<unknown>;
   /** Commits with a video's provider failure, so whatever follows it cannot be lost. */
   onSettled?: (tx: Prisma.TransactionClient, status: "failed") => Promise<void>;
 }) {
@@ -144,8 +157,18 @@ export async function generateMediaFromTool(options: {
         where: { id: saved.artifactId, spaceId: run.spaceId, userId: run.userId, botId: run.botId },
       });
       if (!artifact) return { error: "Generated attachment is unavailable." };
-      await options.publish(messageBlockForArtifact(artifact), reservation.id, artifact.id);
-      return { status: "completed", artifactId: artifact.id };
+      const block = messageBlockForArtifact(artifact);
+      await options.publish(
+        saved.modelId ? [block, mediaModelMark(saved.modelId)] : [block],
+        reservation.id,
+        artifact.id,
+        saved.modelId,
+      );
+      return {
+        status: "completed",
+        artifactId: artifact.id,
+        ...(saved.modelId ? { modelId: saved.modelId } : {}),
+      };
     }
     if (video && typeof args.jobId === "string") {
       const claim = await prisma.externalEffect.updateMany({
@@ -238,8 +261,18 @@ export async function generateMediaFromTool(options: {
         });
       throw error;
     }
-    await options.publish(attached.block, reservation.id, attached.artifactId);
-    return { status: "completed", artifactId: attached.artifactId };
+    const modelId = output.output.modelId ?? undefined;
+    await options.publish(
+      modelId ? [attached.block, mediaModelMark(modelId)] : [attached.block],
+      reservation.id,
+      attached.artifactId,
+      modelId,
+    );
+    return {
+      status: "completed",
+      artifactId: attached.artifactId,
+      ...(modelId ? { modelId } : {}),
+    };
   } catch (error) {
     context.signal.throwIfAborted();
     return {

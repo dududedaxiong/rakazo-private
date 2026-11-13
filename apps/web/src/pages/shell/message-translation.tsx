@@ -162,7 +162,9 @@ export function useMessageTranslation({
       ) : (
         <>
           <p className="text-body-sm text-link">
-            {t`Translated with ${state.result.modelId} · ${translationLanguageLabel(state.result.sourceLanguage)} to ${translationLanguageLabel(targetLanguage)}`}
+            {state.result.usedFallback
+              ? t`Translated with ${state.result.modelId} (backup) · ${translationLanguageLabel(state.result.sourceLanguage)} to ${translationLanguageLabel(targetLanguage)}`
+              : t`Translated with ${state.result.modelId} · ${translationLanguageLabel(state.result.sourceLanguage)} to ${translationLanguageLabel(targetLanguage)}`}
           </p>
           <p className="mt-1.5 text-body whitespace-pre-wrap text-foreground" dir="auto">
             {state.result.translatedText}

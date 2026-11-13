@@ -6,6 +6,7 @@ import type {
   VoiceInfo,
   VoiceStatus,
 } from "@rakazo/contracts";
+import { primaryBotModel } from "@rakazo/contracts";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
@@ -210,8 +211,12 @@ export function ThreadComposerChips({
         label: t("Media model"),
         value: t("Image and video generation"),
         active: Boolean(
-          (videoOverride !== null ? videoOverride.modelId : currentBot?.videoModelId) ??
-            (imageOverride !== null ? imageOverride.modelId : currentBot?.imageModelId),
+          (videoOverride !== null
+            ? videoOverride.modelId
+            : primaryBotModel(currentBot?.videoModels)?.model) ??
+            (imageOverride !== null
+              ? imageOverride.modelId
+              : primaryBotModel(currentBot?.imageModels)?.model),
         ),
         onPress: onPickMediaModel,
       },

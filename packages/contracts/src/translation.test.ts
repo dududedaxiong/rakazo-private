@@ -64,13 +64,24 @@ describe("TranslateInputSchema", () => {
         sourceLanguage: "en",
         targetLanguage: "zh",
         modelId: "model-1",
+        usedFallback: false,
       }),
     ).toEqual({
       translatedText: "你好",
       sourceLanguage: "en",
       targetLanguage: "zh",
       modelId: "model-1",
+      usedFallback: false,
     });
+    expect(
+      TranslateOutputSchema.parse({
+        translatedText: "你好",
+        sourceLanguage: "en",
+        targetLanguage: "zh",
+        modelId: "model-2",
+        usedFallback: true,
+      }).usedFallback,
+    ).toBe(true);
   });
 });
 

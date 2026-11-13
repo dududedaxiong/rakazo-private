@@ -212,9 +212,10 @@ describe("bot media tools", () => {
       expect(poll).not.toHaveBeenCalled();
       expect(attach).not.toHaveBeenCalled();
       expect(publish).toHaveBeenCalledWith(
-        expect.objectContaining({ artifactId: artifact.id }),
+        [expect.objectContaining({ artifactId: artifact.id })],
         row.id,
         artifact.id,
+        undefined,
       );
     },
   );

@@ -1,5 +1,10 @@
-import type { TranslationSourceLanguage, TranslationTargetLanguage } from "@rakazo/contracts";
+import type {
+  BotModelEntry,
+  TranslationSourceLanguage,
+  TranslationTargetLanguage,
+} from "@rakazo/contracts";
 import {
+  primaryBotModel,
   resolveTargetLanguage as resolveContractTargetLanguage,
   TRANSLATION_SOURCE_LANGUAGE_CODES,
   TRANSLATION_SOURCE_LANGUAGE_LABELS,
@@ -76,8 +81,7 @@ export const DEFAULT_BOT_TRANSLATION_SETTINGS: BotTranslationSettings = {
 export function translationSettingsFromBot(
   bot:
     | {
-        translationModelProvider?: string | null;
-        translationModelId?: string | null;
+        translationModels?: readonly BotModelEntry[] | null;
         translationSourceLanguage?: string;
         translationTargetLanguage?: string | null;
         autoTranslate?: boolean;
@@ -94,9 +98,10 @@ export function translationSettingsFromBot(
     bot?.translationTargetLanguage && isTargetLanguage(bot.translationTargetLanguage)
       ? bot.translationTargetLanguage
       : "auto";
+  const primary = primaryBotModel(bot?.translationModels);
   return {
-    modelProvider: bot?.translationModelProvider ?? null,
-    modelId: bot?.translationModelId ?? null,
+    modelProvider: primary?.provider ?? null,
+    modelId: primary?.model ?? null,
     sourceLanguage,
     targetLanguage,
     autoTranslate: bot?.autoTranslate ?? false,
@@ -127,6 +132,8 @@ export type BotTranslationResult = {
   sourceLanguage: string;
   targetLanguage: string;
   modelId: string;
+  /** True when the translation came from a fallback model, not the primary. */
+  usedFallback: boolean;
 };
 
 /**

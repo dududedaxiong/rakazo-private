@@ -1,4 +1,5 @@
 import type { AgentSkillCatalogEntry, ModelRoleChoice } from "@rakazo/contracts";
+import { primaryBotModel } from "@rakazo/contracts";
 import {
   buildComposerMentionOptions,
   channelMessageSender,
@@ -844,12 +845,12 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
 
   const mainProvider = mainOverride !== null ? mainOverride.provider : currentBot?.modelProvider;
   const mainModelId = mainOverride !== null ? mainOverride.modelId : currentBot?.modelId;
-  const videoProvider =
-    videoOverride !== null ? videoOverride.provider : currentBot?.videoModelProvider;
-  const videoModelId = videoOverride !== null ? videoOverride.modelId : currentBot?.videoModelId;
-  const imageProvider =
-    imageOverride !== null ? imageOverride.provider : currentBot?.imageModelProvider;
-  const imageModelId = imageOverride !== null ? imageOverride.modelId : currentBot?.imageModelId;
+  const videoPrimary = primaryBotModel(currentBot?.videoModels);
+  const videoProvider = videoOverride !== null ? videoOverride.provider : videoPrimary?.provider;
+  const videoModelId = videoOverride !== null ? videoOverride.modelId : videoPrimary?.model;
+  const imagePrimary = primaryBotModel(currentBot?.imageModels);
+  const imageProvider = imageOverride !== null ? imageOverride.provider : imagePrimary?.provider;
+  const imageModelId = imageOverride !== null ? imageOverride.modelId : imagePrimary?.model;
   const sheetKey =
     sheetRole === "main"
       ? mainProvider && mainModelId
@@ -1110,6 +1111,13 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             botId={botId ?? ""}
             userId={userId}
             selectedKey={sheetKey}
+            currentModels={
+              sheetRole === "video"
+                ? currentBot?.videoModels
+                : sheetRole === "image"
+                  ? currentBot?.imageModels
+                  : undefined
+            }
             onClose={() => setSheetRole(null)}
             onSaved={(choice) => {
               if (sheetRole === "main") {
@@ -1134,9 +1142,24 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             catalog={modelCatalog}
             video={{ provider: videoProvider ?? null, modelId: videoModelId ?? null }}
             image={{ provider: imageProvider ?? null, modelId: imageModelId ?? null }}
+            videoPresets={currentBot?.videoPromptPresets ?? null}
+            imagePresets={currentBot?.imagePromptPresets ?? null}
+            activeVideoPreset={currentBot?.activeVideoPromptPreset ?? null}
+            activeImagePreset={currentBot?.activeImagePromptPreset ?? null}
             onPickRole={(role) => {
               setMediaOpen(false);
               setSheetRole(role);
+            }}
+            onPickPreset={(role, name) => {
+              if (!botId) return;
+              void rpc("bots/update", {
+                botId,
+                ...(role === "video"
+                  ? { activeVideoPromptPreset: name }
+                  : { activeImagePromptPreset: name }),
+              })
+                .then(() => refreshMentionBots())
+                .catch(() => undefined);
             }}
             onClose={() => setMediaOpen(false)}
           />

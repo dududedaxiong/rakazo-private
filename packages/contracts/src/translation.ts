@@ -62,6 +62,8 @@ export const TranslateOutputSchema = z.object({
   sourceLanguage: z.string(),
   targetLanguage: z.string(),
   modelId: z.string(),
+  /** True when the translation came from a fallback model, not the primary. */
+  usedFallback: z.boolean(),
 });
 export type TranslateOutput = z.infer<typeof TranslateOutputSchema>;
 

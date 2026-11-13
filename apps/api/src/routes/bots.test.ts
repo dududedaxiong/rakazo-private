@@ -45,12 +45,13 @@ const bot = (overrides: Record<string, unknown> = {}) => ({
   name: "Chief",
   modelProvider: "provider-a",
   modelId: "model-a",
-  translationModelProvider: null,
-  translationModelId: null,
-  videoModelProvider: null,
-  videoModelId: null,
-  imageModelProvider: null,
-  imageModelId: null,
+  translationModels: null,
+  videoModels: null,
+  imageModels: null,
+  videoPromptPresets: null,
+  activeVideoPromptPreset: null,
+  imagePromptPresets: null,
+  activeImagePromptPreset: null,
   thread: { id: "thread-1" },
   ...overrides,
 });
@@ -170,6 +171,27 @@ describe("bots testMediaModel", () => {
     expect(result).toEqual({ supported: false, seconds: 1.1, detail: "只回了文字，没有视频" });
   });
 
+  it("passes the preset prompt to the probe", async () => {
+    const { routes } = setup();
+    const result = await (routes.bots.testMediaModel as unknown as Handler)({
+      context: { actor },
+      input: {
+        botId: "bot-1",
+        kind: "image",
+        provider: "provider-a",
+        modelId: "model-a",
+        presetPrompt: "用水彩风格画",
+      },
+    });
+    expect(result).toEqual({ supported: true, seconds: 2.3, detail: "image" });
+    expect(mockedAdapters.probeMediaModel).toHaveBeenCalledWith(
+      expect.objectContaining({ model: "model-a", kind: "image", presetPrompt: "用水彩风格画" }),
+      undefined,
+      undefined,
+      expect.objectContaining({ allowPrivate: false }),
+    );
+  });
+
   it("refuses a model the validation rejects", async () => {
     const { routes } = setup();
     mockedAdapters.validateBotModelChange.mockResolvedValueOnce({
@@ -217,32 +239,71 @@ describe("bots update with media models", () => {
     vi.clearAllMocks();
   });
 
-  it("saves the video and image models", async () => {
+  it("saves the video and image model lists with presets", async () => {
     const { routes, ctx } = setup();
     ctx.repos.listBots.mockResolvedValueOnce([
-      bot({ videoModelProvider: "provider-a", videoModelId: "video-a" }),
+      bot({ videoModels: [{ provider: "provider-a", model: "video-a" }] }),
     ]);
     const updated = await (routes.bots.update as unknown as Handler)({
       context: { actor },
       input: {
         botId: "bot-1",
-        videoModelProvider: "provider-a",
-        videoModelId: "video-a",
-        imageModelProvider: "provider-a",
-        imageModelId: "image-a",
+        videoModels: [
+          { provider: "provider-a", model: "video-a" },
+          { provider: "provider-a", model: "video-b" },
+        ],
+        imageModels: [{ provider: "provider-a", model: "image-a" }],
+        videoPromptPresets: [{ name: "水彩", prompt: "用水彩风格画" }],
+        activeVideoPromptPreset: "水彩",
       },
     });
     expect(mockedDb.commitBotUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         botId: "bot-1",
         data: expect.objectContaining({
-          videoModelProvider: "provider-a",
-          videoModelId: "video-a",
-          imageModelProvider: "provider-a",
-          imageModelId: "image-a",
+          videoModels: [
+            { provider: "provider-a", model: "video-a" },
+            { provider: "provider-a", model: "video-b" },
+          ],
+          imageModels: [{ provider: "provider-a", model: "image-a" }],
+          videoPromptPresets: [{ name: "水彩", prompt: "用水彩风格画" }],
+          activeVideoPromptPreset: "水彩",
         }),
       }),
     );
-    expect(updated).toMatchObject({ id: "bot-1", videoModelProvider: "provider-a" });
+    expect(updated).toMatchObject({ id: "bot-1" });
+  });
+
+  it("treats legacy translation singles as setting the primary", async () => {
+    const { routes, ctx } = setup();
+    ctx.repos.getBot.mockResolvedValueOnce(
+      bot({
+        translationModels: [{ provider: "provider-a", model: "old-model" }],
+        translationModelProvider: "provider-a",
+        translationModelId: "old-model",
+      }),
+    );
+    await (routes.bots.update as unknown as Handler)({
+      context: { actor },
+      input: {
+        botId: "bot-1",
+        translationModelProvider: "provider-a",
+        translationModelId: "new-model",
+      },
+    });
+    expect(mockedDb.commitBotUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        botId: "bot-1",
+        data: expect.objectContaining({
+          // The new primary moves to the front; the old primary stays as fallback.
+          translationModels: [
+            { provider: "provider-a", model: "new-model" },
+            { provider: "provider-a", model: "old-model" },
+          ],
+          translationModelProvider: "provider-a",
+          translationModelId: "new-model",
+        }),
+      }),
+    );
   });
 });

@@ -30,8 +30,7 @@ describe("botTranslationSettings", () => {
     expect(
       botTranslationSettings(
         bot({
-          translationModelProvider: "deepseek",
-          translationModelId: "deepseek-v4.1-flash",
+          translationModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
           translationSourceLanguage: "en",
           translationTargetLanguage: "zh",
           autoTranslate: true,
@@ -45,6 +44,22 @@ describe("botTranslationSettings", () => {
       translationTargetLanguage: "zh",
       autoTranslate: true,
       showTranslationActions: false,
+    });
+  });
+
+  it("reads the primary from an ordered list, fallbacks aside", () => {
+    expect(
+      botTranslationSettings(
+        bot({
+          translationModels: [
+            { provider: "deepseek", model: "deepseek-v4.1-flash" },
+            { provider: "openai", model: "gpt-5" },
+          ],
+        }),
+      ),
+    ).toMatchObject({
+      translationModelProvider: "deepseek",
+      translationModelId: "deepseek-v4.1-flash",
     });
   });
 

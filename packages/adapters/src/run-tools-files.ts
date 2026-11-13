@@ -46,6 +46,23 @@ export async function callMediaTool(ctx: RunContext, call: ToolCall, recoverOnly
     !deps.artifacts
   )
     return { error: "Media generation is unavailable." };
+  // A video can take minutes, so the chat shows it is generating instead of
+  // looking stuck; the same thread.progress activity line the runtime uses.
+  if (run.trigger !== "routine") {
+    await deps.events
+      .append({
+        spaceId: run.spaceId,
+        threadId: thread.id,
+        botId: ctx.bot.id,
+        type: "thread.progress",
+        runId: ctx.runId,
+        payload: {
+          text: name === "generate_video" ? "正在生成视频…" : "正在生成图片…",
+          activity: true,
+        },
+      })
+      .catch(() => undefined);
+  }
   const result = await generateMediaFromTool({
     name,
     args,

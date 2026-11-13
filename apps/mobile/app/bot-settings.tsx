@@ -1,10 +1,22 @@
-import type { Bot, BotAvatarSet, ComputerMode, ReplyMode, ThinkingLevel } from "@rakazo/contracts";
+import type {
+  Bot,
+  BotAvatarSet,
+  BotModelEntry,
+  BotPromptPreset,
+  ComputerMode,
+  ReplyMode,
+  ThinkingLevel,
+} from "@rakazo/contracts";
 import {
+  activeBotPromptPreset,
   BOT_AVATAR_SHAPE_COUNT,
   BOT_COLORS,
   BOT_DESCRIPTION_MAX_LENGTH,
   BOT_INSTRUCTIONS_MAX_LENGTH,
+  BOT_MODEL_LIST_MAX,
   BOT_NAME_MAX_LENGTH,
+  BOT_PROMPT_PRESET_MAX,
+  moveBotModelToFront,
   resolveBotAvatarSet,
 } from "@rakazo/contracts";
 import {
@@ -105,7 +117,7 @@ const NativeBotPackageTools = lazy(() =>
 /** One media-capability probe: idle until tested, then the inline result. */
 type MediaModelTestState =
   | { status: "idle" }
-  | { status: "testing" }
+  | { status: "testing"; modelKey: string }
   | {
       status: "done";
       supported: boolean;
@@ -115,82 +127,467 @@ type MediaModelTestState =
       modelId: string;
     };
 
-/** One media model row: picker, test button, inline result, and quick set. */
-function MediaModelRow({
+/** True when two ordered model lists hold the same entries in the same order. */
+function sameModelList(
+  a: readonly BotModelEntry[] | null | undefined,
+  b: readonly BotModelEntry[] | null | undefined,
+): boolean {
+  const left = a ?? [];
+  const right = b ?? [];
+  return (
+    left.length === right.length &&
+    left.every((item, i) => item.provider === right[i]?.provider && item.model === right[i]?.model)
+  );
+}
+
+/** True when two preset lists hold the same names and prompts in the same order. */
+function samePresetList(
+  a: readonly BotPromptPreset[] | null | undefined,
+  b: readonly BotPromptPreset[] | null | undefined,
+): boolean {
+  const left = a ?? [];
+  const right = b ?? [];
+  return (
+    left.length === right.length &&
+    left.every((item, i) => item.name === right[i]?.name && item.prompt === right[i]?.prompt)
+  );
+}
+
+/**
+ * One ordered model list: each row shows its rank (primary first, then
+ * fallbacks), a test button where one exists, up/down reorder, and remove.
+ * The test result stays inline under the tested row, with a one-tap
+ * "set as primary" when a tested fallback supports the kind.
+ */
+function OrderedModelList({
   kind,
-  choices,
-  value,
+  label,
+  models,
   onChange,
+  addChoices,
+  catalog,
   test,
   onTest,
-  onApply,
+  onApplyPrimary,
+  testable,
+  labelFor,
 }: {
-  kind: "video" | "image";
-  choices: MenuPickerChoice[];
-  value: string;
-  onChange: (key: string) => void;
-  test: MediaModelTestState;
-  onTest: () => void;
-  onApply: () => void;
+  kind: "video" | "image" | "translation";
+  label: string;
+  models: BotModelEntry[];
+  onChange: (next: BotModelEntry[]) => void;
+  addChoices: MenuPickerChoice[];
+  catalog: MobileModel[];
+  test?: MediaModelTestState;
+  onTest?: (entry: BotModelEntry) => void;
+  onApplyPrimary?: () => void;
+  testable: boolean;
+  labelFor: (entry: BotModelEntry) => string;
 }) {
   const { t } = useI18n();
   const tokens = useMobileTokens();
-  const hasModel = value !== "";
-  const testing = test.status === "testing";
-  const label = kind === "video" ? t("Video generation model") : t("Image generation model");
+  const move = (index: number, delta: -1 | 1) => {
+    const next = [...models];
+    const target = index + delta;
+    if (target < 0 || target >= next.length) return;
+    const current = next[index];
+    const other = next[target];
+    if (!current || !other) return;
+    next[index] = other;
+    next[target] = current;
+    onChange(next);
+  };
   return (
     <>
-      <View style={{ flexDirection: "row", alignItems: "center", paddingEnd: 12 }}>
-        <View style={{ flex: 1 }}>
-          <MenuPicker choices={choices} label={label} onChange={onChange} value={value} />
-        </View>
-        <NativeActionButton
-          accessibilityLabel={
-            kind === "video" ? t("Test video generation model") : t("Test image generation model")
-          }
-          busy={testing}
-          disabled={!hasModel}
-          label={t("Test")}
-          onPress={onTest}
-          prominence="secondary"
-          size="compact"
-        />
+      <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+        <Text style={{ color: tokens.foreground, fontSize: 15, fontWeight: "600" }}>{label}</Text>
       </View>
-      {test.status === "done" ? (
+      {models.length === 0 ? (
         <Text
           style={{
-            paddingHorizontal: 16,
-            paddingBottom: 12,
+            color: tokens.mutedForeground,
             fontSize: 13,
-            color: test.supported ? tokens.success : tokens.destructive,
+            paddingHorizontal: 16,
+            paddingTop: 8,
           }}
         >
-          {test.supported
-            ? kind === "video"
-              ? t("✓ {model} supports video generation · {seconds}s", {
-                  model: test.modelId,
-                  seconds: test.seconds,
-                })
-              : t("✓ {model} supports image generation · {seconds}s", {
-                  model: test.modelId,
-                  seconds: test.seconds,
-                })
-            : kind === "video"
-              ? t("✗ Does not support video generation · {reason}", { reason: test.detail })
-              : t("✗ Does not support image generation · {reason}", { reason: test.detail })}
+          {t("Not set")}
         </Text>
       ) : null}
-      {test.status === "done" && test.supported && test.modelKey !== value ? (
+      {models.map((entry, index) => {
+        const key = modelOptionKey(entry.provider, entry.model);
+        const isPrimary = index === 0;
+        const tested = test?.status === "done" && test.modelKey === key;
+        const testing = test?.status === "testing" && testable && test.modelKey === key;
+        return (
+          <View key={key}>
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+              }}
+            >
+              <Text
+                style={{
+                  color: isPrimary ? tokens.link : tokens.mutedForeground,
+                  fontSize: 13,
+                  fontWeight: isPrimary ? "600" : "400",
+                  minWidth: 36,
+                }}
+              >
+                {isPrimary ? t("Primary") : `#${index + 1}`}
+              </Text>
+              <Text style={{ flex: 1, color: tokens.foreground, fontSize: 15 }} numberOfLines={1}>
+                {labelFor(entry)}
+              </Text>
+              {testable ? (
+                <NativeActionButton
+                  accessibilityLabel={t("Test this model")}
+                  busy={testing}
+                  label={t("Test")}
+                  onPress={() => onTest?.(entry)}
+                  prominence="secondary"
+                  size="compact"
+                />
+              ) : null}
+              <Pressable
+                accessibilityLabel={t("Move up")}
+                accessibilityRole="button"
+                disabled={index === 0}
+                onPress={() => move(index, -1)}
+                style={{
+                  minWidth: 32,
+                  minHeight: 32,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{ color: index === 0 ? tokens.border : tokens.foreground, fontSize: 16 }}
+                >
+                  ↑
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityLabel={t("Move down")}
+                accessibilityRole="button"
+                disabled={index === models.length - 1}
+                onPress={() => move(index, 1)}
+                style={{
+                  minWidth: 32,
+                  minHeight: 32,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: index === models.length - 1 ? tokens.border : tokens.foreground,
+                    fontSize: 16,
+                  }}
+                >
+                  ↓
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityLabel={t("Remove this model")}
+                accessibilityRole="button"
+                onPress={() => onChange(models.filter((item) => item !== entry))}
+                style={{
+                  minWidth: 32,
+                  minHeight: 32,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ color: tokens.destructive, fontSize: 16 }}>✕</Text>
+              </Pressable>
+            </View>
+            {tested && test.status === "done" ? (
+              <Text
+                style={{
+                  paddingHorizontal: 16,
+                  paddingBottom: 8,
+                  fontSize: 13,
+                  color: test.supported ? tokens.success : tokens.destructive,
+                }}
+              >
+                {test.supported
+                  ? kind === "video"
+                    ? t("✓ {model} supports video generation · {seconds}s", {
+                        model: test.modelId,
+                        seconds: test.seconds,
+                      })
+                    : t("✓ {model} supports image generation · {seconds}s", {
+                        model: test.modelId,
+                        seconds: test.seconds,
+                      })
+                  : kind === "video"
+                    ? t("✗ Does not support video generation · {reason}", { reason: test.detail })
+                    : t("✗ Does not support image generation · {reason}", { reason: test.detail })}
+              </Text>
+            ) : null}
+            {tested && test.status === "done" && test.supported && !isPrimary ? (
+              <Pressable
+                accessibilityRole="button"
+                onPress={onApplyPrimary}
+                style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}
+              >
+                <Text style={{ color: tokens.link, fontSize: 15 }}>{t("Set as primary")}</Text>
+              </Pressable>
+            ) : null}
+          </View>
+        );
+      })}
+      {addChoices.length > 0 && models.length < BOT_MODEL_LIST_MAX ? (
+        <MenuPickerMenu
+          label={
+            kind === "video"
+              ? t("Add video backup")
+              : kind === "image"
+                ? t("Add image backup")
+                : t("Add backup")
+          }
+          choices={addChoices}
+          value=""
+          onChange={(key) => {
+            const parsed = parseModelOptionKey(key);
+            if (!parsed) return;
+            onChange([
+              ...models,
+              {
+                provider: parsed.provider,
+                model: resolveSelectableModelId(catalog, parsed.provider, parsed.modelId),
+              },
+            ]);
+          }}
+        >
+          <View>
+            <SettingsRow
+              accessibilityLabel={
+                kind === "video"
+                  ? t("Add video backup")
+                  : kind === "image"
+                    ? t("Add image backup")
+                    : t("Add backup")
+              }
+              accessibilityRole="button"
+              accessible
+              title={
+                kind === "video"
+                  ? t("Add video backup")
+                  : kind === "image"
+                    ? t("Add image backup")
+                    : t("Add backup")
+              }
+              trailing={
+                <NativeSymbol
+                  android="chevron-expand"
+                  color={native.tertiaryLabel}
+                  ios="chevron.up.chevron.down"
+                  size={13}
+                />
+              }
+            />
+          </View>
+        </MenuPickerMenu>
+      ) : null}
+    </>
+  );
+}
+
+/**
+ * The prompt presets for one media kind: tap a preset to make it active, edit
+ * or delete per row, add a new one. The editor is inline: name plus prompt.
+ */
+function PromptPresetSection({
+  label,
+  presets,
+  active,
+  onChange,
+  onActiveChange,
+}: {
+  label: string;
+  presets: BotPromptPreset[];
+  active: string | null;
+  onChange: (next: BotPromptPreset[]) => void;
+  onActiveChange: (name: string | null) => void;
+}) {
+  const { t } = useI18n();
+  const tokens = useMobileTokens();
+  const [editing, setEditing] = useState<{
+    index: number | null;
+    name: string;
+    prompt: string;
+    error: string | null;
+  } | null>(null);
+  const saveEditing = () => {
+    if (!editing) return;
+    const name = editing.name.trim();
+    const prompt = editing.prompt.trim();
+    if (!name) {
+      setEditing({ ...editing, error: t("Enter a preset name") });
+      return;
+    }
+    if (presets.some((preset, i) => preset.name === name && i !== editing.index)) {
+      setEditing({ ...editing, error: t("A preset with this name already exists") });
+      return;
+    }
+    const next = [...presets];
+    const wasActive = editing.index !== null && presets[editing.index]?.name === active;
+    if (editing.index === null) {
+      next.push({ name, prompt });
+    } else {
+      next[editing.index] = { name, prompt };
+    }
+    onChange(next);
+    if (wasActive) onActiveChange(name);
+    if (editing.index === null && next.length === 1) onActiveChange(name);
+    setEditing(null);
+  };
+  return (
+    <>
+      <View style={{ paddingHorizontal: 16, paddingTop: 12 }}>
+        <Text style={{ color: tokens.foreground, fontSize: 15, fontWeight: "600" }}>{label}</Text>
+      </View>
+      {presets.map((preset, index) => {
+        const isActive = active === preset.name;
+        return (
+          <View
+            key={preset.name}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+            }}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
+              onPress={() => onActiveChange(isActive ? null : preset.name)}
+              style={{ flex: 1 }}
+            >
+              <Text
+                style={{
+                  color: isActive ? tokens.link : tokens.foreground,
+                  fontSize: 15,
+                  fontWeight: isActive ? "600" : "400",
+                }}
+                numberOfLines={1}
+              >
+                {isActive ? `✓ ${preset.name}` : preset.name}
+              </Text>
+              <Text
+                style={{ color: tokens.mutedForeground, fontSize: 13, marginTop: 2 }}
+                numberOfLines={2}
+              >
+                {preset.prompt}
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel={t("Edit preset")}
+              accessibilityRole="button"
+              onPress={() =>
+                setEditing({ index, name: preset.name, prompt: preset.prompt, error: null })
+              }
+              style={{
+                minWidth: 32,
+                minHeight: 32,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ color: tokens.link, fontSize: 15 }}>{t("Edit")}</Text>
+            </Pressable>
+            <Pressable
+              accessibilityLabel={t("Delete preset")}
+              accessibilityRole="button"
+              onPress={() =>
+                Alert.alert(t("Delete preset"), preset.name, [
+                  { text: t("Cancel"), style: "cancel" },
+                  {
+                    text: t("Delete"),
+                    style: "destructive",
+                    onPress: () => {
+                      onChange(presets.filter((_, i) => i !== index));
+                      if (isActive) onActiveChange(null);
+                    },
+                  },
+                ])
+              }
+              style={{
+                minWidth: 32,
+                minHeight: 32,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text style={{ color: tokens.destructive, fontSize: 16 }}>✕</Text>
+            </Pressable>
+          </View>
+        );
+      })}
+      {editing ? (
+        <View style={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8 }}>
+          <TextInput
+            accessibilityLabel={t("Preset name")}
+            placeholder={t("Preset name")}
+            placeholderTextColor={tokens.mutedForeground}
+            value={editing.name}
+            onChangeText={(name) => setEditing({ ...editing, name, error: null })}
+            style={{
+              color: tokens.foreground,
+              fontSize: 15,
+              borderWidth: 1,
+              borderColor: tokens.border,
+              borderRadius: 8,
+              paddingHorizontal: 10,
+              paddingVertical: 8,
+            }}
+          />
+          <TextInput
+            accessibilityLabel={t("Preset prompt")}
+            placeholder={t("Preset prompt")}
+            placeholderTextColor={tokens.mutedForeground}
+            value={editing.prompt}
+            onChangeText={(prompt) => setEditing({ ...editing, prompt, error: null })}
+            multiline
+            style={{
+              color: tokens.foreground,
+              fontSize: 15,
+              borderWidth: 1,
+              borderColor: tokens.border,
+              borderRadius: 8,
+              paddingHorizontal: 10,
+              paddingVertical: 8,
+              minHeight: 72,
+              textAlignVertical: "top",
+            }}
+          />
+          {editing.error ? (
+            <Text style={{ color: tokens.destructive, fontSize: 13 }}>{editing.error}</Text>
+          ) : null}
+          <View style={{ flexDirection: "row", gap: 12, justifyContent: "flex-end" }}>
+            <NativeActionButton
+              label={t("Cancel")}
+              prominence="quiet"
+              onPress={() => setEditing(null)}
+            />
+            <NativeActionButton label={t("Save")} prominence="secondary" onPress={saveEditing} />
+          </View>
+        </View>
+      ) : presets.length < BOT_PROMPT_PRESET_MAX ? (
         <Pressable
           accessibilityRole="button"
-          onPress={onApply}
+          onPress={() => setEditing({ index: null, name: "", prompt: "", error: null })}
           style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}
         >
-          <Text style={{ color: tokens.link, fontSize: 15 }}>
-            {kind === "video"
-              ? t("Set as video generation model")
-              : t("Set as image generation model")}
-          </Text>
+          <Text style={{ color: tokens.link, fontSize: 15 }}>{t("New preset")}</Text>
         </Pressable>
       ) : null}
     </>
@@ -223,9 +620,13 @@ export default function BotSettingsScreen() {
   const [advancedOpen, setAdvancedOpen] = useState(focus === "model" || pickedModel !== undefined);
   const [packageOpen, setPackageOpen] = useState(false);
   const [modelKey, setModelKey] = useState("");
-  const [translationModelKey, setTranslationModelKey] = useState("");
-  const [videoModelKey, setVideoModelKey] = useState("");
-  const [imageModelKey, setImageModelKey] = useState("");
+  const [translationModels, setTranslationModels] = useState<BotModelEntry[]>([]);
+  const [videoModels, setVideoModels] = useState<BotModelEntry[]>([]);
+  const [imageModels, setImageModels] = useState<BotModelEntry[]>([]);
+  const [videoPresets, setVideoPresets] = useState<BotPromptPreset[]>([]);
+  const [activeVideoPreset, setActiveVideoPreset] = useState<string | null>(null);
+  const [imagePresets, setImagePresets] = useState<BotPromptPreset[]>([]);
+  const [activeImagePreset, setActiveImagePreset] = useState<string | null>(null);
   const [videoTest, setVideoTest] = useState<MediaModelTestState>({ status: "idle" });
   const [imageTest, setImageTest] = useState<MediaModelTestState>({ status: "idle" });
   const [translationSource, setTranslationSource] = useState<TranslationSourceLanguage>("auto");
@@ -365,21 +766,13 @@ export default function BotSettingsScreen() {
             : "",
         );
         setThinkingLevel(next.thinkingLevel ?? "");
-        setTranslationModelKey(
-          next.translationModelProvider && next.translationModelId
-            ? modelOptionKey(next.translationModelProvider, next.translationModelId)
-            : "",
-        );
-        setVideoModelKey(
-          next.videoModelProvider && next.videoModelId
-            ? modelOptionKey(next.videoModelProvider, next.videoModelId)
-            : "",
-        );
-        setImageModelKey(
-          next.imageModelProvider && next.imageModelId
-            ? modelOptionKey(next.imageModelProvider, next.imageModelId)
-            : "",
-        );
+        setTranslationModels(next.translationModels ?? []);
+        setVideoModels(next.videoModels ?? []);
+        setImageModels(next.imageModels ?? []);
+        setVideoPresets(next.videoPromptPresets ?? []);
+        setActiveVideoPreset(next.activeVideoPromptPreset ?? null);
+        setImagePresets(next.imagePromptPresets ?? []);
+        setActiveImagePreset(next.activeImagePromptPreset ?? null);
         setTranslationSource(next.translationSourceLanguage ?? "auto");
         setTranslationTarget(
           next.translationTargetLanguage &&
@@ -451,64 +844,29 @@ export default function BotSettingsScreen() {
     [catalog, credentials, me, selectedModelKey, t],
   );
 
-  const storedTranslationModel = translationModelKey
-    ? parseModelOptionKey(translationModelKey)
-    : null;
-  const selectedTranslationModel = storedTranslationModel
-    ? {
-        provider: storedTranslationModel.provider,
-        modelId: resolveSelectableModelId(
-          catalog,
-          storedTranslationModel.provider,
-          storedTranslationModel.modelId,
+  // The "add backup" pickers list detected models not already in the list.
+  const addChoices = (models: BotModelEntry[]): MenuPickerChoice[] => {
+    const used = new Set<string>();
+    for (const entry of models) {
+      used.add(modelOptionKey(entry.provider, entry.model));
+      used.add(
+        modelOptionKey(
+          entry.provider,
+          resolveSelectableModelId(catalog, entry.provider, entry.model),
         ),
-      }
-    : null;
-  // The translation model picks from the same detected models, without the
-  // space default: an empty key means no translation model is set.
-  const translationModelChoices: MenuPickerChoice[] = useMemo(
-    () => [
-      { key: "", label: t("Not set") },
-      ...modelChoices.slice(1).map((choice) => ({ key: choice.key, label: choice.label })),
-    ],
-    [modelChoices, t],
-  );
-  const videoModelChoices: MenuPickerChoice[] = useMemo(
-    () => [
-      { key: "", label: t("Not set") },
-      ...modelChoices.slice(1).map((choice) => ({ key: choice.key, label: choice.label })),
-    ],
-    [modelChoices, t],
-  );
-  const imageModelChoices: MenuPickerChoice[] = useMemo(
-    () => [
-      { key: "", label: t("Not set") },
-      ...modelChoices.slice(1).map((choice) => ({ key: choice.key, label: choice.label })),
-    ],
-    [modelChoices, t],
-  );
-  const storedVideoModel = videoModelKey ? parseModelOptionKey(videoModelKey) : null;
-  const selectedVideoModel = storedVideoModel
-    ? {
-        provider: storedVideoModel.provider,
-        modelId: resolveSelectableModelId(
-          catalog,
-          storedVideoModel.provider,
-          storedVideoModel.modelId,
-        ),
-      }
-    : null;
-  const storedImageModel = imageModelKey ? parseModelOptionKey(imageModelKey) : null;
-  const selectedImageModel = storedImageModel
-    ? {
-        provider: storedImageModel.provider,
-        modelId: resolveSelectableModelId(
-          catalog,
-          storedImageModel.provider,
-          storedImageModel.modelId,
-        ),
-      }
-    : null;
+      );
+    }
+    return modelChoices.slice(1).filter((choice) => !used.has(choice.key));
+  };
+  const labelForModelEntry = (entry: BotModelEntry): string => {
+    const found = catalog.find(
+      (item) =>
+        item.provider === entry.provider &&
+        (item.id === entry.model ||
+          resolveSelectableModelId(catalog, item.provider, item.id) === entry.model),
+    );
+    return found?.label ?? entry.model;
+  };
   const translationTargetChoices: MenuPickerChoice[] = useMemo(
     () =>
       TRANSLATION_TARGET_LANGUAGES.map((code) => ({
@@ -733,20 +1091,28 @@ export default function BotSettingsScreen() {
     setPackError(null);
   }
 
-  async function testMediaModel(kind: "video" | "image") {
+  async function testMediaModel(kind: "video" | "image", entry: BotModelEntry) {
     if (!botId) return;
-    const selected = kind === "video" ? selectedVideoModel : selectedImageModel;
-    if (!selected) return;
+    const selected = {
+      provider: entry.provider,
+      modelId: resolveSelectableModelId(catalog, entry.provider, entry.model),
+    };
     const setTest = kind === "video" ? setVideoTest : setImageTest;
     const started = Date.now();
     const seconds = () => Math.round(((Date.now() - started) / 1000) * 10) / 10;
-    setTest({ status: "testing" });
+    setTest({ status: "testing", modelKey: modelOptionKey(entry.provider, entry.model) });
     try {
+      // The probe runs with the active preset, so the test reflects real usage.
+      const preset =
+        kind === "video"
+          ? activeBotPromptPreset(videoPresets, activeVideoPreset)
+          : activeBotPromptPreset(imagePresets, activeImagePreset);
       const result = await rpc("bots/testMediaModel", {
         botId,
         kind,
         provider: selected.provider,
         modelId: selected.modelId,
+        ...(preset ? { presetPrompt: preset.prompt } : {}),
       });
       setTest({
         status: "done",
@@ -768,21 +1134,21 @@ export default function BotSettingsScreen() {
     }
   }
 
-  /** Applies a tested model in one tap, so the picker and the server agree at once. */
+  /** Applies a tested model in one tap: it moves to primary, the rest stay as fallbacks. */
   async function applyTestedMediaModel(kind: "video" | "image") {
     if (!botId || !bot) return;
     const test = kind === "video" ? videoTest : imageTest;
     if (test.status !== "done" || !test.supported) return;
     const parsed = parseModelOptionKey(test.modelKey);
     if (!parsed) return;
-    if (kind === "video") setVideoModelKey(test.modelKey);
-    else setImageModelKey(test.modelKey);
+    const models = kind === "video" ? videoModels : imageModels;
+    const next = moveBotModelToFront(models, { provider: parsed.provider, model: parsed.modelId });
+    if (kind === "video") setVideoModels(next);
+    else setImageModels(next);
     try {
       const updated = await rpc(
         "bots/update",
-        kind === "video"
-          ? { botId, videoModelProvider: parsed.provider, videoModelId: parsed.modelId }
-          : { botId, imageModelProvider: parsed.provider, imageModelId: parsed.modelId },
+        kind === "video" ? { botId, videoModels: next } : { botId, imageModels: next },
       );
       setBot((prev) => (prev ? { ...prev, ...updated } : prev));
     } catch (err) {
@@ -808,12 +1174,13 @@ export default function BotSettingsScreen() {
         modelId?: string | null;
         thinkingLevel?: ThinkingLevel | null;
         autoSpeak?: boolean;
-        translationModelProvider?: string | null;
-        translationModelId?: string | null;
-        videoModelProvider?: string | null;
-        videoModelId?: string | null;
-        imageModelProvider?: string | null;
-        imageModelId?: string | null;
+        translationModels?: BotModelEntry[] | null;
+        videoModels?: BotModelEntry[] | null;
+        imageModels?: BotModelEntry[] | null;
+        videoPromptPresets?: BotPromptPreset[] | null;
+        activeVideoPromptPreset?: string | null;
+        imagePromptPresets?: BotPromptPreset[] | null;
+        activeImagePromptPreset?: string | null;
         translationSourceLanguage?: TranslationSourceLanguage;
         translationTargetLanguage?: TranslationTargetLanguage | null;
         autoTranslate?: boolean;
@@ -842,26 +1209,26 @@ export default function BotSettingsScreen() {
           : null;
       }
       if (autoSpeak !== bot.autoSpeak) input.autoSpeak = autoSpeak;
-      const translationModelChanged =
-        (selectedTranslationModel?.provider ?? null) !== (bot.translationModelProvider ?? null) ||
-        (selectedTranslationModel?.modelId ?? null) !== (bot.translationModelId ?? null);
-      if (translationModelChanged) {
-        input.translationModelProvider = selectedTranslationModel?.provider ?? null;
-        input.translationModelId = selectedTranslationModel?.modelId ?? null;
+      if (!sameModelList(translationModels, bot.translationModels)) {
+        input.translationModels = translationModels;
       }
-      const videoModelChanged =
-        (selectedVideoModel?.provider ?? null) !== (bot.videoModelProvider ?? null) ||
-        (selectedVideoModel?.modelId ?? null) !== (bot.videoModelId ?? null);
-      if (videoModelChanged) {
-        input.videoModelProvider = selectedVideoModel?.provider ?? null;
-        input.videoModelId = selectedVideoModel?.modelId ?? null;
+      if (!sameModelList(videoModels, bot.videoModels)) {
+        input.videoModels = videoModels;
       }
-      const imageModelChanged =
-        (selectedImageModel?.provider ?? null) !== (bot.imageModelProvider ?? null) ||
-        (selectedImageModel?.modelId ?? null) !== (bot.imageModelId ?? null);
-      if (imageModelChanged) {
-        input.imageModelProvider = selectedImageModel?.provider ?? null;
-        input.imageModelId = selectedImageModel?.modelId ?? null;
+      if (!sameModelList(imageModels, bot.imageModels)) {
+        input.imageModels = imageModels;
+      }
+      if (!samePresetList(videoPresets, bot.videoPromptPresets)) {
+        input.videoPromptPresets = videoPresets;
+      }
+      if ((activeVideoPreset ?? null) !== (bot.activeVideoPromptPreset ?? null)) {
+        input.activeVideoPromptPreset = activeVideoPreset;
+      }
+      if (!samePresetList(imagePresets, bot.imagePromptPresets)) {
+        input.imagePromptPresets = imagePresets;
+      }
+      if ((activeImagePreset ?? null) !== (bot.activeImagePromptPreset ?? null)) {
+        input.activeImagePromptPreset = activeImagePreset;
       }
       if ((translationSource || "auto") !== (bot.translationSourceLanguage ?? "auto")) {
         input.translationSourceLanguage = translationSource || "auto";
@@ -915,12 +1282,13 @@ export default function BotSettingsScreen() {
       (selectedModel?.provider ?? null) !== (bot.modelProvider ?? null) ||
       (selectedModel?.modelId ?? null) !== (bot.modelId ?? null) ||
       (thinkingLevel || null) !== (bot.thinkingLevel ?? null) ||
-      (selectedTranslationModel?.provider ?? null) !== (bot.translationModelProvider ?? null) ||
-      (selectedTranslationModel?.modelId ?? null) !== (bot.translationModelId ?? null) ||
-      (selectedVideoModel?.provider ?? null) !== (bot.videoModelProvider ?? null) ||
-      (selectedVideoModel?.modelId ?? null) !== (bot.videoModelId ?? null) ||
-      (selectedImageModel?.provider ?? null) !== (bot.imageModelProvider ?? null) ||
-      (selectedImageModel?.modelId ?? null) !== (bot.imageModelId ?? null) ||
+      !sameModelList(translationModels, bot.translationModels) ||
+      !sameModelList(videoModels, bot.videoModels) ||
+      !sameModelList(imageModels, bot.imageModels) ||
+      !samePresetList(videoPresets, bot.videoPromptPresets) ||
+      (activeVideoPreset ?? null) !== (bot.activeVideoPromptPreset ?? null) ||
+      !samePresetList(imagePresets, bot.imagePromptPresets) ||
+      (activeImagePreset ?? null) !== (bot.activeImagePromptPreset ?? null) ||
       (translationSource || "auto") !== (bot.translationSourceLanguage ?? "auto") ||
       (translationTarget || "auto") !== (bot.translationTargetLanguage ?? "auto") ||
       autoTranslate !== (bot.autoTranslate ?? false) ||
@@ -1086,29 +1454,51 @@ export default function BotSettingsScreen() {
               ) : null}
             </SettingsGroup>
             <SettingsGroup label={t("Media generation")}>
-              <MediaModelRow
+              <OrderedModelList
                 kind="video"
-                choices={videoModelChoices}
-                value={videoModelKey}
-                onChange={(key) => {
-                  setVideoModelKey(key);
+                label={t("Video generation model")}
+                models={videoModels}
+                onChange={(next) => {
+                  setVideoModels(next);
                   setVideoTest({ status: "idle" });
                 }}
+                addChoices={addChoices(videoModels)}
+                catalog={catalog}
                 test={videoTest}
-                onTest={() => void testMediaModel("video")}
-                onApply={() => void applyTestedMediaModel("video")}
+                onTest={(entry) => void testMediaModel("video", entry)}
+                onApplyPrimary={() => void applyTestedMediaModel("video")}
+                testable
+                labelFor={labelForModelEntry}
               />
-              <MediaModelRow
+              <PromptPresetSection
+                label={t("Video prompt presets")}
+                presets={videoPresets}
+                active={activeVideoPreset}
+                onChange={setVideoPresets}
+                onActiveChange={setActiveVideoPreset}
+              />
+              <OrderedModelList
                 kind="image"
-                choices={imageModelChoices}
-                value={imageModelKey}
-                onChange={(key) => {
-                  setImageModelKey(key);
+                label={t("Image generation model")}
+                models={imageModels}
+                onChange={(next) => {
+                  setImageModels(next);
                   setImageTest({ status: "idle" });
                 }}
+                addChoices={addChoices(imageModels)}
+                catalog={catalog}
                 test={imageTest}
-                onTest={() => void testMediaModel("image")}
-                onApply={() => void applyTestedMediaModel("image")}
+                onTest={(entry) => void testMediaModel("image", entry)}
+                onApplyPrimary={() => void applyTestedMediaModel("image")}
+                testable
+                labelFor={labelForModelEntry}
+              />
+              <PromptPresetSection
+                label={t("Image prompt presets")}
+                presets={imagePresets}
+                active={activeImagePreset}
+                onChange={setImagePresets}
+                onActiveChange={setActiveImagePreset}
               />
             </SettingsGroup>
             <SettingsGroup label={t("Computer")}>
@@ -1133,11 +1523,15 @@ export default function BotSettingsScreen() {
               {deviceVoiceEnabled ? voiceRow : null}
             </SettingsGroup>
             <SettingsGroup label={t("Translation settings")}>
-              <MenuPicker
-                choices={translationModelChoices}
+              <OrderedModelList
+                kind="translation"
                 label={t("Translation model")}
-                onChange={setTranslationModelKey}
-                value={translationModelKey}
+                models={translationModels}
+                onChange={setTranslationModels}
+                addChoices={addChoices(translationModels)}
+                catalog={catalog}
+                testable={false}
+                labelFor={labelForModelEntry}
               />
               <SettingsRow
                 title={t("Translation direction")}

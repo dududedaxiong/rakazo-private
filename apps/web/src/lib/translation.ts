@@ -1,10 +1,12 @@
 import type {
+  BotModelEntry,
   TranslationTargetLanguage as ContractTranslationTargetLanguage,
   TranslateInput,
   TranslateOutput,
   TranslationSourceLanguage,
 } from "@rakazo/contracts";
 import {
+  primaryBotModel,
   TRANSLATION_SOURCE_LANGUAGE_CODES,
   TRANSLATION_SOURCE_LANGUAGE_LABELS,
   TRANSLATION_TARGET_LANGUAGE_CODES,
@@ -67,18 +69,19 @@ export function translationLanguageLabel(code: string): string {
 /**
  * A bot's translation settings, with the web default filled in for an unset target.
  * Accepts a full bot or the partial bot shape the message roster hands out.
+ * The model fields are the ordered list's primary; fallbacks stay server-side.
  */
 export function botTranslationSettings(bot: {
-  translationModelProvider?: string | null;
-  translationModelId?: string | null;
+  translationModels?: readonly BotModelEntry[] | null;
   translationSourceLanguage?: string;
   translationTargetLanguage?: string | null;
   autoTranslate?: boolean;
   showTranslationActions?: boolean;
 }): BotTranslationSettings {
+  const primary = primaryBotModel(bot.translationModels);
   return {
-    translationModelProvider: bot.translationModelProvider ?? null,
-    translationModelId: bot.translationModelId ?? null,
+    translationModelProvider: primary?.provider ?? null,
+    translationModelId: primary?.model ?? null,
     translationSourceLanguage: isTranslationSourceLanguage(bot.translationSourceLanguage)
       ? bot.translationSourceLanguage
       : DEFAULT_TRANSLATION_SOURCE_LANGUAGE,

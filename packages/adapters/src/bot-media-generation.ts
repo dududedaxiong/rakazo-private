@@ -1,65 +1,80 @@
 import type { MediaGenerationProvider } from "@rakazo/adapter-kit";
+import type { BotModelEntry } from "@rakazo/contracts";
+import {
+  activeBotPromptPreset,
+  parseBotModelList,
+  parseBotPromptPresets,
+  withPromptPreset,
+} from "@rakazo/contracts";
 import type { Bot } from "@rakazo/db";
 import type { ExecutorDeps } from "./executor-deps.js";
+import type { BotMediaCallEntry, BotMediaKindCalls } from "./media-generation-provider.js";
 import { BotMediaGenerationProvider } from "./media-generation-provider.js";
 import { generateMediaWithChatModel } from "./pi-openai-compatible-provider.js";
 import { resolveConnectedModelKey } from "./run-model.js";
 
 type BotMediaFields = Pick<
   Bot,
-  "videoModelProvider" | "videoModelId" | "imageModelProvider" | "imageModelId"
+  | "videoModels"
+  | "imageModels"
+  | "videoPromptPresets"
+  | "activeVideoPromptPreset"
+  | "imagePromptPresets"
+  | "activeImagePromptPreset"
 >;
 
-type MediaCall = (
-  prompt: string,
-  signal: AbortSignal,
-) => Promise<{
-  bytes: Uint8Array;
-  mimeType: "image/png" | "video/mp4";
-}>;
-
 /**
- * Resolves one bot media kind to a chat-model call, or null when the bot has
- * nothing configured for it or the configured model no longer resolves. A
- * failed resolution falls back to the global provider instead of breaking
- * the run: the bot's media setting is a preference, not a requirement.
+ * Resolves one bot media kind's ordered list into the calls to try, in order.
+ * An entry whose model no longer resolves is skipped and recorded, so the
+ * all-fail error can name it; a failed resolution never breaks the run on its
+ * own — the bot's media setting is a preference, not a requirement.
  */
-async function resolveBotMediaCall(
+async function resolveBotMediaKind(
   deps: ExecutorDeps,
   scope: { userId: string; spaceId: string },
-  provider: string | null,
-  modelId: string | null,
+  entries: readonly BotModelEntry[] | null,
   kind: "image" | "video",
-): Promise<MediaCall | null> {
-  if (!provider || !modelId) return null;
-  try {
-    const { resolved } = await resolveConnectedModelKey(deps, scope, provider, modelId);
-    const baseUrl = resolved.baseUrl;
-    if (!baseUrl) return null;
-    return (prompt, signal) =>
-      generateMediaWithChatModel(
-        {
-          baseUrl,
-          apiKey: resolved.apiKey,
-          headers: resolved.headers,
-          apiProtocol: resolved.apiProtocol,
-          authMode: resolved.authMode,
-          model: modelId,
-          kind,
-          prompt,
-        },
-        undefined,
-        signal,
-        { allowPrivate: resolved.allowPrivateEndpoint ?? false },
-      );
-  } catch {
-    return null;
+  presetPrompt: string | null,
+): Promise<BotMediaKindCalls> {
+  const calls: BotMediaCallEntry[] = [];
+  const failures: { modelId: string; reason: string }[] = [];
+  for (const entry of entries ?? []) {
+    try {
+      const { resolved } = await resolveConnectedModelKey(deps, scope, entry.provider, entry.model);
+      const baseUrl = resolved.baseUrl;
+      if (!baseUrl) {
+        failures.push({ modelId: entry.model, reason: "not connected" });
+        continue;
+      }
+      calls.push({
+        modelId: entry.model,
+        call: (prompt, signal) =>
+          generateMediaWithChatModel(
+            {
+              baseUrl,
+              apiKey: resolved.apiKey,
+              headers: resolved.headers,
+              apiProtocol: resolved.apiProtocol,
+              authMode: resolved.authMode,
+              model: entry.model,
+              kind,
+              prompt: withPromptPreset(presetPrompt, prompt),
+            },
+            undefined,
+            signal,
+            { allowPrivate: resolved.allowPrivateEndpoint ?? false },
+          ),
+      });
+    } catch {
+      failures.push({ modelId: entry.model, reason: "not connected" });
+    }
   }
+  return { calls, failures };
 }
 
 /**
  * The media provider for one run: each kind answers from the bot's configured
- * media model when it resolves, and otherwise from the global provider. A bot
+ * media models, tried in order, and otherwise from the global provider. A bot
  * with no media models gets the global provider unchanged, so its chats
  * behave exactly as before.
  */
@@ -69,13 +84,23 @@ export async function resolveBotMediaGenerationProvider(
   bot: BotMediaFields,
   fallback?: MediaGenerationProvider,
 ): Promise<MediaGenerationProvider | undefined> {
-  const hasImage = Boolean(bot.imageModelProvider && bot.imageModelId);
-  const hasVideo = Boolean(bot.videoModelProvider && bot.videoModelId);
-  if (!hasImage && !hasVideo) return fallback;
-  const [imageCall, videoCall] = await Promise.all([
-    resolveBotMediaCall(deps, scope, bot.imageModelProvider, bot.imageModelId, "image"),
-    resolveBotMediaCall(deps, scope, bot.videoModelProvider, bot.videoModelId, "video"),
+  const imageEntries = parseBotModelList(bot.imageModels);
+  const videoEntries = parseBotModelList(bot.videoModels);
+  if (!imageEntries && !videoEntries) return fallback;
+  const imagePreset =
+    activeBotPromptPreset(
+      parseBotPromptPresets(bot.imagePromptPresets),
+      bot.activeImagePromptPreset,
+    )?.prompt ?? null;
+  const videoPreset =
+    activeBotPromptPreset(
+      parseBotPromptPresets(bot.videoPromptPresets),
+      bot.activeVideoPromptPreset,
+    )?.prompt ?? null;
+  const [image, video] = await Promise.all([
+    resolveBotMediaKind(deps, scope, imageEntries, "image", imagePreset),
+    resolveBotMediaKind(deps, scope, videoEntries, "video", videoPreset),
   ]);
-  if (!imageCall && !videoCall) return fallback;
-  return new BotMediaGenerationProvider(imageCall, videoCall, fallback);
+  if (image.calls.length === 0 && video.calls.length === 0) return fallback;
+  return new BotMediaGenerationProvider(image, video, fallback);
 }

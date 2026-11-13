@@ -8303,3 +8303,7 @@ msgstr "Wybierz model tłumaczenia w ustawieniach zaawansowanych tego bota"
 #: src/pages/shell/message-translation.tsx
 msgid "Translated with {modelId} · {source} to {target}"
 msgstr "Przetłumaczono przy użyciu {modelId} · z {source} na {target}"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {modelId} (backup) · {source} to {target}"
+msgstr "Przetłumaczono przy użyciu {modelId} (zapasowy) · z {source} na {target}"

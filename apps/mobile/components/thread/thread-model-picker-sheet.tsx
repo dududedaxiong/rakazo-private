@@ -1,3 +1,5 @@
+import type { BotModelEntry } from "@rakazo/contracts";
+import { moveBotModelToFront } from "@rakazo/contracts";
 import type { ChatModelChoice } from "@rakazo/core";
 import { useNavigation } from "expo-router";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
@@ -45,6 +47,8 @@ export function ThreadModelPickerSheet({
   botId,
   userId,
   selectedKey,
+  /** The bot's current ordered list for the video/image role; a pick moves to its front. */
+  currentModels,
   onClose,
   onSaved,
 }: {
@@ -53,6 +57,7 @@ export function ThreadModelPickerSheet({
   botId: string;
   userId: string;
   selectedKey: string;
+  currentModels?: readonly BotModelEntry[] | null;
   onClose: () => void;
   onSaved: (choice: ThreadModelSave) => void;
 }) {
@@ -179,10 +184,17 @@ export function ThreadModelPickerSheet({
       const modelId = choice.modelId ?? null;
       if (role === "main") {
         await rpc("bots/update", { botId, modelProvider: provider, modelId });
-      } else if (role === "video") {
-        await rpc("bots/update", { botId, videoModelProvider: provider, videoModelId: modelId });
-      } else if (role === "image") {
-        await rpc("bots/update", { botId, imageModelProvider: provider, imageModelId: modelId });
+      } else if (role === "video" || role === "image") {
+        // A pick moves to the front of the ordered list; the rest stay as
+        // fallbacks. Picking the space default clears the list.
+        const next =
+          provider && modelId
+            ? moveBotModelToFront(currentModels, { provider, model: modelId })
+            : [];
+        await rpc("bots/update", {
+          botId,
+          ...(role === "video" ? { videoModels: next } : { imageModels: next }),
+        });
       } else {
         await rpc("models/setRole", {
           role: "computer",
@@ -224,13 +236,24 @@ export function ThreadModelPickerSheet({
     setChoices((prev) => prev?.filter((item) => item.key !== choice.key) ?? null);
     try {
       await removeModelFromConnection(target);
+      const removed =
+        choice.provider && choice.modelId
+          ? { provider: choice.provider, model: choice.modelId }
+          : null;
       if (choice.key === selectedKey) {
         if (role === "main") {
           await rpc("bots/update", { botId, modelProvider: null, modelId: null });
-        } else if (role === "video") {
-          await rpc("bots/update", { botId, videoModelProvider: null, videoModelId: null });
-        } else if (role === "image") {
-          await rpc("bots/update", { botId, imageModelProvider: null, imageModelId: null });
+        } else if (role === "video" || role === "image") {
+          // Dropping a listed model removes it from the ordered list; the
+          // next entry becomes primary.
+          const next = (currentModels ?? []).filter(
+            (item) =>
+              !(removed && item.provider === removed.provider && item.model === removed.model),
+          );
+          await rpc("bots/update", {
+            botId,
+            ...(role === "video" ? { videoModels: next } : { imageModels: next }),
+          });
         } else {
           await rpc("models/setRole", {
             role: "computer",
@@ -240,6 +263,17 @@ export function ThreadModelPickerSheet({
           });
         }
         onSaved({ provider: null, modelId: null });
+      } else if ((role === "video" || role === "image") && removed) {
+        // A fallback was removed: save the list without it, primary unchanged.
+        const next = (currentModels ?? []).filter(
+          (item) => !(item.provider === removed.provider && item.model === removed.model),
+        );
+        if (next.length !== (currentModels ?? []).length) {
+          await rpc("bots/update", {
+            botId,
+            ...(role === "video" ? { videoModels: next } : { imageModels: next }),
+          });
+        }
       }
       await reloadChoices();
     } catch (err) {

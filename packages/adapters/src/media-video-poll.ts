@@ -107,9 +107,10 @@ export function mediaDelivery(
         },
       ),
     publish: async (
-      block: Parameters<typeof persistMessageInTransaction>[3][number],
+      blocks: Parameters<typeof persistMessageInTransaction>[3],
       jobId: string,
       artifactId: string,
+      modelId?: string,
     ) => {
       const committed = await deps.prisma.$transaction(async (tx) => {
         // Commit completion with the message so a restarted poll cannot post twice, and a job
@@ -118,7 +119,11 @@ export function mediaDelivery(
           where: { id: jobId, status: "media_polling" },
           data: {
             status: "media_completed",
-            result: { provider: options.providerId, artifactId },
+            result: {
+              provider: options.providerId,
+              artifactId,
+              ...(modelId ? { modelId } : {}),
+            },
           },
         });
         if (!claimed.count) return null;
@@ -126,7 +131,7 @@ export function mediaDelivery(
           tx,
           run,
           "bot",
-          [block],
+          blocks,
           undefined,
           undefined,
           options.afterRun,

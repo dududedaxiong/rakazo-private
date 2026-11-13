@@ -174,8 +174,13 @@ function bot(description = "Billing", overrides: Partial<Bot> = {}): Bot {
     modelProvider: null,
     modelId: null,
     thinkingLevel: null,
-    translationModelProvider: null,
-    translationModelId: null,
+    translationModels: null,
+    videoModels: null,
+    imageModels: null,
+    videoPromptPresets: null,
+    activeVideoPromptPreset: null,
+    imagePromptPresets: null,
+    activeImagePromptPreset: null,
     translationSourceLanguage: "auto",
     translationTargetLanguage: null,
     autoTranslate: false,
@@ -884,8 +889,7 @@ describe("BotSettings translation settings", () => {
 
   it("shows a stored translation model, languages and auto-translate", async () => {
     await render("Billing", {
-      translationModelProvider: "deepseek",
-      translationModelId: "deepseek-v4.1-flash",
+      translationModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
       translationSourceLanguage: "ja",
       translationTargetLanguage: "en",
       autoTranslate: true,
@@ -934,8 +938,7 @@ describe("BotSettings translation settings", () => {
 
   it("clears the translation model pair together when the model is unset", async () => {
     await render("Billing", {
-      translationModelProvider: "deepseek",
-      translationModelId: "deepseek-v4.1-flash",
+      translationModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
     } as Partial<Bot>);
     await setSelect(translationModelSelect(), "");
     await clickSave();

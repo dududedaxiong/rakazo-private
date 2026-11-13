@@ -13,8 +13,9 @@ const actor = {
 } satisfies Actor;
 
 type BotConfig = {
-  translationModelProvider: string | null;
-  translationModelId: string | null;
+  translationModels?: { provider: string; model: string }[] | null;
+  translationModelProvider?: string | null;
+  translationModelId?: string | null;
 };
 
 function doneRun(text: string) {
@@ -91,6 +92,7 @@ describe("createTranslator", () => {
       translatedText: "你好",
       detectedLanguage: "en",
       modelId: "model-1",
+      usedFallback: false,
     });
     expect(resolveConnectedModel).toHaveBeenCalledWith(
       { userId: "user-1", spaceId: "space-1" },
@@ -107,6 +109,7 @@ describe("createTranslator", () => {
       translatedText: "你好",
       detectedLanguage: "ja",
       modelId: "model-1",
+      usedFallback: false,
     });
   });
 
@@ -130,6 +133,7 @@ describe("createTranslator", () => {
       translatedText: "최신 상황",
       detectedLanguage: "zh",
       modelId: "model-1",
+      usedFallback: false,
     });
     expect(run).toHaveBeenCalledTimes(2);
   });
@@ -153,6 +157,7 @@ describe("createTranslator", () => {
       translatedText: "你好",
       detectedLanguage: "en",
       modelId: "model-1",
+      usedFallback: false,
     });
     expect(run).toHaveBeenCalledTimes(2);
   });
@@ -172,5 +177,88 @@ describe("createTranslator", () => {
     });
     await expect(translator(actor, "bot-1", "hello", "auto", "zh")).rejects.toThrow();
     expect(run).toHaveBeenCalledTimes(2);
+  });
+
+  it("uses the fallback when the primary does not resolve, and marks it", async () => {
+    const { translator, resolveConnectedModel, run } = harness({
+      bot: {
+        translationModels: [
+          { provider: "test-provider", model: "model-1" },
+          { provider: "test-provider", model: "model-2" },
+        ],
+      },
+      runs: [doneRun('{"detected": "en", "text": "你好"}')],
+    });
+    resolveConnectedModel.mockImplementation(async (_scope, _provider, modelId) => {
+      if (modelId === "model-1") throw new Error("not connected");
+      return { provider: "test-provider", id: modelId };
+    });
+    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).resolves.toEqual({
+      translatedText: "你好",
+      detectedLanguage: "en",
+      modelId: "model-2",
+      usedFallback: true,
+    });
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the fallback when the primary keeps failing, and marks it", async () => {
+    const { translator, resolveConnectedModel, run } = harness({
+      bot: {
+        translationModels: [
+          { provider: "test-provider", model: "model-1" },
+          { provider: "test-provider", model: "model-2" },
+        ],
+      },
+      runs: [doneRun(""), doneRun(""), doneRun('{"detected": "en", "text": "你好"}')],
+    });
+    resolveConnectedModel.mockImplementation(async (_scope, _provider, modelId) => ({
+      provider: "test-provider",
+      id: modelId,
+    }));
+    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).resolves.toEqual({
+      translatedText: "你好",
+      detectedLanguage: "en",
+      modelId: "model-2",
+      usedFallback: true,
+    });
+    expect(run).toHaveBeenCalledTimes(3);
+  });
+
+  it("lists every model's failure reason when all fail", async () => {
+    const { translator, resolveConnectedModel } = harness({
+      bot: {
+        translationModels: [
+          { provider: "test-provider", model: "model-1" },
+          { provider: "test-provider", model: "model-2" },
+        ],
+      },
+      runs: [doneRun(""), doneRun(""), doneRun(""), doneRun("")],
+    });
+    resolveConnectedModel.mockImplementation(async (_scope, _provider, modelId) => {
+      if (modelId === "model-1") throw new Error("not connected");
+      return { provider: "test-provider", id: modelId };
+    });
+    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).rejects.toThrow(
+      "Translation failed: model-1 (not connected), model-2 (Translation produced no text)",
+    );
+  });
+
+  it("reads an old single-model bot as a one-element list", async () => {
+    const { translator, resolveConnectedModel } = harness({
+      bot: { translationModelProvider: "test-provider", translationModelId: "model-1" },
+      runs: [doneRun('{"detected": "en", "text": "你好"}')],
+    });
+    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).resolves.toEqual({
+      translatedText: "你好",
+      detectedLanguage: "en",
+      modelId: "model-1",
+      usedFallback: false,
+    });
+    expect(resolveConnectedModel).toHaveBeenCalledWith(
+      { userId: "user-1", spaceId: "space-1" },
+      "test-provider",
+      "model-1",
+    );
   });
 });

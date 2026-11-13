@@ -80,10 +80,8 @@ const currentBot = {
   name: "Chief",
   modelProvider: "provider-a",
   modelId: "model-a",
-  videoModelProvider: null,
-  videoModelId: null,
-  imageModelProvider: null,
-  imageModelId: null,
+  videoModels: null,
+  imageModels: null,
   computerMode: "team",
 } as unknown as MobileBot;
 
@@ -149,10 +147,8 @@ describe("ThreadComposerChips media model card", () => {
   it("still shows the card when no media model is set", async () => {
     await mountChips({
       ...currentBot,
-      videoModelProvider: null,
-      videoModelId: null,
-      imageModelProvider: null,
-      imageModelId: null,
+      videoModels: null,
+      imageModels: null,
     } as unknown as MobileBot);
     expect(node.textContent).toContain("Media model");
   });

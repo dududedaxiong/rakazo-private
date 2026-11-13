@@ -12,6 +12,8 @@ import {
   disabledBuiltinToolSet,
   InstructionVersionSchema,
   initialBotMemory,
+  parseBotModelList,
+  parseBotPromptPresets,
   resolveBotAvatarSet,
   TRANSLATION_SOURCE_LANGUAGE_CODES,
 } from "@rakazo/contracts";
@@ -76,6 +78,26 @@ function rosterUpdatedAt(newestMessage: { createdAt: Date } | undefined, botUpda
   return newestMessage?.createdAt ?? botUpdatedAt;
 }
 
+/**
+ * A bot's translation models: the ordered list when it has one, else the
+ * single model older rows still carry. The list is the source of truth once
+ * written; the single is only a read fallback for rows the migration has not
+ * backfilled yet.
+ */
+function resolveTranslationModels(bot: {
+  translationModels?: unknown;
+  translationModelProvider?: string | null;
+  translationModelId?: string | null;
+}): { provider: string; model: string }[] | null {
+  const list = parseBotModelList(bot.translationModels);
+  if (list) return list;
+  const provider = bot.translationModelProvider
+    ? canonicalPiProviderId(bot.translationModelProvider)
+    : null;
+  const model = bot.translationModelId ?? null;
+  return provider && model ? [{ provider, model }] : null;
+}
+
 function mapBot(
   bot: {
     id: string;
@@ -104,10 +126,13 @@ function mapBot(
     thinkingLevel?: string | null;
     translationModelProvider?: string | null;
     translationModelId?: string | null;
-    videoModelProvider?: string | null;
-    videoModelId?: string | null;
-    imageModelProvider?: string | null;
-    imageModelId?: string | null;
+    translationModels?: unknown;
+    videoModels?: unknown;
+    imageModels?: unknown;
+    videoPromptPresets?: unknown;
+    activeVideoPromptPreset?: string | null;
+    imagePromptPresets?: unknown;
+    activeImagePromptPreset?: string | null;
     translationSourceLanguage?: string | null;
     translationTargetLanguage?: string | null;
     autoTranslate?: boolean;
@@ -161,18 +186,13 @@ function mapBot(
     modelProvider: bot.modelProvider ? canonicalPiProviderId(bot.modelProvider) : null,
     modelId: bot.modelId ?? null,
     thinkingLevel: (bot.thinkingLevel as Bot["thinkingLevel"]) ?? null,
-    translationModelProvider: bot.translationModelProvider
-      ? canonicalPiProviderId(bot.translationModelProvider)
-      : null,
-    translationModelId: bot.translationModelId ?? null,
-    videoModelProvider: bot.videoModelProvider
-      ? canonicalPiProviderId(bot.videoModelProvider)
-      : null,
-    videoModelId: bot.videoModelId ?? null,
-    imageModelProvider: bot.imageModelProvider
-      ? canonicalPiProviderId(bot.imageModelProvider)
-      : null,
-    imageModelId: bot.imageModelId ?? null,
+    translationModels: resolveTranslationModels(bot),
+    videoModels: parseBotModelList(bot.videoModels),
+    imageModels: parseBotModelList(bot.imageModels),
+    videoPromptPresets: parseBotPromptPresets(bot.videoPromptPresets),
+    activeVideoPromptPreset: bot.activeVideoPromptPreset ?? null,
+    imagePromptPresets: parseBotPromptPresets(bot.imagePromptPresets),
+    activeImagePromptPreset: bot.activeImagePromptPreset ?? null,
     translationSourceLanguage: (TRANSLATION_SOURCE_LANGUAGE_CODES as readonly string[]).includes(
       bot.translationSourceLanguage ?? "",
     )

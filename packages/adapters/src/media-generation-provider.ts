@@ -6,7 +6,11 @@ import type {
   MediaGenerationProvider,
   MediaVideoJob,
 } from "@rakazo/adapter-kit";
-import { MediaGenerationError } from "@rakazo/adapter-kit";
+import {
+  allMediaModelsFailedError,
+  MediaGenerationError,
+  mediaGenerationFailureReason,
+} from "@rakazo/adapter-kit";
 import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
 import { z } from "zod";
 import { FAKE_VIDEO_BASE64 } from "./fake-media-assets.js";
@@ -283,9 +287,24 @@ export class FakeMediaGenerationProvider implements MediaGenerationProvider {
 /** The job id of a video a chat model returned inline; there is nothing to poll. */
 export const CHAT_MEDIA_VIDEO_JOB_ID = "chat-media-video";
 
+/** One bot-configured model to try, in list order. */
+export type BotMediaCallEntry = {
+  modelId: string;
+  call: (prompt: string, signal: AbortSignal) => Promise<GeneratedMedia>;
+};
+
+/** One bot-configured model that could not even be reached, with why. */
+export type BotMediaFailure = { modelId: string; reason: string };
+
+/** One kind's ordered tries: the calls that resolved, plus the entries that did not. */
+export type BotMediaKindCalls = {
+  calls: BotMediaCallEntry[];
+  failures: BotMediaFailure[];
+};
+
 /**
- * A media provider that answers each kind from a chat model: a bot's configured
- * image/video model, or the global provider when the bot has none for that kind.
+ * A media provider that answers each kind from a bot's configured models,
+ * tried in order, or the global provider when the bot has none for that kind.
  * The chat model returns the finished media inline, so its video is already
  * complete and never needs polling. The id stays the fallback's so a job the
  * fallback submitted still polls under the provider that saved it.
@@ -294,26 +313,42 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
   readonly id: string;
   readonly capabilities: { images: boolean; video: boolean; offline: boolean };
   constructor(
-    private readonly imageCall:
-      | ((prompt: string, signal: AbortSignal) => Promise<GeneratedMedia>)
-      | null,
-    private readonly videoCall:
-      | ((prompt: string, signal: AbortSignal) => Promise<GeneratedMedia>)
-      | null,
+    private readonly image: BotMediaKindCalls,
+    private readonly video: BotMediaKindCalls,
     private readonly fallback?: MediaGenerationProvider,
   ) {
     this.id = fallback?.id ?? "bot-media";
     this.capabilities = {
-      images: Boolean(imageCall ?? fallback?.capabilities.images),
-      video: Boolean(videoCall ?? fallback?.capabilities.video),
+      images: Boolean(image.calls.length > 0 || fallback?.capabilities.images),
+      video: Boolean(video.calls.length > 0 || fallback?.capabilities.video),
       offline: fallback?.capabilities.offline ?? false,
     };
+  }
+  private async tryCalls(
+    kind: BotMediaKindCalls,
+    input: MediaGenerationInput,
+    signal: AbortSignal,
+  ): Promise<GeneratedMedia> {
+    const failures: BotMediaFailure[] = [...kind.failures];
+    for (const entry of kind.calls) {
+      try {
+        const output = await entry.call(input.prompt, signal);
+        return { ...output, modelId: entry.modelId };
+      } catch (error) {
+        signal.throwIfAborted();
+        failures.push({
+          modelId: entry.modelId,
+          reason: mediaGenerationFailureReason(error),
+        });
+      }
+    }
+    throw allMediaModelsFailedError(failures);
   }
   async generateImage(
     input: MediaGenerationInput,
     context: AdapterContext,
   ): Promise<GeneratedMedia> {
-    if (this.imageCall) return this.imageCall(input.prompt, context.signal);
+    if (this.image.calls.length > 0) return this.tryCalls(this.image, input, context.signal);
     if (this.fallback) return this.fallback.generateImage(input, context);
     throw new MediaGenerationError("unsupported");
   }
@@ -321,8 +356,8 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
     input: MediaGenerationInput,
     context: AdapterContext,
   ): Promise<MediaVideoJob> {
-    if (this.videoCall) {
-      const output = await this.videoCall(input.prompt, context.signal);
+    if (this.video.calls.length > 0) {
+      const output = await this.tryCalls(this.video, input, context.signal);
       return { id: CHAT_MEDIA_VIDEO_JOB_ID, status: "completed", output };
     }
     if (this.fallback) return this.fallback.generateVideo(input, context);

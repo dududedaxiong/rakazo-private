@@ -8800,6 +8800,10 @@ msgstr "请先在该机器人的高级设置里选择翻译模型"
 msgid "Translated with {modelId} · {source} to {target}"
 msgstr "翻译 · 用 {modelId} 翻译 · {source}译{target}"
 
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {modelId} (backup) · {source} to {target}"
+msgstr "翻译 · 用 {modelId}（备选）翻译 · {source}译{target}"
+
 #: src/pages/Favorites.tsx
 msgid "translation"
 msgstr "译文"

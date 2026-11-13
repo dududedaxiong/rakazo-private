@@ -195,11 +195,17 @@ export function MessageTranslationView({
             <Text style={{ color: blue, fontWeight: "700" }}>{t("Translate")}</Text>
             <Text style={{ color: tokens.mutedForeground }}>
               {"  "}
-              {t("Translated with {model} · {source} to {target}", {
-                model: result.modelId,
-                source: translationSourceLabel(result.sourceLanguage),
-                target: translationTargetLabel(result.targetLanguage),
-              })}
+              {result.usedFallback
+                ? t("Translated with {model} (backup) · {source} to {target}", {
+                    model: result.modelId,
+                    source: translationSourceLabel(result.sourceLanguage),
+                    target: translationTargetLabel(result.targetLanguage),
+                  })
+                : t("Translated with {model} · {source} to {target}", {
+                    model: result.modelId,
+                    source: translationSourceLabel(result.sourceLanguage),
+                    target: translationTargetLabel(result.targetLanguage),
+                  })}
             </Text>
           </Text>
           <Text selectable style={{ color: tokens.foreground, fontSize: 15, marginTop: 6 }}>

@@ -8760,3 +8760,7 @@ msgstr "請先在該機器人的進階設定裡選擇翻譯模型"
 #: src/pages/shell/message-translation.tsx
 msgid "Translated with {modelId} · {source} to {target}"
 msgstr "翻譯 · 用 {modelId} 翻譯 · {source}譯{target}"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {modelId} (backup) · {source} to {target}"
+msgstr "翻譯 · 用 {modelId}（備選）翻譯 · {source}譯{target}"

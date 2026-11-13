@@ -4,6 +4,7 @@ import { MediaGenerationError } from "@rakazo/adapter-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveBotMediaGenerationProvider } from "./bot-media-generation.js";
 import type { ExecutorDeps } from "./executor-deps.js";
+import type { BotMediaKindCalls } from "./media-generation-provider.js";
 import {
   BotMediaGenerationProvider,
   CHAT_MEDIA_VIDEO_JOB_ID,
@@ -33,22 +34,34 @@ const tinyPngBase64 =
 const tinyPng = Buffer.from(tinyPngBase64, "base64");
 
 const noMediaBot = {
-  videoModelProvider: null,
-  videoModelId: null,
-  imageModelProvider: null,
-  imageModelId: null,
+  videoModels: null,
+  imageModels: null,
+  videoPromptPresets: null,
+  activeVideoPromptPreset: null,
+  imagePromptPresets: null,
+  activeImagePromptPreset: null,
 };
 const imageBot = {
   ...noMediaBot,
-  imageModelProvider: "openai_compatible",
-  imageModelId: "image-model",
+  imageModels: [{ provider: "openai_compatible", model: "image-model" }],
 };
 const videoBot = {
   ...noMediaBot,
-  videoModelProvider: "openai_compatible",
-  videoModelId: "video-model",
+  videoModels: [{ provider: "openai_compatible", model: "video-model" }],
 };
 const bothBot = { ...imageBot, ...videoBot };
+const fallbackImageBot = {
+  ...noMediaBot,
+  imageModels: [
+    { provider: "openai_compatible", model: "primary-model" },
+    { provider: "openai_compatible", model: "fallback-model" },
+  ],
+};
+const presetImageBot = {
+  ...imageBot,
+  imagePromptPresets: [{ name: "水彩", prompt: "用水彩风格画" }],
+  activeImagePromptPreset: "水彩",
+};
 
 function resolveKeyValue(baseUrl: string | undefined) {
   return {
@@ -125,6 +138,7 @@ describe("bot media routing", () => {
       expect(await provider?.generateImage({ prompt: "画一只猫" }, context)).toEqual({
         bytes: tinyPng,
         mimeType: "image/png",
+        modelId: "image-model",
       });
       expect(mockedResolveKey).toHaveBeenCalledTimes(1);
       expect(mockedResolveKey).toHaveBeenCalledWith(
@@ -152,7 +166,11 @@ describe("bot media routing", () => {
       expect(video).toEqual({
         id: CHAT_MEDIA_VIDEO_JOB_ID,
         status: "completed",
-        output: { bytes: Buffer.from("AAAA", "base64"), mimeType: "video/mp4" },
+        output: {
+          bytes: Buffer.from("AAAA", "base64"),
+          mimeType: "video/mp4",
+          modelId: "video-model",
+        },
       });
       expect(seen).toHaveLength(1);
       expect(seen[0]?.model).toBe("video-model");
@@ -162,6 +180,45 @@ describe("bot media routing", () => {
         mimeType: "image/png",
       });
       expect(seen).toHaveLength(1);
+    });
+  });
+
+  it("tries the fallback when the primary no longer resolves", async () => {
+    await withChatServer(`data:image/png;base64,${tinyPngBase64}`, async (baseUrl, seen) => {
+      mockedResolveKey.mockImplementation(async (_deps, _scope, _provider, modelId) => {
+        if (modelId === "primary-model") throw new Error("not connected");
+        return resolveKeyValue(baseUrl);
+      });
+      const fallback = new FakeMediaGenerationProvider();
+      const provider = await resolveBotMediaGenerationProvider(
+        deps,
+        scope,
+        fallbackImageBot,
+        fallback,
+      );
+      expect(await provider?.generateImage({ prompt: "画一只猫" }, context)).toEqual({
+        bytes: tinyPng,
+        mimeType: "image/png",
+        modelId: "fallback-model",
+      });
+      expect(seen).toHaveLength(1);
+      expect(seen[0]?.model).toBe("fallback-model");
+    });
+  });
+
+  it("prepends the active prompt preset to the generation prompt", async () => {
+    await withChatServer(`data:image/png;base64,${tinyPngBase64}`, async (baseUrl, seen) => {
+      mockedResolveKey.mockResolvedValue(resolveKeyValue(baseUrl));
+      const fallback = new FakeMediaGenerationProvider();
+      const provider = await resolveBotMediaGenerationProvider(
+        deps,
+        scope,
+        presetImageBot,
+        fallback,
+      );
+      await provider?.generateImage({ prompt: "画一只猫" }, context);
+      expect(seen).toHaveLength(1);
+      expect(seen[0]?.messages).toEqual([{ role: "user", content: "用水彩风格画\n画一只猫" }]);
     });
   });
 
@@ -187,16 +244,21 @@ describe("bot media routing", () => {
 
 describe("BotMediaGenerationProvider", () => {
   const imageCall = vi.fn(async () => ({ bytes: tinyPng, mimeType: "image/png" as const }));
+  const noCalls: BotMediaKindCalls = { calls: [], failures: [] };
 
   it("keeps the fallback id so its jobs still poll under the provider that saved them", () => {
     const fallback = new FakeMediaGenerationProvider();
-    const provider = new BotMediaGenerationProvider(imageCall, null, fallback);
+    const provider = new BotMediaGenerationProvider(
+      { calls: [{ modelId: "image-model", call: imageCall }], failures: [] },
+      noCalls,
+      fallback,
+    );
     expect(provider.id).toBe("fake");
     expect(provider.capabilities).toEqual({ images: true, video: true, offline: true });
   });
 
   it("throws unsupported when neither kind has a source", async () => {
-    const provider = new BotMediaGenerationProvider(null, null, undefined);
+    const provider = new BotMediaGenerationProvider(noCalls, noCalls, undefined);
     expect(provider.capabilities).toEqual({ images: false, video: false, offline: false });
     await expect(provider.generateImage({ prompt: "x" }, context)).rejects.toBeInstanceOf(
       MediaGenerationError,
@@ -209,13 +271,60 @@ describe("BotMediaGenerationProvider", () => {
     );
   });
 
+  it("uses the fallback when the primary fails and marks which model produced the result", async () => {
+    const primary = vi.fn(async () => {
+      throw new MediaGenerationError("provider_failure", "boom");
+    });
+    const fallbackCall = vi.fn(async () => ({ bytes: tinyPng, mimeType: "image/png" as const }));
+    const provider = new BotMediaGenerationProvider(
+      {
+        calls: [
+          { modelId: "primary-model", call: primary },
+          { modelId: "fallback-model", call: fallbackCall },
+        ],
+        failures: [],
+      },
+      noCalls,
+      undefined,
+    );
+    const media = await provider.generateImage({ prompt: "x" }, context);
+    expect(media.modelId).toBe("fallback-model");
+    expect(primary).toHaveBeenCalledTimes(1);
+    expect(fallbackCall).toHaveBeenCalledTimes(1);
+  });
+
+  it("lists every model's failure reason when all fail", async () => {
+    const fail = (code: "authentication" | "timeout") =>
+      vi.fn(async () => {
+        throw new MediaGenerationError(code);
+      });
+    const provider = new BotMediaGenerationProvider(
+      {
+        calls: [
+          { modelId: "primary-model", call: fail("authentication") },
+          { modelId: "fallback-model", call: fail("timeout") },
+        ],
+        failures: [],
+      },
+      noCalls,
+      undefined,
+    );
+    await expect(provider.generateImage({ prompt: "x" }, context)).rejects.toThrow(
+      "primary-model (authentication failed), fallback-model (timed out)",
+    );
+  });
+
   it("fails a chat video poll instead of asking the fallback about a job it never ran", async () => {
     const fallback = new FakeMediaGenerationProvider();
     const videoCall = vi.fn(async () => ({
       bytes: Buffer.from("AAAA", "base64"),
       mimeType: "video/mp4" as const,
     }));
-    const provider = new BotMediaGenerationProvider(null, videoCall, fallback);
+    const provider = new BotMediaGenerationProvider(
+      noCalls,
+      { calls: [{ modelId: "video-model", call: videoCall }], failures: [] },
+      fallback,
+    );
     expect(await provider.pollVideo(CHAT_MEDIA_VIDEO_JOB_ID, context)).toEqual({
       id: CHAT_MEDIA_VIDEO_JOB_ID,
       status: "failed",

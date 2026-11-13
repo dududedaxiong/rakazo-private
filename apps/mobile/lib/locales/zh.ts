@@ -1854,6 +1854,8 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Copy translation": "复制译文",
   Collapse: "收起",
   "Translated with {model} · {source} to {target}": "用 {model} 翻译 · {source}译{target}",
+  "Translated with {model} (backup) · {source} to {target}":
+    "用 {model}（备选）翻译 · {source}译{target}",
   "Choose a translation model in Model settings first.": "请先在模型设置里选择翻译模型。",
   "Translation model": "翻译模型",
   "Translation settings": "翻译设置",
@@ -1882,6 +1884,24 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Set as image generation model": "设为图片生成模型",
   "Media model": "影图模型",
   "Image and video generation": "图片视频生成",
+  "Video prompt preset": "视频提示词预设",
+  "Image prompt preset": "图片提示词预设",
+  "Video prompt presets": "视频提示词预设",
+  "Image prompt presets": "图片提示词预设",
+  "No preset": "不使用预设",
+  Primary: "主用",
+  "Add backup": "添加备选",
+  "Add video backup": "添加视频备选",
+  "Add image backup": "添加图片备选",
+  "Set as primary": "设为主用",
+  "Test this model": "测试该模型",
+  "Edit preset": "编辑预设",
+  "Delete preset": "删除预设",
+  "Preset name": "预设名称",
+  "Preset prompt": "预设提示词",
+  "Enter a preset name": "请输入预设名称",
+  "A preset with this name already exists": "已有同名预设",
+  "New preset": "新建预设",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

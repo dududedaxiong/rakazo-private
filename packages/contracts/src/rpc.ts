@@ -688,6 +688,8 @@ export const appContract = {
           kind: z.enum(["image", "video"]),
           provider: z.string().trim().min(1).max(80),
           modelId: z.string().trim().min(1).max(200),
+          /** The active prompt preset for this kind, tested along with the model. */
+          presetPrompt: z.string().trim().min(1).max(4000).optional(),
         }),
       )
       .output(

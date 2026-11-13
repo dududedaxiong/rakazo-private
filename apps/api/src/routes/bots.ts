@@ -28,13 +28,21 @@ import {
 import type {
   Actor,
   Bot,
+  BotModelEntry,
+  BotPromptPreset,
   BotSecretMetadata,
   SettingsScope,
   VaultPutInput,
 } from "@rakazo/contracts";
-import { BotSecretAuth, resolveBotAvatarSet, resolveTargetLanguage } from "@rakazo/contracts";
+import {
+  BotSecretAuth,
+  parseBotModelList,
+  parseBotPromptPresets,
+  primaryBotModel,
+  resolveBotAvatarSet,
+  resolveTargetLanguage,
+} from "@rakazo/contracts";
 import { ACTIVE_RUN_STATUSES, COMPUTER_USING_RUNS, displayName } from "@rakazo/core";
-import type { Prisma } from "@rakazo/db";
 import {
   BotSectionNameConflictError,
   botProfileLabelsChanged,
@@ -44,6 +52,7 @@ import {
   InstructionConflictError,
   IsolationError,
   isRecordNotFound,
+  Prisma,
   recordComputerRunEnd,
   recordSecurityEvent,
   restoreBotUnderComputerQuota,
@@ -429,51 +438,111 @@ export function botsRoutes(ctx: RouterContext) {
           current: { provider: existing.modelProvider, model: existing.modelId },
         });
         if (!modelChange.ok) throw new ORPCError("BAD_REQUEST", { message: modelChange.error });
-        const translationModelChange = await validateBotModelChange(
-          botModelValidation(context.actor),
-          {
-            userId: context.actor.userId,
-            spaceId: context.actor.spaceId,
-            provider:
-              input.translationModelProvider !== undefined
-                ? input.translationModelProvider
-                : existing.translationModelProvider,
-            model:
-              input.translationModelId !== undefined
-                ? input.translationModelId
-                : existing.translationModelId,
-            current: {
-              provider: existing.translationModelProvider,
-              model: existing.translationModelId,
-            },
-          },
-        );
-        if (!translationModelChange.ok)
-          throw new ORPCError("BAD_REQUEST", { message: translationModelChange.error });
-        // The two media roles share one validation shape with the main and
-        // translation models; a helper keeps the four checks from diverging.
-        const validateMediaModelChange = async (
-          provider: string | null | undefined,
-          model: string | null | undefined,
-          current: { provider: string | null; model: string | null },
+        // `existing` is the Prisma row, so its JSON columns parse first; the
+        // contract lists they become are what validation and writes use.
+        const existingTranslationModels = parseBotModelList(existing.translationModels);
+        const existingVideoModels = parseBotModelList(existing.videoModels);
+        const existingImageModels = parseBotModelList(existing.imageModels);
+        const existingVideoPresets = parseBotPromptPresets(existing.videoPromptPresets);
+        const existingImagePresets = parseBotPromptPresets(existing.imagePromptPresets);
+        // Every entry of an ordered model list must be a model this user has
+        // connected; entries already on the list skip the re-check.
+        const validateModelListChange = async (
+          next: readonly BotModelEntry[] | null | undefined,
+          current: readonly BotModelEntry[] | null | undefined,
+          label: string,
         ) => {
-          const change = await validateBotModelChange(botModelValidation(context.actor), {
-            userId: context.actor.userId,
-            spaceId: context.actor.spaceId,
-            provider: provider !== undefined ? provider : current.provider,
-            model: model !== undefined ? model : current.model,
-            current,
-          });
-          if (!change.ok) throw new ORPCError("BAD_REQUEST", { message: change.error });
+          if (next === undefined) return;
+          for (const entry of next ?? []) {
+            const already = (current ?? []).some(
+              (item) => item.provider === entry.provider && item.model === entry.model,
+            );
+            const change = await validateBotModelChange(botModelValidation(context.actor), {
+              userId: context.actor.userId,
+              spaceId: context.actor.spaceId,
+              provider: entry.provider,
+              model: entry.model,
+              current: already
+                ? { provider: entry.provider, model: entry.model }
+                : { provider: null, model: null },
+            });
+            if (!change.ok)
+              throw new ORPCError("BAD_REQUEST", {
+                message: `${label} ${entry.model}: ${change.error}`,
+              });
+          }
         };
-        await validateMediaModelChange(input.videoModelProvider, input.videoModelId, {
-          provider: existing.videoModelProvider,
-          model: existing.videoModelId,
-        });
-        await validateMediaModelChange(input.imageModelProvider, input.imageModelId, {
-          provider: existing.imageModelProvider,
-          model: existing.imageModelId,
-        });
+        // Older apps still send the single translation model: setting it moves
+        // that model to the front of the list (or clears the list when both
+        // are null). New clients send the whole list instead.
+        const legacyTranslationModels = (): BotModelEntry[] | null | undefined => {
+          if (input.translationModels !== undefined) return input.translationModels;
+          if (
+            input.translationModelProvider === undefined &&
+            input.translationModelId === undefined
+          )
+            return undefined;
+          if (!input.translationModelProvider || !input.translationModelId) return [];
+          const entry = {
+            provider: input.translationModelProvider,
+            model: input.translationModelId,
+          };
+          return [
+            entry,
+            ...(existingTranslationModels ?? []).filter(
+              (item) => item.provider !== entry.provider || item.model !== entry.model,
+            ),
+          ];
+        };
+        const effectiveTranslationModels = legacyTranslationModels();
+        await validateModelListChange(
+          effectiveTranslationModels,
+          existingTranslationModels,
+          "Translation model",
+        );
+        await validateModelListChange(input.videoModels, existingVideoModels, "Video model");
+        await validateModelListChange(input.imageModels, existingImageModels, "Image model");
+        // A named active preset must exist in the presets it names; when the
+        // preset list itself changes and the stored active is gone, the first
+        // preset takes over (or none, when the list is empty).
+        const resolvePresetUpdate = (
+          nextPresets: readonly BotPromptPreset[] | null | undefined,
+          nextActive: string | null | undefined,
+          currentPresets: readonly BotPromptPreset[] | null | undefined,
+          currentActive: string | null | undefined,
+        ): { presets?: BotPromptPreset[] | null; active?: string | null } => {
+          if (nextPresets === undefined && nextActive === undefined) return {};
+          const presets = nextPresets !== undefined ? (nextPresets ?? []) : (currentPresets ?? []);
+          if (
+            nextActive !== undefined &&
+            nextActive !== null &&
+            !presets.some((preset) => preset.name === nextActive)
+          )
+            throw new ORPCError("BAD_REQUEST", { message: "Unknown prompt preset" });
+          const active = nextActive !== undefined ? nextActive : (currentActive ?? null);
+          const retargeted =
+            active !== null && !presets.some((preset) => preset.name === active)
+              ? (presets[0]?.name ?? null)
+              : active;
+          return {
+            ...(nextPresets !== undefined
+              ? { presets: presets.length > 0 ? [...presets] : null }
+              : {}),
+            active: retargeted,
+          };
+        };
+        const videoPresetUpdate = resolvePresetUpdate(
+          input.videoPromptPresets,
+          input.activeVideoPromptPreset,
+          existingVideoPresets,
+          existing.activeVideoPromptPreset,
+        );
+        const imagePresetUpdate = resolvePresetUpdate(
+          input.imagePromptPresets,
+          input.activeImagePromptPreset,
+          existingImagePresets,
+          existing.activeImagePromptPreset,
+        );
         const thinkingLevel = input.thinkingLevel;
         if (!existing.thread) throw new IsolationError();
         // Picking a set on one bot pins it unless it is the owner's default, which unpins it.
@@ -515,23 +584,52 @@ export function botsRoutes(ctx: RouterContext) {
             ...(input.modelProvider !== undefined
               ? { modelProvider: input.modelProvider, modelId: input.modelId ?? null }
               : {}),
-            ...(input.translationModelProvider !== undefined
+            ...(effectiveTranslationModels !== undefined
               ? {
-                  translationModelProvider: input.translationModelProvider,
-                  translationModelId: input.translationModelId ?? null,
+                  translationModels:
+                    effectiveTranslationModels && effectiveTranslationModels.length > 0
+                      ? (effectiveTranslationModels as Prisma.InputJsonValue)
+                      : Prisma.DbNull,
+                  // The old columns mirror the list's first entry, so older
+                  // releases keep reading the primary.
+                  translationModelProvider:
+                    primaryBotModel(effectiveTranslationModels)?.provider ?? null,
+                  translationModelId: primaryBotModel(effectiveTranslationModels)?.model ?? null,
                 }
               : {}),
-            ...(input.videoModelProvider !== undefined
+            ...(input.videoModels !== undefined
               ? {
-                  videoModelProvider: input.videoModelProvider,
-                  videoModelId: input.videoModelId ?? null,
+                  videoModels: input.videoModels?.length
+                    ? (input.videoModels as Prisma.InputJsonValue)
+                    : Prisma.DbNull,
                 }
               : {}),
-            ...(input.imageModelProvider !== undefined
+            ...(input.imageModels !== undefined
               ? {
-                  imageModelProvider: input.imageModelProvider,
-                  imageModelId: input.imageModelId ?? null,
+                  imageModels: input.imageModels?.length
+                    ? (input.imageModels as Prisma.InputJsonValue)
+                    : Prisma.DbNull,
                 }
+              : {}),
+            ...(videoPresetUpdate.presets !== undefined
+              ? {
+                  videoPromptPresets: videoPresetUpdate.presets
+                    ? (videoPresetUpdate.presets as Prisma.InputJsonValue)
+                    : Prisma.DbNull,
+                }
+              : {}),
+            ...(videoPresetUpdate.active !== undefined
+              ? { activeVideoPromptPreset: videoPresetUpdate.active }
+              : {}),
+            ...(imagePresetUpdate.presets !== undefined
+              ? {
+                  imagePromptPresets: imagePresetUpdate.presets
+                    ? (imagePresetUpdate.presets as Prisma.InputJsonValue)
+                    : Prisma.DbNull,
+                }
+              : {}),
+            ...(imagePresetUpdate.active !== undefined
+              ? { activeImagePromptPreset: imagePresetUpdate.active }
               : {}),
             ...(input.translationSourceLanguage !== undefined
               ? { translationSourceLanguage: input.translationSourceLanguage }
@@ -598,6 +696,7 @@ export function botsRoutes(ctx: RouterContext) {
             sourceLanguage: result.detectedLanguage,
             targetLanguage,
             modelId: result.modelId,
+            usedFallback: result.usedFallback,
           };
         } catch (error) {
           if (error instanceof TranslationModelNotConfiguredError) {
@@ -608,10 +707,14 @@ export function botsRoutes(ctx: RouterContext) {
       }),
       testMediaModel: authed.bots.testMediaModel.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);
-        const current =
+        const primary =
           input.kind === "video"
-            ? { provider: bot.videoModelProvider ?? null, model: bot.videoModelId ?? null }
-            : { provider: bot.imageModelProvider ?? null, model: bot.imageModelId ?? null };
+            ? primaryBotModel(parseBotModelList(bot.videoModels))
+            : primaryBotModel(parseBotModelList(bot.imageModels));
+        const current = {
+          provider: primary?.provider ?? null,
+          model: primary?.model ?? null,
+        };
         const validated = await validateBotModelChange(botModelValidation(context.actor), {
           userId: context.actor.userId,
           spaceId: context.actor.spaceId,
@@ -670,6 +773,7 @@ export function botsRoutes(ctx: RouterContext) {
             authMode: parsed.authMode,
             model: input.modelId,
             kind: input.kind,
+            presetPrompt: input.presetPrompt,
           },
           compatibleEndpointPreset(parsed.baseUrl) ? deps.modelConnectionFetch : undefined,
           context.signal,

@@ -81,6 +81,106 @@ export const InstructionVersionSchema = z.object({
   createdAt: z.string(),
 });
 
+/**
+ * One entry of a bot's ordered model list: a connected provider and one of its
+ * models. The first entry is the primary; the rest are fallbacks, tried in
+ * order when the one before it fails.
+ */
+export const BotModelEntrySchema = z.object({
+  provider: z.string().trim().min(1).max(80),
+  model: z.string().trim().min(1).max(200),
+});
+export type BotModelEntry = z.infer<typeof BotModelEntrySchema>;
+
+/** One named prompt preset for image or video generation. */
+export const BotPromptPresetSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  prompt: z.string().trim().min(1).max(4000),
+});
+export type BotPromptPreset = z.infer<typeof BotPromptPresetSchema>;
+
+/** At most this many fallback models per role; more would be noise, not resilience. */
+export const BOT_MODEL_LIST_MAX = 8;
+/** At most this many prompt presets per media kind. */
+export const BOT_PROMPT_PRESET_MAX = 20;
+
+/**
+ * Reads a stored ordered model list: a JSON array of `{provider, model}`
+ * pairs, deduplicated, in order. Anything else (null, a stale single, a
+ * malformed row) reads as no list, so older rows degrade instead of breaking.
+ */
+export function parseBotModelList(value: unknown): BotModelEntry[] | null {
+  const parsed = z.array(BotModelEntrySchema).safeParse(value);
+  if (!parsed.success) return null;
+  const seen = new Set<string>();
+  const list: BotModelEntry[] = [];
+  for (const entry of parsed.data) {
+    const key = `${entry.provider}\u0000${entry.model}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    list.push(entry);
+  }
+  return list.length > 0 ? list : null;
+}
+
+/** Reads stored prompt presets: a JSON array of `{name, prompt}` pairs, names unique. */
+export function parseBotPromptPresets(value: unknown): BotPromptPreset[] | null {
+  const parsed = z.array(BotPromptPresetSchema).safeParse(value);
+  if (!parsed.success) return null;
+  const seen = new Set<string>();
+  const list: BotPromptPreset[] = [];
+  for (const preset of parsed.data) {
+    if (seen.has(preset.name)) continue;
+    seen.add(preset.name);
+    list.push(preset);
+  }
+  return list.length > 0 ? list : null;
+}
+
+/** The primary entry of an ordered model list: its first entry, or null. */
+export function primaryBotModel(
+  list: readonly BotModelEntry[] | null | undefined,
+): BotModelEntry | null {
+  return list?.[0] ?? null;
+}
+
+/**
+ * Moves an entry to the front of a model list (adding it if absent),
+ * de-duplicated and capped — the "pick this model, keep the rest as
+ * fallbacks" operation.
+ */
+export function moveBotModelToFront(
+  list: readonly BotModelEntry[] | null | undefined,
+  entry: BotModelEntry,
+): BotModelEntry[] {
+  const key = `${entry.provider}\u0000${entry.model}`;
+  const rest = (list ?? []).filter((item) => `${item.provider}\u0000${item.model}` !== key);
+  return [entry, ...rest].slice(0, BOT_MODEL_LIST_MAX);
+}
+
+/**
+ * The preset a generation uses: the one named `activeName`, or null when the
+ * bot has none by that name. Callers fall back to no preset, never to a
+ * different preset than the one picked.
+ */
+export function activeBotPromptPreset(
+  presets: readonly BotPromptPreset[] | null | undefined,
+  activeName: string | null | undefined,
+): BotPromptPreset | null {
+  if (!presets || !activeName) return null;
+  return presets.find((preset) => preset.name === activeName) ?? null;
+}
+
+/**
+ * Prepends a prompt preset to a generation request: the preset states the
+ * style first, the request states what to make. No preset means the request
+ * goes through untouched.
+ */
+export function withPromptPreset(preset: string | null | undefined, prompt: string): string {
+  const trimmed = preset?.trim();
+  return trimmed ? `${trimmed}\n${prompt}` : prompt;
+}
+
 export const BotSchema = z.object({
   id: Id,
   spaceId: Id,
@@ -114,15 +214,20 @@ export const BotSchema = z.object({
   modelProvider: z.string().nullable(),
   modelId: z.string().nullable(),
   thinkingLevel: ThinkingLevelSchema.nullable(),
-  /** The model used for translation; null until one is picked. */
-  translationModelProvider: z.string().nullable(),
-  translationModelId: z.string().nullable(),
-  /** The model used to generate videos; null until one is picked. */
-  videoModelProvider: z.string().nullable(),
-  videoModelId: z.string().nullable(),
-  /** The model used to generate images; null until one is picked. */
-  imageModelProvider: z.string().nullable(),
-  imageModelId: z.string().nullable(),
+  /** The model used for translation; the first entry is the primary, the rest are fallbacks. */
+  translationModels: z.array(BotModelEntrySchema).nullable(),
+  /** The models used to generate videos; the first entry is the primary, the rest are fallbacks. */
+  videoModels: z.array(BotModelEntrySchema).nullable(),
+  /** The models used to generate images; the first entry is the primary, the rest are fallbacks. */
+  imageModels: z.array(BotModelEntrySchema).nullable(),
+  /** Named prompt presets for video generation. */
+  videoPromptPresets: z.array(BotPromptPresetSchema).nullable(),
+  /** The name of the active video prompt preset; null means no preset. */
+  activeVideoPromptPreset: z.string().nullable(),
+  /** Named prompt presets for image generation. */
+  imagePromptPresets: z.array(BotPromptPresetSchema).nullable(),
+  /** The name of the active image prompt preset; null means no preset. */
+  activeImagePromptPreset: z.string().nullable(),
   /** The language to translate from; `auto` lets the model detect it. */
   translationSourceLanguage: TranslationSourceLanguageSchema,
   /** Null means unset; clients show their own default (mobile `auto`, web `zh`). */
@@ -532,12 +637,35 @@ export const UpdateBotInput = z
     modelProvider: z.string().trim().min(1).max(80).nullable().optional(),
     modelId: z.string().trim().min(1).max(200).nullable().optional(),
     thinkingLevel: ThinkingLevelSchema.nullable().optional(),
+    /**
+     * Legacy single translation model, kept for older apps: setting it moves
+     * that model to the front of `translationModels` (or clears the list when
+     * both are null). New clients send `translationModels` instead.
+     */
     translationModelProvider: z.string().trim().min(1).max(80).nullable().optional(),
     translationModelId: z.string().trim().min(1).max(200).nullable().optional(),
-    videoModelProvider: z.string().trim().min(1).max(80).nullable().optional(),
-    videoModelId: z.string().trim().min(1).max(200).nullable().optional(),
-    imageModelProvider: z.string().trim().min(1).max(80).nullable().optional(),
-    imageModelId: z.string().trim().min(1).max(200).nullable().optional(),
+    /** Ordered translation models; first is primary, rest are fallbacks. */
+    translationModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Ordered video generation models; first is primary, rest are fallbacks. */
+    videoModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Ordered image generation models; first is primary, rest are fallbacks. */
+    imageModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Named prompt presets for video generation. */
+    videoPromptPresets: z
+      .array(BotPromptPresetSchema)
+      .max(BOT_PROMPT_PRESET_MAX)
+      .nullable()
+      .optional(),
+    /** The name of the active video prompt preset; null means no preset. */
+    activeVideoPromptPreset: z.string().trim().min(1).max(80).nullable().optional(),
+    /** Named prompt presets for image generation. */
+    imagePromptPresets: z
+      .array(BotPromptPresetSchema)
+      .max(BOT_PROMPT_PRESET_MAX)
+      .nullable()
+      .optional(),
+    /** The name of the active image prompt preset; null means no preset. */
+    activeImagePromptPreset: z.string().trim().min(1).max(80).nullable().optional(),
     translationSourceLanguage: TranslationSourceLanguageSchema.optional(),
     translationTargetLanguage: z.string().trim().max(20).nullable().optional(),
     autoTranslate: z.boolean().optional(),
@@ -560,8 +688,24 @@ export const UpdateBotInput = z
       ctx,
       "translationModelId",
     );
-    pairedModelIssues(value.videoModelProvider, value.videoModelId, ctx, "videoModelId");
-    pairedModelIssues(value.imageModelProvider, value.imageModelId, ctx, "imageModelId");
+    for (const [list, path] of [
+      [value.videoPromptPresets, "videoPromptPresets"],
+      [value.imagePromptPresets, "imagePromptPresets"],
+    ] as const) {
+      if (!list) continue;
+      const names = new Set<string>();
+      for (const preset of list) {
+        if (names.has(preset.name)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Prompt preset names must be unique",
+            path: [path],
+          });
+          break;
+        }
+        names.add(preset.name);
+      }
+    }
   });
 export type UpdateBotInput = z.infer<typeof UpdateBotInput>;
 

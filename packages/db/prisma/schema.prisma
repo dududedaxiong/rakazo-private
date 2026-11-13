@@ -1071,12 +1071,20 @@ model Bot {
   thinkingLevel     String?
   translationModelProvider  String?
   translationModelId        String?
-  /** The model used to generate videos for this bot; null until one is picked. */
-  videoModelProvider        String?
-  videoModelId              String?
-  /** The model used to generate images for this bot; null until one is picked. */
-  imageModelProvider        String?
-  imageModelId              String?
+  /** Ordered translation models as JSON [{provider, model}]; first is primary, rest are fallbacks. */
+  translationModels         Json?
+  /** Ordered video generation models as JSON [{provider, model}]; first is primary, rest are fallbacks. */
+  videoModels               Json?
+  /** Ordered image generation models as JSON [{provider, model}]; first is primary, rest are fallbacks. */
+  imageModels               Json?
+  /** Named prompt presets for video generation as JSON [{name, prompt}]. */
+  videoPromptPresets        Json?
+  /** Name of the active video prompt preset; null means no preset. */
+  activeVideoPromptPreset   String?
+  /** Named prompt presets for image generation as JSON [{name, prompt}]. */
+  imagePromptPresets        Json?
+  /** Name of the active image prompt preset; null means no preset. */
+  activeImagePromptPreset   String?
   translationSourceLanguage String   @default("auto")
   translationTargetLanguage String?
   autoTranslate             Boolean  @default(false)

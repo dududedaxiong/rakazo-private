@@ -27,6 +27,7 @@ import {
   isNonPublicAddress,
   MODEL_KEY_REJECTED_ERROR,
   parseModelHeaders,
+  withPromptPreset,
 } from "@rakazo/contracts";
 import { Agent } from "undici";
 import { declaredVisionModelIds, inputModalities } from "./model-modalities.js";
@@ -1194,6 +1195,8 @@ export async function probeMediaModel(
     authMode?: ModelAuthMode;
     model: string;
     kind: MediaModelProbeKind;
+    /** The bot's active prompt preset for this kind; the probe tests with it applied. */
+    presetPrompt?: string;
   },
   fetchImpl?: typeof fetch,
   signal?: AbortSignal,
@@ -1203,7 +1206,10 @@ export async function probeMediaModel(
   const seconds = () => Math.round(((Date.now() - started) / 1000) * 10) / 10;
   try {
     const { status, parsed, bodyText } = await requestChatMedia(
-      { ...input, prompt: MEDIA_MODEL_PROBE_PROMPTS[input.kind] },
+      {
+        ...input,
+        prompt: withPromptPreset(input.presetPrompt, MEDIA_MODEL_PROBE_PROMPTS[input.kind]),
+      },
       fetchImpl,
       signal,
       opts,
@@ -1266,7 +1272,9 @@ export async function generateMediaWithChatModel(
   } catch (error) {
     if (signal?.aborted) throw error;
     if (error instanceof MediaGenerationError) throw error;
-    if (isAbortError(error)) throw new MediaGenerationError("provider_failure");
+    // The caller's signal is untouched here, so an abort is the probe's own
+    // timeout, not a cancellation.
+    if (isAbortError(error)) throw new MediaGenerationError("timeout");
     throw new MediaGenerationError("provider_failure");
   }
 }

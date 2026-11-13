@@ -3,6 +3,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { ChatMarkdown, LinkifiedText, withBlockMentions } from "@rakazo/chat-ui/web";
 import type {
   BotAvatarSet,
+  BotModelEntry,
   LoginFieldInput,
   MessageReaction,
   ThreadMessage,
@@ -127,8 +128,7 @@ export const MessageView = memo(function MessageView({
         color: string;
         status?: string;
         avatarSet?: BotAvatarSet;
-        translationModelProvider?: string | null;
-        translationModelId?: string | null;
+        translationModels?: readonly BotModelEntry[] | null;
         translationSourceLanguage?: string;
         translationTargetLanguage?: string | null;
         autoTranslate?: boolean;

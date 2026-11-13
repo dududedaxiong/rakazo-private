@@ -451,18 +451,16 @@ describe("bot settings device voice menu", () => {
       )!;
       await act(async () => choice.click());
     };
-    await pick("Video generation model", "video-a");
-    await pick("Image generation model", "image-a");
+    await pick("Add video backup", "video-a");
+    await pick("Add image backup", "image-a");
     const save = [...container.querySelectorAll("button")].find(
       (button) => button.textContent === "Save",
     )!;
     await act(async () => save.click());
     expect(mocks.rpc).toHaveBeenCalledWith("bots/update", {
       botId: "bot-fixture",
-      videoModelProvider: "openai-compatible",
-      videoModelId: "video-a",
-      imageModelProvider: "openai-compatible",
-      imageModelId: "image-a",
+      videoModels: [{ provider: "openai-compatible", model: "video-a" }],
+      imageModels: [{ provider: "openai-compatible", model: "image-a" }],
     });
   });
 

@@ -50,8 +50,7 @@ describe("translation languages", () => {
     expect(translationSettingsFromBot({})).toEqual(DEFAULT_BOT_TRANSLATION_SETTINGS);
     expect(
       translationSettingsFromBot({
-        translationModelProvider: "openai",
-        translationModelId: "gpt-5",
+        translationModels: [{ provider: "openai", model: "gpt-5" }],
         translationSourceLanguage: "en",
         translationTargetLanguage: "ja",
         autoTranslate: true,
@@ -64,6 +63,19 @@ describe("translation languages", () => {
       targetLanguage: "ja",
       autoTranslate: true,
       showTranslationActions: false,
+    });
+    // The primary is the list's first entry; fallbacks do not change it.
+    expect(
+      translationSettingsFromBot({
+        translationModels: [
+          { provider: "openai", model: "gpt-5" },
+          { provider: "deepseek", model: "deepseek-chat" },
+        ],
+      }),
+    ).toEqual({
+      ...DEFAULT_BOT_TRANSLATION_SETTINGS,
+      modelProvider: "openai",
+      modelId: "gpt-5",
     });
     // An unset target is "auto" on mobile; an unknown code falls back to "auto".
     expect(
