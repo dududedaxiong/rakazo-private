@@ -8,6 +8,8 @@ const opaque = [
   "c123456789012345678901234",
   "tz4a98xxat96iws9zmbrgj3a",
   "V1StGXR8_Z5jdHi6BmyT",
+  "Ff1dE9",
+  "7C3irl",
 ];
 
 describe("displayName", () => {
@@ -25,6 +27,8 @@ describe("displayName", () => {
     "dev_bot",
     "r2d2",
     "123",
+    "Gpt4o",
+    "Chat42",
     "AlexandertheGreat",
     "Ada Lovelace",
     "CustomerSupportBot2026",

@@ -107,6 +107,7 @@ function mapBot(
     translationSourceLanguage?: string | null;
     translationTargetLanguage?: string | null;
     autoTranslate?: boolean;
+    showTranslationActions?: boolean;
     teamChatAmbientEnabled?: boolean;
     teamChatRules?: string;
     crossSpaceCommunication?: boolean;
@@ -167,6 +168,7 @@ function mapBot(
       : "auto",
     translationTargetLanguage: bot.translationTargetLanguage ?? null,
     autoTranslate: bot.autoTranslate ?? false,
+    showTranslationActions: bot.showTranslationActions ?? true,
     teamChatAmbientEnabled: bot.teamChatAmbientEnabled ?? false,
     teamChatRules: bot.teamChatRules ?? "",
     crossSpaceCommunication: bot.crossSpaceCommunication ?? true,

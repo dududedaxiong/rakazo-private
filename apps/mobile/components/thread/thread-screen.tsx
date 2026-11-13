@@ -49,6 +49,7 @@ import { threadColumnPadding, threadHeaderFloats } from "../../lib/thread-edges"
 import {
   favoriteSnippet,
   toggleThreadFavorite,
+  translationFavoriteId,
   useThreadFavorites,
 } from "../../lib/thread-favorites";
 import { useThreadFeedback } from "../../lib/thread-feedback";
@@ -70,7 +71,12 @@ import { useThreadSend } from "../../lib/thread-send";
 import { threadGroupMembers } from "../../lib/thread-snapshot";
 import { useThreadSync } from "../../lib/thread-sync";
 import { useThreadTranscript } from "../../lib/thread-transcript";
-import { useAutoSpeakReply, useSpeakMessages, useThreadVoiceCall } from "../../lib/thread-voice";
+import {
+  useAutoSpeakReply,
+  useSpeakMessages,
+  useSpeakText,
+  useThreadVoiceCall,
+} from "../../lib/thread-voice";
 import { liveEndRunError } from "../../lib/thread-window";
 import { getVoicePlaybackState, stopVoicePlayback, subscribeVoicePlayback } from "../../lib/voice";
 import { ChatTitleHero, chatTitleHeroHeight } from "../chat-title-hero";
@@ -585,6 +591,13 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     mentionBots,
   });
 
+  const speakTranslation = useSpeakText({
+    botId,
+    members: snap?.members,
+    displayName,
+    mentionBots,
+  });
+
   const { openBotChat } = useThreadVoiceCall({
     botId,
     readOnly,
@@ -614,6 +627,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     quote: setQuoteTarget,
     select: setSelectableText,
     speak,
+    speakText: speakTranslation,
     react: composer.react,
     favorite: (message) => {
       if (!threadKey) return;
@@ -621,6 +635,15 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
         messageId: message.id,
         snippet: favoriteSnippet(selectableMessageText(message)),
         text: selectableMessageText(message),
+        createdAt: Date.now(),
+      });
+    },
+    favoriteTranslation: (message, translatedText) => {
+      if (!threadKey) return;
+      toggleThreadFavorite(threadKey, {
+        messageId: translationFavoriteId(message.id),
+        snippet: favoriteSnippet(translatedText),
+        text: translatedText,
         createdAt: Date.now(),
       });
     },

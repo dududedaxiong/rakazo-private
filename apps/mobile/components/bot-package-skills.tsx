@@ -1,4 +1,5 @@
 import type { BotPackageReceipt, BotPackageSkillReceipt } from "@rakazo/contracts";
+import { displayName } from "@rakazo/core";
 import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { useI18n } from "../lib/i18n";
@@ -16,11 +17,13 @@ function SkillRow({
 }) {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState(skill.name);
+  // A code-like skill name never shows bare: the row falls back to "Skill", and a pending
+  // skill starts with an empty rename draft so the code is not sitting in the field either.
+  const [name, setName] = useState(displayName(skill.name, ""));
   return (
     <View style={styles.section}>
       <NativeActionButton
-        label={skill.name}
+        label={displayName(skill.name, t("Skill"))}
         selected={open}
         prominence="quiet"
         onPress={() => setOpen(!open)}

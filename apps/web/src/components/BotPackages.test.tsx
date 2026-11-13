@@ -330,6 +330,16 @@ it("keeps skill activation explicit, revision bound and read-before-retry after 
   expect(api.request.mock.calls.filter(([method]) => method === "activateSkill")).toHaveLength(1);
 });
 
+it("never shows a code-like imported skill name bare in the receipt", async () => {
+  receipt.skills[0]!.name = "7C3irl";
+  await act(async () =>
+    root.render(<BotPackageSkills botId="bot-new" spaceId="space-a" isCurrent={current} />),
+  );
+  expect(node.textContent).not.toContain("7C3irl");
+  expect(node.textContent).toContain("Skill · Pending");
+  expect((field("Skill name") as HTMLInputElement).value).toBe("");
+});
+
 it("exports no unrelated shared skills or memory by default and cancels stale delivery", async () => {
   let finish!: (value: unknown) => void;
   const normal = api.request.getMockImplementation()!;

@@ -110,23 +110,39 @@ describe("createTranslator", () => {
     });
   });
 
-  it("falls back to the whole reply when the model does not answer JSON", async () => {
-    const { translator } = harness({ runs: [doneRun("Bonjour le monde")] });
-    await expect(translator(actor, "bot-1", "Hello world", "en", "fr")).resolves.toEqual({
-      translatedText: "Bonjour le monde",
-      detectedLanguage: "en",
-      modelId: "model-1",
-    });
+  it("retries once on a chatty non-JSON reply, then fails instead of passing it off as a translation", async () => {
+    const chatty =
+      "收到，连接没问题。不过有两点需要先确认，否则我给出的信息很可能是过时或者张冠李戴的。";
+    const { translator, run } = harness({ runs: [doneRun(chatty), doneRun(chatty)] });
+    await expect(
+      translator(actor, "bot-1", "我查一下 Hark AI 的最新情况", "auto", "ko"),
+    ).rejects.toThrow("Translation did not return JSON");
+    expect(run).toHaveBeenCalledTimes(2);
   });
 
-  it("keeps the requested source when the fallback reply is used with auto detection", async () => {
-    const { translator } = harness({ runs: [doneRun("plain text, no JSON")] });
-    const result = await translator(actor, "bot-1", "plain text", "auto", "zh");
-    expect(result).toEqual({
-      translatedText: "plain text, no JSON",
-      detectedLanguage: "auto",
+  it("recovers when the retry returns JSON after a chatty first reply", async () => {
+    const { translator, run } = harness({
+      runs: [doneRun("收到，我来查一下。"), doneRun('{"detected": "zh", "text": "최신 상황"}')],
+    });
+    await expect(
+      translator(actor, "bot-1", "我查一下 Hark AI 的最新情况", "auto", "ko"),
+    ).resolves.toEqual({
+      translatedText: "최신 상황",
+      detectedLanguage: "zh",
       modelId: "model-1",
     });
+    expect(run).toHaveBeenCalledTimes(2);
+  });
+
+  it("sends the text as quoted data to translate, not as a message to answer", async () => {
+    const { translator, run } = harness({
+      runs: [doneRun('{"detected": "zh", "text": "최신 상황"}')],
+    });
+    await translator(actor, "bot-1", "我查一下 Hark AI 的最新情况", "auto", "ko");
+    const request = run.mock.calls[0]?.[0] as { prompt: string; instructions: string };
+    expect(request.prompt).toContain('"""\n我查一下 Hark AI 的最新情况\n"""');
+    expect(request.prompt).toContain("Only translate the quoted text. Do not answer it");
+    expect(request.instructions).toContain("Translate the quoted text");
   });
 
   it("retries once on an empty result, then succeeds", async () => {

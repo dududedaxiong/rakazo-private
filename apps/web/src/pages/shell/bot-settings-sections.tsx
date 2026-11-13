@@ -315,6 +315,8 @@ export function TranslationGroup({
   onTargetLanguageChange,
   autoTranslate,
   onAutoTranslateChange,
+  showTranslationActions,
+  onShowTranslationActionsChange,
 }: {
   ids: string;
   choices: readonly ChatModelChoice[];
@@ -326,6 +328,8 @@ export function TranslationGroup({
   onTargetLanguageChange: (language: TranslationTargetLanguage) => void;
   autoTranslate: boolean;
   onAutoTranslateChange: (checked: boolean) => void;
+  showTranslationActions: boolean;
+  onShowTranslationActionsChange: (checked: boolean) => void;
 }) {
   const { t } = useLingui();
   return (
@@ -398,6 +402,19 @@ export function TranslationGroup({
           id={`${ids}-auto-translate`}
           checked={autoTranslate}
           onCheckedChange={onAutoTranslateChange}
+        />
+      </label>
+      <label
+        htmlFor={`${ids}-show-translation-actions`}
+        className="flex min-h-11 cursor-pointer items-center justify-between gap-3 text-body text-foreground"
+      >
+        <span className={rowLabelClass}>
+          <Trans>Show read-aloud, share, and favorite on translations</Trans>
+        </span>
+        <Switch
+          id={`${ids}-show-translation-actions`}
+          checked={showTranslationActions}
+          onCheckedChange={onShowTranslationActionsChange}
         />
       </label>
     </BotPanelGroup>

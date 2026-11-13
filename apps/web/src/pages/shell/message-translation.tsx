@@ -31,6 +31,9 @@ export function useMessageTranslation({
   settings,
   rpc,
   isLastMessage = false,
+  speakText,
+  speaking = false,
+  speakDisabled = false,
 }: {
   messageId: string;
   text: string;
@@ -39,12 +42,20 @@ export function useMessageTranslation({
   rpc: ReturnType<typeof createSpaceRpc>;
   /** Only the newest reply auto-translates; opening history must not re-fire every message. */
   isLastMessage?: boolean;
+  /** Reads arbitrary text in the bot's voice; absent when voice is not ready. */
+  speakText?: (text: string) => void;
+  /** This message is being read aloud right now. */
+  speaking?: boolean;
+  /** A call holds the speaker, so a new read waits until it ends. */
+  speakDisabled?: boolean;
 }): { actions: ReactNode; panel: ReactNode } {
   const { t } = useLingui();
   const [state, setState] = useState<TranslationState>({ status: "idle" });
   const [collapsed, setCollapsed] = useState(false);
   const attemptedAutoRef = useRef(false);
   const [copied, copy, copyFailed, resetCopy, copyFailedText] = useCopyText();
+  /** The bot's switch for the read-aloud, share, and favorite actions; on by default. */
+  const showActions = settings?.showTranslationActions ?? true;
 
   useEffect(() => {
     setState({ status: "idle" });
@@ -99,6 +110,22 @@ export function useMessageTranslation({
     </Button>
   );
 
+  // The web has no message favorites; share falls back to copying when the
+  // browser has no share sheet, and a dismissed sheet copies nothing.
+  const shareTranslation = useCallback(async () => {
+    if (state.status !== "done") return;
+    const text = state.result.translatedText;
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ text });
+        return;
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+      }
+    }
+    await copy(text);
+  }, [copy, state]);
+
   if (!expanded) return { actions, panel: null };
 
   const targetLanguage = resolveTranslationTargetLanguage(
@@ -139,6 +166,27 @@ export function useMessageTranslation({
             >
               {copied ? <Trans>Copied</Trans> : <Trans>Copy translation</Trans>}
             </button>
+            {showActions && speakText ? (
+              <button
+                type="button"
+                onClick={() => speakText(state.result.translatedText)}
+                disabled={speakDisabled && !speaking}
+                className="text-body text-link"
+                aria-label={speaking ? t`Stop` : t`Speak`}
+              >
+                {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
+              </button>
+            ) : null}
+            {showActions ? (
+              <button
+                type="button"
+                onClick={() => void shareTranslation()}
+                className="text-body text-link"
+                aria-label={t`Share`}
+              >
+                <Trans>Share</Trans>
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={() => setCollapsed(true)}

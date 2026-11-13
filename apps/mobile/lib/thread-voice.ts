@@ -26,6 +26,7 @@ import {
 import { currentSessionGeneration } from "./session";
 import { speakerColorFor } from "./thread-message-text";
 import { errorText } from "./user-error";
+import type { SpeechQueueItem } from "./voice";
 import { getVoicePlaybackState, speakQueue, speakText, stopVoicePlayback } from "./voice";
 import {
   loadCallCallerName,
@@ -135,7 +136,7 @@ export function useSpeakMessages({
   mentionBots: MobileBot[];
 }) {
   const { t } = useI18n();
-  const router = useRouter();
+  const showCouldNotSpeak = useCouldNotSpeakAlert();
   return useCallback(
     (message: MobileMessage) => {
       // An active call owns the speaker; a manual read must not cut into it.
@@ -168,27 +169,95 @@ export function useSpeakMessages({
         ];
       });
       if (items.length === 0) return;
-      const showCouldNotSpeak = () =>
-        Alert.alert(t("Could not speak"), t("Add a voice provider in Voice settings."), [
-          { text: t("Cancel"), style: "cancel" },
-          { text: t("Open Voice"), onPress: () => router.push("/voice") },
-        ]);
       // On-device reads overlap: each tap starts its own chain and the
       // earlier ones keep playing. Any other engine stays on the single
       // playback, where a new read replaces the old one.
-      void (async () => {
-        try {
-          const spoken = (await readAloudUsesOnDevice())
-            ? await speakOverlayChain(items)
-            : await speakQueue(items);
-          if (!spoken) showCouldNotSpeak();
-        } catch (err) {
-          Alert.alert(t("Could not speak"), errorText(err, t("Try again.")));
-        }
-      })();
+      void speakItems(items, showCouldNotSpeak, t);
     },
-    [botId, displayName, mentionBots, members, visibleMessages],
+    [botId, displayName, mentionBots, members, showCouldNotSpeak, t, visibleMessages],
   );
+}
+
+/**
+ * Reads one given text aloud — a translation reads its own words, not the
+ * message it came from. Same guards as a message read: a call owns the
+ * speaker, and tapping the text already sounding stops it.
+ */
+export function useSpeakText({
+  botId,
+  members,
+  displayName,
+  mentionBots,
+}: {
+  botId?: string;
+  members: MobileSnapshot["members"] | undefined;
+  displayName?: string;
+  mentionBots: MobileBot[];
+}) {
+  const { t } = useI18n();
+  const showCouldNotSpeak = useCouldNotSpeakAlert();
+  return useCallback(
+    (message: MobileMessage, text: string) => {
+      if (getCallSnapshot()) return;
+      if (stopOverlayChainForMessage(message.id)) return;
+      const playback = getVoicePlaybackState();
+      if (playback.status === "playing" && playback.messageId === message.id) {
+        stopVoicePlayback();
+        return;
+      }
+      if (!text.trim()) return;
+      const speakerBotId = message.botId ?? botId ?? members?.[0]?.botId ?? "";
+      void speakItems(
+        [
+          {
+            text,
+            botId: speakerBotId,
+            messageId: message.id,
+            speaker: {
+              name: memberName(members, speakerBotId) ?? displayName,
+              color: speakerColorFor(mentionBots, members, speakerBotId),
+            },
+          },
+        ],
+        showCouldNotSpeak,
+        t,
+      );
+    },
+    [botId, displayName, mentionBots, members, showCouldNotSpeak, t],
+  );
+}
+
+/** The "no voice is set up" alert with a shortcut to Voice settings. */
+function useCouldNotSpeakAlert() {
+  const { t } = useI18n();
+  const router = useRouter();
+  return useCallback(
+    () =>
+      Alert.alert(t("Could not speak"), t("Add a voice provider in Voice settings."), [
+        { text: t("Cancel"), style: "cancel" },
+        { text: t("Open Voice"), onPress: () => router.push("/voice") },
+      ]),
+    [router, t],
+  );
+}
+
+/** One read-aloud item, always tied to its message, so either engine can play it. */
+type SpeakItem = SpeechQueueItem & { messageId: string };
+
+/** Plays read-aloud items on the on-device chain or the single playback. */
+async function speakItems(
+  items: SpeakItem[],
+  showCouldNotSpeak: () => void,
+  t: (message: string) => string,
+): Promise<void> {
+  try {
+    const spoken = (await readAloudUsesOnDevice())
+      ? await speakOverlayChain(items)
+      : await speakQueue(items);
+    if (!spoken) showCouldNotSpeak();
+  } catch (err) {
+    Alert.alert(t("Could not speak"), errorText(err, t("Try again.")));
+  }
 }
 
 /** Starts a voice call with the chat's bot, and answers when another bot's call put the caller through. */

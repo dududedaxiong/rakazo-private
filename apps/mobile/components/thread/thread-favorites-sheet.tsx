@@ -3,7 +3,11 @@ import { mobileTokens } from "../../lib/appearance";
 import { useI18n } from "../../lib/i18n";
 import type { MobileBot } from "../../lib/mobile-types";
 import type { ThreadFavorite } from "../../lib/thread-favorites";
-import { removeThreadFavorite, useThreadFavorites } from "../../lib/thread-favorites";
+import {
+  favoriteMessageId,
+  removeThreadFavorite,
+  useThreadFavorites,
+} from "../../lib/thread-favorites";
 import { translationSettingsFromBot } from "../../lib/translation";
 import { NativeActionButton } from "../native-action-button";
 import { NativeSheet, useNativeSheet } from "../native-sheet";
@@ -175,7 +179,8 @@ function FavoriteCard({
         accessibilityLabel={t("Tap to jump back")}
         onPress={() => {
           onClose();
-          onJump(item.messageId);
+          // A translation favorite jumps back to the message it translates.
+          onJump(favoriteMessageId(item));
         }}
         style={({ pressed }) => ({ ...(pressed ? { opacity: 0.6 } : null) })}
       >
@@ -209,6 +214,7 @@ function FavoriteCard({
       </View>
       <MessageTranslationView
         translation={translation}
+        showActions={settings.showTranslationActions}
         style={{ marginBottom: 0, marginTop: 10 }}
       />
     </View>

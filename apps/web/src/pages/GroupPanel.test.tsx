@@ -105,6 +105,7 @@ function fakeBot(id: string, name: string): Bot {
     translationSourceLanguage: "auto",
     translationTargetLanguage: null,
     autoTranslate: false,
+    showTranslationActions: true,
     thinkingLevel: null,
     teamChatAmbientEnabled: false,
     teamChatRules: "",

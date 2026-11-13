@@ -39,6 +39,7 @@ export type MobileBot = Pick<
   | "translationSourceLanguage"
   | "translationTargetLanguage"
   | "autoTranslate"
+  | "showTranslationActions"
   | "autoSpeak"
   | "fleetManagement"
   | "crossSpaceCommunication"

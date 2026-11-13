@@ -1046,6 +1046,7 @@ model Bot {
   translationSourceLanguage String   @default("auto")
   translationTargetLanguage String?
   autoTranslate             Boolean  @default(false)
+  showTranslationActions    Boolean  @default(true)
   disabledBuiltinTools String[] @default([])
   webhookSecretId   String?
   teamChatAmbientEnabled Boolean @default(false)

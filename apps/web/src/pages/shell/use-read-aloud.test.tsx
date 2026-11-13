@@ -103,3 +103,15 @@ it("reads a message on request when no call is active", () => {
   act(() => latest.speakMessage(message("m2", "spoken words")));
   expect(speak).toHaveBeenCalledWith("spoken words", { botId: "bot-b", messageId: "m2" });
 });
+
+it("reads arbitrary text, such as a translation, on request", () => {
+  renderRead({ snapshot: snapshot([message("m1", "first reply")]) });
+  act(() => latest.speakText("translated words", { botId: "bot-b", messageId: "m2" }));
+  expect(speak).toHaveBeenCalledWith("translated words", { botId: "bot-b", messageId: "m2" });
+});
+
+it("does not start an arbitrary read while a call is active", () => {
+  renderRead({ snapshot: snapshot([message("m1", "first reply")]), callBotId: "bot-a" });
+  act(() => latest.speakText("translated words", { botId: "bot-b", messageId: "m2" }));
+  expect(speak).not.toHaveBeenCalled();
+});

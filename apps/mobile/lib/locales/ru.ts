@@ -1835,6 +1835,8 @@ export const RU_MESSAGES: Record<string, string> = {
   "Source language": "Язык оригинала",
   "Target language": "Язык перевода",
   "Auto-translate": "Автоперевод",
+  "Show read-aloud, share, and favorite on translations":
+    "Показывать озвучивание, отправку и избранное в переводах",
   "Replies are translated into the target language automatically.":
     "Ответы автоматически переводятся на целевой язык.",
   "Not set": "Не задано",

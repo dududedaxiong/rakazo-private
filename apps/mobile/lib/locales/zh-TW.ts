@@ -1856,6 +1856,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Source language": "來源語言",
   "Target language": "目標語言",
   "Auto-translate": "自動翻譯",
+  "Show read-aloud, share, and favorite on translations": "譯文顯示朗讀、分享、收藏",
   "Replies are translated into the target language automatically.":
     "開啟後 AI 回覆自動翻譯成目標語言",
   "Not set": "未設定",

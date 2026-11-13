@@ -150,6 +150,40 @@ it("preserves null thread group names", () => {
   });
 });
 
+it("falls back for short generated codes, not just long opaque tokens", () => {
+  expect(
+    displayIdentityResult(
+      ["threads", "get"],
+      {
+        members: [{ name: "Ff1dE9", botId: "bot-1" }],
+        messages: [
+          {
+            blocks: [
+              {
+                kind: "bot_message_received",
+                fromBotId: "bot-1",
+                fromBotName: "Ff1dE9",
+                text: "hi",
+              },
+            ],
+          },
+        ],
+      },
+      labels,
+    ),
+  ).toMatchObject({
+    members: [{ name: "Бот" }],
+    messages: [{ blocks: [{ fromBotName: "Бот", text: "hi" }] }],
+  });
+  expect(
+    displayIdentityResult(
+      ["groups", "list"],
+      [{ id: "group-1", name: "Group", members: [{ name: "7C3irl", botId: "bot-2" }] }],
+      labels,
+    ),
+  ).toMatchObject([{ members: [{ name: "Бот" }] }]);
+});
+
 it("keeps source names through live subagent projection and object spreads", () => {
   const event = displayIdentityEvent(
     {

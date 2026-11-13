@@ -179,6 +179,7 @@ function bot(description = "Billing", overrides: Partial<Bot> = {}): Bot {
     translationSourceLanguage: "auto",
     translationTargetLanguage: null,
     autoTranslate: false,
+    showTranslationActions: true,
     teamChatAmbientEnabled: false,
     teamChatRules: "",
     fleetManagement: false,

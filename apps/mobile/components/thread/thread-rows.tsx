@@ -15,6 +15,7 @@ import { StyleSheet, View } from "react-native";
 import { useI18n } from "../../lib/i18n";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "../../lib/mobile-types";
 import { threadHeaderFloats } from "../../lib/thread-edges";
+import { translationFavoriteId } from "../../lib/thread-favorites";
 import { previewMessageText } from "../../lib/thread-message-text";
 import type { useThreadTranscript } from "../../lib/thread-transcript";
 import type { UserBubble } from "../../lib/user-bubble";
@@ -42,8 +43,11 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
       quote: (message) => rowActionsRef.current.quote(message),
       select: (text) => rowActionsRef.current.select(text),
       speak: (message) => rowActionsRef.current.speak(message),
+      speakText: (message, text) => rowActionsRef.current.speakText?.(message, text),
       react: (message, reaction) => rowActionsRef.current.react(message, reaction),
       favorite: (message) => rowActionsRef.current.favorite?.(message),
+      favoriteTranslation: (message, translatedText) =>
+        rowActionsRef.current.favoriteTranslation?.(message, translatedText),
       regenerate: (message) => rowActionsRef.current.regenerate?.(message),
       markUnread: (message) => rowActionsRef.current.markUnread(message),
       answer: (message, answer, fields, dismiss, remember) =>
@@ -194,6 +198,7 @@ export function useThreadRows({
             speakingMessageId === message.id || overlaySpeakingMessageIds?.has(message.id) === true
           }
           favorited={favoriteIds?.has(message.id) ?? false}
+          translationFavorited={favoriteIds?.has(translationFavoriteId(message.id)) ?? false}
           searchHit={searchHitIds?.has(message.id) ?? false}
           searchCurrent={searchCurrentId === message.id}
           messageReactions={messageReactions}

@@ -55,6 +55,7 @@ describe("translation languages", () => {
         translationSourceLanguage: "en",
         translationTargetLanguage: "ja",
         autoTranslate: true,
+        showTranslationActions: false,
       }),
     ).toEqual({
       modelProvider: "openai",
@@ -62,6 +63,7 @@ describe("translation languages", () => {
       sourceLanguage: "en",
       targetLanguage: "ja",
       autoTranslate: true,
+      showTranslationActions: false,
     });
     // An unset target is "auto" on mobile; an unknown code falls back to "auto".
     expect(

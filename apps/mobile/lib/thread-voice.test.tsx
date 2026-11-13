@@ -14,7 +14,12 @@ import {
   stopOverlayChainForMessage,
 } from "./overlay-speech";
 import { clearSessionToken, currentSessionGeneration, saveSessionToken } from "./session";
-import { useAutoSpeakReply, useSpeakMessages, useThreadVoiceCall } from "./thread-voice";
+import {
+  useAutoSpeakReply,
+  useSpeakMessages,
+  useSpeakText,
+  useThreadVoiceCall,
+} from "./thread-voice";
 import { getVoicePlaybackState, speakQueue, speakText, stopVoicePlayback } from "./voice";
 import { takeShortcutVoiceChat } from "./voice-chat-intent";
 
@@ -235,6 +240,18 @@ describe("read-aloud while a call is active", () => {
     return null;
   }
 
+  let latestSpeakText: ReturnType<typeof useSpeakText>;
+
+  function SpeakTextHarness() {
+    latestSpeakText = useSpeakText({
+      botId: speakingBot.id,
+      members: undefined,
+      displayName: speakingBot.name,
+      mentionBots: [],
+    });
+    return null;
+  }
+
   beforeEach(async () => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
     vi.mocked(getCallSnapshot).mockReturnValue(null);
@@ -426,5 +443,31 @@ describe("read-aloud while a call is active", () => {
     expect(stopVoicePlayback).toHaveBeenCalledOnce();
     expect(speakOverlayChain).not.toHaveBeenCalled();
     expect(speakQueue).not.toHaveBeenCalled();
+  });
+
+  it("reads one given text, such as a translation, instead of the message chain", async () => {
+    vi.mocked(readAloudUsesOnDevice).mockResolvedValueOnce(false);
+    const messages = [message("m1", "first reply"), message("m2", "second reply")];
+    act(() => root.render(createElement(SpeakTextHarness, null)));
+    await act(async () => {
+      latestSpeakText(messages[0]!, "translated words");
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(speakQueue).toHaveBeenCalledOnce();
+    expect(vi.mocked(speakQueue).mock.calls[0]?.[0]).toEqual([
+      expect.objectContaining({ text: "translated words", botId: "bot-b", messageId: "m1" }),
+    ]);
+    expect(speakOverlayChain).not.toHaveBeenCalled();
+  });
+
+  it("does not read given text while a call is active", async () => {
+    vi.mocked(getCallSnapshot).mockReturnValue(activeCall());
+    act(() => root.render(createElement(SpeakTextHarness, null)));
+    await act(async () => {
+      latestSpeakText(message("m1", "first reply"), "translated words");
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(speakQueue).not.toHaveBeenCalled();
+    expect(speakOverlayChain).not.toHaveBeenCalled();
   });
 });

@@ -1809,6 +1809,8 @@ export const DE_MESSAGES: Record<string, string> = {
   "Source language": "Ausgangssprache",
   "Target language": "Zielsprache",
   "Auto-translate": "Automatisch übersetzen",
+  "Show read-aloud, share, and favorite on translations":
+    "Vorlesen, Teilen und Favorisieren bei Übersetzungen anzeigen",
   "Replies are translated into the target language automatically.":
     "Antworten werden automatisch in die Zielsprache übersetzt.",
   "Not set": "Nicht festgelegt",

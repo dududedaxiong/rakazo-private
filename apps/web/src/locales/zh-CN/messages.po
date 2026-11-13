@@ -8717,6 +8717,10 @@ msgid "Auto-translate replies"
 msgstr "自动翻译回复"
 
 #: src/pages/shell/bot-settings-sections.tsx
+msgid "Show read-aloud, share, and favorite on translations"
+msgstr "译文显示朗读、分享、收藏"
+
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Translation model"
 msgstr "翻译模型"
 

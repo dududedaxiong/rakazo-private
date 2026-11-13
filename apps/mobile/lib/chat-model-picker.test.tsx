@@ -2040,6 +2040,7 @@ const threadBot: MobileBot = {
   translationSourceLanguage: "auto",
   translationTargetLanguage: null,
   autoTranslate: false,
+  showTranslationActions: true,
   autoSpeak: false,
   fleetManagement: false,
 };

@@ -438,7 +438,7 @@ function SpaceShell() {
       },
     },
   );
-  const { speakingMessageId, speakMessage, callHoldsSpeaker } = useReadAloud({
+  const { speakingMessageId, speakMessage, speakText, callHoldsSpeaker } = useReadAloud({
     active,
     snapshot,
     callBotId: call?.botId,
@@ -1078,6 +1078,7 @@ function SpaceShell() {
               speakingMessageId={speakingMessageId}
               callHoldsSpeaker={callHoldsSpeaker}
               onSpeak={speakMessage}
+              onSpeakText={speakText}
               onOpenComputer={computerControls.onOpenComputer}
               onOpenImportSetup={openImportSetup}
               rpc={rpc}

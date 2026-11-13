@@ -82,6 +82,24 @@ describe("thread favorites", () => {
     expect(favoriteSnippet("short")).toBe("short");
   });
 
+  it("keeps a translation favorite distinct from its message's favorite", async () => {
+    const { favoriteMessageId, isThreadFavorite, toggleThreadFavorite, translationFavoriteId } =
+      await import("./thread-favorites");
+    expect(translationFavoriteId("m1")).toBe("m1:translation");
+    expect(favoriteMessageId({ messageId: "m1:translation", snippet: "t", createdAt: 1 })).toBe(
+      "m1",
+    );
+    expect(favoriteMessageId({ messageId: "m1", snippet: "o", createdAt: 1 })).toBe("m1");
+    toggleThreadFavorite("thread", {
+      messageId: translationFavoriteId("m1"),
+      snippet: "translated",
+      text: "translated",
+      createdAt: 2,
+    });
+    expect(isThreadFavorite("thread", "m1:translation")).toBe(true);
+    expect(isThreadFavorite("thread", "m1")).toBe(false);
+  });
+
   it("toggles a favorite on and off, newest first", async () => {
     const { isThreadFavorite, threadFavoritesFor, toggleThreadFavorite } = await import(
       "./thread-favorites"

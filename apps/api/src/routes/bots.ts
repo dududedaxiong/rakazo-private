@@ -499,6 +499,9 @@ export function botsRoutes(ctx: RouterContext) {
               ? { translationTargetLanguage: input.translationTargetLanguage }
               : {}),
             ...(input.autoTranslate !== undefined ? { autoTranslate: input.autoTranslate } : {}),
+            ...(input.showTranslationActions !== undefined
+              ? { showTranslationActions: input.showTranslationActions }
+              : {}),
             ...(input.thinkingLevel !== undefined ? { thinkingLevel } : {}),
             ...(input.teamChatAmbientEnabled !== undefined
               ? { teamChatAmbientEnabled: input.teamChatAmbientEnabled }

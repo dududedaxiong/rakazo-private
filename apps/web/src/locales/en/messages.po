@@ -8265,6 +8265,10 @@ msgid "Auto-translate replies"
 msgstr "Auto-translate replies"
 
 #: src/pages/shell/bot-settings-sections.tsx
+msgid "Show read-aloud, share, and favorite on translations"
+msgstr "Show read-aloud, share, and favorite on translations"
+
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Translation model"
 msgstr "Translation model"
 

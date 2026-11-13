@@ -73,6 +73,7 @@ function advancedValues(bot: Bot) {
     translation.translationSourceLanguage,
     translation.translationTargetLanguage ?? DEFAULT_TRANSLATION_TARGET_LANGUAGE,
     translation.autoTranslate,
+    translation.showTranslationActions,
   ] as const;
 }
 
@@ -201,6 +202,9 @@ export function BotSettings({
   const [autoTranslate, setAutoTranslate] = useState(
     () => botTranslationSettings(bot).autoTranslate,
   );
+  const [showTranslationActions, setShowTranslationActions] = useState(
+    () => botTranslationSettings(bot).showTranslationActions,
+  );
   const [disabledBuiltinTools, setDisabledBuiltinTools] = useState<string[]>(
     bot.disabledBuiltinTools ?? [],
   );
@@ -244,6 +248,7 @@ export function BotSettings({
     translationSourceLanguage,
     translationTargetLanguage,
     autoTranslate,
+    showTranslationActions,
   ]);
   const dirty =
     name.trim() !== savedNameRef.current.trim() ||
@@ -305,6 +310,7 @@ export function BotSettings({
     if (translationTargetLanguage === saved[8])
       setTranslationTargetLanguage(next[8] as TranslationTargetLanguage);
     if (autoTranslate === saved[9]) setAutoTranslate(next[9] as boolean);
+    if (showTranslationActions === saved[10]) setShowTranslationActions(next[10] as boolean);
     setSavedAdvanced(JSON.stringify(next));
   }, [bot]);
 
@@ -440,6 +446,7 @@ export function BotSettings({
         translationSourceLanguage,
         translationTargetLanguage,
         autoTranslate,
+        showTranslationActions,
         ...(modelMetaReady &&
         (thinkingOptions.length > 0 ||
           (selected?.provider ?? null) !== bot.modelProvider ||
@@ -502,6 +509,7 @@ export function BotSettings({
           translationSourceLanguage,
           translationTargetLanguage,
           autoTranslate,
+          showTranslationActions,
         ]),
       );
     } catch (err) {
@@ -714,6 +722,8 @@ export function BotSettings({
               onTargetLanguageChange={setTranslationTargetLanguage}
               autoTranslate={autoTranslate}
               onAutoTranslateChange={setAutoTranslate}
+              showTranslationActions={showTranslationActions}
+              onShowTranslationActionsChange={setShowTranslationActions}
             />
             <PermissionsGroup
               ids={ids}

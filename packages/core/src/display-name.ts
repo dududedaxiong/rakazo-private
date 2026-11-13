@@ -10,7 +10,9 @@ export function isOpaqueName(name: string): boolean {
     (/^c[a-z0-9]{24}$/.test(name) && /[0-9]/.test(name)) ||
     (/^[a-z][a-z0-9]{23}$/.test(name) && /[0-9]/.test(name)) ||
     // Require interspersed digits and unstructured casing; numbered words/handles stay names.
-    (/^[A-Za-z0-9_-]{20,}$/.test(name) &&
+    // Short generated codes read the same way, so the floor is 6 characters: a bot or skill
+    // named "Ff1dE9" is a bare code, while five-character handles such as "Gpt4o" stay names.
+    (/^[A-Za-z0-9_-]{6,}$/.test(name) &&
       /[a-z]/.test(name) &&
       /[A-Z]/.test(name) &&
       /[0-9]/.test(name) &&

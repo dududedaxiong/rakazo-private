@@ -1826,6 +1826,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Source language": "原文言語",
   "Target language": "翻訳先言語",
   "Auto-translate": "自動翻訳",
+  "Show read-aloud, share, and favorite on translations": "翻訳に読み上げ・共有・お気に入りを表示",
   "Replies are translated into the target language automatically.":
     "AI の返信は自動で目標言語に翻訳されます。",
   "Not set": "未設定",

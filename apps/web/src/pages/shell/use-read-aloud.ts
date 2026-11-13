@@ -71,17 +71,27 @@ export function useReadAloud({
   speakingMessageIdRef.current = speakingMessageId;
   const callBotIdRef = useRef(callBotId);
   callBotIdRef.current = callBotId;
-  const speakMessage = useCallback((message: ThreadMessage) => {
-    if (speakingMessageIdRef.current === message.id) {
+  /**
+   * Reads any text in a bot's voice: a translation reads its own words, not
+   * the message it came from. Tapping the text already sounding stops it.
+   */
+  const speakText = useCallback((text: string, opts: { botId: string; messageId: string }) => {
+    if (speakingMessageIdRef.current === opts.messageId) {
       speaker.stop();
       return;
     }
     // An active call owns the speaker; a manual read must not cut into it.
     if (callBotIdRef.current !== undefined) return;
-    const text = speechFromBlocks(message.blocks);
-    const id = message.botId ?? activeBotId.current;
-    if (text && id) readAloud(text, { botId: id, messageId: message.id });
+    if (text) readAloud(text, opts);
   }, []);
+  const speakMessage = useCallback(
+    (message: ThreadMessage) => {
+      const text = speechFromBlocks(message.blocks);
+      const id = message.botId ?? activeBotId.current;
+      if (text && id) speakText(text, { botId: id, messageId: message.id });
+    },
+    [speakText],
+  );
 
-  return { speakingMessageId, speakMessage, callHoldsSpeaker: callBotId !== undefined };
+  return { speakingMessageId, speakMessage, speakText, callHoldsSpeaker: callBotId !== undefined };
 }

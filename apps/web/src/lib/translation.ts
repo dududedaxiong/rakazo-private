@@ -37,6 +37,7 @@ export interface BotTranslationSettings {
   translationSourceLanguage: TranslationSourceLanguage;
   translationTargetLanguage: TranslationTargetLanguage | null;
   autoTranslate: boolean;
+  showTranslationActions: boolean;
 }
 
 const SOURCE_LANGUAGES = new Set<string>(TRANSLATION_SOURCE_LANGUAGES);
@@ -73,6 +74,7 @@ export function botTranslationSettings(bot: {
   translationSourceLanguage?: string;
   translationTargetLanguage?: string | null;
   autoTranslate?: boolean;
+  showTranslationActions?: boolean;
 }): BotTranslationSettings {
   return {
     translationModelProvider: bot.translationModelProvider ?? null,
@@ -84,6 +86,7 @@ export function botTranslationSettings(bot: {
       ? bot.translationTargetLanguage
       : null,
     autoTranslate: bot.autoTranslate ?? false,
+    showTranslationActions: bot.showTranslationActions ?? true,
   };
 }
 

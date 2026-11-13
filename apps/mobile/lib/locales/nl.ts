@@ -1793,6 +1793,8 @@ export const NL_MESSAGES: Record<string, string> = {
   "Source language": "Brontaal",
   "Target language": "Doeltaal",
   "Auto-translate": "Automatisch vertalen",
+  "Show read-aloud, share, and favorite on translations":
+    "Voorlezen, delen en favorieten weergeven bij vertalingen",
   "Replies are translated into the target language automatically.":
     "Antwoorden worden automatisch naar de doeltaal vertaald.",
   "Not set": "Niet ingesteld",

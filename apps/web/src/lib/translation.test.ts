@@ -22,6 +22,7 @@ describe("botTranslationSettings", () => {
       translationSourceLanguage: "auto",
       translationTargetLanguage: null,
       autoTranslate: false,
+      showTranslationActions: true,
     });
   });
 
@@ -34,6 +35,7 @@ describe("botTranslationSettings", () => {
           translationSourceLanguage: "en",
           translationTargetLanguage: "zh",
           autoTranslate: true,
+          showTranslationActions: false,
         }),
       ),
     ).toEqual({
@@ -42,6 +44,7 @@ describe("botTranslationSettings", () => {
       translationSourceLanguage: "en",
       translationTargetLanguage: "zh",
       autoTranslate: true,
+      showTranslationActions: false,
     });
   });
 
@@ -105,6 +108,7 @@ describe("translation model", () => {
         translationSourceLanguage: "auto",
         translationTargetLanguage: null,
         autoTranslate: false,
+        showTranslationActions: true,
       }),
     ).toBe("deepseek::deepseek-v4.1-flash");
     expect(
@@ -114,6 +118,7 @@ describe("translation model", () => {
         translationSourceLanguage: "auto",
         translationTargetLanguage: null,
         autoTranslate: false,
+        showTranslationActions: true,
       }),
     ).toBe("");
   });

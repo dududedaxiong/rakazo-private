@@ -123,6 +123,8 @@ export const BotSchema = z.object({
   translationTargetLanguage: z.string().nullable(),
   /** Translate AI replies into the target language automatically. */
   autoTranslate: z.boolean(),
+  /** Show read-aloud, share, and favorite actions on a translation. */
+  showTranslationActions: z.boolean(),
   teamChatAmbientEnabled: z.boolean(),
   teamChatRules: z.string(),
   crossSpaceCommunication: z.boolean().optional(),
@@ -529,6 +531,7 @@ export const UpdateBotInput = z
     translationSourceLanguage: TranslationSourceLanguageSchema.optional(),
     translationTargetLanguage: z.string().trim().max(20).nullable().optional(),
     autoTranslate: z.boolean().optional(),
+    showTranslationActions: z.boolean().optional(),
     teamChatAmbientEnabled: z.boolean().optional(),
     teamChatRules: z.string().max(TEAM_CHAT_RULES_MAX_LENGTH).optional(),
     crossSpaceCommunication: z.boolean().optional(),

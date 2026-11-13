@@ -70,9 +70,13 @@ export type MessageRowActions = {
   quote: (message: MobileMessage) => void;
   select: (text: string) => void;
   speak: (message: MobileMessage) => void;
+  /** Reads given text, such as a translation, aloud. Absent where unsupported. */
+  speakText?: (message: MobileMessage, text: string) => void;
   react: (message: MobileMessage, reaction: MessageReaction) => Promise<boolean>;
   /** Toggles this bot reply in the thread's favorites. Absent where unsupported. */
   favorite?: (message: MobileMessage) => void;
+  /** Toggles a translation of this bot reply in the thread's favorites. */
+  favoriteTranslation?: (message: MobileMessage, translatedText: string) => void;
   /** Resends the user message this bot reply answers. Absent where unsupported. */
   regenerate?: (message: MobileMessage) => void;
   markUnread: (message: MobileMessage) => void;
@@ -121,6 +125,8 @@ type MessageRowProps = {
   speaking?: boolean;
   /** This bot reply is in the thread's favorites. */
   favorited?: boolean;
+  /** This bot reply's translation is in the thread's favorites. */
+  translationFavorited?: boolean;
   /** This message matches the open conversation search. */
   searchHit?: boolean;
   /** This message is the current search hit. */
@@ -169,6 +175,7 @@ export const MessageRow = memo(function MessageRow({
   waitingForUser,
   speaking,
   favorited,
+  translationFavorited,
   searchHit,
   searchCurrent,
   peerExchange,
@@ -629,7 +636,27 @@ export const MessageRow = memo(function MessageRow({
               onTranslate={canTranslate ? translation.translate : undefined}
             />
           ) : null}
-          {canTranslate ? <MessageTranslationView translation={translation} /> : null}
+          {canTranslate ? (
+            <MessageTranslationView
+              translation={translation}
+              showActions={translationSettings.showTranslationActions}
+              speaking={speaking}
+              onSpeakText={
+                !onCall && actions.speakText
+                  ? (text) => actions.speakText!(message, text)
+                  : undefined
+              }
+              favorited={translationFavorited}
+              onToggleFavorite={
+                actions.favoriteTranslation
+                  ? () => {
+                      const text = translation.result?.translatedText;
+                      if (text) actions.favoriteTranslation!(message, text);
+                    }
+                  : undefined
+              }
+            />
+          ) : null}
           {displayedReactions.size > 0 ? (
             <View
               style={{

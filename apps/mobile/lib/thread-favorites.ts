@@ -97,6 +97,22 @@ export function favoriteSnippet(text: string): string {
   return flat.length > 64 ? `${flat.slice(0, 64)}…` : flat;
 }
 
+/**
+ * The favorite id for a message's translation, distinct from the message's
+ * own favorite, so favoriting a translation never toggles the original.
+ */
+export function translationFavoriteId(messageId: string): string {
+  return `${messageId}:translation`;
+}
+
+/** The message a favorite belongs to, whether it saves the reply or its translation. */
+export function favoriteMessageId(favorite: ThreadFavorite): string {
+  const suffix = ":translation";
+  return favorite.messageId.endsWith(suffix)
+    ? favorite.messageId.slice(0, -suffix.length)
+    : favorite.messageId;
+}
+
 /** This thread's favorites, newest first. */
 export function threadFavoritesFor(threadKey: string | undefined): ThreadFavorite[] {
   if (!threadKey) return EMPTY;

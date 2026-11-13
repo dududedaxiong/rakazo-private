@@ -28,6 +28,7 @@ function bot(id = "bot-1"): Bot {
     translationSourceLanguage: "auto",
     translationTargetLanguage: null,
     autoTranslate: false,
+    showTranslationActions: true,
     autoSpeak: false,
     spaceId: "space-1",
     description: "",

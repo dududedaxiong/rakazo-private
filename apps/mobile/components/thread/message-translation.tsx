@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ViewStyle } from "react-native";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useI18n } from "../../lib/i18n";
+import { shareMessageText } from "../../lib/message-context-menu";
 import { useMobileTokens, useResolvedAppearance } from "../../lib/native";
 import type { BotTranslationResult, BotTranslationSettings } from "../../lib/translation";
 import {
@@ -135,14 +136,33 @@ export function useMessageTranslation({
  * The expanded translation area: a light-blue box under the message with a
  * "翻译 · 用 {model} 翻译 · {source}译{target}" header, the translated text,
  * and copy / collapse actions. Loading and failure render in place.
+ * Read-aloud, share, and favorite act on the translated text; each renders
+ * only when its handler is provided and the bot shows translation actions.
+ * The favorites sheet passes no speak or favorite handler, so its cards
+ * offer share only.
  */
 export function MessageTranslationView({
   translation,
   style,
+  showActions = true,
+  speaking = false,
+  onSpeakText,
+  favorited = false,
+  onToggleFavorite,
 }: {
   translation: MessageTranslation;
   /** Overrides the outer spacing (a card, unlike a row, supplies its own). */
   style?: ViewStyle;
+  /** The bot's switch for the read-aloud, share, and favorite actions. */
+  showActions?: boolean;
+  /** This message's translation is being read aloud right now. */
+  speaking?: boolean;
+  /** Reads the translated text; absent where voice is unavailable. */
+  onSpeakText?: (text: string) => void;
+  /** This translation is in the thread's favorites. */
+  favorited?: boolean;
+  /** Toggles this translation in the thread's favorites. */
+  onToggleFavorite?: () => void;
 }) {
   const { t } = useI18n();
   const tokens = useMobileTokens();
@@ -196,6 +216,40 @@ export function MessageTranslationView({
             >
               <Text style={{ color: blue, fontSize: 14 }}>{t("Copy translation")}</Text>
             </Pressable>
+            {showActions && onSpeakText ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={speaking ? t("Stop") : t("Speak message")}
+                onPress={() => onSpeakText(result.translatedText)}
+                hitSlop={8}
+              >
+                <Text style={{ color: blue, fontSize: 14 }}>
+                  {speaking ? t("Stop") : t("Speak message")}
+                </Text>
+              </Pressable>
+            ) : null}
+            {showActions ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("Share")}
+                onPress={() => shareMessageText(result.translatedText)}
+                hitSlop={8}
+              >
+                <Text style={{ color: blue, fontSize: 14 }}>{t("Share")}</Text>
+              </Pressable>
+            ) : null}
+            {showActions && onToggleFavorite ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={favorited ? t("Unfavorite") : t("Favorite")}
+                onPress={onToggleFavorite}
+                hitSlop={8}
+              >
+                <Text style={{ color: blue, fontSize: 14 }}>
+                  {favorited ? t("Unfavorite") : t("Favorite")}
+                </Text>
+              </Pressable>
+            ) : null}
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t("Collapse")}

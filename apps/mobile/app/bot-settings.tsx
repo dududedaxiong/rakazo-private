@@ -132,6 +132,7 @@ export default function BotSettingsScreen() {
   const [translationSource, setTranslationSource] = useState<TranslationSourceLanguage>("auto");
   const [translationTarget, setTranslationTarget] = useState<TranslationTargetLanguage>("auto");
   const [autoTranslate, setAutoTranslate] = useState(false);
+  const [showTranslationActions, setShowTranslationActions] = useState(true);
   const [thinkingLevel, setThinkingLevel] = useState("");
   const [notifyOnFinish, setNotifyOnFinish] = useState(true);
   const [autoSpeak, setAutoSpeak] = useState(false);
@@ -278,6 +279,7 @@ export default function BotSettingsScreen() {
             : "auto",
         );
         setAutoTranslate(next.autoTranslate ?? false);
+        setShowTranslationActions(next.showTranslationActions ?? true);
         setAutoSpeak(next.autoSpeak);
         setNotifyOnFinish(next.notifyOnFinish ?? true);
         setDailyCheckIns(next.dailyCheckIns ?? true);
@@ -609,6 +611,7 @@ export default function BotSettingsScreen() {
         translationSourceLanguage?: TranslationSourceLanguage;
         translationTargetLanguage?: TranslationTargetLanguage | null;
         autoTranslate?: boolean;
+        showTranslationActions?: boolean;
       } = { botId };
       if (profile.description !== (bot.description ?? "")) {
         input.description = profile.description;
@@ -647,6 +650,8 @@ export default function BotSettingsScreen() {
         input.translationTargetLanguage = translationTarget || "auto";
       }
       if (autoTranslate !== (bot.autoTranslate ?? false)) input.autoTranslate = autoTranslate;
+      if (showTranslationActions !== (bot.showTranslationActions ?? true))
+        input.showTranslationActions = showTranslationActions;
       if (computerMode !== bot.computerMode) {
         await rpc(
           "bots/setComputer",
@@ -694,7 +699,8 @@ export default function BotSettingsScreen() {
       (selectedTranslationModel?.modelId ?? null) !== (bot.translationModelId ?? null) ||
       (translationSource || "auto") !== (bot.translationSourceLanguage ?? "auto") ||
       (translationTarget || "auto") !== (bot.translationTargetLanguage ?? "auto") ||
-      autoTranslate !== (bot.autoTranslate ?? false));
+      autoTranslate !== (bot.autoTranslate ?? false) ||
+      showTranslationActions !== (bot.showTranslationActions ?? true));
 
   const hasVoiceMenu = !voiceError && voices.length > 1;
   const voiceRowContent = (
@@ -938,6 +944,11 @@ export default function BotSettingsScreen() {
                 detail={t("Replies are translated into the target language automatically.")}
                 value={autoTranslate}
                 onChange={setAutoTranslate}
+              />
+              <SettingsSwitch
+                label={t("Show read-aloud, share, and favorite on translations")}
+                value={showTranslationActions}
+                onChange={setShowTranslationActions}
               />
             </SettingsGroup>
             <SettingsGroup label={t("Permissions")}>

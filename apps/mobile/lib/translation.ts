@@ -55,6 +55,8 @@ export type BotTranslationSettings = {
   /** "auto" follows the system language; the server stores null for unset. */
   targetLanguage: TranslationTargetLanguage;
   autoTranslate: boolean;
+  /** Show read-aloud, share, and favorite actions on a translation. */
+  showTranslationActions: boolean;
 };
 
 export const DEFAULT_BOT_TRANSLATION_SETTINGS: BotTranslationSettings = {
@@ -63,12 +65,13 @@ export const DEFAULT_BOT_TRANSLATION_SETTINGS: BotTranslationSettings = {
   sourceLanguage: "auto",
   targetLanguage: "auto",
   autoTranslate: false,
+  showTranslationActions: true,
 };
 
 /**
  * Reads a bot's translation settings, defaulting an unset source to "auto",
- * an unset target to "auto" (follow the system language), and auto-translate
- * to off.
+ * an unset target to "auto" (follow the system language), auto-translate
+ * to off, and the translation actions to shown.
  */
 export function translationSettingsFromBot(
   bot:
@@ -78,6 +81,7 @@ export function translationSettingsFromBot(
         translationSourceLanguage?: string;
         translationTargetLanguage?: string | null;
         autoTranslate?: boolean;
+        showTranslationActions?: boolean;
       }
     | null
     | undefined,
@@ -96,6 +100,7 @@ export function translationSettingsFromBot(
     sourceLanguage,
     targetLanguage,
     autoTranslate: bot?.autoTranslate ?? false,
+    showTranslationActions: bot?.showTranslationActions ?? true,
   };
 }
 

@@ -40,6 +40,16 @@ export function ChatPersonaSwitcher({
   );
 }
 
+/** A list entry the switcher can render and apply; anything else is dropped, never rendered. */
+function isSwitchableTemplate(value: unknown): value is PromptTemplate {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    typeof (value as PromptTemplate).id === "string" &&
+    typeof (value as PromptTemplate).name === "string"
+  );
+}
+
 function PersonaSwitchList({ bot, onBotUpdated }: { bot: Bot; onBotUpdated: (bot: Bot) => void }) {
   const { t } = useLingui();
   const [templates, setTemplates] = useState<PromptTemplate[] | null>(null);
@@ -47,14 +57,23 @@ function PersonaSwitchList({ bot, onBotUpdated }: { bot: Bot; onBotUpdated: (bot
   const [applyingId, setApplyingId] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
-    rpc.promptTemplates
-      .list()
-      .then((loaded) => {
-        if (!cancelled) setTemplates(loaded);
-      })
-      .catch((err: unknown) => {
+    async function load() {
+      try {
+        // Inside an async function so a synchronously thrown list() still lands in the catch
+        // below instead of escaping the effect into the app-wide error boundary.
+        const loaded = await rpc.promptTemplates.list();
+        if (cancelled) return;
+        if (!Array.isArray(loaded)) {
+          // A non-list reply must never reach `templates.map` below.
+          setError(t`Something went wrong. Try again.`);
+          return;
+        }
+        setTemplates(loaded.filter(isSwitchableTemplate));
+      } catch (err) {
         if (!cancelled) setError(errorText(err));
-      });
+      }
+    }
+    void load();
     return () => {
       cancelled = true;
     };

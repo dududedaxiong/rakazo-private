@@ -1861,6 +1861,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Source language": "源语言",
   "Target language": "目标语言",
   "Auto-translate": "自动翻译",
+  "Show read-aloud, share, and favorite on translations": "译文显示朗读、分享、收藏",
   "Replies are translated into the target language automatically.":
     "开启后 AI 回复自动翻译成目标语言",
   "Not set": "未设置",

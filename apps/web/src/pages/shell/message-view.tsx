@@ -84,6 +84,7 @@ export const MessageView = memo(function MessageView({
   speaking,
   callHoldsSpeaker,
   onSpeak,
+  onSpeakText,
   onOpenComputer,
   onOpenImportSetup,
   rpc,
@@ -130,6 +131,7 @@ export const MessageView = memo(function MessageView({
         translationSourceLanguage?: string;
         translationTargetLanguage?: string | null;
         autoTranslate?: boolean;
+        showTranslationActions?: boolean;
       }
     | undefined;
   replyParent?: ThreadMessage;
@@ -142,6 +144,8 @@ export const MessageView = memo(function MessageView({
   /** An active call owns the speaker, so new reads wait until it ends. */
   callHoldsSpeaker: boolean;
   onSpeak: (message: ThreadMessage) => void;
+  /** Reads arbitrary text, such as a translation, in a bot's voice. */
+  onSpeakText?: (text: string, opts: { botId: string; messageId: string }) => void;
   onOpenComputer: (botId?: string) => void;
   /** Opens where an imported item's setup is finished. */
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
@@ -211,6 +215,14 @@ export const MessageView = memo(function MessageView({
     return bot ? botTranslationSettings(bot) : undefined;
   }, [message.botId, message.role, peerBot]);
   const translatableText = useMemo(() => copyableMessageText(message), [message]);
+  // A translation reads under its own message's id, so the row's Speak button
+  // shows Stop while it sounds and stops it; voice reads stay hidden until ready.
+  const speakTranslation = useCallback(
+    (text: string) => {
+      if (message.botId) onSpeakText?.(text, { botId: message.botId, messageId: message.id });
+    },
+    [message.botId, message.id, onSpeakText],
+  );
   const translation = useMessageTranslation({
     messageId: message.id,
     text: translatableText,
@@ -218,6 +230,9 @@ export const MessageView = memo(function MessageView({
     settings: translationSettings,
     rpc,
     isLastMessage,
+    speakText: voiceReady ? speakTranslation : undefined,
+    speaking,
+    speakDisabled: callHoldsSpeaker,
   });
   const replyBotId = message.replyPreview?.botId ?? replyParent?.botId;
   const author = message.role === "user" ? otherAuthor(message.author, meId) : undefined;

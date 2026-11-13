@@ -97,6 +97,7 @@ export const Transcript = memo(function Transcript({
   speakingMessageId,
   callHoldsSpeaker,
   onSpeak,
+  onSpeakText,
   onOpenComputer,
   onOpenImportSetup,
   rpc,
@@ -151,6 +152,7 @@ export const Transcript = memo(function Transcript({
         translationSourceLanguage?: string;
         translationTargetLanguage?: string | null;
         autoTranslate?: boolean;
+        showTranslationActions?: boolean;
       }
     | undefined;
   onRefresh: () => Promise<void>;
@@ -160,6 +162,8 @@ export const Transcript = memo(function Transcript({
   speakingMessageId: string | null;
   callHoldsSpeaker: boolean;
   onSpeak: (message: ThreadMessage) => void;
+  /** Reads arbitrary text, such as a translation, in a bot's voice. */
+  onSpeakText?: (text: string, opts: { botId: string; messageId: string }) => void;
   onOpenComputer: (botId?: string) => void;
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
   rpc: ReturnType<typeof createSpaceRpc>;
@@ -647,6 +651,7 @@ export const Transcript = memo(function Transcript({
                       speaking={speakingMessageId === message.id}
                       callHoldsSpeaker={callHoldsSpeaker}
                       onSpeak={onSpeak}
+                      onSpeakText={onSpeakText}
                       onOpenComputer={onOpenComputer}
                       onOpenImportSetup={onOpenImportSetup}
                       rpc={rpc}

@@ -1,5 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { BotPackageReceipt, BotPackageSkillReceipt } from "@rakazo/contracts";
+import { displayName } from "@rakazo/core";
 import { Button, Input } from "@rakazo/ui-web";
 import { useId, useState } from "react";
 
@@ -14,11 +15,13 @@ function SkillRow({
 }) {
   const { t } = useLingui();
   const id = useId();
-  const [name, setName] = useState(skill.name);
+  // A code-like skill name never shows bare: the row falls back to "Skill", and a pending
+  // skill starts with an empty rename draft so the code is not sitting in the field either.
+  const [name, setName] = useState(displayName(skill.name, ""));
   return (
     <details className="rounded-lg border p-3">
       <summary className="cursor-pointer" dir="auto">
-        {skill.name} ·{" "}
+        {displayName(skill.name, t`Skill`)} ·{" "}
         {skill.status === "activated"
           ? t`Enabled`
           : skill.status === "removed"

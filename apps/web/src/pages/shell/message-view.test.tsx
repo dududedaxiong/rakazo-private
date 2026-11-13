@@ -506,6 +506,50 @@ describe("message translation", () => {
     expect(translate).toHaveBeenCalledTimes(2);
     expect(translationPanel()?.textContent).toContain("Hark AI 是一款新的 AI 搜索产品。");
   });
+
+  it("reads the translated text aloud and offers to share it", async () => {
+    const onSpeakText = vi.fn();
+    renderTranslated({ voiceReady: true, onSpeakText });
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const panel = translationPanel();
+    expect(panel?.textContent).toContain("Speak");
+    expect(panel?.textContent).toContain("Share");
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="Speak"]')?.click();
+    });
+    expect(onSpeakText).toHaveBeenCalledExactlyOnceWith("Hark AI 是一款新的 AI 搜索产品。", {
+      botId: "bot-1",
+      messageId: "message",
+    });
+  });
+
+  it("hides the read-aloud and share actions when the bot turns them off", async () => {
+    renderTranslated({
+      peerBot: () => ({
+        color: "orange",
+        translationModelProvider: "deepseek",
+        translationModelId: "deepseek-v4.1-flash",
+        translationSourceLanguage: "en",
+        translationTargetLanguage: null,
+        autoTranslate: false,
+        showTranslationActions: false,
+      }),
+      voiceReady: true,
+      onSpeakText: vi.fn(),
+    });
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const panel = translationPanel();
+    expect(panel?.textContent).toContain("Copy translation");
+    expect(panel?.textContent).toContain("Collapse");
+    expect(panel?.textContent).not.toContain("Speak");
+    expect(panel?.textContent).not.toContain("Share");
+  });
 });
 
 it("opens one counted peer line without an inline reply toggle", () => {
