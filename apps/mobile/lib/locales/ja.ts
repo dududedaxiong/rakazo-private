@@ -1812,6 +1812,25 @@ export const JA_MESSAGES: Record<string, string> = {
     "エクスポートしたファイルはDownload/Rakazo/提示詞模板/に保存されます。外部エディタで編集し、同じ名前で再度インポートすると更新されます。使用中のテンプレートはすぐに適用されます。",
   Import: "インポート",
   Custom: "カスタム",
+  Translate: "翻訳",
+  "Translating…": "翻訳中…",
+  "Translation failed. Try again.": "翻訳に失敗しました。もう一度お試しください。",
+  "Copy translation": "訳文をコピー",
+  Collapse: "閉じる",
+  "Translated with {model} · {source} to {target}": "{model} で翻訳 · {source}から{target}へ",
+  "Choose a translation model in Model settings first.":
+    "先にモデル設定で翻訳モデルを選択してください。",
+  "Translation model": "翻訳モデル",
+  "Translation settings": "翻訳設定",
+  "Translation direction": "翻訳方向",
+  "Source language": "原文言語",
+  "Target language": "翻訳先言語",
+  "Auto-translate": "自動翻訳",
+  "Replies are translated into the target language automatically.":
+    "AI の返信は自動で目標言語に翻訳されます。",
+  "Not set": "未設定",
+  "Translations only show here and don't change the original. A favorite without a translation model will ask you to pick one first.":
+    "訳文はここにだけ表示され、原文は変わりません。翻訳モデルが未設定のお気に入りは、先にモデル選択を求められます。",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "{peer}とのメッセージ{count}件" };

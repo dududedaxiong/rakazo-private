@@ -28,7 +28,7 @@ import type {
   SettingsScope,
   VaultPutInput,
 } from "@rakazo/contracts";
-import { BotSecretAuth, resolveBotAvatarSet } from "@rakazo/contracts";
+import { BotSecretAuth, resolveBotAvatarSet, resolveTargetLanguage } from "@rakazo/contracts";
 import { ACTIVE_RUN_STATUSES, COMPUTER_USING_RUNS, displayName } from "@rakazo/core";
 import type { Prisma } from "@rakazo/db";
 import {
@@ -58,6 +58,7 @@ import { requireIdentityConfirmation } from "../identity-confirmation.js";
 import { managedAppCatalog } from "../onboarding.js";
 import type { RouterDeps } from "../router.js";
 import { loadMessagePage } from "../thread-message-pages.js";
+import { TranslationModelNotConfiguredError } from "../translate.js";
 import type { RouterContext } from "./context.js";
 import { computerContext, modelSetup, THREAD_MESSAGE_PAGE_SIZE } from "./shared.js";
 
@@ -423,6 +424,27 @@ export function botsRoutes(ctx: RouterContext) {
           current: { provider: existing.modelProvider, model: existing.modelId },
         });
         if (!modelChange.ok) throw new ORPCError("BAD_REQUEST", { message: modelChange.error });
+        const translationModelChange = await validateBotModelChange(
+          botModelValidation(context.actor),
+          {
+            userId: context.actor.userId,
+            spaceId: context.actor.spaceId,
+            provider:
+              input.translationModelProvider !== undefined
+                ? input.translationModelProvider
+                : existing.translationModelProvider,
+            model:
+              input.translationModelId !== undefined
+                ? input.translationModelId
+                : existing.translationModelId,
+            current: {
+              provider: existing.translationModelProvider,
+              model: existing.translationModelId,
+            },
+          },
+        );
+        if (!translationModelChange.ok)
+          throw new ORPCError("BAD_REQUEST", { message: translationModelChange.error });
         const thinkingLevel = input.thinkingLevel;
         if (!existing.thread) throw new IsolationError();
         // Picking a set on one bot pins it unless it is the owner's default, which unpins it.
@@ -464,6 +486,19 @@ export function botsRoutes(ctx: RouterContext) {
             ...(input.modelProvider !== undefined
               ? { modelProvider: input.modelProvider, modelId: input.modelId ?? null }
               : {}),
+            ...(input.translationModelProvider !== undefined
+              ? {
+                  translationModelProvider: input.translationModelProvider,
+                  translationModelId: input.translationModelId ?? null,
+                }
+              : {}),
+            ...(input.translationSourceLanguage !== undefined
+              ? { translationSourceLanguage: input.translationSourceLanguage }
+              : {}),
+            ...(input.translationTargetLanguage !== undefined
+              ? { translationTargetLanguage: input.translationTargetLanguage }
+              : {}),
+            ...(input.autoTranslate !== undefined ? { autoTranslate: input.autoTranslate } : {}),
             ...(input.thinkingLevel !== undefined ? { thinkingLevel } : {}),
             ...(input.teamChatAmbientEnabled !== undefined
               ? { teamChatAmbientEnabled: input.teamChatAmbientEnabled }
@@ -496,6 +531,36 @@ export function botsRoutes(ctx: RouterContext) {
         const bot = bots.find((b) => b.id === input.botId);
         if (!bot) throw new IsolationError();
         return bot;
+      }),
+      translate: authed.bots.translate.handler(async ({ context, input }) => {
+        const bot = await repos.getBot(context.actor, input.botId);
+        // The client resolves `auto` to a concrete language; an older client
+        // may still send it, so fall back to the bot's saved target, then Chinese.
+        const targetLanguage =
+          input.targetLanguage === "auto"
+            ? resolveTargetLanguage(bot.translationTargetLanguage ?? "auto")
+            : input.targetLanguage;
+        try {
+          const result = await deps.translator(
+            context.actor,
+            input.botId,
+            input.text,
+            input.sourceLanguage,
+            targetLanguage,
+            context.signal,
+          );
+          return {
+            translatedText: result.translatedText,
+            sourceLanguage: result.detectedLanguage,
+            targetLanguage,
+            modelId: result.modelId,
+          };
+        } catch (error) {
+          if (error instanceof TranslationModelNotConfiguredError) {
+            throw new ORPCError("BAD_REQUEST", { message: "先选择翻译模型" });
+          }
+          throw error;
+        }
       }),
       restoreInstructions: authed.bots.restoreInstructions.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);

@@ -1779,6 +1779,25 @@ export const NL_MESSAGES: Record<string, string> = {
     "Geëxporteerde bestanden gaan naar Download/Rakazo/提示词模板/. Bewerk er een in een externe editor en importeer vervolgens dezelfde naam om het bij te werken. Een sjabloon in gebruik wordt meteen toegepast.",
   Import: "Importeren",
   Custom: "Aangepast",
+  Translate: "Vertalen",
+  "Translating…": "Vertalen…",
+  "Translation failed. Try again.": "Vertaling mislukt. Probeer het opnieuw.",
+  "Copy translation": "Vertaling kopiëren",
+  Collapse: "Inklappen",
+  "Translated with {model} · {source} to {target}": "Vertaald met {model} · {source} naar {target}",
+  "Choose a translation model in Model settings first.":
+    "Kies eerst een vertaalmodel in de modelinstellingen.",
+  "Translation model": "Vertaalmodel",
+  "Translation settings": "Vertaalinstellingen",
+  "Translation direction": "Vertaalrichting",
+  "Source language": "Brontaal",
+  "Target language": "Doeltaal",
+  "Auto-translate": "Automatisch vertalen",
+  "Replies are translated into the target language automatically.":
+    "Antwoorden worden automatisch naar de doeltaal vertaald.",
+  "Not set": "Niet ingesteld",
+  "Translations only show here and don't change the original. A favorite without a translation model will ask you to pick one first.":
+    "Vertalingen worden alleen hier weergegeven en veranderen het origineel niet. Bij een favoriet zonder vertaalmodel wordt je eerst gevraagd er een te kiezen.",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

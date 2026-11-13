@@ -13,6 +13,7 @@ import {
   InstructionVersionSchema,
   initialBotMemory,
   resolveBotAvatarSet,
+  TRANSLATION_SOURCE_LANGUAGE_CODES,
 } from "@rakazo/contracts";
 import {
   BACKGROUND_RUN_TRIGGERS,
@@ -101,6 +102,11 @@ function mapBot(
     modelProvider?: string | null;
     modelId?: string | null;
     thinkingLevel?: string | null;
+    translationModelProvider?: string | null;
+    translationModelId?: string | null;
+    translationSourceLanguage?: string | null;
+    translationTargetLanguage?: string | null;
+    autoTranslate?: boolean;
     teamChatAmbientEnabled?: boolean;
     teamChatRules?: string;
     crossSpaceCommunication?: boolean;
@@ -150,6 +156,17 @@ function mapBot(
     modelProvider: bot.modelProvider ? canonicalPiProviderId(bot.modelProvider) : null,
     modelId: bot.modelId ?? null,
     thinkingLevel: (bot.thinkingLevel as Bot["thinkingLevel"]) ?? null,
+    translationModelProvider: bot.translationModelProvider
+      ? canonicalPiProviderId(bot.translationModelProvider)
+      : null,
+    translationModelId: bot.translationModelId ?? null,
+    translationSourceLanguage: (TRANSLATION_SOURCE_LANGUAGE_CODES as readonly string[]).includes(
+      bot.translationSourceLanguage ?? "",
+    )
+      ? (bot.translationSourceLanguage as Bot["translationSourceLanguage"])
+      : "auto",
+    translationTargetLanguage: bot.translationTargetLanguage ?? null,
+    autoTranslate: bot.autoTranslate ?? false,
     teamChatAmbientEnabled: bot.teamChatAmbientEnabled ?? false,
     teamChatRules: bot.teamChatRules ?? "",
     crossSpaceCommunication: bot.crossSpaceCommunication ?? true,

@@ -60,6 +60,7 @@ import { routinesRoutes } from "./routes/routines.js";
 import { spacesRoutes } from "./routes/spaces.js";
 import { spendingLimitRoutes } from "./routes/spending-limit.js";
 import { threadsRoutes } from "./routes/threads.js";
+import type { Translator } from "./translate.js";
 import type { VoiceDeps } from "./voice.js";
 
 export { nextConnectionLabel } from "./model-credentials.js";
@@ -127,6 +128,8 @@ export interface RouterDeps {
   email?: TransactionalEmailProvider;
   onEmailError?: (error: unknown) => void;
   speechSummary?: VoiceDeps["speechSummary"];
+  /** Translates with a bot's translation model; every router needs one. */
+  translator: Translator;
   env: {
     /** Domain of bots' email addresses; unset when this server receives no email. */
     inboundEmailDomain?: string;

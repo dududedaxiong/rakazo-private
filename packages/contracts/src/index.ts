@@ -51,6 +51,7 @@ export * from "./server-headers.js";
 export * from "./settings-scope.js";
 export * from "./space-availability.js";
 export * from "./terminal.js";
+export * from "./translation.js";
 export * from "./user-devices.js";
 export * from "./vault-items.js";
 export * from "./voice-errors.js";

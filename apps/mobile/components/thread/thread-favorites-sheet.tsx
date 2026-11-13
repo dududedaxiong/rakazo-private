@@ -1,23 +1,34 @@
 import { Modal, Platform, Pressable, ScrollView, Text, View } from "react-native";
 import { mobileTokens } from "../../lib/appearance";
 import { useI18n } from "../../lib/i18n";
+import type { MobileBot } from "../../lib/mobile-types";
+import type { ThreadFavorite } from "../../lib/thread-favorites";
 import { removeThreadFavorite, useThreadFavorites } from "../../lib/thread-favorites";
+import { translationSettingsFromBot } from "../../lib/translation";
 import { NativeActionButton } from "../native-action-button";
 import { NativeSheet, useNativeSheet } from "../native-sheet";
-import { NativeSymbol } from "../native-symbol";
+import {
+  MessageTranslationView,
+  TranslateButton,
+  useMessageTranslation,
+} from "./message-translation";
 
 /**
  * The thread's favorited replies: tapping one closes the sheet and jumps
- * back to that reply in the conversation; each item can be unfavorited here.
+ * back to that reply in the conversation; each card can be deleted here, or
+ * translated in place with the bot's translation model.
  */
 export function ThreadFavoritesSheet({
   visible,
   threadKey,
+  bot,
   onClose,
   onJump,
 }: {
   visible: boolean;
   threadKey: string | undefined;
+  /** The bot whose replies these are; without it there is no translation model to use. */
+  bot?: MobileBot | null;
   onClose: () => void;
   onJump: (messageId: string) => void;
 }) {
@@ -68,57 +79,33 @@ export function ThreadFavoritesSheet({
           {t("Nothing saved yet. Favorite a useful reply and it will show up here.")}
         </Text>
       ) : (
-        <ScrollView style={{ maxHeight: 480 }}>
-          {favorites.map((item) => (
-            <View
-              key={item.messageId}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-                paddingHorizontal: 20,
-                paddingVertical: 4,
-              }}
-            >
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("Tap to jump back")}
-                onPress={() => {
-                  onClose();
-                  onJump(item.messageId);
-                }}
-                style={({ pressed }) => ({
-                  flex: 1,
-                  paddingVertical: 8,
-                  ...(pressed ? { opacity: 0.6 } : null),
-                })}
-              >
-                <Text style={{ color: tokens.foreground, fontSize: 15 }} numberOfLines={2}>
-                  {item.snippet}
-                </Text>
-                <Text style={{ color: tokens.mutedForeground, fontSize: 12, marginTop: 4 }}>
-                  {new Date(item.createdAt).toLocaleString()}
-                </Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("Unfavorite")}
-                onPress={() => {
-                  if (threadKey) removeThreadFavorite(threadKey, item.messageId);
-                }}
-                hitSlop={8}
-                style={{ padding: 6 }}
-              >
-                <NativeSymbol
-                  ios="bookmark.fill"
-                  android="bookmark"
-                  size={20}
-                  color={tokens.link}
-                />
-              </Pressable>
-            </View>
-          ))}
-        </ScrollView>
+        <>
+          <ScrollView style={{ maxHeight: 480 }}>
+            {favorites.map((item) => (
+              <FavoriteCard
+                key={item.messageId}
+                item={item}
+                threadKey={threadKey}
+                bot={bot}
+                onClose={onClose}
+                onJump={onJump}
+              />
+            ))}
+          </ScrollView>
+          <Text
+            style={{
+              color: tokens.mutedForeground,
+              fontSize: 12,
+              textAlign: "center",
+              paddingHorizontal: 20,
+              paddingTop: 12,
+            }}
+          >
+            {t(
+              "Translations only show here and don't change the original. A favorite without a translation model will ask you to pick one first.",
+            )}
+          </Text>
+        </>
       )}
     </View>
   );
@@ -143,5 +130,87 @@ export function ThreadFavoritesSheet({
         {content}
       </View>
     </Modal>
+  );
+}
+
+function FavoriteCard({
+  item,
+  threadKey,
+  bot,
+  onClose,
+  onJump,
+}: {
+  item: ThreadFavorite;
+  threadKey: string | undefined;
+  bot?: MobileBot | null;
+  onClose: () => void;
+  onJump: (messageId: string) => void;
+}) {
+  const { t } = useI18n();
+  const tokens = mobileTokens();
+  const settings = translationSettingsFromBot(bot ?? null);
+  // Older favorites only stored the 64-character snippet; translate that.
+  const text = item.text ?? item.snippet;
+  const translation = useMessageTranslation({
+    botId: bot?.id,
+    text,
+    settings,
+    autoTranslate: false,
+    composing: false,
+  });
+
+  return (
+    <View
+      style={{
+        borderWidth: 1,
+        borderColor: tokens.border,
+        borderRadius: 12,
+        padding: 12,
+        marginHorizontal: 20,
+        marginVertical: 6,
+      }}
+    >
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("Tap to jump back")}
+        onPress={() => {
+          onClose();
+          onJump(item.messageId);
+        }}
+        style={({ pressed }) => ({ ...(pressed ? { opacity: 0.6 } : null) })}
+      >
+        <Text style={{ color: tokens.foreground, fontSize: 15 }} numberOfLines={2}>
+          {item.snippet}
+        </Text>
+        <Text style={{ color: tokens.mutedForeground, fontSize: 12, marginTop: 4 }}>
+          {new Date(item.createdAt).toLocaleString()}
+        </Text>
+      </Pressable>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginTop: 8,
+        }}
+      >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("Delete")}
+          onPress={() => {
+            if (threadKey) removeThreadFavorite(threadKey, item.messageId);
+          }}
+          hitSlop={8}
+          style={({ pressed }) => ({ paddingVertical: 6, ...(pressed ? { opacity: 0.6 } : null) })}
+        >
+          <Text style={{ color: tokens.mutedForeground, fontSize: 14 }}>{t("Delete")}</Text>
+        </Pressable>
+        {bot ? <TranslateButton label={t("Translate")} onPress={translation.translate} /> : null}
+      </View>
+      <MessageTranslationView
+        translation={translation}
+        style={{ marginBottom: 0, marginTop: 10 }}
+      />
+    </View>
   );
 }

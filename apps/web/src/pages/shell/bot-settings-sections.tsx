@@ -18,6 +18,12 @@ import {
 import { Download, Settings, X } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
 import { thinkingLevelLabel } from "../../lib/model-catalog";
+import type { TranslationSourceLanguage, TranslationTargetLanguage } from "../../lib/translation";
+import {
+  TRANSLATION_SOURCE_LANGUAGES,
+  TRANSLATION_TARGET_LANGUAGES,
+  translationLanguageLabel,
+} from "../../lib/translation";
 import { ChatModelPicker } from "./chat-model-picker";
 
 const rowLabelClass = "text-body text-foreground";
@@ -294,6 +300,106 @@ export function VoiceGroup({
           </NativeSelect>
         </label>
       ) : null}
+    </BotPanelGroup>
+  );
+}
+
+export function TranslationGroup({
+  ids,
+  choices,
+  value,
+  onModelChange,
+  sourceLanguage,
+  onSourceLanguageChange,
+  targetLanguage,
+  onTargetLanguageChange,
+  autoTranslate,
+  onAutoTranslateChange,
+}: {
+  ids: string;
+  choices: readonly ChatModelChoice[];
+  value: string;
+  onModelChange: (key: string) => void;
+  sourceLanguage: TranslationSourceLanguage;
+  onSourceLanguageChange: (language: TranslationSourceLanguage) => void;
+  targetLanguage: TranslationTargetLanguage;
+  onTargetLanguageChange: (language: TranslationTargetLanguage) => void;
+  autoTranslate: boolean;
+  onAutoTranslateChange: (checked: boolean) => void;
+}) {
+  const { t } = useLingui();
+  return (
+    <BotPanelGroup label={t`Translation`}>
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <label htmlFor={`${ids}-translation-model`} className={rowLabelClass}>
+          <Trans>Translation model</Trans>
+        </label>
+        <div className="min-w-0 w-full max-w-2/3 [&>div]:mt-0 [&>button]:mt-0">
+          <ChatModelPicker
+            id={`${ids}-translation-model`}
+            choices={choices}
+            value={value}
+            onChange={onModelChange}
+          />
+        </div>
+      </div>
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <span className={rowLabelClass}>
+          <Trans>Source language</Trans>
+        </span>
+        <fieldset
+          className="m-0 flex flex-wrap justify-end gap-2 border-0 p-0"
+          aria-label={t`Source language`}
+        >
+          {TRANSLATION_SOURCE_LANGUAGES.map((language) => (
+            <Toggle
+              key={language}
+              variant="outline"
+              size="sm"
+              pressed={sourceLanguage === language}
+              onPressedChange={(pressed) => {
+                if (pressed) onSourceLanguageChange(language);
+              }}
+              className="aria-pressed:border-foreground/40 aria-pressed:text-foreground"
+            >
+              {translationLanguageLabel(language)}
+            </Toggle>
+          ))}
+        </fieldset>
+      </div>
+      <label
+        htmlFor={`${ids}-translation-target`}
+        className="flex min-h-11 items-center justify-between gap-3 text-body text-foreground"
+      >
+        <Trans>Target language</Trans>
+        <NativeSelect
+          id={`${ids}-translation-target`}
+          className="max-w-2/3"
+          value={targetLanguage}
+          onChange={(event) =>
+            onTargetLanguageChange(event.target.value as TranslationTargetLanguage)
+          }
+        >
+          {TRANSLATION_TARGET_LANGUAGES.map((language) => (
+            <NativeSelectOption key={language} value={language}>
+              {translationLanguageLabel(language)}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+      </label>
+      <label
+        htmlFor={`${ids}-auto-translate`}
+        className="flex min-h-11 cursor-pointer items-center justify-between gap-3 text-body text-foreground"
+      >
+        <span className={rowLabelClass}>
+          <Trans>Auto-translate replies</Trans>
+        </span>
+        <Switch
+          id={`${ids}-auto-translate`}
+          checked={autoTranslate}
+          onCheckedChange={onAutoTranslateChange}
+        />
+      </label>
     </BotPanelGroup>
   );
 }

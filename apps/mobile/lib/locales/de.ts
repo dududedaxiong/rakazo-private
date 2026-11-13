@@ -1794,6 +1794,26 @@ export const DE_MESSAGES: Record<string, string> = {
     "Exportierte Dateien landen in Download/Rakazo/提示词模板/. Bearbeiten Sie eine Datei in einem externen Editor und importieren Sie sie unter demselben Namen erneut, um sie zu aktualisieren. Eine verwendete Vorlage wird sofort angewendet.",
   Import: "Importieren",
   Custom: "Benutzerdefiniert",
+  Translate: "Übersetzen",
+  "Translating…": "Übersetzen…",
+  "Translation failed. Try again.": "Übersetzung fehlgeschlagen. Versuche es erneut.",
+  "Copy translation": "Übersetzung kopieren",
+  Collapse: "Einklappen",
+  "Translated with {model} · {source} to {target}":
+    "Übersetzt mit {model} · {source} nach {target}",
+  "Choose a translation model in Model settings first.":
+    "Wähle zuerst ein Übersetzungsmodell in den Modelleinstellungen.",
+  "Translation model": "Übersetzungsmodell",
+  "Translation settings": "Übersetzungseinstellungen",
+  "Translation direction": "Übersetzungsrichtung",
+  "Source language": "Ausgangssprache",
+  "Target language": "Zielsprache",
+  "Auto-translate": "Automatisch übersetzen",
+  "Replies are translated into the target language automatically.":
+    "Antworten werden automatisch in die Zielsprache übersetzt.",
+  "Not set": "Nicht festgelegt",
+  "Translations only show here and don't change the original. A favorite without a translation model will ask you to pick one first.":
+    "Übersetzungen werden nur hier angezeigt und ändern das Original nicht. Für einen Favoriten ohne Übersetzungsmodell wirst du zuerst um eine Auswahl gebeten.",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

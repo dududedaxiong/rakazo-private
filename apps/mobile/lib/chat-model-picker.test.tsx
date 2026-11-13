@@ -2035,6 +2035,11 @@ const threadBot: MobileBot = {
   modelProvider: "openrouter",
   modelId: "vendor/model-2",
   thinkingLevel: null,
+  translationModelProvider: null,
+  translationModelId: null,
+  translationSourceLanguage: "auto",
+  translationTargetLanguage: null,
+  autoTranslate: false,
   autoSpeak: false,
   fleetManagement: false,
 };

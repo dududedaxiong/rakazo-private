@@ -1820,6 +1820,26 @@ export const RU_MESSAGES: Record<string, string> = {
     "Экспортированные файлы сохраняются в Download/Rakazo/提示词模板/. Отредактируйте файл во внешнем редакторе, затем импортируйте его под тем же именем, чтобы обновить. Используемый шаблон применится сразу.",
   Import: "Импортировать",
   Custom: "Своя",
+  Translate: "Перевести",
+  "Translating…": "Перевод…",
+  "Translation failed. Try again.": "Не удалось перевести. Попробуйте ещё раз.",
+  "Copy translation": "Копировать перевод",
+  Collapse: "Свернуть",
+  "Translated with {model} · {source} to {target}":
+    "Переведено с помощью {model} · {source} на {target}",
+  "Choose a translation model in Model settings first.":
+    "Сначала выберите модель перевода в настройках модели.",
+  "Translation model": "Модель перевода",
+  "Translation settings": "Настройки перевода",
+  "Translation direction": "Направление перевода",
+  "Source language": "Язык оригинала",
+  "Target language": "Язык перевода",
+  "Auto-translate": "Автоперевод",
+  "Replies are translated into the target language automatically.":
+    "Ответы автоматически переводятся на целевой язык.",
+  "Not set": "Не задано",
+  "Translations only show here and don't change the original. A favorite without a translation model will ask you to pick one first.":
+    "Переводы показываются только здесь и не меняют оригинал. Для избранного без модели перевода сначала будет предложено её выбрать.",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

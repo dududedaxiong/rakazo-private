@@ -8235,3 +8235,71 @@ msgstr "Este modelo está em uso neste bot. Salvar sozinho só altera o modelo."
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "Use"
 msgstr "Usar"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Not selected"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Source language"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Target language"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Auto-translate replies"
+msgstr ""
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation model"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate this reply"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating…"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Copy translation"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse translation"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Retry translation"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translation failed"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Choose a translation model in this bot's Advanced settings"
+msgstr ""
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {modelId} · {source} to {target}"
+msgstr ""

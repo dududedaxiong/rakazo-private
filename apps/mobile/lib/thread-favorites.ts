@@ -7,6 +7,8 @@ export type ThreadFavorite = {
   messageId: string;
   /** The reply's first line or so, shown in the favorites list. */
   snippet: string;
+  /** The reply's full text, for in-place translation; older favorites lack it. */
+  text?: string;
   createdAt: number;
 };
 
@@ -28,7 +30,8 @@ function isFavoriteItem(value: unknown): value is ThreadFavorite {
   return (
     typeof item.messageId === "string" &&
     typeof item.snippet === "string" &&
-    typeof item.createdAt === "number"
+    typeof item.createdAt === "number" &&
+    (item.text === undefined || typeof item.text === "string")
   );
 }
 

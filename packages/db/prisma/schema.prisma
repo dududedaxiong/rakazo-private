@@ -1041,6 +1041,11 @@ model Bot {
   modelProvider     String?
   modelId           String?
   thinkingLevel     String?
+  translationModelProvider  String?
+  translationModelId        String?
+  translationSourceLanguage String   @default("auto")
+  translationTargetLanguage String?
+  autoTranslate             Boolean  @default(false)
   disabledBuiltinTools String[] @default([])
   webhookSecretId   String?
   teamChatAmbientEnabled Boolean @default(false)

@@ -8235,3 +8235,71 @@ msgstr "Ten szablon jest używany przez tego bota. Samo zapisanie zmienia tylko 
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "Use"
 msgstr "Użyj"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate"
+msgstr "Przetłumacz"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating"
+msgstr "Tłumaczenie"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation"
+msgstr "Tłumaczenie"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Not selected"
+msgstr "Nie wybrano"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Source language"
+msgstr "Język źródłowy"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Target language"
+msgstr "Język docelowy"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Auto-translate replies"
+msgstr "Automatycznie tłumacz odpowiedzi"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation model"
+msgstr "Model tłumaczenia"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate this reply"
+msgstr "Przetłumacz tę odpowiedź"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating…"
+msgstr "Tłumaczenie…"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Copy translation"
+msgstr "Kopiuj tłumaczenie"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse"
+msgstr "Zwiń"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse translation"
+msgstr "Zwiń tłumaczenie"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Retry translation"
+msgstr "Ponów tłumaczenie"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translation failed"
+msgstr "Tłumaczenie nie powiodło się"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Choose a translation model in this bot's Advanced settings"
+msgstr "Wybierz model tłumaczenia w ustawieniach zaawansowanych tego bota"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {modelId} · {source} to {target}"
+msgstr "Przetłumaczono przy użyciu {modelId} · z {source} na {target}"

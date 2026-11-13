@@ -30,6 +30,12 @@ import { BotPersonaSection } from "../../components/prompt-templates/BotPersonaS
 import { botProfilePatch } from "../../lib/bot-profile-patch";
 import { lazyComponent } from "../../lib/preload-recovery";
 import { useSpaceQueries } from "../../lib/query";
+import type { TranslationSourceLanguage, TranslationTargetLanguage } from "../../lib/translation";
+import {
+  botTranslationSettings,
+  DEFAULT_TRANSLATION_TARGET_LANGUAGE,
+  translationModelKey,
+} from "../../lib/translation";
 import { errorText } from "../../lib/user-error";
 import { AvatarStudioPopover } from "./avatar-studio-popover";
 import {
@@ -41,6 +47,7 @@ import {
   PermissionsGroup,
   RepliesGroup,
   ToolsGroup,
+  TranslationGroup,
   VoiceGroup,
 } from "./bot-settings-sections";
 
@@ -54,6 +61,7 @@ const KnowledgeSection = lazyComponent(() =>
 
 /** The advanced fields one Save sends, in the order their saved snapshot keeps them. */
 function advancedValues(bot: Bot) {
+  const translation = botTranslationSettings(bot);
   return [
     bot.modelProvider && bot.modelId ? modelOptionKey(bot.modelProvider, bot.modelId) : "",
     bot.thinkingLevel ?? "",
@@ -61,6 +69,10 @@ function advancedValues(bot: Bot) {
     bot.memoryScope,
     bot.autoSpeak,
     bot.voiceId ?? "",
+    translationModelKey(translation),
+    translation.translationSourceLanguage,
+    translation.translationTargetLanguage ?? DEFAULT_TRANSLATION_TARGET_LANGUAGE,
+    translation.autoTranslate,
   ] as const;
 }
 
@@ -116,6 +128,11 @@ export function BotSettings({
     modelProvider?: string | null;
     modelId?: string | null;
     thinkingLevel?: ThinkingLevel | null;
+    translationModelProvider?: string | null;
+    translationModelId?: string | null;
+    translationSourceLanguage?: TranslationSourceLanguage;
+    translationTargetLanguage?: TranslationTargetLanguage | null;
+    autoTranslate?: boolean;
     disabledBuiltinTools?: string[];
   }) => Promise<void>;
   onExport: () => Promise<void>;
@@ -168,6 +185,22 @@ export function BotSettings({
     bot.modelProvider && bot.modelId ? modelOptionKey(bot.modelProvider, bot.modelId) : "",
   );
   const [thinkingLevel, setThinkingLevel] = useState(bot.thinkingLevel ?? "");
+  const [translationModel, setTranslationModel] = useState(() =>
+    translationModelKey(botTranslationSettings(bot)),
+  );
+  const [translationSourceLanguage, setTranslationSourceLanguage] =
+    useState<TranslationSourceLanguage>(
+      () => botTranslationSettings(bot).translationSourceLanguage,
+    );
+  const [translationTargetLanguage, setTranslationTargetLanguage] =
+    useState<TranslationTargetLanguage>(
+      () =>
+        botTranslationSettings(bot).translationTargetLanguage ??
+        DEFAULT_TRANSLATION_TARGET_LANGUAGE,
+    );
+  const [autoTranslate, setAutoTranslate] = useState(
+    () => botTranslationSettings(bot).autoTranslate,
+  );
   const [disabledBuiltinTools, setDisabledBuiltinTools] = useState<string[]>(
     bot.disabledBuiltinTools ?? [],
   );
@@ -207,6 +240,10 @@ export function BotSettings({
     memoryScope,
     autoSpeak,
     voiceId,
+    translationModel,
+    translationSourceLanguage,
+    translationTargetLanguage,
+    autoTranslate,
   ]);
   const dirty =
     name.trim() !== savedNameRef.current.trim() ||
@@ -262,6 +299,12 @@ export function BotSettings({
     if (memoryScope === saved[3]) setMemoryScope(next[3]);
     if (autoSpeak === saved[4]) setAutoSpeak(next[4]);
     if (voiceId === saved[5]) setVoiceId(next[5]);
+    if (translationModel === saved[6]) setTranslationModel(next[6]);
+    if (translationSourceLanguage === saved[7])
+      setTranslationSourceLanguage(next[7] as TranslationSourceLanguage);
+    if (translationTargetLanguage === saved[8])
+      setTranslationTargetLanguage(next[8] as TranslationTargetLanguage);
+    if (autoTranslate === saved[9]) setAutoTranslate(next[9] as boolean);
     setSavedAdvanced(JSON.stringify(next));
   }, [bot]);
 
@@ -276,6 +319,26 @@ export function BotSettings({
   const selectedModelKey = selectedModel
     ? modelOptionKey(selectedModel.provider, selectedModel.modelId)
     : "";
+
+  const storedTranslationModel = translationModel ? parseModelOptionKey(translationModel) : null;
+  const selectedTranslationModel = storedTranslationModel
+    ? {
+        provider: storedTranslationModel.provider,
+        modelId: resolveSelectableModelId(
+          catalog,
+          storedTranslationModel.provider,
+          storedTranslationModel.modelId,
+        ),
+      }
+    : null;
+  const selectedTranslationModelKey = selectedTranslationModel
+    ? modelOptionKey(selectedTranslationModel.provider, selectedTranslationModel.modelId)
+    : "";
+  const translationModelChoices = chatModelChoices(
+    connectedOptions,
+    selectedTranslationModelKey,
+    t`Not selected`,
+  );
 
   const defaultEntry = me?.defaultModel
     ? catalogEntry(catalog, me.defaultProvider, me.defaultModel)
@@ -341,6 +404,7 @@ export function BotSettings({
         return;
       }
       const selected = selectedModel;
+      const selectedTranslation = selectedTranslationModel;
       const nextName = (patchOverrides?.name !== undefined ? patchOverrides.name : name).trim();
       const nextDescription = (
         patchOverrides?.description !== undefined ? patchOverrides.description : description
@@ -371,6 +435,11 @@ export function BotSettings({
         voiceId: voiceId || null,
         modelProvider: selected?.provider ?? null,
         modelId: selected?.modelId ?? null,
+        translationModelProvider: selectedTranslation?.provider ?? null,
+        translationModelId: selectedTranslation?.modelId ?? null,
+        translationSourceLanguage,
+        translationTargetLanguage,
+        autoTranslate,
         ...(modelMetaReady &&
         (thinkingOptions.length > 0 ||
           (selected?.provider ?? null) !== bot.modelProvider ||
@@ -422,7 +491,18 @@ export function BotSettings({
       if (nextName) savedNameRef.current = nextName;
       savedDescriptionRef.current = nextDescription;
       setSavedAdvanced(
-        JSON.stringify([modelKey, thinkingLevel, computerMode, memoryScope, autoSpeak, voiceId]),
+        JSON.stringify([
+          modelKey,
+          thinkingLevel,
+          computerMode,
+          memoryScope,
+          autoSpeak,
+          voiceId,
+          translationModel,
+          translationSourceLanguage,
+          translationTargetLanguage,
+          autoTranslate,
+        ]),
       );
     } catch (err) {
       if (
@@ -622,6 +702,18 @@ export function BotSettings({
               voices={voices}
               voiceId={voiceId}
               onVoiceIdChange={setVoiceId}
+            />
+            <TranslationGroup
+              ids={ids}
+              choices={translationModelChoices}
+              value={selectedTranslationModelKey}
+              onModelChange={setTranslationModel}
+              sourceLanguage={translationSourceLanguage}
+              onSourceLanguageChange={setTranslationSourceLanguage}
+              targetLanguage={translationTargetLanguage}
+              onTargetLanguageChange={setTranslationTargetLanguage}
+              autoTranslate={autoTranslate}
+              onAutoTranslateChange={setAutoTranslate}
             />
             <PermissionsGroup
               ids={ids}

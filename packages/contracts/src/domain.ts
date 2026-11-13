@@ -9,6 +9,7 @@ import { NavLinkSchema } from "./nav-links.js";
 import { RoutineWatchSchema, RoutineWatchStateSchema } from "./routine-watch.js";
 import { RunTriggerSchema } from "./runs.js";
 import { SpaceAvailabilitySchema } from "./space-availability.js";
+import { TranslationSourceLanguageSchema } from "./translation.js";
 
 export const MemoryScopeSchema = z.enum(["isolated", "shared"]);
 export type MemoryScopeValue = z.infer<typeof MemoryScopeSchema>;
@@ -113,6 +114,15 @@ export const BotSchema = z.object({
   modelProvider: z.string().nullable(),
   modelId: z.string().nullable(),
   thinkingLevel: ThinkingLevelSchema.nullable(),
+  /** The model used for translation; null until one is picked. */
+  translationModelProvider: z.string().nullable(),
+  translationModelId: z.string().nullable(),
+  /** The language to translate from; `auto` lets the model detect it. */
+  translationSourceLanguage: TranslationSourceLanguageSchema,
+  /** Null means unset; clients show their own default (mobile `auto`, web `zh`). */
+  translationTargetLanguage: z.string().nullable(),
+  /** Translate AI replies into the target language automatically. */
+  autoTranslate: z.boolean(),
   teamChatAmbientEnabled: z.boolean(),
   teamChatRules: z.string(),
   crossSpaceCommunication: z.boolean().optional(),
@@ -461,6 +471,39 @@ export const CreateBotInput = z.object({
 });
 export type CreateBotInput = z.infer<typeof CreateBotInput>;
 
+/**
+ * A model choice only means something as a provider + id pair. Reject partial
+ * shapes like `{ modelId: null }` (provider omitted) so a clear cannot succeed
+ * without updating both persisted fields.
+ */
+function pairedModelIssues(
+  provider: string | null | undefined,
+  model: string | null | undefined,
+  ctx: { addIssue: (issue: { code: "custom"; message: string; path: string[] }) => void },
+  modelPath: string,
+): void {
+  const providerProvided = provider !== undefined;
+  const modelProvided = model !== undefined;
+  if (!providerProvided && !modelProvided) return;
+  if (providerProvided !== modelProvided) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Model provider and model id must both be set or both cleared",
+      path: [modelPath],
+    });
+    return;
+  }
+  const bothNull = provider === null && model === null;
+  const bothSet = Boolean(provider) && Boolean(model);
+  if (!bothNull && !bothSet) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Model provider and model id must both be set or both cleared",
+      path: [modelPath],
+    });
+  }
+}
+
 export const UpdateBotInput = z
   .object({
     botId: Id,
@@ -481,6 +524,11 @@ export const UpdateBotInput = z
     modelProvider: z.string().trim().min(1).max(80).nullable().optional(),
     modelId: z.string().trim().min(1).max(200).nullable().optional(),
     thinkingLevel: ThinkingLevelSchema.nullable().optional(),
+    translationModelProvider: z.string().trim().min(1).max(80).nullable().optional(),
+    translationModelId: z.string().trim().min(1).max(200).nullable().optional(),
+    translationSourceLanguage: TranslationSourceLanguageSchema.optional(),
+    translationTargetLanguage: z.string().trim().max(20).nullable().optional(),
+    autoTranslate: z.boolean().optional(),
     teamChatAmbientEnabled: z.boolean().optional(),
     teamChatRules: z.string().max(TEAM_CHAT_RULES_MAX_LENGTH).optional(),
     crossSpaceCommunication: z.boolean().optional(),
@@ -492,28 +540,13 @@ export const UpdateBotInput = z
     expectedSettings: BotSettingsValuesSchema.optional(),
   })
   .superRefine((value, ctx) => {
-    const providerProvided = value.modelProvider !== undefined;
-    const modelProvided = value.modelId !== undefined;
-    if (!providerProvided && !modelProvided) return;
-    // Reject partial shapes like `{ modelId: null }` (provider omitted) so a
-    // clear cannot succeed without updating both persisted fields.
-    if (providerProvided !== modelProvided) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Model provider and model id must both be set or both cleared",
-        path: ["modelId"],
-      });
-      return;
-    }
-    const bothNull = value.modelProvider === null && value.modelId === null;
-    const bothSet = Boolean(value.modelProvider) && Boolean(value.modelId);
-    if (!bothNull && !bothSet) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Model provider and model id must both be set or both cleared",
-        path: ["modelId"],
-      });
-    }
+    pairedModelIssues(value.modelProvider, value.modelId, ctx, "modelId");
+    pairedModelIssues(
+      value.translationModelProvider,
+      value.translationModelId,
+      ctx,
+      "translationModelId",
+    );
   });
 export type UpdateBotInput = z.infer<typeof UpdateBotInput>;
 

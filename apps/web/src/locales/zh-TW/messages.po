@@ -8688,3 +8688,71 @@ msgstr "這個模板正在目前機器人上使用。只儲存會改模板內容
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "Use"
 msgstr "使用"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate"
+msgstr "翻譯"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating"
+msgstr "翻譯中"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation"
+msgstr "翻譯"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Not selected"
+msgstr "未選擇"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Source language"
+msgstr "來源語言"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Target language"
+msgstr "目標語言"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Auto-translate replies"
+msgstr "自動翻譯回覆"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Translation model"
+msgstr "翻譯模型"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translate this reply"
+msgstr "翻譯這則回覆"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translating…"
+msgstr "翻譯中…"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Copy translation"
+msgstr "複製譯文"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse"
+msgstr "收起"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Collapse translation"
+msgstr "收起譯文"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Retry translation"
+msgstr "重試翻譯"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translation failed"
+msgstr "翻譯失敗"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Choose a translation model in this bot's Advanced settings"
+msgstr "請先在該機器人的進階設定裡選擇翻譯模型"
+
+#: src/pages/shell/message-translation.tsx
+msgid "Translated with {modelId} · {source} to {target}"
+msgstr "翻譯 · 用 {modelId} 翻譯 · {source}譯{target}"

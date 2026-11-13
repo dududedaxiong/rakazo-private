@@ -244,6 +244,7 @@ import { SearchQueryOutputSchema } from "./search.js";
 import { SecurityEventListInputSchema, SecurityEventSchema } from "./security-events.js";
 import { SettingsScopeSchema, SpaceSettingSchema, settingsScopeInput } from "./settings-scope.js";
 import { SpaceAvailabilitySchema } from "./space-availability.js";
+import { TranslateInputSchema, TranslateOutputSchema } from "./translation.js";
 
 const botId = z.object({ botId: Id });
 const groupId = z.object({ groupId: Id });
@@ -672,6 +673,7 @@ export const appContract = {
     duplicate: oc.input(botId).output(BotSchema),
     reorder: oc.input(ReorderBotsInput).output(z.object({ ok: z.literal(true) })),
     update: oc.input(UpdateBotInput).output(BotSchema),
+    translate: oc.input(TranslateInputSchema).output(TranslateOutputSchema),
     restoreInstructions: oc
       .input(
         z.object({

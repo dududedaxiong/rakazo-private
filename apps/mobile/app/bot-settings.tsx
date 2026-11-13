@@ -84,6 +84,15 @@ import { createQueuedSave } from "../lib/queued-save";
 import { loadSessionToken } from "../lib/session";
 import { useSideInsets } from "../lib/side-insets";
 import { thinkingLevelLabel } from "../lib/thinking-level";
+import type { TranslationSourceLanguage, TranslationTargetLanguage } from "../lib/translation";
+import {
+  isTranslationTargetLanguage,
+  TRANSLATION_SOURCE_LANGUAGES,
+  TRANSLATION_TARGET_LANGUAGES,
+  translationSourceLabel,
+  translationTargetLabel,
+  translationTargetShortLabel,
+} from "../lib/translation";
 import { errorText } from "../lib/user-error";
 import { stopVoicePlayback } from "../lib/voice";
 
@@ -119,6 +128,10 @@ export default function BotSettingsScreen() {
   const [advancedOpen, setAdvancedOpen] = useState(focus === "model" || pickedModel !== undefined);
   const [packageOpen, setPackageOpen] = useState(false);
   const [modelKey, setModelKey] = useState("");
+  const [translationModelKey, setTranslationModelKey] = useState("");
+  const [translationSource, setTranslationSource] = useState<TranslationSourceLanguage>("auto");
+  const [translationTarget, setTranslationTarget] = useState<TranslationTargetLanguage>("auto");
+  const [autoTranslate, setAutoTranslate] = useState(false);
   const [thinkingLevel, setThinkingLevel] = useState("");
   const [notifyOnFinish, setNotifyOnFinish] = useState(true);
   const [autoSpeak, setAutoSpeak] = useState(false);
@@ -252,6 +265,19 @@ export default function BotSettingsScreen() {
             : "",
         );
         setThinkingLevel(next.thinkingLevel ?? "");
+        setTranslationModelKey(
+          next.translationModelProvider && next.translationModelId
+            ? modelOptionKey(next.translationModelProvider, next.translationModelId)
+            : "",
+        );
+        setTranslationSource(next.translationSourceLanguage ?? "auto");
+        setTranslationTarget(
+          next.translationTargetLanguage &&
+            isTranslationTargetLanguage(next.translationTargetLanguage)
+            ? next.translationTargetLanguage
+            : "auto",
+        );
+        setAutoTranslate(next.autoTranslate ?? false);
         setAutoSpeak(next.autoSpeak);
         setNotifyOnFinish(next.notifyOnFinish ?? true);
         setDailyCheckIns(next.dailyCheckIns ?? true);
@@ -312,6 +338,37 @@ export default function BotSettingsScreen() {
   const modelChoices = useMemo(
     () => chatModelPickerChoices(me, catalog, credentials, selectedModelKey, t),
     [catalog, credentials, me, selectedModelKey, t],
+  );
+
+  const storedTranslationModel = translationModelKey
+    ? parseModelOptionKey(translationModelKey)
+    : null;
+  const selectedTranslationModel = storedTranslationModel
+    ? {
+        provider: storedTranslationModel.provider,
+        modelId: resolveSelectableModelId(
+          catalog,
+          storedTranslationModel.provider,
+          storedTranslationModel.modelId,
+        ),
+      }
+    : null;
+  // The translation model picks from the same detected models, without the
+  // space default: an empty key means no translation model is set.
+  const translationModelChoices: MenuPickerChoice[] = useMemo(
+    () => [
+      { key: "", label: t("Not set") },
+      ...modelChoices.slice(1).map((choice) => ({ key: choice.key, label: choice.label })),
+    ],
+    [modelChoices, t],
+  );
+  const translationTargetChoices: MenuPickerChoice[] = useMemo(
+    () =>
+      TRANSLATION_TARGET_LANGUAGES.map((code) => ({
+        key: code,
+        label: translationTargetLabel(code),
+      })),
+    [],
   );
 
   const thinkingChoices: MenuPickerChoice[] = useMemo(
@@ -547,6 +604,11 @@ export default function BotSettingsScreen() {
         modelId?: string | null;
         thinkingLevel?: ThinkingLevel | null;
         autoSpeak?: boolean;
+        translationModelProvider?: string | null;
+        translationModelId?: string | null;
+        translationSourceLanguage?: TranslationSourceLanguage;
+        translationTargetLanguage?: TranslationTargetLanguage | null;
+        autoTranslate?: boolean;
       } = { botId };
       if (profile.description !== (bot.description ?? "")) {
         input.description = profile.description;
@@ -571,6 +633,20 @@ export default function BotSettingsScreen() {
           : null;
       }
       if (autoSpeak !== bot.autoSpeak) input.autoSpeak = autoSpeak;
+      const translationModelChanged =
+        (selectedTranslationModel?.provider ?? null) !== (bot.translationModelProvider ?? null) ||
+        (selectedTranslationModel?.modelId ?? null) !== (bot.translationModelId ?? null);
+      if (translationModelChanged) {
+        input.translationModelProvider = selectedTranslationModel?.provider ?? null;
+        input.translationModelId = selectedTranslationModel?.modelId ?? null;
+      }
+      if ((translationSource || "auto") !== (bot.translationSourceLanguage ?? "auto")) {
+        input.translationSourceLanguage = translationSource || "auto";
+      }
+      if ((translationTarget || "auto") !== (bot.translationTargetLanguage ?? "auto")) {
+        input.translationTargetLanguage = translationTarget || "auto";
+      }
+      if (autoTranslate !== (bot.autoTranslate ?? false)) input.autoTranslate = autoTranslate;
       if (computerMode !== bot.computerMode) {
         await rpc(
           "bots/setComputer",
@@ -613,7 +689,12 @@ export default function BotSettingsScreen() {
       autoSpeak !== bot.autoSpeak ||
       (selectedModel?.provider ?? null) !== (bot.modelProvider ?? null) ||
       (selectedModel?.modelId ?? null) !== (bot.modelId ?? null) ||
-      (thinkingLevel || null) !== (bot.thinkingLevel ?? null));
+      (thinkingLevel || null) !== (bot.thinkingLevel ?? null) ||
+      (selectedTranslationModel?.provider ?? null) !== (bot.translationModelProvider ?? null) ||
+      (selectedTranslationModel?.modelId ?? null) !== (bot.translationModelId ?? null) ||
+      (translationSource || "auto") !== (bot.translationSourceLanguage ?? "auto") ||
+      (translationTarget || "auto") !== (bot.translationTargetLanguage ?? "auto") ||
+      autoTranslate !== (bot.autoTranslate ?? false));
 
   const hasVoiceMenu = !voiceError && voices.length > 1;
   const voiceRowContent = (
@@ -794,6 +875,70 @@ export default function BotSettingsScreen() {
                 value={autoSpeak}
               />
               {deviceVoiceEnabled ? voiceRow : null}
+            </SettingsGroup>
+            <SettingsGroup label={t("Translation settings")}>
+              <MenuPicker
+                choices={translationModelChoices}
+                label={t("Translation model")}
+                onChange={setTranslationModelKey}
+                value={translationModelKey}
+              />
+              <SettingsRow
+                title={t("Translation direction")}
+                value={`${translationSourceLabel(translationSource)} → ${translationTargetShortLabel(translationTarget)}`}
+              />
+              <View style={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8 }}>
+                <Text style={{ color: native.secondaryLabel, fontSize: 13 }}>
+                  {t("Source language")}
+                </Text>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                  {TRANSLATION_SOURCE_LANGUAGES.map((code) => {
+                    const selected = translationSource === code;
+                    return (
+                      <Pressable
+                        key={code}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: selected }}
+                        accessibilityLabel={translationSourceLabel(code)}
+                        onPress={() => setTranslationSource(code)}
+                        style={{
+                          minHeight: 36,
+                          justifyContent: "center",
+                          paddingHorizontal: 14,
+                          borderRadius: 18,
+                          borderWidth: 1,
+                          borderColor: selected ? "transparent" : tokens.border,
+                          backgroundColor: selected ? tokens.link : "transparent",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: selected ? "#fff" : tokens.foreground,
+                            fontSize: 15,
+                            fontWeight: selected ? "600" : "400",
+                          }}
+                        >
+                          {translationSourceLabel(code)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+              <MenuPicker
+                choices={translationTargetChoices}
+                label={t("Target language")}
+                onChange={(key) => {
+                  if (isTranslationTargetLanguage(key)) setTranslationTarget(key);
+                }}
+                value={translationTarget}
+              />
+              <SettingsSwitch
+                label={t("Auto-translate")}
+                detail={t("Replies are translated into the target language automatically.")}
+                value={autoTranslate}
+                onChange={setAutoTranslate}
+              />
             </SettingsGroup>
             <SettingsGroup label={t("Permissions")}>
               <SettingsSwitch

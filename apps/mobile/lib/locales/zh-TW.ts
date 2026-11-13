@@ -1843,6 +1843,24 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
     "匯出到 Download/Rakazo/提示詞模板/。用外部編輯器改完，重新匯入同名檔案會直接更新模板；正在用的模板會立刻套用。",
   Import: "匯入",
   Custom: "自訂",
+  Translate: "翻譯",
+  "Translating…": "翻譯中…",
+  "Translation failed. Try again.": "翻譯失敗，請重試。",
+  "Copy translation": "複製譯文",
+  Collapse: "收起",
+  "Translated with {model} · {source} to {target}": "用 {model} 翻譯 · {source}譯{target}",
+  "Choose a translation model in Model settings first.": "請先在模型設定裡選擇翻譯模型。",
+  "Translation model": "翻譯模型",
+  "Translation settings": "翻譯設定",
+  "Translation direction": "翻譯方向",
+  "Source language": "來源語言",
+  "Target language": "目標語言",
+  "Auto-translate": "自動翻譯",
+  "Replies are translated into the target language automatically.":
+    "開啟後 AI 回覆自動翻譯成目標語言",
+  "Not set": "未設定",
+  "Translations only show here and don't change the original. A favorite without a translation model will ask you to pick one first.":
+    "譯文只在本地展開顯示，不改原文；未定翻譯模型的那條，點翻譯會先提示去選模型",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "與{peer}的 {count} 則訊息" };

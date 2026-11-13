@@ -1848,6 +1848,24 @@ export const ZH_MESSAGES: Record<string, string> = {
     "导出到 Download/Rakazo/提示词模板/。用外部编辑器改完，重新导入同名文件会直接更新模板；正在用的模板会立刻应用。",
   Import: "导入",
   Custom: "自定义",
+  Translate: "翻译",
+  "Translating…": "翻译中…",
+  "Translation failed. Try again.": "翻译失败，请重试。",
+  "Copy translation": "复制译文",
+  Collapse: "收起",
+  "Translated with {model} · {source} to {target}": "用 {model} 翻译 · {source}译{target}",
+  "Choose a translation model in Model settings first.": "请先在模型设置里选择翻译模型。",
+  "Translation model": "翻译模型",
+  "Translation settings": "翻译设置",
+  "Translation direction": "翻译方向",
+  "Source language": "源语言",
+  "Target language": "目标语言",
+  "Auto-translate": "自动翻译",
+  "Replies are translated into the target language automatically.":
+    "开启后 AI 回复自动翻译成目标语言",
+  "Not set": "未设置",
+  "Translations only show here and don't change the original. A favorite without a translation model will ask you to pick one first.":
+    "译文只在本地展开显示，不改原文；不定翻译模型的那条，点翻译会先提示去选模型",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

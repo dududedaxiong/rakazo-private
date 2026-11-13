@@ -83,8 +83,9 @@ describe("thread favorites", () => {
   });
 
   it("toggles a favorite on and off, newest first", async () => {
-    const { isThreadFavorite, threadFavoritesFor, toggleThreadFavorite } =
-      await import("./thread-favorites");
+    const { isThreadFavorite, threadFavoritesFor, toggleThreadFavorite } = await import(
+      "./thread-favorites"
+    );
     const first = { messageId: "m1", snippet: "first", createdAt: 1 };
     const second = { messageId: "m2", snippet: "second", createdAt: 2 };
     expect(toggleThreadFavorite("bot-1", first)).toBe(true);
@@ -106,6 +107,31 @@ describe("thread favorites", () => {
     expect(threadFavoritesFor("bot-2")).toEqual([]);
     expect(threadFavoritesFor(undefined)).toEqual([]);
     await waitForSaves(2);
+  });
+
+  it("stores the full text with a favorite", async () => {
+    const { threadFavoritesFor, toggleThreadFavorite } = await import("./thread-favorites");
+    toggleThreadFavorite("bot-1", {
+      messageId: "m1",
+      snippet: "one",
+      text: "one two three",
+      createdAt: 1,
+    });
+    expect(threadFavoritesFor("bot-1")[0]?.text).toBe("one two three");
+    await waitForSaves(1);
+    expect(store.setItemAsync).toHaveBeenCalledWith(
+      "rakazo.thread-favorites",
+      expect.stringContaining("one two three"),
+    );
+  });
+
+  it("loads stored favorites without full text", async () => {
+    store.stored = JSON.stringify({
+      "bot-1": [{ messageId: "m2", snippet: "two", createdAt: 2 }],
+    });
+    const { seen } = await mountFavoritesProbe("bot-1");
+    await waitFor(() => seen().length > 0);
+    expect(seen()[0]).toEqual({ messageId: "m2", snippet: "two", createdAt: 2 });
   });
 
   it("persists toggles to storage", async () => {

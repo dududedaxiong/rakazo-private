@@ -140,9 +140,19 @@ export const Transcript = memo(function Transcript({
   onJumpToMessage: (messageId: string) => void;
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
   memberName?: (botId: string | undefined) => string | undefined;
-  peerBot: (
-    botId: string,
-  ) => { name?: string; color: string; status?: string; avatarSet?: BotAvatarSet } | undefined;
+  peerBot: (botId: string) =>
+    | {
+        name?: string;
+        color: string;
+        status?: string;
+        avatarSet?: BotAvatarSet;
+        translationModelProvider?: string | null;
+        translationModelId?: string | null;
+        translationSourceLanguage?: string;
+        translationTargetLanguage?: string | null;
+        autoTranslate?: boolean;
+      }
+    | undefined;
   onRefresh: () => Promise<void>;
   onBotChanged: () => Promise<void>;
   onAddRoutine: (name: string, prompt: string) => void;
@@ -229,6 +239,11 @@ export const Transcript = memo(function Transcript({
     [onJumpToMessage],
   );
   const reactionView = useMemo(() => projectMessageReactions(pageView.visibleMessages), [pageView]);
+  // The newest rendered message; only it auto-translates when its bot has
+  // auto-translate on, so opening history does not translate every reply.
+  const lastVisibleMessageId = [...reactionView.visibleMessages]
+    .reverse()
+    .find((candidate) => messageHasVisibleBlocks(candidate.blocks, showToolActivity))?.id;
   const visibleReceipts = reactionView.visibleMessages.filter((message) =>
     messageHasVisibleBlocks(message.blocks, showToolActivity),
   );
@@ -639,6 +654,7 @@ export const Transcript = memo(function Transcript({
                       onReply={onReply}
                       onMarkUnread={onMarkUnread}
                       onReact={onReact}
+                      isLastMessage={message.id === lastVisibleMessageId}
                     />
                   </div>
                 </div>

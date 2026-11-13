@@ -4,7 +4,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { rpc } from "../../lib/rpc";
 import { MessageView } from "./message-view";
 
@@ -18,6 +18,7 @@ vi.mock("../../lib/rpc", () => ({ rpc: { skills, artifacts: { get: vi.fn() } } }
 vi.mock("@lingui/core/macro", () => ({
   plural: (count: number, forms: { one: string; other: string }) =>
     (count === 1 ? forms.one : forms.other).replace("#", String(count)),
+  t: (strings: TemplateStringsArray, ...values: unknown[]) => String.raw(strings, ...values),
 }));
 
 vi.mock("@lingui/react/macro", () => ({
@@ -342,6 +343,169 @@ it("disables starting a read while a call holds the speaker, keeping stop availa
   ];
   expect(stopButtons().length).toBeGreaterThan(0);
   for (const button of stopButtons()) expect(button.disabled).toBe(false);
+});
+
+describe("message translation", () => {
+  const translated = {
+    translatedText: "Hark AI 是一款新的 AI 搜索产品。",
+    sourceLanguage: "en",
+    targetLanguage: "zh",
+    modelId: "deepseek-v4.1-flash",
+  };
+  const botMessage = (blocks: ThreadMessage["blocks"]): ThreadMessage => ({
+    id: "message",
+    threadId: "thread",
+    seq: 1,
+    role: "bot",
+    botId: "bot-1",
+    createdAt: new Date().toISOString(),
+    blocks,
+  });
+  const textBlocks: ThreadMessage["blocks"] = [
+    { kind: "text", text: "Hark AI is a new AI search product." },
+  ];
+  const translatingBot: PeerBot = () => ({
+    color: "orange",
+    translationModelProvider: "deepseek",
+    translationModelId: "deepseek-v4.1-flash",
+    translationSourceLanguage: "en",
+    translationTargetLanguage: null,
+    autoTranslate: false,
+  });
+  const flush = () =>
+    act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  const translateButton = () =>
+    container.querySelector<HTMLButtonElement>('button[aria-label="Translate this reply"]');
+  const translationPanel = () => container.querySelector('[data-testid="message-translation"]');
+
+  function renderTranslated(props: Partial<ComponentProps<typeof MessageView>> = {}) {
+    const translate = vi.fn(async () => translated);
+    const spaceRpc = { bots: { translate } };
+    renderView("bot", textBlocks, {
+      message: botMessage(textBlocks),
+      peerBot: translatingBot,
+      rpc: spaceRpc as never,
+      ...props,
+    });
+    return { translate, spaceRpc };
+  }
+
+  it("translates a bot reply on click and shows the translation under the bubble", async () => {
+    const { translate } = renderTranslated();
+    expect(translateButton()).not.toBeNull();
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(translate).toHaveBeenCalledExactlyOnceWith({
+      botId: "bot-1",
+      text: "Hark AI is a new AI search product.",
+      sourceLanguage: "en",
+      targetLanguage: "zh",
+    });
+    const panel = translationPanel();
+    expect(panel?.textContent).toContain("Translated with deepseek-v4.1-flash · English to 中文");
+    expect(panel?.textContent).toContain("Hark AI 是一款新的 AI 搜索产品。");
+    expect(panel?.textContent).toContain("Copy translation");
+    expect(panel?.textContent).toContain("Collapse");
+    // The original stays as sent.
+    expect(container.querySelector('[data-testid="message-bot-bubble"]')?.textContent).toContain(
+      "Hark AI is a new AI search product.",
+    );
+  });
+
+  it("translates a reply with other blocks through the same panel", async () => {
+    const mixed: ThreadMessage["blocks"] = [
+      { kind: "text", text: "Hark AI is a new AI search product." },
+      { kind: "card", lines: [{ k: "Source", v: "Hark" }] },
+    ];
+    const { translate } = renderTranslated({ message: botMessage(mixed) });
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(translate).toHaveBeenCalledTimes(1);
+    expect(translationPanel()?.textContent).toContain("Hark AI 是一款新的 AI 搜索产品。");
+  });
+
+  it("prompts for a translation model instead of calling translate when none is set", async () => {
+    const { translate } = renderTranslated({
+      peerBot: () => ({ color: "orange" }),
+    });
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(translate).not.toHaveBeenCalled();
+    expect(translationPanel()).toBeNull();
+  });
+
+  it("auto-translates the newest reply and expands it", async () => {
+    const { translate } = renderTranslated({
+      peerBot: () => ({ ...translatingBot("bot-1")!, autoTranslate: true }),
+      isLastMessage: true,
+    });
+    await flush();
+    expect(translate).toHaveBeenCalledTimes(1);
+    expect(translationPanel()?.textContent).toContain("Hark AI 是一款新的 AI 搜索产品。");
+  });
+
+  it("does not auto-translate an older reply", async () => {
+    const { translate } = renderTranslated({
+      peerBot: () => ({ ...translatingBot("bot-1")!, autoTranslate: true }),
+    });
+    await flush();
+    expect(translate).not.toHaveBeenCalled();
+    expect(translationPanel()).toBeNull();
+  });
+
+  it("collapses the translation and does not auto-expand it again", async () => {
+    const { translate } = renderTranslated({
+      peerBot: () => ({ ...translatingBot("bot-1")!, autoTranslate: true }),
+      isLastMessage: true,
+    });
+    await flush();
+    expect(translationPanel()).not.toBeNull();
+    const collapse = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Collapse translation"]',
+    );
+    await act(async () => {
+      collapse?.click();
+    });
+    expect(translationPanel()).toBeNull();
+    await flush();
+    expect(translate).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries after a failed translation", async () => {
+    const translate = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValue(translated);
+    renderView("bot", textBlocks, {
+      message: botMessage(textBlocks),
+      peerBot: translatingBot,
+      rpc: { bots: { translate } } as never,
+    });
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(translate).toHaveBeenCalledTimes(1);
+    expect(translationPanel()?.textContent).toContain("offline");
+    const retry = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Retry translation"]',
+    );
+    expect(retry).not.toBeNull();
+    await act(async () => {
+      retry?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(translate).toHaveBeenCalledTimes(2);
+    expect(translationPanel()?.textContent).toContain("Hark AI 是一款新的 AI 搜索产品。");
+  });
 });
 
 it("opens one counted peer line without an inline reply toggle", () => {

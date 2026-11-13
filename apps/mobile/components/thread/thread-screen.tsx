@@ -620,6 +620,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       toggleThreadFavorite(threadKey, {
         messageId: message.id,
         snippet: favoriteSnippet(selectableMessageText(message)),
+        text: selectableMessageText(message),
         createdAt: Date.now(),
       });
     },
@@ -1099,6 +1100,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
         <ThreadFavoritesSheet
           visible={favoritesOpen}
           threadKey={threadKey}
+          bot={currentBot}
           onClose={() => setFavoritesOpen(false)}
           onJump={(messageId) => {
             void applyMessageJump({ botId, groupId, messageId }).catch(() => undefined);

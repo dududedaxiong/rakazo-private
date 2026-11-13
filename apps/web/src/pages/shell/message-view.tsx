@@ -8,7 +8,12 @@ import type {
   ThreadMessage,
 } from "@rakazo/contracts";
 import type { ChildBotBlock, PeerExchange } from "@rakazo/core";
-import { isPeerReceiptBlocks, isToolActivityBlock, otherAuthor } from "@rakazo/core";
+import {
+  copyableMessageText,
+  isPeerReceiptBlocks,
+  isToolActivityBlock,
+  otherAuthor,
+} from "@rakazo/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@rakazo/ui-web";
 import { UserRound } from "lucide-react";
 import { memo, useCallback, useMemo } from "react";
@@ -38,6 +43,8 @@ import {
   shouldRenderToolCard,
   toolStepCount,
 } from "../../lib/tool-activity-view";
+import type { BotTranslationSettings } from "../../lib/translation";
+import { botTranslationSettings } from "../../lib/translation";
 import { ReplyLine } from "./chat-context";
 import { FALLBACK_BOT_COLOR, previewMessageText } from "./chat-shared";
 import type { ImportSetupTarget } from "./import-setup-card";
@@ -50,6 +57,7 @@ import {
   McpApprovalCard,
 } from "./message-cards";
 import { MessageHoverActions } from "./message-hover-actions";
+import { useMessageTranslation } from "./message-translation";
 
 export const MessageView = memo(function MessageView({
   artifactTarget,
@@ -84,6 +92,7 @@ export const MessageView = memo(function MessageView({
   onMarkUnread,
   markedUnread = false,
   onReact,
+  isLastMessage = false,
 }: {
   artifactTarget: ArtifactTarget;
   canAnswer: boolean;
@@ -110,9 +119,19 @@ export const MessageView = memo(function MessageView({
   peerExchange?: PeerExchange;
   speakerName?: string;
   memberName?: (botId: string | undefined) => string | undefined;
-  peerBot: (
-    botId: string,
-  ) => { name?: string; color: string; status?: string; avatarSet?: BotAvatarSet } | undefined;
+  peerBot: (botId: string) =>
+    | {
+        name?: string;
+        color: string;
+        status?: string;
+        avatarSet?: BotAvatarSet;
+        translationModelProvider?: string | null;
+        translationModelId?: string | null;
+        translationSourceLanguage?: string;
+        translationTargetLanguage?: string | null;
+        autoTranslate?: boolean;
+      }
+    | undefined;
   replyParent?: ThreadMessage;
   onJumpToMessage?: (messageId: string) => void;
   onRefresh: () => Promise<void>;
@@ -132,6 +151,8 @@ export const MessageView = memo(function MessageView({
   onMarkUnread: (message: ThreadMessage) => void;
   markedUnread?: boolean;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
+  /** The newest visible message; only it auto-translates when the bot has auto-translate on. */
+  isLastMessage?: boolean;
 }) {
   const { t } = useLingui();
   const isNarration =
@@ -182,6 +203,22 @@ export const MessageView = memo(function MessageView({
     [mentions, onOpenBot, peerBot],
   );
   const speak = () => onSpeak(message);
+  // The speaker's translation settings, when the roster knows this bot; a
+  // missing bot means no translation model and no auto-translate.
+  const translationSettings = useMemo<BotTranslationSettings | undefined>(() => {
+    if (message.role !== "bot" || !message.botId) return undefined;
+    const bot = peerBot(message.botId);
+    return bot ? botTranslationSettings(bot) : undefined;
+  }, [message.botId, message.role, peerBot]);
+  const translatableText = useMemo(() => copyableMessageText(message), [message]);
+  const translation = useMessageTranslation({
+    messageId: message.id,
+    text: translatableText,
+    botId: message.botId,
+    settings: translationSettings,
+    rpc,
+    isLastMessage,
+  });
   const replyBotId = message.replyPreview?.botId ?? replyParent?.botId;
   const author = message.role === "user" ? otherAuthor(message.author, meId) : undefined;
   const replyAuthor = otherAuthor(message.replyPreview?.author ?? replyParent?.author, meId);
@@ -265,59 +302,67 @@ export const MessageView = memo(function MessageView({
         {messageContext}
         <div className="relative w-fit max-w-full [@media(hover:none)]:w-full">
           <div className="flex w-fit max-w-full justify-start [@media(hover:none)]:w-full">
-            <div
-              data-testid="message-bot-bubble"
-              className="max-w-full space-y-2.5 rounded-2xl bg-muted px-[18px] py-3 text-body-lg text-foreground"
-              dir="auto"
-            >
-              {visibleNarrationBlocks.map((block, i) => {
-                if (block.kind === "steps") {
-                  return (
-                    <ToolActivityDisclosure
-                      key={i}
-                      live={isLive}
-                      stepCount={toolStepCount(block.steps)}
-                      durationMs={block.durationMs}
-                    >
-                      <ToolSteps
-                        steps={block.steps}
-                        currentIndex={isLive ? block.steps.length - 1 : undefined}
-                        limit={isLive ? LIVE_TOOL_STEP_WINDOW : undefined}
-                      />
-                    </ToolActivityDisclosure>
-                  );
-                }
-                if (block.kind === "text" || block.kind === "progress") {
-                  return (
-                    <div
-                      key={i}
-                      data-quote-message-id={block.kind === "text" ? quoteMessageId : undefined}
-                    >
-                      <ChatMarkdown
-                        streaming={block.kind === "progress"}
-                        renderMention={renderMention}
-                        onOpenPage={openPage}
+            <div className="flex min-w-0 max-w-full flex-col">
+              <div
+                data-testid="message-bot-bubble"
+                className="max-w-full space-y-2.5 rounded-2xl bg-muted px-[18px] py-3 text-body-lg text-foreground"
+                dir="auto"
+              >
+                {visibleNarrationBlocks.map((block, i) => {
+                  if (block.kind === "steps") {
+                    return (
+                      <ToolActivityDisclosure
+                        key={i}
+                        live={isLive}
+                        stepCount={toolStepCount(block.steps)}
+                        durationMs={block.durationMs}
                       >
-                        {block.text}
-                      </ChatMarkdown>
-                    </div>
-                  );
-                }
-                return null;
-              })}
-              {!isLive && voiceReady && message.blocks.some((block) => block.kind === "text") ? (
-                <Button
-                  variant="text"
-                  size="xs"
-                  aria-label={speaking ? t`Stop speaking` : t`Speak this reply`}
-                  // Stopping the speech in progress stays available; a call blocks new reads.
-                  disabled={callHoldsSpeaker && !speaking}
-                  onClick={speak}
-                  className="font-normal"
-                >
-                  {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
-                </Button>
-              ) : null}
+                        <ToolSteps
+                          steps={block.steps}
+                          currentIndex={isLive ? block.steps.length - 1 : undefined}
+                          limit={isLive ? LIVE_TOOL_STEP_WINDOW : undefined}
+                        />
+                      </ToolActivityDisclosure>
+                    );
+                  }
+                  if (block.kind === "text" || block.kind === "progress") {
+                    return (
+                      <div
+                        key={i}
+                        data-quote-message-id={block.kind === "text" ? quoteMessageId : undefined}
+                      >
+                        <ChatMarkdown
+                          streaming={block.kind === "progress"}
+                          renderMention={renderMention}
+                          onOpenPage={openPage}
+                        >
+                          {block.text}
+                        </ChatMarkdown>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+                {!isLive && message.blocks.some((block) => block.kind === "text") ? (
+                  <div className="flex flex-wrap items-center gap-1">
+                    {voiceReady ? (
+                      <Button
+                        variant="text"
+                        size="xs"
+                        aria-label={speaking ? t`Stop speaking` : t`Speak this reply`}
+                        // Stopping the speech in progress stays available; a call blocks new reads.
+                        disabled={callHoldsSpeaker && !speaking}
+                        onClick={speak}
+                        className="font-normal"
+                      >
+                        {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
+                      </Button>
+                    ) : null}
+                    {translationSettings ? translation.actions : null}
+                  </div>
+                ) : null}
+              </div>
+              {translation.panel}
             </div>
           </div>
           {hoverActions}
@@ -582,34 +627,43 @@ export const MessageView = memo(function MessageView({
             );
           }
           if (block.kind === "text") {
+            const firstText = i === textAnchorIndex;
             return (
               <div
                 key={i}
                 className="relative flex w-fit max-w-full justify-start [@media(hover:none)]:w-full [@media(hover:none)]:flex-wrap"
               >
-                <div
-                  data-testid="message-bot-bubble"
-                  className="max-w-full rounded-2xl bg-muted px-[18px] py-3 text-body-lg text-foreground"
-                  dir="auto"
-                >
-                  <div data-quote-message-id={quoteMessageId}>
-                    <ChatMarkdown renderMention={renderMention} onOpenPage={openPage}>
-                      {block.text}
-                    </ChatMarkdown>
+                <div className="flex min-w-0 max-w-full flex-col">
+                  <div
+                    data-testid="message-bot-bubble"
+                    className="max-w-full rounded-2xl bg-muted px-[18px] py-3 text-body-lg text-foreground"
+                    dir="auto"
+                  >
+                    <div data-quote-message-id={quoteMessageId}>
+                      <ChatMarkdown renderMention={renderMention} onOpenPage={openPage}>
+                        {block.text}
+                      </ChatMarkdown>
+                    </div>
+                    {voiceReady || (firstText && translationSettings && !isLive) ? (
+                      <div className="mt-2 flex flex-wrap items-center gap-1">
+                        {voiceReady ? (
+                          <Button
+                            variant="text"
+                            size="xs"
+                            aria-label={speaking ? t`Stop speaking` : t`Speak this reply`}
+                            // Stopping the speech in progress stays available; a call blocks new reads.
+                            disabled={callHoldsSpeaker && !speaking}
+                            onClick={speak}
+                            className="font-normal"
+                          >
+                            {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
+                          </Button>
+                        ) : null}
+                        {firstText && translationSettings && !isLive ? translation.actions : null}
+                      </div>
+                    ) : null}
                   </div>
-                  {voiceReady ? (
-                    <Button
-                      variant="text"
-                      size="xs"
-                      aria-label={speaking ? t`Stop speaking` : t`Speak this reply`}
-                      // Stopping the speech in progress stays available; a call blocks new reads.
-                      disabled={callHoldsSpeaker && !speaking}
-                      onClick={speak}
-                      className="mt-2 font-normal"
-                    >
-                      {speaking ? <Trans>Stop</Trans> : <Trans>Speak</Trans>}
-                    </Button>
-                  ) : null}
+                  {firstText ? translation.panel : null}
                 </div>
                 {i === hoverAnchorIndex ? hoverActions : null}
               </div>

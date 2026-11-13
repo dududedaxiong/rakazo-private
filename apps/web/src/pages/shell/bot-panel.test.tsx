@@ -72,7 +72,7 @@ vi.mock("@rakazo/ui-web", () => ({
     />
   ),
   Toggle: ({
-    onPressedChange: _onPressedChange,
+    onPressedChange,
     pressed,
     variant: _variant,
     size: _size,
@@ -83,7 +83,12 @@ vi.mock("@rakazo/ui-web", () => ({
     pressed?: boolean;
     onPressedChange?: (pressed: boolean) => void;
   }) => (
-    <button type="button" aria-pressed={pressed} {...props}>
+    <button
+      type="button"
+      aria-pressed={pressed}
+      onClick={() => onPressedChange?.(!pressed)}
+      {...props}
+    >
       {props.children}
     </button>
   ),
@@ -169,6 +174,11 @@ function bot(description = "Billing", overrides: Partial<Bot> = {}): Bot {
     modelProvider: null,
     modelId: null,
     thinkingLevel: null,
+    translationModelProvider: null,
+    translationModelId: null,
+    translationSourceLanguage: "auto",
+    translationTargetLanguage: null,
+    autoTranslate: false,
     teamChatAmbientEnabled: false,
     teamChatRules: "",
     fleetManagement: false,
@@ -814,6 +824,124 @@ describe("BotSettings avatar set persistence", () => {
     expect(
       container.querySelector('[aria-label="Avatar set"]')?.getAttribute("data-avatar-set"),
     ).toBe("rakazo");
+  });
+});
+
+describe("BotSettings translation settings", () => {
+  const deepseekCredential = {
+    id: "cred-deepseek",
+    provider: "deepseek",
+    label: "DeepSeek",
+    hasKey: true,
+    isDefault: true,
+    modelId: "DeepSeek-V4.1-Flash",
+  };
+  const deepseekCatalog = [
+    {
+      provider: "deepseek",
+      providerName: "DeepSeek",
+      id: "deepseek-flash",
+      label: "DeepSeek V4.1 Flash",
+      billing: "",
+    },
+  ];
+
+  function translationModelSelect() {
+    const select = container.querySelector<HTMLSelectElement>('[id$="-translation-model"]');
+    if (!select) throw new Error("Missing translation model select");
+    return select;
+  }
+
+  function translationTargetSelect() {
+    const select = container.querySelector<HTMLSelectElement>('[id$="-translation-target"]');
+    if (!select) throw new Error("Missing translation target select");
+    return select;
+  }
+
+  async function setSelect(select: HTMLSelectElement, value: string) {
+    await act(async () => {
+      select.value = value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  }
+
+  it("shows the translation section with no model and Chinese as the default target", async () => {
+    await render();
+    const advanced = container.querySelector('[data-testid="bot-settings-advanced"]')!;
+    expect(advanced.textContent).toContain("Translation");
+    expect(translationModelSelect().value).toBe("");
+    expect(translationTargetSelect().value).toBe("zh");
+    expect(
+      container.querySelector('button[id$="-auto-translate"]')?.getAttribute("aria-checked"),
+    ).toBe("false");
+    const sourceButtons = [...advanced.querySelectorAll("button")].filter(
+      (button) => button.textContent === "自动检测",
+    );
+    expect(sourceButtons).toHaveLength(1);
+    expect(sourceButtons[0]?.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("shows a stored translation model, languages and auto-translate", async () => {
+    await render("Billing", {
+      translationModelProvider: "deepseek",
+      translationModelId: "deepseek-v4.1-flash",
+      translationSourceLanguage: "ja",
+      translationTargetLanguage: "en",
+      autoTranslate: true,
+    } as Partial<Bot>);
+    expect(translationModelSelect().value).toBe("deepseek::deepseek-flash");
+    expect(translationTargetSelect().value).toBe("en");
+    expect(
+      container.querySelector('button[id$="-auto-translate"]')?.getAttribute("aria-checked"),
+    ).toBe("true");
+    const sourceButtons = [...container.querySelectorAll("button")].filter(
+      (button) => button.textContent === "日语",
+    );
+    expect(sourceButtons[0]?.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("saves the chosen translation model, languages and auto-translate", async () => {
+    vi.mocked(rpc.models.credentials).mockResolvedValueOnce([deepseekCredential]);
+    vi.mocked(rpc.models.list).mockResolvedValueOnce(deepseekCatalog);
+    await render();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect([...translationModelSelect().options].map((option) => option.value)).toContain(
+      "deepseek::deepseek-flash",
+    );
+    await setSelect(translationModelSelect(), "deepseek::deepseek-flash");
+    await setSelect(translationTargetSelect(), "ja");
+    const sourceButton = [...container.querySelectorAll("button")].find(
+      (button) => button.textContent === "English",
+    );
+    await act(async () => {
+      sourceButton?.click();
+    });
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[id$="-auto-translate"]')!.click();
+    });
+    await clickSave();
+    expect(onSave.mock.lastCall?.[0]).toMatchObject({
+      translationModelProvider: "deepseek",
+      translationModelId: "deepseek-flash",
+      translationSourceLanguage: "en",
+      translationTargetLanguage: "ja",
+      autoTranslate: true,
+    });
+  });
+
+  it("clears the translation model pair together when the model is unset", async () => {
+    await render("Billing", {
+      translationModelProvider: "deepseek",
+      translationModelId: "deepseek-v4.1-flash",
+    } as Partial<Bot>);
+    await setSelect(translationModelSelect(), "");
+    await clickSave();
+    expect(onSave.mock.lastCall?.[0]).toMatchObject({
+      translationModelProvider: null,
+      translationModelId: null,
+    });
   });
 });
 

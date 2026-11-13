@@ -42,6 +42,7 @@ import { blockText } from "../../lib/mobile-types";
 import { useMobileTokens, useResolvedAppearance } from "../../lib/native";
 import { selectableTextFromMarkdown } from "../../lib/selectable-text";
 import { ThreadReadOnlyContext } from "../../lib/thread-read-only";
+import { translationSettingsFromBot } from "../../lib/translation";
 import type { UserBubble } from "../../lib/user-bubble";
 import { BotAvatar } from "../bot-avatar";
 import type { ImageArtifactPreviewTarget } from "../image-artifact-viewer";
@@ -53,6 +54,11 @@ import { TimeSeparator } from "../time-separator";
 import { UnreadDivider } from "../unread-divider";
 import type { MessageActionProps } from "./message-bubble";
 import { MessageBubble } from "./message-bubble";
+import {
+  MessageTranslationView,
+  TranslateButton,
+  useMessageTranslation,
+} from "./message-translation";
 
 export type MessageRowActions = {
   helperToggle: (
@@ -476,6 +482,22 @@ export const MessageRow = memo(function MessageRow({
     favorited,
   ]);
   const layout = messageRowLayout(message.blocks, { activityBotId, inGroup, columnWidth });
+  // This reply's translation settings come from the bot that wrote it.
+  const messageBot =
+    bots.find((candidate) => candidate.id === bubbleBotId) ??
+    bots.find((candidate) => candidate.id === botId);
+  const translationSettings = translationSettingsFromBot(messageBot ?? null);
+  const canTranslate =
+    message.role === "bot" &&
+    !message.id.startsWith("progress:") &&
+    Boolean(blockText(message).trim());
+  const translation = useMessageTranslation({
+    botId: messageBot?.id,
+    text: blockText(message),
+    settings: translationSettings,
+    autoTranslate: translationSettings.autoTranslate,
+    composing: liveMessageComposing(message.blocks),
+  });
   // A search hit tints the row yellow; the current hit is stronger than a plain
   // hit, and both outrank the jump highlight.
   const rowHighlight =
@@ -591,6 +613,7 @@ export const MessageRow = memo(function MessageRow({
                 favorite: favorited ? t("Unfavorite") : t("Favorite"),
                 share: t("Share"),
                 regenerate: t("Regenerate"),
+                translate: t("Translate"),
               }}
               onCopy={copyMessage}
               // Tapping read-aloud toggles it: the speak action stops a
@@ -603,8 +626,10 @@ export const MessageRow = memo(function MessageRow({
               onFavorite={actions.favorite ? () => actions.favorite!(message) : undefined}
               favorited={favorited ?? false}
               onRegenerate={readOnly ? undefined : regenerateMessage}
+              onTranslate={canTranslate ? translation.translate : undefined}
             />
           ) : null}
+          {canTranslate ? <MessageTranslationView translation={translation} /> : null}
           {displayedReactions.size > 0 ? (
             <View
               style={{
@@ -666,6 +691,7 @@ export function MessageActionRow({
   onFavorite,
   favorited = false,
   onRegenerate,
+  onTranslate,
 }: {
   /** The account whose interface settings order and hide these tiles. */
   userId?: string;
@@ -675,6 +701,8 @@ export function MessageActionRow({
     favorite: string;
     share: string;
     regenerate: string;
+    /** Absent where the row has no translate action (e.g. voice chat). */
+    translate?: string;
   };
   onCopy: () => void;
   onSpeak: () => void;
@@ -686,6 +714,8 @@ export function MessageActionRow({
   onFavorite?: () => void;
   favorited?: boolean;
   onRegenerate?: () => void;
+  /** Absent where this reply cannot be translated. */
+  onTranslate?: () => void;
 }) {
   const tokens = useMobileTokens();
   const colorScheme = useResolvedAppearance();
@@ -709,6 +739,12 @@ export function MessageActionRow({
   const favoriteTile = favorited
     ? { background: colorScheme === "dark" ? tokens.link : "#2f6bff", icon: "#fff" }
     : tile;
+  // The translate action is a wide blue pill, not a 36px tile: it sits next
+  // to the favorite tile, or before regenerate when favorite is hidden.
+  const translatePill =
+    onTranslate && labels.translate ? (
+      <TranslateButton label={labels.translate} onPress={onTranslate} />
+    ) : null;
   const tiles: Record<MessageActionId, ReactNode> = {
     copy: (
       <ActionTile
@@ -776,9 +812,16 @@ export function MessageActionRow({
       {visible.map((id, index) => (
         <Fragment key={id}>
           {id === "regenerate" && index > 0 ? <View style={{ flex: 1 }} /> : null}
+          {id === "regenerate" && translatePill && !visible.includes("favorite")
+            ? translatePill
+            : null}
           {tiles[id]}
+          {id === "favorite" && translatePill ? translatePill : null}
         </Fragment>
       ))}
+      {translatePill && !visible.includes("favorite") && !visible.includes("regenerate")
+        ? translatePill
+        : null}
     </View>
   );
 }

@@ -60,6 +60,11 @@ const bot: MobileBot = {
   modelProvider: null,
   modelId: null,
   thinkingLevel: null,
+  translationModelProvider: null,
+  translationModelId: null,
+  translationSourceLanguage: "auto",
+  translationTargetLanguage: null,
+  autoTranslate: false,
   autoSpeak: false,
   fleetManagement: false,
 };
