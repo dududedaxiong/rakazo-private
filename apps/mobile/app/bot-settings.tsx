@@ -102,6 +102,101 @@ const NativeBotPackageTools = lazy(() =>
   })),
 );
 
+/** One media-capability probe: idle until tested, then the inline result. */
+type MediaModelTestState =
+  | { status: "idle" }
+  | { status: "testing" }
+  | {
+      status: "done";
+      supported: boolean;
+      seconds: number;
+      detail: string;
+      modelKey: string;
+      modelId: string;
+    };
+
+/** One media model row: picker, test button, inline result, and quick set. */
+function MediaModelRow({
+  kind,
+  choices,
+  value,
+  onChange,
+  test,
+  onTest,
+  onApply,
+}: {
+  kind: "video" | "image";
+  choices: MenuPickerChoice[];
+  value: string;
+  onChange: (key: string) => void;
+  test: MediaModelTestState;
+  onTest: () => void;
+  onApply: () => void;
+}) {
+  const { t } = useI18n();
+  const tokens = useMobileTokens();
+  const hasModel = value !== "";
+  const testing = test.status === "testing";
+  const label = kind === "video" ? t("Video generation model") : t("Image generation model");
+  return (
+    <>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingEnd: 12 }}>
+        <View style={{ flex: 1 }}>
+          <MenuPicker choices={choices} label={label} onChange={onChange} value={value} />
+        </View>
+        <NativeActionButton
+          accessibilityLabel={
+            kind === "video" ? t("Test video generation model") : t("Test image generation model")
+          }
+          busy={testing}
+          disabled={!hasModel}
+          label={t("Test")}
+          onPress={onTest}
+          prominence="secondary"
+          size="compact"
+        />
+      </View>
+      {test.status === "done" ? (
+        <Text
+          style={{
+            paddingHorizontal: 16,
+            paddingBottom: 12,
+            fontSize: 13,
+            color: test.supported ? tokens.success : tokens.destructive,
+          }}
+        >
+          {test.supported
+            ? kind === "video"
+              ? t("✓ {model} supports video generation · {seconds}s", {
+                  model: test.modelId,
+                  seconds: test.seconds,
+                })
+              : t("✓ {model} supports image generation · {seconds}s", {
+                  model: test.modelId,
+                  seconds: test.seconds,
+                })
+            : kind === "video"
+              ? t("✗ Does not support video generation · {reason}", { reason: test.detail })
+              : t("✗ Does not support image generation · {reason}", { reason: test.detail })}
+        </Text>
+      ) : null}
+      {test.status === "done" && test.supported && test.modelKey !== value ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={onApply}
+          style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}
+        >
+          <Text style={{ color: tokens.link, fontSize: 15 }}>
+            {kind === "video"
+              ? t("Set as video generation model")
+              : t("Set as image generation model")}
+          </Text>
+        </Pressable>
+      ) : null}
+    </>
+  );
+}
+
 export default function BotSettingsScreen() {
   const sideInsets = useSideInsets();
   const tokens = useMobileTokens();
@@ -129,6 +224,10 @@ export default function BotSettingsScreen() {
   const [packageOpen, setPackageOpen] = useState(false);
   const [modelKey, setModelKey] = useState("");
   const [translationModelKey, setTranslationModelKey] = useState("");
+  const [videoModelKey, setVideoModelKey] = useState("");
+  const [imageModelKey, setImageModelKey] = useState("");
+  const [videoTest, setVideoTest] = useState<MediaModelTestState>({ status: "idle" });
+  const [imageTest, setImageTest] = useState<MediaModelTestState>({ status: "idle" });
   const [translationSource, setTranslationSource] = useState<TranslationSourceLanguage>("auto");
   const [translationTarget, setTranslationTarget] = useState<TranslationTargetLanguage>("auto");
   const [autoTranslate, setAutoTranslate] = useState(false);
@@ -271,6 +370,16 @@ export default function BotSettingsScreen() {
             ? modelOptionKey(next.translationModelProvider, next.translationModelId)
             : "",
         );
+        setVideoModelKey(
+          next.videoModelProvider && next.videoModelId
+            ? modelOptionKey(next.videoModelProvider, next.videoModelId)
+            : "",
+        );
+        setImageModelKey(
+          next.imageModelProvider && next.imageModelId
+            ? modelOptionKey(next.imageModelProvider, next.imageModelId)
+            : "",
+        );
         setTranslationSource(next.translationSourceLanguage ?? "auto");
         setTranslationTarget(
           next.translationTargetLanguage &&
@@ -364,6 +473,42 @@ export default function BotSettingsScreen() {
     ],
     [modelChoices, t],
   );
+  const videoModelChoices: MenuPickerChoice[] = useMemo(
+    () => [
+      { key: "", label: t("Not set") },
+      ...modelChoices.slice(1).map((choice) => ({ key: choice.key, label: choice.label })),
+    ],
+    [modelChoices, t],
+  );
+  const imageModelChoices: MenuPickerChoice[] = useMemo(
+    () => [
+      { key: "", label: t("Not set") },
+      ...modelChoices.slice(1).map((choice) => ({ key: choice.key, label: choice.label })),
+    ],
+    [modelChoices, t],
+  );
+  const storedVideoModel = videoModelKey ? parseModelOptionKey(videoModelKey) : null;
+  const selectedVideoModel = storedVideoModel
+    ? {
+        provider: storedVideoModel.provider,
+        modelId: resolveSelectableModelId(
+          catalog,
+          storedVideoModel.provider,
+          storedVideoModel.modelId,
+        ),
+      }
+    : null;
+  const storedImageModel = imageModelKey ? parseModelOptionKey(imageModelKey) : null;
+  const selectedImageModel = storedImageModel
+    ? {
+        provider: storedImageModel.provider,
+        modelId: resolveSelectableModelId(
+          catalog,
+          storedImageModel.provider,
+          storedImageModel.modelId,
+        ),
+      }
+    : null;
   const translationTargetChoices: MenuPickerChoice[] = useMemo(
     () =>
       TRANSLATION_TARGET_LANGUAGES.map((code) => ({
@@ -588,6 +733,63 @@ export default function BotSettingsScreen() {
     setPackError(null);
   }
 
+  async function testMediaModel(kind: "video" | "image") {
+    if (!botId) return;
+    const selected = kind === "video" ? selectedVideoModel : selectedImageModel;
+    if (!selected) return;
+    const setTest = kind === "video" ? setVideoTest : setImageTest;
+    const started = Date.now();
+    const seconds = () => Math.round(((Date.now() - started) / 1000) * 10) / 10;
+    setTest({ status: "testing" });
+    try {
+      const result = await rpc("bots/testMediaModel", {
+        botId,
+        kind,
+        provider: selected.provider,
+        modelId: selected.modelId,
+      });
+      setTest({
+        status: "done",
+        supported: result.supported,
+        seconds: result.seconds,
+        detail: result.detail,
+        modelKey: modelOptionKey(selected.provider, selected.modelId),
+        modelId: selected.modelId,
+      });
+    } catch (err) {
+      setTest({
+        status: "done",
+        supported: false,
+        seconds: seconds(),
+        detail: errorText(err, t("Could not test this model")),
+        modelKey: modelOptionKey(selected.provider, selected.modelId),
+        modelId: selected.modelId,
+      });
+    }
+  }
+
+  /** Applies a tested model in one tap, so the picker and the server agree at once. */
+  async function applyTestedMediaModel(kind: "video" | "image") {
+    if (!botId || !bot) return;
+    const test = kind === "video" ? videoTest : imageTest;
+    if (test.status !== "done" || !test.supported) return;
+    const parsed = parseModelOptionKey(test.modelKey);
+    if (!parsed) return;
+    if (kind === "video") setVideoModelKey(test.modelKey);
+    else setImageModelKey(test.modelKey);
+    try {
+      const updated = await rpc(
+        "bots/update",
+        kind === "video"
+          ? { botId, videoModelProvider: parsed.provider, videoModelId: parsed.modelId }
+          : { botId, imageModelProvider: parsed.provider, imageModelId: parsed.modelId },
+      );
+      setBot((prev) => (prev ? { ...prev, ...updated } : prev));
+    } catch (err) {
+      setError(errorText(err, t("Could not save bot")));
+    }
+  }
+
   async function save() {
     if (!botId || !bot || pending) return;
     setPending(true);
@@ -608,6 +810,10 @@ export default function BotSettingsScreen() {
         autoSpeak?: boolean;
         translationModelProvider?: string | null;
         translationModelId?: string | null;
+        videoModelProvider?: string | null;
+        videoModelId?: string | null;
+        imageModelProvider?: string | null;
+        imageModelId?: string | null;
         translationSourceLanguage?: TranslationSourceLanguage;
         translationTargetLanguage?: TranslationTargetLanguage | null;
         autoTranslate?: boolean;
@@ -642,6 +848,20 @@ export default function BotSettingsScreen() {
       if (translationModelChanged) {
         input.translationModelProvider = selectedTranslationModel?.provider ?? null;
         input.translationModelId = selectedTranslationModel?.modelId ?? null;
+      }
+      const videoModelChanged =
+        (selectedVideoModel?.provider ?? null) !== (bot.videoModelProvider ?? null) ||
+        (selectedVideoModel?.modelId ?? null) !== (bot.videoModelId ?? null);
+      if (videoModelChanged) {
+        input.videoModelProvider = selectedVideoModel?.provider ?? null;
+        input.videoModelId = selectedVideoModel?.modelId ?? null;
+      }
+      const imageModelChanged =
+        (selectedImageModel?.provider ?? null) !== (bot.imageModelProvider ?? null) ||
+        (selectedImageModel?.modelId ?? null) !== (bot.imageModelId ?? null);
+      if (imageModelChanged) {
+        input.imageModelProvider = selectedImageModel?.provider ?? null;
+        input.imageModelId = selectedImageModel?.modelId ?? null;
       }
       if ((translationSource || "auto") !== (bot.translationSourceLanguage ?? "auto")) {
         input.translationSourceLanguage = translationSource || "auto";
@@ -697,6 +917,10 @@ export default function BotSettingsScreen() {
       (thinkingLevel || null) !== (bot.thinkingLevel ?? null) ||
       (selectedTranslationModel?.provider ?? null) !== (bot.translationModelProvider ?? null) ||
       (selectedTranslationModel?.modelId ?? null) !== (bot.translationModelId ?? null) ||
+      (selectedVideoModel?.provider ?? null) !== (bot.videoModelProvider ?? null) ||
+      (selectedVideoModel?.modelId ?? null) !== (bot.videoModelId ?? null) ||
+      (selectedImageModel?.provider ?? null) !== (bot.imageModelProvider ?? null) ||
+      (selectedImageModel?.modelId ?? null) !== (bot.imageModelId ?? null) ||
       (translationSource || "auto") !== (bot.translationSourceLanguage ?? "auto") ||
       (translationTarget || "auto") !== (bot.translationTargetLanguage ?? "auto") ||
       autoTranslate !== (bot.autoTranslate ?? false) ||
@@ -860,6 +1084,32 @@ export default function BotSettingsScreen() {
                   value={thinkingLevel}
                 />
               ) : null}
+            </SettingsGroup>
+            <SettingsGroup label={t("Media generation")}>
+              <MediaModelRow
+                kind="video"
+                choices={videoModelChoices}
+                value={videoModelKey}
+                onChange={(key) => {
+                  setVideoModelKey(key);
+                  setVideoTest({ status: "idle" });
+                }}
+                test={videoTest}
+                onTest={() => void testMediaModel("video")}
+                onApply={() => void applyTestedMediaModel("video")}
+              />
+              <MediaModelRow
+                kind="image"
+                choices={imageModelChoices}
+                value={imageModelKey}
+                onChange={(key) => {
+                  setImageModelKey(key);
+                  setImageTest({ status: "idle" });
+                }}
+                test={imageTest}
+                onTest={() => void testMediaModel("image")}
+                onApply={() => void applyTestedMediaModel("image")}
+              />
             </SettingsGroup>
             <SettingsGroup label={t("Computer")}>
               <View style={styles.cardContent}>

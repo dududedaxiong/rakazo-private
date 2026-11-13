@@ -23,7 +23,7 @@ import { ModelTestRowMenu } from "../model-test-row-menu";
 import { NativeActionButton } from "../native-action-button";
 import { NativeSheet, useNativeSheet } from "../native-sheet";
 
-export type ThreadModelPickerRole = "main" | "computer";
+export type ThreadModelPickerRole = "main" | "computer" | "video" | "image";
 
 export type ThreadModelSave = {
   provider: string | null;
@@ -71,7 +71,14 @@ export function ThreadModelPickerSheet({
   const [onlyAvailable, setOnlyAvailable] = useState(false);
   const testRun = getModelTestRunStore();
   const testSnapshot = useSyncExternalStore(testRun.subscribe, testRun.getSnapshot);
-  const title = role === "main" ? t("Main model") : t("Computer model");
+  const title =
+    role === "main"
+      ? t("Main model")
+      : role === "computer"
+        ? t("Computer model")
+        : role === "video"
+          ? t("Video generation model")
+          : t("Image generation model");
 
   // The store keys results by model; rows key by picker key, so the space
   // default row reads the result of the model behind it.
@@ -172,6 +179,10 @@ export function ThreadModelPickerSheet({
       const modelId = choice.modelId ?? null;
       if (role === "main") {
         await rpc("bots/update", { botId, modelProvider: provider, modelId });
+      } else if (role === "video") {
+        await rpc("bots/update", { botId, videoModelProvider: provider, videoModelId: modelId });
+      } else if (role === "image") {
+        await rpc("bots/update", { botId, imageModelProvider: provider, imageModelId: modelId });
       } else {
         await rpc("models/setRole", {
           role: "computer",
@@ -216,6 +227,10 @@ export function ThreadModelPickerSheet({
       if (choice.key === selectedKey) {
         if (role === "main") {
           await rpc("bots/update", { botId, modelProvider: null, modelId: null });
+        } else if (role === "video") {
+          await rpc("bots/update", { botId, videoModelProvider: null, videoModelId: null });
+        } else if (role === "image") {
+          await rpc("bots/update", { botId, imageModelProvider: null, imageModelId: null });
         } else {
           await rpc("models/setRole", {
             role: "computer",

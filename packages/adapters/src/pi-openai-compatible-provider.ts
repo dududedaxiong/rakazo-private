@@ -6,6 +6,8 @@ import { anthropicMessagesApi } from "@earendil-works/pi-ai/api/anthropic-messag
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
 import { openAIResponsesApi } from "@earendil-works/pi-ai/api/openai-responses.lazy";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
+import type { GeneratedMedia } from "@rakazo/adapter-kit";
+import { MediaGenerationError } from "@rakazo/adapter-kit";
 import type {
   ModelApiProtocol,
   ModelAuthMode,
@@ -15,6 +17,7 @@ import type {
   ModelHealthSummary,
 } from "@rakazo/contracts";
 import {
+  ATTACHMENT_MAX_BYTES,
   DEFAULT_MODEL_CONTEXT_WINDOW,
   DEFAULT_MODEL_MAX_TOKENS,
   effectiveAuthMode,
@@ -46,6 +49,7 @@ import {
 } from "./pi-runtime-limits.js";
 import { guardToolCallNames } from "./pi-tool-call-guard.js";
 import { dispatcherFetch, fetchPairedWithDispatcher } from "./undici-fetch.js";
+import { fetchSafeWebBytes } from "./web-ssrf.js";
 
 export { OPENAI_COMPATIBLE_PROVIDER_ID };
 
@@ -1071,4 +1075,366 @@ export async function probeModelHealth(
     results,
     summary,
   };
+}
+
+/** What the media probe asks for; the reply only has to carry the media, not be good. */
+export const MEDIA_MODEL_PROBE_PROMPTS = {
+  image: "画一只猫",
+  video: "生成一段猫走路的短视频",
+} as const;
+
+export type MediaModelProbeKind = "image" | "video";
+
+export interface MediaModelProbeResult {
+  /** True when the probe reply actually carried an image (or a video). */
+  supported: boolean;
+  /** Seconds the probe took, one decimal. */
+  seconds: number;
+  /** Short reason: what was found, or why it did not count as supported. */
+  detail: string;
+}
+
+const MEDIA_MODEL_MAX_TOKENS = 1024;
+
+/** One chat call to a media model; the probe and the runtime generator share it. */
+export interface ChatMediaModelInput {
+  baseUrl: string;
+  apiKey?: string;
+  headers?: Record<string, string>;
+  apiProtocol?: ModelApiProtocol;
+  authMode?: ModelAuthMode;
+  model: string;
+  kind: MediaModelProbeKind;
+  prompt: string;
+}
+
+async function requestChatMedia(
+  input: ChatMediaModelInput,
+  fetchImpl?: typeof fetch,
+  signal?: AbortSignal,
+  opts?: OpenAiCompatibleUrlPolicy,
+): Promise<{ status: number; parsed: unknown; bodyText: string }> {
+  const baseUrl = assertAllowedOpenAiCompatibleUrl(input.baseUrl, opts);
+  assertHttpsForKeyedOpenAiCompatibleUrl(
+    baseUrl,
+    input.apiKey,
+    Object.keys(input.headers ?? {}).length > 0,
+  );
+  const safeFetch = createOpenAiCompatibleFetch(fetchImpl, undefined, {
+    ...opts,
+    headers: input.headers,
+  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), modelHealthTimeoutMs());
+  const merged = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+  try {
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "User-Agent": MODEL_HEALTH_BROWSER_USER_AGENT,
+    };
+    if (input.apiProtocol === "anthropic-messages") {
+      headers["anthropic-version"] = ANTHROPIC_MESSAGES_VERSION;
+    }
+    const mode = effectiveAuthMode(input.authMode, input.apiProtocol);
+    const key = input.apiKey?.trim();
+    if (key && mode !== "none") {
+      if (mode === "bearer" || mode === "both") headers.Authorization = `Bearer ${key}`;
+      if (mode === "x-api-key" || mode === "both") headers["x-api-key"] = key;
+    }
+    const messages = [{ role: "user", content: input.prompt }];
+    let url: string;
+    let body: Record<string, unknown>;
+    if (input.apiProtocol === "anthropic-messages") {
+      url = new URL("v1/messages", `${anthropicMessagesBaseUrl(baseUrl.href)}/`).href;
+      body = { model: input.model, max_tokens: MEDIA_MODEL_MAX_TOKENS, messages, temperature: 0 };
+    } else if (input.apiProtocol === "responses") {
+      url = new URL("responses", `${baseUrl.href}/`).href;
+      body = {
+        model: input.model,
+        input: input.prompt,
+        max_output_tokens: MEDIA_MODEL_MAX_TOKENS,
+        temperature: 0,
+      };
+    } else {
+      url = new URL("chat/completions", `${baseUrl.href}/`).href;
+      body = { model: input.model, messages, max_tokens: MEDIA_MODEL_MAX_TOKENS, temperature: 0 };
+    }
+    const response = await safeFetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      redirect: "error",
+      signal: merged,
+    });
+    const bodyText = await readBoundedHealthText(response);
+    let parsed: unknown = null;
+    try {
+      parsed = JSON.parse(bodyText) as unknown;
+    } catch {
+      parsed = null;
+    }
+    return { status: response.status, parsed, bodyText };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Probes one model for media generation: asks it to make one small image or
+ * video, then checks the reply actually carries that kind of media. A text-only
+ * reply is not support, even when the model answered the prompt in words.
+ */
+export async function probeMediaModel(
+  input: {
+    baseUrl: string;
+    apiKey?: string;
+    headers?: Record<string, string>;
+    apiProtocol?: ModelApiProtocol;
+    authMode?: ModelAuthMode;
+    model: string;
+    kind: MediaModelProbeKind;
+  },
+  fetchImpl?: typeof fetch,
+  signal?: AbortSignal,
+  opts?: OpenAiCompatibleUrlPolicy,
+): Promise<MediaModelProbeResult> {
+  const started = Date.now();
+  const seconds = () => Math.round(((Date.now() - started) / 1000) * 10) / 10;
+  try {
+    const { status, parsed, bodyText } = await requestChatMedia(
+      { ...input, prompt: MEDIA_MODEL_PROBE_PROMPTS[input.kind] },
+      fetchImpl,
+      signal,
+      opts,
+    );
+    if (status < 200 || status >= 300) {
+      const classified = classifyHealthResponse(status, bodyText, parsed);
+      return { supported: false, seconds: seconds(), detail: classified.detail };
+    }
+    if (parsed === null) {
+      return { supported: false, seconds: seconds(), detail: "返回不是 JSON" };
+    }
+    const found = extractMediaFromReply(parsed, input.kind) !== null;
+    if (found) {
+      return {
+        supported: true,
+        seconds: seconds(),
+        detail: input.kind === "image" ? "返回了图片" : "返回了视频",
+      };
+    }
+    return {
+      supported: false,
+      seconds: seconds(),
+      detail: input.kind === "image" ? "只回了文字，没有图片" : "只回了文字，没有视频",
+    };
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    if (isAbortError(error)) {
+      return { supported: false, seconds: seconds(), detail: "请求超时" };
+    }
+    const message = error instanceof Error ? error.message : "";
+    return {
+      supported: false,
+      seconds: seconds(),
+      detail: message ? healthDetail(`网络错误：${message}`, 120) : "网络错误",
+    };
+  }
+}
+
+/**
+ * Asks a chat model to generate one image or video and returns the bytes it
+ * produced. The reply must carry the media; a text-only reply is a failure,
+ * not a result. Remote URLs are downloaded through the SSRF-safe fetch and
+ * capped at the attachment limit.
+ */
+export async function generateMediaWithChatModel(
+  input: ChatMediaModelInput,
+  fetchImpl?: typeof fetch,
+  signal?: AbortSignal,
+  opts?: OpenAiCompatibleUrlPolicy,
+): Promise<GeneratedMedia> {
+  const mimeType = input.kind === "image" ? "image/png" : "video/mp4";
+  try {
+    const { status, parsed } = await requestChatMedia(input, fetchImpl, signal, opts);
+    if (status === 401 || status === 403) throw new MediaGenerationError("authentication");
+    if (status === 429) throw new MediaGenerationError("rate_limit");
+    if (status < 200 || status >= 300) throw new MediaGenerationError("provider_failure");
+    const reference = parsed === null ? null : extractMediaFromReply(parsed, input.kind);
+    if (!reference) throw new MediaGenerationError("provider_failure");
+    return await materializeMediaReference(reference, input.kind, mimeType, signal);
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    if (error instanceof MediaGenerationError) throw error;
+    if (isAbortError(error)) throw new MediaGenerationError("provider_failure");
+    throw new MediaGenerationError("provider_failure");
+  }
+}
+
+async function materializeMediaReference(
+  reference: ReplyMediaReference,
+  kind: MediaModelProbeKind,
+  mimeType: GeneratedMedia["mimeType"],
+  signal?: AbortSignal,
+): Promise<GeneratedMedia> {
+  if (reference.kind === "dataUri" || reference.kind === "b64") {
+    const bytes = Buffer.from(reference.data, "base64");
+    if (!bytes.byteLength) throw new MediaGenerationError("provider_failure");
+    if (bytes.byteLength > ATTACHMENT_MAX_BYTES) throw new MediaGenerationError("output_limit");
+    return { bytes, mimeType };
+  }
+  const downloaded = await fetchSafeWebBytes(reference.url, {
+    maxBytes: ATTACHMENT_MAX_BYTES,
+    signal,
+  }).catch((error: unknown) => {
+    if (signal?.aborted) throw error;
+    throw new MediaGenerationError("provider_failure");
+  });
+  const contentType = downloaded.contentType?.split(";")[0]?.trim().toLowerCase();
+  if (contentType && !contentType.startsWith(kind === "image" ? "image/" : "video/")) {
+    throw new MediaGenerationError("provider_failure");
+  }
+  if (!downloaded.body.byteLength) throw new MediaGenerationError("provider_failure");
+  return { bytes: downloaded.body, mimeType };
+}
+
+/** A media payload found in a chat reply: inline bytes or a URL to download. */
+export type ReplyMediaReference =
+  | { kind: "dataUri"; mimeType: string; data: string }
+  | { kind: "b64"; data: string }
+  | { kind: "url"; url: string };
+
+const MEDIA_DATA_URI_PATTERN = /data:(image|video)\/([a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=]+)/;
+const MEDIA_IMAGE_URL_PATTERN = /https?:\/\/\S+\.(?:png|jpe?g|gif|webp|bmp|avif)(?:[?#]\S*)?/i;
+const MEDIA_IMAGE_MARKDOWN_PATTERN = /!\[[^\]]*\]\(([^)\s]+)\)/;
+const MEDIA_VIDEO_URL_PATTERN = /https?:\/\/\S+\.(?:mp4|webm|mov|m3u8|avi|mkv)(?:[?#]\S*)?/i;
+const MEDIA_HTTP_URL_PATTERN = /https?:\/\/[^\s"'<>)]+/;
+const MEDIA_IMAGE_TYPES = new Set([
+  "image_url",
+  "input_image",
+  "output_image",
+  "image",
+  "image_generation_call",
+]);
+const MEDIA_VIDEO_TYPES = new Set(["video_url", "video", "output_video", "video_generation_call"]);
+
+function isHttpUrl(value: string): boolean {
+  return value.startsWith("http://") || value.startsWith("https://");
+}
+
+/** The media a string carries for the requested kind, if it carries any. */
+function mediaReferenceFromString(
+  value: string,
+  kind: MediaModelProbeKind,
+): ReplyMediaReference | null {
+  const data = MEDIA_DATA_URI_PATTERN.exec(value);
+  if (data) {
+    const mediaKind = data[1];
+    const subtype = data[2];
+    const payload = data[3];
+    if (mediaKind && subtype && payload && (kind === "image") === (mediaKind === "image")) {
+      return { kind: "dataUri", mimeType: `${mediaKind}/${subtype}`, data: payload };
+    }
+  }
+  if (kind === "image") {
+    const markdown = MEDIA_IMAGE_MARKDOWN_PATTERN.exec(value);
+    if (markdown?.[1]) {
+      const target = markdown[1];
+      const embedded = target.startsWith("data:image/")
+        ? MEDIA_DATA_URI_PATTERN.exec(target)
+        : null;
+      if (embedded) {
+        const mediaKind = embedded[1];
+        const subtype = embedded[2];
+        const payload = embedded[3];
+        if (mediaKind && subtype && payload) {
+          return { kind: "dataUri", mimeType: `${mediaKind}/${subtype}`, data: payload };
+        }
+      }
+      if (isHttpUrl(target)) return { kind: "url", url: target };
+    }
+    const url = MEDIA_IMAGE_URL_PATTERN.exec(value);
+    if (url) return { kind: "url", url: url[0] };
+    return null;
+  }
+  const url = MEDIA_VIDEO_URL_PATTERN.exec(value);
+  if (url) return { kind: "url", url: url[0] };
+  if (value.includes("video_url")) {
+    const any = MEDIA_HTTP_URL_PATTERN.exec(value);
+    if (any) return { kind: "url", url: any[0] };
+  }
+  return null;
+}
+
+/**
+ * Walks a chat reply for media of the requested kind and returns the first
+ * usable payload: typed content parts (image_url, image blocks, generated-image
+ * output) and inline media the chat renders (data URIs, markdown images, media
+ * URLs). A plain text reply, even one that talks about an image, carries none.
+ */
+export function extractMediaFromReply(
+  body: unknown,
+  kind: MediaModelProbeKind,
+): ReplyMediaReference | null {
+  const stack: unknown[] = [body];
+  while (stack.length > 0) {
+    const value = stack.pop();
+    if (typeof value === "string") {
+      const found = mediaReferenceFromString(value, kind);
+      if (found) return found;
+      continue;
+    }
+    if (Array.isArray(value)) {
+      stack.push(...value);
+      continue;
+    }
+    if (value !== null && typeof value === "object") {
+      const record = value as Record<string, unknown>;
+      const type = typeof record.type === "string" ? record.type : "";
+      if (kind === "image") {
+        if (typeof record.b64_json === "string" && record.b64_json.length > 0) {
+          return { kind: "b64", data: record.b64_json };
+        }
+        const imageUrl = record.image_url;
+        if (typeof imageUrl === "string") {
+          const found =
+            mediaReferenceFromString(imageUrl, kind) ??
+            (isHttpUrl(imageUrl) ? { kind: "url", url: imageUrl } : null);
+          if (found) return found;
+        } else if (imageUrl !== null && typeof imageUrl === "object") {
+          const url = (imageUrl as Record<string, unknown>).url;
+          if (typeof url === "string") {
+            const found =
+              mediaReferenceFromString(url, kind) ?? (isHttpUrl(url) ? { kind: "url", url } : null);
+            if (found) return found;
+          }
+        }
+        if (
+          MEDIA_IMAGE_TYPES.has(type) &&
+          typeof record.url === "string" &&
+          isHttpUrl(record.url)
+        ) {
+          return { kind: "url", url: record.url };
+        }
+      } else {
+        const videoUrl = record.video_url;
+        if (typeof videoUrl === "string" && isHttpUrl(videoUrl)) {
+          return { kind: "url", url: videoUrl };
+        }
+        if (videoUrl !== null && typeof videoUrl === "object") {
+          const url = (videoUrl as Record<string, unknown>).url;
+          if (typeof url === "string" && isHttpUrl(url)) return { kind: "url", url };
+        }
+        if (
+          MEDIA_VIDEO_TYPES.has(type) &&
+          typeof record.url === "string" &&
+          isHttpUrl(record.url)
+        ) {
+          return { kind: "url", url: record.url };
+        }
+      }
+      stack.push(...Object.values(record));
+    }
+  }
+  return null;
 }

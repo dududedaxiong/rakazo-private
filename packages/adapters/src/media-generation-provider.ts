@@ -279,3 +279,58 @@ export class FakeMediaGenerationProvider implements MediaGenerationProvider {
     };
   }
 }
+
+/** The job id of a video a chat model returned inline; there is nothing to poll. */
+export const CHAT_MEDIA_VIDEO_JOB_ID = "chat-media-video";
+
+/**
+ * A media provider that answers each kind from a chat model: a bot's configured
+ * image/video model, or the global provider when the bot has none for that kind.
+ * The chat model returns the finished media inline, so its video is already
+ * complete and never needs polling. The id stays the fallback's so a job the
+ * fallback submitted still polls under the provider that saved it.
+ */
+export class BotMediaGenerationProvider implements MediaGenerationProvider {
+  readonly id: string;
+  readonly capabilities: { images: boolean; video: boolean; offline: boolean };
+  constructor(
+    private readonly imageCall:
+      | ((prompt: string, signal: AbortSignal) => Promise<GeneratedMedia>)
+      | null,
+    private readonly videoCall:
+      | ((prompt: string, signal: AbortSignal) => Promise<GeneratedMedia>)
+      | null,
+    private readonly fallback?: MediaGenerationProvider,
+  ) {
+    this.id = fallback?.id ?? "bot-media";
+    this.capabilities = {
+      images: Boolean(imageCall ?? fallback?.capabilities.images),
+      video: Boolean(videoCall ?? fallback?.capabilities.video),
+      offline: fallback?.capabilities.offline ?? false,
+    };
+  }
+  async generateImage(
+    input: MediaGenerationInput,
+    context: AdapterContext,
+  ): Promise<GeneratedMedia> {
+    if (this.imageCall) return this.imageCall(input.prompt, context.signal);
+    if (this.fallback) return this.fallback.generateImage(input, context);
+    throw new MediaGenerationError("unsupported");
+  }
+  async generateVideo(
+    input: MediaGenerationInput,
+    context: AdapterContext,
+  ): Promise<MediaVideoJob> {
+    if (this.videoCall) {
+      const output = await this.videoCall(input.prompt, context.signal);
+      return { id: CHAT_MEDIA_VIDEO_JOB_ID, status: "completed", output };
+    }
+    if (this.fallback) return this.fallback.generateVideo(input, context);
+    throw new MediaGenerationError("unsupported");
+  }
+  async pollVideo(id: string, context: AdapterContext): Promise<MediaVideoJob> {
+    if (id === CHAT_MEDIA_VIDEO_JOB_ID) return { id, status: "failed" };
+    if (this.fallback) return this.fallback.pollVideo(id, context);
+    throw new MediaGenerationError("unsupported");
+  }
+}

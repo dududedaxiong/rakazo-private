@@ -1071,6 +1071,12 @@ model Bot {
   thinkingLevel     String?
   translationModelProvider  String?
   translationModelId        String?
+  /** The model used to generate videos for this bot; null until one is picked. */
+  videoModelProvider        String?
+  videoModelId              String?
+  /** The model used to generate images for this bot; null until one is picked. */
+  imageModelProvider        String?
+  imageModelId              String?
   translationSourceLanguage String   @default("auto")
   translationTargetLanguage String?
   autoTranslate             Boolean  @default(false)

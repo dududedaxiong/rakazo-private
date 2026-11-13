@@ -111,6 +111,22 @@ vi.mock("./api", () => ({
     }
     if (procedure === "scratchpad/list") return mocks.work;
     if (procedure === "memory/list") return mocks.docs;
+    if (procedure === "models/list")
+      return [
+        { provider: "openai-compatible", id: "model-a", label: "Model A" },
+        { provider: "openai-compatible", id: "video-a", label: "Video A" },
+        { provider: "openai-compatible", id: "image-a", label: "Image A" },
+      ];
+    if (procedure === "models/credentials")
+      return [
+        {
+          id: "credential-fixture",
+          provider: "openai-compatible",
+          modelId: "model-a",
+          label: "Fixture",
+          enabledModelIds: ["model-a", "video-a", "image-a"],
+        },
+      ];
     if (procedure === "me") return {};
     return [];
   },
@@ -423,6 +439,30 @@ describe("bot settings device voice menu", () => {
     expect(mocks.rpc).toHaveBeenCalledWith("bots/update", {
       botId: "bot-fixture",
       dailyCheckIns: false,
+    });
+  });
+
+  it("saves the video and image generation models", async () => {
+    await render();
+    const pick = async (menuLabel: string, modelId: string) => {
+      const menu = container.querySelector(`[data-menu="${menuLabel}"]`)!;
+      const choice = [...menu.querySelectorAll("button")].find((button) =>
+        button.textContent?.includes(modelId),
+      )!;
+      await act(async () => choice.click());
+    };
+    await pick("Video generation model", "video-a");
+    await pick("Image generation model", "image-a");
+    const save = [...container.querySelectorAll("button")].find(
+      (button) => button.textContent === "Save",
+    )!;
+    await act(async () => save.click());
+    expect(mocks.rpc).toHaveBeenCalledWith("bots/update", {
+      botId: "bot-fixture",
+      videoModelProvider: "openai-compatible",
+      videoModelId: "video-a",
+      imageModelProvider: "openai-compatible",
+      imageModelId: "image-a",
     });
   });
 

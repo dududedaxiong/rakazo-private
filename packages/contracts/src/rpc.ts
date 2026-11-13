@@ -681,6 +681,25 @@ export const appContract = {
     reorder: oc.input(ReorderBotsInput).output(z.object({ ok: z.literal(true) })),
     update: oc.input(UpdateBotInput).output(BotSchema),
     translate: oc.input(TranslateInputSchema).output(TranslateOutputSchema),
+    testMediaModel: oc
+      .input(
+        z.object({
+          botId: Id,
+          kind: z.enum(["image", "video"]),
+          provider: z.string().trim().min(1).max(80),
+          modelId: z.string().trim().min(1).max(200),
+        }),
+      )
+      .output(
+        z.object({
+          /** True when the probe reply actually carried an image (or a video). */
+          supported: z.boolean(),
+          /** Seconds the probe took, one decimal. */
+          seconds: z.number(),
+          /** Short reason: what was found, or why it did not count as supported. */
+          detail: z.string(),
+        }),
+      ),
     restoreInstructions: oc
       .input(
         z.object({

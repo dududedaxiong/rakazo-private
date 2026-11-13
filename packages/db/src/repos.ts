@@ -104,6 +104,10 @@ function mapBot(
     thinkingLevel?: string | null;
     translationModelProvider?: string | null;
     translationModelId?: string | null;
+    videoModelProvider?: string | null;
+    videoModelId?: string | null;
+    imageModelProvider?: string | null;
+    imageModelId?: string | null;
     translationSourceLanguage?: string | null;
     translationTargetLanguage?: string | null;
     autoTranslate?: boolean;
@@ -161,6 +165,14 @@ function mapBot(
       ? canonicalPiProviderId(bot.translationModelProvider)
       : null,
     translationModelId: bot.translationModelId ?? null,
+    videoModelProvider: bot.videoModelProvider
+      ? canonicalPiProviderId(bot.videoModelProvider)
+      : null,
+    videoModelId: bot.videoModelId ?? null,
+    imageModelProvider: bot.imageModelProvider
+      ? canonicalPiProviderId(bot.imageModelProvider)
+      : null,
+    imageModelId: bot.imageModelId ?? null,
     translationSourceLanguage: (TRANSLATION_SOURCE_LANGUAGE_CODES as readonly string[]).includes(
       bot.translationSourceLanguage ?? "",
     )

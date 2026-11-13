@@ -45,6 +45,7 @@ import { formatAgentEnvironmentInstruction } from "./agent-environment.js";
 import { createApprovedEffectReplayQueue } from "./approval-effect.js";
 import { PARTIAL_REPLY_NOTE } from "./automated-messages.js";
 import { backgroundHelpersAllowed } from "./background-helpers.js";
+import { resolveBotMediaGenerationProvider } from "./bot-media-generation.js";
 import { loadBotMessageContext } from "./bot-messages.js";
 import {
   commandCredentialRedactions,
@@ -609,6 +610,14 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           loadRunLoginRedactions(deps.prisma, deps.secretStore, run, run.id),
           loadRunCodeRedactions(deps.prisma, deps.secretStore, run, run.id),
         ]);
+        // The bot's own media models answer image/video generation in this run;
+        // anything it did not configure keeps the deployment's provider.
+        const runMediaGeneration = await resolveBotMediaGenerationProvider(
+          deps,
+          { userId: run.userId, spaceId: run.spaceId },
+          bot,
+          mediaGeneration,
+        );
         // Team chat reaches people besides the owner, so their runs get a group channel's limits.
         const teamChatConversationId =
           run.trigger === "messaging" ? thread.externalConversationId : null;
@@ -1267,8 +1276,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
             trigger: run.trigger,
             semanticMemoryEnabled,
             semanticMemoryForgets: Boolean(semanticMemory?.forget),
-            mediaImagesEnabled: Boolean(deps.artifacts && mediaGeneration?.capabilities.images),
-            mediaVideoEnabled: Boolean(deps.artifacts && mediaGeneration?.capabilities.video),
+            mediaImagesEnabled: Boolean(deps.artifacts && runMediaGeneration?.capabilities.images),
+            mediaVideoEnabled: Boolean(deps.artifacts && runMediaGeneration?.capabilities.video),
             cloudAgentEnabled: cloudAgentsEnabled(cloudAgent, run.spaceId),
             paymentWalletEnabled,
             messagingChannelRun: nonOwnerChatRun,
@@ -1435,7 +1444,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
 
         const ctx: RunContext = {
           deps,
-          providers: { web, mediaGeneration, browser, cloudAgent },
+          providers: { web, mediaGeneration: runMediaGeneration, browser, cloudAgent },
           run,
           runId,
           workerId,

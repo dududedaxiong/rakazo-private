@@ -13,7 +13,23 @@ import { NativeActionButton } from "../native-action-button";
  * Switch the chat's persona: one tap applies a template at once, and the
  * next message uses its prompt. The bot menu stays on the avatar; this sheet
  * opens from the name under it.
+ *
+ * The template list is guarded the way the web switcher is: a non-list reply
+ * shows an inline error, and entries without a usable id and name are
+ * dropped instead of rendered, so a bad row can never take the whole page
+ * down to the error screen.
  */
+
+/** A list entry the sheet can render and apply; anything else is dropped, never rendered. */
+function isSwitchableTemplate(value: unknown): value is PromptTemplate {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    typeof (value as PromptTemplate).id === "string" &&
+    typeof (value as PromptTemplate).name === "string"
+  );
+}
+
 export function ThreadPersonaSheet({
   visible,
   botId,
@@ -32,7 +48,11 @@ export function ThreadPersonaSheet({
   const { t } = useI18n();
   const tokens = mobileTokens();
   const templatesQuery = usePromptTemplates();
-  const templates = templatesQuery.data;
+  // The query is typed as a list, but a stale cache or a malformed reply can
+  // hand the render anything; treat the payload as untrusted at this boundary.
+  const rawTemplates: unknown = templatesQuery.data;
+  const malformedReply = rawTemplates !== undefined && !Array.isArray(rawTemplates);
+  const templates = Array.isArray(rawTemplates) ? rawTemplates.filter(isSwitchableTemplate) : [];
   const [error, setError] = useState<string | null>(null);
   const [applyingId, setApplyingId] = useState<string | null>(null);
 
@@ -61,7 +81,7 @@ export function ThreadPersonaSheet({
         <Text style={{ color: tokens.mutedForeground, fontSize: 15, paddingVertical: 12 }}>
           {t("Loading…")}
         </Text>
-      ) : templatesQuery.isError ? (
+      ) : templatesQuery.isError || malformedReply ? (
         <View style={{ gap: 12, paddingVertical: 12 }}>
           <Text accessibilityRole="alert" style={{ color: tokens.destructive, fontSize: 15 }}>
             {errorText(templatesQuery.error, t("Could not load templates"))}
@@ -72,7 +92,7 @@ export function ThreadPersonaSheet({
             onPress={() => void templatesQuery.refetch()}
           />
         </View>
-      ) : templates?.length ? (
+      ) : templates.length ? (
         templates.map((template) => {
           const inUse = template.id === currentTemplateId;
           const applying = applyingId === template.id;
@@ -134,7 +154,7 @@ export function ThreadPersonaSheet({
                   numberOfLines={1}
                   style={{ color: tokens.mutedForeground, fontSize: 13, marginTop: 3 }}
                 >
-                  {template.content}
+                  {typeof template.content === "string" ? template.content : ""}
                 </Text>
               </View>
               <View

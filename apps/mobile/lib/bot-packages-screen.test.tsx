@@ -342,6 +342,18 @@ it("checks the same nonce after a lost import reply without replaying a write", 
   expect(imports()).toHaveLength(1);
 });
 
+it("shows a generic name when the imported bot's name is an opaque code", async () => {
+  receipt = { ...receipt, botName: "7C3irl" };
+  await mountImport();
+  await fill("Bot package or Grok JSON", "{}");
+  await click("Preview");
+  await click("Import as new bot");
+  expect(node.textContent).toContain("Bot imported");
+  expect(node.textContent).not.toContain("7C3irl");
+  await click("Recent imports");
+  expect(node.textContent).not.toContain("7C3irl");
+});
+
 it("reopens a selected recent receipt without automatic import or resume", async () => {
   await mountImport();
   await click("Recent imports");

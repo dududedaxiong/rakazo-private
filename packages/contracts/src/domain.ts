@@ -117,6 +117,12 @@ export const BotSchema = z.object({
   /** The model used for translation; null until one is picked. */
   translationModelProvider: z.string().nullable(),
   translationModelId: z.string().nullable(),
+  /** The model used to generate videos; null until one is picked. */
+  videoModelProvider: z.string().nullable(),
+  videoModelId: z.string().nullable(),
+  /** The model used to generate images; null until one is picked. */
+  imageModelProvider: z.string().nullable(),
+  imageModelId: z.string().nullable(),
   /** The language to translate from; `auto` lets the model detect it. */
   translationSourceLanguage: TranslationSourceLanguageSchema,
   /** Null means unset; clients show their own default (mobile `auto`, web `zh`). */
@@ -528,6 +534,10 @@ export const UpdateBotInput = z
     thinkingLevel: ThinkingLevelSchema.nullable().optional(),
     translationModelProvider: z.string().trim().min(1).max(80).nullable().optional(),
     translationModelId: z.string().trim().min(1).max(200).nullable().optional(),
+    videoModelProvider: z.string().trim().min(1).max(80).nullable().optional(),
+    videoModelId: z.string().trim().min(1).max(200).nullable().optional(),
+    imageModelProvider: z.string().trim().min(1).max(80).nullable().optional(),
+    imageModelId: z.string().trim().min(1).max(200).nullable().optional(),
     translationSourceLanguage: TranslationSourceLanguageSchema.optional(),
     translationTargetLanguage: z.string().trim().max(20).nullable().optional(),
     autoTranslate: z.boolean().optional(),
@@ -550,6 +560,8 @@ export const UpdateBotInput = z
       ctx,
       "translationModelId",
     );
+    pairedModelIssues(value.videoModelProvider, value.videoModelId, ctx, "videoModelId");
+    pairedModelIssues(value.imageModelProvider, value.imageModelId, ctx, "imageModelId");
   });
 export type UpdateBotInput = z.infer<typeof UpdateBotInput>;
 

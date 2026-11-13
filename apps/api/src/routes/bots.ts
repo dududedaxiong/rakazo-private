@@ -1,10 +1,12 @@
 import { randomBytes } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import { runContinueJob } from "@rakazo/adapter-kit";
+import { runContinueJob, SecretStoreUnavailableError } from "@rakazo/adapter-kit";
 import {
   archiveBot,
   checkpointAndStopComputer,
+  compatibleEndpointPreset,
   defaultVaultItemTitle,
+  findConnectedModelCredential,
   forgetBotSecret,
   forgetPageShareSecrets,
   hasActiveComputerControl,
@@ -13,6 +15,8 @@ import {
   newVaultItemName,
   normalizeSecretDestination,
   pageUrlOrigin,
+  parseModelSecret,
+  probeMediaModel,
   relabelVaultItem,
   revealBotSecret,
   SPACE_VAULT_NOT_IN_USE,
@@ -55,6 +59,7 @@ import { botEmailAddress, botEmailAddresses, claimBotEmailAddress } from "../bot
 import { changedBotSettings } from "../bot-setting-analytics.js";
 import { createBotFromTemplate, listBotTemplates } from "../bot-templates.js";
 import { requireIdentityConfirmation } from "../identity-confirmation.js";
+import { mayUsePrivateEndpoint } from "../mcp-servers.js";
 import { managedAppCatalog } from "../onboarding.js";
 import type { RouterDeps } from "../router.js";
 import { loadMessagePage } from "../thread-message-pages.js";
@@ -445,6 +450,30 @@ export function botsRoutes(ctx: RouterContext) {
         );
         if (!translationModelChange.ok)
           throw new ORPCError("BAD_REQUEST", { message: translationModelChange.error });
+        // The two media roles share one validation shape with the main and
+        // translation models; a helper keeps the four checks from diverging.
+        const validateMediaModelChange = async (
+          provider: string | null | undefined,
+          model: string | null | undefined,
+          current: { provider: string | null; model: string | null },
+        ) => {
+          const change = await validateBotModelChange(botModelValidation(context.actor), {
+            userId: context.actor.userId,
+            spaceId: context.actor.spaceId,
+            provider: provider !== undefined ? provider : current.provider,
+            model: model !== undefined ? model : current.model,
+            current,
+          });
+          if (!change.ok) throw new ORPCError("BAD_REQUEST", { message: change.error });
+        };
+        await validateMediaModelChange(input.videoModelProvider, input.videoModelId, {
+          provider: existing.videoModelProvider,
+          model: existing.videoModelId,
+        });
+        await validateMediaModelChange(input.imageModelProvider, input.imageModelId, {
+          provider: existing.imageModelProvider,
+          model: existing.imageModelId,
+        });
         const thinkingLevel = input.thinkingLevel;
         if (!existing.thread) throw new IsolationError();
         // Picking a set on one bot pins it unless it is the owner's default, which unpins it.
@@ -490,6 +519,18 @@ export function botsRoutes(ctx: RouterContext) {
               ? {
                   translationModelProvider: input.translationModelProvider,
                   translationModelId: input.translationModelId ?? null,
+                }
+              : {}),
+            ...(input.videoModelProvider !== undefined
+              ? {
+                  videoModelProvider: input.videoModelProvider,
+                  videoModelId: input.videoModelId ?? null,
+                }
+              : {}),
+            ...(input.imageModelProvider !== undefined
+              ? {
+                  imageModelProvider: input.imageModelProvider,
+                  imageModelId: input.imageModelId ?? null,
                 }
               : {}),
             ...(input.translationSourceLanguage !== undefined
@@ -564,6 +605,76 @@ export function botsRoutes(ctx: RouterContext) {
           }
           throw error;
         }
+      }),
+      testMediaModel: authed.bots.testMediaModel.handler(async ({ context, input }) => {
+        const bot = await repos.getBot(context.actor, input.botId);
+        const current =
+          input.kind === "video"
+            ? { provider: bot.videoModelProvider ?? null, model: bot.videoModelId ?? null }
+            : { provider: bot.imageModelProvider ?? null, model: bot.imageModelId ?? null };
+        const validated = await validateBotModelChange(botModelValidation(context.actor), {
+          userId: context.actor.userId,
+          spaceId: context.actor.spaceId,
+          provider: input.provider,
+          model: input.modelId,
+          current,
+        });
+        if (!validated.ok) throw new ORPCError("BAD_REQUEST", { message: validated.error });
+        const scope = { userId: context.actor.userId, spaceId: context.actor.spaceId };
+        // A hosted model has no user credential to probe with; the test only
+        // runs against the user's own connections.
+        const hostedProvider = deps.billing?.modelCreditsEnabled
+          ? deps.env.defaultProvider
+          : undefined;
+        if (hostedProvider && input.provider === hostedProvider) {
+          return { supported: false, seconds: 0, detail: "托管模型暂不支持这样测试" };
+        }
+        let credential: Awaited<ReturnType<typeof findConnectedModelCredential>> | null = null;
+        try {
+          credential = await findConnectedModelCredential(
+            deps.prisma,
+            deps.secrets,
+            scope,
+            input.provider,
+            input.modelId,
+          );
+        } catch {
+          credential = null;
+        }
+        if (!credential) {
+          return { supported: false, seconds: 0, detail: "该模型未连接" };
+        }
+        let plaintext: string;
+        try {
+          const secret = await deps.prisma.secret.findFirst({
+            where: { id: credential.secretId, userId: context.actor.userId, spaceId: null },
+            select: { ciphertext: true },
+          });
+          if (!secret) return { supported: false, seconds: 0, detail: "该模型未连接" };
+          plaintext = await deps.secrets.load(secret.ciphertext, credential.secretId);
+        } catch (error) {
+          if (error instanceof SecretStoreUnavailableError)
+            throw new ORPCError("SERVICE_UNAVAILABLE", { cause: error });
+          return { supported: false, seconds: 0, detail: "读不到该连接的密钥" };
+        }
+        const parsed = parseModelSecret(plaintext);
+        if (parsed.kind !== "openai_compatible") {
+          return { supported: false, seconds: 0, detail: "该连接不支持这样测试" };
+        }
+        return probeMediaModel(
+          {
+            baseUrl: parsed.baseUrl,
+            apiKey: parsed.apiKey,
+            headers: parsed.headers,
+            apiProtocol: parsed.apiProtocol,
+            authMode: parsed.authMode,
+            model: input.modelId,
+            kind: input.kind,
+          },
+          compatibleEndpointPreset(parsed.baseUrl) ? deps.modelConnectionFetch : undefined,
+          context.signal,
+          { allowPrivate: mayUsePrivateEndpoint(deps) },
+        );
       }),
       restoreInstructions: authed.bots.restoreInstructions.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);

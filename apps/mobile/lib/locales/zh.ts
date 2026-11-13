@@ -1867,6 +1867,21 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Not set": "未设置",
   "Translations only show here and don't change the original. A favorite without a translation model will ask you to pick one first.":
     "译文只在本地展开显示，不改原文；不定翻译模型的那条，点翻译会先提示去选模型",
+  "Media generation": "媒体生成",
+  "Video generation model": "视频生成模型",
+  "Image generation model": "图片生成模型",
+  Test: "测试",
+  "Test video generation model": "测试视频生成模型",
+  "Test image generation model": "测试图片生成模型",
+  "Could not test this model": "无法测试这个模型",
+  "✓ {model} supports video generation · {seconds}s": "✓ {model} 支持视频生成 · {seconds}s",
+  "✗ Does not support video generation · {reason}": "✗ 不支持视频生成 · {reason}",
+  "✓ {model} supports image generation · {seconds}s": "✓ {model} 支持图片生成 · {seconds}s",
+  "✗ Does not support image generation · {reason}": "✗ 不支持图片生成 · {reason}",
+  "Set as video generation model": "设为视频生成模型",
+  "Set as image generation model": "设为图片生成模型",
+  "Media model": "影图模型",
+  "Image and video generation": "图片视频生成",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

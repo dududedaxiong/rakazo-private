@@ -1,6 +1,6 @@
 import { BOT_NAME_MAX_LENGTH, BOT_PACKAGE_MAX_BYTES } from "@rakazo/contracts";
 import type { BotPackageImportState } from "@rakazo/core";
-import { createBotPackageImport } from "@rakazo/core";
+import { createBotPackageImport, displayName as safeDisplayName } from "@rakazo/core";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
@@ -235,7 +235,7 @@ export function NativeBotPackageImport({
       {receipt ? (
         <View style={styles.section} testID="bot-package-receipt">
           <Text selectable style={styles.heading}>
-            {receipt.botName}
+            {safeDisplayName(receipt.botName, t("Bot"))}
           </Text>
           <Text style={styles.text}>
             {receipt.status === "completed"
@@ -269,7 +269,8 @@ export function NativeBotPackageImport({
               <NativeActionButton
                 label={t("Open bot")}
                 onPress={() => {
-                  if (client.isCurrent() && receipt.botId) onOpen(receipt.botId, receipt.botName);
+                  if (client.isCurrent() && receipt.botId)
+                    onOpen(receipt.botId, safeDisplayName(receipt.botName, t("Bot")));
                 }}
               />
             </>
@@ -303,7 +304,7 @@ export function NativeBotPackageImport({
           {state?.recent.map((item) => (
             <View key={item.importId}>
               <Text selectable style={styles.text}>
-                {item.botName}
+                {safeDisplayName(item.botName, t("Bot"))}
               </Text>
               <NativeActionButton
                 label={t("Review import")}

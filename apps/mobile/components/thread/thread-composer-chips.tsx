@@ -22,6 +22,7 @@ export type ComposerChip = {
     | "mainModel"
     | "computerModel"
     | "voiceModel"
+    | "mediaModel"
     | "computer"
     | "routines"
     | "favorites"
@@ -46,6 +47,9 @@ export function ThreadComposerChips({
   mainOverride,
   computerChoice,
   onPickModel,
+  onPickMediaModel,
+  videoOverride,
+  imageOverride,
   favoriteCount,
   onOpenFavorites,
   backgroundLabel,
@@ -59,9 +63,14 @@ export function ThreadComposerChips({
   catalog: MobileModel[] | null;
   /** The model saved from the sheet, until the chat's bot list catches up with it. */
   mainOverride: ThreadModelSave | null;
+  /** The media models saved from the sheet, until the chat's bot list catches up with it. */
+  videoOverride: ThreadModelSave | null;
+  imageOverride: ThreadModelSave | null;
   /** The computer model, fetched by the screen so the bot menu shares it. */
   computerChoice: ModelRoleChoice | null;
   onPickModel: (role: ThreadModelPickerRole) => void;
+  /** Opens the media (video/image) model sheet. */
+  onPickMediaModel: () => void;
   favoriteCount: number;
   onOpenFavorites: () => void;
   backgroundLabel: string;
@@ -197,6 +206,16 @@ export function ThreadComposerChips({
         onPress: () => router.push("/(settings)/voice"),
       },
       {
+        id: "mediaModel",
+        label: t("Media model"),
+        value: t("Image and video generation"),
+        active: Boolean(
+          (videoOverride !== null ? videoOverride.modelId : currentBot?.videoModelId) ??
+            (imageOverride !== null ? imageOverride.modelId : currentBot?.imageModelId),
+        ),
+        onPress: onPickMediaModel,
+      },
+      {
         id: "computer",
         label: t("Computer"),
         value: computerValue,
@@ -250,6 +269,8 @@ export function ThreadComposerChips({
     routines,
     mainProvider,
     mainModelId,
+    videoOverride,
+    imageOverride,
     catalog,
     router,
     favoriteCount,
@@ -266,7 +287,7 @@ export function ThreadComposerChips({
   // The quick row from the chat mockup (v3): five big cards in one horizontally
   // scrolling row, icon on top, name in the middle, live value underneath in
   // small grey type. Card width matches the v3 grid (412px phone, 12px insets,
-  // 7px gaps -> 72px a card); the row scrolls so all eight stay reachable.
+  // 7px gaps -> 72px a card); the row scrolls so all nine stay reachable.
   return (
     <ScrollView
       horizontal
@@ -322,15 +343,17 @@ export function ThreadComposerChips({
                     ? "desktopcomputer"
                     : chip.id === "voiceModel"
                       ? "waveform"
-                      : chip.id === "computer"
-                        ? "macbook"
-                        : chip.id === "routines"
-                          ? "clock.arrow.circlepath"
-                          : chip.id === "favorites"
-                            ? "bookmark"
-                            : chip.id === "backup"
-                              ? "icloud"
-                              : "photo"
+                      : chip.id === "mediaModel"
+                        ? "film"
+                        : chip.id === "computer"
+                          ? "macbook"
+                          : chip.id === "routines"
+                            ? "clock.arrow.circlepath"
+                            : chip.id === "favorites"
+                              ? "bookmark"
+                              : chip.id === "backup"
+                                ? "icloud"
+                                : "photo"
               }
               android={
                 chip.id === "mainModel"
@@ -339,15 +362,17 @@ export function ThreadComposerChips({
                     ? "desktop-outline"
                     : chip.id === "voiceModel"
                       ? "mic-outline"
-                      : chip.id === "computer"
-                        ? "laptop-outline"
-                        : chip.id === "routines"
-                          ? "time-outline"
-                          : chip.id === "favorites"
-                            ? "bookmark-outline"
-                            : chip.id === "backup"
-                              ? "cloud-upload-outline"
-                              : "image-outline"
+                      : chip.id === "mediaModel"
+                        ? "film-outline"
+                        : chip.id === "computer"
+                          ? "laptop-outline"
+                          : chip.id === "routines"
+                            ? "time-outline"
+                            : chip.id === "favorites"
+                              ? "bookmark-outline"
+                              : chip.id === "backup"
+                                ? "cloud-upload-outline"
+                                : "image-outline"
               }
               size={21}
               color={tokens.link}

@@ -101,6 +101,7 @@ import { ThreadCustomSettingsSheet } from "./thread-custom-settings-sheet";
 import { ThreadFavoritesSheet } from "./thread-favorites-sheet";
 import { useThreadHeader } from "./thread-header";
 import { LoadEarlierButton, ThreadWorkingFooter } from "./thread-list-controls";
+import { ThreadMediaModelSheet } from "./thread-media-model-sheet";
 import { ThreadMessageList } from "./thread-message-list";
 import type { ThreadModelPickerRole, ThreadModelSave } from "./thread-model-picker-sheet";
 import { ThreadModelPickerSheet } from "./thread-model-picker-sheet";
@@ -159,6 +160,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   const [modelCredentials, setModelCredentials] = useState<MobileModelCredential[] | null>(null);
   // The model saved from the sheet, until the chat's bot list catches up with it.
   const [mainOverride, setMainOverride] = useState<ThreadModelSave | null>(null);
+  // The media models saved from the sheet, until the chat's bot list catches up with it.
+  const [videoOverride, setVideoOverride] = useState<ThreadModelSave | null>(null);
+  const [imageOverride, setImageOverride] = useState<ThreadModelSave | null>(null);
+  const [mediaOpen, setMediaOpen] = useState(false);
   // The computer model, fetched here so the shortcut row and the bot menu share one picker.
   const [computerChoice, setComputerChoice] = useState<ModelRoleChoice | null>(null);
   const [sheetRole, setSheetRole] = useState<ThreadModelPickerRole | null>(null);
@@ -839,14 +844,28 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
 
   const mainProvider = mainOverride !== null ? mainOverride.provider : currentBot?.modelProvider;
   const mainModelId = mainOverride !== null ? mainOverride.modelId : currentBot?.modelId;
+  const videoProvider =
+    videoOverride !== null ? videoOverride.provider : currentBot?.videoModelProvider;
+  const videoModelId = videoOverride !== null ? videoOverride.modelId : currentBot?.videoModelId;
+  const imageProvider =
+    imageOverride !== null ? imageOverride.provider : currentBot?.imageModelProvider;
+  const imageModelId = imageOverride !== null ? imageOverride.modelId : currentBot?.imageModelId;
   const sheetKey =
     sheetRole === "main"
       ? mainProvider && mainModelId
         ? modelOptionKey(mainProvider, mainModelId)
         : ""
-      : computerChoice
-        ? modelOptionKey(computerChoice.provider, computerChoice.modelId)
-        : "";
+      : sheetRole === "video"
+        ? videoProvider && videoModelId
+          ? modelOptionKey(videoProvider, videoModelId)
+          : ""
+        : sheetRole === "image"
+          ? imageProvider && imageModelId
+            ? modelOptionKey(imageProvider, imageModelId)
+            : ""
+          : computerChoice
+            ? modelOptionKey(computerChoice.provider, computerChoice.modelId)
+            : "";
 
   return (
     <View style={{ flex: 1 }}>
@@ -1034,8 +1053,11 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
               userId={userId}
               catalog={modelCatalog}
               mainOverride={mainOverride}
+              videoOverride={videoOverride}
+              imageOverride={imageOverride}
               computerChoice={computerChoice}
               onPickModel={setSheetRole}
+              onPickMediaModel={() => setMediaOpen(true)}
               favoriteCount={favorites.length}
               onOpenFavorites={() => setFavoritesOpen(true)}
               backgroundLabel={
@@ -1092,6 +1114,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             onSaved={(choice) => {
               if (sheetRole === "main") {
                 setMainOverride(choice);
+              } else if (sheetRole === "video") {
+                setVideoOverride(choice);
+              } else if (sheetRole === "image") {
+                setImageOverride(choice);
               } else {
                 setComputerChoice(
                   choice.provider && choice.modelId
@@ -1100,6 +1126,19 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
                 );
               }
             }}
+          />
+        ) : null}
+        {mediaOpen ? (
+          <ThreadMediaModelSheet
+            visible
+            catalog={modelCatalog}
+            video={{ provider: videoProvider ?? null, modelId: videoModelId ?? null }}
+            image={{ provider: imageProvider ?? null, modelId: imageModelId ?? null }}
+            onPickRole={(role) => {
+              setMediaOpen(false);
+              setSheetRole(role);
+            }}
+            onClose={() => setMediaOpen(false)}
           />
         ) : null}
         <ThreadBotMenuSheet

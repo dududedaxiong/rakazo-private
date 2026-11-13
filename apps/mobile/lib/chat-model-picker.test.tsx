@@ -2037,6 +2037,10 @@ const threadBot: MobileBot = {
   thinkingLevel: null,
   translationModelProvider: null,
   translationModelId: null,
+  videoModelProvider: null,
+  videoModelId: null,
+  imageModelProvider: null,
+  imageModelId: null,
   translationSourceLanguage: "auto",
   translationTargetLanguage: null,
   autoTranslate: false,
@@ -2063,6 +2067,9 @@ async function renderChips() {
           mainOverride={mainOverride}
           computerChoice={computerChoice}
           onPickModel={setSheetRole}
+          videoOverride={null}
+          imageOverride={null}
+          onPickMediaModel={() => undefined}
           favoriteCount={0}
           onOpenFavorites={() => undefined}
           backgroundLabel="Default"
@@ -2111,7 +2118,7 @@ const FakeSheet = ({ children }: { children?: ReactNode }) =>
   createElement("div", { "data-native-sheet": true }, children);
 
 describe("thread composer quick cards", () => {
-  it("shows live values on eight cards in the mockup's order", async () => {
+  it("shows live values on nine cards in the mockup's order", async () => {
     await renderChips();
     expect(
       [...container.querySelectorAll("button")].map((button) => button.getAttribute("aria-label")),
@@ -2119,6 +2126,7 @@ describe("thread composer quick cards", () => {
       "Main model: Model 2",
       "Computer model: Model 2",
       "Voice model: 晓晓 · 女声",
+      "Media model: Image and video generation",
       "Computer: Online",
       "Routines: 3 running",
       "Favorites: No favorites",
@@ -2261,6 +2269,9 @@ describe("thread model picker sheet", () => {
             mainOverride={null}
             computerChoice={mocks.computerPrimary}
             onPickModel={setSheetRole}
+            videoOverride={null}
+            imageOverride={null}
+            onPickMediaModel={() => undefined}
             favoriteCount={0}
             onOpenFavorites={() => undefined}
             backgroundLabel="Default"
@@ -2412,6 +2423,9 @@ describe("thread model picker sheet", () => {
             mainOverride={mainOverride}
             computerChoice={mocks.computerPrimary}
             onPickModel={setSheetRole}
+            videoOverride={null}
+            imageOverride={null}
+            onPickMediaModel={() => undefined}
             favoriteCount={0}
             onOpenFavorites={() => undefined}
             backgroundLabel="Default"
@@ -2512,6 +2526,9 @@ describe("thread model picker sheet", () => {
             mainOverride={mainOverride}
             computerChoice={mocks.computerPrimary}
             onPickModel={setSheetRole}
+            videoOverride={null}
+            imageOverride={null}
+            onPickMediaModel={() => undefined}
             favoriteCount={0}
             onOpenFavorites={() => undefined}
             backgroundLabel="Default"

@@ -6,6 +6,7 @@ import {
   normalizeContext,
 } from "@earendil-works/pi-ai";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
+import { MediaGenerationError } from "@rakazo/adapter-kit";
 import { ModelConnectInputSchema, OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo/contracts";
 import { fetch as undiciFetch } from "undici";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -19,9 +20,12 @@ import { listPiCatalog } from "./pi-models.js";
 import {
   createOpenAiCompatibleFetch,
   createOpenAiCompatibleLookup,
+  extractMediaFromReply,
+  generateMediaWithChatModel,
   OPENAI_COMPATIBLE_CATALOG_MODEL_ID,
   openAiCompatibleCatalogProvider,
   prepareOpenAiCompatibleConnect,
+  probeMediaModel,
   probeModelHealth,
   probeOpenAiCompatibleModels,
   registerOpenAiCompatibleCatalog,
@@ -1806,5 +1810,169 @@ describe("model health probe", () => {
     await expect(
       probeModelHealth({ baseUrl, models: ["a"] }, fetchImpl, caller.signal, OWNER),
     ).rejects.toMatchObject({ name: "AbortError" });
+  });
+});
+
+describe("media model reply", () => {
+  const baseUrl = "http://127.0.0.1:8000/v1";
+  const tinyPngBase64 =
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0u8AAAAASUVORK5CYII=";
+  const tinyPng = Buffer.from(tinyPngBase64, "base64");
+  const chatReply = (content: unknown) => ({ choices: [{ message: { content } }] });
+  const chatFetch = (body: unknown, status = 200): typeof fetch =>
+    (async () => new Response(JSON.stringify(body), { status })) as typeof fetch;
+  const mediaError = async (promise: Promise<unknown>) => {
+    const error = await promise.catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(MediaGenerationError);
+    return error as MediaGenerationError;
+  };
+
+  it("extracts inline image payloads in their shapes", () => {
+    expect(
+      extractMediaFromReply(chatReply(`data:image/png;base64,${tinyPngBase64}`), "image"),
+    ).toEqual({ kind: "dataUri", mimeType: "image/png", data: tinyPngBase64 });
+    expect(extractMediaFromReply({ data: [{ b64_json: tinyPngBase64 }] }, "image")).toEqual({
+      kind: "b64",
+      data: tinyPngBase64,
+    });
+    expect(
+      extractMediaFromReply(
+        chatReply([{ type: "image_url", image_url: { url: "https://cdn.example.test/a.png" } }]),
+        "image",
+      ),
+    ).toEqual({ kind: "url", url: "https://cdn.example.test/a.png" });
+    expect(
+      extractMediaFromReply(chatReply("![cat](https://cdn.example.test/a.png)"), "image"),
+    ).toEqual({ kind: "url", url: "https://cdn.example.test/a.png" });
+  });
+
+  it("extracts video payloads and nothing else", () => {
+    expect(
+      extractMediaFromReply(chatReply("here it is: https://cdn.example.test/a.mp4"), "video"),
+    ).toEqual({ kind: "url", url: "https://cdn.example.test/a.mp4" });
+    expect(extractMediaFromReply({ video_url: "https://cdn.example.test/a.mp4" }, "video")).toEqual(
+      { kind: "url", url: "https://cdn.example.test/a.mp4" },
+    );
+    expect(extractMediaFromReply(chatReply("data:video/mp4;base64,AAAA"), "video")).toEqual({
+      kind: "dataUri",
+      mimeType: "video/mp4",
+      data: "AAAA",
+    });
+    expect(extractMediaFromReply(chatReply("just a cat picture"), "image")).toBeNull();
+    expect(extractMediaFromReply(chatReply("just a cat picture"), "video")).toBeNull();
+    expect(
+      extractMediaFromReply(chatReply(`data:image/png;base64,${tinyPngBase64}`), "video"),
+    ).toBeNull();
+    expect(extractMediaFromReply(chatReply("https://cdn.example.test/a.mp4"), "image")).toBeNull();
+    expect(extractMediaFromReply({ type: "image_url" }, "image")).toBeNull();
+  });
+
+  it("generates an image from a data URI reply", async () => {
+    const seen: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      seen.push({ url: String(input), init });
+      return new Response(JSON.stringify(chatReply(`data:image/png;base64,${tinyPngBase64}`)), {
+        status: 200,
+      });
+    }) as typeof fetch;
+    const media = await generateMediaWithChatModel(
+      { baseUrl, model: "image-model", kind: "image", prompt: "画一只猫" },
+      fetchImpl,
+      undefined,
+      OWNER,
+    );
+    expect(media).toEqual({ bytes: tinyPng, mimeType: "image/png" });
+    expect(seen).toHaveLength(1);
+    expect(seen[0]?.url).toBe("http://127.0.0.1:8000/v1/chat/completions");
+    const body = JSON.parse(String(seen[0]?.init?.body ?? "{}")) as Record<string, unknown>;
+    expect(body.model).toBe("image-model");
+    expect(body.messages).toEqual([{ role: "user", content: "画一只猫" }]);
+  });
+
+  it("generates a video from a data URI reply", async () => {
+    const media = await generateMediaWithChatModel(
+      {
+        baseUrl,
+        model: "video-model",
+        kind: "video",
+        prompt: "生成一段猫走路的短视频",
+      },
+      chatFetch(chatReply("data:video/mp4;base64,AAAA")),
+      undefined,
+      OWNER,
+    );
+    expect(media.mimeType).toBe("video/mp4");
+    expect(media.bytes).toEqual(Buffer.from("AAAA", "base64"));
+  });
+
+  it("fails when the model only answers in words", async () => {
+    const error = await mediaError(
+      generateMediaWithChatModel(
+        { baseUrl, model: "chat-model", kind: "image", prompt: "画一只猫" },
+        chatFetch(chatReply("当然可以，这是一只猫的描述……")),
+        undefined,
+        OWNER,
+      ),
+    );
+    expect(error.code).toBe("provider_failure");
+  });
+
+  it("maps upstream failures to media error codes", async () => {
+    const auth = await mediaError(
+      generateMediaWithChatModel(
+        { baseUrl, model: "m", kind: "image", prompt: "画一只猫" },
+        chatFetch({ error: { message: "bad key" } }, 401),
+        undefined,
+        OWNER,
+      ),
+    );
+    expect(auth.code).toBe("authentication");
+    const limited = await mediaError(
+      generateMediaWithChatModel(
+        { baseUrl, model: "m", kind: "video", prompt: "生成一段视频" },
+        chatFetch({ error: { message: "slow down" } }, 429),
+        undefined,
+        OWNER,
+      ),
+    );
+    expect(limited.code).toBe("rate_limit");
+    const failed = await mediaError(
+      generateMediaWithChatModel(
+        { baseUrl, model: "m", kind: "image", prompt: "画一只猫" },
+        chatFetch({ error: { message: "boom" } }, 500),
+        undefined,
+        OWNER,
+      ),
+    );
+    expect(failed.code).toBe("provider_failure");
+  });
+
+  it("probes a model through the shared reply check", async () => {
+    const supported = await probeMediaModel(
+      { baseUrl, model: "image-model", kind: "image" },
+      chatFetch(chatReply(`data:image/png;base64,${tinyPngBase64}`)),
+      undefined,
+      OWNER,
+    );
+    expect(supported).toEqual({
+      supported: true,
+      seconds: expect.any(Number),
+      detail: "返回了图片",
+    });
+    const unsupported = await probeMediaModel(
+      { baseUrl, model: "chat-model", kind: "image" },
+      chatFetch(chatReply("这是一只猫")),
+      undefined,
+      OWNER,
+    );
+    expect(unsupported.supported).toBe(false);
+    expect(unsupported.detail).toBe("只回了文字，没有图片");
+    const denied = await probeMediaModel(
+      { baseUrl, model: "m", kind: "video" },
+      chatFetch({ error: { message: "bad key" } }, 401),
+      undefined,
+      OWNER,
+    );
+    expect(denied.supported).toBe(false);
   });
 });

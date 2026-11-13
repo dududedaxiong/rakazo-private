@@ -1,4 +1,5 @@
 import type { BotPackageDocument, BotPackageLeftOut } from "@rakazo/contracts";
+import { displayName } from "@rakazo/core";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -30,7 +31,7 @@ export function BotPackageLeftOutList({ items }: { items: BotPackageLeftOut[] })
       {items.map((item, index) => (
         <View key={`${item.kind}:${index}`}>
           <Text selectable style={styles.text}>
-            {item.name}
+            {item.kind === "skill" ? displayName(item.name, t("Skill")) : item.name}
           </Text>
           <Text selectable style={styles.secondary}>
             {item.reason}
