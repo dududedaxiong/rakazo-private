@@ -38,6 +38,7 @@ import {
 import { ActiveBotGlyph } from "../../components/ai/CollaborationMarker";
 import { VoiceChatCard } from "../../components/call/VoiceChatCard";
 import type { ArtifactTarget } from "../../lib/artifact-open";
+import { userMessageHasNoNormalReply } from "../../lib/message-resend";
 import { projectPageCards } from "../../lib/page-cards";
 import {
   isDetachedRange,
@@ -267,6 +268,18 @@ export const Transcript = memo(function Transcript({
     [onJumpToMessage],
   );
   const reactionView = useMemo(() => projectMessageReactions(pageView.visibleMessages), [pageView]);
+  /** The user messages with no normal bot reply after them: only those show the resend icon. */
+  const unrepliedMessageIds = useMemo(() => {
+    const ids = new Set<string>();
+    const list = reactionView.visibleMessages;
+    for (let i = 0; i < list.length; i++) {
+      if (userMessageHasNoNormalReply(list, i, showToolActivity)) {
+        const id = list[i]?.id;
+        if (id) ids.add(id);
+      }
+    }
+    return ids;
+  }, [reactionView.visibleMessages, showToolActivity]);
   // The newest rendered message; only it auto-translates when its bot has
   // auto-translate on, so opening history does not translate every reply.
   const lastVisibleMessageId = [...reactionView.visibleMessages]
@@ -681,6 +694,7 @@ export const Transcript = memo(function Transcript({
                       onRegenerate={onRegenerate}
                       regenerateDisabled={regenerateDisabled}
                       onResend={onResend}
+                      showResend={unrepliedMessageIds.has(message.id)}
                       voiceReady={voiceReady}
                       speaking={speakingMessageId === message.id}
                       speakingProgress={

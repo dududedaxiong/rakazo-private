@@ -25,6 +25,7 @@ export function MessageHoverActions({
   markedUnread = false,
   onReact,
   onResend,
+  showResend = false,
 }: {
   message: ThreadMessage;
   side: "start" | "end";
@@ -34,6 +35,8 @@ export function MessageHoverActions({
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
   /** Re-sends this user message; absent where resending is unavailable. */
   onResend?: (message: ThreadMessage) => void;
+  /** True when this user message has no normal bot reply after it. */
+  showResend?: boolean;
 }) {
   const { t } = useLingui();
   const [copiedNow, copy, copyFailed, resetCopy, copyFailedText] = useCopyText();
@@ -46,10 +49,14 @@ export function MessageHoverActions({
   // Streaming progress bubbles keep hover free for selection / stop clicks.
   if (message.id.startsWith("progress:")) return null;
 
-  // Resend is for the user's own messages with text: a message that got no
-  // normal reply can be sent again without retyping it.
+  // Resend is a visible icon for the user's own messages with text, shown
+  // only while the message has no normal bot reply after it: a message that
+  // got no reply can be sent again without retyping it.
   const canResend =
-    onResend !== undefined && message.role === "user" && copyableMessageText(message).trim() !== "";
+    onResend !== undefined &&
+    showResend &&
+    message.role === "user" &&
+    copyableMessageText(message).trim() !== "";
 
   const copied = copiedNow && copiedText === copyableMessageText(message);
 
@@ -65,7 +72,7 @@ export function MessageHoverActions({
     "grid h-11 w-11 place-items-center text-muted-foreground transition-colors hover:text-foreground [@media(hover:hover)_and_(pointer:fine)]:h-7 [@media(hover:hover)_and_(pointer:fine)]:w-7";
 
   return (
-    <MessageHoverMetadata pinned={moreOpen || reactionsOpen || copied} side={side}>
+    <MessageHoverMetadata pinned={moreOpen || reactionsOpen || copied || canResend} side={side}>
       <div data-testid="message-hover-actions" className="flex items-center gap-0.5">
         {canReactToThreadMessage(message) ? (
           <Popover open={reactionsOpen} onOpenChange={setReactionsOpen}>
@@ -102,6 +109,16 @@ export function MessageHoverActions({
         >
           <Reply size={15} strokeWidth={1.7} />
         </button>
+        {canResend ? (
+          <button
+            type="button"
+            aria-label={t`Resend`}
+            onClick={() => onResend(message)}
+            className={iconButtonClass}
+          >
+            <Send size={15} strokeWidth={1.7} />
+          </button>
+        ) : null}
         <DropdownMenu open={moreOpen} onOpenChange={setMoreOpen}>
           <DropdownMenuTrigger
             aria-label={copied ? t`Copied` : t`More`}
@@ -123,17 +140,6 @@ export function MessageHoverActions({
               <Reply size={14} strokeWidth={1.7} />
               <Trans>Reply</Trans>
             </DropdownMenuItem>
-            {canResend ? (
-              <DropdownMenuItem
-                onClick={() => {
-                  setMoreOpen(false);
-                  onResend(message);
-                }}
-              >
-                <Send size={14} strokeWidth={1.7} />
-                <Trans>Resend</Trans>
-              </DropdownMenuItem>
-            ) : null}
             {canMarkMessageUnread(message) && !markedUnread ? (
               <DropdownMenuItem
                 onClick={() => {

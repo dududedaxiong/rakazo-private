@@ -162,7 +162,11 @@ const userMessage: ThreadMessage = {
   blocks: [{ kind: "text", text: "Shanghai weather" }],
 };
 
-function renderHoverActions(next: ThreadMessage, onResend?: (entry: ThreadMessage) => void) {
+function renderHoverActions(
+  next: ThreadMessage,
+  onResend?: (entry: ThreadMessage) => void,
+  showResend?: boolean,
+) {
   act(() =>
     root.render(
       <MessageHoverActions
@@ -172,39 +176,53 @@ function renderHoverActions(next: ThreadMessage, onResend?: (entry: ThreadMessag
         onMarkUnread={vi.fn()}
         onReact={vi.fn<(message: ThreadMessage, reaction: MessageReaction) => Promise<void>>()}
         onResend={onResend}
+        showResend={showResend}
       />,
     ),
   );
+}
+
+function resendButton() {
+  return document.querySelector<HTMLButtonElement>('button[aria-label="Resend"]');
 }
 
 async function openMoreMenu() {
   await click(document.querySelector<HTMLButtonElement>('button[aria-label="More"]'));
 }
 
-it("offers Resend for a user message with text and resends it", async () => {
+it("offers Resend as a top-level icon for a user message with no reply, and resends it", async () => {
   const onResend = vi.fn();
-  renderHoverActions(userMessage, onResend);
-  await openMoreMenu();
-  await click(menuItem("Resend"));
+  renderHoverActions(userMessage, onResend, true);
+  await click(resendButton());
 
   expect(onResend).toHaveBeenCalledTimes(1);
   expect(onResend).toHaveBeenCalledWith(userMessage);
+  // One entry point only: the More menu no longer carries a Resend item.
+  await openMoreMenu();
+  expect(menuItem("Resend")).toBeUndefined();
 });
 
 it("hides Resend for bot replies", async () => {
-  renderHoverActions(message, vi.fn());
-  await openMoreMenu();
-  expect(menuItem("Resend")).toBeUndefined();
+  renderHoverActions(message, vi.fn(), true);
+  expect(resendButton()).toBeNull();
 });
 
 it("hides Resend for a user message without text", async () => {
-  renderHoverActions({ ...userMessage, blocks: [{ kind: "text", text: "   " }] }, vi.fn());
-  await openMoreMenu();
-  expect(menuItem("Resend")).toBeUndefined();
+  renderHoverActions({ ...userMessage, blocks: [{ kind: "text", text: "   " }] }, vi.fn(), true);
+  expect(resendButton()).toBeNull();
 });
 
 it("hides Resend when no resend handler is provided", async () => {
-  renderHoverActions(userMessage);
-  await openMoreMenu();
-  expect(menuItem("Resend")).toBeUndefined();
+  renderHoverActions(userMessage, undefined, true);
+  expect(resendButton()).toBeNull();
+});
+
+it("hides Resend when the message already has a normal reply", async () => {
+  renderHoverActions(userMessage, vi.fn(), false);
+  expect(resendButton()).toBeNull();
+});
+
+it("hides Resend when showResend is not provided", async () => {
+  renderHoverActions(userMessage, vi.fn());
+  expect(resendButton()).toBeNull();
 });
