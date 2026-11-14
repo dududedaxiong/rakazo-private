@@ -380,12 +380,20 @@ describe("message translation", () => {
   const translateButton = () =>
     container.querySelector<HTMLButtonElement>('button[aria-label="Translate this reply"]');
   const translationPanel = () => container.querySelector('[data-testid="message-translation"]');
+  const buttonByText = (text: string) =>
+    [...container.querySelectorAll("button")].find((button) => button.textContent === text);
+  // The switch menus render their items as menuitem roles (in a portal), not buttons.
+  const menuItem = (text: string) =>
+    [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+      (el) => el.textContent?.trim() === text,
+    );
 
   function renderTranslated(
     props: Partial<ComponentProps<typeof MessageView>> = {},
     result = translated,
   ) {
     const translate = vi.fn(async () => result);
+    const update = vi.fn(async () => ({}));
     const favorites = {
       list: vi.fn(async () => []),
       add: vi.fn(async (input: { botId: string; messageId: string; snippet: string }) => ({
@@ -396,14 +404,14 @@ describe("message translation", () => {
       })),
       remove: vi.fn(async () => ({ ok: true as const })),
     };
-    const spaceRpc = { bots: { translate }, favorites };
+    const spaceRpc = { bots: { translate, update }, favorites };
     renderView("bot", textBlocks, {
       message: botMessage(textBlocks),
       peerBot: translatingBot,
       rpc: spaceRpc as never,
       ...props,
     });
-    return { translate, spaceRpc };
+    return { translate, update, spaceRpc };
   }
 
   it("translates a bot reply on click and shows the translation under the bubble", async () => {
@@ -440,6 +448,55 @@ describe("message translation", () => {
     expect(panel?.textContent).toContain(
       "Translated with deepseek-v4.1-flash (backup) · English to 中文",
     );
+  });
+
+  it("lists connected models the bot has not configured in the switch menu", async () => {
+    renderTranslated({
+      availableTranslationModels: [
+        { provider: "deepseek", model: "deepseek-v4.1-flash" },
+        { provider: "test", model: "glm-5.3-flash" },
+      ],
+    });
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    act(() => buttonByText("deepseek-v4.1-flash")?.click());
+    await act(async () => {});
+    // The current row also carries its health badge ("Normal"), so match by inclusion.
+    const items = [...document.querySelectorAll('[role="menuitem"]')].map(
+      (el) => el.textContent ?? "",
+    );
+    expect(items.some((text) => text.includes("deepseek-v4.1-flash"))).toBe(true);
+    expect(items.some((text) => text.includes("glm-5.3-flash"))).toBe(true);
+  });
+
+  it("switches to an unconfigured model, moves it to the front, and re-translates", async () => {
+    const { translate, update } = renderTranslated({
+      availableTranslationModels: [
+        { provider: "deepseek", model: "deepseek-v4.1-flash" },
+        { provider: "test", model: "glm-5.3-flash" },
+      ],
+    });
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(translate).toHaveBeenCalledTimes(1);
+    act(() => buttonByText("deepseek-v4.1-flash")?.click());
+    await act(async () => {});
+    await act(async () => {
+      menuItem("glm-5.3-flash")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(update).toHaveBeenCalledExactlyOnceWith({
+      botId: "bot-1",
+      translationModels: [
+        { provider: "test", model: "glm-5.3-flash" },
+        { provider: "deepseek", model: "deepseek-v4.1-flash" },
+      ],
+    });
+    expect(translate).toHaveBeenCalledTimes(2);
   });
 
   it("shows a generic label when the translation model id is an opaque code", async () => {

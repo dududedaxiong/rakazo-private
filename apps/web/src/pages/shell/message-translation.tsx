@@ -17,7 +17,7 @@ import {
 } from "@rakazo/ui-web";
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { favoriteSnippet, translationFavoriteId, useMessageFavorite } from "../../lib/favorites";
 import { modelStatusFromProbe, recordModelStatus } from "../../lib/model-status";
 import type { createSpaceRpc } from "../../lib/rpc";
@@ -123,6 +123,7 @@ export function useMessageTranslation({
   botId,
   settings,
   translationModels,
+  availableModels,
   rpc,
   isLastMessage = false,
   speakText,
@@ -136,6 +137,8 @@ export function useMessageTranslation({
   settings: BotTranslationSettings | undefined;
   /** The bot's ordered translation models; the first is primary, rest are fallbacks. */
   translationModels?: readonly BotModelEntry[] | null;
+  /** Every connected model; the menu lists these after the bot's configured ones. */
+  availableModels?: readonly BotModelEntry[] | null;
   rpc: ReturnType<typeof createSpaceRpc>;
   /** Only the newest reply auto-translates; opening history must not re-fire every message. */
   isLastMessage?: boolean;
@@ -304,6 +307,22 @@ export function useMessageTranslation({
   }, [botId, isLastMessage, settings, text, translate]);
 
   const expanded = state.status !== "idle" && !collapsed;
+  // The menu lists every connected model, configured ones first, so a bot with
+  // a single translation model can still switch; picking an unconfigured one
+  // moves it to the front of the bot's list (see switchModel). This stays
+  // above the early return: hooks must run on every render.
+  const menuModels = useMemo(() => {
+    const configured = translationModels ?? [];
+    const configuredKeys = new Set(
+      configured.map((entry) => modelOptionKey(entry.provider, entry.model)),
+    );
+    return [
+      ...configured,
+      ...(availableModels ?? []).filter(
+        (entry) => !configuredKeys.has(modelOptionKey(entry.provider, entry.model)),
+      ),
+    ];
+  }, [availableModels, translationModels]);
   const actions = (
     <Button
       variant="text"
@@ -347,7 +366,7 @@ export function useMessageTranslation({
   const modelMenu = doneResult ? (
     <ModelSwitchMenu
       label={t`Translation model`}
-      models={translationModels ?? []}
+      models={menuModels}
       currentKey={currentModelKey}
       applyingKey={applyingModelKey}
       onSelect={(entry) => void switchModel(entry)}

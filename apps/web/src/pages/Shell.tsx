@@ -12,6 +12,7 @@ import {
   answerableAskMessageIds,
   channelMessageSender,
   chatUserBubbleColors,
+  connectedModelChoices,
   copyableMessageText,
   dismissableAskMessageIds,
   foldPeerReplies,
@@ -251,6 +252,19 @@ function SpaceShell() {
   };
   const voiceStatus: VoiceStatus | null =
     useQuery(queries.voice.status.queryOptions()).data ?? null;
+  // The translation bubble's model menu lists every connected model, not just
+  // the bot's configured ones, so a bot with one translation model can still
+  // switch; the menu itself puts configured models first.
+  const credentialsQuery = useQuery(queries.models.credentials.queryOptions());
+  const catalogQuery = useQuery(queries.models.list.queryOptions());
+  const availableTranslationModels = useMemo(
+    () =>
+      connectedModelChoices(credentialsQuery.data ?? [], catalogQuery.data ?? []).map((choice) => ({
+        provider: choice.provider,
+        model: choice.modelId,
+      })),
+    [credentialsQuery.data, catalogQuery.data],
+  );
   const { mobileSidebarOpen, setMobileSidebarOpen, swipeHandlers } = useMobileSidebar();
   const isMobileSidebar = useIsMobile();
   const pages = usePagesForChat();
@@ -1251,6 +1265,7 @@ function SpaceShell() {
               onOpenPeerMessages={openPeerMessages}
               memberName={resolveTranscriptMemberName}
               peerBot={resolveTranscriptBot}
+              availableTranslationModels={availableTranslationModels}
               onRefresh={refreshActiveThread}
               onBotChanged={refreshBots}
               onAddRoutine={addSkillRoutine}

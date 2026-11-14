@@ -92,6 +92,7 @@ export const Transcript = memo(function Transcript({
   onOpenPeerMessages,
   memberName,
   peerBot,
+  availableTranslationModels,
   onRefresh,
   onBotChanged,
   onAddRoutine,
@@ -148,6 +149,8 @@ export const Transcript = memo(function Transcript({
   onJumpToMessage: (messageId: string) => void;
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
   memberName?: (botId: string | undefined) => string | undefined;
+  /** Every connected model, so a translation bubble can switch past the bot's configured ones. */
+  availableTranslationModels?: readonly BotModelEntry[];
   peerBot: (botId: string) =>
     | {
         name?: string;
@@ -658,6 +661,7 @@ export const Transcript = memo(function Transcript({
                       }
                       memberName={memberName}
                       peerBot={peerBot}
+                      availableTranslationModels={availableTranslationModels}
                       replyParent={
                         message.replyToMessageId
                           ? messageById.get(message.replyToMessageId)

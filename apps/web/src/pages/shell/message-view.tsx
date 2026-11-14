@@ -125,6 +125,7 @@ export const MessageView = memo(function MessageView({
   speakerName,
   memberName,
   peerBot,
+  availableTranslationModels,
   replyParent,
   onJumpToMessage,
   onRefresh,
@@ -192,6 +193,8 @@ export const MessageView = memo(function MessageView({
         activeVideoPromptPreset?: string | null;
       }
     | undefined;
+  /** Every connected model, so a translation bubble can switch past the bot's configured ones. */
+  availableTranslationModels?: readonly BotModelEntry[];
   replyParent?: ThreadMessage;
   onJumpToMessage?: (messageId: string) => void;
   onRefresh: () => Promise<void>;
@@ -297,6 +300,7 @@ export const MessageView = memo(function MessageView({
       message.role === "bot" && message.botId
         ? peerBot(message.botId)?.translationModels
         : undefined,
+    availableModels: availableTranslationModels,
     rpc,
     isLastMessage,
     speakText: messageVoiceReady ? speakTranslation : undefined,
