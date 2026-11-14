@@ -184,6 +184,10 @@ msgstr "{count, plural, other {與{peer}的 # 則訊息}}"
 msgid "{count, plural, one {# row} other {# rows}}"
 msgstr "{count, plural, one {# 列} other {# 列}}"
 
+#: src/pages/shell/dialogs.tsx
+msgid "{count, plural, one {Delete # message?} other {Delete # messages?}}"
+msgstr ""
+
 #: src/lib/billing.ts
 msgid "{count} days"
 msgstr "{count} 天"
@@ -211,6 +215,10 @@ msgstr "{count} 年"
 #: src/lib/relative-time.ts
 msgid "{days}d ago"
 msgstr "{days} 天前"
+
+#: src/pages/Shell.tsx
+msgid "{deleted, plural, one {Deleted # message} other {Deleted # messages}}"
+msgstr ""
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
@@ -2529,6 +2537,10 @@ msgid "Could not delete MCP server"
 msgstr "無法刪除 MCP 伺服器"
 
 #: src/pages/shell/dialogs.tsx
+msgid "Could not delete messages"
+msgstr ""
+
+#: src/pages/shell/dialogs.tsx
 msgid "Could not delete page"
 msgstr "無法刪除頁面"
 
@@ -3368,6 +3380,7 @@ msgstr "已還原預設模板"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-selection.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
 msgstr "刪除"
@@ -3446,6 +3459,12 @@ msgstr "已刪除"
 #: src/components/admin/AdminUsers.tsx
 msgid "Deleted"
 msgstr "已刪除"
+
+#. placeholder {0}: selectedMessages.length
+#. placeholder {1}: failures.join(", ")
+#: src/pages/Shell.tsx
+msgid "Deleted {deleted} of {0} messages. Could not delete: {1}"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Deleted bot"
@@ -5216,6 +5235,12 @@ msgstr "訊息"
 #: src/lib/browser-notifications.ts
 msgid "Message"
 msgstr "訊息"
+
+#. placeholder {0}: index + 1
+#. placeholder {1}: selectedMessages.length
+#: src/pages/Shell.tsx
+msgid "message {0} of {1}"
+msgstr ""
 
 #: src/pages/shell/composer.tsx
 msgid "Message {activeName}"
@@ -8358,6 +8383,7 @@ msgstr "此通話已不在響鈴中。"
 
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "This can't be undone."
 msgstr "此操作無法復原。"

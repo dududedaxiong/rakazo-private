@@ -884,6 +884,13 @@ export const appContract = {
       )
       .output(z.object({ ok: z.literal(true) })),
     clear: oc.input(threadTarget).output(z.object({ ok: z.literal(true) })),
+    /**
+     * Delete one message; the caller must own the thread. The message's favorites
+     * go with it, so the favorites list never points at a deleted message.
+     */
+    deleteMessage: oc
+      .input(threadTarget.safeExtend({ messageId: Id }))
+      .output(z.object({ ok: z.literal(true) })),
     answer: oc
       .input(
         threadTarget

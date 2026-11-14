@@ -183,6 +183,10 @@ msgstr "{count, plural, one {# message with {peer}} other {# messages with {peer
 msgid "{count, plural, one {# row} other {# rows}}"
 msgstr "{count, plural, one {# row} other {# rows}}"
 
+#: src/pages/shell/dialogs.tsx
+msgid "{count, plural, one {Delete # message?} other {Delete # messages?}}"
+msgstr "{count, plural, one {Delete # message?} other {Delete # messages?}}"
+
 #: src/lib/billing.ts
 msgid "{count} days"
 msgstr "{count} days"
@@ -210,6 +214,10 @@ msgstr "{count} years"
 #: src/lib/relative-time.ts
 msgid "{days}d ago"
 msgstr "{days}d ago"
+
+#: src/pages/Shell.tsx
+msgid "{deleted, plural, one {Deleted # message} other {Deleted # messages}}"
+msgstr "{deleted, plural, one {Deleted # message} other {Deleted # messages}}"
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
@@ -2528,6 +2536,10 @@ msgid "Could not delete MCP server"
 msgstr "Could not delete MCP server"
 
 #: src/pages/shell/dialogs.tsx
+msgid "Could not delete messages"
+msgstr "Could not delete messages"
+
+#: src/pages/shell/dialogs.tsx
 msgid "Could not delete page"
 msgstr "Could not delete page"
 
@@ -3367,6 +3379,7 @@ msgstr "Default templates restored"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-selection.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
 msgstr "Delete"
@@ -3445,6 +3458,12 @@ msgstr "deleted"
 #: src/components/admin/AdminUsers.tsx
 msgid "Deleted"
 msgstr "Deleted"
+
+#. placeholder {0}: selectedMessages.length
+#. placeholder {1}: failures.join(", ")
+#: src/pages/Shell.tsx
+msgid "Deleted {deleted} of {0} messages. Could not delete: {1}"
+msgstr "Deleted {deleted} of {0} messages. Could not delete: {1}"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Deleted bot"
@@ -5215,6 +5234,12 @@ msgstr "Message"
 #: src/lib/browser-notifications.ts
 msgid "Message"
 msgstr "Message"
+
+#. placeholder {0}: index + 1
+#. placeholder {1}: selectedMessages.length
+#: src/pages/Shell.tsx
+msgid "message {0} of {1}"
+msgstr "message {0} of {1}"
 
 #: src/pages/shell/composer.tsx
 msgid "Message {activeName}"
@@ -8357,6 +8382,7 @@ msgstr "This call is no longer ringing."
 
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "This can't be undone."
 msgstr "This can't be undone."

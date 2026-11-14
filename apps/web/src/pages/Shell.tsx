@@ -1,3 +1,4 @@
+import { plural } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import type {
   AgentSkillCatalogEntry,
@@ -85,6 +86,7 @@ import { Composer } from "./shell/composer";
 import { ComputerOverlay } from "./shell/computer-overlay";
 import { ComputerPanel } from "./shell/computer-panel";
 import type { CreateBotDialogInput } from "./shell/create-bot-dialog";
+import { DeleteMessagesDialog } from "./shell/dialogs";
 import type { ImportSetupTarget } from "./shell/import-setup-card";
 import { KeyboardShortcutsDialog } from "./shell/keyboard-shortcuts-dialog";
 import type { BatchTranslateResult } from "./shell/message-selection";
@@ -772,6 +774,7 @@ function SpaceShell() {
   const [forwardDialogOpen, setForwardDialogOpen] = useState(false);
   const [translateResults, setTranslateResults] = useState<readonly BatchTranslateResult[]>([]);
   const [translateDialogOpen, setTranslateDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectionBusy, setSelectionBusy] = useState(false);
 
   const toggleSelectMessage = useCallback((messageId: string) => {
@@ -867,6 +870,51 @@ function SpaceShell() {
     },
     [exitSelection, navigate, rpc, selectedMessages, selectionBusy, t],
   );
+
+  /** Deletes the selected messages one by one, then reports which ones failed. */
+  const deleteSelected = useCallback(async () => {
+    if (selectedMessages.length === 0 || selectionBusy) return;
+    const target = inGroup ? { groupId } : { botId: active?.id };
+    if (!target.groupId && !target.botId) return;
+    setSelectionBusy(true);
+    try {
+      const failures: string[] = [];
+      let deleted = 0;
+      for (const [index, message] of selectedMessages.entries()) {
+        try {
+          await rpc.threads.deleteMessage({ ...target, messageId: message.id });
+          deleted += 1;
+        } catch {
+          const snippet = copyableMessageText(message).split("\n")[0]?.trim().slice(0, 40);
+          failures.push(snippet || t`message ${index + 1} of ${selectedMessages.length}`);
+        }
+      }
+      setDeleteDialogOpen(false);
+      exitSelection();
+      // A failed refresh must not hide the result: the messages are deleted
+      // either way, and the next sync picks up any stale rows.
+      await refreshActiveThread().catch(() => undefined);
+      if (failures.length === 0) {
+        toast(t`${plural(deleted, { one: "Deleted # message", other: "Deleted # messages" })}`);
+      } else {
+        toast(
+          t`Deleted ${deleted} of ${selectedMessages.length} messages. Could not delete: ${failures.join(", ")}`,
+        );
+      }
+    } finally {
+      setSelectionBusy(false);
+    }
+  }, [
+    active?.id,
+    exitSelection,
+    groupId,
+    inGroup,
+    refreshActiveThread,
+    rpc,
+    selectedMessages,
+    selectionBusy,
+    t,
+  ]);
   function openChatSettings(kind: "bot" | "group", id: string) {
     const destKey =
       userId && bootstrapMe?.spaceId
@@ -1295,6 +1343,9 @@ function SpaceShell() {
                 onExport={exportSelected}
                 onTranslate={() => void translateSelected()}
                 onForward={() => setForwardDialogOpen(true)}
+                onDelete={() => {
+                  if (selectedMessageIds.size > 0) setDeleteDialogOpen(true);
+                }}
                 onCancel={exitSelection}
               />
             ) : (
@@ -1376,6 +1427,13 @@ function SpaceShell() {
         open={translateDialogOpen}
         onOpenChange={setTranslateDialogOpen}
       />
+      {deleteDialogOpen ? (
+        <DeleteMessagesDialog
+          count={selectedMessageIds.size}
+          onCancel={() => setDeleteDialogOpen(false)}
+          onConfirm={() => deleteSelected()}
+        />
+      ) : null}
       <CallCard onSettings={() => openSettings("voice")} />
       <IncomingCall
         bots={bootstrapMe?.phoneCallsEnabled ? bots : []}

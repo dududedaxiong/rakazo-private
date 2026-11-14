@@ -352,6 +352,39 @@ export async function clearThread(
   };
 }
 
+export interface DeleteThreadMessageInput {
+  spaceId: string;
+  threadId: string;
+  messageId: string;
+}
+
+/**
+ * Delete one message from a thread. Replies, runs and external rows that point at
+ * it are SetNull by the schema and steering rows cascade with it, so only the
+ * favorites need explicit cleanup: they keep the message id as a plain string, so
+ * both the message favorite and its `:translation` twin are removed here.
+ */
+export async function deleteThreadMessage(
+  prisma: PrismaClient,
+  input: DeleteThreadMessageInput,
+): Promise<{ deleted: boolean }> {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const message = await tx.message.findFirst({
+      where: { id: input.messageId, threadId: input.threadId },
+      select: { id: true },
+    });
+    if (!message) return { deleted: false };
+    await tx.messageFavorite.deleteMany({
+      where: {
+        spaceId: input.spaceId,
+        messageId: { in: [input.messageId, `${input.messageId}:translation`] },
+      },
+    });
+    await tx.message.delete({ where: { id: input.messageId } });
+    return { deleted: true };
+  }, THREAD_LOCK_TRANSACTION_OPTIONS);
+}
+
 export async function sendUserMessage(
   prisma: PrismaClient,
   input: SendUserMessageInput,

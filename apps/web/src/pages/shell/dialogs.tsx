@@ -343,6 +343,45 @@ export function ClearConversationDialog({
   );
 }
 
+export function DeleteMessagesDialog({
+  count,
+  onCancel,
+  onConfirm,
+}: {
+  count: number;
+  onCancel: () => void;
+  onConfirm: () => Promise<void>;
+}) {
+  const { t } = useLingui();
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  return (
+    <ConfirmDialog
+      onCancel={onCancel}
+      title={
+        <Plural
+          value={count}
+          one="Delete # message?"
+          other="Delete # messages?"
+        />
+      }
+      description={<Trans>This can't be undone.</Trans>}
+      error={error}
+      busy={deleting}
+      onConfirm={() => {
+        setDeleting(true);
+        setError(null);
+        void onConfirm().catch((err: unknown) => {
+          setError(errorText(err, t`Could not delete messages`));
+          setDeleting(false);
+        });
+      }}
+      confirmLabel={deleting ? <Trans>Deleting…</Trans> : <Trans>Delete</Trans>}
+    />
+  );
+}
+
 export function DeleteBotDialog({
   bot,
   onCancel,

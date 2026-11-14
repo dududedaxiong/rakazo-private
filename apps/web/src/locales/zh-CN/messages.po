@@ -183,6 +183,10 @@ msgstr "{count, plural, other {与 {peer} 的 # 条消息}}"
 msgid "{count, plural, one {# row} other {# rows}}"
 msgstr "{count, plural, one {# 行} other {# 行}}"
 
+#: src/pages/shell/dialogs.tsx
+msgid "{count, plural, one {Delete # message?} other {Delete # messages?}}"
+msgstr "{count, plural, one {删除 # 条消息？} other {删除 # 条消息？}}"
+
 #: src/lib/billing.ts
 msgid "{count} days"
 msgstr "{count} 天"
@@ -210,6 +214,10 @@ msgstr "{count} 年"
 #: src/lib/relative-time.ts
 msgid "{days}d ago"
 msgstr "{days} 天前"
+
+#: src/pages/Shell.tsx
+msgid "{deleted, plural, one {Deleted # message} other {Deleted # messages}}"
+msgstr "{deleted, plural, one {已删除 # 条消息} other {已删除 # 条消息}}"
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
@@ -2528,6 +2536,10 @@ msgid "Could not delete MCP server"
 msgstr "无法删除 MCP 服务器"
 
 #: src/pages/shell/dialogs.tsx
+msgid "Could not delete messages"
+msgstr "无法删除消息"
+
+#: src/pages/shell/dialogs.tsx
 msgid "Could not delete page"
 msgstr "无法删除页面"
 
@@ -3367,6 +3379,7 @@ msgstr "已恢复默认模板"
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-selection.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
 msgstr "删除"
@@ -3445,6 +3458,12 @@ msgstr "已删除"
 #: src/components/admin/AdminUsers.tsx
 msgid "Deleted"
 msgstr "已删除"
+
+#. placeholder {0}: selectedMessages.length
+#. placeholder {1}: failures.join(", ")
+#: src/pages/Shell.tsx
+msgid "Deleted {deleted} of {0} messages. Could not delete: {1}"
+msgstr "已删除 {0} 条消息中的 {deleted} 条。无法删除：{1}"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Deleted bot"
@@ -5215,6 +5234,12 @@ msgstr "消息"
 #: src/lib/browser-notifications.ts
 msgid "Message"
 msgstr "消息"
+
+#. placeholder {0}: index + 1
+#. placeholder {1}: selectedMessages.length
+#: src/pages/Shell.tsx
+msgid "message {0} of {1}"
+msgstr "第 {0} 条消息（共 {1} 条）"
 
 #: src/pages/shell/composer.tsx
 msgid "Message {activeName}"
@@ -8357,6 +8382,7 @@ msgstr "这通电话已经不响了。"
 
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "This can't be undone."
 msgstr "此操作无法撤销。"

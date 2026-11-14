@@ -16,6 +16,7 @@ import {
   appendEventInTransaction,
   createExternalConversationRepos,
   createThreadMessageInTransaction,
+  deleteThreadMessage,
   IsolationError,
   isUniqueViolation,
   loadMessageAuthor,
@@ -360,6 +361,16 @@ export function threadsRoutes(ctx: RouterContext) {
             getLogger().error("semantic memory purge after thread clear failed", error);
           }
         }
+        return { ok: true as const };
+      }),
+      deleteMessage: authed.threads.deleteMessage.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const { deleted } = await deleteThreadMessage(deps.prisma, {
+          spaceId: context.actor.spaceId,
+          threadId: target.threadId,
+          messageId: input.messageId,
+        });
+        if (!deleted) throw new ORPCError("NOT_FOUND", { message: "Message not found" });
         return { ok: true as const };
       }),
       followUp: authed.threads.followUp.handler(async ({ context, input }) => {

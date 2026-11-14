@@ -183,6 +183,10 @@ msgstr "{count, plural, one {{peer} के साथ # संदेश} other {{
 msgid "{count, plural, one {# row} other {# rows}}"
 msgstr "{count, plural, one {# पंक्ति} other {# पंक्तियाँ}}"
 
+#: src/pages/shell/dialogs.tsx
+msgid "{count, plural, one {Delete # message?} other {Delete # messages?}}"
+msgstr ""
+
 #: src/lib/billing.ts
 msgid "{count} days"
 msgstr "{count} दिन"
@@ -210,6 +214,10 @@ msgstr "{count} वर्ष"
 #: src/lib/relative-time.ts
 msgid "{days}d ago"
 msgstr "{days} दिन पहले"
+
+#: src/pages/Shell.tsx
+msgid "{deleted, plural, one {Deleted # message} other {Deleted # messages}}"
+msgstr ""
 
 #: src/components/markdown-copy.tsx
 msgid "{from}–{to} of {total} rows"
@@ -2528,6 +2536,10 @@ msgid "Could not delete MCP server"
 msgstr "MCP सर्वर डिलीट नहीं किया जा सका"
 
 #: src/pages/shell/dialogs.tsx
+msgid "Could not delete messages"
+msgstr ""
+
+#: src/pages/shell/dialogs.tsx
 msgid "Could not delete page"
 msgstr "पेज हटाया नहीं जा सका"
 
@@ -3367,6 +3379,7 @@ msgstr "डिफ़ॉल्ट टेम्पलेट पुनर्स्�
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/message-selection.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
 msgstr "डिलीट करें"
@@ -3444,6 +3457,12 @@ msgstr "डिलीट किया गया"
 
 #: src/components/admin/AdminUsers.tsx
 msgid "Deleted"
+msgstr ""
+
+#. placeholder {0}: selectedMessages.length
+#. placeholder {1}: failures.join(", ")
+#: src/pages/Shell.tsx
+msgid "Deleted {deleted} of {0} messages. Could not delete: {1}"
 msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
@@ -5215,6 +5234,12 @@ msgstr "संदेश"
 #: src/lib/browser-notifications.ts
 msgid "Message"
 msgstr "संदेश"
+
+#. placeholder {0}: index + 1
+#. placeholder {1}: selectedMessages.length
+#: src/pages/Shell.tsx
+msgid "message {0} of {1}"
+msgstr ""
 
 #: src/pages/shell/composer.tsx
 msgid "Message {activeName}"
@@ -8357,6 +8382,7 @@ msgstr "यह कॉल अब नहीं बज रही है।"
 
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/shell/dialogs.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "This can't be undone."
 msgstr "इसे पूर्ववत नहीं किया जा सकता।"

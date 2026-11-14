@@ -12,8 +12,7 @@ export type BatchTranslateResult = {
 
 /**
  * The bottom bar shown while messages are selected: how many are picked,
- * and the batch actions for them. Delete is not here: the server has no
- * per-message delete endpoint, so it cannot run yet.
+ * and the batch actions for them.
  */
 export function MessageSelectionBar({
   count,
@@ -21,6 +20,7 @@ export function MessageSelectionBar({
   onExport,
   onTranslate,
   onForward,
+  onDelete,
   onCancel,
 }: {
   count: number;
@@ -28,6 +28,7 @@ export function MessageSelectionBar({
   onExport: () => void;
   onTranslate: () => void;
   onForward: () => void;
+  onDelete: () => void;
   onCancel: () => void;
 }) {
   return (
@@ -43,6 +44,15 @@ export function MessageSelectionBar({
       </Button>
       <Button variant="outline" size="sm" disabled={busy} onClick={onForward}>
         <Trans>Forward</Trans>
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={busy}
+        onClick={onDelete}
+        className="text-destructive"
+      >
+        <Trans>Delete</Trans>
       </Button>
       <Button variant="ghost" size="sm" disabled={busy} onClick={onCancel}>
         <Trans>Cancel</Trans>
