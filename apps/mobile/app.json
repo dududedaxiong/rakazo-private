@@ -4,7 +4,7 @@
     "slug": "rakazo-mickvvw",
     "owner": "mickvvws-team",
     "scheme": "rakazo",
-    "version": "1.0.22",
+    "version": "1.0.23",
     "orientation": "default",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
@@ -128,7 +128,7 @@
     },
     "android": {
       "package": "com.rakazo.app.mickvvw",
-      "versionCode": 13,
+      "versionCode": 14,
       "softwareKeyboardLayoutMode": "resize",
       "icon": "./assets/icon.png",
       "adaptiveIcon": {
