@@ -6962,6 +6962,10 @@ msgstr "Verzoeken"
 msgid "Research & writing"
 msgstr "Onderzoek & schrijven"
 
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Resend"
+msgstr ""
+
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ExternalConversationSettings.tsx

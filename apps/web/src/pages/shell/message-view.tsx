@@ -134,6 +134,7 @@ export const MessageView = memo(function MessageView({
   onAddRoutine,
   onRegenerate,
   regenerateDisabled,
+  onResend,
   voiceReady,
   speaking,
   speakingProgress,
@@ -206,6 +207,8 @@ export const MessageView = memo(function MessageView({
   onRegenerate?: (messageId: string) => Promise<void>;
   /** A send or a run is in progress, so a regenerate would wait. */
   regenerateDisabled?: boolean;
+  /** Re-sends a user message that got no normal reply. */
+  onResend?: (messageId: string) => Promise<void>;
   voiceReady: boolean;
   speaking: boolean;
   /** The read-aloud segment sounding now, when this is the message being read. */
@@ -412,6 +415,7 @@ export const MessageView = memo(function MessageView({
       onMarkUnread={onMarkUnread}
       markedUnread={markedUnread}
       onReact={onReact}
+      onResend={onResend ? () => onResend(message.id) : undefined}
     />
   );
   if (isNarration) {

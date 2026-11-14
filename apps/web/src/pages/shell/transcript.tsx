@@ -99,6 +99,7 @@ export const Transcript = memo(function Transcript({
   onAddRoutine,
   onRegenerate,
   regenerateDisabled,
+  onResend,
   selecting,
   selectedMessageIds,
   onToggleSelectMessage,
@@ -173,6 +174,8 @@ export const Transcript = memo(function Transcript({
   onRegenerate?: (messageId: string) => Promise<void>;
   /** A send or a run is in progress, so a regenerate would wait. */
   regenerateDisabled?: boolean;
+  /** Re-sends a user message that got no normal reply. */
+  onResend?: (messageId: string) => Promise<void>;
   /** Selection mode is on: every bubble gets a checkbox. */
   selecting?: boolean;
   selectedMessageIds?: ReadonlySet<string>;
@@ -677,6 +680,7 @@ export const Transcript = memo(function Transcript({
                       onAddRoutine={onAddRoutine}
                       onRegenerate={onRegenerate}
                       regenerateDisabled={regenerateDisabled}
+                      onResend={onResend}
                       voiceReady={voiceReady}
                       speaking={speakingMessageId === message.id}
                       speakingProgress={

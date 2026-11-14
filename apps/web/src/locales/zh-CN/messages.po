@@ -6962,6 +6962,10 @@ msgstr "请求"
 msgid "Research & writing"
 msgstr "调研和写作"
 
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Resend"
+msgstr "重新发送"
+
 #: src/components/ComputerMaintenanceActions.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ExternalConversationSettings.tsx

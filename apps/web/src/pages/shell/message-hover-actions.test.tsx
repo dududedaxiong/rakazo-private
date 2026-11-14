@@ -155,3 +155,56 @@ it("drops the copied confirmation when the message changes before it ends", asyn
   expect(trigger?.getAttribute("aria-label")).toBe("More");
   expect(trigger?.querySelector(".lucide-check")).toBeNull();
 });
+
+const userMessage: ThreadMessage = {
+  ...message,
+  role: "user",
+  blocks: [{ kind: "text", text: "Shanghai weather" }],
+};
+
+function renderHoverActions(next: ThreadMessage, onResend?: (entry: ThreadMessage) => void) {
+  act(() =>
+    root.render(
+      <MessageHoverActions
+        message={next}
+        side="start"
+        onReply={vi.fn()}
+        onMarkUnread={vi.fn()}
+        onReact={vi.fn<(message: ThreadMessage, reaction: MessageReaction) => Promise<void>>()}
+        onResend={onResend}
+      />,
+    ),
+  );
+}
+
+async function openMoreMenu() {
+  await click(document.querySelector<HTMLButtonElement>('button[aria-label="More"]'));
+}
+
+it("offers Resend for a user message with text and resends it", async () => {
+  const onResend = vi.fn();
+  renderHoverActions(userMessage, onResend);
+  await openMoreMenu();
+  await click(menuItem("Resend"));
+
+  expect(onResend).toHaveBeenCalledTimes(1);
+  expect(onResend).toHaveBeenCalledWith(userMessage);
+});
+
+it("hides Resend for bot replies", async () => {
+  renderHoverActions(message, vi.fn());
+  await openMoreMenu();
+  expect(menuItem("Resend")).toBeUndefined();
+});
+
+it("hides Resend for a user message without text", async () => {
+  renderHoverActions({ ...userMessage, blocks: [{ kind: "text", text: "   " }] }, vi.fn());
+  await openMoreMenu();
+  expect(menuItem("Resend")).toBeUndefined();
+});
+
+it("hides Resend when no resend handler is provided", async () => {
+  renderHoverActions(userMessage);
+  await openMoreMenu();
+  expect(menuItem("Resend")).toBeUndefined();
+});

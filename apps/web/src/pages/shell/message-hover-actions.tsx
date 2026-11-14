@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
   useCopyText,
 } from "@rakazo/ui-web";
-import { Check, Copy, MessageSquareDot, MoreHorizontal, Reply, Smile } from "lucide-react";
+import { Check, Copy, MessageSquareDot, MoreHorizontal, Reply, Send, Smile } from "lucide-react";
 import { useState } from "react";
 import { MessageHoverMetadata } from "../../components/MessageHoverMetadata";
 
@@ -24,6 +24,7 @@ export function MessageHoverActions({
   onMarkUnread,
   markedUnread = false,
   onReact,
+  onResend,
 }: {
   message: ThreadMessage;
   side: "start" | "end";
@@ -31,6 +32,8 @@ export function MessageHoverActions({
   onMarkUnread: (message: ThreadMessage) => void;
   markedUnread?: boolean;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
+  /** Re-sends this user message; absent where resending is unavailable. */
+  onResend?: (message: ThreadMessage) => void;
 }) {
   const { t } = useLingui();
   const [copiedNow, copy, copyFailed, resetCopy, copyFailedText] = useCopyText();
@@ -42,6 +45,11 @@ export function MessageHoverActions({
 
   // Streaming progress bubbles keep hover free for selection / stop clicks.
   if (message.id.startsWith("progress:")) return null;
+
+  // Resend is for the user's own messages with text: a message that got no
+  // normal reply can be sent again without retyping it.
+  const canResend =
+    onResend !== undefined && message.role === "user" && copyableMessageText(message).trim() !== "";
 
   const copied = copiedNow && copiedText === copyableMessageText(message);
 
@@ -115,6 +123,17 @@ export function MessageHoverActions({
               <Reply size={14} strokeWidth={1.7} />
               <Trans>Reply</Trans>
             </DropdownMenuItem>
+            {canResend ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  setMoreOpen(false);
+                  onResend(message);
+                }}
+              >
+                <Send size={14} strokeWidth={1.7} />
+                <Trans>Resend</Trans>
+              </DropdownMenuItem>
+            ) : null}
             {canMarkMessageUnread(message) && !markedUnread ? (
               <DropdownMenuItem
                 onClick={() => {

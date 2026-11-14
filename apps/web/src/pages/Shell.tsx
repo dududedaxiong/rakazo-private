@@ -767,6 +767,22 @@ function SpaceShell() {
     [composer, t, transcript],
   );
 
+  /**
+   * Re-sends one user message's own text, for a message that got no normal
+   * reply. Unlike regenerate it needs no bot reply to work from, so it
+   * covers a run that failed before producing one.
+   */
+  const resendMessage = useCallback(
+    async (messageId: string) => {
+      const message = transcript.messages.find((entry) => entry.id === messageId);
+      if (!message) return;
+      const text = copyableMessageText(message);
+      if (!text.trim()) return;
+      await composer.sendMessage(text, [], crypto.randomUUID());
+    },
+    [composer, transcript],
+  );
+
   /** Multi-select: the picked message ids, and the dialogs the batch actions open. */
   const [selecting, setSelecting] = useState(false);
   const [selectedMessageIds, setSelectedMessageIds] = useState<ReadonlySet<string>>(
@@ -1299,6 +1315,7 @@ function SpaceShell() {
               workingRoutine={workingRoutineName(workingRuns)}
               onRegenerate={regenerateFromMessage}
               regenerateDisabled={sending || transcriptRunning}
+              onResend={resendMessage}
               selecting={selecting}
               selectedMessageIds={selectedMessageIds}
               onToggleSelectMessage={toggleSelectMessage}
