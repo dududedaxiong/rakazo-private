@@ -7458,6 +7458,12 @@ msgstr "安全与运维"
 msgid "Security code"
 msgstr "安全码"
 
+#. placeholder {0}: speakingProgress.index + 1
+#. placeholder {1}: speakingProgress.total
+#: src/pages/shell/message-view.tsx
+msgid "Segment {0} of {1}"
+msgstr "第 {0} / {1} 段"
+
 #: src/pages/shell/chat-header.tsx
 msgid "Select a bot"
 msgstr "选择 Bot"

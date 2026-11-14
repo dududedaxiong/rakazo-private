@@ -8,18 +8,40 @@ import { afterEach, expect, it, vi } from "vitest";
 import { useReadAloud } from "./use-read-aloud";
 
 const speakerMock = vi.hoisted(() => {
-  const listeners = new Set<(snapshot: { status: string; messageId?: string }) => void>();
+  const listeners = new Set<
+    (snapshot: {
+      status: string;
+      messageId?: string;
+      caption?: string;
+      segmentIndex?: number;
+      segmentTotal?: number;
+    }) => void
+  >();
   return {
     speak: vi.fn(async (): Promise<string | undefined> => undefined),
     stop: vi.fn(),
-    subscribe: (listener: (snapshot: { status: string; messageId?: string }) => void) => {
+    subscribe: (
+      listener: (snapshot: {
+        status: string;
+        messageId?: string;
+        caption?: string;
+        segmentIndex?: number;
+        segmentTotal?: number;
+      }) => void,
+    ) => {
       listeners.add(listener);
       listener({ status: "idle" });
       return () => {
         listeners.delete(listener);
       };
     },
-    emit: (snapshot: { status: string; messageId?: string }) => {
+    emit: (snapshot: {
+      status: string;
+      messageId?: string;
+      caption?: string;
+      segmentIndex?: number;
+      segmentTotal?: number;
+    }) => {
       for (const listener of [...listeners]) listener(snapshot);
     },
     isSpeaking: () => false,
@@ -271,4 +293,35 @@ it("stops the queue when a read fails outright", async () => {
   });
   expect(speak).toHaveBeenCalledTimes(1);
   expect(latest.readingConversation).toBe(false);
+});
+
+it("exposes the current read-aloud segment and clears it when idle", () => {
+  renderRead({ snapshot: snapshot([message("m1", "first reply")]) });
+  expect(latest.speakingProgress).toBeNull();
+  act(() =>
+    speakerMock.emit({
+      status: "speaking",
+      messageId: "m1",
+      caption: "Second part.",
+      segmentIndex: 1,
+      segmentTotal: 3,
+    }),
+  );
+  expect(latest.speakingMessageId).toBe("m1");
+  expect(latest.speakingProgress).toEqual({
+    messageId: "m1",
+    caption: "Second part.",
+    index: 1,
+    total: 3,
+  });
+  act(() => speakerMock.emit({ status: "idle" }));
+  expect(latest.speakingProgress).toBeNull();
+  expect(latest.speakingMessageId).toBeNull();
+});
+
+it("hides progress while a read is still preparing", () => {
+  renderRead({ snapshot: snapshot([message("m1", "first reply")]) });
+  act(() => speakerMock.emit({ status: "preparing", messageId: "m1" }));
+  expect(latest.speakingMessageId).toBe("m1");
+  expect(latest.speakingProgress).toBeNull();
 });

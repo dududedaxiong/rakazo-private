@@ -346,6 +346,44 @@ it("disables starting a read while a call holds the speaker, keeping stop availa
   for (const button of stopButtons()) expect(button.disabled).toBe(false);
 });
 
+describe("read-aloud progress", () => {
+  const progress = {
+    messageId: "message",
+    caption: "Second part of the reply.",
+    index: 1,
+    total: 3,
+  };
+  const progressLine = () => container.querySelector('[data-testid="read-aloud-progress"]');
+
+  it("shows the sounding segment and its position under a bot reply", () => {
+    renderView("bot", [{ kind: "text", text: "Hello" }], {
+      voiceReady: true,
+      speaking: true,
+      speakingProgress: progress,
+    });
+    expect(progressLine()?.textContent).toContain("Second part of the reply.");
+    expect(progressLine()?.textContent).toContain("Segment 2 of 3");
+  });
+
+  it("shows the same line under a user message during a conversation read", () => {
+    renderView("user", [{ kind: "text", text: "Hello" }], {
+      voiceReady: true,
+      speaking: true,
+      speakingProgress: progress,
+    });
+    expect(progressLine()?.textContent).toContain("Segment 2 of 3");
+  });
+
+  it("hides the line for a single-segment read", () => {
+    renderView("bot", [{ kind: "text", text: "Hello" }], {
+      voiceReady: true,
+      speaking: true,
+      speakingProgress: { ...progress, index: 0, total: 1 },
+    });
+    expect(progressLine()).toBeNull();
+  });
+});
+
 describe("message translation", () => {
   const translated = {
     translatedText: "Hark AI 是一款新的 AI 搜索产品。",

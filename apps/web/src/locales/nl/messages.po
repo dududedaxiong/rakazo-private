@@ -7458,6 +7458,12 @@ msgstr "Beveiliging & Ops"
 msgid "Security code"
 msgstr "Beveiligingscode"
 
+#. placeholder {0}: speakingProgress.index + 1
+#. placeholder {1}: speakingProgress.total
+#: src/pages/shell/message-view.tsx
+msgid "Segment {0} of {1}"
+msgstr ""
+
 #: src/pages/shell/chat-header.tsx
 msgid "Select a bot"
 msgstr "Selecteer een bot"

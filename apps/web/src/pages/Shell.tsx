@@ -478,6 +478,7 @@ function SpaceShell() {
   );
   const {
     speakingMessageId,
+    speakingProgress,
     speakMessage,
     speakText,
     callHoldsSpeaker,
@@ -1324,6 +1325,7 @@ function SpaceShell() {
               onAddRoutine={addSkillRoutine}
               voiceReady={voiceReady}
               speakingMessageId={speakingMessageId}
+              speakingProgress={speakingProgress}
               callHoldsSpeaker={callHoldsSpeaker}
               onSpeak={speakMessage}
               onSpeakText={speakText}

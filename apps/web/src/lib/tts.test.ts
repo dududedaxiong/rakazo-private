@@ -107,6 +107,54 @@ describe("Speaker", () => {
     expect(speaker.state.status).toBe("idle");
   });
 
+  it("tags each spoken segment with its caption and position", async () => {
+    const speaker = new Speaker();
+    vi.spyOn(
+      speaker as unknown as { prepare: () => Promise<string[]> },
+      "prepare",
+    ).mockResolvedValue(["First.", "Second.", "Third."]);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(new Blob(["audio"]), { status: 200 })),
+    );
+    const played: Array<unknown> = [];
+    vi.stubGlobal(
+      "Audio",
+      class {
+        src = "";
+        onended: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        constructor() {
+          played.push(this);
+        }
+        play() {
+          queueMicrotask(() => this.onended?.());
+          return Promise.resolve();
+        }
+        pause() {}
+      },
+    );
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:voice");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+    const snapshots: Array<{ caption?: string; segmentIndex?: number; segmentTotal?: number }> = [];
+    speaker.subscribe((state) => {
+      if (state.status === "speaking") {
+        snapshots.push({
+          caption: state.caption,
+          segmentIndex: state.segmentIndex,
+          segmentTotal: state.segmentTotal,
+        });
+      }
+    });
+
+    await expect(speaker.speak("Read this.", { messageId: "m1" })).resolves.toBeUndefined();
+    expect(snapshots).toEqual([
+      { caption: "First.", segmentIndex: 0, segmentTotal: 3 },
+      { caption: "Second.", segmentIndex: 1, segmentTotal: 3 },
+      { caption: "Third.", segmentIndex: 2, segmentTotal: 3 },
+    ]);
+  });
+
   it("reports the failure when every utterance fails to render", async () => {
     const speaker = new Speaker();
     vi.spyOn(

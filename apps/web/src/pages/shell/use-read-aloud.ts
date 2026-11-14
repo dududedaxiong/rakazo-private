@@ -23,6 +23,14 @@ function readAloud(
   });
 }
 
+/** Where a read-aloud is: the message sounding, its current segment, and how many there are. */
+export interface SpeakingProgress {
+  messageId: string;
+  caption: string;
+  index: number;
+  total: number;
+}
+
 /** Reads bot replies aloud: on request, and automatically for bots that speak their replies. */
 export function useReadAloud({
   active,
@@ -36,6 +44,7 @@ export function useReadAloud({
   activeBotId: RefObject<string | undefined>;
 }) {
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [speakingProgress, setSpeakingProgress] = useState<SpeakingProgress | null>(null);
   const [readingConversation, setReadingConversation] = useState(false);
   const autoSpoken = useRef<string | null>(null);
   const autoSpokenBotId = useRef<string | null>(null);
@@ -45,6 +54,20 @@ export function useReadAloud({
   useEffect(() => {
     const unsubSpeech = speaker.subscribe((state) => {
       setSpeakingMessageId(state.status === "idle" ? null : (state.messageId ?? null));
+      setSpeakingProgress(
+        state.status === "speaking" &&
+          state.messageId !== undefined &&
+          state.caption !== undefined &&
+          state.segmentIndex !== undefined &&
+          state.segmentTotal !== undefined
+          ? {
+              messageId: state.messageId,
+              caption: state.caption,
+              index: state.segmentIndex,
+              total: state.segmentTotal,
+            }
+          : null,
+      );
     });
     return () => {
       unsubSpeech();
@@ -179,6 +202,7 @@ export function useReadAloud({
 
   return {
     speakingMessageId,
+    speakingProgress,
     speakMessage,
     speakText,
     callHoldsSpeaker: callBotId !== undefined,

@@ -53,6 +53,7 @@ import type { ImportSetupTarget } from "./import-setup-card";
 import { MessageSelectCheckbox } from "./message-selection";
 import { MessageView } from "./message-view";
 import { QuoteSelectionButton } from "./quote-selection-button";
+import type { SpeakingProgress } from "./use-read-aloud";
 
 /** Bubbles stop at a readable line length instead of stretching with wide windows. */
 export function bubbleFrameWidth(role: ThreadMessage["role"]) {
@@ -103,6 +104,7 @@ export const Transcript = memo(function Transcript({
   onToggleSelectMessage,
   voiceReady,
   speakingMessageId,
+  speakingProgress,
   callHoldsSpeaker,
   onSpeak,
   onSpeakText,
@@ -177,6 +179,8 @@ export const Transcript = memo(function Transcript({
   onToggleSelectMessage?: (messageId: string) => void;
   voiceReady: boolean;
   speakingMessageId: string | null;
+  /** The read-aloud segment sounding now; only the message it names shows progress. */
+  speakingProgress?: SpeakingProgress | null;
   callHoldsSpeaker: boolean;
   onSpeak: (message: ThreadMessage) => void;
   /** Reads arbitrary text, such as a translation, in a bot's voice. */
@@ -675,6 +679,9 @@ export const Transcript = memo(function Transcript({
                       regenerateDisabled={regenerateDisabled}
                       voiceReady={voiceReady}
                       speaking={speakingMessageId === message.id}
+                      speakingProgress={
+                        speakingProgress?.messageId === message.id ? speakingProgress : undefined
+                      }
                       callHoldsSpeaker={callHoldsSpeaker}
                       onSpeak={onSpeak}
                       onSpeakText={onSpeakText}

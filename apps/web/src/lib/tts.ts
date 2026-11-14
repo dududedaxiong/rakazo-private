@@ -17,6 +17,9 @@ export interface SpeechSnapshot {
   botId?: string;
   messageId?: string;
   caption?: string;
+  /** Which utterance is playing, so the UI can show read-aloud progress. */
+  segmentIndex?: number;
+  segmentTotal?: number;
   error?: string;
 }
 
@@ -139,6 +142,8 @@ export class Speaker {
         botId: opts.botId,
         messageId: opts.messageId,
         caption: utterances[i],
+        segmentIndex: i,
+        segmentTotal: utterances.length,
       });
       const finished = await this.play(rendered.blob, live);
       if (!finished) {

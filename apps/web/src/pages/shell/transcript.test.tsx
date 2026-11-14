@@ -223,3 +223,24 @@ it("drops the quote pill when an edit removes only one end of the selection", as
   expect(window.getSelection()!.getRangeAt(0).collapsed).toBe(false);
   expect(document.querySelector("[data-quote-selection]")).toBeNull();
 });
+
+it("shows read-aloud progress only under the message being read", () => {
+  const messages = [
+    textMessage("m1", "bot", "First reply."),
+    textMessage("m2", "bot", "Second reply."),
+  ];
+  render({
+    ...baseProps(messages),
+    speakingMessageId: "m2",
+    speakingProgress: {
+      messageId: "m2",
+      caption: "Middle of the second reply.",
+      index: 1,
+      total: 3,
+    },
+  });
+  const lines = [...document.querySelectorAll('[data-testid="read-aloud-progress"]')];
+  expect(lines).toHaveLength(1);
+  expect(lines[0]?.textContent).toContain("Middle of the second reply.");
+  expect(lines[0]?.textContent).toContain("Segment 2 of 3");
+});

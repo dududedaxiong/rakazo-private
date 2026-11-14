@@ -64,6 +64,7 @@ import {
 } from "./message-cards";
 import { MessageHoverActions } from "./message-hover-actions";
 import { useMessageTranslation } from "./message-translation";
+import type { SpeakingProgress } from "./use-read-aloud";
 
 /** A bot reply longer than this folds to a preview until expanded. */
 const LONG_MESSAGE_CHARS = 800;
@@ -135,6 +136,7 @@ export const MessageView = memo(function MessageView({
   regenerateDisabled,
   voiceReady,
   speaking,
+  speakingProgress,
   callHoldsSpeaker,
   onSpeak,
   onSpeakText,
@@ -206,6 +208,8 @@ export const MessageView = memo(function MessageView({
   regenerateDisabled?: boolean;
   voiceReady: boolean;
   speaking: boolean;
+  /** The read-aloud segment sounding now, when this is the message being read. */
+  speakingProgress?: SpeakingProgress;
   /** An active call owns the speaker, so new reads wait until it ends. */
   callHoldsSpeaker: boolean;
   onSpeak: (message: ThreadMessage) => void;
@@ -308,6 +312,21 @@ export const MessageView = memo(function MessageView({
     speakDisabled: callHoldsSpeaker,
     onBotChanged,
   });
+  /** The segment sounding now, with its position; a single-segment read needs no progress. */
+  const readAloudProgress =
+    speakingProgress && speakingProgress.total > 1 ? (
+      <p
+        data-testid="read-aloud-progress"
+        className="px-1 text-body-sm text-muted-foreground"
+        dir="auto"
+      >
+        {speakingProgress.caption}
+        <span className="whitespace-nowrap">
+          {" · "}
+          {t`Segment ${speakingProgress.index + 1} of ${speakingProgress.total}`}
+        </span>
+      </p>
+    ) : null;
   const favorite = useMessageFavorite({
     rpc,
     botId: message.role === "bot" ? message.botId : undefined,
@@ -483,6 +502,7 @@ export const MessageView = memo(function MessageView({
                 ) : null}
               </div>
               {translation.panel}
+              {readAloudProgress}
             </div>
           </div>
           {hoverActions}
@@ -935,6 +955,7 @@ export const MessageView = memo(function MessageView({
           }
           return null;
         })}
+        {readAloudProgress}
         {hoverAnchorIndex === -1 ? hoverActions : null}
       </div>
       {pageCards}
