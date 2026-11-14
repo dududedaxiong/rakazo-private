@@ -18,6 +18,7 @@ import { useI18n } from "../lib/i18n";
 import { imageDismissBackdropOpacity, shouldDismissImage } from "../lib/image-dismiss";
 import type { ImageSize } from "../lib/inline-image";
 import { fitImageSize } from "../lib/inline-image";
+import { saveGeneratedMedia } from "../lib/media-folders";
 import { iosAtLeast } from "../lib/native-controls";
 import { errorText } from "../lib/user-error";
 import { GlassIconButton } from "./glass-icon-button";
@@ -220,10 +221,19 @@ function ZoomableImage({
 export function ImageArtifactViewer({
   threadTarget,
   target,
+  saveDirectory,
+  showDownload = true,
+  showShare = true,
   onClose,
 }: {
   threadTarget: MobileArtifactTarget;
   target: ImageArtifactPreviewTarget;
+  /** The bot's image save directory; null means the default folder. */
+  saveDirectory?: string | null;
+  /** Whether the download action shows (the bot's generated-media setting). */
+  showDownload?: boolean;
+  /** Whether the share action shows (the bot's generated-media setting). */
+  showShare?: boolean;
   onClose: () => void;
 }) {
   const { t } = useI18n();
@@ -280,6 +290,18 @@ export function ImageArtifactViewer({
       .then((uri) => shareLocalFile(uri, target.mimeType, target.name))
       .catch((error) => Alert.alert(t("Could not share image"), errorText(error, t("Try again."))));
 
+  // Download saves the image into the App's local folder, under the bot's
+  // image directory, instead of only keeping it in the cache.
+  const download = () =>
+    void imageArtifactUri(requestTarget(), target.artifactId, target.mimeType)
+      .then((uri) => {
+        saveGeneratedMedia(uri, target.mimeType, target.name, {
+          imageSaveDirectory: saveDirectory ?? null,
+        });
+        Alert.alert(t("Saved {name} locally", { name: target.name }));
+      })
+      .catch((error) => Alert.alert(t("Could not save image"), errorText(error, t("Try again."))));
+
   return (
     // Insets come from the SafeAreaProvider mounted by app/image.tsx, seeded with the window
     // metrics so they are right on the first frame.
@@ -309,13 +331,24 @@ export function ImageArtifactViewer({
           iconSize={18}
           onPress={close}
         />
-        <GlassIconButton
-          accessibilityLabel={t("Share {name}", { name: target.name })}
-          ios="square.and.arrow.up"
-          android="share-social-outline"
-          iconSize={18}
-          onPress={share}
-        />
+        {showShare ? (
+          <GlassIconButton
+            accessibilityLabel={t("Share {name}", { name: target.name })}
+            ios="square.and.arrow.up"
+            android="share-social-outline"
+            iconSize={18}
+            onPress={share}
+          />
+        ) : null}
+        {showDownload ? (
+          <GlassIconButton
+            accessibilityLabel={t("Download")}
+            ios="square.and.arrow.down"
+            android="download-outline"
+            iconSize={18}
+            onPress={download}
+          />
+        ) : null}
       </View>
       <View
         style={styles.stage}

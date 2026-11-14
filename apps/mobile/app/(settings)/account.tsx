@@ -58,6 +58,11 @@ import {
   subscribeHaptics,
 } from "../../lib/haptics";
 import { dateLocaleForUi, useI18n } from "../../lib/i18n";
+import {
+  clearMediaTemp,
+  formatBytes,
+  mediaTempUsage,
+} from "../../lib/media-folders";
 import type { LiveNotificationSettings } from "../../lib/live-notifications";
 import {
   canPostPromotedNotifications,
@@ -182,6 +187,21 @@ export default function Account() {
   const archivedCounts = useRef({ bots: 0, groups: 0 });
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [usageToday, setUsageToday] = useState<UsageSummary | null>(null);
+  const [tempUsage, setTempUsage] = useState(() => mediaTempUsage());
+  const refreshTempUsage = useCallback(() => setTempUsage(mediaTempUsage()), []);
+  const clearTempFiles = useCallback(() => {
+    Alert.alert(t("Clear temporary files?"), undefined, [
+      { text: t("Cancel"), style: "cancel" },
+      {
+        text: t("Clear"),
+        style: "destructive",
+        onPress: () => {
+          clearMediaTemp();
+          refreshTempUsage();
+        },
+      },
+    ]);
+  }, [refreshTempUsage, t]);
   const [avatarPending, setAvatarPending] = useState(false);
   // Messaging appears only on servers that have a chat app connected, as on web.
   const [messagingEnabled, setMessagingEnabled] = useState(false);
@@ -334,7 +354,8 @@ export default function Account() {
     useCallback(() => {
       void loadHapticsPreference();
       void loadTrustedLinkSites().catch(() => undefined);
-    }, []),
+      refreshTempUsage();
+    }, [refreshTempUsage]),
   );
 
   // Checked on every visit, so a failed check never hides Messaging for good.
@@ -560,6 +581,16 @@ export default function Account() {
             onPress={editName}
           />
           {focus !== "usage" ? usageBlock : null}
+          <SettingsRow
+            accessibilityRole="button"
+            accessibilityLabel={t("Temporary files")}
+            detail={`${t("{count} files", { count: tempUsage.files })} · ${formatBytes(tempUsage.bytes)}`}
+            disabled={tempUsage.files === 0}
+            dimmed={tempUsage.files === 0}
+            title={t("Temporary files")}
+            value={tempUsage.files > 0 ? t("Clear") : undefined}
+            onPress={clearTempFiles}
+          />
         </SettingsGroup>
 
         {organizations ? (

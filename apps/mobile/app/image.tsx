@@ -16,6 +16,9 @@ export default function ImageScreen() {
     mimeType?: string | string[];
     botId?: string | string[];
     groupId?: string | string[];
+    imageSaveDirectory?: string | string[];
+    showDownload?: string | string[];
+    showShare?: string | string[];
   }>();
   const groupId = first(params.groupId);
 
@@ -32,6 +35,9 @@ export default function ImageScreen() {
           name: first(params.name),
           mimeType: first(params.mimeType) || "image/png",
         }}
+        saveDirectory={first(params.imageSaveDirectory) || null}
+        showDownload={first(params.showDownload) !== "0"}
+        showShare={first(params.showShare) !== "0"}
         onClose={() => router.back()}
       />
     </SafeAreaProvider>

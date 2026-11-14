@@ -50,6 +50,10 @@ type SpeechOptions = {
   voiceId?: string;
   botId?: string;
   messageId?: string;
+  /** Which utterance of its message this is, for read-aloud progress. */
+  segmentIndex?: number;
+  /** How many utterances its message splits into. */
+  segmentTotal?: number;
   speaker?: PlaybackSpeaker;
   /** Tags this speech for its starter, so stopSpeaking(owner) cuts only this playback. */
   owner?: SpeechOwner;
@@ -66,6 +70,12 @@ export type VoicePlaybackState = {
   botId?: string;
   /** The thread message this clip was spoken from, when playback started from one. */
   messageId?: string;
+  /** Which utterance of its message is sounding, for read-aloud progress. */
+  segmentIndex?: number;
+  /** How many utterances its message splits into. */
+  segmentTotal?: number;
+  /** The utterance sounding now, for read-aloud progress. */
+  caption?: string;
   /** False when the active engine (Android on-device voice) can only stop, not pause. */
   canPause: boolean;
   speaker?: PlaybackSpeaker;
@@ -358,6 +368,13 @@ export async function speakText(text: string, opts: SpeechOptions = {}): Promise
 let resolvedReadAloudEpoch = -1;
 let resolvedReadAloud: VoiceSourceId = "auto";
 
+/** The read-aloud progress fields, only for a multi-utterance read. */
+function speechProgressFields(opts: SpeechOptions, text: string) {
+  return opts.segmentTotal !== undefined && opts.segmentTotal > 1
+    ? { segmentIndex: opts.segmentIndex ?? 0, segmentTotal: opts.segmentTotal, caption: text }
+    : {};
+}
+
 async function speakPrepared(text: string, opts: SpeechOptions, epoch: number): Promise<boolean> {
   if (!isCurrentSpeech(epoch)) return false;
   // Each queued item owns the epoch while it prepares and plays.
@@ -373,7 +390,13 @@ async function speakPrepared(text: string, opts: SpeechOptions, epoch: number): 
     },
   };
   setPlayback(
-    { status: "playing", botId: opts.botId, messageId: opts.messageId, canPause: false },
+    {
+      status: "playing",
+      botId: opts.botId,
+      messageId: opts.messageId,
+      ...speechProgressFields(opts, text),
+      canPause: false,
+    },
     prepareControl,
   );
   try {
@@ -465,14 +488,26 @@ async function speakPrepared(text: string, opts: SpeechOptions, epoch: number): 
       pause: () => {
         session.pause();
         setPlayback(
-          { status: "paused", botId: opts.botId, messageId: opts.messageId, canPause: true },
+          {
+            status: "paused",
+            botId: opts.botId,
+            messageId: opts.messageId,
+            ...speechProgressFields(opts, text),
+            canPause: true,
+          },
           control,
         );
       },
       resume: () => {
         session.resume();
         setPlayback(
-          { status: "playing", botId: opts.botId, messageId: opts.messageId, canPause: true },
+          {
+            status: "playing",
+            botId: opts.botId,
+            messageId: opts.messageId,
+            ...speechProgressFields(opts, text),
+            canPause: true,
+          },
           control,
         );
       },

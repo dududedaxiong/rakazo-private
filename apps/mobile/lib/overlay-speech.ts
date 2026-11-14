@@ -11,12 +11,25 @@ export interface OverlaySpeechItem {
   text: string;
   botId?: string;
   messageId: string;
+  /** Which utterance of its message this is, for read-aloud progress. */
+  segmentIndex?: number;
+  /** How many utterances its message splits into. */
+  segmentTotal?: number;
+}
+
+/** The utterance sounding now, for read-aloud progress under its message. */
+export interface OverlaySpeechProgress {
+  messageId: string;
+  segmentIndex: number;
+  segmentTotal: number;
+  text: string;
 }
 
 interface OverlayChain {
   id: number;
   messageIds: string[];
   currentMessageId: string | undefined;
+  currentItem: OverlaySpeechItem | undefined;
   stop: () => void;
 }
 
@@ -28,6 +41,7 @@ const listeners = new Set<() => void>();
 // only when a chain starts, advances, or ends.
 let cachedChainMessageIds: ReadonlySet<string> = new Set();
 let cachedSpeakingMessageIds: ReadonlySet<string> = new Set();
+let cachedProgress: OverlaySpeechProgress | null = null;
 
 function rebuildCaches() {
   cachedChainMessageIds = new Set([...chains.values()].flatMap((chain) => chain.messageIds));
@@ -36,6 +50,17 @@ function rebuildCaches() {
       .map((chain) => chain.currentMessageId)
       .filter((id): id is string => id !== undefined),
   );
+  const current = [...chains.values()].find((chain) => chain.currentItem !== undefined);
+  const item = current?.currentItem;
+  cachedProgress =
+    item && item.segmentTotal !== undefined && item.segmentTotal > 1
+      ? {
+          messageId: item.messageId,
+          segmentIndex: item.segmentIndex ?? 0,
+          segmentTotal: item.segmentTotal,
+          text: item.text,
+        }
+      : null;
 }
 
 function notify() {
@@ -56,6 +81,11 @@ export function getOverlayChainMessageIds(): ReadonlySet<string> {
 /** The message sounding now in each overlay chain, for the speaker icon. */
 export function getOverlaySpeakingMessageIds(): ReadonlySet<string> {
   return cachedSpeakingMessageIds;
+}
+
+/** The utterance sounding now, for read-aloud progress; null when none. */
+export function getOverlaySpeechProgress(): OverlaySpeechProgress | null {
+  return cachedProgress;
 }
 
 /** Stops the overlay chain containing this message, if any. */
@@ -107,6 +137,7 @@ export async function speakOverlayChain(items: OverlaySpeechItem[]): Promise<boo
     id: nextChainId++,
     messageIds,
     currentMessageId: undefined,
+    currentItem: undefined,
     stop: () => {
       abort.abort();
       currentPlayback?.stop();
@@ -119,6 +150,7 @@ export async function speakOverlayChain(items: OverlaySpeechItem[]): Promise<boo
     for (const item of items) {
       if (abort.signal.aborted) return true;
       chain.currentMessageId = item.messageId;
+      chain.currentItem = item;
       notify();
       try {
         spoken =
@@ -144,6 +176,7 @@ export async function speakOverlayChain(items: OverlaySpeechItem[]): Promise<boo
   } finally {
     chains.delete(chain.id);
     chain.currentMessageId = undefined;
+    chain.currentItem = undefined;
     notify();
   }
 }

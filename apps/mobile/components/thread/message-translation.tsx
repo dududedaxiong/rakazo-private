@@ -149,6 +149,8 @@ export function MessageTranslationView({
   onSpeakText,
   favorited = false,
   onToggleFavorite,
+  /** Opens the translation-model picker; absent where switching is unavailable. */
+  onSwitchModel,
 }: {
   translation: MessageTranslation;
   /** Overrides the outer spacing (a card, unlike a row, supplies its own). */
@@ -163,6 +165,8 @@ export function MessageTranslationView({
   favorited?: boolean;
   /** Toggles this translation in the thread's favorites. */
   onToggleFavorite?: () => void;
+  /** Opens the translation-model picker. */
+  onSwitchModel?: () => void;
 }) {
   const { t } = useI18n();
   const tokens = useMobileTokens();
@@ -172,6 +176,29 @@ export function MessageTranslationView({
   const { status, result, error, expanded } = translation;
 
   if (!expanded || status === "idle") return null;
+
+  // Tapping the model name opens the picker; without a handler it is plain text.
+  const modelTextProps = onSwitchModel
+    ? {
+        onPress: onSwitchModel,
+        accessibilityRole: "button" as const,
+        accessibilityLabel: t("Switch translation model"),
+      }
+    : {};
+  const modelLine =
+    status === "done" && result
+      ? result.usedFallback
+        ? t("Translated with {model} (backup) · {source} to {target}", {
+            model: result.modelId,
+            source: translationSourceLabel(result.sourceLanguage),
+            target: translationTargetLabel(result.targetLanguage),
+          })
+        : t("Translated with {model} · {source} to {target}", {
+            model: result.modelId,
+            source: translationSourceLabel(result.sourceLanguage),
+            target: translationTargetLabel(result.targetLanguage),
+          })
+      : "";
 
   return (
     <View
@@ -193,19 +220,9 @@ export function MessageTranslationView({
         <>
           <Text style={{ fontSize: 13 }}>
             <Text style={{ color: blue, fontWeight: "700" }}>{t("Translate")}</Text>
-            <Text style={{ color: tokens.mutedForeground }}>
+            <Text style={{ color: tokens.mutedForeground }} {...modelTextProps}>
               {"  "}
-              {result.usedFallback
-                ? t("Translated with {model} (backup) · {source} to {target}", {
-                    model: result.modelId,
-                    source: translationSourceLabel(result.sourceLanguage),
-                    target: translationTargetLabel(result.targetLanguage),
-                  })
-                : t("Translated with {model} · {source} to {target}", {
-                    model: result.modelId,
-                    source: translationSourceLabel(result.sourceLanguage),
-                    target: translationTargetLabel(result.targetLanguage),
-                  })}
+              {modelLine}
             </Text>
           </Text>
           <Text selectable style={{ color: tokens.foreground, fontSize: 15, marginTop: 6 }}>

@@ -14,6 +14,7 @@ const labels: Record<MessageMenuSymbol, string> = {
   speak: "Speak message",
   select: "Select text",
   unread: "Mark as unread",
+  selectMessages: "Select messages",
 };
 
 const reactions = ["👍", "👎", "❤️", "😂", "🎉", "😮"] as const;
@@ -125,6 +126,24 @@ describe("message context menu", () => {
         }),
       ),
     ).not.toContain("favorite");
+  });
+
+  it("offers Select messages right after Favorite, only when asked", () => {
+    const menu = buildMessageContextMenu({
+      labels,
+      reactions,
+      include: { quote: false, react: false, speak: false, select: false, selectMessages: true },
+    });
+    expect(menu.map((entry) => entry.id)).toEqual(["reply", "copy", "share", "selectMessages"]);
+    expect(
+      ids(
+        buildMessageContextMenu({
+          labels,
+          reactions,
+          include: { quote: false, react: false, speak: false, select: false },
+        }),
+      ),
+    ).not.toContain("selectMessages");
   });
 
   it("reads a reaction id back out of a menu event", () => {

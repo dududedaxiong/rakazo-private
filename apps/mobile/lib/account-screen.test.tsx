@@ -21,6 +21,7 @@ import type * as ApiServer from "./api-server";
 import { replaceWithSignIn } from "./auth-routing";
 import { endCallBeforeSessionEnd } from "./call-session";
 import { promptAccountDeletion } from "./delete-account-prompt";
+import { clearMediaTemp } from "./media-folders";
 import type * as Session from "./session";
 import { registerSettingsSheet } from "./settings-sheet";
 import type * as ThreadFeedback from "./thread-feedback";
@@ -321,6 +322,17 @@ vi.mock("./live-notifications", () => ({
   setLiveNotificationSettings: vi.fn(),
   stopLiveNotifications: vi.fn(async () => undefined),
 }));
+const tempUsageState = vi.hoisted(() => ({ files: 0, bytes: 0 }));
+vi.mock("./media-folders", () => ({
+  clearMediaTemp: vi.fn(() => {
+    const cleared = tempUsageState.files;
+    tempUsageState.files = 0;
+    tempUsageState.bytes = 0;
+    return cleared;
+  }),
+  formatBytes: (bytes: number) => `${bytes} B`,
+  mediaTempUsage: vi.fn(() => ({ ...tempUsageState })),
+}));
 const { styles } = vi.hoisted(() => ({ styles: new Proxy({}, { get: () => ({}) }) }));
 vi.mock("./native", () => ({
   native: new Proxy({}, { get: () => "#000" }),
@@ -383,6 +395,8 @@ beforeEach(() => {
   account.me = { userId: "user-1", name: "Tester", email: "tester@example.test" };
   account.rules = [];
   account.messaging = { enabled: true };
+  tempUsageState.files = 0;
+  tempUsageState.bytes = 0;
   haptics.enabled = true;
   haptics.listeners.clear();
   haptics.save.mockReset().mockResolvedValue(undefined);
@@ -442,6 +456,26 @@ async function renderAccount() {
     alert: () => screen.querySelector('[role="alert"]')?.textContent ?? null,
   };
 }
+
+it("shows the temp folder usage and clears it after a confirm", async () => {
+  tempUsageState.files = 3;
+  tempUsageState.bytes = 2048;
+  const view = await renderAccount();
+  const row = view.button("Temporary files");
+  expect(row).toBeDefined();
+  expect(row?.getAttribute("data-value")).toBe("Clear");
+  expect(row?.disabled).toBe(false);
+  await view.press("Temporary files");
+  expect(Alert.alert).toHaveBeenCalledWith("Clear temporary files?", undefined, expect.any(Array));
+  const buttons = vi.mocked(Alert.alert).mock.lastCall?.[2];
+  const clearButton = buttons?.find((button) => button.text === "Clear");
+  expect(clearButton?.style).toBe("destructive");
+  await act(async () => clearButton?.onPress?.());
+  expect(clearMediaTemp).toHaveBeenCalled();
+  // The row refreshes to empty and can no longer be pressed.
+  expect(view.button("Temporary files")?.getAttribute("data-value")).toBeNull();
+  expect(view.button("Temporary files")?.disabled).toBe(true);
+});
 
 it("navigates to sign-in while a silent server still owes the sign-out delivery", async () => {
   const actual = await vi.importActual<typeof ApiAuth>("./api-auth");

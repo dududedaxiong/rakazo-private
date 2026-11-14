@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getOverlayChainMessageIds,
   getOverlaySpeakingMessageIds,
+  getOverlaySpeechProgress,
   readAloudUsesOnDevice,
   speakOverlayChain,
   stopAllOverlaySpeech,
@@ -121,6 +122,37 @@ describe("speakOverlayChain", () => {
     expect(changes).toContainEqual(["m1"]);
     expect(changes).toContainEqual(["m2"]);
     unsubscribe();
+  });
+
+  it("reports read-aloud progress per utterance of a message", async () => {
+    const first = { text: "one", messageId: "m1", segmentIndex: 0, segmentTotal: 2 };
+    const second = { text: "two", messageId: "m1", segmentIndex: 1, segmentTotal: 2 };
+    const done = speakOverlayChain([first, second]);
+    expect(getOverlaySpeechProgress()).toEqual({
+      messageId: "m1",
+      segmentIndex: 0,
+      segmentTotal: 2,
+      text: "one",
+    });
+    mocks.speakCalls[0]!.resolve(true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(getOverlaySpeechProgress()).toEqual({
+      messageId: "m1",
+      segmentIndex: 1,
+      segmentTotal: 2,
+      text: "two",
+    });
+    mocks.speakCalls[1]!.resolve(true);
+    await expect(done).resolves.toBe(true);
+    expect(getOverlaySpeechProgress()).toBeNull();
+  });
+
+  it("reports no progress for a single-utterance read", async () => {
+    const done = speakOverlayChain([item("m1", "one")]);
+    expect(getOverlaySpeechProgress()).toBeNull();
+    mocks.speakCalls[0]!.resolve(true);
+    await expect(done).resolves.toBe(true);
+    expect(getOverlaySpeechProgress()).toBeNull();
   });
 
   it("plays two chains at once without either stopping the other", async () => {

@@ -2042,6 +2042,12 @@ const threadBot: MobileBot = {
   activeVideoPromptPreset: null,
   imagePromptPresets: null,
   activeImagePromptPreset: null,
+  imageSaveDirectory: null,
+  videoSaveDirectory: null,
+  showMediaFavorite: true,
+  showMediaShare: true,
+  showMediaPreview: true,
+  showMediaDownload: true,
   translationSourceLanguage: "auto",
   translationTargetLanguage: null,
   autoTranslate: false,
@@ -2127,7 +2133,7 @@ describe("thread composer quick cards", () => {
       "Main model: Model 2",
       "Computer model: Model 2",
       "Voice model: 晓晓 · 女声",
-      "Media model: Image and video generation",
+      "Media model: What image and video generation needs",
       "Computer: Online",
       "Routines: 3 running",
       "Favorites: No favorites",
@@ -2200,6 +2206,42 @@ describe("thread model picker sheet", () => {
     expect(mocks.push).not.toHaveBeenCalled();
     expect(sheetRows()).toHaveLength(0);
     expect(chipCard("Computer model")?.getAttribute("aria-label")).toBe("Computer model: Model 4");
+  });
+
+  it("saves a translation model pick to the front of the list", async () => {
+    // A variable, not a literal: Biome reads a literal role prop as an ARIA
+    // role, and "translation" is a picker role, not an ARIA role.
+    const translationRole: ThreadModelPickerRole = "translation";
+    function Harness() {
+      const [open, setOpen] = useState(true);
+      return open ? (
+        <ThreadModelPickerSheet
+          visible
+          role={translationRole}
+          botId="bot-fixture"
+          userId="user-fixture"
+          selectedKey="openrouter::vendor/model-1"
+          currentModels={[{ provider: "openrouter", model: "vendor/model-1" }]}
+          onClose={() => setOpen(false)}
+          onSaved={() => undefined}
+        />
+      ) : null;
+    }
+    await act(async () => root.render(<Harness />));
+    await act(async () =>
+      sheetRows()
+        .find((row) => row.textContent === "Model 2")!
+        .click(),
+    );
+    await act(async () => menuButton("Switch to this model")!.click());
+    expect(mocks.update).toHaveBeenCalledWith({
+      botId: "bot-fixture",
+      translationModels: [
+        { provider: "openrouter", model: "vendor/model-2" },
+        { provider: "openrouter", model: "vendor/model-1" },
+      ],
+    });
+    expect(sheetRows()).toHaveLength(0);
   });
 
   it("tests every testable connection from the header and shows the results on the rows", async () => {

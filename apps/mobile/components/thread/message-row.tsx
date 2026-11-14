@@ -7,13 +7,14 @@ import {
   copyableMessageText,
   isPeerReceiptBlocks,
   liveMessageComposing,
+  modelOptionKey,
   selectableMessageText,
 } from "@rakazo/core";
 import * as Clipboard from "expo-clipboard";
 import type { ComponentProps, ReactNode } from "react";
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GestureResponderEvent, LayoutChangeEvent } from "react-native";
-import { Platform, Pressable, View } from "react-native";
+import { Platform, Pressable, Text, View } from "react-native";
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -29,6 +30,11 @@ import type { MessageActionId } from "../../lib/custom-settings";
 import { useCustomSettings, visibleMessageActions } from "../../lib/custom-settings";
 import { canDoubleTapReact } from "../../lib/double-tap";
 import { useI18n } from "../../lib/i18n";
+import {
+  mediaDisplaySettingsFromBot,
+  messageHasGeneratedImage,
+  messageHasGeneratedMedia,
+} from "../../lib/media-display";
 import { presentMessageActionSheet } from "../../lib/message-action-sheet";
 import {
   buildMessageContextMenu,
@@ -40,6 +46,7 @@ import { messageRowLayout } from "../../lib/message-row-layout";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "../../lib/mobile-types";
 import { blockText } from "../../lib/mobile-types";
 import { useMobileTokens, useResolvedAppearance } from "../../lib/native";
+import type { OverlaySpeechProgress } from "../../lib/overlay-speech";
 import { selectableTextFromMarkdown } from "../../lib/selectable-text";
 import { ThreadReadOnlyContext } from "../../lib/thread-read-only";
 import { translationSettingsFromBot } from "../../lib/translation";
@@ -50,6 +57,7 @@ import { presentMessageMenu } from "../message-action-menu";
 import { MessageContextMenu } from "../message-context-menu";
 import { NativeSymbol } from "../native-symbol";
 import { ReplyLine } from "../reply-line";
+import { MessageSelectCheckbox } from "./message-selection-bar";
 import { TimeSeparator } from "../time-separator";
 import { UnreadDivider } from "../unread-divider";
 import type { MessageActionProps } from "./message-bubble";
@@ -59,6 +67,8 @@ import {
   TranslateButton,
   useMessageTranslation,
 } from "./message-translation";
+import type { ThreadModelPickerRole } from "./thread-model-picker-sheet";
+import { ThreadModelPickerSheet } from "./thread-model-picker-sheet";
 
 export type MessageRowActions = {
   helperToggle: (
@@ -69,6 +79,8 @@ export type MessageRowActions = {
   reply: (message: MobileMessage) => void;
   quote: (message: MobileMessage) => void;
   select: (text: string) => void;
+  /** Enters multi-select with this message picked. */
+  enterSelection: (message: MobileMessage) => void;
   speak: (message: MobileMessage) => void;
   /** Reads given text, such as a translation, aloud. Absent where unsupported. */
   speakText?: (message: MobileMessage, text: string) => void;
@@ -123,6 +135,14 @@ type MessageRowProps = {
   waitingForUser: boolean;
   /** This message's reply is being read aloud right now. */
   speaking?: boolean;
+  /** The utterance sounding now, for read-aloud progress. */
+  speechProgress?: OverlaySpeechProgress;
+  /** Multi-select is on: the row shows a checkbox instead of actions. */
+  selecting?: boolean;
+  /** This message is picked while selecting. */
+  selected?: boolean;
+  /** Toggles this message's checkbox while selecting. */
+  onToggleSelect?: () => void;
   /** This bot reply is in the thread's favorites. */
   favorited?: boolean;
   /** This bot reply's translation is in the thread's favorites. */
@@ -174,6 +194,10 @@ export const MessageRow = memo(function MessageRow({
   mentions,
   waitingForUser,
   speaking,
+  speechProgress,
+  selecting,
+  selected,
+  onToggleSelect,
   favorited,
   translationFavorited,
   searchHit,
@@ -253,12 +277,14 @@ export const MessageRow = memo(function MessageRow({
     const includeSpeak = message.role === "bot" && !onCall && Boolean(blockText(message));
     const includeSelect = messageText.trim().length > 0;
     // A favorited reply stays favoritable from the row and the long-press menu;
-    // favorites are local, so they work in read-only history too.
+    // favorites are local, so they work in read-only history too. A reply
+    // carrying generated media follows the bot's favorite toggle instead.
     const includeFavorite =
       Boolean(actions.favorite) &&
       message.role === "bot" &&
       !message.id.startsWith("progress:") &&
-      Boolean(blockText(message).trim());
+      Boolean(blockText(message).trim()) &&
+      (mediaDisplay.showMediaFavorite || !hasGeneratedMedia);
     const favoriteLabel = favorited ? t("Unfavorite") : t("Favorite");
     const toggleFavorite = () => actions.favorite?.(message);
     // Any sent message can be marked unread; the next open starts New at the first reply from it.
@@ -311,6 +337,7 @@ export const MessageRow = memo(function MessageRow({
       ...(includeSelect ? [{ name: "select", text: t("Select text"), onPress: select }] : []),
       { name: "copy", text: t("Copy"), onPress: copy },
       { name: "share", text: t("Share"), onPress: share },
+      { name: "selectMessages", text: t("Select messages"), onPress: () => actions.enterSelection(message) },
       ...(includeFavorite
         ? [{ name: "favorite", text: favoriteLabel, onPress: toggleFavorite }]
         : []),
@@ -329,6 +356,7 @@ export const MessageRow = memo(function MessageRow({
         speak: t("Speak message"),
         select: t("Select text"),
         unread: t("Mark as unread"),
+        selectMessages: t("Select messages"),
       },
       reactions: MESSAGE_REACTIONS,
       include: {
@@ -340,6 +368,7 @@ export const MessageRow = memo(function MessageRow({
         unread: includeUnread,
         share: includeSelect,
         favorite: includeFavorite,
+        selectMessages: true,
       },
     });
     const openSheet = (event: GestureResponderEvent) =>
@@ -423,6 +452,12 @@ export const MessageRow = memo(function MessageRow({
                   },
                 ]
               : []),
+            {
+              name: "selectMessages",
+              text: t("Select messages"),
+              icon: "checkbox-outline" as const,
+              onPress: () => actions.enterSelection(message),
+            },
           ],
         ],
       });
@@ -460,6 +495,7 @@ export const MessageRow = memo(function MessageRow({
         if (id === "speak") speakMessage();
         if (id === "select") select();
         if (id === "unread") markUnread();
+        if (id === "selectMessages") actions.enterSelection(message);
       },
       actionProps: {
         onLongPress: Platform.OS === "ios" ? undefined : openSheet,
@@ -494,6 +530,10 @@ export const MessageRow = memo(function MessageRow({
     bots.find((candidate) => candidate.id === bubbleBotId) ??
     bots.find((candidate) => candidate.id === botId);
   const translationSettings = translationSettingsFromBot(messageBot ?? null);
+  // This reply's generated-media actions come from the bot that wrote it.
+  const mediaDisplay = mediaDisplaySettingsFromBot(messageBot ?? null);
+  const hasGeneratedImage = messageHasGeneratedImage(message);
+  const hasGeneratedMedia = messageHasGeneratedMedia(message);
   const canTranslate =
     message.role === "bot" &&
     !message.id.startsWith("progress:") &&
@@ -505,6 +545,15 @@ export const MessageRow = memo(function MessageRow({
     autoTranslate: translationSettings.autoTranslate,
     composing: liveMessageComposing(message.blocks),
   });
+  const [translationPickerOpen, setTranslationPickerOpen] = useState(false);
+  // A variable, not a literal: Biome reads a literal role prop as an ARIA
+  // role, and "translation" is a picker role, not an ARIA role.
+  const translationPickerRole: ThreadModelPickerRole = "translation";
+  // The picker marks the bot's primary translation model as selected.
+  const translationSelectedKey =
+    translationSettings.modelProvider && translationSettings.modelId
+      ? modelOptionKey(translationSettings.modelProvider, translationSettings.modelId)
+      : "";
   // A search hit tints the row yellow; the current hit is stronger than a plain
   // hit, and both outrank the jump highlight.
   const rowHighlight =
@@ -517,6 +566,42 @@ export const MessageRow = memo(function MessageRow({
           ? "#ffdf6b"
           : "#fff3bf"
       : undefined;
+  // The bubble, shared by the context menu and the selecting tap-to-toggle:
+  // while selecting, previews stay closed so a tap only toggles the checkbox.
+  const bubble = (
+    <ThreadReadOnlyContext.Provider value={readOnly}>
+      <MessageBubble
+        mentions={mentions}
+        botId={bubbleBotId}
+        groupId={groupId}
+        message={message}
+        authorName={authorName}
+        botName={botName}
+        showBotSenderName={showBotSenderName}
+        bots={bots}
+        members={members}
+        canAnswer={canAnswer}
+        canDismiss={canDismiss}
+        onAnswer={actions.answer}
+        onOpenBot={actions.openBot}
+        onOpenComputer={actions.openComputer}
+        onChoiceDismissed={onChoiceDismissed}
+        onPreviewFile={selecting ? () => {} : actions.previewFile}
+        onPreviewImage={
+          selecting || (hasGeneratedImage && !mediaDisplay.showMediaPreview)
+            ? () => {}
+            : actions.previewImage
+        }
+        peerExchange={peerExchange}
+        onOpenPeerChat={actions.openPeerChat}
+        actionProps={actionProps}
+        doubleTapSurface={Boolean(likeMessage)}
+        onHelperToggle={actions.helperToggle}
+        userBubble={userBubble}
+        userId={userId}
+      />
+    </ThreadReadOnlyContext.Provider>
+  );
   return (
     <View
       key={message.id}
@@ -538,6 +623,11 @@ export const MessageRow = memo(function MessageRow({
           justifyContent: message.role === "user" ? "flex-end" : "flex-start",
         }}
       >
+        {selecting && onToggleSelect ? (
+          <View style={{ paddingTop: 10 }}>
+            <MessageSelectCheckbox selected={selected ?? false} onToggle={onToggleSelect} />
+          </View>
+        ) : null}
         {activityBotId ? (
           <View style={{ paddingTop: 22 }}>
             <BotAvatar
@@ -571,45 +661,44 @@ export const MessageRow = memo(function MessageRow({
               onJump={actions.jump}
             />
           )}
-          <MessageContextMenu
-            actions={menu}
-            fullWidth={layout.menuFullWidth}
-            maxWidth={layout.menuMaxWidth}
-            colorScheme={colorScheme}
-            onAction={onMenuAction}
-            onLongPress={actionProps.onLongPress}
-            onDoubleTap={messageHasInlineControls(message.blocks) ? undefined : likeMessage}
-          >
-            <ThreadReadOnlyContext.Provider value={readOnly}>
-              <MessageBubble
-                mentions={mentions}
-                botId={bubbleBotId}
-                groupId={groupId}
-                message={message}
-                authorName={authorName}
-                botName={botName}
-                showBotSenderName={showBotSenderName}
-                bots={bots}
-                members={members}
-                canAnswer={canAnswer}
-                canDismiss={canDismiss}
-                onAnswer={actions.answer}
-                onOpenBot={actions.openBot}
-                onOpenComputer={actions.openComputer}
-                onChoiceDismissed={onChoiceDismissed}
-                onPreviewFile={actions.previewFile}
-                onPreviewImage={actions.previewImage}
-                peerExchange={peerExchange}
-                onOpenPeerChat={actions.openPeerChat}
-                actionProps={actionProps}
-                doubleTapSurface={Boolean(likeMessage)}
-                onHelperToggle={actions.helperToggle}
-                userBubble={userBubble}
-                userId={userId}
-              />
-            </ThreadReadOnlyContext.Provider>
-          </MessageContextMenu>
+          {selecting && onToggleSelect ? (
+            <Pressable
+              onPress={onToggleSelect}
+              style={{ maxWidth: "100%", flexShrink: 1 }}
+            >
+              {bubble}
+            </Pressable>
+          ) : (
+            <MessageContextMenu
+              actions={menu}
+              fullWidth={layout.menuFullWidth}
+              maxWidth={layout.menuMaxWidth}
+              colorScheme={colorScheme}
+              onAction={onMenuAction}
+              onLongPress={actionProps.onLongPress}
+              onDoubleTap={messageHasInlineControls(message.blocks) ? undefined : likeMessage}
+            >
+              {bubble}
+            </MessageContextMenu>
+          )}
+          {speaking && speechProgress ? (
+            <View style={{ marginTop: 4, gap: 2 }}>
+              <Text
+                numberOfLines={2}
+                style={{ color: tokens.mutedForeground, fontSize: 13, lineHeight: 18 }}
+              >
+                {speechProgress.text}
+              </Text>
+              <Text style={{ color: tokens.mutedForeground, fontSize: 12 }}>
+                {t("Segment {index} of {total}", {
+                  index: speechProgress.segmentIndex + 1,
+                  total: speechProgress.segmentTotal,
+                })}
+              </Text>
+            </View>
+          ) : null}
           {message.role === "bot" &&
+          !selecting &&
           !message.id.startsWith("progress:") &&
           blockText(message).trim() ? (
             <MessageActionRow
@@ -655,6 +744,7 @@ export const MessageRow = memo(function MessageRow({
                     }
                   : undefined
               }
+              onSwitchModel={messageBot?.id ? () => setTranslationPickerOpen(true) : undefined}
             />
           ) : null}
           {displayedReactions.size > 0 ? (
@@ -692,6 +782,22 @@ export const MessageRow = memo(function MessageRow({
           ) : null}
         </View>
       </View>
+      {translationPickerOpen && messageBot ? (
+        <ThreadModelPickerSheet
+          visible
+          role={translationPickerRole}
+          botId={messageBot.id}
+          userId={userId ?? ""}
+          selectedKey={translationSelectedKey}
+          currentModels={messageBot.translationModels}
+          onClose={() => setTranslationPickerOpen(false)}
+          onSaved={() => {
+            // The server translates with the bot's saved list, so
+            // re-translating now uses the model just picked.
+            translation.translate();
+          }}
+        />
+      ) : null}
     </View>
   );
 });

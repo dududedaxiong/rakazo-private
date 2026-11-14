@@ -31,6 +31,7 @@ import {
 } from "../lib/artifacts";
 import { useFloatingHeaderInset } from "../lib/floating-header";
 import { t, useI18n } from "../lib/i18n";
+import { saveGeneratedMedia } from "../lib/media-folders";
 import { presentMessageActionSheet } from "../lib/message-action-sheet";
 import { native, useResolvedAppearance, useThemedStyles } from "../lib/native";
 import { iosAtLeast } from "../lib/native-controls";
@@ -79,7 +80,15 @@ async function computePreview(mimeType: string, file: File): Promise<PreviewCont
 }
 
 export default function ArtifactDetailScreen() {
-  const { artifactId, exact } = useLocalSearchParams<{ artifactId: string; exact?: string }>();
+  const { artifactId, exact, imageSaveDirectory, videoSaveDirectory, showDownload, showShare } =
+    useLocalSearchParams<{
+      artifactId: string;
+      exact?: string;
+      imageSaveDirectory?: string;
+      videoSaveDirectory?: string;
+      showDownload?: string;
+      showShare?: string;
+    }>();
   const navigation = useNavigation();
   const router = useRouter();
   const headerInset = useFloatingHeaderInset();
@@ -202,20 +211,54 @@ export default function ArtifactDetailScreen() {
     }
   }, [content, t]);
 
+  const download = useCallback(async () => {
+    if (content.status !== "ready") return;
+    try {
+      saveGeneratedMedia(content.file.uri, content.artifact.mimeType, content.artifact.name, {
+        imageSaveDirectory: imageSaveDirectory ?? null,
+        videoSaveDirectory: videoSaveDirectory ?? null,
+      });
+      Alert.alert(t("Saved {name} locally", { name: content.artifact.name }));
+    } catch (error) {
+      Alert.alert(t("Could not save media"), errorText(error, t("Try again.")));
+    }
+  }, [content, t, imageSaveDirectory, videoSaveDirectory]);
+
+  // The media toggles gate only image and video artifacts; documents and
+  // other files always keep Share, and never show Download.
+  const isMedia =
+    content.status === "ready" &&
+    (content.artifact.mimeType.startsWith("image/") ||
+      content.artifact.mimeType.startsWith("video/"));
+  const showShareButton = !isMedia || showShare !== "0";
+  const showDownloadButton = isMedia && showDownload !== "0";
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: content.status === "ready" ? content.artifact.name : "",
       headerRight: () =>
         content.status === "ready" ? (
           <View style={styles.headerActions}>
-            <Pressable
-              accessibilityLabel={t("Share")}
-              hitSlop={8}
-              onPress={() => void share()}
-              style={styles.headerButton}
-            >
-              <NativeSymbol ios="square.and.arrow.up" android="share-social-outline" size={19} />
-            </Pressable>
+            {showShareButton ? (
+              <Pressable
+                accessibilityLabel={t("Share")}
+                hitSlop={8}
+                onPress={() => void share()}
+                style={styles.headerButton}
+              >
+                <NativeSymbol ios="square.and.arrow.up" android="share-social-outline" size={19} />
+              </Pressable>
+            ) : null}
+            {showDownloadButton ? (
+              <Pressable
+                accessibilityLabel={t("Download")}
+                hitSlop={8}
+                onPress={() => void download()}
+                style={styles.headerButton}
+              >
+                <NativeSymbol ios="square.and.arrow.down" android="download-outline" size={19} />
+              </Pressable>
+            ) : null}
             <Pressable
               accessibilityLabel={t("Delete")}
               hitSlop={8}
@@ -236,12 +279,26 @@ export default function ArtifactDetailScreen() {
             unstable_headerRightItems: () =>
               content.status === "ready"
                 ? [
-                    {
-                      type: "button" as const,
-                      label: t("Share"),
-                      icon: { type: "sfSymbol" as const, name: "square.and.arrow.up" },
-                      onPress: () => void share(),
-                    },
+                    ...(showShareButton
+                      ? [
+                          {
+                            type: "button" as const,
+                            label: t("Share"),
+                            icon: { type: "sfSymbol" as const, name: "square.and.arrow.up" },
+                            onPress: () => void share(),
+                          },
+                        ]
+                      : []),
+                    ...(showDownloadButton
+                      ? [
+                          {
+                            type: "button" as const,
+                            label: t("Download"),
+                            icon: { type: "sfSymbol" as const, name: "square.and.arrow.down" },
+                            onPress: () => void download(),
+                          },
+                        ]
+                      : []),
                     {
                       type: "button" as const,
                       label: t("Delete"),
@@ -254,7 +311,17 @@ export default function ArtifactDetailScreen() {
           }
         : {}),
     });
-  }, [confirmDelete, content, navigation, share, styles, t]);
+  }, [
+    confirmDelete,
+    content,
+    navigation,
+    share,
+    download,
+    showShareButton,
+    showDownloadButton,
+    styles,
+    t,
+  ]);
 
   const scrolling =
     content.status === "ready" &&

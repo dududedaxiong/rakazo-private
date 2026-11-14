@@ -42,6 +42,15 @@ vi.mock("./incoming-share", () => ({
   takeIncomingShare: vi.fn(),
 }));
 vi.mock("./user-error", () => ({ errorText: (_: unknown, fallback: string) => fallback }));
+const stagedUploads = vi.hoisted(
+  () => [] as Array<{ contentBase64: string; mimeType: string; name: string }>,
+);
+vi.mock("./media-folders", () => ({
+  stageUploadedMedia: (contentBase64: string, mimeType: string, name: string) => {
+    stagedUploads.push({ contentBase64, mimeType, name });
+    return `file:///document/Rakazo/临时/${name}`;
+  },
+}));
 
 let root: Root;
 let attachments: ReturnType<typeof useThreadAttachments>;
@@ -107,6 +116,7 @@ function attachment(id: string, threadKey: string): PickedAttachment & { threadK
 
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  stagedUploads.length = 0;
   root = createRoot(document.createElement("div"));
 });
 
@@ -157,6 +167,17 @@ it("counts a read that settles before the next render against the attachment lim
   ]);
   // The identity i18n mock leaves the placeholder; before the fix there was no notice at all.
   expect(attachments.attachmentNotice).toBe("Skipped {items}");
+});
+
+it("stages a picked upload into the temp folder", async () => {
+  act(() => root.render(<Probe botId="bot-a" />));
+  vi.mocked(pickDocuments).mockResolvedValueOnce({
+    attachments: [{ id: "u1", name: "u1.png", mimeType: "image/png", contentBase64: "aGk=" }],
+    skipped: [],
+  });
+  await act(async () => attachments.attachFrom("file"));
+  expect(stagedUploads).toEqual([{ contentBase64: "aGk=", mimeType: "image/png", name: "u1.png" }]);
+  expect(attachments.activePendingAttachments.map((item) => item.id)).toEqual(["u1"]);
 });
 
 it("keeps a chat's unsent attachments when the chat is left and reopened", () => {

@@ -1,4 +1,4 @@
-import { memberName, resolvePersonaColorDef } from "@rakazo/core";
+import { memberName, resolvePersonaColorDef, toUtterances } from "@rakazo/core";
 import { useNavigation, useRouter } from "expo-router";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
@@ -244,16 +244,30 @@ function useCouldNotSpeakAlert() {
 /** One read-aloud item, always tied to its message, so either engine can play it. */
 type SpeakItem = SpeechQueueItem & { messageId: string };
 
-/** Plays read-aloud items on the on-device chain or the single playback. */
+/**
+ * Plays read-aloud items on the on-device chain or the single playback. Each
+ * message splits into utterances first, so both engines can report read-aloud
+ * progress (which utterance of the message is sounding) as they play.
+ */
 async function speakItems(
   items: SpeakItem[],
   showCouldNotSpeak: () => void,
   t: (message: string) => string,
 ): Promise<void> {
+  const utterances = items.flatMap((item) => {
+    const segments = toUtterances(item.text);
+    return segments.map((text, index) => ({
+      ...item,
+      text,
+      segmentIndex: index,
+      segmentTotal: segments.length,
+    }));
+  });
+  if (utterances.length === 0) return;
   try {
     const spoken = (await readAloudUsesOnDevice())
-      ? await speakOverlayChain(items)
-      : await speakQueue(items);
+      ? await speakOverlayChain(utterances)
+      : await speakQueue(utterances);
     if (!spoken) showCouldNotSpeak();
   } catch (err) {
     Alert.alert(t("Could not speak"), errorText(err, t("Try again.")));

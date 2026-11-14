@@ -209,7 +209,7 @@ export function ThreadComposerChips({
       {
         id: "mediaModel",
         label: t("Media model"),
-        value: t("Image and video generation"),
+        value: t("What image and video generation needs"),
         active: Boolean(
           (videoOverride !== null
             ? videoOverride.modelId

@@ -14,6 +14,7 @@ import type { ListRenderItemInfo } from "react-native";
 import { StyleSheet, View } from "react-native";
 import { useI18n } from "../../lib/i18n";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "../../lib/mobile-types";
+import type { OverlaySpeechProgress } from "../../lib/overlay-speech";
 import { threadHeaderFloats } from "../../lib/thread-edges";
 import { translationFavoriteId } from "../../lib/thread-favorites";
 import { previewMessageText } from "../../lib/thread-message-text";
@@ -42,6 +43,7 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
       reply: (message) => rowActionsRef.current.reply(message),
       quote: (message) => rowActionsRef.current.quote(message),
       select: (text) => rowActionsRef.current.select(text),
+      enterSelection: (message) => rowActionsRef.current.enterSelection(message),
       speak: (message) => rowActionsRef.current.speak(message),
       speakText: (message, text) => rowActionsRef.current.speakText?.(message, text),
       react: (message, reaction) => rowActionsRef.current.react(message, reaction),
@@ -87,6 +89,10 @@ export function useThreadRows({
   highlightedMessageId,
   speakingMessageId,
   overlaySpeakingMessageIds,
+  speechProgress,
+  selecting,
+  selectedMessageIds,
+  onToggleSelectMessage,
   favoriteIds,
   searchHitIds,
   searchCurrentId,
@@ -114,6 +120,14 @@ export function useThreadRows({
   speakingMessageId?: string;
   /** Messages sounding now in an overlay read-aloud chain. */
   overlaySpeakingMessageIds?: ReadonlySet<string>;
+  /** The utterance sounding now, for read-aloud progress. */
+  speechProgress?: OverlaySpeechProgress | null;
+  /** Multi-select is on: rows show checkboxes instead of actions. */
+  selecting?: boolean;
+  /** The picked message ids while selecting. */
+  selectedMessageIds?: ReadonlySet<string>;
+  /** Toggles one message's checkbox while selecting. */
+  onToggleSelectMessage?: (messageId: string) => void;
   /** Bot replies in the thread's favorites. */
   favoriteIds?: ReadonlySet<string>;
   /** Messages matching the open conversation search. */
@@ -196,6 +210,12 @@ export function useThreadRows({
           )}
           speaking={
             speakingMessageId === message.id || overlaySpeakingMessageIds?.has(message.id) === true
+          }
+          speechProgress={speechProgress?.messageId === message.id ? speechProgress : undefined}
+          selecting={selecting}
+          selected={selectedMessageIds?.has(message.id) ?? false}
+          onToggleSelect={
+            onToggleSelectMessage ? () => onToggleSelectMessage(message.id) : undefined
           }
           favorited={favoriteIds?.has(message.id) ?? false}
           translationFavorited={favoriteIds?.has(translationFavoriteId(message.id)) ?? false}

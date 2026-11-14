@@ -20,7 +20,7 @@ import {
 import { useFocusEffect, useIsFocused, useLocalSearchParams, useRouter } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { I18nManager, Platform, Pressable, Text, TextInput, View } from "react-native";
+import { Alert, I18nManager, Platform, Pressable, Text, TextInput, View } from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { readableGutters } from "../../lib/adaptive-layout";
@@ -36,9 +36,14 @@ import { useComputerFloatEnabled } from "../../lib/computer-float-settings";
 import { cronLabels } from "../../lib/cron";
 import { heroBackgroundHeightFor, useCustomSettings } from "../../lib/custom-settings";
 import { useI18n } from "../../lib/i18n";
-import type { MobileModel, MobileModelCredential } from "../../lib/mobile-types";
+import type { MobileMessage, MobileModel, MobileModelCredential } from "../../lib/mobile-types";
+import { blockText } from "../../lib/mobile-types";
 import { useThemedStyles } from "../../lib/native";
-import { getOverlaySpeakingMessageIds, subscribeOverlaySpeech } from "../../lib/overlay-speech";
+import {
+  getOverlaySpeakingMessageIds,
+  getOverlaySpeechProgress,
+  subscribeOverlaySpeech,
+} from "../../lib/overlay-speech";
 import { useChatOnScreen } from "../../lib/page-card-detail";
 import { currentPersonaName } from "../../lib/prompt-template-display";
 import { usePromptTemplates } from "../../lib/prompt-templates";
@@ -98,6 +103,7 @@ import { ThreadBackupSheet } from "./thread-backup-sheet";
 import { ThreadBotMenuSheet } from "./thread-bot-menu-sheet";
 import { ThreadComposerChips } from "./thread-composer-chips";
 import { ThreadComposerDock } from "./thread-composer-dock";
+import { MessageSelectionBar } from "./message-selection-bar";
 import { ThreadCustomSettingsSheet } from "./thread-custom-settings-sheet";
 import { ThreadFavoritesSheet } from "./thread-favorites-sheet";
 import { useThreadHeader } from "./thread-header";
@@ -141,6 +147,13 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchIndex, setSearchIndex] = useState(0);
+  // Multi-select batch delete: the picked message ids, and whether a batch
+  // delete is running. The selection bar replaces the composer while on.
+  const [selecting, setSelecting] = useState(false);
+  const [selectedMessageIds, setSelectedMessageIds] = useState<ReadonlySet<string>>(
+    () => new Set(),
+  );
+  const [selectionBusy, setSelectionBusy] = useState(false);
   const searchBarHeight = searchOpen ? 48 : 0;
   // The interface settings, live: a slider moves the chat at once, so the hero
   // background's height follows the settings without a reload.
@@ -624,6 +637,68 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   } = useThreadRunError(snap?.run, botId, currentBot?.modelProvider);
 
   // Event actions read the latest committed screen state without invalidating settled rows.
+  /** Multi-select: toggles one message's checkbox. */
+  const toggleSelectMessage = useCallback((messageId: string) => {
+    setSelectedMessageIds((current) => {
+      const next = new Set(current);
+      if (next.has(messageId)) next.delete(messageId);
+      else next.add(messageId);
+      return next;
+    });
+  }, []);
+  const exitSelection = useCallback(() => {
+    setSelecting(false);
+    setSelectedMessageIds(new Set());
+  }, []);
+  /** Enters selection from the long-press menu, with that message picked. */
+  const enterSelection = useCallback((message: MobileMessage) => {
+    setSelecting(true);
+    setSelectedMessageIds(new Set([message.id]));
+  }, []);
+  /** Deletes the selected messages one by one, then reports which failed. */
+  const deleteSelected = useCallback(async () => {
+    if (selectedMessageIds.size === 0 || selectionBusy) return;
+    const target = groupId ? { groupId } : botId ? { botId } : null;
+    if (!target) return;
+    const messages = (snap?.messages ?? []).filter((message) => selectedMessageIds.has(message.id));
+    setSelectionBusy(true);
+    try {
+      const failures: string[] = [];
+      for (const [index, message] of messages.entries()) {
+        try {
+          await rpc("threads/deleteMessage", { ...target, messageId: message.id });
+        } catch {
+          const snippet = blockText(message).split("\n")[0]?.trim().slice(0, 40);
+          failures.push(snippet || t("message {index} of {total}", { index: index + 1, total: messages.length }));
+        }
+      }
+      exitSelection();
+      void refresh();
+      if (failures.length > 0) {
+        Alert.alert(
+          t("Could not delete {count} messages", { count: failures.length }),
+          failures.join("\n"),
+        );
+      }
+    } finally {
+      setSelectionBusy(false);
+    }
+  }, [selectedMessageIds, selectionBusy, groupId, botId, snap?.messages, exitSelection, refresh, t]);
+  const confirmDeleteSelected = useCallback(() => {
+    if (selectedMessageIds.size === 0 || selectionBusy) return;
+    const count = selectedMessageIds.size;
+    Alert.alert(
+      count === 1
+        ? t("Delete 1 message?")
+        : t("Delete {count} messages?", { count }),
+      t("This can't be undone."),
+      [
+        { text: t("Cancel"), style: "cancel" },
+        { text: t("Delete"), style: "destructive", onPress: () => void deleteSelected() },
+      ],
+    );
+  }, [selectedMessageIds, selectionBusy, deleteSelected, t]);
+
   const rowActions = useLatestRowActions({
     helperToggle: scroll.helperToggle,
     reply: (message) => {
@@ -632,6 +707,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     },
     quote: setQuoteTarget,
     select: setSelectableText,
+    enterSelection,
     speak,
     speakText: speakTranslation,
     react: composer.react,
@@ -681,11 +757,33 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     openComputer,
     // A chat attachment opens the version it was sent with, not the newest.
     previewFile: (artifactId) =>
-      router.push({ pathname: "/artifact", params: { artifactId, exact: "1" } }),
+      router.push({
+        pathname: "/artifact",
+        params: {
+          artifactId,
+          exact: "1",
+          ...(currentBot?.imageSaveDirectory
+            ? { imageSaveDirectory: currentBot.imageSaveDirectory }
+            : {}),
+          ...(currentBot?.videoSaveDirectory
+            ? { videoSaveDirectory: currentBot.videoSaveDirectory }
+            : {}),
+          showDownload: currentBot?.showMediaDownload === false ? "0" : "1",
+          showShare: currentBot?.showMediaShare === false ? "0" : "1",
+        },
+      }),
     previewImage: (target) =>
       router.push({
         pathname: "/image",
-        params: { ...target, ...(groupId ? { groupId } : { botId }) },
+        params: {
+          ...target,
+          ...(groupId ? { groupId } : { botId }),
+          ...(currentBot?.imageSaveDirectory
+            ? { imageSaveDirectory: currentBot.imageSaveDirectory }
+            : {}),
+          showDownload: currentBot?.showMediaDownload === false ? "0" : "1",
+          showShare: currentBot?.showMediaShare === false ? "0" : "1",
+        },
       }),
     jump: (messageId) => {
       void applyMessageJump({
@@ -718,6 +816,24 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     subscribeOverlaySpeech,
     getOverlaySpeakingMessageIds,
   );
+  const overlayProgress = useSyncExternalStore(subscribeOverlaySpeech, getOverlaySpeechProgress);
+  // Read-aloud progress comes from whichever engine is sounding: the
+  // on-device chain, or the single playback. Only a multi-utterance read
+  // shows progress; a single utterance has nothing to count.
+  const speechProgress =
+    overlayProgress ??
+    (playback.status === "playing" &&
+    playback.messageId !== undefined &&
+    playback.segmentTotal !== undefined &&
+    playback.segmentTotal > 1 &&
+    playback.caption !== undefined
+      ? {
+          messageId: playback.messageId,
+          segmentIndex: playback.segmentIndex ?? 0,
+          segmentTotal: playback.segmentTotal,
+          text: playback.caption,
+        }
+      : null);
 
   const { liveItems, renderMessageRow, renderItem } = useThreadRows({
     snap,
@@ -740,6 +856,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     highlightedMessageId: scroll.highlightedMessageId,
     speakingMessageId: playback.status === "playing" ? playback.messageId : undefined,
     overlaySpeakingMessageIds,
+    speechProgress,
+    selecting,
+    selectedMessageIds,
+    onToggleSelectMessage: toggleSelectMessage,
     favoriteIds,
     searchHitIds,
     searchCurrentId,
@@ -1021,6 +1141,14 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             </View>
           ) : null}
           {/* Shrinks (the suggestion lists scroll) so the input and Send stay above the keyboard. */}
+          {selecting ? (
+            <MessageSelectionBar
+              count={selectedMessageIds.size}
+              busy={selectionBusy}
+              onDelete={confirmDeleteSelected}
+              onCancel={exitSelection}
+            />
+          ) : (
           <ThreadComposerDock
             hidden={readOnly}
             columnPadding={columnPadding}
@@ -1100,6 +1228,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
               onEmptied={composer.composerEmptied}
             />
           </ThreadComposerDock>
+          )}
         </View>
         {selectableText !== null ? (
           <SelectTextSheet text={selectableText} onClose={() => setSelectableText(null)} />
@@ -1142,10 +1271,18 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             catalog={modelCatalog}
             video={{ provider: videoProvider ?? null, modelId: videoModelId ?? null }}
             image={{ provider: imageProvider ?? null, modelId: imageModelId ?? null }}
+            videoModels={currentBot?.videoModels ?? null}
+            imageModels={currentBot?.imageModels ?? null}
             videoPresets={currentBot?.videoPromptPresets ?? null}
             imagePresets={currentBot?.imagePromptPresets ?? null}
             activeVideoPreset={currentBot?.activeVideoPromptPreset ?? null}
             activeImagePreset={currentBot?.activeImagePromptPreset ?? null}
+            videoSaveDirectory={currentBot?.videoSaveDirectory ?? null}
+            imageSaveDirectory={currentBot?.imageSaveDirectory ?? null}
+            showMediaFavorite={currentBot?.showMediaFavorite ?? true}
+            showMediaShare={currentBot?.showMediaShare ?? true}
+            showMediaPreview={currentBot?.showMediaPreview ?? true}
+            showMediaDownload={currentBot?.showMediaDownload ?? true}
             onPickRole={(role) => {
               setMediaOpen(false);
               setSheetRole(role);
@@ -1158,6 +1295,40 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
                   ? { activeVideoPromptPreset: name }
                   : { activeImagePromptPreset: name }),
               })
+                .then(() => refreshMentionBots())
+                .catch(() => undefined);
+            }}
+            onPresetsChange={(role, next) => {
+              if (!botId) return;
+              void rpc("bots/update", {
+                botId,
+                ...(role === "video" ? { videoPromptPresets: next } : { imagePromptPresets: next }),
+              })
+                .then(() => refreshMentionBots())
+                .catch(() => undefined);
+            }}
+            onSaveDirectory={(role, value) => {
+              if (!botId) return;
+              void rpc("bots/update", {
+                botId,
+                ...(role === "video"
+                  ? { videoSaveDirectory: value }
+                  : { imageSaveDirectory: value }),
+              })
+                .then(() => refreshMentionBots())
+                .catch(() => undefined);
+            }}
+            onToggleMediaAction={(action, value) => {
+              if (!botId) return;
+              const patch =
+                action === "favorite"
+                  ? { showMediaFavorite: value }
+                  : action === "share"
+                    ? { showMediaShare: value }
+                    : action === "preview"
+                      ? { showMediaPreview: value }
+                      : { showMediaDownload: value };
+              void rpc("bots/update", { botId, ...patch })
                 .then(() => refreshMentionBots())
                 .catch(() => undefined);
             }}

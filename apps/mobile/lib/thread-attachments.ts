@@ -12,6 +12,7 @@ import {
   retryIncomingShare,
   takeIncomingShare,
 } from "./incoming-share";
+import { stageUploadedMedia } from "./media-folders";
 import type { PickedAttachment } from "./pick-attachments";
 import {
   pickDocuments,
@@ -191,6 +192,16 @@ export function useThreadAttachments({
     const accepted = result.attachments
       .slice(0, room)
       .map((attachment) => ({ ...attachment, threadKey: targetKey }));
+    // Uploads stage into the App's local temp folder, under their category,
+    // so they stay browsable and clearable. Staging is best-effort: if the
+    // copy fails, the original still sends.
+    for (const attachment of accepted) {
+      try {
+        stageUploadedMedia(attachment.contentBase64, attachment.mimeType, attachment.name);
+      } catch {
+        // The send must not fail because the local copy did.
+      }
+    }
     if (accepted.length) {
       // The ref moves now, not only at the next render, so another read that settles
       // before that render sees the room this one has already taken.
