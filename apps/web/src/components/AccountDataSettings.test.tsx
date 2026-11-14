@@ -297,11 +297,15 @@ it("refuses a breached backup password", async () => {
   await setBackupPassword(password);
 
   await act(async () => button("Export").click());
-  await flush();
-
-  expect(container.querySelector('[role="alert"]')?.textContent).toBe(
-    "This password appeared in a data breach. Choose another.",
+  // The breach check awaits subtle.digest, then fetch, then response.text(),
+  // so a single macrotask is not enough for the alert to appear under load.
+  // Wait for the alert itself instead of a fixed number of ticks.
+  await vi.waitFor(() =>
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+      "This password appeared in a data breach. Choose another.",
+    ),
   );
+
   expect(accountToken).not.toHaveBeenCalled();
   expect(fetchMock).toHaveBeenCalledTimes(1);
 });
