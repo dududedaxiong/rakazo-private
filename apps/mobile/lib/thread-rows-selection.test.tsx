@@ -5,7 +5,8 @@ import { act, createElement } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useThreadRows } from "../components/thread/thread-rows";
+import type { MessageRowActions } from "../components/thread/message-row";
+import { useLatestRowActions, useThreadRows } from "../components/thread/thread-rows";
 import type { MobileMessage, MobileSnapshot } from "./mobile-types";
 import type { useThreadTranscript } from "./thread-transcript";
 
@@ -206,5 +207,80 @@ describe("useThreadRows multi-select", () => {
     render({ ...base, selecting: true, selectedMessageIds: new Set(["m1"]) });
     const selectingRow = latest?.renderMessageRow(first) as ReactElement<{ selecting: boolean }>;
     expect(selectingRow.props.selecting).toBe(true);
+  });
+});
+
+describe("useLatestRowActions resend", () => {
+  let root: Root | null = null;
+  let container: HTMLDivElement | null = null;
+  let latest: MessageRowActions | null = null;
+
+  function Harness({ current }: { current: MessageRowActions }) {
+    latest = useLatestRowActions(current);
+    return null;
+  }
+
+  function render(current: MessageRowActions) {
+    act(() => {
+      root?.render(createElement(Harness, { current }));
+    });
+  }
+
+  function rowActions(resend: (message: MobileMessage) => void): MessageRowActions {
+    return {
+      helperToggle: () => {},
+      reply: () => {},
+      quote: () => {},
+      select: () => {},
+      enterSelection: () => {},
+      speak: () => {},
+      react: async () => true,
+      markUnread: () => {},
+      answer: async () => {},
+      openBot: () => {},
+      openComputer: () => {},
+      previewFile: () => {},
+      previewImage: () => {},
+      jump: () => {},
+      dismissChoice: () => {},
+      openPeerChat: () => {},
+      layout: () => {},
+      resend,
+    };
+  }
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => {
+      root?.unmount();
+    });
+    container?.remove();
+    root = null;
+    container = null;
+    latest = null;
+  });
+
+  it("forwards resend to the latest action without invalidating rows", () => {
+    const first = vi.fn();
+    const target = message("m1", "Hello again");
+    render(rowActions(first));
+    const stable = latest;
+    expect(stable).not.toBeNull();
+    stable?.resend?.(target);
+    expect(first).toHaveBeenCalledWith(target);
+
+    // Re-rendering with a new resend keeps the same stable wrapper, but the
+    // wrapper must call through to the newest action, not the first one.
+    const second = vi.fn();
+    render(rowActions(second));
+    expect(latest).toBe(stable);
+    latest?.resend?.(target);
+    expect(first).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledWith(target);
   });
 });

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { MobileMessage } from "./mobile-types";
-import { buildRegeneratePayload, previousUserMessageText } from "./thread-regenerate";
+import {
+  buildRegeneratePayload,
+  previousUserMessageText,
+  resendableUserMessageText,
+} from "./thread-regenerate";
 
 function message(id: string, role: "user" | "bot", text: string): MobileMessage {
   return {
@@ -39,6 +43,22 @@ describe("previousUserMessageText", () => {
       message("b1", "bot", "Answer"),
     ];
     expect(previousUserMessageText(messages, "b1")).toBe("Real question");
+  });
+});
+
+describe("resendableUserMessageText", () => {
+  it("returns the user message's own text", () => {
+    expect(resendableUserMessageText(message("u1", "user", "What is 2 + 2?"))).toBe(
+      "What is 2 + 2?",
+    );
+  });
+
+  it("returns null for a bot reply", () => {
+    expect(resendableUserMessageText(message("b1", "bot", "4"))).toBeNull();
+  });
+
+  it("returns null when the user message has no text to resend", () => {
+    expect(resendableUserMessageText(message("u1", "user", "   "))).toBeNull();
   });
 });
 

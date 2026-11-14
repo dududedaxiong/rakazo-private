@@ -66,7 +66,11 @@ import { useThreadListScroll } from "../../lib/thread-list-scroll";
 import { useThreadMentionCatalog } from "../../lib/thread-mention-catalog";
 import { useThreadPaging } from "../../lib/thread-paging";
 import { useThreadRead } from "../../lib/thread-read";
-import { buildRegeneratePayload, previousUserMessageText } from "../../lib/thread-regenerate";
+import {
+  buildRegeneratePayload,
+  previousUserMessageText,
+  resendableUserMessageText,
+} from "../../lib/thread-regenerate";
 import {
   isOwnThreadMessage,
   latestArrivalMessage,
@@ -97,13 +101,13 @@ import { createThreadHeaderStyles } from "../thread-header-styles";
 import { ChatBackgroundLayer } from "./chat-background-layer";
 import { ComputerFloatWindow } from "./computer-float-window";
 import { HeroBackgroundLayer } from "./hero-background-layer";
+import { MessageSelectionBar } from "./message-selection-bar";
 import { QuoteSheet } from "./quote-sheet";
 import { ThreadBackgroundSheet } from "./thread-background-sheet";
 import { ThreadBackupSheet } from "./thread-backup-sheet";
 import { ThreadBotMenuSheet } from "./thread-bot-menu-sheet";
 import { ThreadComposerChips } from "./thread-composer-chips";
 import { ThreadComposerDock } from "./thread-composer-dock";
-import { MessageSelectionBar } from "./message-selection-bar";
 import { ThreadCustomSettingsSheet } from "./thread-custom-settings-sheet";
 import { ThreadFavoritesSheet } from "./thread-favorites-sheet";
 import { useThreadHeader } from "./thread-header";
@@ -669,7 +673,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
           await rpc("threads/deleteMessage", { ...target, messageId: message.id });
         } catch {
           const snippet = blockText(message).split("\n")[0]?.trim().slice(0, 40);
-          failures.push(snippet || t("message {index} of {total}", { index: index + 1, total: messages.length }));
+          failures.push(
+            snippet ||
+              t("message {index} of {total}", { index: index + 1, total: messages.length }),
+          );
         }
       }
       exitSelection();
@@ -683,14 +690,21 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     } finally {
       setSelectionBusy(false);
     }
-  }, [selectedMessageIds, selectionBusy, groupId, botId, snap?.messages, exitSelection, refresh, t]);
+  }, [
+    selectedMessageIds,
+    selectionBusy,
+    groupId,
+    botId,
+    snap?.messages,
+    exitSelection,
+    refresh,
+    t,
+  ]);
   const confirmDeleteSelected = useCallback(() => {
     if (selectedMessageIds.size === 0 || selectionBusy) return;
     const count = selectedMessageIds.size;
     Alert.alert(
-      count === 1
-        ? t("Delete 1 message?")
-        : t("Delete {count} messages?", { count }),
+      count === 1 ? t("Delete 1 message?") : t("Delete {count} messages?", { count }),
       t("This can't be undone."),
       [
         { text: t("Cancel"), style: "cancel" },
@@ -698,6 +712,33 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       ],
     );
   }, [selectedMessageIds, selectionBusy, deleteSelected, t]);
+
+  /**
+   * Sends a user message's text again through the normal outbox, so a message
+   * that got no usable reply can be retried without retyping it. Like
+   * regenerate, a resend adds a second copy of the message to the thread.
+   */
+  const sendUserTextAgain = (text: string) => {
+    if (readOnly) return;
+    const originThreadKey = groupId ?? botId;
+    if (!originThreadKey) return;
+    if (!text) return;
+    try {
+      composer.retry(
+        feedback.sendAttempt(
+          buildRegeneratePayload({
+            text,
+            originThreadKey,
+            botTarget: botId,
+            groupTarget: groupId,
+          }),
+        ),
+      );
+    } catch {
+      feedback.setError(t("Failed to send message"));
+      return;
+    }
+  };
 
   const rowActions = useLatestRowActions({
     helperToggle: scroll.helperToggle,
@@ -730,26 +771,12 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       });
     },
     regenerate: (message) => {
-      if (readOnly) return;
-      const originThreadKey = groupId ?? botId;
-      if (!originThreadKey) return;
-      const text = previousUserMessageText(history.snapRef.current?.messages ?? [], message.id);
-      if (!text) return;
-      try {
-        composer.retry(
-          feedback.sendAttempt(
-            buildRegeneratePayload({
-              text,
-              originThreadKey,
-              botTarget: botId,
-              groupTarget: groupId,
-            }),
-          ),
-        );
-      } catch {
-        feedback.setError(t("Failed to send message"));
-        return;
-      }
+      sendUserTextAgain(
+        previousUserMessageText(history.snapRef.current?.messages ?? [], message.id) ?? "",
+      );
+    },
+    resend: (message) => {
+      sendUserTextAgain(resendableUserMessageText(message) ?? "");
     },
     markUnread: markUnreadFrom,
     answer: composer.answer,
@@ -1149,85 +1176,85 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
               onCancel={exitSelection}
             />
           ) : (
-          <ThreadComposerDock
-            hidden={readOnly}
-            columnPadding={columnPadding}
-            notice={<ThreadFetchErrorNotice error={error} showingSaved={showingSaved} />}
-            onHeight={setDockHeight}
-            replyTarget={replyTarget}
-            replyAuthor={
-              replyTarget?.role === "user"
-                ? (otherAuthor(replyTarget.author, userId)?.name ??
-                  channelMessageSender(replyTarget.blocks) ??
-                  t("You"))
-                : (memberName(snap?.members, replyTarget?.botId) ?? displayName ?? t("Bot"))
-            }
-            replyQuote={replyQuote}
-            threadTarget={artifactTarget}
-            onDismissReply={() => {
-              setReplyTarget(null);
-              setReplyQuote(null);
-            }}
-            attachmentNotice={attachments.attachmentNotice}
-            attachments={attachments.activePendingAttachments}
-            onRemoveAttachment={(id) =>
-              attachments.setPendingAttachments((current) =>
-                current.filter((item) => item.id !== id),
-              )
-            }
-          >
-            <ThreadComposerChips
-              botId={botId}
-              currentBot={currentBot}
-              userId={userId}
-              catalog={modelCatalog}
-              mainOverride={mainOverride}
-              videoOverride={videoOverride}
-              imageOverride={imageOverride}
-              computerChoice={computerChoice}
-              onPickModel={setSheetRole}
-              onPickMediaModel={() => setMediaOpen(true)}
-              favoriteCount={favorites.length}
-              onOpenFavorites={() => setFavoritesOpen(true)}
-              backgroundLabel={
-                !background
-                  ? t("Default")
-                  : background.kind === "image"
-                    ? t("Local image")
-                    : background.kind === "video"
-                      ? t("Video")
-                      : t("URL subscription")
+            <ThreadComposerDock
+              hidden={readOnly}
+              columnPadding={columnPadding}
+              notice={<ThreadFetchErrorNotice error={error} showingSaved={showingSaved} />}
+              onHeight={setDockHeight}
+              replyTarget={replyTarget}
+              replyAuthor={
+                replyTarget?.role === "user"
+                  ? (otherAuthor(replyTarget.author, userId)?.name ??
+                    channelMessageSender(replyTarget.blocks) ??
+                    t("You"))
+                  : (memberName(snap?.members, replyTarget?.botId) ?? displayName ?? t("Bot"))
               }
-              onOpenBackground={() => setBackgroundOpen(true)}
-              onOpenBackup={() => setBackupOpen(true)}
-            />
-            <ThreadComposer
-              key={threadKey}
-              ref={composer.composerRef}
-              draftScope={draftScope}
-              agentSkills={agentSkills}
-              composerMentionTargets={composerMentionTargets}
-              onMentionRequested={onMentionRequested}
-              composerPrompt={composerPrompt}
-              thinkingLevel={thinkingLevel}
-              replyTargetId={replyTarget?.id}
               replyQuote={replyQuote}
-              attachmentIds={attachments.activePendingAttachments.map(
-                (attachment) => attachment.id,
-              )}
-              botId={botId}
-              onCall={onCall}
-              working={working}
-              sending={composer.sending || attachments.shareImporting}
-              styles={styles}
-              attachActions={attachments.attachActions}
-              attachFrom={attachments.attachFrom}
-              send={composer.send}
-              stop={composer.stop}
-              onSlashAction={composer.runSlashAction}
-              onEmptied={composer.composerEmptied}
-            />
-          </ThreadComposerDock>
+              threadTarget={artifactTarget}
+              onDismissReply={() => {
+                setReplyTarget(null);
+                setReplyQuote(null);
+              }}
+              attachmentNotice={attachments.attachmentNotice}
+              attachments={attachments.activePendingAttachments}
+              onRemoveAttachment={(id) =>
+                attachments.setPendingAttachments((current) =>
+                  current.filter((item) => item.id !== id),
+                )
+              }
+            >
+              <ThreadComposerChips
+                botId={botId}
+                currentBot={currentBot}
+                userId={userId}
+                catalog={modelCatalog}
+                mainOverride={mainOverride}
+                videoOverride={videoOverride}
+                imageOverride={imageOverride}
+                computerChoice={computerChoice}
+                onPickModel={setSheetRole}
+                onPickMediaModel={() => setMediaOpen(true)}
+                favoriteCount={favorites.length}
+                onOpenFavorites={() => setFavoritesOpen(true)}
+                backgroundLabel={
+                  !background
+                    ? t("Default")
+                    : background.kind === "image"
+                      ? t("Local image")
+                      : background.kind === "video"
+                        ? t("Video")
+                        : t("URL subscription")
+                }
+                onOpenBackground={() => setBackgroundOpen(true)}
+                onOpenBackup={() => setBackupOpen(true)}
+              />
+              <ThreadComposer
+                key={threadKey}
+                ref={composer.composerRef}
+                draftScope={draftScope}
+                agentSkills={agentSkills}
+                composerMentionTargets={composerMentionTargets}
+                onMentionRequested={onMentionRequested}
+                composerPrompt={composerPrompt}
+                thinkingLevel={thinkingLevel}
+                replyTargetId={replyTarget?.id}
+                replyQuote={replyQuote}
+                attachmentIds={attachments.activePendingAttachments.map(
+                  (attachment) => attachment.id,
+                )}
+                botId={botId}
+                onCall={onCall}
+                working={working}
+                sending={composer.sending || attachments.shareImporting}
+                styles={styles}
+                attachActions={attachments.attachActions}
+                attachFrom={attachments.attachFrom}
+                send={composer.send}
+                stop={composer.stop}
+                onSlashAction={composer.runSlashAction}
+                onEmptied={composer.composerEmptied}
+              />
+            </ThreadComposerDock>
           )}
         </View>
         {selectableText !== null ? (

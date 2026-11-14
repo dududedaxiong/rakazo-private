@@ -1597,6 +1597,7 @@ export const NL_MESSAGES: Record<string, string> = {
   Like: "Leuk",
   Dislike: "Niet leuk",
   Regenerate: "Opnieuw genereren",
+  Resend: "Opnieuw verzenden",
   "Computer screen": "Computerscherm",
   Resize: "Formaat wijzigen",
   "The connection dropped. Try again.": "De verbinding is verbroken. Probeer het opnieuw.",

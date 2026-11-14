@@ -1631,6 +1631,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Like: "いいね",
   Dislike: "よくないね",
   Regenerate: "再生成",
+  Resend: "再送信",
   "Computer screen": "コンピューター画面",
   Resize: "サイズ変更",
   "The connection dropped. Try again.": "接続が切れました。もう一度お試しください。",

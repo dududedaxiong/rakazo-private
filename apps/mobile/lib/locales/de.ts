@@ -1609,6 +1609,7 @@ export const DE_MESSAGES: Record<string, string> = {
   Like: "Gefällt mir",
   Dislike: "Gefällt mir nicht",
   Regenerate: "Neu generieren",
+  Resend: "Erneut senden",
   "Computer screen": "Computerbildschirm",
   Resize: "Größe ändern",
   "The connection dropped. Try again.": "Die Verbindung ist abgebrochen. Bitte erneut versuchen.",

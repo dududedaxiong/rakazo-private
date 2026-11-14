@@ -1592,6 +1592,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   Like: "讚",
   Dislike: "踩",
   Regenerate: "重新生成",
+  Resend: "重新傳送",
   "Computer screen": "電腦畫面",
   Resize: "調整大小",
   "The connection dropped. Try again.": "連線中斷了，請重試。",

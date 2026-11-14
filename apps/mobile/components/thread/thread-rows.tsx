@@ -51,6 +51,7 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
       favoriteTranslation: (message, translatedText) =>
         rowActionsRef.current.favoriteTranslation?.(message, translatedText),
       regenerate: (message) => rowActionsRef.current.regenerate?.(message),
+      resend: (message) => rowActionsRef.current.resend?.(message),
       markUnread: (message) => rowActionsRef.current.markUnread(message),
       answer: (message, answer, fields, dismiss, remember) =>
         rowActionsRef.current.answer(message, answer, fields, dismiss, remember),

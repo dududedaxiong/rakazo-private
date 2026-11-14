@@ -1637,6 +1637,7 @@ export const RU_MESSAGES: Record<string, string> = {
   Like: "Нравится",
   Dislike: "Не нравится",
   Regenerate: "Сгенерировать заново",
+  Resend: "Отправить ещё раз",
   "Computer screen": "Экран компьютера",
   Resize: "Изменить размер",
   "The connection dropped. Try again.": "Соединение прервано. Попробуйте ещё раз.",

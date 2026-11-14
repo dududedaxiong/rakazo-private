@@ -6,6 +6,7 @@ vi.mock("react-native", () => ({ Share: { share: vi.fn() } }));
 
 const labels: Record<MessageMenuSymbol, string> = {
   reply: "Reply",
+  resend: "Resend",
   copy: "Copy",
   share: "Share",
   favorite: "Favorite",
@@ -101,6 +102,30 @@ describe("message context menu", () => {
         }),
       ),
     ).not.toContain("unread");
+  });
+
+  it("offers Resend right after Reply for a user message, only when asked", () => {
+    const menu = buildMessageContextMenu({
+      labels,
+      reactions,
+      include: { quote: false, react: false, speak: false, select: true, resend: true },
+    });
+    expect(menu.map((entry) => [entry.id, entry.title, entry.symbol])).toEqual([
+      ["reply", "Reply", "reply"],
+      ["resend", "Resend", "resend"],
+      ["copy", "Copy", "copy"],
+      ["share", "Share", "share"],
+      ["secondary", "", undefined],
+    ]);
+    expect(
+      ids(
+        buildMessageContextMenu({
+          labels,
+          reactions,
+          include: { quote: false, react: false, speak: false, select: true },
+        }),
+      ),
+    ).not.toContain("resend");
   });
 
   it("offers Favorite right after Share for a bot reply, only when asked", () => {

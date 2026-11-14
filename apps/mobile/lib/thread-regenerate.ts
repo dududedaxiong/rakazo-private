@@ -22,6 +22,17 @@ export function previousUserMessageText(
 }
 
 /**
+ * The text of a user message, for resending it as-is from its own long-press
+ * menu. Returns null when the message is not a user message or has no text to
+ * resend (an attachment-only message cannot go through the text outbox).
+ */
+export function resendableUserMessageText(message: MobileMessage): string | null {
+  if (message.role !== "user") return null;
+  const text = selectableMessageText(message).trim();
+  return text ? text : null;
+}
+
+/**
  * A regenerate is a plain resend of that user message through the normal outbox,
  * so it runs the same send path as a message typed in the composer.
  *

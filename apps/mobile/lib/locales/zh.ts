@@ -1597,6 +1597,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   Like: "赞",
   Dislike: "踩",
   Regenerate: "重新生成",
+  Resend: "重新发送",
   "Computer screen": "电脑画面",
   Resize: "调整大小",
   "The connection dropped. Try again.": "连接断开了，请重试。",

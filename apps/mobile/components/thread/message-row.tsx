@@ -57,11 +57,11 @@ import { presentMessageMenu } from "../message-action-menu";
 import { MessageContextMenu } from "../message-context-menu";
 import { NativeSymbol } from "../native-symbol";
 import { ReplyLine } from "../reply-line";
-import { MessageSelectCheckbox } from "./message-selection-bar";
 import { TimeSeparator } from "../time-separator";
 import { UnreadDivider } from "../unread-divider";
 import type { MessageActionProps } from "./message-bubble";
 import { MessageBubble } from "./message-bubble";
+import { MessageSelectCheckbox } from "./message-selection-bar";
 import {
   MessageTranslationView,
   TranslateButton,
@@ -91,6 +91,8 @@ export type MessageRowActions = {
   favoriteTranslation?: (message: MobileMessage, translatedText: string) => void;
   /** Resends the user message this bot reply answers. Absent where unsupported. */
   regenerate?: (message: MobileMessage) => void;
+  /** Resends this user message's own text. Absent where unsupported. */
+  resend?: (message: MobileMessage) => void;
   markUnread: (message: MobileMessage) => void;
   answer: (
     message: MobileMessage,
@@ -303,6 +305,11 @@ export const MessageRow = memo(function MessageRow({
     const react = (reaction: MessageReaction) => actions.react(message, reaction);
     const share = () => shareMessageText(copyableMessageText(message));
     const regenerateMessage = actions.regenerate ? () => actions.regenerate!(message) : undefined;
+    const resendMessage = actions.resend ? () => actions.resend!(message) : undefined;
+    // Resend only makes sense for a sent user message with text to send again;
+    // an attachment-only message cannot go through the text outbox.
+    const includeResend =
+      !readOnly && Boolean(actions.resend) && message.role === "user" && includeSelect;
     const markUnread = () => actions.markUnread(message);
     // VoiceOver reads the bubble as one element and can't reach a code block's copy button.
     const codeBlocks = message.role === "user" ? [] : markdownCodeBlocks(blockText(message));
@@ -311,6 +318,9 @@ export const MessageRow = memo(function MessageRow({
     };
     const menuActions = [
       ...(!readOnly ? [{ name: "reply", text: t("Reply"), onPress: reply }] : []),
+      ...(includeResend
+        ? [{ name: "resend", text: t("Resend"), onPress: () => resendMessage?.() }]
+        : []),
       ...(includeUnread
         ? [{ name: "unread", text: t("Mark as unread"), onPress: markUnread }]
         : []),
@@ -337,7 +347,11 @@ export const MessageRow = memo(function MessageRow({
       ...(includeSelect ? [{ name: "select", text: t("Select text"), onPress: select }] : []),
       { name: "copy", text: t("Copy"), onPress: copy },
       { name: "share", text: t("Share"), onPress: share },
-      { name: "selectMessages", text: t("Select messages"), onPress: () => actions.enterSelection(message) },
+      {
+        name: "selectMessages",
+        text: t("Select messages"),
+        onPress: () => actions.enterSelection(message),
+      },
       ...(includeFavorite
         ? [{ name: "favorite", text: favoriteLabel, onPress: toggleFavorite }]
         : []),
@@ -348,6 +362,7 @@ export const MessageRow = memo(function MessageRow({
     const menu = buildMessageContextMenu({
       labels: {
         reply: t("Reply"),
+        resend: t("Resend"),
         copy: t("Copy"),
         share: t("Share"),
         favorite: favoriteLabel,
@@ -361,6 +376,7 @@ export const MessageRow = memo(function MessageRow({
       reactions: MESSAGE_REACTIONS,
       include: {
         reply: !readOnly,
+        resend: includeResend,
         quote: includeQuote,
         react: includeReact,
         speak: includeSpeak,
@@ -386,6 +402,16 @@ export const MessageRow = memo(function MessageRow({
                     text: t("Reply"),
                     icon: "arrow-undo-outline" as const,
                     onPress: reply,
+                  },
+                ]
+              : []),
+            ...(includeResend
+              ? [
+                  {
+                    name: "resend",
+                    text: t("Resend"),
+                    icon: "send-outline" as const,
+                    onPress: () => resendMessage?.(),
                   },
                 ]
               : []),
@@ -488,6 +514,7 @@ export const MessageRow = memo(function MessageRow({
           return;
         }
         if (id === "reply") reply();
+        if (id === "resend") resendMessage?.();
         if (id === "copy") copy();
         if (id === "share") share();
         if (id === "favorite") toggleFavorite();
@@ -662,10 +689,7 @@ export const MessageRow = memo(function MessageRow({
             />
           )}
           {selecting && onToggleSelect ? (
-            <Pressable
-              onPress={onToggleSelect}
-              style={{ maxWidth: "100%", flexShrink: 1 }}
-            >
+            <Pressable onPress={onToggleSelect} style={{ maxWidth: "100%", flexShrink: 1 }}>
               {bubble}
             </Pressable>
           ) : (

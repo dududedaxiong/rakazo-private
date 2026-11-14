@@ -1590,6 +1590,7 @@ export const PL_MESSAGES: Record<string, string> = {
   Like: "Lubię to",
   Dislike: "Nie lubię",
   Regenerate: "Wygeneruj ponownie",
+  Resend: "Wyślij ponownie",
   "Computer screen": "Ekran komputera",
   Resize: "Zmień rozmiar",
   "The connection dropped. Try again.": "Połączenie zostało przerwane. Spróbuj ponownie.",

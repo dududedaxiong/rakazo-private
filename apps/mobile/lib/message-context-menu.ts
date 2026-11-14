@@ -2,6 +2,7 @@ import { Share } from "react-native";
 
 export const messageMenuSymbols = [
   "reply",
+  "resend",
   "copy",
   "share",
   "favorite",
@@ -58,6 +59,8 @@ export function buildMessageContextMenu({
     favorite?: boolean;
     /** Enters multi-select with this message picked. */
     selectMessages?: boolean;
+    /** Resends this user message's own text. */
+    resend?: boolean;
   };
 }): MessageMenuEntry[] {
   const secondary: MessageMenuEntry[] = [
@@ -67,6 +70,7 @@ export function buildMessageContextMenu({
   ];
   return [
     ...(include.reply !== false ? [entry("reply", labels.reply)] : []),
+    ...(include.resend ? [entry("resend", labels.resend)] : []),
     ...(include.unread ? [entry("unread", labels.unread)] : []),
     entry("copy", labels.copy),
     ...(include.share !== false ? [entry("share", labels.share)] : []),

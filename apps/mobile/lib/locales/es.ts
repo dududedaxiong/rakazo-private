@@ -1551,6 +1551,7 @@ export const ES_MESSAGES: Record<string, string> = {
   Like: "Me gusta",
   Dislike: "No me gusta",
   Regenerate: "Regenerar",
+  Resend: "Reenviar",
   "Computer screen": "Pantalla del ordenador",
   Resize: "Cambiar tamaño",
   "The connection dropped. Try again.": "Se perdió la conexión. Inténtalo de nuevo.",
