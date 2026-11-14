@@ -59,7 +59,10 @@ export function ChatHeader({
   const referral = useBilling().status?.referral;
   const [inviteOpen, setInviteOpen] = useState(false);
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-2 px-3 py-[13px] md:px-[22px] [&_button]:pointer-events-auto">
+    // The strip is opaque: the transcript scrolls under this floating header,
+    // and without a solid background a message bubble shows through the gaps
+    // between the pills and the title area looks empty.
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-2 bg-background px-3 py-[13px] md:px-[22px] [&_button]:pointer-events-auto">
       <div className="flex items-center">
         <Button
           variant="floating"

@@ -131,6 +131,15 @@ const selectButton = () =>
 
 const gift = () => container.querySelector<HTMLButtonElement>('[aria-label="Invite a friend"]');
 
+it("keeps the header strip opaque so a scrolled message cannot show through it", () => {
+  renderHeader();
+  // The transcript scrolls under this floating header; without a solid
+  // background a message bubble shows through the gaps between the pills
+  // and the title area looks empty.
+  const classes = container.firstElementChild?.className.split(" ") ?? [];
+  expect(classes).toContain("bg-background");
+});
+
 it("shows the persona switcher in a bot chat and not in a group", () => {
   billing.status = { referral: null };
   renderHeader();
