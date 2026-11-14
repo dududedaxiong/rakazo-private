@@ -7281,6 +7281,7 @@ describe("bot model auth on save", () => {
       title: "",
       description: "",
       instructions: "",
+      promptTemplateId: null,
       color: "ink",
       notifyOnFinish: true,
       pinned: false,
@@ -7388,6 +7389,32 @@ describe("bot model auth on save", () => {
     expect(response.status).toBe(200);
     expect(botUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ data: expect.objectContaining({ dailyCheckIns: false }) }),
+    );
+  });
+
+  it("persists media save directories and action toggles through the bot update route", async () => {
+    const { botUpdate, handler } = saveDeps({ modelId: spark, preferences: () => null });
+    const response = await call(handler, "bots/update", {
+      botId: "bot-1",
+      imageSaveDirectory: "Rakazo/猫",
+      videoSaveDirectory: null,
+      showMediaFavorite: false,
+      showMediaShare: true,
+      showMediaPreview: false,
+      showMediaDownload: true,
+    });
+    expect(response.status).toBe(200);
+    expect(botUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          imageSaveDirectory: "Rakazo/猫",
+          videoSaveDirectory: null,
+          showMediaFavorite: false,
+          showMediaShare: true,
+          showMediaPreview: false,
+          showMediaDownload: true,
+        }),
+      }),
     );
   });
 
@@ -8338,6 +8365,7 @@ describe("openai-compatible enabled models", () => {
       title: "",
       description: "",
       instructions: "",
+      promptTemplateId: null,
       color: "ink",
       notifyOnFinish: true,
       pinned: false,

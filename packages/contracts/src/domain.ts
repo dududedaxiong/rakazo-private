@@ -228,6 +228,18 @@ export const BotSchema = z.object({
   imagePromptPresets: z.array(BotPromptPresetSchema).nullable(),
   /** The name of the active image prompt preset; null means no preset. */
   activeImagePromptPreset: z.string().nullable(),
+  /** Directory or album name for saving generated images; null means the default location. */
+  imageSaveDirectory: z.string().nullable(),
+  /** Directory or album name for saving generated videos; null means the default location. */
+  videoSaveDirectory: z.string().nullable(),
+  /** Show the favorite action on generated media. */
+  showMediaFavorite: z.boolean(),
+  /** Show the share action on generated media. */
+  showMediaShare: z.boolean(),
+  /** Show the preview action on generated media. */
+  showMediaPreview: z.boolean(),
+  /** Show the download action on generated media. */
+  showMediaDownload: z.boolean(),
   /** The language to translate from; `auto` lets the model detect it. */
   translationSourceLanguage: TranslationSourceLanguageSchema,
   /** Null means unset; clients show their own default (mobile `auto`, web `zh`). */
@@ -666,6 +678,18 @@ export const UpdateBotInput = z
       .optional(),
     /** The name of the active image prompt preset; null means no preset. */
     activeImagePromptPreset: z.string().trim().min(1).max(80).nullable().optional(),
+    /** Directory or album name for saving generated images; null means the default location. */
+    imageSaveDirectory: z.string().trim().min(1).max(80).nullable().optional(),
+    /** Directory or album name for saving generated videos; null means the default location. */
+    videoSaveDirectory: z.string().trim().min(1).max(80).nullable().optional(),
+    /** Show the favorite action on generated media. */
+    showMediaFavorite: z.boolean().optional(),
+    /** Show the share action on generated media. */
+    showMediaShare: z.boolean().optional(),
+    /** Show the preview action on generated media. */
+    showMediaPreview: z.boolean().optional(),
+    /** Show the download action on generated media. */
+    showMediaDownload: z.boolean().optional(),
     translationSourceLanguage: TranslationSourceLanguageSchema.optional(),
     translationTargetLanguage: z.string().trim().max(20).nullable().optional(),
     autoTranslate: z.boolean().optional(),

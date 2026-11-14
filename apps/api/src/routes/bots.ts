@@ -641,6 +641,22 @@ export function botsRoutes(ctx: RouterContext) {
             ...(input.showTranslationActions !== undefined
               ? { showTranslationActions: input.showTranslationActions }
               : {}),
+            ...(input.imageSaveDirectory !== undefined
+              ? { imageSaveDirectory: input.imageSaveDirectory }
+              : {}),
+            ...(input.videoSaveDirectory !== undefined
+              ? { videoSaveDirectory: input.videoSaveDirectory }
+              : {}),
+            ...(input.showMediaFavorite !== undefined
+              ? { showMediaFavorite: input.showMediaFavorite }
+              : {}),
+            ...(input.showMediaShare !== undefined ? { showMediaShare: input.showMediaShare } : {}),
+            ...(input.showMediaPreview !== undefined
+              ? { showMediaPreview: input.showMediaPreview }
+              : {}),
+            ...(input.showMediaDownload !== undefined
+              ? { showMediaDownload: input.showMediaDownload }
+              : {}),
             ...(input.thinkingLevel !== undefined ? { thinkingLevel } : {}),
             ...(input.teamChatAmbientEnabled !== undefined
               ? { teamChatAmbientEnabled: input.teamChatAmbientEnabled }

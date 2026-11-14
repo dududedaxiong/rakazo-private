@@ -133,6 +133,12 @@ function mapBot(
     activeVideoPromptPreset?: string | null;
     imagePromptPresets?: unknown;
     activeImagePromptPreset?: string | null;
+    imageSaveDirectory?: string | null;
+    videoSaveDirectory?: string | null;
+    showMediaFavorite?: boolean;
+    showMediaShare?: boolean;
+    showMediaPreview?: boolean;
+    showMediaDownload?: boolean;
     translationSourceLanguage?: string | null;
     translationTargetLanguage?: string | null;
     autoTranslate?: boolean;
@@ -193,6 +199,12 @@ function mapBot(
     activeVideoPromptPreset: bot.activeVideoPromptPreset ?? null,
     imagePromptPresets: parseBotPromptPresets(bot.imagePromptPresets),
     activeImagePromptPreset: bot.activeImagePromptPreset ?? null,
+    imageSaveDirectory: bot.imageSaveDirectory ?? null,
+    videoSaveDirectory: bot.videoSaveDirectory ?? null,
+    showMediaFavorite: bot.showMediaFavorite ?? true,
+    showMediaShare: bot.showMediaShare ?? true,
+    showMediaPreview: bot.showMediaPreview ?? true,
+    showMediaDownload: bot.showMediaDownload ?? true,
     translationSourceLanguage: (TRANSLATION_SOURCE_LANGUAGE_CODES as readonly string[]).includes(
       bot.translationSourceLanguage ?? "",
     )

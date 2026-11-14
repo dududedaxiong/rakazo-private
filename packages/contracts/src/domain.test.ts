@@ -104,6 +104,49 @@ describe("prompt presets", () => {
   });
 });
 
+describe("UpdateBotInput media settings", () => {
+  it("accepts save directories and media action toggles", () => {
+    const parsed = UpdateBotInput.parse({
+      botId: BOT_ID,
+      imageSaveDirectory: "Rakazo/猫",
+      videoSaveDirectory: null,
+      showMediaFavorite: false,
+      showMediaShare: true,
+      showMediaPreview: false,
+      showMediaDownload: true,
+    });
+    expect(parsed.imageSaveDirectory).toBe("Rakazo/猫");
+    expect(parsed.videoSaveDirectory).toBeNull();
+    expect(parsed.showMediaFavorite).toBe(false);
+    expect(parsed.showMediaShare).toBe(true);
+    expect(parsed.showMediaPreview).toBe(false);
+    expect(parsed.showMediaDownload).toBe(true);
+  });
+
+  it("rejects a save directory over 80 characters", () => {
+    expect(
+      UpdateBotInput.safeParse({ botId: BOT_ID, imageSaveDirectory: "a".repeat(81) }).success,
+    ).toBe(false);
+    expect(
+      UpdateBotInput.safeParse({ botId: BOT_ID, videoSaveDirectory: "a".repeat(81) }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an empty or blank save directory", () => {
+    expect(UpdateBotInput.safeParse({ botId: BOT_ID, imageSaveDirectory: "" }).success).toBe(false);
+    expect(UpdateBotInput.safeParse({ botId: BOT_ID, videoSaveDirectory: "   " }).success).toBe(
+      false,
+    );
+  });
+
+  it("rejects non-boolean media action toggles", () => {
+    expect(UpdateBotInput.safeParse({ botId: BOT_ID, showMediaFavorite: "yes" }).success).toBe(
+      false,
+    );
+    expect(UpdateBotInput.safeParse({ botId: BOT_ID, showMediaDownload: 1 }).success).toBe(false);
+  });
+});
+
 describe("UpdateBotInput model lists", () => {
   it("accepts ordered model lists and presets", () => {
     const parsed = UpdateBotInput.parse({

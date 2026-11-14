@@ -1089,6 +1089,18 @@ model Bot {
   imagePromptPresets        Json?
   /** Name of the active image prompt preset; null means no preset. */
   activeImagePromptPreset   String?
+  /** Directory or album name for saving generated images; null means the default location. */
+  imageSaveDirectory        String?
+  /** Directory or album name for saving generated videos; null means the default location. */
+  videoSaveDirectory        String?
+  /** Show the favorite action on generated media. */
+  showMediaFavorite         Boolean  @default(true)
+  /** Show the share action on generated media. */
+  showMediaShare            Boolean  @default(true)
+  /** Show the preview action on generated media. */
+  showMediaPreview          Boolean  @default(true)
+  /** Show the download action on generated media. */
+  showMediaDownload         Boolean  @default(true)
   translationSourceLanguage String   @default("auto")
   translationTargetLanguage String?
   autoTranslate             Boolean  @default(false)
