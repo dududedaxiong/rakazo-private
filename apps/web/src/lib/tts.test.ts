@@ -82,16 +82,20 @@ describe("Speaker", () => {
       }),
     );
     const played: Array<unknown> = [];
+    let plays = 0;
     vi.stubGlobal(
       "Audio",
       class {
         src = "";
         onended: (() => void) | null = null;
         onerror: (() => void) | null = null;
+        onplaying: (() => void) | null = null;
+        onloadedmetadata: (() => void) | null = null;
         constructor() {
           played.push(this);
         }
         play() {
+          plays += 1;
           queueMicrotask(() => this.onended?.());
           return Promise.resolve();
         }
@@ -103,9 +107,47 @@ describe("Speaker", () => {
 
     await expect(speaker.speak("Read this.", { messageId: "m1" })).resolves.toBeUndefined();
     expect(requested).toEqual(["First.", "Second.", "Third."]);
-    expect(played).toHaveLength(2);
+    // One audio element is reused for the whole read; it played twice
+    // (the failed middle utterance never reached it).
+    expect(played).toHaveLength(1);
+    expect(plays).toBe(2);
     expect(speaker.state.status).toBe("idle");
   });
+
+  // Fake timers stall the response-body stream reader, so this one waits
+  // out the real start watchdog instead.
+  it("skips a segment whose audio never starts instead of stalling", async () => {
+    const speaker = new Speaker();
+    vi.spyOn(
+      speaker as unknown as { prepare: () => Promise<string[]> },
+      "prepare",
+    ).mockResolvedValue(["First."]);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(new Blob(["audio"]), { status: 200 })),
+    );
+    vi.stubGlobal(
+      "Audio",
+      class {
+        src = "";
+        onended: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        onplaying: (() => void) | null = null;
+        onloadedmetadata: (() => void) | null = null;
+        // Never starts, never ends, never errors: a phone blocking a later
+        // segment's playback instead of rejecting it.
+        play() {
+          return new Promise(() => undefined);
+        }
+        pause() {}
+      },
+    );
+    vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:voice");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+
+    await expect(speaker.speak("Read this.", { messageId: "m1" })).resolves.toBeUndefined();
+    expect(speaker.state.status).toBe("idle");
+  }, 20000);
 
   it("tags each spoken segment with its caption and position", async () => {
     const speaker = new Speaker();

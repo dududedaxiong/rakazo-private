@@ -36,10 +36,23 @@ interface SpeakOptions {
 
 const IDLE: SpeechSnapshot = { status: "idle" };
 
+/** A clip that never starts playing must not stall the whole read. */
+const PLAY_START_TIMEOUT_MS = 5000;
+/** A clip that starts but never ends is abandoned after its own length plus this. */
+const PLAY_END_SLACK_MS = 10000;
+/** Fallback cap when a clip's duration is unknown. */
+const PLAY_END_FALLBACK_MS = 120000;
+
 export class Speaker {
   private snapshot: SpeechSnapshot = IDLE;
   private watchers = new Set<(s: SpeechSnapshot) => void>();
   private token = 0;
+  /**
+   * One audio element for the whole read. A fresh element per segment needs
+   * new user activation to play, and the tap's activation expires seconds
+   * after it, so on phones a later segment's play() can hang forever instead
+   * of resolving. An element that already played from the tap keeps playing.
+   */
   private audio: HTMLAudioElement | null = null;
   private objectUrl: string | null = null;
   private settlePlayback: ((finished: boolean) => void) | null = null;
@@ -79,8 +92,9 @@ export class Speaker {
   private teardownAudio() {
     if (this.audio) {
       this.audio.pause();
+      // Clear the source but keep the element: its playback permission from
+      // the tap must survive into the next segment.
       this.audio.src = "";
-      this.audio = null;
     }
     if (this.objectUrl) {
       URL.revokeObjectURL(this.objectUrl);
@@ -225,22 +239,45 @@ export class Speaker {
       if (!live()) return resolve(false);
       this.teardownAudio();
       const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
+      const audio = this.audio ?? new Audio();
       this.audio = audio;
       this.objectUrl = url;
       let settled = false;
+      let startTimer: ReturnType<typeof setTimeout> | undefined;
+      let endTimer: ReturnType<typeof setTimeout> | undefined;
       const done = (ok: boolean) => {
         if (settled) return;
         settled = true;
+        if (startTimer !== undefined) clearTimeout(startTimer);
+        if (endTimer !== undefined) clearTimeout(endTimer);
         audio.onended = null;
         audio.onerror = null;
+        audio.onplaying = null;
+        audio.onloadedmetadata = null;
         if (this.settlePlayback === done) this.settlePlayback = null;
         if (this.audio === audio) this.teardownAudio();
         resolve(ok);
       };
-      this.settlePlayback = done;
+      audio.src = url;
       audio.onended = () => done(true);
       audio.onerror = () => done(false);
+      // A clip that never starts (a phone blocking a later segment's
+      // playback, for instance) is skipped after a short wait instead of
+      // holding the read hostage.
+      startTimer = setTimeout(() => done(false), PLAY_START_TIMEOUT_MS);
+      audio.onplaying = () => {
+        if (startTimer !== undefined) {
+          clearTimeout(startTimer);
+          startTimer = undefined;
+        }
+        const duration = audio.duration;
+        const cap =
+          Number.isFinite(duration) && duration > 0
+            ? Math.min(Math.max(duration * 1000 + PLAY_END_SLACK_MS, 20000), 180000)
+            : PLAY_END_FALLBACK_MS;
+        endTimer = setTimeout(() => done(false), cap);
+      };
+      this.settlePlayback = done;
       audio.play().catch(() => done(false));
     });
   }
