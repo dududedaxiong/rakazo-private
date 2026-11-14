@@ -127,6 +127,7 @@ export function MediaResult({
   const [collapsed, setCollapsed] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
   const [applyingModelKey, setApplyingModelKey] = useState<string | null>(null);
   const [applyingPreset, setApplyingPreset] = useState(false);
 
@@ -188,7 +189,11 @@ export function MediaResult({
   }, [artifactId, mimeType, name, t, target]);
 
   // Share the file itself; when the browser has no share sheet, save it instead.
+  // The save reports itself: without a toast the click looks dead, like the
+  // translation share did before it got its own copied state.
   const share = useCallback(async () => {
+    if (sharing) return;
+    setSharing(true);
     try {
       const bytes = await fetchArtifactBytes(target, artifactId);
       const file = new File([new Uint8Array(bytes)], name, { type: mimeType });
@@ -201,11 +206,14 @@ export function MediaResult({
         }
       }
       await downloadArtifact(target, artifactId, name, mimeType);
+      toast(t`Downloading ${name}`);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       toast(errorText(err, t`Could not share ${name}`));
+    } finally {
+      setSharing(false);
     }
-  }, [artifactId, mimeType, name, t, target]);
+  }, [artifactId, mimeType, name, sharing, t, target]);
 
   const toggleFavorite = useCallback(async () => {
     await favorite.toggle();
@@ -297,8 +305,14 @@ export function MediaResult({
         >
           <Trans>Download</Trans>
         </Button>
-        <Button variant="text" size="xs" onClick={() => void share()} className="font-normal">
-          <Trans>Share</Trans>
+        <Button
+          variant="text"
+          size="xs"
+          onClick={() => void share()}
+          disabled={sharing}
+          className="font-normal"
+        >
+          {sharing ? <Trans>Sharing…</Trans> : <Trans>Share</Trans>}
         </Button>
         <Button
           variant="text"

@@ -156,6 +156,9 @@ export function useMessageTranslation({
   const [collapsed, setCollapsed] = useState(false);
   const attemptedAutoRef = useRef(false);
   const [copied, copy, copyFailed, resetCopy, copyFailedText] = useCopyText();
+  /** Share has its own copy state: falling back to copy must light up Share, not Copy. */
+  const [sharedCopied, shareCopy, shareCopyFailed, resetShareCopy, shareCopyFailedText] =
+    useCopyText();
   /** The bot's switch for the read-aloud, share, and favorite actions; on by default. */
   const showActions = settings?.showTranslationActions ?? true;
   /** The model being switched to; the menu stays disabled until it lands. */
@@ -337,7 +340,8 @@ export function useMessageTranslation({
   );
 
   // Share falls back to copying when the browser has no share sheet, and a
-  // dismissed sheet copies nothing.
+  // dismissed sheet copies nothing. The fallback copy reports on Share itself,
+  // so Copy keeps its own state.
   const shareTranslation = useCallback(async () => {
     if (state.status !== "done") return;
     const text = translatedText;
@@ -349,8 +353,8 @@ export function useMessageTranslation({
         if (err instanceof DOMException && err.name === "AbortError") return;
       }
     }
-    await copy(text);
-  }, [copy, state.status, translatedText]);
+    await shareCopy(text);
+  }, [shareCopy, state.status, translatedText]);
 
   if (!expanded) return { actions, panel: null };
 
@@ -447,7 +451,7 @@ export function useMessageTranslation({
                 className="text-body text-link"
                 aria-label={t`Share`}
               >
-                <Trans>Share</Trans>
+                {sharedCopied ? <Trans>Copied</Trans> : <Trans>Share</Trans>}
               </button>
             ) : null}
             {showActions ? (
@@ -474,9 +478,12 @@ export function useMessageTranslation({
             </button>
           </div>
           <CopyTextFallback
-            open={copyFailed}
-            onOpenChange={resetCopy}
-            text={copyFailedText}
+            open={copyFailed || shareCopyFailed}
+            onOpenChange={() => {
+              resetCopy();
+              resetShareCopy();
+            }}
+            text={copyFailedText || shareCopyFailedText}
             label={t`Copy translation`}
           />
         </>

@@ -684,6 +684,117 @@ describe("message translation", () => {
     });
   });
 
+  it("copies on share when the browser has no share sheet, and only Share shows Copied", async () => {
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    try {
+      Reflect.deleteProperty(navigator, "share");
+      renderTranslated();
+      await act(async () => {
+        translateButton()?.click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      await act(async () => {
+        buttonByText("Share")?.click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      expect(writeText).toHaveBeenCalledWith("Hark AI 是一款新的 AI 搜索产品。");
+      // The fallback copy lights up Share itself; Copy keeps its own state.
+      expect(buttonByText("Share")).toBeUndefined();
+      expect(buttonByText("Copied")).not.toBeUndefined();
+      expect(buttonByText("Copy translation")).not.toBeUndefined();
+    } finally {
+      Reflect.deleteProperty(navigator, "clipboard");
+    }
+  });
+
+  it("uses the system share sheet when available and copies nothing", async () => {
+    const share = vi.fn(async () => undefined);
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "share", { value: share, configurable: true });
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    try {
+      renderTranslated();
+      await act(async () => {
+        translateButton()?.click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      await act(async () => {
+        buttonByText("Share")?.click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      expect(share).toHaveBeenCalledWith({ text: "Hark AI 是一款新的 AI 搜索产品。" });
+      expect(writeText).not.toHaveBeenCalled();
+      expect(buttonByText("Share")).not.toBeUndefined();
+      expect(buttonByText("Copied")).toBeUndefined();
+    } finally {
+      Reflect.deleteProperty(navigator, "share");
+      Reflect.deleteProperty(navigator, "clipboard");
+    }
+  });
+
+  it("copies nothing when the share sheet is dismissed", async () => {
+    const share = vi.fn(async () => {
+      throw new DOMException("The user aborted the share.", "AbortError");
+    });
+    const writeText = vi.fn(async () => undefined);
+    Object.defineProperty(navigator, "share", { value: share, configurable: true });
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    try {
+      renderTranslated();
+      await act(async () => {
+        translateButton()?.click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      await act(async () => {
+        buttonByText("Share")?.click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      expect(writeText).not.toHaveBeenCalled();
+      expect(buttonByText("Share")).not.toBeUndefined();
+    } finally {
+      Reflect.deleteProperty(navigator, "share");
+      Reflect.deleteProperty(navigator, "clipboard");
+    }
+  });
+
+  it("offers the text by hand when the fallback copy fails", async () => {
+    const writeText = vi.fn(async () => {
+      throw new Error("Clipboard denied.");
+    });
+    Object.defineProperty(navigator, "clipboard", {
+      value: { writeText },
+      configurable: true,
+    });
+    try {
+      Reflect.deleteProperty(navigator, "share");
+      renderTranslated();
+      await act(async () => {
+        translateButton()?.click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      await act(async () => {
+        buttonByText("Share")?.click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      });
+      const field = document.querySelector<HTMLTextAreaElement>(
+        'textarea[aria-label="Copy translation"]',
+      );
+      expect(field?.value).toBe("Hark AI 是一款新的 AI 搜索产品。");
+    } finally {
+      Reflect.deleteProperty(navigator, "clipboard");
+    }
+  });
+
   it("hides the read-aloud and share actions when the bot turns them off", async () => {
     renderTranslated({
       peerBot: () => ({
