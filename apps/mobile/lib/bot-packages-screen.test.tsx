@@ -124,7 +124,11 @@ vi.mock("./i18n", () => ({
 }));
 
 import { NativeBotPackageImport } from "../components/bot-package-import";
-import { NativeBotPackageSkills, NativeBotPackageTools } from "../components/bot-package-tools";
+import {
+  NativeBotPackageExport,
+  NativeBotPackageSkills,
+  NativeBotPackageTools,
+} from "../components/bot-package-tools";
 import type { MobileBotPackageClient } from "./bot-package-client";
 import type { MobileScope } from "./mobile-scope";
 
@@ -484,4 +488,21 @@ it("reviews native export omissions before OS handoff and invalidates choices be
   expect(api.share).toHaveBeenCalledOnce();
   expect(api.request.mock.calls.filter(([name]) => name === "botPackages/export")).toHaveLength(2);
   expect(button("Share package")).toBeUndefined();
+});
+
+it("exports one bot's package on its own, without the settings editor", async () => {
+  const client = {
+    request: (procedure: string, input: unknown) => api.request(procedure, input),
+    isCurrent: () => api.current,
+  } as MobileBotPackageClient;
+  await act(async () => root.render(<NativeBotPackageExport botId="new-bot" client={client} />));
+  await click("Preview package");
+  expect(api.request.mock.calls.filter(([name]) => name === "botPackages/export")[0]![1]).toEqual({
+    botId: "new-bot",
+    skillIds: [],
+    includeMemory: false,
+  });
+  expect(api.share).not.toHaveBeenCalled();
+  await click("Share package");
+  expect(api.share).toHaveBeenCalledOnce();
 });

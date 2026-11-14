@@ -375,6 +375,8 @@ describe("inbox organization actions", () => {
       onRenameSection: vi.fn().mockResolvedValue(undefined),
       onDeleteSection: vi.fn().mockResolvedValue(undefined),
       onDelete: vi.fn(),
+      onExport: vi.fn(),
+      onImport: vi.fn(),
       ...modalOverrides,
     };
     const root = await mount(<BotOrganizeModal {...props} />);
@@ -494,6 +496,23 @@ describe("inbox organization actions", () => {
         (button) => button.textContent === "Delete…",
       ),
     ).toBe(false);
+  });
+  it("offers export and import rows that hand the tap to the caller", async () => {
+    const { props, click } = await organize();
+    await click("Export package");
+    expect(props.onExport).toHaveBeenCalledOnce();
+    await click("Import bot");
+    expect(props.onImport).toHaveBeenCalledOnce();
+    // The caller closes the sheet and navigates; the modal only reports the tap.
+    expect(props.onClose).not.toHaveBeenCalled();
+  });
+  it("shows no export or import rows when the caller offers none", async () => {
+    const { root } = await organize({}, { onExport: undefined, onImport: undefined });
+    const labels = Array.from(root.element.querySelectorAll("button")).map(
+      (button) => button.textContent,
+    );
+    expect(labels).not.toContain("Export package");
+    expect(labels).not.toContain("Import bot");
   });
   it("presents a native iOS form sheet instead of the custom overlay", async () => {
     mocks.platform = "ios";

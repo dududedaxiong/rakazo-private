@@ -837,6 +837,27 @@ function Home({ embedded, onSelectSpace, onShareSelect }: InboxPaneProps & { emb
             setOrganizeTarget(null);
             void runRowAction(organizeTarget.kind, organizeChat, "delete");
           }}
+          onExport={
+            organizeTarget.kind === "bot"
+              ? () => {
+                  organizeRequestId.current += 1;
+                  setOrganizeTarget(null);
+                  router.push({
+                    pathname: "/bot-package-export",
+                    params: { botId: organizeChat.id },
+                  });
+                }
+              : undefined
+          }
+          onImport={
+            organizeTarget.kind === "bot"
+              ? () => {
+                  organizeRequestId.current += 1;
+                  setOrganizeTarget(null);
+                  router.push("/bot-package-import");
+                }
+              : undefined
+          }
         />
       ) : null}
     </View>

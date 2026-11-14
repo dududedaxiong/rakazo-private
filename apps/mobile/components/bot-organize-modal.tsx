@@ -44,6 +44,8 @@ export function BotOrganizeModal({
   onRenameSection,
   onDeleteSection,
   onDelete,
+  onExport,
+  onImport,
 }: {
   bot: Pick<MobileBot, "name" | "pinned" | "sectionId"> &
     Partial<Pick<MobileBot, "notifyOnFinish">>;
@@ -55,6 +57,10 @@ export function BotOrganizeModal({
   onDeleteSection: (sectionId: string) => Promise<void>;
   /** Deletes this chat itself; absent where the caller offers no delete. */
   onDelete?: () => void;
+  /** Exports this bot to a file; absent where the caller offers no export (bots only). */
+  onExport?: () => void;
+  /** Imports a bot from a file; absent where the caller offers no import (bots only). */
+  onImport?: () => void;
 }) {
   const Sheet = useNativeSheet();
   const styles = useThemedStyles(createBotOrganizeStyles);
@@ -234,6 +240,28 @@ export function BotOrganizeModal({
           ) : null}
         </>
       )}
+      {onExport ? (
+        <Pressable
+          accessibilityRole="button"
+          disabled={saving}
+          onPress={onExport}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+        >
+          <NativeSymbol ios="square.and.arrow.up" android="share-social-outline" size={18} />
+          <Text style={styles.actionLabel}>{t("Export package")}</Text>
+        </Pressable>
+      ) : null}
+      {onImport ? (
+        <Pressable
+          accessibilityRole="button"
+          disabled={saving}
+          onPress={onImport}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+        >
+          <NativeSymbol ios="square.and.arrow.down" android="download-outline" size={18} />
+          <Text style={styles.actionLabel}>{t("Import bot")}</Text>
+        </Pressable>
+      ) : null}
       {onDelete ? (
         <Pressable
           accessibilityRole="button"

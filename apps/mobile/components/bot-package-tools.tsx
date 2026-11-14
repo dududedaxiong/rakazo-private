@@ -76,7 +76,14 @@ export function NativeBotPackageSkills({
   );
 }
 
-function PackageExport({ botId, client }: { botId: string; client: MobileBotPackageClient }) {
+/** The bot package export UI on its own: preview the package, then share the file. */
+export function NativeBotPackageExport({
+  botId,
+  client,
+}: {
+  botId: string;
+  client: MobileBotPackageClient;
+}) {
   const { t } = useI18n();
   const [state, setState] = useState(initialBotPackageExport);
   const [skills, setSkills] = useState<AgentSkillCatalogEntry[]>([]);
@@ -298,7 +305,7 @@ function ToolsEditor({ botId, scope }: { botId: string; scope: MobileScope }) {
         onPress={() => setOpen(!open)}
         prominence="secondary"
       />
-      {open && client ? <PackageExport key={botId} botId={botId} client={client} /> : null}
+      {open && client ? <NativeBotPackageExport key={botId} botId={botId} client={client} /> : null}
       {client ? <NativeBotPackageSkills botId={botId} client={client} /> : null}
     </View>
   );
