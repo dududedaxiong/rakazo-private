@@ -789,6 +789,11 @@ function SpaceShell() {
     setSelecting(false);
     setSelectedMessageIds(new Set());
   }, []);
+  /** The header button toggles selection off again instead of doing nothing. */
+  const toggleSelection = useCallback(() => {
+    if (selecting) exitSelection();
+    else setSelecting(true);
+  }, [selecting, exitSelection]);
   /** The selected messages, in transcript order. */
   const selectedMessages = useMemo(
     () => transcript.messages.filter((message) => selectedMessageIds.has(message.id)),
@@ -1250,7 +1255,7 @@ function SpaceShell() {
                 botName: name,
               });
             }}
-            onSelectMessages={() => setSelecting(true)}
+            onSelectMessages={toggleSelection}
             onBotUpdated={(updated) =>
               setBots((current) =>
                 current.map((entry) => (entry.id === updated.id ? updated : entry)),
