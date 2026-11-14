@@ -8,6 +8,7 @@ export const DE_MESSAGES: Record<string, string> = {
     "Menschliche Überprüfung fehlgeschlagen. Bitte erneut versuchen.",
   "Invalid invite code": "Ungültiger Einladungscode",
   "Invite code": "Einladungscode",
+  "It seems stuck": "Es scheint festzuhängen",
   "Keep only usable models": "Nur nutzbare Modelle behalten",
   "No available models.": "No available models.",
   "No models to test": "Keine Modelle zum Testen",
@@ -17,6 +18,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Rate limited": "Ratenlimit",
   "Registration is closed on this server": "Die Registrierung ist auf diesem Server geschlossen",
   "Stop floating outside the app": "Schweben außerhalb der App beenden",
+  "Switch model and retry": "Modell wechseln und erneut versuchen",
   "Can't float outside the app": "Schweben außerhalb der App nicht möglich",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
     "In diesem Build gibt es kein schwebendes Systemfenster. Der Computerbildschirm bleibt in der App.",

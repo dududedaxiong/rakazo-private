@@ -1185,3 +1185,77 @@ describe("long bot replies", () => {
     expect(buttonByText("Expand")).toBeUndefined();
   });
 });
+
+describe("stuck run", () => {
+  const buttonByText = (text: string) =>
+    [...container.querySelectorAll("button")].find((button) => button.textContent === text);
+  // The switch menus render their items as menuitem roles (in a portal), not buttons.
+  const menuItem = (text: string) =>
+    [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(
+      (el) => el.textContent?.trim() === text,
+    );
+  const stuck = {
+    runId: "run-1",
+    botId: "bot-1",
+    messageId: "message",
+    modelProvider: "p1",
+    modelId: "model-a",
+  };
+  const models = [
+    { provider: "p1", model: "model-a" },
+    { provider: "p2", model: "model-b" },
+  ];
+
+  function renderStuck(props: Partial<ComponentProps<typeof MessageView>> = {}) {
+    const onStopStuckRun = vi.fn(async () => undefined);
+    const onRetryStuckRun = vi.fn(async () => undefined);
+    renderView("user", [{ kind: "text", text: "Shanghai weather" }], {
+      stuck,
+      onStopStuckRun,
+      onRetryStuckRun,
+      availableRetryModels: models,
+      ...props,
+    });
+    return { onStopStuckRun, onRetryStuckRun };
+  }
+
+  it("shows the recovery row under a stuck user message", () => {
+    renderStuck();
+    expect(container.querySelector('[data-testid="stuck-run-actions"]')).not.toBeNull();
+    expect(buttonByText("Cancel")).not.toBeUndefined();
+    expect(buttonByText("Switch model and retry")).not.toBeUndefined();
+  });
+
+  it("stops the run from Cancel", async () => {
+    const { onStopStuckRun } = renderStuck();
+    await act(async () => {
+      buttonByText("Cancel")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(onStopStuckRun).toHaveBeenCalledExactlyOnceWith();
+  });
+
+  it("retries on the picked model", async () => {
+    const { onRetryStuckRun } = renderStuck();
+    act(() => buttonByText("Switch model and retry")?.click());
+    await act(async () => {});
+    await act(async () => {
+      menuItem("model-b")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(onRetryStuckRun).toHaveBeenCalledExactlyOnceWith("message", "bot-1", {
+      provider: "p2",
+      model: "model-b",
+    });
+  });
+
+  it("hides the retry picker when no model is connected, and hides the row without a stuck run", () => {
+    renderStuck({ availableRetryModels: [] });
+    expect(container.querySelector('[data-testid="stuck-run-actions"]')).not.toBeNull();
+    expect(buttonByText("Switch model and retry")).toBeUndefined();
+    expect(buttonByText("Cancel")).not.toBeUndefined();
+
+    renderView("user", [{ kind: "text", text: "Shanghai weather" }]);
+    expect(container.querySelector('[data-testid="stuck-run-actions"]')).toBeNull();
+  });
+});

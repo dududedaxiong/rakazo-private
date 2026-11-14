@@ -1621,6 +1621,7 @@ msgstr "Can't read images"
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -2925,6 +2926,7 @@ msgid "Could not save model"
 msgstr "Could not save model"
 
 #: src/pages/model-settings/use-model-settings.ts
+#: src/pages/Shell.tsx
 msgid "Could not save models"
 msgstr "Could not save models"
 
@@ -4764,6 +4766,10 @@ msgstr "Isolated preview — no access to your account"
 msgid "It may have been deleted, or it belongs to someone else."
 msgstr "It may have been deleted, or it belongs to someone else."
 
+#: src/pages/shell/stuck-run-actions.tsx
+msgid "It seems stuck"
+msgstr "It seems stuck"
+
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Its bots and groups are kept and leave the section."
 msgstr "Its bots and groups are kept and leave the section."
@@ -5338,6 +5344,7 @@ msgstr "Mode"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/stuck-run-actions.tsx
 msgid "Model"
 msgstr "Model"
 
@@ -8096,6 +8103,10 @@ msgstr "Supports thinking"
 msgid "Switch"
 msgstr "Switch"
 
+#: src/pages/shell/stuck-run-actions.tsx
+msgid "Switch model and retry"
+msgstr "Switch model and retry"
+
 #: src/components/prompt-templates/BotPersonaSection.tsx
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switch persona"
@@ -9330,6 +9341,7 @@ msgstr "Working instructions"
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts
 #: src/pages/Auth.tsx
+#: src/pages/shell/composer-parts.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Working…"
 msgstr "Working…"

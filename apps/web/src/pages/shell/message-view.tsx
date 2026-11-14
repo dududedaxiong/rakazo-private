@@ -9,7 +9,7 @@ import type {
   MessageReaction,
   ThreadMessage,
 } from "@rakazo/contracts";
-import type { ChildBotBlock, PeerExchange } from "@rakazo/core";
+import type { ChildBotBlock, PeerExchange, StuckRun } from "@rakazo/core";
 import {
   copyableMessageText,
   isPeerReceiptBlocks,
@@ -64,6 +64,7 @@ import {
 } from "./message-cards";
 import { MessageHoverActions } from "./message-hover-actions";
 import { useMessageTranslation } from "./message-translation";
+import { StuckRunActions } from "./stuck-run-actions";
 import type { SpeakingProgress } from "./use-read-aloud";
 
 /** A bot reply longer than this folds to a preview until expanded. */
@@ -136,6 +137,10 @@ export const MessageView = memo(function MessageView({
   regenerateDisabled,
   onResend,
   showResend,
+  stuck,
+  onStopStuckRun,
+  onRetryStuckRun,
+  availableRetryModels,
   voiceReady,
   speaking,
   speakingProgress,
@@ -212,6 +217,14 @@ export const MessageView = memo(function MessageView({
   onResend?: (messageId: string) => Promise<void>;
   /** True when this user message has no normal bot reply after it. */
   showResend?: boolean;
+  /** This user message's run has gone quiet; the row under it offers recovery. */
+  stuck?: StuckRun;
+  /** Stops the thread's runs; the stuck row's Cancel uses it. */
+  onStopStuckRun?: () => Promise<void>;
+  /** Stops the stuck run, switches the run's bot to the picked model, and re-runs the message. */
+  onRetryStuckRun?: (messageId: string, botId: string, entry: BotModelEntry) => Promise<void>;
+  /** Every connected model, so a stuck run can move to any model that works. */
+  availableRetryModels?: readonly BotModelEntry[];
   voiceReady: boolean;
   speaking: boolean;
   /** The read-aloud segment sounding now, when this is the message being read. */
@@ -964,6 +977,14 @@ export const MessageView = memo(function MessageView({
           return null;
         })}
         {readAloudProgress}
+        {stuck && message.role === "user" && onStopStuckRun && onRetryStuckRun ? (
+          <StuckRunActions
+            stuck={stuck}
+            models={availableRetryModels ?? []}
+            onCancel={onStopStuckRun}
+            onRetry={(entry) => onRetryStuckRun(stuck.messageId, stuck.botId, entry)}
+          />
+        ) : null}
         {hoverAnchorIndex === -1 ? hoverActions : null}
       </div>
       {pageCards}

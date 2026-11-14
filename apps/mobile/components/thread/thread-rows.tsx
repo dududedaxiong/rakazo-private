@@ -1,15 +1,18 @@
 import type { ThreadItem } from "@rakazo/core";
 import {
+  activeThreadRuns,
   answerableAskMessageIds,
   dismissableAskMessageIds,
   groupVoiceChats,
+  isRunWorking,
   memberName,
   otherAuthor,
+  stuckWorkingRuns,
   timeSeparatorIds,
   unreadDividerMessageId,
   voiceChatHoldsMessage,
 } from "@rakazo/core";
-import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ListRenderItemInfo } from "react-native";
 import { StyleSheet, View } from "react-native";
 import { useI18n } from "../../lib/i18n";
@@ -29,6 +32,17 @@ import { MessageRow } from "./message-row";
 const rowStyles = StyleSheet.create({
   row: { marginTop: 12, width: "100%" },
 });
+
+/** Re-renders every intervalMs while active, so time-based rows appear without a new event. */
+function useNow(active: boolean, intervalMs: number): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return undefined;
+    const timer = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(timer);
+  }, [active, intervalMs]);
+  return now;
+}
 
 /** Stable row actions that call the latest screen actions, so settled rows don't re-render. */
 export function useLatestRowActions(current: MessageRowActions): MessageRowActions {
@@ -52,6 +66,8 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
         rowActionsRef.current.favoriteTranslation?.(message, translatedText),
       regenerate: (message) => rowActionsRef.current.regenerate?.(message),
       resend: (message) => rowActionsRef.current.resend?.(message),
+      stopStuckRun: () => rowActionsRef.current.stopStuckRun?.(),
+      retryStuckRun: (message) => rowActionsRef.current.retryStuckRun?.(message),
       markUnread: (message) => rowActionsRef.current.markUnread(message),
       answer: (message, answer, fields, dismiss, remember) =>
         rowActionsRef.current.answer(message, answer, fields, dismiss, remember),
@@ -140,6 +156,20 @@ export function useThreadRows({
   const { showBotSenderName, reactionView, exchanges, visibleMessages } = transcript;
   const answerableAskIds = useMemo(() => answerableAskMessageIds(snap), [snap]);
   const dismissableAskIds = useMemo(() => dismissableAskMessageIds(snap, userId), [snap, userId]);
+  // A stuck run shows nothing until the threshold passes, and silence emits no
+  // events, so the clock ticks while a run is working.
+  const runs = useMemo(() => activeThreadRuns(snap), [snap]);
+  const now = useNow(
+    runs.some((run) => isRunWorking(run.status)),
+    15_000,
+  );
+  const stuckByMessageId = useMemo(
+    () =>
+      new Map(
+        stuckWorkingRuns(visibleMessages, runs, now).map((stuck) => [stuck.messageId, stuck]),
+      ),
+    [visibleMessages, runs, now],
+  );
   const separatorIds = useMemo(() => timeSeparatorIds(visibleMessages), [visibleMessages]);
   const unreadDividerId = useMemo(
     () => unreadDividerMessageId(visibleMessages, readSeq, snap?.olderCursor ?? null),
@@ -209,6 +239,7 @@ export function useThreadRows({
               run.id === message.runId &&
               (run.status === "waiting_input" || run.status === "waiting_takeover"),
           )}
+          stuck={stuckByMessageId.has(message.id)}
           speaking={
             speakingMessageId === message.id || overlaySpeakingMessageIds?.has(message.id) === true
           }
@@ -275,6 +306,7 @@ export function useThreadRows({
       searchCurrentId,
       columnWidth,
       userId,
+      stuckByMessageId,
       t,
       locale,
     ],

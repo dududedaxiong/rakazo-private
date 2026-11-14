@@ -181,6 +181,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   // The computer model, fetched here so the shortcut row and the bot menu share one picker.
   const [computerChoice, setComputerChoice] = useState<ModelRoleChoice | null>(null);
   const [sheetRole, setSheetRole] = useState<ThreadModelPickerRole | null>(null);
+  // The stuck message waiting for a model pick: [换模型重试] stops its run and
+  // opens the main-model sheet; saving a model re-runs it. Cleared when the
+  // sheet closes without a pick, so a later pick does not retry a stale message.
+  const stuckRetryMessageRef = useRef<MobileMessage | null>(null);
   const [botMenuOpen, setBotMenuOpen] = useState(false);
   const [personaOpen, setPersonaOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
@@ -760,6 +764,21 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     [readOnly, groupId, botId, refresh, feedback, t],
   );
 
+  /**
+   * Retries a stuck message on another model: stops the quiet run first (a
+   * resend refuses while a run is active), then opens the main-model sheet;
+   * saving a model there re-runs the message on it.
+   */
+  const retryStuckRun = useCallback(
+    (message: MobileMessage) => {
+      if (readOnly) return;
+      stuckRetryMessageRef.current = message;
+      void composer.stop();
+      setSheetRole("main");
+    },
+    [readOnly, composer],
+  );
+
   const rowActions = useLatestRowActions({
     helperToggle: scroll.helperToggle,
     reply: (message) => {
@@ -796,6 +815,8 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       );
     },
     resend: resendMessage,
+    stopStuckRun: () => void composer.stop(),
+    retryStuckRun,
     markUnread: markUnreadFrom,
     answer: composer.answer,
     openBot,
@@ -1293,10 +1314,18 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
                   ? currentBot?.imageModels
                   : undefined
             }
-            onClose={() => setSheetRole(null)}
+            onClose={() => {
+              setSheetRole(null);
+              stuckRetryMessageRef.current = null;
+            }}
             onSaved={(choice) => {
               if (sheetRole === "main") {
                 setMainOverride(choice);
+                // A stuck retry armed this sheet: the model is saved, so
+                // re-run the waiting message on it.
+                const pending = stuckRetryMessageRef.current;
+                stuckRetryMessageRef.current = null;
+                if (pending) void resendMessage(pending);
               } else if (sheetRole === "video") {
                 setVideoOverride(choice);
               } else if (sheetRole === "image") {

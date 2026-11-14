@@ -7,6 +7,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Human verification failed. Try again.": "人機驗證失敗，請重試。",
   "Invalid invite code": "邀請碼無效",
   "Invite code": "邀請碼",
+  "It seems stuck": "似乎卡住了",
   "Keep only usable models": "只保留可用模型",
   "No available models.": "沒有可用模型。",
   "No models to test": "沒有可測試的模型",
@@ -16,6 +17,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Rate limited": "限流",
   "Registration is closed on this server": "本伺服器已關閉註冊",
   "Stop floating outside the app": "取消應用程式外懸浮",
+  "Switch model and retry": "換模型重試",
   "Can't float outside the app": "無法懸浮到應用程式外",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
     "目前版本沒有系統懸浮窗功能，電腦畫面只能留在應用程式內。",

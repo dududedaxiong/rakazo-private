@@ -7,6 +7,7 @@ export const RU_MESSAGES: Record<string, string> = {
   "Human verification failed. Try again.": "Проверка не пройдена. Попробуйте снова.",
   "Invalid invite code": "Неверный код приглашения",
   "Invite code": "Код приглашения",
+  "It seems stuck": "Похоже, зависло",
   "Keep only usable models": "Оставить только рабочие модели",
   "No available models.": "No available models.",
   "No models to test": "Нет моделей для проверки",
@@ -16,6 +17,7 @@ export const RU_MESSAGES: Record<string, string> = {
   "Rate limited": "Лимит запросов",
   "Registration is closed on this server": "Регистрация на этом сервере закрыта",
   "Stop floating outside the app": "Убрать всплывающее окно",
+  "Switch model and retry": "Сменить модель и повторить",
   "Can't float outside the app": "Не удаётся вывести за пределы приложения",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
     "В этой сборке нет системного плавающего окна. Экран компьютера останется в приложении.",

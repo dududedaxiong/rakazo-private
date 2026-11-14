@@ -95,6 +95,7 @@ export * from "./routine-mention-batcher.js";
 export * from "./routine-runs.js";
 export * from "./run-error.js";
 export * from "./run-state.js";
+export * from "./run-stuck.js";
 export * from "./sandbox-command.js";
 export * from "./screen-lease.js";
 export * from "./screen-reconnect.js";

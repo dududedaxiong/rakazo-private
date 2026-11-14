@@ -7,6 +7,7 @@ export const ES_MESSAGES: Record<string, string> = {
   "Human verification failed. Try again.": "La verificación humana falló. Inténtalo de nuevo.",
   "Invalid invite code": "Código de invitación no válido",
   "Invite code": "Código de invitación",
+  "It seems stuck": "Parece que se quedó atascado",
   "Keep only usable models": "Conservar solo los modelos utilizables",
   "No available models.": "No available models.",
   "No models to test": "No hay modelos para probar",
@@ -16,6 +17,7 @@ export const ES_MESSAGES: Record<string, string> = {
   "Rate limited": "Límite de velocidad",
   "Registration is closed on this server": "El registro está cerrado en este servidor",
   "Stop floating outside the app": "Dejar de flotar fuera de la app",
+  "Switch model and retry": "Cambiar de modelo y reintentar",
   "Can't float outside the app": "No se puede flotar fuera de la app",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
     "En esta compilación no está disponible la ventana flotante del sistema. La pantalla del ordenador permanece dentro de la app.",

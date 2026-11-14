@@ -103,6 +103,7 @@ function baseProps(messages: readonly ThreadMessage[]): ComponentProps<typeof Tr
     answerableAskIds: new Set<string>(),
     dismissableAskIds: new Set<string>(),
     running: true,
+    runs: [],
     workingBots: [{ botId: "bot", color: "orange", status: "running" }],
     onLoadOlder: vi.fn(),
     onOpenBot: vi.fn(),
@@ -243,4 +244,66 @@ it("shows read-aloud progress only under the message being read", () => {
   expect(lines).toHaveLength(1);
   expect(lines[0]?.textContent).toContain("Middle of the second reply.");
   expect(lines[0]?.textContent).toContain("Segment 2 of 3");
+});
+
+it("shows the stuck recovery row under a message whose run went quiet", () => {
+  const startedAt = new Date(Date.now() - 200_000).toISOString();
+  const userMessage = { ...textMessage("m1", "user", "Shanghai weather"), runId: "run-1" };
+  render({
+    ...baseProps([userMessage]),
+    runs: [
+      {
+        id: "run-1",
+        botId: "bot",
+        threadId: "thread",
+        taskId: "task",
+        status: "running",
+        trigger: "user",
+        routineId: null,
+        routineName: null,
+        modelProvider: "p1",
+        modelId: "model-a",
+        error: null,
+        startedAt,
+        completedAt: null,
+        createdAt: startedAt,
+      },
+    ],
+    availableTranslationModels: [
+      { provider: "p1", model: "model-a" },
+      { provider: "p2", model: "model-b" },
+    ],
+    onStopRun: vi.fn(),
+    onRetryStuckRun: vi.fn(),
+  });
+  expect(container.querySelector('[data-testid="stuck-run-actions"]')).not.toBeNull();
+});
+
+it("hides the stuck recovery row while the run is still young", () => {
+  const startedAt = new Date(Date.now() - 60_000).toISOString();
+  const userMessage = { ...textMessage("m1", "user", "Shanghai weather"), runId: "run-1" };
+  render({
+    ...baseProps([userMessage]),
+    runs: [
+      {
+        id: "run-1",
+        botId: "bot",
+        threadId: "thread",
+        taskId: "task",
+        status: "running",
+        trigger: "user",
+        routineId: null,
+        routineName: null,
+        modelProvider: "p1",
+        modelId: "model-a",
+        error: null,
+        startedAt,
+        completedAt: null,
+        createdAt: startedAt,
+      },
+    ],
+    onStopRun: vi.fn(),
+    onRetryStuckRun: vi.fn(),
+  });
+  expect(container.querySelector('[data-testid="stuck-run-actions"]')).toBeNull();
 });

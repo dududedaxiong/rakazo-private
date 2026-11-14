@@ -93,6 +93,10 @@ export type MessageRowActions = {
   regenerate?: (message: MobileMessage) => void;
   /** Resends this user message's own text. Absent where unsupported. */
   resend?: (message: MobileMessage) => void;
+  /** Stops the thread's runs; the stuck row's Cancel uses it. Absent where unsupported. */
+  stopStuckRun?: () => void;
+  /** Opens the model picker to retry this stuck message on another model. Absent where unsupported. */
+  retryStuckRun?: (message: MobileMessage) => void;
   markUnread: (message: MobileMessage) => void;
   answer: (
     message: MobileMessage,
@@ -151,6 +155,8 @@ type MessageRowProps = {
   translationFavorited?: boolean;
   /** This message matches the open conversation search. */
   searchHit?: boolean;
+  /** This user message's run has gone quiet; the row under it offers recovery. */
+  stuck?: boolean;
   /** This message is the current search hit. */
   searchCurrent?: boolean;
   messageReactions?: ReadonlyMap<MessageReaction, number>;
@@ -204,6 +210,7 @@ export const MessageRow = memo(function MessageRow({
   translationFavorited,
   searchHit,
   searchCurrent,
+  stuck,
   peerExchange,
   activityBotId,
   activityColor,
@@ -804,6 +811,12 @@ export const MessageRow = memo(function MessageRow({
               ))}
             </View>
           ) : null}
+          {stuck && message.role === "user" && !selecting ? (
+            <StuckRunRow
+              onCancel={actions.stopStuckRun}
+              onRetry={actions.retryStuckRun ? () => actions.retryStuckRun!(message) : undefined}
+            />
+          ) : null}
         </View>
       </View>
       {translationPickerOpen && messageBot ? (
@@ -825,6 +838,41 @@ export const MessageRow = memo(function MessageRow({
     </View>
   );
 });
+
+/**
+ * The recovery row under a user message whose run has gone quiet: the run
+ * produced no reply for over three minutes, so the system offers to stop it
+ * or switch model and retry, instead of leaving the message hanging.
+ */
+function StuckRunRow({ onCancel, onRetry }: { onCancel?: () => void; onRetry?: () => void }) {
+  const { t } = useI18n();
+  const tokens = useMobileTokens();
+  return (
+    <View
+      testID="stuck-run-actions"
+      style={{
+        flexDirection: "row",
+        flexWrap: "wrap",
+        alignItems: "center",
+        gap: 12,
+        marginTop: 4,
+        justifyContent: "flex-end",
+      }}
+    >
+      <Text style={{ color: tokens.mutedForeground, fontSize: 13 }}>{t("It seems stuck")}</Text>
+      {onCancel ? (
+        <Pressable onPress={onCancel} accessibilityRole="button">
+          <Text style={{ color: tokens.link, fontSize: 13 }}>{t("Cancel")}</Text>
+        </Pressable>
+      ) : null}
+      {onRetry ? (
+        <Pressable onPress={onRetry} accessibilityRole="button">
+          <Text style={{ color: tokens.link, fontSize: 13 }}>{t("Switch model and retry")}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
 
 /**
  * The action buttons under an AI reply: 36×36 tiles with a 10pt radius,

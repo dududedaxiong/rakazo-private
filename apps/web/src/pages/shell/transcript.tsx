@@ -5,6 +5,7 @@ import type {
   BotModelEntry,
   LoginFieldInput,
   MessageReaction,
+  Run,
   ThreadMessage,
 } from "@rakazo/contracts";
 import type { ChildBotBlock, FoldedTranscript } from "@rakazo/core";
@@ -17,6 +18,7 @@ import {
   peerExchangeLines,
   projectBotMentions,
   projectMessageReactions,
+  stuckWorkingRuns,
   timeSeparatorIds,
   unreadDividerMessageId,
   voiceChatHoldsMessage,
@@ -63,6 +65,17 @@ export function bubbleFrameWidth(role: ThreadMessage["role"]) {
     : "max-w-[min(88%,calc(100%_-_8rem),39rem)] [@media(hover:none)]:max-w-[min(88%,39rem)]";
 }
 
+/** Re-renders every intervalMs while active, so time-based rows appear without a new event. */
+function useNow(active: boolean, intervalMs: number): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return undefined;
+    const timer = window.setInterval(() => setNow(Date.now()), intervalMs);
+    return () => window.clearInterval(timer);
+  }, [active, intervalMs]);
+  return now;
+}
+
 export const Transcript = memo(function Transcript({
   scrollRef,
   scrollRequest,
@@ -78,6 +91,7 @@ export const Transcript = memo(function Transcript({
   answerableAskIds,
   dismissableAskIds,
   running,
+  runs,
   workingBots,
   workingRoutine,
   userBubble,
@@ -101,6 +115,8 @@ export const Transcript = memo(function Transcript({
   onRegenerate,
   regenerateDisabled,
   onResend,
+  onStopRun,
+  onRetryStuckRun,
   selecting,
   selectedMessageIds,
   onToggleSelectMessage,
@@ -130,6 +146,8 @@ export const Transcript = memo(function Transcript({
   answerableAskIds: Set<string>;
   dismissableAskIds: Set<string>;
   running: boolean;
+  /** The thread's active runs, so a run gone quiet can hang its recovery row on its message. */
+  runs: readonly Run[];
   workingBots: GroupAvatarMember[];
   workingRoutine?: string;
   /** Your bubbles take the bot's color in its own chat. */
@@ -177,6 +195,10 @@ export const Transcript = memo(function Transcript({
   regenerateDisabled?: boolean;
   /** Re-sends a user message that got no normal reply. */
   onResend?: (messageId: string) => Promise<void>;
+  /** Stops the thread's runs; the stuck row's Cancel uses it. */
+  onStopRun?: () => Promise<void>;
+  /** Stops the stuck run, switches the run's bot to the picked model, and re-runs the message. */
+  onRetryStuckRun?: (messageId: string, botId: string, entry: BotModelEntry) => Promise<void>;
   /** Selection mode is on: every bubble gets a checkbox. */
   selecting?: boolean;
   selectedMessageIds?: ReadonlySet<string>;
@@ -280,6 +302,19 @@ export const Transcript = memo(function Transcript({
     }
     return ids;
   }, [reactionView.visibleMessages, showToolActivity]);
+  // A stuck run shows nothing until the threshold passes, and silence emits no
+  // events, so the clock ticks while a run is working.
+  const now = useNow(running, 15_000);
+  const stuckByMessageId = useMemo(
+    () =>
+      new Map(
+        stuckWorkingRuns(reactionView.visibleMessages, runs, now).map((stuck) => [
+          stuck.messageId,
+          stuck,
+        ]),
+      ),
+    [reactionView.visibleMessages, runs, now],
+  );
   // The newest rendered message; only it auto-translates when its bot has
   // auto-translate on, so opening history does not translate every reply.
   const lastVisibleMessageId = [...reactionView.visibleMessages]
@@ -695,6 +730,12 @@ export const Transcript = memo(function Transcript({
                       regenerateDisabled={regenerateDisabled}
                       onResend={onResend}
                       showResend={unrepliedMessageIds.has(message.id)}
+                      stuck={stuckByMessageId.get(message.id)}
+                      onStopStuckRun={onStopRun}
+                      onRetryStuckRun={onRetryStuckRun}
+                      // Every connected model, not just the bot's configured
+                      // ones, so a stuck run can move to any model that works.
+                      availableRetryModels={availableTranslationModels}
                       voiceReady={voiceReady}
                       speaking={speakingMessageId === message.id}
                       speakingProgress={

@@ -7,6 +7,7 @@ export const NL_MESSAGES: Record<string, string> = {
   "Human verification failed. Try again.": "Menselijke verificatie mislukt. Probeer het opnieuw.",
   "Invalid invite code": "Ongeldige uitnodigingscode",
   "Invite code": "Uitnodigingscode",
+  "It seems stuck": "Het lijkt vast te zitten",
   "Keep only usable models": "Alleen bruikbare modellen behouden",
   "No available models.": "No available models.",
   "No models to test": "Geen modellen om te testen",
@@ -16,6 +17,7 @@ export const NL_MESSAGES: Record<string, string> = {
   "Rate limited": "Snelheidslimiet",
   "Registration is closed on this server": "Registratie is gesloten op deze server",
   "Stop floating outside the app": "Stop zweven buiten de app",
+  "Switch model and retry": "Model wisselen en opnieuw proberen",
   "Can't float outside the app": "Zweven buiten de app is niet mogelijk",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
     "In deze build is geen zwevend systeemvenster beschikbaar. Het computerscherm blijft in de app.",

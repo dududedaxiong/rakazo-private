@@ -3,6 +3,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type {
   AgentSkillCatalogEntry,
   Bot,
+  BotModelEntry,
   SpaceMemoryConfig,
   ThreadMessage,
   VoiceStatus,
@@ -796,6 +797,27 @@ function SpaceShell() {
     [rpc, transcript, activeBotId, activeGroupId, active, refreshThread, t],
   );
 
+  /**
+   * Retries a stuck message on another model: stops the quiet run first (a
+   * resend refuses while a run is active), saves the picked model on the
+   * run's bot, then re-runs the AI on the existing message without
+   * duplicating it.
+   */
+  const retryStuckRunWithModel = useCallback(
+    async (messageId: string, botId: string, entry: BotModelEntry) => {
+      await stopRun();
+      try {
+        await rpc.bots.update({ botId, modelProvider: entry.provider, modelId: entry.model });
+      } catch (error) {
+        toast(errorText(error, t`Could not save models`));
+        return;
+      }
+      void refreshBots().catch(() => undefined);
+      await resendMessage(messageId);
+    },
+    [stopRun, rpc, refreshBots, resendMessage, t],
+  );
+
   /** Multi-select: the picked message ids, and the dialogs the batch actions open. */
   const [selecting, setSelecting] = useState(false);
   const [selectedMessageIds, setSelectedMessageIds] = useState<ReadonlySet<string>>(
@@ -1324,11 +1346,14 @@ function SpaceShell() {
               answerableAskIds={answerableAskIds}
               dismissableAskIds={dismissableAskIds}
               running={transcriptRunning}
+              runs={currentRuns}
               workingBots={workingBots}
               workingRoutine={workingRoutineName(workingRuns)}
               onRegenerate={regenerateFromMessage}
               regenerateDisabled={sending || transcriptRunning}
               onResend={resendMessage}
+              onStopRun={stopRun}
+              onRetryStuckRun={retryStuckRunWithModel}
               selecting={selecting}
               selectedMessageIds={selectedMessageIds}
               onToggleSelectMessage={toggleSelectMessage}

@@ -7,6 +7,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Human verification failed. Try again.": "人間認証に失敗しました。もう一度お試しください。",
   "Invalid invite code": "招待コードが無効です",
   "Invite code": "招待コード",
+  "It seems stuck": "止まっているようです",
   "Keep only usable models": "利用可能なモデルのみ残す",
   "No available models.": "No available models.",
   "No models to test": "テストするモデルがありません",
@@ -16,6 +17,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Rate limited": "レート制限",
   "Registration is closed on this server": "このサーバーでは登録が閉じられています",
   "Stop floating outside the app": "アプリ外のフローティングを止める",
+  "Switch model and retry": "モデルを変更して再試行",
   "Can't float outside the app": "アプリの外にフローティングできません",
   "The system floating window isn't available in this build. The computer screen stays inside the app.":
     "このビルドではシステムフローティングウィンドウを利用できません。コンピューター画面はアプリ内に留まります。",

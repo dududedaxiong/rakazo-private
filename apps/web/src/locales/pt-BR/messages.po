@@ -1621,6 +1621,7 @@ msgstr "Não pode ler imagens"
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -2925,6 +2926,7 @@ msgid "Could not save model"
 msgstr "Não foi possível salvar o modelo"
 
 #: src/pages/model-settings/use-model-settings.ts
+#: src/pages/Shell.tsx
 msgid "Could not save models"
 msgstr ""
 
@@ -4764,6 +4766,10 @@ msgstr "Pré-visualização isolada — sem acesso à sua conta"
 msgid "It may have been deleted, or it belongs to someone else."
 msgstr "Ela pode ter sido excluída ou pertencer a outra pessoa."
 
+#: src/pages/shell/stuck-run-actions.tsx
+msgid "It seems stuck"
+msgstr ""
+
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Its bots and groups are kept and leave the section."
 msgstr "Seus bots e grupos são mantidos e saem da seção."
@@ -5338,6 +5344,7 @@ msgstr "Modo"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/stuck-run-actions.tsx
 msgid "Model"
 msgstr "Modelo"
 
@@ -8096,6 +8103,10 @@ msgstr "Suporta raciocínio"
 msgid "Switch"
 msgstr "Mudar"
 
+#: src/pages/shell/stuck-run-actions.tsx
+msgid "Switch model and retry"
+msgstr ""
+
 #: src/components/prompt-templates/BotPersonaSection.tsx
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switch persona"
@@ -9330,6 +9341,7 @@ msgstr "Instruções de trabalho"
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts
 #: src/pages/Auth.tsx
+#: src/pages/shell/composer-parts.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Working…"
 msgstr "Trabalhando…"

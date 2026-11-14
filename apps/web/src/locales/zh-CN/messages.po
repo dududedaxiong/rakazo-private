@@ -1621,6 +1621,7 @@ msgstr "无法读取图像"
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
 msgstr "取消"
 
@@ -2925,6 +2926,7 @@ msgid "Could not save model"
 msgstr "无法保存模型"
 
 #: src/pages/model-settings/use-model-settings.ts
+#: src/pages/Shell.tsx
 msgid "Could not save models"
 msgstr "无法保存模型"
 
@@ -4764,6 +4766,10 @@ msgstr "隔离预览，访问不了你的账户"
 msgid "It may have been deleted, or it belongs to someone else."
 msgstr "它可能已被删除，或属于其他人。"
 
+#: src/pages/shell/stuck-run-actions.tsx
+msgid "It seems stuck"
+msgstr "似乎卡住了"
+
 #: src/pages/shell/shell-dialogs.tsx
 msgid "Its bots and groups are kept and leave the section."
 msgstr "其中的 Bot 和群组会保留，并移出该分组。"
@@ -5338,6 +5344,7 @@ msgstr "模式"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/stuck-run-actions.tsx
 msgid "Model"
 msgstr "模型"
 
@@ -8096,6 +8103,10 @@ msgstr "支持思考"
 msgid "Switch"
 msgstr "切换"
 
+#: src/pages/shell/stuck-run-actions.tsx
+msgid "Switch model and retry"
+msgstr "换模型重试"
+
 #: src/components/prompt-templates/BotPersonaSection.tsx
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switch persona"
@@ -9330,6 +9341,7 @@ msgstr "工作指令"
 #: src/components/ToolActivityDisclosure.tsx
 #: src/lib/roster-status.ts
 #: src/pages/Auth.tsx
+#: src/pages/shell/composer-parts.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Working…"
 msgstr "处理中…"
