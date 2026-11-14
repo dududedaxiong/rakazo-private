@@ -124,6 +124,12 @@ export interface ReplyState {
    * assistant turn and needs a break from the earlier text that stayed in this reply.
    */
   assistantTurnBreakPending: boolean;
+  /**
+   * Length of the separator the current turn's first text added before its own
+   * words (0 when none). A stalled turn's text is discarded with its separator,
+   * so the backup's fresh answer does not inherit a stray blank line.
+   */
+  currentTurnSeparatorLength: number;
   /** Replaced whenever a secret is added, so streamed progress hides it too. */
   redactor: ReturnType<typeof createStreamingRedactor>;
 }

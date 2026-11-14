@@ -14,6 +14,17 @@ export const MODEL_HEALTH_TIMEOUT_MS = 60_000;
  * and advance the configured fallback chain.
  */
 export const MODEL_STREAM_IDLE_TIMEOUT_MS = 180_000;
+/**
+ * Wait for the first real token after response headers. A model that never
+ * starts is cut loose sooner than the outer cap, instead of holding the run
+ * for the full idle bound.
+ */
+export const MODEL_STREAM_FIRST_TOKEN_TIMEOUT_MS = 60_000;
+/**
+ * Silence allowed once real content has started flowing. A mid-stream stall
+ * switches to the next model sooner than the outer cap.
+ */
+export const MODEL_STREAM_STALL_TIMEOUT_MS = 30_000;
 export const DEFAULT_MODEL_STREAM_MAX_RETRIES = 1;
 
 /** More retries extend the worst-case turn; the executor heartbeat renews its leases. */
@@ -47,6 +58,27 @@ export function modelHealthTimeoutMs(): number {
 
 export function modelStreamIdleTimeoutMs(): number {
   return timeoutMsFromEnv(process.env.MODEL_STREAM_IDLE_TIMEOUT_MS, MODEL_STREAM_IDLE_TIMEOUT_MS);
+}
+
+/**
+ * The outer idle cap bounds the two tighter bounds too: a configured
+ * first-token or stall wait longer than the idle bound is clamped to it.
+ */
+export function modelStreamFirstTokenTimeoutMs(): number {
+  return Math.min(
+    timeoutMsFromEnv(
+      process.env.MODEL_STREAM_FIRST_TOKEN_TIMEOUT_MS,
+      MODEL_STREAM_FIRST_TOKEN_TIMEOUT_MS,
+    ),
+    modelStreamIdleTimeoutMs(),
+  );
+}
+
+export function modelStreamStallTimeoutMs(): number {
+  return Math.min(
+    timeoutMsFromEnv(process.env.MODEL_STREAM_STALL_TIMEOUT_MS, MODEL_STREAM_STALL_TIMEOUT_MS),
+    modelStreamIdleTimeoutMs(),
+  );
 }
 
 export const TOOL_RESULT_TEXT_LIMIT = 12_000;

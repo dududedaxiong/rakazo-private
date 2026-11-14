@@ -162,7 +162,7 @@ import {
   runtimeFallbackModel,
 } from "./run-model.js";
 import { runModelBackups, startRunModel } from "./run-model-start.js";
-import { createReplyState } from "./run-progress.js";
+import { createReplyState, discardStalledTurnText } from "./run-progress.js";
 import {
   DELEGATED_EMPTY_NOTICE,
   GROUP_UNADDRESSED_REPLY_GUIDANCE,
@@ -1905,6 +1905,10 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   if (updated.count !== 1) {
                     throw new Error("Run lease was lost before the backup model could be used");
                   }
+                  // A stalled model's partial text must not survive into the
+                  // backup's fresh answer; the switch already waited for this
+                  // call, so the backup streams only after the cut.
+                  discardStalledTurnText(ctx.state.reply);
                 }
                 activeModel["model.provider"] = provider;
                 activeModel["model.id"] = modelId;

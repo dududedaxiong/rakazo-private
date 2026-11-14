@@ -1,6 +1,7 @@
 import type {
   Api,
   AssistantMessage,
+  AssistantMessageEvent,
   Context,
   Model,
   Models,
@@ -10,8 +11,14 @@ import { builtinModels } from "@earendil-works/pi-ai/providers/all";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createOpenAiCompatibleFetch } from "./pi-openai-compatible-provider.js";
-import { MODEL_STREAM_IDLE_TIMEOUT_MS, MODEL_STREAM_TIMEOUT_MS } from "./pi-runtime-limits.js";
 import {
+  MODEL_STREAM_FIRST_TOKEN_TIMEOUT_MS,
+  MODEL_STREAM_IDLE_TIMEOUT_MS,
+  MODEL_STREAM_STALL_TIMEOUT_MS,
+  MODEL_STREAM_TIMEOUT_MS,
+} from "./pi-runtime-limits.js";
+import {
+  isStreamActivityEvent,
   MODEL_STREAM_IDLE_TIMEOUT_MESSAGE,
   modelStreamIdleWatchdog,
   reliableModelStream,
@@ -59,6 +66,7 @@ describe("Model stream idle watchdog", () => {
   it("waits out a configured idle bound longer than the default", async () => {
     vi.useFakeTimers();
     vi.stubEnv("MODEL_STREAM_IDLE_TIMEOUT_MS", "240000");
+    vi.stubEnv("MODEL_STREAM_FIRST_TOKEN_TIMEOUT_MS", "240000");
     const watchdog = modelStreamIdleWatchdog(undefined);
     watchdog.ping();
     await vi.advanceTimersByTimeAsync(240_000 - 1);
@@ -77,8 +85,9 @@ describe("Model stream idle watchdog", () => {
     let pending = iterator.next();
     inner.push({ type: "start", partial: assistantMessage() });
     await pending;
-    for (let minute = 0; minute < 60; minute++) {
-      await vi.advanceTimersByTimeAsync(60_000);
+    // Real tokens keep arriving inside the stall bound, so the stream never aborts.
+    for (let second = 0; second < 3600; second += 20) {
+      await vi.advanceTimersByTimeAsync(20_000);
       pending = iterator.next();
       inner.push({ type: "text_delta", contentIndex: 0, delta: "x", partial: assistantMessage() });
       await pending;
@@ -103,10 +112,13 @@ describe("Model stream idle watchdog", () => {
     await vi.advanceTimersByTimeAsync(MODEL_STREAM_IDLE_TIMEOUT_MS * 2);
     expect(watchdog.signal.aborted).toBe(false);
 
+    // Headers landed, so the first-token bound runs from here. The start event
+    // that follows carries no content and does not re-arm it.
+    watchdog.ping();
     inner.push({ type: "start", partial: assistantMessage() });
     await pending;
 
-    await vi.advanceTimersByTimeAsync(MODEL_STREAM_IDLE_TIMEOUT_MS - 1);
+    await vi.advanceTimersByTimeAsync(MODEL_STREAM_FIRST_TOKEN_TIMEOUT_MS - 1);
     expect(watchdog.signal.aborted).toBe(false);
     await vi.advanceTimersByTimeAsync(1);
     expect(watchdog.signal.aborted).toBe(true);
@@ -146,9 +158,9 @@ describe("Model stream idle watchdog", () => {
     expect(watchdog.signal.aborted).toBe(false);
 
     // Headers landed — pi's onResponse seam pings the watchdog — but the body
-    // then stays silent: the idle bound applies from here.
+    // then stays silent: the first-token bound applies from here.
     watchdog.ping();
-    await vi.advanceTimersByTimeAsync(MODEL_STREAM_IDLE_TIMEOUT_MS - 1);
+    await vi.advanceTimersByTimeAsync(MODEL_STREAM_FIRST_TOKEN_TIMEOUT_MS - 1);
     expect(watchdog.signal.aborted).toBe(false);
     await vi.advanceTimersByTimeAsync(1);
     expect(watchdog.signal.aborted).toBe(true);
@@ -180,7 +192,8 @@ describe("Model stream idle watchdog", () => {
     await vi.advanceTimersByTimeAsync(MODEL_STREAM_TIMEOUT_MS + MODEL_STREAM_IDLE_TIMEOUT_MS);
     expect(watchdog.signal.aborted).toBe(false);
 
-    // The retried attempt's headers arrive: the first event arms the timer.
+    // The retried attempt's headers arrive: the first event carries no content,
+    // so nothing arms the timer yet, and the stream still completes.
     inner.push({ type: "start", partial: assistantMessage() });
     expect((await pending).value).toMatchObject({ type: "start" });
     expect(watchdog.signal.aborted).toBe(false);
@@ -192,29 +205,168 @@ describe("Model stream idle watchdog", () => {
     await expect(stream.result()).resolves.toMatchObject({ stopReason: "stop" });
   });
 
-  it("re-arms on every delivered event so a busy stream never aborts", async () => {
+  it("re-arms only on real content, so a busy stream never aborts", async () => {
     vi.useFakeTimers();
     const watchdog = modelStreamIdleWatchdog(undefined);
     const inner = new AssistantMessageEventStream();
     const stream = watchdog.wrap(inner);
     const iterator = stream[Symbol.asyncIterator]();
 
-    await vi.advanceTimersByTimeAsync(MODEL_STREAM_IDLE_TIMEOUT_MS - 1);
+    // Headers arm the first-token bound; the start event carries no content
+    // and does not extend it.
+    watchdog.ping();
     let pending = iterator.next();
     inner.push({ type: "start", partial: assistantMessage() });
     await pending;
 
-    await vi.advanceTimersByTimeAsync(MODEL_STREAM_IDLE_TIMEOUT_MS - 1);
-    expect(watchdog.signal.aborted).toBe(false);
+    // Real tokens keep arriving inside the stall bound.
+    for (let second = 0; second < 120; second += 20) {
+      await vi.advanceTimersByTimeAsync(20_000);
+      pending = iterator.next();
+      inner.push({ type: "text_delta", contentIndex: 0, delta: "x", partial: assistantMessage() });
+      expect((await pending).value).toMatchObject({ type: "text_delta", delta: "x" });
+      expect(watchdog.signal.aborted).toBe(false);
+    }
 
-    pending = iterator.next();
-    inner.push({ type: "text_delta", contentIndex: 0, delta: "x", partial: assistantMessage() });
-    expect((await pending).value).toMatchObject({ type: "text_delta", delta: "x" });
-
-    await vi.advanceTimersByTimeAsync(MODEL_STREAM_IDLE_TIMEOUT_MS - 1);
+    // Once the tokens stop, the stall bound still applies.
+    await vi.advanceTimersByTimeAsync(MODEL_STREAM_STALL_TIMEOUT_MS - 1);
     expect(watchdog.signal.aborted).toBe(false);
     await vi.advanceTimersByTimeAsync(1);
     expect(watchdog.signal.aborted).toBe(true);
+  });
+
+  it("still aborts when only keep-alives and empty events arrive", async () => {
+    vi.useFakeTimers();
+    const watchdog = modelStreamIdleWatchdog(undefined);
+    const inner = new AssistantMessageEventStream();
+    const stream = watchdog.wrap(inner);
+    const iterator = stream[Symbol.asyncIterator]();
+    watchdog.ping();
+    let pending = iterator.next();
+    inner.push({ type: "start", partial: assistantMessage() });
+    await pending;
+    // A gateway that keeps the connection alive with empty events must not
+    // hold a stalled stream open past the first-token bound.
+    for (let second = 0; second < 40; second += 20) {
+      await vi.advanceTimersByTimeAsync(20_000);
+      pending = iterator.next();
+      inner.push({ type: "text_delta", contentIndex: 0, delta: "", partial: assistantMessage() });
+      await pending;
+    }
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(watchdog.signal.aborted).toBe(true);
+    expect((watchdog.signal.reason as Error).message).toBe(MODEL_STREAM_IDLE_TIMEOUT_MESSAGE);
+  });
+
+  it("aborts a mid-stream stall at the stall bound", async () => {
+    vi.useFakeTimers();
+    const watchdog = modelStreamIdleWatchdog(undefined);
+    const inner = new AssistantMessageEventStream();
+    const stream = watchdog.wrap(inner);
+    const iterator = stream[Symbol.asyncIterator]();
+    watchdog.ping();
+    let pending = iterator.next();
+    inner.push({ type: "start", partial: assistantMessage() });
+    await pending;
+    pending = iterator.next();
+    inner.push({ type: "text_delta", contentIndex: 0, delta: "x", partial: assistantMessage() });
+    await pending;
+    await vi.advanceTimersByTimeAsync(MODEL_STREAM_STALL_TIMEOUT_MS - 1);
+    expect(watchdog.signal.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(watchdog.signal.aborted).toBe(true);
+    expect((watchdog.signal.reason as Error).message).toBe(MODEL_STREAM_IDLE_TIMEOUT_MESSAGE);
+  });
+
+  it("treats reasoning deltas as activity", async () => {
+    vi.useFakeTimers();
+    const watchdog = modelStreamIdleWatchdog(undefined);
+    const inner = new AssistantMessageEventStream();
+    const stream = watchdog.wrap(inner);
+    const iterator = stream[Symbol.asyncIterator]();
+    watchdog.ping();
+    let pending = iterator.next();
+    inner.push({ type: "start", partial: assistantMessage() });
+    await pending;
+    for (let second = 0; second < 120; second += 20) {
+      await vi.advanceTimersByTimeAsync(20_000);
+      pending = iterator.next();
+      inner.push({
+        type: "thinking_delta",
+        contentIndex: 0,
+        delta: "x",
+        partial: assistantMessage(),
+      });
+      await pending;
+      expect(watchdog.signal.aborted).toBe(false);
+    }
+  });
+
+  it("treats a tool call in progress as activity", async () => {
+    vi.useFakeTimers();
+    const watchdog = modelStreamIdleWatchdog(undefined);
+    const inner = new AssistantMessageEventStream();
+    const stream = watchdog.wrap(inner);
+    const iterator = stream[Symbol.asyncIterator]();
+    watchdog.ping();
+    let pending = iterator.next();
+    inner.push({ type: "start", partial: assistantMessage() });
+    await pending;
+    pending = iterator.next();
+    inner.push({ type: "toolcall_start", contentIndex: 0, partial: assistantMessage() });
+    await pending;
+    for (let second = 0; second < 60; second += 20) {
+      await vi.advanceTimersByTimeAsync(20_000);
+      pending = iterator.next();
+      inner.push({
+        type: "toolcall_delta",
+        contentIndex: 0,
+        delta: "x",
+        partial: assistantMessage(),
+      });
+      await pending;
+      expect(watchdog.signal.aborted).toBe(false);
+    }
+    // Once the call stops growing, the stall bound still applies.
+    await vi.advanceTimersByTimeAsync(MODEL_STREAM_STALL_TIMEOUT_MS);
+    expect(watchdog.signal.aborted).toBe(true);
+  });
+
+  it("treats thinking that arrives complete at its start as activity", async () => {
+    vi.useFakeTimers();
+    const watchdog = modelStreamIdleWatchdog(undefined);
+    const inner = new AssistantMessageEventStream();
+    const stream = watchdog.wrap(inner);
+    const iterator = stream[Symbol.asyncIterator]();
+    watchdog.ping();
+    const pending = iterator.next();
+    // Redacted thinking may arrive complete at its start event with no deltas.
+    const thinking = assistantMessage({
+      content: [{ type: "thinking", thinking: "redacted", thinkingSignature: "opaque" }],
+    });
+    inner.push({ type: "thinking_start", contentIndex: 0, partial: thinking });
+    await pending;
+    // The start counted as activity, so the shorter stall bound — not the
+    // first-token bound — runs from here.
+    await vi.advanceTimersByTimeAsync(MODEL_STREAM_STALL_TIMEOUT_MS - 1);
+    expect(watchdog.signal.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(watchdog.signal.aborted).toBe(true);
+  });
+
+  it("clamps the tighter bounds to the configured outer cap", async () => {
+    vi.useFakeTimers();
+    vi.stubEnv("MODEL_STREAM_IDLE_TIMEOUT_MS", "10000");
+    vi.stubEnv("MODEL_STREAM_FIRST_TOKEN_TIMEOUT_MS", "60000");
+    vi.stubEnv("MODEL_STREAM_STALL_TIMEOUT_MS", "30000");
+    const watchdog = modelStreamIdleWatchdog(undefined);
+    watchdog.ping();
+    await vi.advanceTimersByTimeAsync(10_000 - 1);
+    expect(watchdog.signal.aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(watchdog.signal.aborted).toBe(true);
+    expect((watchdog.signal.reason as Error).message).toBe(MODEL_STREAM_IDLE_TIMEOUT_MESSAGE);
+    watchdog.dispose();
   });
 
   it("propagates a caller abort without relabeling it", async () => {
@@ -277,6 +429,108 @@ describe("Model stream idle watchdog", () => {
   });
 });
 
+describe("isStreamActivityEvent", () => {
+  const emptyText = assistantMessage({ content: [{ type: "text", text: "" }] });
+  const emptyThinking = assistantMessage({ content: [{ type: "thinking", thinking: "" }] });
+  const redactedThinking = assistantMessage({
+    content: [{ type: "thinking", thinking: "redacted", thinkingSignature: "opaque" }],
+  });
+  const cases: Array<[string, AssistantMessageEvent, boolean]> = [
+    [
+      "a text delta counts",
+      { type: "text_delta", contentIndex: 0, delta: "x", partial: assistantMessage() },
+      true,
+    ],
+    [
+      "an empty text delta does not",
+      { type: "text_delta", contentIndex: 0, delta: "", partial: assistantMessage() },
+      false,
+    ],
+    [
+      "a thinking delta counts",
+      { type: "thinking_delta", contentIndex: 0, delta: "x", partial: assistantMessage() },
+      true,
+    ],
+    [
+      "an empty thinking delta does not",
+      { type: "thinking_delta", contentIndex: 0, delta: "", partial: assistantMessage() },
+      false,
+    ],
+    [
+      "a tool-call delta counts",
+      { type: "toolcall_delta", contentIndex: 0, delta: "{", partial: assistantMessage() },
+      true,
+    ],
+    [
+      "an empty tool-call delta does not",
+      { type: "toolcall_delta", contentIndex: 0, delta: "", partial: assistantMessage() },
+      false,
+    ],
+    [
+      "a text end with content counts",
+      { type: "text_end", contentIndex: 0, content: "hi", partial: assistantMessage() },
+      true,
+    ],
+    [
+      "an empty text end does not",
+      { type: "text_end", contentIndex: 0, content: "", partial: assistantMessage() },
+      false,
+    ],
+    [
+      "a thinking end with content counts",
+      { type: "thinking_end", contentIndex: 0, content: "x", partial: assistantMessage() },
+      true,
+    ],
+    [
+      "an empty thinking end does not",
+      { type: "thinking_end", contentIndex: 0, content: "", partial: assistantMessage() },
+      false,
+    ],
+    ["a text start does not", { type: "text_start", contentIndex: 0, partial: emptyText }, false],
+    [
+      "a thinking start with an empty block does not",
+      { type: "thinking_start", contentIndex: 0, partial: emptyThinking },
+      false,
+    ],
+    [
+      "a thinking start with complete redacted thinking counts",
+      { type: "thinking_start", contentIndex: 0, partial: redactedThinking },
+      true,
+    ],
+    [
+      "a tool-call start counts",
+      { type: "toolcall_start", contentIndex: 0, partial: assistantMessage() },
+      true,
+    ],
+    [
+      "a tool-call end counts",
+      {
+        type: "toolcall_end",
+        contentIndex: 0,
+        toolCall: { type: "toolCall", id: "1", name: "tool", arguments: {} },
+        partial: assistantMessage(),
+      },
+      true,
+    ],
+    ["a start event does not", { type: "start", partial: assistantMessage() }, false],
+    ["a done event does not", { type: "done", reason: "stop", message: assistantMessage() }, false],
+    [
+      "an error event does not",
+      {
+        type: "error",
+        reason: "error",
+        error: assistantMessage({ stopReason: "error", errorMessage: "boom" }),
+      },
+      false,
+    ],
+  ];
+  for (const [name, event, expected] of cases) {
+    it(name, () => {
+      expect(isStreamActivityEvent(event)).toBe(expected);
+    });
+  }
+});
+
 describe.each([
   codexModel,
   { provider: "openrouter", api: "openai-completions" } as Model<Api>,
@@ -314,12 +568,14 @@ describe.each([
     expect(guardedOptions?.signal?.aborted).toBe(false);
     expect(caller.signal.aborted).toBe(false);
 
-    // Once events flow, silence is bounded — and the watchdog aborts only its
-    // own request signal, never the caller's.
+    // Once headers land, silence is bounded — and the watchdog aborts only its
+    // own request signal, never the caller's. The start event itself carries
+    // no content, so the first-token bound runs from the headers.
     const pending = guarded[Symbol.asyncIterator]().next();
     inner.push({ type: "start", partial: assistantMessage() });
     await pending;
-    await vi.advanceTimersByTimeAsync(MODEL_STREAM_IDLE_TIMEOUT_MS);
+    await guardedOptions?.onResponse?.({ status: 200, headers: {} }, model);
+    await vi.advanceTimersByTimeAsync(MODEL_STREAM_FIRST_TOKEN_TIMEOUT_MS);
     expect(guardedOptions?.signal?.aborted).toBe(true);
     expect(caller.signal.aborted).toBe(false);
   });
@@ -352,10 +608,10 @@ describe.each([
     expect(guardedOptions?.signal?.aborted).toBe(false);
 
     // The retried attempt's 2xx headers arm a fresh full budget; a body that
-    // then stays silent aborts at the idle bound.
+    // then stays silent aborts at the first-token bound.
     await guardedOptions?.onResponse?.({ status: 200, headers: {} }, model);
     expect(onResponse).toHaveBeenCalledWith({ status: 200, headers: {} }, model);
-    await vi.advanceTimersByTimeAsync(MODEL_STREAM_IDLE_TIMEOUT_MS - 1);
+    await vi.advanceTimersByTimeAsync(MODEL_STREAM_FIRST_TOKEN_TIMEOUT_MS - 1);
     expect(guardedOptions?.signal?.aborted).toBe(false);
     await vi.advanceTimersByTimeAsync(1);
     expect(guardedOptions?.signal?.aborted).toBe(true);
@@ -494,7 +750,7 @@ describe.each(["google-generative-ai", "google-vertex"] as const)(
         expect(options.timeoutMs).toBe(MODEL_STREAM_TIMEOUT_MS);
         await options.onResponse?.({ status: 200, headers: {} }, model);
         expect(onResponse).toHaveBeenCalledWith({ status: 200, headers: {} }, model);
-        await vi.advanceTimersByTimeAsync(MODEL_STREAM_IDLE_TIMEOUT_MS);
+        await vi.advanceTimersByTimeAsync(MODEL_STREAM_FIRST_TOKEN_TIMEOUT_MS);
         expect(options.signal?.aborted).toBe(true);
         expect(caller.signal.aborted).toBe(false);
         inner.push(abortedByPi());

@@ -58,6 +58,7 @@ import {
 } from "./run-notifications.js";
 import {
   canPublishDurableNarration,
+  fallbackAnswerMark,
   flushPendingTools,
   flushProgress,
   mayBeSilentEnding,
@@ -187,6 +188,7 @@ export async function consumeRunEvents(
       if (event.type === "tool" || event.type === "takeover") {
         recordExplicitNoResponse(reply, reply.assistantTurnText);
         reply.assistantTurnText = "";
+        reply.currentTurnSeparatorLength = 0;
       }
       if (event.type === "text") {
         await streamText(ctx, event);
@@ -281,6 +283,7 @@ async function streamText(ctx: RunContext, event: RuntimeEvent<"text">) {
   if (reply.assistantTurnBreakPending && event.text) {
     reply.assistantTurnBreakPending = false;
     const separator = assistantTurnSeparator(reply.assembled, event.text);
+    reply.currentTurnSeparatorLength = separator.length;
     if (separator) {
       reply.assembled += separator;
       reply.currentTextSegment += separator;
@@ -867,6 +870,22 @@ export async function completeRun(ctx: RunContext) {
     throw new Error(TOOL_STEPS_WITHOUT_RESPONSE);
   }
   if (!(await renewRunLease(deps, runId, ctx.workerId, ctx.fence))) return;
+  // A fallback answered this run: mark which model it was, like generated
+  // media. The run row carries the answering model; this attempt's snapshot
+  // still holds the model the run started with. A failed read skips the mark
+  // instead of failing the run that already finished.
+  if (silentReply.assembled.trim() && blocks.length > 0) {
+    try {
+      const current = await deps.prisma.run.findUnique({
+        where: { id: runId },
+        select: { modelId: true },
+      });
+      const mark = fallbackAnswerMark(run.modelId, current?.modelId);
+      if (mark) blocks.push({ kind: "text", text: mark });
+    } catch (error) {
+      getLogger().error("run.answer model read failed", error);
+    }
+  }
   const botMessageOutcome =
     run.trigger === "bot_message"
       ? botMessageOutcomeFromMidTurn(text, reply.midTurnUserTexts)

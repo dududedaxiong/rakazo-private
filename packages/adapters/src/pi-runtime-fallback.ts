@@ -465,6 +465,9 @@ export function fallbackAwareModelStream(
       };
       lastPartial = undefined;
       let sawVisibleOutput = false;
+      // A tool call started in this attempt must never be switched away: its
+      // fate is ambiguous once issued, so a stall there fails the run instead.
+      let sawToolCall = false;
       let restart = false;
       let stream: AssistantMessageEventStream;
       // A backup runs at its own effort, never the main model's.
@@ -629,6 +632,20 @@ export function fallbackAwareModelStream(
               const next = await resolveNext(target);
               if (failIfAborted(target)) return;
               if (next) {
+                if (event.error.errorMessage === MODEL_STREAM_IDLE_TIMEOUT_MESSAGE) {
+                  // The model never produced a token; record the stall like the
+                  // mid-stream switch below so both paths are observable the same way.
+                  getLogger().info("model.stall.switch", {
+                    runId: state.request.runId,
+                    provider: target.config.provider,
+                    model: target.config.id,
+                    reason: "first-token timeout",
+                    outputTokens: lastPartial?.usage?.output ?? 0,
+                    elapsedMs: Date.now() - startedAt,
+                    nextProvider: next.config.provider,
+                    nextModel: next.config.id,
+                  });
+                }
                 state.messagesBeforeSwitch = context.messages.length;
                 await state.onSwitch(next);
                 if (failIfAborted(target)) return;
@@ -668,6 +685,51 @@ export function fallbackAwareModelStream(
                 }
                 terminalEvent = firstRetryableError;
               }
+            }
+            // A model that went quiet after writing cannot be continued from its
+            // partial text: the next model starts this turn fresh, and the
+            // executor drops the stalled text from the reply. The no-output case
+            // above already switches; this is its mid-stream twin, and it must
+            // run before the cut-reply continuation below, which would otherwise
+            // keep the stalled attempt's text and ask the same model to go on.
+            // A tool call already started is never switched away (see sawToolCall).
+            if (
+              sawVisibleOutput &&
+              !sawToolCall &&
+              event.reason === "error" &&
+              !signalAborted() &&
+              event.error.errorMessage === MODEL_STREAM_IDLE_TIMEOUT_MESSAGE &&
+              state.isProviderFailure(event.error)
+            ) {
+              state.primaryFailure ??= sanitizeProviderError(
+                target.config.provider,
+                event.error.errorMessage ?? "Model request failed.",
+              );
+              const next = await resolveNext(target);
+              if (failIfAborted(target)) return;
+              if (next) {
+                getLogger().info("model.stall.switch", {
+                  runId: state.request.runId,
+                  provider: target.config.provider,
+                  model: target.config.id,
+                  reason: "mid-stream stall",
+                  outputTokens: lastPartial?.usage?.output ?? 0,
+                  elapsedMs: Date.now() - startedAt,
+                  nextProvider: next.config.provider,
+                  nextModel: next.config.id,
+                });
+                state.messagesBeforeSwitch = context.messages.length;
+                await state.onSwitch(next);
+                if (failIfAborted(target)) return;
+                // A raised budget or lower thinking level fitted the failed model, not this one.
+                outputBudget = undefined;
+                thinkingOverride = undefined;
+                buffered = [];
+                restart = true;
+                break;
+              }
+              // No backup: fall through to the cut-reply continuation or the
+              // terminal error below, exactly as a stall without a switch behaves.
             }
             const cutText = lastPartial ? assistantText(lastPartial) : "";
             if (
@@ -814,6 +876,13 @@ export function fallbackAwareModelStream(
             ...event.partial,
             content: event.partial.content.map((part) => ({ ...part })),
           };
+          if (
+            event.type === "toolcall_start" ||
+            event.type === "toolcall_delta" ||
+            event.type === "toolcall_end"
+          ) {
+            sawToolCall = true;
+          }
           if (eventHasVisibleOutput(event)) {
             sawVisibleOutput = true;
             for (const pending of buffered) output.push(pending);

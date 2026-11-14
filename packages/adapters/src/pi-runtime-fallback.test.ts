@@ -148,6 +148,26 @@ function stream(_target: Model<"openai-completions">, response: AssistantMessage
   return result;
 }
 
+/**
+ * A stream that writes real text, then goes idle: the text arrives as deltas
+ * (visible output), and the idle error that follows carries the same partial text.
+ */
+function streamStalledAfterText(target: Model<"openai-completions">, text: string) {
+  const result = new AssistantMessageEventStream();
+  const partial = message(target, [{ type: "text", text }], "stop");
+  result.push({ type: "start", partial: { ...partial, content: [] } });
+  result.push({ type: "text_delta", contentIndex: 0, delta: text, partial });
+  const error = message(
+    target,
+    [{ type: "text", text }],
+    "error",
+    MODEL_STREAM_IDLE_TIMEOUT_MESSAGE,
+  );
+  result.push({ type: "error", reason: "error", error });
+  result.end(error);
+  return result;
+}
+
 function countContextImages(context: { messages?: unknown[] }): number {
   let count = 0;
   for (const message of context.messages ?? []) {
@@ -311,7 +331,7 @@ describe("Pi runtime transient model retries", () => {
     expect(providerState.delay).toHaveBeenCalledOnce();
   });
 
-  it("does not recover idle after partial text", async () => {
+  it("does not recover idle after partial text that was never streamed", async () => {
     const content: AssistantMessage["content"] = [{ type: "text", text: "partial" }];
     providerState.stream.mockImplementation(() =>
       stream(primary, message(primary, content, "error", MODEL_STREAM_IDLE_TIMEOUT_MESSAGE)),
@@ -1359,6 +1379,87 @@ describe("Pi runtime ordered model fallback", () => {
 
     expect(input.onModelChange).toHaveBeenCalledExactlyOnceWith(backupA.provider, backupA.id);
     expect(events.filter((event) => event.type === "progress")).toEqual([]);
+  });
+
+  it("switches to the backup when the primary stalls mid-stream", async () => {
+    const input = request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]);
+    input.onModelChange = vi.fn(async () => undefined);
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) => {
+      if (target.provider === primary.provider) {
+        return streamStalledAfterText(target, "Stalled partial.");
+      }
+      return stream(target, message(target, [{ type: "text", text: "Recovered." }], "stop"));
+    });
+
+    const events = await run(input);
+
+    // The stalled attempt's text reached the agent before the switch, so the
+    // agent-level reply still holds it; the executor drops it from the final
+    // message when the switch lands. The backup's answer is what completes.
+    expect(
+      providerState.stream.mock.calls.map(
+        ([target]) => (target as Model<"openai-completions">).provider,
+      ),
+    ).toEqual([primary.provider, backupA.provider]);
+    expect(input.onModelChange).toHaveBeenCalledExactlyOnceWith(backupA.provider, backupA.id);
+    expect(events.filter((event) => event.type === "text")).toEqual([
+      { type: "text", text: "Stalled partial." },
+      { type: "text", text: "Recovered." },
+    ]);
+    expect(events.at(-1)).toEqual({ type: "done", text: "Stalled partial.Recovered." });
+  });
+
+  it("switches to the backup on a first-token idle timeout", async () => {
+    const input = request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]);
+    input.onModelChange = vi.fn(async () => undefined);
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
+      target.provider === primary.provider
+        ? stream(target, message(target, [], "error", MODEL_STREAM_IDLE_TIMEOUT_MESSAGE))
+        : stream(target, message(target, [{ type: "text", text: "Recovered." }], "stop")),
+    );
+
+    const events = await run(input);
+
+    expect(providerState.stream).toHaveBeenCalledTimes(2);
+    expect(input.onModelChange).toHaveBeenCalledExactlyOnceWith(backupA.provider, backupA.id);
+    expect(events.filter((event) => event.type === "text")).toEqual([
+      { type: "text", text: "Recovered." },
+    ]);
+    expect(events.at(-1)).toEqual({ type: "done", text: "Recovered." });
+  });
+
+  it("fails with every stalled attempt listed when all fallbacks stall before the first token", async () => {
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
+      stream(target, message(target, [], "error", MODEL_STREAM_IDLE_TIMEOUT_MESSAGE)),
+    );
+    const error = await run(
+      request([
+        { provider: backupA.provider, id: backupA.id, apiKey: "fake-backup-a" },
+        { provider: backupB.provider, id: backupB.id, apiKey: "fake-backup-b" },
+      ]),
+    ).catch((error: Error) => error);
+    const diagnostic = JSON.parse((error as Error).message);
+    expect(diagnostic.primaryError).toBe(MODEL_STREAM_IDLE_TIMEOUT_MESSAGE);
+    expect(diagnostic.backups).toEqual([
+      expect.objectContaining({
+        provider: backupA.provider,
+        modelId: backupA.id,
+        status: "failed",
+        reason: MODEL_STREAM_IDLE_TIMEOUT_MESSAGE,
+      }),
+      expect.objectContaining({
+        provider: backupB.provider,
+        modelId: backupB.id,
+        status: "failed",
+        reason: MODEL_STREAM_IDLE_TIMEOUT_MESSAGE,
+      }),
+    ]);
+    // The last backup retries once on the same model before the run fails.
+    expect(
+      providerState.stream.mock.calls.map(
+        ([target]) => (target as Model<"openai-completions">).provider,
+      ),
+    ).toEqual([primary.provider, backupA.provider, backupB.provider, backupB.provider]);
   });
 
   it("prunes new screenshots using the active backup image limit", async () => {

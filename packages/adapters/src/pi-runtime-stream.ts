@@ -12,8 +12,10 @@ import type {
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
 import { codexComputeResidency } from "./pi-oauth.js";
 import {
+  modelStreamFirstTokenTimeoutMs,
   modelStreamIdleTimeoutMs,
   modelStreamMaxRetries,
+  modelStreamStallTimeoutMs,
   modelStreamTimeoutMs,
   operatorMaxTokens,
   resolveCompletionMaxTokens,
@@ -40,9 +42,52 @@ export interface StreamIdleWatchdog {
   signal: AbortSignal;
   /** Re-arms the idle bound; invoke on response headers and each delivered event. */
   ping(): void;
-  /** Wraps the provider stream so every delivered event re-arms the idle bound. */
+  /** Wraps the provider stream so only real progress re-arms the idle bound. */
   wrap(stream: AssistantMessageEventStream): AssistantMessageEventStream;
   dispose(): void;
+}
+
+/**
+ * Real progress in a model stream: content the model actually produced. Transport
+ * keep-alives, empty progress pings and bare lifecycle events (`start`, an empty
+ * `*_start`, `done`, `error`) carry no content and must not re-arm the idle bound,
+ * or a stalled provider that keeps its connection alive never trips it. Reasoning
+ * deltas count, so a thinking model never false-triggers; a tool call counts from
+ * its start, so a call being assembled or awaited is activity too. Redacted
+ * thinking may arrive complete at its start event with no deltas, so a
+ * `thinking_start` counts when its block already holds content.
+ */
+export function isStreamActivityEvent(event: AssistantMessageEvent): boolean {
+  switch (event.type) {
+    case "text_delta":
+    case "thinking_delta":
+    case "toolcall_delta":
+      return event.delta.length > 0;
+    case "text_end":
+    case "thinking_end":
+      return event.content.length > 0;
+    case "text_start":
+    case "thinking_start": {
+      const part = event.partial.content[event.contentIndex];
+      if (!part) return false;
+      return event.type === "text_start"
+        ? part.type === "text" && part.text.length > 0
+        : part.type === "thinking" && part.thinking.length > 0;
+    }
+    case "toolcall_start":
+    case "toolcall_end":
+      return true;
+    default:
+      return false;
+  }
+}
+
+/** Idle bounds for one stream; every bound defaults from its environment variable. */
+export interface ModelStreamIdleBounds {
+  /** Wait for the first real token after response headers land. */
+  firstTokenTimeoutMs?: number;
+  /** Silence allowed once real content has started flowing. */
+  stallTimeoutMs?: number;
 }
 
 /**
@@ -51,15 +96,23 @@ export interface StreamIdleWatchdog {
  * a 2xx response, keeping time-to-headers and retry backoff outside the idle bound.
  * pi reports any abort as "Request was aborted", so the wrapper relabels it as an
  * idle timeout when the watchdog fired.
+ *
+ * Two bounds, not one: before the first real token the wait is the first-token
+ * bound; once content flows, silence is the shorter stall bound. Only real
+ * progress re-arms the timer, so keep-alives and empty events cannot hold a stalled
+ * stream open past either bound.
  */
 export function modelStreamIdleWatchdog(
   upstream: AbortSignal | undefined,
-  idleTimeoutMs: number = modelStreamIdleTimeoutMs(),
+  bounds: ModelStreamIdleBounds = {},
 ): StreamIdleWatchdog {
   const controller = new AbortController();
   let timedOut = false;
   let disposed = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  let seenActivity = false;
+  const firstTokenTimeoutMs = bounds.firstTokenTimeoutMs ?? modelStreamFirstTokenTimeoutMs();
+  const stallTimeoutMs = bounds.stallTimeoutMs ?? modelStreamStallTimeoutMs();
 
   const onUpstreamAbort = () => controller.abort(upstream?.reason);
   if (upstream?.aborted) controller.abort(upstream.reason);
@@ -67,12 +120,15 @@ export function modelStreamIdleWatchdog(
 
   const arm = () => {
     if (disposed || controller.signal.aborted) return;
-    timer = setTimeout(() => {
-      timer = undefined;
-      if (controller.signal.aborted) return;
-      timedOut = true;
-      controller.abort(new Error(MODEL_STREAM_IDLE_TIMEOUT_MESSAGE));
-    }, idleTimeoutMs);
+    timer = setTimeout(
+      () => {
+        timer = undefined;
+        if (controller.signal.aborted) return;
+        timedOut = true;
+        controller.abort(new Error(MODEL_STREAM_IDLE_TIMEOUT_MESSAGE));
+      },
+      seenActivity ? stallTimeoutMs : firstTokenTimeoutMs,
+    );
     timer.unref?.();
   };
 
@@ -117,7 +173,10 @@ export function modelStreamIdleWatchdog(
         override async *[Symbol.asyncIterator](): AsyncGenerator<AssistantMessageEvent> {
           try {
             for await (const event of inner) {
-              ping();
+              if (isStreamActivityEvent(event)) {
+                seenActivity = true;
+                ping();
+              }
               yield rewrite(event);
             }
           } finally {

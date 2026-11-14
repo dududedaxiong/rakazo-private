@@ -68,6 +68,7 @@ export async function createReplyState(
     lastProgressAt: 0,
     hasStreamedText: false,
     assistantTurnBreakPending: false,
+    currentTurnSeparatorLength: 0,
     redactor: createStreamingRedactor(secrets),
   };
   const priorProgress = await deps.prisma.message.findMany({
@@ -89,6 +90,104 @@ export async function createReplyState(
 
 export function recordExplicitNoResponse(reply: ReplyState, text: string) {
   reply.explicitNoResponse ||= isExactNoResponse(text) || /\bNO_RESPONSE\b/.test(text);
+}
+
+/**
+ * Drops the current assistant turn's streamed text from the reply, for a model
+ * switch after a stall: the stalled attempt's partial text must not survive into
+ * the backup's fresh answer. The turn's text can sit in three places — the
+ * assembled reply, the current segment, and (when a sentence boundary flushed it
+ * mid-turn) the last text block of the message segments — and all three are cut
+ * back together, with the turn's separator ahead of it. All-or-nothing: when the
+ * turn wrote nothing yet (an error switch before any visible output), or when
+ * the text is no longer the reply's tail because a mid-turn narration publish
+ * or steering reset already moved it out, nothing is cut — cutting then would
+ * corrupt the reply instead of cleaning it.
+ */
+export function discardStalledTurnText(reply: ReplyState): void {
+  const cut = reply.assistantTurnText;
+  if (!cut) return;
+  // The reply's tail must still be this turn's text; otherwise the text was
+  // already published or reset elsewhere and there is nothing left to discard.
+  if (!reply.assembled.endsWith(cut)) return;
+  const separatorLength = reply.currentTurnSeparatorLength;
+  // The unflushed tail of the turn's text: the longest tail the current segment
+  // shares with the turn's text. Everything before it was flushed to the segments.
+  let overlap = 0;
+  const most = Math.min(reply.currentTextSegment.length, cut.length);
+  while (
+    overlap < most &&
+    reply.currentTextSegment[reply.currentTextSegment.length - 1 - overlap] ===
+      cut[cut.length - 1 - overlap]
+  )
+    overlap += 1;
+  if (overlap === 0 && reply.currentTextSegment) return;
+  const flushed = cut.slice(0, cut.length - overlap);
+  if (!reply.textSinceLastStep.endsWith(cut)) return;
+  // Validate every cut before applying any: the assembled reply must give the
+  // turn's separator back, and a flushed part must sit at the tail of the last
+  // text block in the segments, with the separator ahead of it.
+  const assembledBefore = reply.assembled.slice(0, reply.assembled.length - cut.length);
+  if (separatorLength > 0 && !assembledBefore.endsWith("\n\n")) return;
+  const segmentBefore = reply.currentTextSegment.slice(
+    0,
+    reply.currentTextSegment.length - overlap,
+  );
+  if (!flushed && separatorLength > 0 && !segmentBefore.endsWith("\n\n")) return;
+  let segments = reply.messageSegments;
+  if (flushed) {
+    let index = segments.length - 1;
+    while (index >= 0 && segments[index]?.kind !== "text") index -= 1;
+    if (index < 0) return;
+    const block = segments[index];
+    if (block?.kind !== "text" || !block.text.endsWith(flushed)) return;
+    let flushedBefore = block.text.slice(0, block.text.length - flushed.length);
+    if (separatorLength > 0) {
+      if (!flushedBefore.endsWith("\n\n")) return;
+      flushedBefore = flushedBefore.slice(0, flushedBefore.length - separatorLength);
+    }
+    segments =
+      flushedBefore.length > 0
+        ? [
+            ...segments.slice(0, index),
+            { kind: "text", text: flushedBefore },
+            ...segments.slice(index + 1),
+          ]
+        : [...segments.slice(0, index), ...segments.slice(index + 1)];
+  }
+  reply.messageSegments = segments;
+  reply.assembled =
+    separatorLength > 0
+      ? assembledBefore.slice(0, assembledBefore.length - separatorLength)
+      : assembledBefore;
+  reply.currentTextSegment =
+    !flushed && separatorLength > 0
+      ? segmentBefore.slice(0, segmentBefore.length - separatorLength)
+      : segmentBefore;
+  reply.textSinceLastStep = reply.textSinceLastStep.slice(
+    0,
+    reply.textSinceLastStep.length - cut.length,
+  );
+  reply.assistantTurnText = "";
+  reply.currentTurnSeparatorLength = 0;
+  reply.pendingProgress = "";
+  // Text the redactor still holds back belongs to the text just taken out.
+  reply.redactor.skip();
+  reply.hasStreamedText = reply.assembled.trim().length > 0;
+  reply.narrationStatusShowing = false;
+}
+
+/**
+ * The mark under a reply answered by a fallback model: which model answered it.
+ * Same "经 <模型名>" convention as generated images and videos; translation
+ * labels only on fallback, and so does chat.
+ */
+export function fallbackAnswerMark(
+  startingModelId: string | undefined | null,
+  currentModelId: string | undefined | null,
+): string | undefined {
+  if (!currentModelId || currentModelId === startingModelId) return undefined;
+  return `经 ${currentModelId}`;
 }
 
 /** Durable interim messages only on genuinely long turns, capped per run. */
