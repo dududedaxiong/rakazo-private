@@ -2863,6 +2863,10 @@ msgstr "このページの名前を変更できませんでした。もう一度
 msgid "Could not render chart"
 msgstr "チャートを表示できませんでした"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "パスワードをリセットできませんでした"

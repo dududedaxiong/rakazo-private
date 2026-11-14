@@ -808,6 +808,15 @@ export const appContract = {
       .output(eventIterator(ProductEventSchema)),
     send: oc.input(threadSendInput).output(threadSendOutput),
     /**
+     * Re-runs the AI on an existing user message that got no reply, without
+     * adding a second copy of the message to the thread. The reply lands
+     * after the existing message. `alreadyRunning` is true when a run for
+     * the message is already in progress, so a double-tap starts no second run.
+     */
+    resend: oc
+      .input(threadTarget.safeExtend({ messageId: Id }))
+      .output(z.object({ ok: z.literal(true), runId: Id, alreadyRunning: z.boolean() })),
+    /**
      * A send that also test-runs the mentioned routines: the message and every run commit
      * together, keyed by the nonce. A separate procedure, because an API without it must
      * reject the call rather than strip the routines and send only the text.

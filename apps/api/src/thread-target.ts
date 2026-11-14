@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { ORPCError } from "@orpc/server";
 import type { JobPublisher, ProductAnalytics, SandboxProvider } from "@rakazo/adapter-kit";
 import { runContinueJob } from "@rakazo/adapter-kit";
@@ -10,6 +11,7 @@ import {
 import {
   ACTIVE_RUN_STATUSES,
   callIdFromClientNonce,
+  copyableMessageText,
   isConversationalRun,
   MODEL_REQUIRED_SEND_ERROR,
   mentionedGroupBotIds,
@@ -1058,4 +1060,159 @@ export async function sendThreadMessage(
   }
   await enqueueRunsNeedingContinue(deps.jobs, [...committed.routineRuns, ...committed.runs]);
   return sendResult(committed.message, committed.runs);
+}
+
+/** The bot that would answer a resend of this message: the thread's bot, or the bot of the latest run the message started in a group. */
+export async function resolveResendBotId(
+  prisma: PrismaClient,
+  target: ThreadTarget,
+  messageId: string,
+): Promise<string | null> {
+  if (target.kind === "bot") return target.botId;
+  const latest = await prisma.run.findFirst({
+    where: { threadId: target.threadId, sourceMessageId: messageId },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: { botId: true },
+  });
+  return latest?.botId ?? null;
+}
+
+/**
+ * Re-runs the AI on an existing user message that got no reply, without
+ * adding a second copy of the message to the thread. A failed run cannot be
+ * continued (continueRun returns early for terminal runs), so this starts a
+ * fresh run for the same message: a new task whose prompt is the one the
+ * message's own send built (so mentions and attachments survive), or,
+ * when the message started no such run, a prompt rebuilt from its blocks.
+ * The reply lands after the existing message, exactly as a normal send's
+ * would. A run already in progress for the message is a no-op, so a
+ * double-tap starts no second run; a later tap after the run fails may
+ * start another.
+ */
+export async function resendThreadMessage(
+  deps: {
+    prisma: PrismaClient;
+    events: ThreadEvents;
+    jobs: JobPublisher;
+  },
+  actor: Actor,
+  target: ThreadTarget,
+  messageId: string,
+): Promise<{ runId: string; alreadyRunning: boolean }> {
+  const commit = () =>
+    deps.prisma.$transaction(async (tx) => {
+      if (!(await spaceTakesWork(tx, actor.spaceId))) throw new SpaceDeletionInProgressError();
+      const message = await tx.message.findFirst({
+        where: { id: messageId, threadId: target.threadId },
+        select: {
+          id: true,
+          role: true,
+          authorUserId: true,
+          blocks: true,
+          sourceRuns: {
+            orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+            select: {
+              id: true,
+              botId: true,
+              status: true,
+              trigger: true,
+              sourceMessageId: true,
+              taskId: true,
+            },
+          },
+        },
+      });
+      if (!message) throw new ORPCError("NOT_FOUND", { message: "Message not found" });
+      if (message.role !== "user" || message.authorUserId !== actor.userId) {
+        throw new ORPCError("FORBIDDEN", { message: "Only your own messages can be resent." });
+      }
+      const botId = target.kind === "bot" ? target.botId : (message.sourceRuns[0]?.botId ?? null);
+      if (!botId) {
+        throw new ORPCError("BAD_REQUEST", { message: "This message has no bot to answer it." });
+      }
+      // Serialize against concurrent sends and resends: a second tap sees the
+      // first tap's run below and starts nothing.
+      await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
+      const active = await tx.run.findFirst({
+        where: {
+          threadId: target.threadId,
+          botId,
+          status: { in: [...ACTIVE_RUN_STATUSES] },
+        },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+        select: { id: true },
+      });
+      if (active) return { runId: active.id, alreadyRunning: true };
+      let prompt: string | null = null;
+      const prior = message.sourceRuns.find(
+        (run) => run.trigger === "user" && run.sourceMessageId === message.id,
+      );
+      if (prior) {
+        const task = await tx.task.findUnique({
+          where: { id: prior.taskId },
+          select: { prompt: true },
+        });
+        prompt = task?.prompt ?? null;
+      }
+      if (!prompt) {
+        const parsed = MessageBlockSchema.array().safeParse(message.blocks);
+        if (!parsed.success) {
+          throw new ORPCError("BAD_REQUEST", { message: "This message cannot be resent." });
+        }
+        const text = copyableMessageText({ blocks: parsed.data });
+        const artifacts = parsed.data
+          .filter(
+            (block): block is Extract<MessageBlock, { kind: "file" | "image" }> =>
+              block.kind === "file" || block.kind === "image",
+          )
+          .map((block) => ({
+            name: block.name,
+            mimeType: block.mimeType,
+            // Image blocks carry no size; images are only named in the prompt,
+            // never described, so zero is exact enough here.
+            size: block.kind === "file" ? block.size : 0,
+          }));
+        // buildSendPrompt never returns empty (it falls back to "See attached
+        // files."), so a message with neither text nor attachments is rejected here.
+        if (!text.trim() && artifacts.length === 0) {
+          throw new ORPCError("BAD_REQUEST", { message: "This message has no text to resend." });
+        }
+        prompt = buildSendPrompt(text, artifacts);
+      }
+      if (!prompt.trim()) {
+        throw new ORPCError("BAD_REQUEST", { message: "This message has no text to resend." });
+      }
+      const task = await tx.task.create({
+        data: {
+          spaceId: actor.spaceId,
+          botId,
+          threadId: target.threadId,
+          userId: actor.userId,
+          prompt,
+          status: "queued",
+        },
+      });
+      // run.clientNonce is unique per space and the original run already holds
+      // `send:${message.id}`, so a resend run takes its own nonce.
+      const run = await tx.run.create({
+        data: {
+          spaceId: actor.spaceId,
+          botId,
+          threadId: target.threadId,
+          taskId: task.id,
+          userId: actor.userId,
+          status: "queued",
+          trigger: "user",
+          clientNonce: `resend:${message.id}:${randomUUID()}`,
+          sourceMessageId: message.id,
+        },
+      });
+      await tx.message.update({ where: { id: message.id }, data: { runId: run.id } });
+      return { runId: run.id, alreadyRunning: false };
+    }, THREAD_LOCK_TRANSACTION_OPTIONS);
+  const committed = await withTransactionRetry(commit);
+  if (!committed.alreadyRunning) {
+    await enqueueRunsNeedingContinue(deps.jobs, [{ id: committed.runId, status: "queued" }]);
+  }
+  return committed;
 }

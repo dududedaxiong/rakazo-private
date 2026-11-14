@@ -2863,6 +2863,10 @@ msgstr "Bu sayfa yeniden adlandırılamadı. Tekrar deneyin."
 msgid "Could not render chart"
 msgstr "Grafik çizilemedi"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "Parola sıfırlanamadı"

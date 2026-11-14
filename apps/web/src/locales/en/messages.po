@@ -2863,6 +2863,10 @@ msgstr "Could not rename this page. Try again."
 msgid "Could not render chart"
 msgstr "Could not render chart"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr "Could not resend"
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "Could not reset password"

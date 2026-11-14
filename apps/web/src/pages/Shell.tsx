@@ -768,19 +768,32 @@ function SpaceShell() {
   );
 
   /**
-   * Re-sends one user message's own text, for a message that got no normal
-   * reply. Unlike regenerate it needs no bot reply to work from, so it
-   * covers a run that failed before producing one.
+   * Re-runs the AI on one user message that got no normal reply, without
+   * adding a second copy of the message to the thread. Unlike regenerate it
+   * needs no bot reply to work from, so it covers a run that failed before
+   * producing one. The reply lands after the existing message.
    */
   const resendMessage = useCallback(
     async (messageId: string) => {
       const message = transcript.messages.find((entry) => entry.id === messageId);
       if (!message) return;
-      const text = copyableMessageText(message);
-      if (!text.trim()) return;
-      await composer.sendMessage(text, [], crypto.randomUUID());
+      const target = activeGroupId.current
+        ? { groupId: activeGroupId.current }
+        : activeBotId.current
+          ? { botId: activeBotId.current }
+          : null;
+      if (!target) return;
+      try {
+        await rpc.threads.resend({ ...target, messageId });
+      } catch (error) {
+        toast(errorText(error, t`Could not resend`));
+        return;
+      }
+      // The queued run shows as working once the snapshot refetches; the
+      // run.started event does the same when the worker picks it up.
+      if (active) void refreshThread(active.id).catch(() => undefined);
     },
-    [composer, transcript],
+    [rpc, transcript, activeBotId, activeGroupId, active, refreshThread, t],
   );
 
   /** Multi-select: the picked message ids, and the dialogs the batch actions open. */

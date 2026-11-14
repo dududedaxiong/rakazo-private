@@ -2863,6 +2863,10 @@ msgstr "לא ניתן היה לשנות את שם הדף. נסו שוב."
 msgid "Could not render chart"
 msgstr "לא ניתן להציג את התרשים"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "לא ניתן לאפס את הסיסמה"

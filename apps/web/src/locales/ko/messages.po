@@ -2863,6 +2863,10 @@ msgstr "이 페이지의 이름을 바꾸지 못했습니다. 다시 시도하�
 msgid "Could not render chart"
 msgstr "차트를 만들지 못했습니다."
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "비밀번호를 재설정할 수 없습니다"

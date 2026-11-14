@@ -66,11 +66,7 @@ import { useThreadListScroll } from "../../lib/thread-list-scroll";
 import { useThreadMentionCatalog } from "../../lib/thread-mention-catalog";
 import { useThreadPaging } from "../../lib/thread-paging";
 import { useThreadRead } from "../../lib/thread-read";
-import {
-  buildRegeneratePayload,
-  previousUserMessageText,
-  resendableUserMessageText,
-} from "../../lib/thread-regenerate";
+import { buildRegeneratePayload, previousUserMessageText } from "../../lib/thread-regenerate";
 import {
   isOwnThreadMessage,
   latestArrivalMessage,
@@ -715,8 +711,8 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
 
   /**
    * Sends a user message's text again through the normal outbox, so a message
-   * that got no usable reply can be retried without retyping it. Like
-   * regenerate, a resend adds a second copy of the message to the thread.
+   * that got no usable reply can be retried without retyping it. A regenerate
+   * adds a second copy of the message to the thread.
    */
   const sendUserTextAgain = (text: string) => {
     if (readOnly) return;
@@ -739,6 +735,27 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       return;
     }
   };
+
+  /**
+   * Re-runs the AI on one user message that got no reply, without adding a
+   * second copy of the message to the thread. The reply lands after the
+   * existing message.
+   */
+  const resendMessage = useCallback(
+    async (message: MobileMessage) => {
+      if (readOnly) return;
+      const target = groupId ? { groupId } : botId ? { botId } : null;
+      if (!target) return;
+      try {
+        await rpc("threads/resend", { ...target, messageId: message.id });
+      } catch {
+        feedback.setError(t("Failed to send message"));
+        return;
+      }
+      void refresh();
+    },
+    [readOnly, groupId, botId, refresh, feedback, t],
+  );
 
   const rowActions = useLatestRowActions({
     helperToggle: scroll.helperToggle,
@@ -775,9 +792,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
         previousUserMessageText(history.snapRef.current?.messages ?? [], message.id) ?? "",
       );
     },
-    resend: (message) => {
-      sendUserTextAgain(resendableUserMessageText(message) ?? "");
-    },
+    resend: resendMessage,
     markUnread: markUnreadFrom,
     answer: composer.answer,
     openBot,

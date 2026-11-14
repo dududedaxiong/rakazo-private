@@ -2863,6 +2863,10 @@ msgstr "Seite konnte nicht umbenannt werden. Versuche es erneut."
 msgid "Could not render chart"
 msgstr "Diagramm konnte nicht angezeigt werden"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "Passwort konnte nicht zurückgesetzt werden"

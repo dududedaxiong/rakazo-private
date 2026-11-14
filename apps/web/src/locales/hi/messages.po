@@ -2863,6 +2863,10 @@ msgstr "इस पेज का नाम नहीं बदला जा स�
 msgid "Could not render chart"
 msgstr "चार्ट रेंडर नहीं हो सका"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "पासवर्ड रीसेट नहीं किया जा सका"

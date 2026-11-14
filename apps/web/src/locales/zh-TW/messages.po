@@ -2864,6 +2864,10 @@ msgstr "無法重新命名此頁面。請再試一次。"
 msgid "Could not render chart"
 msgstr "無法渲染圖表"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr "無法重新傳送"
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "無法重設密碼"

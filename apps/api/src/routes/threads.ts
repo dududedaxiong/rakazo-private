@@ -48,6 +48,8 @@ import { isStopMessage, stopThreadRuns } from "../thread-stop.js";
 import type { ThreadTarget } from "../thread-target.js";
 import {
   replyParentBotId,
+  resendThreadMessage,
+  resolveResendBotId,
   resolveThreadTarget,
   sendTargetBotIds,
   sendThreadMessage,
@@ -213,6 +215,25 @@ export function threadsRoutes(ctx: RouterContext) {
         }
       }),
       send: authed.threads.send.handler(({ context, input }) => send(context.actor, input)),
+      resend: authed.threads.resend.handler(async ({ context, input }) => {
+        const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+        const botId = await resolveResendBotId(deps.prisma, target, input.messageId);
+        if (!botId) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "This message has no bot to answer it.",
+          });
+        }
+        const setup = await modelSetup(deps, context.actor);
+        const noModel = setup.needsModel && !(await botsRunOwnModels(deps, context.actor, [botId]));
+        if (noModel) {
+          throw new ORPCError("BAD_REQUEST", { message: MODEL_REQUIRED_SEND_ERROR });
+        }
+        if (target.kind === "bot") {
+          await assertTeachingSendAllowed(deps.prisma, context.actor.spaceId, target.botId);
+        }
+        const result = await resendThreadMessage(deps, context.actor, target, input.messageId);
+        return { ok: true as const, runId: result.runId, alreadyRunning: result.alreadyRunning };
+      }),
       sendWithRoutines: authed.threads.sendWithRoutines.handler(async ({ context, input }) => {
         const { actor } = context;
         // The same checks as routines/testRun, all before anything is written.

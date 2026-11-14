@@ -2863,6 +2863,10 @@ msgstr "无法重命名此页面。请重试。"
 msgid "Could not render chart"
 msgstr "无法渲染图表"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr "无法重新发送"
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "无法重置密码"

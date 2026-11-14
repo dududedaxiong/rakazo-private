@@ -2863,6 +2863,10 @@ msgstr "No se pudo cambiar el nombre de esta página. Inténtalo de nuevo."
 msgid "Could not render chart"
 msgstr "No se pudo renderizar el gráfico"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "No se pudo restablecer la contraseña"

@@ -12,6 +12,7 @@ import {
   cancelSupersededQueuedRuns,
   latestWaitingRun,
   replyParentBotId,
+  resendThreadMessage,
   sendTargetBotIds,
   sendThreadMessage,
   threadHead,
@@ -5108,6 +5109,212 @@ describe("helper snapshot settlement", () => {
       });
     },
   );
+});
+
+describe("resendThreadMessage", () => {
+  const actor = { spaceId: "workspace-1", userId: "user-1" } as Actor;
+  const botTarget = {
+    kind: "bot",
+    botId: "bot-1",
+    threadId: "thread-1",
+    bot: { computer: null },
+  } as ThreadTarget;
+
+  function resendSetup(overrides: {
+    message?: Record<string, unknown>;
+    activeRun?: Record<string, unknown> | null;
+    priorPrompt?: string | null;
+  }) {
+    const message = {
+      id: "msg-1",
+      role: "user",
+      authorUserId: "user-1",
+      blocks: [{ kind: "text", text: "Shanghai weather" }],
+      sourceRuns: [],
+      ...overrides.message,
+    };
+    const tx = {
+      space: { findUnique: vi.fn(async () => null) },
+      $queryRaw: vi.fn().mockResolvedValue([]),
+      message: {
+        findFirst: vi.fn().mockResolvedValue(message),
+        create: vi.fn(),
+        update: vi.fn(),
+      },
+      run: {
+        findFirst: vi.fn().mockResolvedValue(overrides.activeRun ?? null),
+        create: vi.fn().mockResolvedValue({ id: "run-new" }),
+      },
+      task: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValue(
+            overrides.priorPrompt === undefined ? null : { prompt: overrides.priorPrompt },
+          ),
+        create: vi.fn().mockResolvedValue({ id: "task-new" }),
+      },
+    };
+    const prisma = {
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+    const enqueue = vi.fn().mockResolvedValue(undefined);
+    const deps = {
+      prisma,
+      events: { notify: vi.fn().mockResolvedValue(undefined) } as never,
+      jobs: { enqueue } as never,
+    };
+    return { tx, prisma, enqueue, deps, message };
+  }
+
+  it("starts a fresh run for the existing message and adds no new message", async () => {
+    const { tx, deps, enqueue } = resendSetup({
+      message: {
+        sourceRuns: [
+          {
+            id: "run-old",
+            botId: "bot-1",
+            status: "failed",
+            trigger: "user",
+            sourceMessageId: "msg-1",
+            taskId: "task-old",
+          },
+        ],
+      },
+      priorPrompt: "Shanghai weather",
+    });
+    await expect(resendThreadMessage(deps, actor, botTarget, "msg-1")).resolves.toEqual({
+      runId: "run-new",
+      alreadyRunning: false,
+    });
+    // The prompt is the one the message's own send built, so mentions and
+    // attachments survive the retry.
+    expect(tx.task.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ prompt: "Shanghai weather", status: "queued" }),
+    });
+    expect(tx.run.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        status: "queued",
+        trigger: "user",
+        sourceMessageId: "msg-1",
+        clientNonce: expect.stringMatching(/^resend:msg-1:/),
+      }),
+    });
+    expect(tx.message.update).toHaveBeenCalledWith({
+      where: { id: "msg-1" },
+      data: { runId: "run-new" },
+    });
+    // No new message is created: the reply lands after the existing one.
+    expect(tx.message.create).not.toHaveBeenCalled();
+    expect(enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "run.continue", payload: { runId: "run-new" } }),
+    );
+  });
+
+  it("derives the prompt from the message blocks when it started no run", async () => {
+    const { tx, deps } = resendSetup({
+      message: {
+        blocks: [
+          { kind: "text", text: "Shanghai weather" },
+          {
+            kind: "file",
+            artifactId: "file-1",
+            name: "notes.txt",
+            mimeType: "text/plain",
+            size: 42,
+          },
+        ],
+      },
+    });
+    await expect(resendThreadMessage(deps, actor, botTarget, "msg-1")).resolves.toEqual({
+      runId: "run-new",
+      alreadyRunning: false,
+    });
+    expect(tx.task.findUnique).not.toHaveBeenCalled();
+    expect(tx.task.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        prompt: expect.stringContaining("Shanghai weather"),
+      }),
+    });
+    const prompt = (tx.task.create as ReturnType<typeof vi.fn>).mock.calls[0]?.[0]?.data?.prompt;
+    expect(prompt).toContain('User attached file "notes.txt"');
+  });
+
+  it("is a no-op that starts no second run while one is already in progress", async () => {
+    const { tx, deps, enqueue } = resendSetup({ activeRun: { id: "run-active" } });
+    await expect(resendThreadMessage(deps, actor, botTarget, "msg-1")).resolves.toEqual({
+      runId: "run-active",
+      alreadyRunning: true,
+    });
+    expect(tx.task.create).not.toHaveBeenCalled();
+    expect(tx.run.create).not.toHaveBeenCalled();
+    expect(tx.message.update).not.toHaveBeenCalled();
+    expect(enqueue).not.toHaveBeenCalled();
+  });
+
+  it("rejects a missing message, another person's message, and a bot message", async () => {
+    const missing = resendSetup({});
+    (missing.tx.message.findFirst as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+    await expect(
+      resendThreadMessage(missing.deps, actor, botTarget, "msg-1"),
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+
+    const others = resendSetup({ message: { authorUserId: "user-2" } });
+    await expect(resendThreadMessage(others.deps, actor, botTarget, "msg-1")).rejects.toMatchObject(
+      { code: "FORBIDDEN" },
+    );
+
+    const bot = resendSetup({ message: { role: "bot", authorUserId: "user-1" } });
+    await expect(resendThreadMessage(bot.deps, actor, botTarget, "msg-1")).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+  });
+
+  it("rejects a message with neither text nor attachments", async () => {
+    const empty = resendSetup({ message: { blocks: [] } });
+    await expect(resendThreadMessage(empty.deps, actor, botTarget, "msg-1")).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+    });
+    expect(empty.tx.task.create).not.toHaveBeenCalled();
+    expect(empty.tx.run.create).not.toHaveBeenCalled();
+  });
+
+  it("uses the latest run's bot in a group thread, and refuses a group message with no run", async () => {
+    const groupTarget = {
+      kind: "group",
+      groupId: "group-1",
+      threadId: "thread-1",
+      groupName: "Group",
+      members: [{ botId: "bot-9" }],
+      memberBotIds: ["bot-9"],
+    } as ThreadTarget;
+    const { tx, deps } = resendSetup({
+      message: {
+        sourceRuns: [
+          {
+            id: "run-old",
+            botId: "bot-9",
+            status: "failed",
+            trigger: "user",
+            sourceMessageId: "msg-1",
+            taskId: "task-old",
+          },
+        ],
+      },
+      priorPrompt: "Shanghai weather",
+    });
+    await expect(resendThreadMessage(deps, actor, groupTarget, "msg-1")).resolves.toEqual({
+      runId: "run-new",
+      alreadyRunning: false,
+    });
+    expect(tx.run.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ botId: "bot-9" }),
+    });
+
+    const noRun = resendSetup({});
+    await expect(
+      resendThreadMessage(noRun.deps, actor, groupTarget, "msg-1"),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
 });
 
 describe("sendTargetBotIds", () => {

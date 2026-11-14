@@ -2863,6 +2863,10 @@ msgstr "Nie udało się zmienić nazwy tej strony. Spróbuj ponownie."
 msgid "Could not render chart"
 msgstr "Nie udało się wyświetlić wykresu"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr "Nie udało się wysłać ponownie"
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "Nie udało się zresetować hasła"

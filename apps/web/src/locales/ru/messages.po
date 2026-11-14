@@ -2863,6 +2863,10 @@ msgstr "Не удалось переименовать страницу. Поп�
 msgid "Could not render chart"
 msgstr "Не удалось отобразить диаграмму"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "Не удалось сбросить пароль"

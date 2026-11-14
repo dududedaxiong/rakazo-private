@@ -2863,6 +2863,10 @@ msgstr "Kon deze pagina niet hernoemen. Probeer het opnieuw."
 msgid "Could not render chart"
 msgstr "Grafiek weergeven mislukt"
 
+#: src/pages/Shell.tsx
+msgid "Could not resend"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Could not reset password"
 msgstr "Wachtwoord opnieuw instellen mislukt"
