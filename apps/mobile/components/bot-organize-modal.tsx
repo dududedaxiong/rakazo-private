@@ -21,6 +21,7 @@ import {
 import { mobileTokens } from "../lib/appearance";
 import { confirmDeleteSection } from "../lib/confirm-delete-section";
 import { useI18n } from "../lib/i18n";
+import { INBOX_ROW_ACTIONS } from "../lib/inbox-swipe";
 import type { MobileBot, MobileBotSection } from "../lib/mobile-types";
 import { native, useThemedStyles } from "../lib/native";
 import { errorText } from "../lib/user-error";
@@ -42,6 +43,7 @@ export function BotOrganizeModal({
   onCreateSection,
   onRenameSection,
   onDeleteSection,
+  onDelete,
 }: {
   bot: Pick<MobileBot, "name" | "pinned" | "sectionId"> &
     Partial<Pick<MobileBot, "notifyOnFinish">>;
@@ -51,6 +53,8 @@ export function BotOrganizeModal({
   onCreateSection: (name: string) => Promise<void>;
   onRenameSection: (sectionId: string, name: string) => Promise<void>;
   onDeleteSection: (sectionId: string) => Promise<void>;
+  /** Deletes this chat itself; absent where the caller offers no delete. */
+  onDelete?: () => void;
 }) {
   const Sheet = useNativeSheet();
   const styles = useThemedStyles(createBotOrganizeStyles);
@@ -230,6 +234,24 @@ export function BotOrganizeModal({
           ) : null}
         </>
       )}
+      {onDelete ? (
+        <Pressable
+          accessibilityRole="button"
+          disabled={saving}
+          onPress={onDelete}
+          style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+        >
+          <NativeSymbol
+            ios="trash"
+            android="trash-outline"
+            size={18}
+            color={mobileTokens().destructive}
+          />
+          <Text style={[styles.actionLabel, styles.destructive]}>
+            {t(INBOX_ROW_ACTIONS.delete.label)}
+          </Text>
+        </Pressable>
+      ) : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <NativeActionButton
         label={t("Cancel")}

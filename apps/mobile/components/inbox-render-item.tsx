@@ -15,8 +15,8 @@ import { createHomeStyles } from "./home-styles";
 import { ArchivedChatsRow, BotRow, GroupRow, PinnedTiles, SectionToggle } from "./inbox-rows";
 import { NativeSymbol } from "./native-symbol";
 
-// Swipe actions and the context menu are iOS list behaviour; other platforms keep the long-press
-// sheet.
+// Swipe actions are the iOS system list on iOS and a gesture row on Android; the context menu
+// is iOS-only, and other platforms keep the long-press sheet.
 export const SWIPE_ROWS = Platform.OS === "ios";
 
 type ChatActions = ReturnType<typeof useInboxChatActions>;
@@ -220,7 +220,7 @@ export function useInboxRenderItem({
           day={day}
           onPress={openGroup}
           onLongPress={!SWIPE_ROWS ? organizeGroup : undefined}
-          onAction={SWIPE_ROWS && item.group.spaceId === spaceId ? groupAction : undefined}
+          onAction={item.group.spaceId === spaceId ? groupAction : undefined}
           sections={botSections}
           onOrganize={organizeFromMenu}
           onEditSection={editSectionFromMenu}
@@ -231,7 +231,7 @@ export function useInboxRenderItem({
           day={day}
           onPress={openBot}
           onLongPress={!sharing && !SWIPE_ROWS ? organizeBot : undefined}
-          onAction={!sharing && SWIPE_ROWS && item.bot.spaceId === spaceId ? botAction : undefined}
+          onAction={!sharing && item.bot.spaceId === spaceId ? botAction : undefined}
           sections={botSections}
           onOrganize={organizeFromMenu}
           onEditSection={editSectionFromMenu}

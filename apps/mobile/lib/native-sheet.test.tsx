@@ -350,7 +350,7 @@ describe("native sheet behavior", () => {
 });
 
 describe("inbox organization actions", () => {
-  async function organize(botOverrides = {}) {
+  async function organize(botOverrides = {}, modalOverrides: Record<string, unknown> = {}) {
     const props = {
       bot: {
         name: "Sample chat",
@@ -374,6 +374,8 @@ describe("inbox organization actions", () => {
       onCreateSection: vi.fn().mockResolvedValue(undefined),
       onRenameSection: vi.fn().mockResolvedValue(undefined),
       onDeleteSection: vi.fn().mockResolvedValue(undefined),
+      onDelete: vi.fn(),
+      ...modalOverrides,
     };
     const root = await mount(<BotOrganizeModal {...props} />);
     const click = async (label: string) => {
@@ -477,6 +479,21 @@ describe("inbox organization actions", () => {
     await next.click("Delete section");
     expect(mocks.confirmDelete).toHaveBeenCalledOnce();
     expect(next.props.onDeleteSection).toHaveBeenCalledWith("one");
+  });
+  it("offers a delete row that hands the tap to the caller", async () => {
+    const { props, click } = await organize();
+    await click("Delete…");
+    expect(props.onDelete).toHaveBeenCalledOnce();
+    // The caller closes the sheet and runs the delete; the modal only reports the tap.
+    expect(props.onClose).not.toHaveBeenCalled();
+  });
+  it("shows no delete row when the caller offers none", async () => {
+    const { root } = await organize({}, { onDelete: undefined });
+    expect(
+      Array.from(root.element.querySelectorAll("button")).some(
+        (button) => button.textContent === "Delete…",
+      ),
+    ).toBe(false);
   });
   it("presents a native iOS form sheet instead of the custom overlay", async () => {
     mocks.platform = "ios";

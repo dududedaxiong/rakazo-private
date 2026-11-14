@@ -267,6 +267,7 @@ function Home({ embedded, onSelectSpace, onShareSelect }: InboxPaneProps & { emb
     unreadOverrides,
     archiving,
     updateChat,
+    runRowAction,
     botAction,
     groupAction,
     createSection,
@@ -828,6 +829,13 @@ function Home({ embedded, onSelectSpace, onShareSelect }: InboxPaneProps & { emb
           onDeleteSection={async (sectionId) => {
             await chatRpc(organizeTarget.spaceId, "botSections/remove", { sectionId });
             await loadBots();
+          }}
+          onDelete={() => {
+            // The sheet closes first, so the delete confirmation never sits over a
+            // sheet for a chat that is about to go away.
+            organizeRequestId.current += 1;
+            setOrganizeTarget(null);
+            void runRowAction(organizeTarget.kind, organizeChat, "delete");
           }}
         />
       ) : null}
