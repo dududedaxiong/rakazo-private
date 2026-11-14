@@ -17,6 +17,13 @@ const openModelSettings = vi.hoisted(() => vi.fn());
 vi.mock("expo-router", () => ({ useRouter: () => ({ push: routerPush }) }));
 vi.mock("./api", () => ({ rpc: rpcMock }));
 vi.mock("./model-settings", () => ({ openModelSettings }));
+// The run error hook subscribes to the model test run store, which persists
+// in SecureStore; the tests have no stored run, so hydration finds nothing.
+vi.mock("expo-secure-store", () => ({
+  getItemAsync: async () => null,
+  setItemAsync: async () => undefined,
+  deleteItemAsync: async () => undefined,
+}));
 vi.mock("./i18n", () => ({
   useI18n: () => ({ t: (message: string) => message, locale: "en" }),
 }));

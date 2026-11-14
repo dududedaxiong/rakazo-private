@@ -1,6 +1,7 @@
 import type { ModelHealthReport, ModelHealthSummary } from "@rakazo/contracts";
 import { parseModelFallbackFailure } from "@rakazo/core";
 import type { MobileModel, MobileModelCredential } from "./mobile-types";
+import type { ModelTestResult } from "./model-test-result";
 
 /** A model a health check answered, ready to switch to. */
 export type AvailableModel = {
@@ -85,6 +86,43 @@ export function availableModelsFromReports(
     const connection = reports.find((report) => report.provider === model.provider)?.label;
     return { ...model, label: connection ? `${model.label} (${connection})` : model.label };
   });
+}
+
+/**
+ * The models a same-day test run already proved usable, for the failed run's
+ * providers: the error box lists these at once instead of re-testing every
+ * connection. Labels come from the catalog; a model the catalog no longer
+ * lists keeps its id, and a label shared by two providers gains its provider.
+ */
+export function availableModelsFromTestResults(
+  results: Iterable<ModelTestResult>,
+  providers: readonly string[],
+  catalog: readonly MobileModel[],
+): AvailableModel[] {
+  const models: AvailableModel[] = [];
+  const seen = new Set<string>();
+  for (const result of results) {
+    if (result.state !== "ok") continue;
+    if (!providers.includes(result.provider)) continue;
+    const key = JSON.stringify([result.provider, result.modelId]);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const entry = catalog.find(
+      (item) => item.provider === result.provider && item.id === result.modelId,
+    );
+    models.push({
+      provider: result.provider,
+      modelId: result.modelId,
+      label: entry?.label ?? result.modelId,
+    });
+  }
+  const labelCounts = new Map<string, number>();
+  for (const model of models) labelCounts.set(model.label, (labelCounts.get(model.label) ?? 0) + 1);
+  return models.map((model) =>
+    (labelCounts.get(model.label) ?? 0) > 1
+      ? { ...model, label: `${model.label} (${model.provider})` }
+      : model,
+  );
 }
 
 /** How long one provider test may run, as on the model connection screen. */

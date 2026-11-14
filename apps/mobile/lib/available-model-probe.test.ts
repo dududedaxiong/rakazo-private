@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { AvailableModelProbeDeps } from "./available-model-probe";
 import {
   availableModelsFromReports,
+  availableModelsFromTestResults,
   isProviderModelError,
   mergeHealthReports,
   probeAvailableModels,
@@ -251,5 +252,71 @@ describe("probeAvailableModels", () => {
   it("returns no models when no connection serves the failed providers", async () => {
     const probe = deps({ credentials: async () => [] });
     await expect(probeAvailableModels(probe, null, "openai-compatible")).resolves.toEqual([]);
+  });
+});
+
+describe("availableModelsFromTestResults", () => {
+  const catalog = [
+    catalogEntry("anthropic", "claude-sonnet", "Claude Sonnet"),
+    catalogEntry("openai-compatible", "deepseek-v4.1-flash", "DeepSeek V4.1 Flash"),
+  ];
+  function result(provider: string, modelId: string, state: "ok" | "auth" | "timeout" = "ok") {
+    return {
+      key: `${provider}::${modelId}`,
+      provider,
+      modelId,
+      state,
+      detail: "",
+      seconds: 1,
+      testedAt: Date.now(),
+    };
+  }
+
+  it("lists only same-day ok results for the failed run's providers", () => {
+    expect(
+      availableModelsFromTestResults(
+        [
+          result("anthropic", "claude-sonnet"),
+          result("openai-compatible", "deepseek-v4.1-flash", "auth"),
+          result("other", "some-model"),
+        ],
+        ["openai-compatible", "anthropic"],
+        catalog,
+      ),
+    ).toEqual([{ provider: "anthropic", modelId: "claude-sonnet", label: "Claude Sonnet" }]);
+  });
+
+  it("keeps the model id when the catalog no longer lists it, and dedups repeats", () => {
+    expect(
+      availableModelsFromTestResults(
+        [
+          result("anthropic", "retired-model"),
+          result("anthropic", "retired-model"),
+          result("anthropic", "claude-sonnet"),
+        ],
+        ["anthropic"],
+        catalog,
+      ),
+    ).toEqual([
+      { provider: "anthropic", modelId: "retired-model", label: "retired-model" },
+      { provider: "anthropic", modelId: "claude-sonnet", label: "Claude Sonnet" },
+    ]);
+  });
+
+  it("tells apart two providers sharing a label", () => {
+    const sharedCatalog = [
+      catalogEntry("provider-a", "model-x", "Model X"),
+      catalogEntry("provider-b", "model-x", "Model X"),
+    ];
+    expect(
+      availableModelsFromTestResults(
+        [result("provider-a", "model-x"), result("provider-b", "model-x")],
+        ["provider-a", "provider-b"],
+        sharedCatalog,
+      ),
+    ).toEqual([
+      { provider: "provider-a", modelId: "model-x", label: "Model X (provider-a)" },
+      { provider: "provider-b", modelId: "model-x", label: "Model X (provider-b)" },
+    ]);
   });
 });
