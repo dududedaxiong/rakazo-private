@@ -90,6 +90,8 @@ type ThreadComposerProps = {
   botId?: string;
   onCall: boolean;
   working: boolean;
+  /** A reply is still being worked on, so a new send waits. */
+  runWorking: boolean;
   sending: boolean;
   styles: { circleButton: ViewStyle; composerFill: ViewStyle };
   attachActions: MenuAction[];
@@ -134,6 +136,7 @@ export function ThreadComposer({
   botId,
   onCall,
   working,
+  runWorking,
   sending,
   styles,
   attachActions,
@@ -1052,10 +1055,11 @@ export function ThreadComposer({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={t("Send")}
-              disabled={sending || !canSend}
+              accessibilityHint={runWorking ? t("Working…") : undefined}
+              disabled={sending || runWorking || !canSend}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
               onPress={() => void send()}
-              style={{ marginBottom: 8, opacity: sending || !canSend ? 0.5 : 1 }}
+              style={{ marginBottom: 8, opacity: sending || runWorking || !canSend ? 0.5 : 1 }}
             >
               <GlassSurface
                 tint={tokens.primary}

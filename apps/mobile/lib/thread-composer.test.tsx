@@ -141,6 +141,7 @@ vi.mock("react-native", () => {
       onPressOut,
       onTouchMove,
       accessibilityLabel,
+      accessibilityHint,
       accessible,
       disabled,
       style,
@@ -151,6 +152,7 @@ vi.mock("react-native", () => {
       onPressOut?: () => void;
       onTouchMove?: () => void;
       accessibilityLabel?: string;
+      accessibilityHint?: string;
       accessible?: boolean;
       disabled?: boolean;
       style?: object;
@@ -164,6 +166,7 @@ vi.mock("react-native", () => {
           onPointerUp: onPressOut,
           onTouchMove,
           "aria-label": accessibilityLabel,
+          "aria-description": accessibilityHint,
           "data-accessible": accessible,
           disabled,
           "data-style": JSON.stringify(style),
@@ -295,6 +298,7 @@ const props: Omit<ComponentProps<typeof ThreadComposer>, "ref"> = {
   botId: "bot-1",
   onCall: false,
   working: false,
+  runWorking: false,
   sending: false,
   styles: { circleButton: {}, composerFill: {} },
   attachActions: [],
@@ -1311,9 +1315,7 @@ describe("thread composer isolation", () => {
   });
 
   function holdButton() {
-    const button = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Hold to talk"]',
-    )!;
+    const button = container.querySelector<HTMLButtonElement>('button[aria-label="Hold to talk"]')!;
     expect(button).not.toBeNull();
     return button;
   }
@@ -1549,6 +1551,15 @@ describe("thread composer isolation", () => {
     expect(thinkingButton()!.parentElement!.nextElementSibling).toBe(send);
   });
 
+  it("disables Send and hints it is working while a reply runs", () => {
+    render({ runWorking: true });
+    type("Hello");
+    const send = container.querySelector<HTMLButtonElement>('button[aria-label="Send"]')!;
+    expect(send.disabled).toBe(true);
+    expect(send.getAttribute("aria-description")).toBe("Working…");
+    expect(JSON.parse(send.getAttribute("data-style") ?? "{}").opacity).toBe(0.5);
+  });
+
   it("hides the thinking button when the model cannot think", () => {
     render();
     expect(thinkingButton()).toBeNull();
@@ -1563,15 +1574,11 @@ describe("thread composer isolation", () => {
       ),
     ).toEqual(["default", "low", "medium", "high"]);
     act(() => {
-      (
-        container.querySelector('[data-menu-action="low"]') as HTMLButtonElement
-      ).click();
+      (container.querySelector('[data-menu-action="low"]') as HTMLButtonElement).click();
     });
     expect(save).toHaveBeenCalledWith("low");
     act(() => {
-      (
-        container.querySelector('[data-menu-action="default"]') as HTMLButtonElement
-      ).click();
+      (container.querySelector('[data-menu-action="default"]') as HTMLButtonElement).click();
     });
     expect(save).toHaveBeenCalledWith("");
   });

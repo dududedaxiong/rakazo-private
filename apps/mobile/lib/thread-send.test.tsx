@@ -57,7 +57,7 @@ const said = (id: string, text: string) => ({
 });
 
 /** The chat's sender with `messages` loaded, a composer holding what replies add to it. */
-async function chat(messages: object[]) {
+async function chat(messages: object[], run?: { id: string; status: string }) {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   const payloads: unknown[] = [];
   let sender!: Sender;
@@ -76,7 +76,7 @@ async function chat(messages: object[]) {
       readOnly: false,
       threadKey: "bot-1",
       history: {
-        snapRef: { current: { messages } },
+        snapRef: { current: { messages, run } },
         pinnedAroundRef: { current: null },
         jumpScrollTarget: { current: null },
       },
@@ -140,6 +140,17 @@ async function chat(messages: object[]) {
       }),
   };
 }
+
+it("does not send while a reply is still working", async () => {
+  const view = await chat([], { id: "run-1", status: "running" });
+  try {
+    view.sender().composerRef.current?.addReply("Hello");
+    await act(async () => view.sender().send());
+    expect(hapticImpact).not.toHaveBeenCalled();
+  } finally {
+    await act(async () => view.root.unmount());
+  }
+});
 
 it("taps only valid sends and confirms delivery only for the visible chat", async () => {
   let delivered!: Parameters<typeof feedbackModule.subscribeDelivered>[0];

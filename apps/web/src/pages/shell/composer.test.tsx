@@ -71,6 +71,7 @@ function renderComposer(
     artifactTarget: { botId: "bot-1" },
     activeName: "Ada",
     running: false,
+    runWorking: false,
     pendingAttachments: [],
     attachmentNotice: null,
     sendError: null,
@@ -673,6 +674,25 @@ describe("Composer", () => {
     },
   );
 
+  it("disables Send and hints it is working while a reply runs", () => {
+    const onSend = vi.fn().mockResolvedValue(true);
+    const textarea = renderComposer(onSend, { runWorking: true });
+    type(textarea, "hello");
+    const send = container?.querySelector<HTMLButtonElement>('button[aria-label="Send"]');
+    expect(send?.disabled).toBe(true);
+    expect(send?.getAttribute("title")).toBe("Working…");
+  });
+
+  it("does not send while a reply runs", async () => {
+    const onSend = vi.fn().mockResolvedValue(true);
+    const textarea = renderComposer(onSend, { runWorking: true });
+    type(textarea, "hello");
+    pressEnter(textarea);
+    await act(async () => {});
+    expect(onSend).not.toHaveBeenCalled();
+    expect(textarea.value).toBe("hello");
+  });
+
   it("clears the draft once the message is sent", async () => {
     const onSend = vi.fn().mockResolvedValue(true);
     const textarea = renderComposer(onSend);
@@ -1160,8 +1180,7 @@ it("restores dictation to the previous chat after switching draft keys", async (
         new Promise<boolean>((resolve) => {
           finish = resolve;
         }),
-      {
-      },
+      {},
     );
     const mic = container?.querySelector<HTMLButtonElement>('button[aria-label="Hold to talk"]');
     act(() => mic?.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 0 })));

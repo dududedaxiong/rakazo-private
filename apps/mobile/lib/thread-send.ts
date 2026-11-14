@@ -1,8 +1,10 @@
 import type { LoginFieldInput, MessageReaction } from "@rakazo/contracts";
 import type { SlashActionId } from "@rakazo/core";
 import {
+  activeThreadRuns,
   applyThreadSendReceipt,
   attachmentsForThread,
+  isRunWorking,
   newClientId,
   pageReply,
   resolveComposerSendPlan,
@@ -144,6 +146,10 @@ export function useThreadSend({
     const initialBotTarget = botId;
     const initialGroupTarget = groupId;
     if ((!initialBotTarget && !initialGroupTarget) || sending || preparingSend.current) return;
+    // A reply still being worked on takes the next send's turn: the user
+    // waits for it (or stops it) instead of sending the same message again.
+    const snap = history.snapRef.current;
+    if (snap && activeThreadRuns(snap).some((run) => isRunWorking(run.status))) return;
     const originThreadKey = initialGroupTarget ?? initialBotTarget;
     const submitted = composerRef.current?.snapshot();
     if (!submitted) return;

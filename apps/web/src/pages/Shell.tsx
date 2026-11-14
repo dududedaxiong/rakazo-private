@@ -1395,6 +1395,7 @@ function SpaceShell() {
                   inGroup ? (activeGroup?.name ?? activeSnapshot?.groupName) : active?.name
                 }
                 running={composerRunning}
+                runWorking={transcriptRunning}
                 disabled={Boolean(recordingSkill)}
                 pendingAttachments={composer.activePendingAttachments}
                 attachmentNotice={composer.attachmentNotice}

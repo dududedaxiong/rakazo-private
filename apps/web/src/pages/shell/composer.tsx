@@ -70,6 +70,7 @@ const ComposerBody = memo(function Composer({
   artifactTarget,
   activeName,
   running,
+  runWorking,
   disabled,
   pendingAttachments,
   attachmentNotice,
@@ -104,6 +105,8 @@ const ComposerBody = memo(function Composer({
 }: {
   activeName?: string;
   running: boolean;
+  /** A reply is still being worked on, so a new send waits. */
+  runWorking: boolean;
   disabled?: boolean;
   pendingAttachments: PendingAttachment[];
   attachmentNotice: string | null;
@@ -418,7 +421,7 @@ const ComposerBody = memo(function Composer({
   }
 
   async function send(imageHandling?: "file") {
-    if (!canSend || sending || disabled) return;
+    if (!canSend || sending || disabled || runWorking) return;
     const revision = editRevision.current;
     // Recovery rebuilds the draft from text alone, so only a plain-text send —
     // no reply target, no attachments, no skill, no open page — can share its
@@ -790,9 +793,10 @@ const ComposerBody = memo(function Composer({
           expanded={expanded}
           talk={talk}
           running={running}
+          runWorking={runWorking}
           showTalk={draft.trim().length === 0}
           talkDisabled={disabled || onCall}
-          sendDisabled={sending || !canSend || disabled}
+          sendDisabled={sending || runWorking || !canSend || disabled}
           stopDisabled={sending}
           sendColors={sendColors}
           onSend={() => void send()}

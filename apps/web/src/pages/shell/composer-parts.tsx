@@ -175,6 +175,7 @@ export function ComposerActions({
   expanded,
   talk,
   running,
+  runWorking,
   showTalk,
   talkDisabled,
   sendDisabled,
@@ -187,6 +188,8 @@ export function ComposerActions({
   expanded: boolean;
   talk: ReturnType<typeof useHoldToTalk>;
   running: boolean;
+  /** A reply is still being worked on, so the send button waits. */
+  runWorking: boolean;
   /** Hold-to-talk shows beside Send while the draft is empty. */
   showTalk: boolean;
   talkDisabled: boolean;
@@ -207,6 +210,8 @@ export function ComposerActions({
     : undefined;
   // An empty draft keeps the quiet disabled look either way; the bot's color shows once it can go.
   const sendClassName = `size-8 shrink-0 rounded-full transition-transform active:scale-95 disabled:bg-primary-disabled disabled:text-foreground/30 disabled:opacity-100 ${sendColors ? "bg-chat-user text-chat-user-foreground hover:bg-chat-user/90" : ""}`;
+  // The hint on a send button that waits for the running reply.
+  const sendTitle = runWorking ? t`Working…` : undefined;
   return (
     <div
       ref={actionsRef}
@@ -222,6 +227,7 @@ export function ComposerActions({
           <Button
             size="icon"
             aria-label={t`Send`}
+            title={sendTitle}
             disabled={sendDisabled}
             onClick={onSend}
             style={sendStyle}
@@ -246,6 +252,7 @@ export function ComposerActions({
           <Button
             size="icon"
             aria-label={t`Send`}
+            title={sendTitle}
             disabled={sendDisabled}
             onClick={onSend}
             style={sendStyle}

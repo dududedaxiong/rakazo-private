@@ -428,6 +428,9 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   // card is the state: no typing dots under it.
   const workingGroupBots = activeGroupBots.filter((bot) => isRunWorking(bot.status));
   const working = inGroup ? activeGroupBots.length > 0 : isActiveStatus(currentBotStatus);
+  // A reply still being worked on, so a new send waits. A run waiting on the
+  // user (an ask card, a takeover) does not block sending.
+  const runWorking = inGroup ? workingGroupBots.length > 0 : isRunWorking(currentBotStatus);
 
   const speakFinishedReplyRef = useAutoSpeakReply({
     botId,
@@ -1260,6 +1263,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
                 botId={botId}
                 onCall={onCall}
                 working={working}
+                runWorking={runWorking}
                 sending={composer.sending || attachments.shareImporting}
                 styles={styles}
                 attachActions={attachments.attachActions}
