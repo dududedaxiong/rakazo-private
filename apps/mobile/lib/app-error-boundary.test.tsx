@@ -69,6 +69,8 @@ describe("AppErrorBoundary", () => {
 
     const retry = container.querySelector("button");
     expect(retry?.textContent).toBe("Try again");
+    // The caught error's message shows, so a crash report can name the cause.
+    expect(container.textContent).toContain("render failed");
     expect(SplashScreen.hideAsync).toHaveBeenCalledOnce();
 
     shouldThrow = false;
