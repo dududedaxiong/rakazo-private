@@ -257,6 +257,15 @@ export const MessageRow = memo(function MessageRow({
   const displayedReactions = new Map(messageReactions);
   if (optimisticLike && !hasLike) displayedReactions.set("👍", 1);
   if (optimisticDislike && !hasDislike) displayedReactions.set("👎", 1);
+  // This reply's translation settings come from the bot that wrote it.
+  const messageBot =
+    bots.find((candidate) => candidate.id === bubbleBotId) ??
+    bots.find((candidate) => candidate.id === botId);
+  const translationSettings = translationSettingsFromBot(messageBot ?? null);
+  // This reply's generated-media actions come from the bot that wrote it.
+  const mediaDisplay = mediaDisplaySettingsFromBot(messageBot ?? null);
+  const hasGeneratedImage = messageHasGeneratedImage(message);
+  const hasGeneratedMedia = messageHasGeneratedMedia(message);
   const {
     actionProps,
     menu,
@@ -557,17 +566,11 @@ export const MessageRow = memo(function MessageRow({
     hasDislike,
     optimisticDislike,
     favorited,
+    // The favorite entry follows the bot's toggle; the object itself is fresh
+    // every render, so only the boolean it reads goes here.
+    mediaDisplay.showMediaFavorite,
   ]);
   const layout = messageRowLayout(message.blocks, { activityBotId, inGroup, columnWidth });
-  // This reply's translation settings come from the bot that wrote it.
-  const messageBot =
-    bots.find((candidate) => candidate.id === bubbleBotId) ??
-    bots.find((candidate) => candidate.id === botId);
-  const translationSettings = translationSettingsFromBot(messageBot ?? null);
-  // This reply's generated-media actions come from the bot that wrote it.
-  const mediaDisplay = mediaDisplaySettingsFromBot(messageBot ?? null);
-  const hasGeneratedImage = messageHasGeneratedImage(message);
-  const hasGeneratedMedia = messageHasGeneratedMedia(message);
   const canTranslate =
     message.role === "bot" &&
     !message.id.startsWith("progress:") &&

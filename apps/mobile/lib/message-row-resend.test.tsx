@@ -19,6 +19,10 @@ const mocks = vi.hoisted(() => ({
   } | null,
   present: vi.fn(),
   resend: vi.fn(),
+  favorite: vi.fn(),
+  showMediaFavorite: true,
+  hasGeneratedImage: false,
+  hasGeneratedMedia: false,
 }));
 
 vi.mock("react-native", async () => {
@@ -98,9 +102,14 @@ vi.mock("./message-action-sheet", () => ({
 }));
 
 vi.mock("./media-display", () => ({
-  mediaDisplaySettingsFromBot: () => ({ showMediaFavorite: true, showMediaPreview: true }),
-  messageHasGeneratedImage: () => false,
-  messageHasGeneratedMedia: () => false,
+  mediaDisplaySettingsFromBot: () => ({
+    showMediaFavorite: mocks.showMediaFavorite,
+    showMediaShare: true,
+    showMediaPreview: true,
+    showMediaDownload: true,
+  }),
+  messageHasGeneratedImage: () => mocks.hasGeneratedImage,
+  messageHasGeneratedMedia: () => mocks.hasGeneratedMedia,
 }));
 
 vi.mock("./translation", () => ({
@@ -171,6 +180,20 @@ function message(id: string, role: "user" | "bot", text: string): MobileMessage 
     author: { id: "u1", name: "Me" },
     createdAt: Date.now(),
     blocks: [{ kind: "text", text }],
+  } as unknown as MobileMessage;
+}
+
+/** A bot reply carrying text plus a generated image. */
+function mediaMessage(id: string, role: "user" | "bot", text: string): MobileMessage {
+  return {
+    id,
+    role,
+    author: { id: "u1", name: "Me" },
+    createdAt: Date.now(),
+    blocks: [
+      { kind: "text", text },
+      { kind: "image", url: "https://example.invalid/generated.png" },
+    ],
   } as unknown as MobileMessage;
 }
 
@@ -310,5 +333,78 @@ describe("MessageRow resend", () => {
     const target = message("m1", "user", "Hello again");
     render(rowProps(target, { actions: actions({ resend: undefined }) }));
     expect(menuIds(mocks.menu?.actions ?? [])).not.toContain("resend");
+  });
+});
+
+describe("MessageRow media favorite", () => {
+  let root: Root | null = null;
+  let container: HTMLDivElement | null = null;
+
+  function render(props: RowProps) {
+    act(() => {
+      root?.render(createElement(MessageRow, props));
+    });
+  }
+
+  beforeEach(() => {
+    mocks.os = "ios";
+    mocks.menu = null;
+    mocks.present.mockClear();
+    mocks.resend.mockClear();
+    mocks.favorite.mockClear();
+    mocks.showMediaFavorite = true;
+    mocks.hasGeneratedImage = false;
+    mocks.hasGeneratedMedia = false;
+    container = document.createElement("div");
+    document.body.append(container);
+    root = createRoot(container);
+  });
+
+  afterEach(() => {
+    act(() => {
+      root?.unmount();
+    });
+    container?.remove();
+    root = null;
+    container = null;
+    mocks.menu = null;
+  });
+
+  it("renders a bot reply with text without throwing, and offers Favorite", () => {
+    // Regression: the actions memo read the bot's media-display settings
+    // before they were declared, so any bot reply with text crashed the row.
+    const target = message("b1", "bot", "Hi there");
+    render(rowProps(target, { actions: actions({ favorite: mocks.favorite }) }));
+    expect(menuIds(mocks.menu?.actions ?? [])).toContain("favorite");
+  });
+
+  it("offers Favorite for a plain text reply even when the bot hides the toggle", () => {
+    mocks.showMediaFavorite = false;
+    const target = message("b1", "bot", "Hi there");
+    render(rowProps(target, { actions: actions({ favorite: mocks.favorite }) }));
+    expect(menuIds(mocks.menu?.actions ?? [])).toContain("favorite");
+  });
+
+  it("hides Favorite for generated media when the bot hides the toggle", () => {
+    mocks.showMediaFavorite = false;
+    mocks.hasGeneratedImage = true;
+    mocks.hasGeneratedMedia = true;
+    const target = mediaMessage("b1", "bot", "Here is your image");
+    render(rowProps(target, { actions: actions({ favorite: mocks.favorite }) }));
+    expect(menuIds(mocks.menu?.actions ?? [])).not.toContain("favorite");
+  });
+
+  it("offers Favorite for generated media when the bot shows the toggle", () => {
+    mocks.hasGeneratedImage = true;
+    mocks.hasGeneratedMedia = true;
+    const target = mediaMessage("b1", "bot", "Here is your image");
+    render(rowProps(target, { actions: actions({ favorite: mocks.favorite }) }));
+    expect(menuIds(mocks.menu?.actions ?? [])).toContain("favorite");
+  });
+
+  it("does not offer Favorite when the caller provides no favorite action", () => {
+    const target = message("b1", "bot", "Hi there");
+    render(rowProps(target));
+    expect(menuIds(mocks.menu?.actions ?? [])).not.toContain("favorite");
   });
 });
