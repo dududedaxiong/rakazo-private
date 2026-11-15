@@ -239,7 +239,7 @@ describe("bot media tools", () => {
     expect(publish).toHaveBeenCalledWith(
       [
         expect.objectContaining({ artifactId: artifact.id }),
-        { kind: "text", text: "经 model-a · 水彩" },
+        { kind: "text", text: "当前模型: model-a · 水彩" },
       ],
       row.id,
       artifact.id,

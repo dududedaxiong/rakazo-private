@@ -3264,6 +3264,10 @@ msgstr "Cron expression"
 msgid "Currency"
 msgstr "Currency"
 
+#: src/pages/shell/media-result.tsx
+msgid "Current model"
+msgstr "Current model"
+
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
@@ -9118,10 +9122,6 @@ msgstr "Verifying…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
-
-#: src/pages/shell/media-result.tsx
-msgid "Via"
-msgstr "Via"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"

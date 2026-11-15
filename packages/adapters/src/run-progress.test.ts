@@ -153,7 +153,7 @@ describe("discardStalledTurnText", () => {
 
 describe("fallbackAnswerMark", () => {
   it("marks the answering model when it differs from the starting model", () => {
-    expect(fallbackAnswerMark("primary", "backup-a")).toBe("经 backup-a");
+    expect(fallbackAnswerMark("primary", "backup-a")).toBe("当前模型: backup-a");
   });
 
   it("marks nothing when the same model answered", () => {
@@ -166,6 +166,6 @@ describe("fallbackAnswerMark", () => {
   });
 
   it("marks the answering model when the starting model is unknown", () => {
-    expect(fallbackAnswerMark(undefined, "backup-a")).toBe("经 backup-a");
+    expect(fallbackAnswerMark(undefined, "backup-a")).toBe("当前模型: backup-a");
   });
 });

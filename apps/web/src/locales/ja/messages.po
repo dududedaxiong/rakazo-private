@@ -3264,6 +3264,10 @@ msgstr "Cron式"
 msgid "Currency"
 msgstr "通貨"
 
+#: src/pages/shell/media-result.tsx
+msgid "Current model"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
@@ -9118,10 +9122,6 @@ msgstr "確認中…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "バージョン"
-
-#: src/pages/shell/media-result.tsx
-msgid "Via"
-msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"

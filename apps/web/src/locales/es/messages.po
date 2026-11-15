@@ -3264,6 +3264,10 @@ msgstr "Expresión cron"
 msgid "Currency"
 msgstr "Moneda"
 
+#: src/pages/shell/media-result.tsx
+msgid "Current model"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
@@ -9118,10 +9122,6 @@ msgstr "Verificando…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Versión"
-
-#: src/pages/shell/media-result.tsx
-msgid "Via"
-msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"

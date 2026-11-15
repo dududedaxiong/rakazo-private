@@ -17,7 +17,7 @@ const savedJob = z.object({
   provider: z.string(),
   jobId: z.string().optional(),
   artifactId: z.string().optional(),
-  /** The bot-configured model that produced the media, for the "经 X" mark on recovery. */
+  /** The bot-configured model that produced the media, for the "当前模型: X" mark on recovery. */
   modelId: z.string().optional(),
   /** The prompt preset applied to the media, for the mark on recovery. */
   presetName: z.string().optional(),
@@ -25,7 +25,10 @@ const savedJob = z.object({
 
 /** The mark under a generated image or video: which model made it, and which preset. */
 function mediaModelMark(modelId: string, presetName?: string): MessageBlock {
-  return { kind: "text", text: presetName ? `经 ${modelId} · ${presetName}` : `经 ${modelId}` };
+  return {
+    kind: "text",
+    text: presetName ? `当前模型: ${modelId} · ${presetName}` : `当前模型: ${modelId}`,
+  };
 }
 export async function generateMediaFromTool(options: {
   name: "generate_image" | "generate_video";

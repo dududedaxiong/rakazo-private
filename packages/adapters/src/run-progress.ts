@@ -179,7 +179,7 @@ export function discardStalledTurnText(reply: ReplyState): void {
 
 /**
  * The mark under a reply answered by a fallback model: which model answered it.
- * Same "经 <模型名>" convention as generated images and videos; translation
+ * Same "当前模型: <模型名>" convention as generated images and videos; translation
  * labels only on fallback, and so does chat.
  */
 export function fallbackAnswerMark(
@@ -187,7 +187,7 @@ export function fallbackAnswerMark(
   currentModelId: string | undefined | null,
 ): string | undefined {
   if (!currentModelId || currentModelId === startingModelId) return undefined;
-  return `经 ${currentModelId}`;
+  return `当前模型: ${currentModelId}`;
 }
 
 /** Durable interim messages only on genuinely long turns, capped per run. */

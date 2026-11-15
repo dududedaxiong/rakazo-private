@@ -222,7 +222,7 @@ export function MediaResult({
   const modelName = mark ? displayName(mark.modelId, t`Model`) : t`Model`;
   const markLine = (
     <p className="text-body-sm text-muted-foreground">
-      {t`Via`}{" "}
+      {t`Current model`}:{" "}
       <ModelSwitchMenu
         label={kind === "image" ? t`Image model` : t`Video model`}
         models={models ?? []}

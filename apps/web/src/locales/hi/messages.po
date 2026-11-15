@@ -3264,6 +3264,10 @@ msgstr "Cron एक्सप्रेशन"
 msgid "Currency"
 msgstr "मुद्रा"
 
+#: src/pages/shell/media-result.tsx
+msgid "Current model"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Current password"
@@ -9118,10 +9122,6 @@ msgstr "पुष्टि की जा रही है…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "संस्करण"
-
-#: src/pages/shell/media-result.tsx
-msgid "Via"
-msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"
