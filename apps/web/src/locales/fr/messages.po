@@ -4331,6 +4331,10 @@ msgstr "Accorder"
 msgid "Granting…"
 msgstr "Attribution…"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Groq only transcribes speech. Reading aloud still uses the on-device voice."
+msgstr ""
+
 #: src/lib/identity-display.ts
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/shell/chat-header.tsx
@@ -8262,6 +8266,10 @@ msgstr "Le bot peut utiliser le fichier, mais ne verra pas l'image."
 #: src/components/SecretAskCard.tsx
 msgid "The bot's browser stays signed in for everyone in this space"
 msgstr "Le navigateur du bot reste connecté pour tous les membres de cet espace"
+
+#: src/lib/tts.ts
+msgid "The browser could not read this aloud."
+msgstr ""
 
 #: src/lib/dictation.ts
 msgid "The browser keeps dropping the microphone. Start dictation again to retry."

@@ -4331,6 +4331,10 @@ msgstr "Conceder"
 msgid "Granting…"
 msgstr "Concediendo…"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Groq only transcribes speech. Reading aloud still uses the on-device voice."
+msgstr ""
+
 #: src/lib/identity-display.ts
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/shell/chat-header.tsx
@@ -8262,6 +8266,10 @@ msgstr "El bot puede usar el archivo, pero no verá la imagen."
 #: src/components/SecretAskCard.tsx
 msgid "The bot's browser stays signed in for everyone in this space"
 msgstr "El navegador del bot sigue con la sesión iniciada para todos en este espacio"
+
+#: src/lib/tts.ts
+msgid "The browser could not read this aloud."
+msgstr ""
 
 #: src/lib/dictation.ts
 msgid "The browser keeps dropping the microphone. Start dictation again to retry."

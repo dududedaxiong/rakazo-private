@@ -4332,6 +4332,10 @@ msgstr "授予"
 msgid "Granting…"
 msgstr "正在授予…"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Groq only transcribes speech. Reading aloud still uses the on-device voice."
+msgstr "Groq 僅用於語音轉寫，朗讀仍使用本機語音。"
+
 #: src/lib/identity-display.ts
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/shell/chat-header.tsx
@@ -8263,6 +8267,10 @@ msgstr "機器人可以使用這個檔案，但看不到圖片內容。"
 #: src/components/SecretAskCard.tsx
 msgid "The bot's browser stays signed in for everyone in this space"
 msgstr "機器人的瀏覽器會為此空間的每個人保持登入"
+
+#: src/lib/tts.ts
+msgid "The browser could not read this aloud."
+msgstr "瀏覽器無法朗讀這段內容。"
 
 #: src/lib/dictation.ts
 msgid "The browser keeps dropping the microphone. Start dictation again to retry."

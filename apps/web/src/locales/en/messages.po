@@ -4331,6 +4331,10 @@ msgstr "Grant"
 msgid "Granting…"
 msgstr "Granting…"
 
+#: src/pages/VoiceSettingsOverlay.tsx
+msgid "Groq only transcribes speech. Reading aloud still uses the on-device voice."
+msgstr "Groq only transcribes speech. Reading aloud still uses the on-device voice."
+
 #: src/lib/identity-display.ts
 #: src/pages/MessagingSettingsPanel.tsx
 #: src/pages/shell/chat-header.tsx
@@ -8262,6 +8266,10 @@ msgstr "The bot can use the file but won't see the picture."
 #: src/components/SecretAskCard.tsx
 msgid "The bot's browser stays signed in for everyone in this space"
 msgstr "The bot's browser stays signed in for everyone in this space"
+
+#: src/lib/tts.ts
+msgid "The browser could not read this aloud."
+msgstr "The browser could not read this aloud."
 
 #: src/lib/dictation.ts
 msgid "The browser keeps dropping the microphone. Start dictation again to retry."
