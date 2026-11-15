@@ -576,6 +576,53 @@ describe("prepareVoice", () => {
     const off = await prepareVoice(depsWith(), actor, { text: long, botId: "bot-1" });
     expect(off.utterances.join(" ")).toContain("every check passed");
   });
+
+  it("marks a preset connection without a speech model as transcribe-only", async () => {
+    const groq = await prepareVoice(groqDeps("https://api.groq.com/openai/v1"), actor, {
+      text: "Hello.",
+    });
+    expect(groq).toEqual({ ready: false, transcribeOnly: true, utterances: ["Hello."] });
+
+    const local = await prepareVoice(groqDeps("http://127.0.0.1:8000/v1"), actor, {
+      text: "Hello.",
+    });
+    expect(local.ready).toBe(true);
+    expect(local).not.toHaveProperty("transcribeOnly");
+  });
+
+  function groqDeps(endpoint: string) {
+    const secret = JSON.stringify({
+      kind: "openai_compatible",
+      baseUrl: endpoint,
+      apiKey: "test-key",
+      ttsModel: "mlx-community/Kokoro-82M-bf16",
+      sttModel: "whisper-large-v3-turbo",
+    });
+    const prisma = {
+      bot: { findFirst: vi.fn().mockResolvedValue({ voiceId: "voice-1" }) },
+      spaceSettingOverride: { findUnique: vi.fn().mockResolvedValue(null) },
+      userVoicePreference: {
+        findFirst: vi.fn().mockResolvedValue({
+          isDefault: true,
+          voiceId: "voice-1",
+          speechModel: "",
+          credential: {
+            id: "cred-1",
+            userId: actor.userId,
+            provider: "openai-compatible",
+            secretId: "secret-1",
+            createdAt: new Date(0),
+            updatedAt: new Date(0),
+          },
+        }),
+      },
+      secret: { findFirst: vi.fn().mockResolvedValue({ id: "secret-1", ciphertext: "c" }) },
+    };
+    return {
+      prisma,
+      secrets: { load: vi.fn().mockReturnValue(secret), put: vi.fn() },
+    } as unknown as VoiceDeps;
+  }
 });
 
 describe("synthesizeVoice", () => {

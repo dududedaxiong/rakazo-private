@@ -13,6 +13,7 @@ import {
   OPENAI_COMPATIBLE_VOICE_PROVIDER_ID,
   openAiCompatibleVoiceServer,
   serializeOpenAiCompatibleVoiceSecret,
+  VOICE_CATALOG,
   voiceCatalogEntry,
 } from "@rakazo/adapters";
 import type {
@@ -22,7 +23,7 @@ import type {
   VoiceCredential,
   VoiceStatus,
 } from "@rakazo/contracts";
-import { SettingsScopeSchema } from "@rakazo/contracts";
+import { matchVoicePresetEntry, SettingsScopeSchema } from "@rakazo/contracts";
 import { speakable, toUtterances } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import {
@@ -493,15 +494,36 @@ export async function prepareVoice(
     signal?: AbortSignal;
   },
 ) {
+  let target: Awaited<ReturnType<typeof resolveVoiceTarget>>;
   try {
-    await resolveVoiceTarget(deps, actor, input);
+    target = await resolveVoiceTarget(deps, actor, input);
   } catch (error) {
     if (error instanceof NoVoiceConfigured) {
       return { ready: false, utterances: [] as string[] };
     }
     throw error;
   }
+  // A preset connection without a speech model only transcribes; the caller
+  // reads aloud with a local voice instead of asking it to speak. The
+  // utterances still come along, so the local read keeps the same segments.
+  if (isTranscribeOnlyVoiceConnection(target.cred.provider, target.apiKey)) {
+    return {
+      ready: false,
+      transcribeOnly: true,
+      utterances: await spokenUtterances(deps, actor, input),
+    };
+  }
   return { ready: true, utterances: await spokenUtterances(deps, actor, input) };
+}
+
+/** The connection behind a preset entry that carries no speech model. */
+function isTranscribeOnlyVoiceConnection(provider: string, apiKey: string): boolean {
+  if (provider !== OPENAI_COMPATIBLE_VOICE_PROVIDER_ID) return false;
+  const server = openAiCompatibleVoiceServer(apiKey);
+  const entry = server
+    ? matchVoicePresetEntry(VOICE_CATALOG, provider, server.endpoint)
+    : undefined;
+  return Boolean(entry?.preset && entry.preset.ttsModel === undefined);
 }
 
 async function spokenUtterances(
