@@ -1884,6 +1884,7 @@ export const NL_MESSAGES: Record<string, string> = {
   "Image prompt preset": "Promptpreset voor afbeeldingen",
   "Image prompt presets": "Promptpresets voor afbeeldingen",
   "Media generation": "Mediageneratie",
+  "Other models": "Andere modellen",
   "Media model": "Mediamodel",
   "My subscription": "Mijn abonnement",
   "New preset": "Nieuwe preset",

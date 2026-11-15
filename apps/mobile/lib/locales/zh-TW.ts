@@ -1946,6 +1946,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Image prompt preset": "圖片提示詞預設",
   "Image prompt presets": "圖片提示詞預設",
   "Media generation": "媒體生成",
+  "Other models": "其他模型",
   "Media model": "媒體模型",
   "My subscription": "我的訂閱",
   "New preset": "新增預設",

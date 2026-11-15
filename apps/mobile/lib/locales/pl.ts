@@ -1877,6 +1877,7 @@ export const PL_MESSAGES: Record<string, string> = {
   "Image prompt preset": "Preset promptu obrazu",
   "Image prompt presets": "Presety promptów obrazu",
   "Media generation": "Generowanie multimediów",
+  "Other models": "Inne modele",
   "Media model": "Model multimediów",
   "My subscription": "Moja subskrypcja",
   "New preset": "Nowy preset",

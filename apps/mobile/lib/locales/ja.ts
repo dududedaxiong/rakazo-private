@@ -1916,6 +1916,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Image prompt preset": "画像プロンプトプリセット",
   "Image prompt presets": "画像プロンプトプリセット",
   "Media generation": "メディア生成",
+  "Other models": "その他のモデル",
   "Media model": "メディアモデル",
   "My subscription": "自分のサブスクリプション",
   "New preset": "新しいプリセット",

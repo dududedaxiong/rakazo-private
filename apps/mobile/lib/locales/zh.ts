@@ -1885,6 +1885,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Translations only show here and don't change the original. A favorite without a translation model will ask you to pick one first.":
     "译文只在本地展开显示，不改原文；不定翻译模型的那条，点翻译会先提示去选模型",
   "Media generation": "媒体生成",
+  "Other models": "其他模型",
   "Video generation model": "视频生成模型",
   "Image generation model": "图片生成模型",
   Test: "测试",

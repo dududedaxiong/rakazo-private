@@ -1926,6 +1926,7 @@ export const RU_MESSAGES: Record<string, string> = {
   "Image prompt preset": "Пресет промпта изображений",
   "Image prompt presets": "Пресеты промптов изображений",
   "Media generation": "Генерация медиа",
+  "Other models": "Другие модели",
   "Media model": "Медиамодель",
   "My subscription": "Моя подписка",
   "New preset": "Новый пресет",

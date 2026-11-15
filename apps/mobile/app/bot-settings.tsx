@@ -1258,7 +1258,7 @@ export default function BotSettingsScreen() {
                 />
               ) : null}
             </SettingsGroup>
-            <SettingsGroup label={t("Media generation")}>
+            <SettingsGroup label={t("Other models")}>
               <OrderedModelList
                 kind="video"
                 label={t("Video generation model")}
@@ -1305,29 +1305,6 @@ export default function BotSettingsScreen() {
                 onChange={setImagePresets}
                 onActiveChange={setActiveImagePreset}
               />
-            </SettingsGroup>
-            <SettingsGroup label={t("Computer")}>
-              <View style={styles.cardContent}>
-                <ComputerModePicker plain value={computerMode} onChange={setComputerMode} />
-              </View>
-              <SettingsSwitch
-                label={t("Computer operation float window")}
-                value={computerFloatEnabled}
-                onChange={(value) => {
-                  if (!botId) return;
-                  setComputerFloatEnabled(botId, value);
-                }}
-              />
-            </SettingsGroup>
-            <SettingsGroup label={t("Voice")}>
-              <SettingsSwitch
-                label={t("Read replies aloud")}
-                onChange={setAutoSpeak}
-                value={autoSpeak}
-              />
-              {deviceVoiceEnabled ? voiceRow : null}
-            </SettingsGroup>
-            <SettingsGroup label={t("Translation settings")}>
               <OrderedModelList
                 kind="translation"
                 label={t("Translation model")}
@@ -1399,6 +1376,27 @@ export default function BotSettingsScreen() {
                 value={showTranslationActions}
                 onChange={setShowTranslationActions}
               />
+            </SettingsGroup>
+            <SettingsGroup label={t("Computer")}>
+              <View style={styles.cardContent}>
+                <ComputerModePicker plain value={computerMode} onChange={setComputerMode} />
+              </View>
+              <SettingsSwitch
+                label={t("Computer operation float window")}
+                value={computerFloatEnabled}
+                onChange={(value) => {
+                  if (!botId) return;
+                  setComputerFloatEnabled(botId, value);
+                }}
+              />
+            </SettingsGroup>
+            <SettingsGroup label={t("Voice")}>
+              <SettingsSwitch
+                label={t("Read replies aloud")}
+                onChange={setAutoSpeak}
+                value={autoSpeak}
+              />
+              {deviceVoiceEnabled ? voiceRow : null}
             </SettingsGroup>
             <SettingsGroup label={t("Permissions")}>
               <SettingsSwitch

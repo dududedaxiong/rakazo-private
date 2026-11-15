@@ -1838,6 +1838,7 @@ export const ES_MESSAGES: Record<string, string> = {
   "Image prompt preset": "Preajuste de prompt de imagen",
   "Image prompt presets": "Preajustes de prompt de imagen",
   "Media generation": "Generación multimedia",
+  "Other models": "Otros modelos",
   "Media model": "Modelo multimedia",
   "My subscription": "Mi suscripción",
   "New preset": "Nuevo preajuste",

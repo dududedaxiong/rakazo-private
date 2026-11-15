@@ -1900,6 +1900,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Image prompt preset": "Prompt-Preset für Bilder",
   "Image prompt presets": "Prompt-Presets für Bilder",
   "Media generation": "Mediengenerierung",
+  "Other models": "Andere Modelle",
   "Media model": "Medienmodell",
   "My subscription": "Mein Abonnement",
   "New preset": "Neues Preset",
