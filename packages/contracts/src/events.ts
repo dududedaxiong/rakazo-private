@@ -4,6 +4,7 @@ import { botSecretDestinationSchema, LoginFieldLabels, OneTimeCodeTarget } from 
 import { Id, ThinkingLevelSchema } from "./ids.js";
 import { McpTransportSchema } from "./mcp.js";
 import { McpAppCspSchema } from "./mcp-app.js";
+import { ModelSwitchesSchema } from "./model-switches.js";
 import { PAGE_TITLE_MAX_LENGTH } from "./pages.js";
 
 export const ProductEventType = z.enum([
@@ -506,6 +507,8 @@ export const ThreadMessageSchema = z.object({
   replyQuote: z.string().optional(),
   replyPreview: ReplyPreviewSchema.nullable().optional(),
   runId: Id.optional(),
+  /** The model-switch timeline; only present when a switch happened. */
+  modelSwitches: ModelSwitchesSchema.optional(),
   /** Set when the message was sent from a live voice call; groups one call's transcript. */
   callId: z.string().optional(),
   createdAt: z.string(),

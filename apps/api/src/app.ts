@@ -746,6 +746,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     // The scripted runtime never calls a provider, so neither does its connect.
     modelConnectionCheck: env.agentRuntime === "pi" ? verifyModelServesAgents : undefined,
     artifacts,
+    mediaGeneration,
     email,
     onEmailError,
     dataDir: env.dataDir,
@@ -778,6 +779,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       teamChatJudgeProvider: env.teamChatJudgeProvider,
       teamChatJudgeModel: env.teamChatJudgeModel,
       deploymentModelConfigured: env.deploymentModelConfigured,
+      deploymentModelKey: env.deploymentModelKey,
       deploymentModelHostCredentials: env.deploymentModelHostCredentials,
       webOrigin: env.webOrigin,
       privacyPolicyUrl: env.privacyPolicyUrl,

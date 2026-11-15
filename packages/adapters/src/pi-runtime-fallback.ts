@@ -15,13 +15,16 @@ import {
   isRetryableProviderUnavailable,
   isTransientModelError,
 } from "@rakazo/adapter-kit";
+import type { ModelSwitchAttempt } from "@rakazo/contracts";
 import type { ModelBackupOutcome } from "@rakazo/core";
 import {
   abortableDelay,
+  createModelSwitchAttempt,
   MODEL_CONTEXT_TOO_SMALL_ERROR,
   MODEL_OUTPUT_CUT_ERROR,
   MODEL_OUTPUT_LIMIT_ERROR,
   MODEL_REQUEST_LIMIT_ERROR,
+  recordModelSwitchAttempt,
 } from "@rakazo/core";
 import { getLogger } from "@rakazo/logging";
 import { ModelImageLimitError, pruneForRebuild } from "./context-pruning.js";
@@ -70,6 +73,14 @@ export interface FallbackStreamState {
   nextIndex: number;
   primaryFailure?: string;
   backupOutcomes: Map<string, ModelBackupOutcome>;
+  /**
+   * The switch timeline for this turn, in try order: every model that failed,
+   * was skipped, or finally answered. The request's collector when the caller
+   * persists it with the reply; absent where nothing reads it (subagents,
+   * computer-mode detours). A retried model keeps one entry, its latest
+   * outcome, so a retry that then succeeds leaves no phantom switch.
+   */
+  switchAttempts?: ModelSwitchAttempt[];
   /** Calls repeated, given more room or continued after a cut; bounded per run. */
   selfRecoveries: number;
   /** More room for the next call, after a call ran out of it inside a tool call. */
@@ -302,7 +313,41 @@ export function fallbackAwareModelStream(
     return messages === context.messages ? context : { ...context, messages };
   };
   const signalAborted = () => signal.aborted;
+  /**
+   * One timeline entry. Failures carry the sanitized provider message (never
+   * a raw one); skips carry the short reason they never ran. Aborts are not
+   * attempts: the run was stopped, not beaten by a model.
+   */
+  const recordSwitchAttempt = (
+    model: string,
+    provider: string | undefined,
+    outcome: ModelSwitchAttempt["outcome"],
+    error?: string,
+  ) => {
+    if (!state.switchAttempts) return;
+    recordModelSwitchAttempt(
+      state.switchAttempts,
+      createModelSwitchAttempt({
+        model,
+        provider,
+        outcome,
+        ...(error ? { error } : {}),
+      }),
+    );
+  };
+  const recordTargetAttempt = (
+    target: RuntimeModelTarget,
+    outcome: ModelSwitchAttempt["outcome"],
+    error?: string,
+  ) =>
+    recordSwitchAttempt(
+      target.config.id,
+      target.config.connectionLabel,
+      outcome,
+      error === undefined ? undefined : sanitizeProviderError(target.config.provider, error),
+    );
   const recordFailure = (target: RuntimeModelTarget, error: string) => {
+    if (!/abort|cancel/i.test(error)) recordTargetAttempt(target, "failed", error);
     if (sameModelTarget(target.config, state.request.model)) return;
     state.backupOutcomes.set(modelTargetKey(target.config), {
       provider: target.config.provider,
@@ -353,13 +398,17 @@ export function fallbackAwareModelStream(
       if (state.attempted.has(key)) continue;
       state.attempted.add(key);
       if (sameModelTarget(choice, current.config)) continue;
-      const skip = (reason: string) =>
+      const skip = (reason: string) => {
         state.backupOutcomes.set(key, {
           provider: choice.provider,
           modelId: choice.id,
           status: "skipped",
           reason,
         });
+        // The connection label is unknown for a model that never resolved,
+        // so the timeline names the model alone.
+        recordSwitchAttempt(choice.id, undefined, "skipped", reason);
+      };
       try {
         const config = state.request.resolveFallbackModel
           ? await state.request.resolveFallbackModel(
@@ -868,6 +917,9 @@ export function fallbackAwareModelStream(
             }
             for (const pending of buffered) output.push(pending);
             buffered = [];
+            // The model that answered the turn: earlier failures stay on the
+            // timeline, so a switch that ended here is still visible.
+            recordTargetAttempt(target, "succeeded");
             output.push(event);
             output.end(event.message);
             return;

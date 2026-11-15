@@ -8,7 +8,7 @@ import type {
   SemanticMemoryProvider,
   WebProvider,
 } from "@rakazo/adapter-kit";
-import type { ComputerMode, MessageBlock, ReplyMode } from "@rakazo/contracts";
+import type { ComputerMode, MessageBlock, ModelSwitchAttempt, ReplyMode } from "@rakazo/contracts";
 import { createStreamingRedactor } from "@rakazo/core";
 import { toolEffectIdempotencyKey } from "@rakazo/core/node/approval-effect-key";
 import type { Bot, Computer, effectiveMemoryScope, Run, Task, Thread } from "@rakazo/db";
@@ -204,6 +204,12 @@ export interface RunState {
   walletHosts: Set<string>;
   handedOff: boolean;
   terminalCheckpointComplete: boolean;
+  /**
+   * Models tried this attempt, in order, for the switch timeline the reply
+   * carries. The runtime appends to this same array; completeRun persists
+   * it only when a switch really happened.
+   */
+  modelSwitchAttempts: ModelSwitchAttempt[];
 }
 
 export interface RunComputerContext {

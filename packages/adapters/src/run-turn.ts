@@ -12,6 +12,7 @@ import {
 } from "@rakazo/adapter-kit";
 import {
   BACKGROUND_HELPER_TRIGGER,
+  buildModelSwitches,
   containsSecret,
   displayName,
   humanizeToolName,
@@ -891,6 +892,9 @@ export async function completeRun(ctx: RunContext) {
       ? botMessageOutcomeFromMidTurn(text, reply.midTurnUserTexts)
       : null;
   await ctx.settleRunningHelpers();
+  // Only a reply that really switched models carries a timeline; a
+  // first-model answer, or a retry of the same model, carries none.
+  const modelSwitches = buildModelSwitches(ctx.state.modelSwitchAttempts);
   const completed = await deps.events.finalizeRun({
     spaceId: run.spaceId,
     threadId: thread.id,
@@ -902,6 +906,7 @@ export async function completeRun(ctx: RunContext) {
     leaseFence: ctx.fence,
     outcome: "completed",
     blocks,
+    ...(modelSwitches ? { modelSwitches } : {}),
     markUnread:
       !groupSilentEnd &&
       completionMarksUnread(run.trigger, text, ctx.source.peerMessage?.repliesToRequest === true),

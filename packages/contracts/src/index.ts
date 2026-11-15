@@ -36,6 +36,7 @@ export * from "./model-connections.js";
 export * from "./model-headers.js";
 export * from "./model-provider.js";
 export * from "./model-roles.js";
+export * from "./model-switches.js";
 export * from "./nav-links.js";
 export * from "./network-host.js";
 export * from "./openai-compatible-ui.js";

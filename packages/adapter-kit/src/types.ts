@@ -5,6 +5,7 @@ import type {
   ConnectionCatalogItem,
   ModelApiProtocol,
   ModelAuthMode,
+  ModelSwitchAttempt,
   PurchaseCardField,
   SandboxKind,
 } from "@rakazo/contracts";
@@ -502,6 +503,13 @@ export interface AgentRunModel {
   id: string;
   /** Opaque id of the stored connection serving it, so a model can fall back to another account. */
   connectionId?: string;
+  /**
+   * Display name of the connection serving this model (the user's own
+   * connection label, e.g. the name they gave the relay); distinguishes
+   * same-named models on different connections. Absent for a hosted model
+   * with no user connection. Stored in switch timelines, never the id.
+   */
+  connectionLabel?: string;
   apiKey?: string;
   /** Cloudflare account id stored with a gateway BYOK credential. */
   accountId?: string;
@@ -602,6 +610,14 @@ export interface AgentRunRequest {
   computerModel?: AgentRunModel;
   /** Ordered, user-selected models eligible after provider unavailability. */
   fallbackModels?: Array<Pick<AgentRunModel, "provider" | "id" | "connectionId">>;
+  /**
+   * Collects one entry per model tried, in order, for the switch timeline
+   * (see `buildModelSwitches` in `@rakazo/core`): the runtime appends each
+   * failure, skip and success here; the caller persists it with the reply
+   * only when a switch really happened. Absent in runtimes that do not
+   * report switches (subagents, scripted runs).
+   */
+  modelSwitchAttempts?: ModelSwitchAttempt[];
   /** Resolve one configured backup lazily so healthy primary turns do no extra auth work. */
   resolveFallbackModel?: (
     provider: string,

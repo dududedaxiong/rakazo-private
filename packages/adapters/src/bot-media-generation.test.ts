@@ -196,10 +196,15 @@ describe("bot media routing", () => {
         fallbackImageBot,
         fallback,
       );
-      expect(await provider?.generateImage({ prompt: "画一只猫" }, context)).toEqual({
-        bytes: tinyPng,
-        mimeType: "image/png",
-        modelId: "fallback-model",
+      const media = await provider?.generateImage({ prompt: "画一只猫" }, context);
+      expect(media?.modelId).toBe("fallback-model");
+      // The unresolved primary stays on the timeline as a skip.
+      expect(media?.modelSwitches).toMatchObject({
+        finalModel: "fallback-model",
+        attempts: [
+          { model: "primary-model", outcome: "skipped", errorMessage: "not connected" },
+          { model: "fallback-model", outcome: "succeeded" },
+        ],
       });
       expect(seen).toHaveLength(1);
       expect(seen[0]?.model).toBe("fallback-model");
@@ -293,6 +298,60 @@ describe("BotMediaGenerationProvider", () => {
     expect(fallbackCall).toHaveBeenCalledTimes(1);
   });
 
+  it("carries the switch timeline on the finished media, with the failure detail", async () => {
+    const primary = vi.fn(async () => {
+      throw new Error("429 Too many requests");
+    });
+    const fallbackCall = vi.fn(async () => ({ bytes: tinyPng, mimeType: "image/png" as const }));
+    const provider = new BotMediaGenerationProvider(
+      {
+        calls: [
+          {
+            modelId: "primary-model",
+            provider: "openai-compatible",
+            providerLabel: "主站",
+            call: primary,
+          },
+          {
+            modelId: "fallback-model",
+            provider: "openai-compatible",
+            providerLabel: "GB中转",
+            call: fallbackCall,
+          },
+        ],
+        failures: [],
+      },
+      noCalls,
+      undefined,
+    );
+    const media = await provider.generateImage({ prompt: "x" }, context);
+    expect(media.modelSwitches).toMatchObject({
+      finalModel: "fallback-model",
+      attempts: [
+        {
+          model: "primary-model",
+          provider: "主站",
+          outcome: "failed",
+          errorCode: "rate_limit",
+          errorMessage: "429 Too many requests",
+        },
+        { model: "fallback-model", provider: "GB中转", outcome: "succeeded" },
+      ],
+    });
+  });
+
+  it("carries no timeline when the first model answers", async () => {
+    const only = vi.fn(async () => ({ bytes: tinyPng, mimeType: "image/png" as const }));
+    const provider = new BotMediaGenerationProvider(
+      { calls: [{ modelId: "only-model", call: only }], failures: [] },
+      noCalls,
+      undefined,
+    );
+    const media = await provider.generateImage({ prompt: "x" }, context);
+    expect(media.modelId).toBe("only-model");
+    expect(media.modelSwitches).toBeUndefined();
+  });
+
   it("notifies each failed model and keeps trying until one succeeds", async () => {
     const primary = vi.fn(async () => {
       throw new MediaGenerationError("authentication");
@@ -318,6 +377,8 @@ describe("BotMediaGenerationProvider", () => {
     expect(onModelFailed).toHaveBeenCalledWith({
       modelId: "primary-model",
       reason: "authentication failed",
+      errorCode: "authentication",
+      errorMessage: "Media generation: authentication",
       nextModelId: "fallback-model",
     });
   });
@@ -347,11 +408,15 @@ describe("BotMediaGenerationProvider", () => {
     expect(onModelFailed).toHaveBeenNthCalledWith(1, {
       modelId: "primary-model",
       reason: "authentication failed",
+      errorCode: "authentication",
+      errorMessage: "Media generation: authentication",
       nextModelId: "fallback-model",
     });
     expect(onModelFailed).toHaveBeenNthCalledWith(2, {
       modelId: "fallback-model",
       reason: "timed out",
+      errorCode: "timeout",
+      errorMessage: "Media generation: timeout",
       nextModelId: undefined,
     });
   });

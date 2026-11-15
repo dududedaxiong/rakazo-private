@@ -11,9 +11,16 @@ import {
   MediaGenerationError,
   mediaGenerationFailureReason,
 } from "@rakazo/adapter-kit";
+import type { ModelSwitchAttempt } from "@rakazo/contracts";
 import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
+import {
+  buildModelSwitches,
+  createModelSwitchAttempt,
+  recordModelSwitchAttempt,
+} from "@rakazo/core";
 import { z } from "zod";
 import { FAKE_VIDEO_BASE64 } from "./fake-media-assets.js";
+import { sanitizeProviderError } from "./pi-runtime-errors.js";
 import type { ResolveHostname } from "./web-ssrf.js";
 import { fetchSafeWebBytes } from "./web-ssrf.js";
 
@@ -290,13 +297,26 @@ export const CHAT_MEDIA_VIDEO_JOB_ID = "chat-media-video";
 /** One bot-configured model to try, in list order. */
 export type BotMediaCallEntry = {
   modelId: string;
+  /** The provider id this model runs on, for error sanitizing; absent in older callers. */
+  provider?: string;
+  /** The connection display name the model runs on; absent when unknown. */
+  providerLabel?: string;
   /** The prompt preset applied by this call; absent when no preset was active. */
   presetName?: string;
   call: (prompt: string, signal: AbortSignal) => Promise<GeneratedMedia>;
 };
 
 /** One bot-configured model that could not even be reached, with why. */
-export type BotMediaFailure = { modelId: string; reason: string };
+export type BotMediaFailure = {
+  modelId: string;
+  reason: string;
+  /** The connection display name the model runs on; absent when unknown. */
+  providerLabel?: string;
+  /** Short failure class for the timeline label (e.g. rate_limit, connection). */
+  errorCode?: string;
+  /** Sanitized failure detail, truncated to 300 characters; never contains secrets. */
+  errorMessage?: string;
+};
 
 /** One tried model that failed, and the next model the chain will try, if any. */
 export type BotMediaModelFailure = BotMediaFailure & { nextModelId?: string };
@@ -337,20 +357,59 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
     signal: AbortSignal,
   ): Promise<GeneratedMedia> {
     const failures: BotMediaFailure[] = [...kind.failures];
+    // The timeline, in try order: models that never resolved were skipped,
+    // each call that failed is a failed attempt, and the model that answered
+    // closes it. Only a real switch is kept on the finished media.
+    const attempts: ModelSwitchAttempt[] = kind.failures.map((failure) =>
+      createModelSwitchAttempt({
+        model: failure.modelId,
+        provider: failure.providerLabel,
+        outcome: "skipped",
+        error: failure.reason,
+      }),
+    );
     for (let index = 0; index < kind.calls.length; index++) {
       const entry = kind.calls[index]!;
       try {
         const output = await entry.call(input.prompt, signal);
+        recordModelSwitchAttempt(
+          attempts,
+          createModelSwitchAttempt({
+            model: entry.modelId,
+            provider: entry.providerLabel,
+            outcome: "succeeded",
+          }),
+        );
+        const modelSwitches = buildModelSwitches(attempts);
         return {
           ...output,
           modelId: entry.modelId,
           ...(entry.presetName ? { presetName: entry.presetName } : {}),
+          ...(modelSwitches ? { modelSwitches } : {}),
         };
       } catch (error) {
         signal.throwIfAborted();
+        const raw = error instanceof Error ? error.message : String(error);
+        // A coded provider error names its class directly; an uncoded one is
+        // classified from its message instead.
+        const errorCode =
+          error instanceof MediaGenerationError && error.code !== "provider_failure"
+            ? error.code
+            : undefined;
+        const attempt = createModelSwitchAttempt({
+          model: entry.modelId,
+          provider: entry.providerLabel,
+          outcome: "failed",
+          error: sanitizeProviderError(entry.provider ?? "", raw),
+          ...(errorCode ? { errorCode } : {}),
+        });
+        recordModelSwitchAttempt(attempts, attempt);
         const failure: BotMediaFailure = {
           modelId: entry.modelId,
           reason: mediaGenerationFailureReason(error),
+          ...(entry.providerLabel ? { providerLabel: entry.providerLabel } : {}),
+          ...(attempt.errorCode ? { errorCode: attempt.errorCode } : {}),
+          ...(attempt.errorMessage ? { errorMessage: attempt.errorMessage } : {}),
         };
         failures.push(failure);
         try {

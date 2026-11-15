@@ -1430,6 +1430,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           walletHosts: new Set(),
           handedOff: false,
           terminalCheckpointComplete: false,
+          modelSwitchAttempts: [],
         };
         const { effects } = state;
         /** Fleet tools take every scope from the run, never from arguments. */
@@ -1851,6 +1852,8 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               // The live array: secrets learned later in the run redact too.
               secrets: runSecrets,
               model: mainRunModel,
+              // The same array completeRun reads for the reply's switch timeline.
+              modelSwitchAttempts: state.modelSwitchAttempts,
               computerModel,
               fallbackModels: fallbackModels.map(({ provider, modelId, credentialId }) => ({
                 provider,

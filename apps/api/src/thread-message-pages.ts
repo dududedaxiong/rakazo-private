@@ -4,7 +4,7 @@ import type {
   ThreadMessage,
   ThreadMessagePage,
 } from "@rakazo/contracts";
-import { MessageBlock as MessageBlockSchema } from "@rakazo/contracts";
+import { MessageBlock as MessageBlockSchema, ModelSwitchesSchema } from "@rakazo/contracts";
 import {
   BACKGROUND_RUN_TRIGGERS,
   callIdFromClientNonce,
@@ -280,6 +280,7 @@ type MessageRow = {
   } | null;
   runId: string | null;
   clientNonce?: string | null;
+  modelSwitches: Prisma.JsonValue;
   createdAt: Date;
 };
 
@@ -306,6 +307,8 @@ function toThreadMessage(row: MessageRow, authors: Map<string, MessageAuthor>): 
         ? null
         : undefined;
   const author = row.authorUserId ? authors.get(row.authorUserId) : undefined;
+  // A malformed timeline never breaks the page: the message reads without one.
+  const modelSwitches = ModelSwitchesSchema.safeParse(row.modelSwitches).data;
   return {
     id: row.id,
     threadId: row.threadId,
@@ -314,6 +317,7 @@ function toThreadMessage(row: MessageRow, authors: Map<string, MessageAuthor>): 
     blocks: row.blocks as ThreadMessage["blocks"],
     botId: row.botId ?? undefined,
     ...(author ? { author } : {}),
+    ...(modelSwitches ? { modelSwitches } : {}),
     replyToMessageId: row.replyToMessageId ?? undefined,
     replyQuote: row.replyQuote ?? undefined,
     replyPreview,

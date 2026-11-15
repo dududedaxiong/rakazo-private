@@ -1,4 +1,4 @@
-import type { MessageAuthor, MessageBlock } from "@rakazo/contracts";
+import type { MessageAuthor, MessageBlock, ModelSwitches } from "@rakazo/contracts";
 import type { Prisma, PrismaClient } from "./client.js";
 import { THREAD_LOCK_TRANSACTION_OPTIONS, withTransactionRetry } from "./transaction-retry.js";
 
@@ -70,6 +70,8 @@ export interface CreateThreadMessageInput {
   runId?: string;
   clientNonce?: string;
   markUnread?: boolean;
+  /** The reply's model-switch timeline; only present when a switch happened. */
+  modelSwitches?: ModelSwitches;
   /** Terminal echo after the run is already cancelled. Every other write stays rejected. */
   allowCancelledRun?: boolean;
   /** The executing attempt's lease; a superseded attempt cannot write. */
@@ -113,6 +115,9 @@ export async function createThreadMessageInTransaction(
       replyQuote: input.replyQuote,
       runId: input.runId,
       clientNonce: input.clientNonce,
+      ...(input.modelSwitches
+        ? { modelSwitches: input.modelSwitches as Prisma.InputJsonValue }
+        : {}),
     },
   });
 }

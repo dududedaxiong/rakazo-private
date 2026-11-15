@@ -2,6 +2,7 @@ import type {
   AgentHomeStore,
   ArtifactStore,
   JobPublisher,
+  MediaGenerationProvider,
   MemoryStore,
   NotificationProvider,
   PaymentWalletProvider,
@@ -49,6 +50,7 @@ import { contentRoutes } from "./routes/content.js";
 import { createRouterContext } from "./routes/context.js";
 import { favoritesRoutes } from "./routes/favorites.js";
 import { mcpRoutes } from "./routes/mcp.js";
+import { mediaRoutes } from "./routes/media.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { messagingRoutes } from "./routes/messaging.js";
 import { modelsRoutes } from "./routes/models.js";
@@ -116,6 +118,8 @@ export interface RouterDeps {
   pluginRepoFetcher?: PluginRepoFetcher;
   pluginMarketplaceRead?: PluginTextReader;
   artifacts: ArtifactStore;
+  /** The deployment's media provider, for bots with no media models of their own. */
+  mediaGeneration?: MediaGenerationProvider;
   dataDir: string;
   messagingInstallations?: MessagingInstallations;
   messaging?: {
@@ -151,6 +155,7 @@ export interface RouterDeps {
     defaultProvider: string;
     defaultModel: string;
     deploymentModelConfigured?: boolean;
+    deploymentModelKey?: string;
     deploymentModelHostCredentials?: boolean;
     webOrigin: string;
     privacyPolicyUrl?: string;
@@ -177,6 +182,7 @@ export function createRouter(deps: RouterDeps) {
     ...organizationsRoutes(ctx),
     ...modelsRoutes(ctx),
     ...botsRoutes(ctx),
+    ...mediaRoutes(ctx),
     ...botPackagesRoutes(ctx),
     ...promptTemplatesRoutes(ctx),
     ...favoritesRoutes(ctx),

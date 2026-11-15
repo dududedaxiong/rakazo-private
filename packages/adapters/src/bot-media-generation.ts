@@ -37,17 +37,28 @@ async function resolveBotMediaKind(
   preset: BotPromptPreset | null,
 ): Promise<BotMediaKindCalls> {
   const calls: BotMediaCallEntry[] = [];
-  const failures: { modelId: string; reason: string }[] = [];
+  const failures: { modelId: string; reason: string; providerLabel?: string }[] = [];
   for (const entry of entries ?? []) {
     try {
-      const { resolved } = await resolveConnectedModelKey(deps, scope, entry.provider, entry.model);
+      const { resolved, credential } = await resolveConnectedModelKey(
+        deps,
+        scope,
+        entry.provider,
+        entry.model,
+      );
       const baseUrl = resolved.baseUrl;
       if (!baseUrl) {
-        failures.push({ modelId: entry.model, reason: "not connected" });
+        failures.push({
+          modelId: entry.model,
+          reason: "not connected",
+          ...(credential?.label ? { providerLabel: credential.label } : {}),
+        });
         continue;
       }
       calls.push({
         modelId: entry.model,
+        provider: entry.provider,
+        ...(credential?.label ? { providerLabel: credential.label } : {}),
         ...(preset ? { presetName: preset.name } : {}),
         call: (prompt, signal) =>
           generateMediaWithChatModel(

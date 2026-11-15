@@ -1,8 +1,9 @@
 import type { ProductAnalytics, RealtimeFanout } from "@rakazo/adapter-kit";
-import type { ChatAlert, MessageBlock, ProductEvent } from "@rakazo/contracts";
+import type { ChatAlert, MessageBlock, ModelSwitches, ProductEvent } from "@rakazo/contracts";
 import {
   AnalyticsTrigger,
   hasThinkingActivityMarker,
+  ModelSwitchesSchema,
   ThreadActivityPayloadSchema,
 } from "@rakazo/contracts";
 import {
@@ -148,6 +149,8 @@ export type FinalizeRunInput = FinalizeRunBase &
         outcome: "completed";
         blocks: MessageBlock[];
         markUnread?: boolean;
+        /** The reply's model-switch timeline; only when a switch happened. */
+        modelSwitches?: ModelSwitches;
       }
     | {
         outcome: "failed";
@@ -765,12 +768,18 @@ async function finalizeRunOnce(
         ? completedRunBlocks(input.blocks, writableRun?.startedAt ?? null, now)
         : (input.partialReply ?? []);
     if (replyBlocks.length > 0) {
+      // A malformed timeline never blocks the reply: the message lands without one.
+      const modelSwitches =
+        input.outcome === "completed" && input.modelSwitches
+          ? ModelSwitchesSchema.safeParse(input.modelSwitches).data
+          : undefined;
       const message = await createThreadMessageInTransaction(tx, {
         threadId: input.threadId,
         role: "bot",
         blocks: replyBlocks,
         botId: input.botId,
         runId: input.runId,
+        ...(modelSwitches ? { modelSwitches } : {}),
         ...(input.outcome === "completed"
           ? { markUnread: input.markUnread }
           : { clientNonce: partialReplyClientNonce(input.runId) }),

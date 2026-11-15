@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock, ModelSwitches } from "@rakazo/contracts";
 import { callIdFromClientNonce, isBackgroundRunTrigger, redactSecrets } from "@rakazo/core";
 import type { Prisma, RunLease } from "@rakazo/db";
 import {
@@ -123,6 +123,8 @@ export async function persistMessageInTransaction(
   clientNonce?: string,
   allowCancelledRun = false,
   lease?: RunLease,
+  /** The message's model-switch timeline; only when a switch happened. */
+  modelSwitches?: ModelSwitches,
 ) {
   const message = await createThreadMessageInTransaction(tx, {
     threadId: run.threadId,
@@ -134,6 +136,7 @@ export async function persistMessageInTransaction(
     clientNonce,
     allowCancelledRun,
     lease,
+    ...(modelSwitches ? { modelSwitches } : {}),
   });
   const event = await appendEventInTransaction(tx, {
     spaceId: run.spaceId,

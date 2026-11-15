@@ -1,3 +1,4 @@
+import type { ModelSwitches } from "@rakazo/contracts";
 import type { AdapterContext } from "./types.js";
 
 export type MediaGenerationInput = { prompt: string };
@@ -8,6 +9,8 @@ export type GeneratedMedia = {
   modelId?: string;
   /** The prompt preset applied to this media; absent when no preset was active. */
   presetName?: string;
+  /** The model-switch timeline; only when a switch happened while producing it. */
+  modelSwitches?: ModelSwitches;
 };
 export type MediaVideoJob =
   | { id: string; status: "queued" | "running"; progress?: number }

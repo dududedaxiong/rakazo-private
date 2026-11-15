@@ -739,6 +739,30 @@ export const appContract = {
       }),
     ),
   },
+  /**
+   * A generated image or video, by its artifact: the extra prompt the viewer
+   * added for this generation, and a re-run of that generation under the
+   * bot's current media settings. Only the artifact's own bot and space.
+   */
+  media: {
+    getSupplementaryPrompt: oc.input(z.object({ artifactId: Id })).output(
+      z.object({
+        supplementaryPrompt: z.string(),
+        presetName: z.string().optional(),
+        modelId: z.string().optional(),
+      }),
+    ),
+    setSupplementaryPrompt: oc
+      .input(z.object({ artifactId: Id, supplementaryPrompt: z.string().max(4000) }))
+      .output(z.object({ ok: z.literal(true) })),
+    regenerate: oc.input(z.object({ artifactId: Id })).output(
+      z.object({
+        ok: z.literal(true),
+        status: z.enum(["completed", "queued"]),
+        artifactId: Id.optional(),
+      }),
+    ),
+  },
   promptTemplates: {
     list: oc.output(z.array(PromptTemplateSchema)),
     create: oc.input(CreatePromptTemplateInput).output(PromptTemplateSchema),

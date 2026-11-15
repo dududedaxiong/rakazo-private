@@ -1338,6 +1338,9 @@ model Message {
   replies          Message[] @relation("MessageReplies")
   runId            String?
   clientNonce      String?
+  /// The model-switch timeline for this message ({attempts, finalModel});
+  /// NULL when the first model answered with no switch. Old rows stay NULL.
+  modelSwitches    Json?
   /// Blind-index search tokens for the encrypted blocks; NULL until the row is encrypted.
   searchTokens     Int[]
   sourceRuns            Run[]             @relation("RunSourceMessage")

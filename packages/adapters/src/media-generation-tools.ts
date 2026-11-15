@@ -5,7 +5,8 @@ import type {
   MediaVideoJob,
 } from "@rakazo/adapter-kit";
 import { MediaGenerationError } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock, ModelSwitches } from "@rakazo/contracts";
+import { ModelSwitchesSchema } from "@rakazo/contracts";
 import { messageBlockForArtifact } from "@rakazo/core";
 import type { ExternalEffect, Prisma, PrismaClient } from "@rakazo/db";
 import { isUniqueViolation } from "@rakazo/db";
@@ -13,7 +14,7 @@ import { z } from "zod";
 import { mediaPromptSchema, validateGeneratedMedia } from "./media-generation-provider.js";
 
 export const MEDIA_JOB_KIND = "media_generation_job";
-const savedJob = z.object({
+export const savedJob = z.object({
   provider: z.string(),
   jobId: z.string().optional(),
   artifactId: z.string().optional(),
@@ -21,6 +22,10 @@ const savedJob = z.object({
   modelId: z.string().optional(),
   /** The prompt preset applied to the media, for the mark on recovery. */
   presetName: z.string().optional(),
+  /** The viewer's extra prompt for this generation; a re-run appends it to the raw prompt. */
+  supplementaryPrompt: z.string().max(4000).optional(),
+  /** The model-switch timeline; only when a switch happened while producing it. */
+  modelSwitches: ModelSwitchesSchema.optional(),
 });
 
 /** The mark under a generated image or video: which model made it, and which preset. */
@@ -55,6 +60,8 @@ export async function generateMediaFromTool(options: {
     modelId?: string,
     /** The prompt preset applied to the media; kept in the saved job for recovery. */
     presetName?: string,
+    /** Kept in the saved job with the message: its switch timeline and extra prompt. */
+    meta?: { modelSwitches?: ModelSwitches; supplementaryPrompt?: string },
   ) => Promise<unknown>;
   /** Commits with a video's provider failure, so whatever follows it cannot be lost. */
   onSettled?: (tx: Prisma.TransactionClient, status: "failed") => Promise<void>;
@@ -165,12 +172,19 @@ export async function generateMediaFromTool(options: {
       });
       if (!artifact) return { error: "Generated attachment is unavailable." };
       const block = messageBlockForArtifact(artifact);
+      // Only pass the extra fields when the job actually saved them, so the
+      // recovery path keeps the exact call shape it had before.
+      const meta =
+        saved.modelSwitches || saved.supplementaryPrompt
+          ? { modelSwitches: saved.modelSwitches, supplementaryPrompt: saved.supplementaryPrompt }
+          : undefined;
       await options.publish(
         saved.modelId ? [block, mediaModelMark(saved.modelId, saved.presetName)] : [block],
         reservation.id,
         artifact.id,
         saved.modelId,
         saved.presetName,
+        ...(meta ? [meta] : []),
       );
       return {
         status: "completed",
@@ -232,7 +246,13 @@ export async function generateMediaFromTool(options: {
                 : output.status === "completed"
                   ? "media_polling"
                   : "media_pending",
-            result: { provider: provider.id, jobId: output.id },
+            result: {
+              provider: provider.id,
+              jobId: output.id,
+              ...(saved.supplementaryPrompt
+                ? { supplementaryPrompt: saved.supplementaryPrompt }
+                : {}),
+            },
           },
         });
         if (updated.count && output.status === "failed") await options.onSettled?.(tx, "failed");
@@ -249,6 +269,7 @@ export async function generateMediaFromTool(options: {
     const fetched = {
       provider: provider.id,
       ...("id" in output ? { jobId: output.id } : {}),
+      ...(saved.supplementaryPrompt ? { supplementaryPrompt: saved.supplementaryPrompt } : {}),
     };
     let attached: { artifactId: string; block: MessageBlock };
     try {
@@ -271,12 +292,20 @@ export async function generateMediaFromTool(options: {
     }
     const modelId = output.output.modelId ?? undefined;
     const presetName = output.output.presetName ?? undefined;
+    const meta =
+      output.output.modelSwitches || saved.supplementaryPrompt
+        ? {
+            modelSwitches: output.output.modelSwitches,
+            supplementaryPrompt: saved.supplementaryPrompt,
+          }
+        : undefined;
     await options.publish(
       modelId ? [attached.block, mediaModelMark(modelId, presetName)] : [attached.block],
       reservation.id,
       attached.artifactId,
       modelId,
       presetName,
+      ...(meta ? [meta] : []),
     );
     return {
       status: "completed",

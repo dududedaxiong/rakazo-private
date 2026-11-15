@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { Id } from "./ids.js";
+import { ModelSwitchAttemptSchema } from "./model-switches.js";
 
 /** Languages a message can be translated from; `auto` lets the model detect it. */
 export const TRANSLATION_SOURCE_LANGUAGE_CODES = ["auto", "zh", "en", "ja", "ko"] as const;
@@ -64,6 +65,8 @@ export const TranslateOutputSchema = z.object({
   modelId: z.string(),
   /** True when the translation came from a fallback model, not the primary. */
   usedFallback: z.boolean(),
+  /** Every model tried, in order, when more than the first was needed. */
+  attempts: z.array(ModelSwitchAttemptSchema).optional(),
 });
 export type TranslateOutput = z.infer<typeof TranslateOutputSchema>;
 

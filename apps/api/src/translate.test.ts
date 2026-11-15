@@ -101,6 +101,20 @@ describe("createTranslator", () => {
     );
   });
 
+  it("carries no attempts when the first model answers", async () => {
+    const { translator } = harness({
+      runs: [doneRun('{"detected": "en", "text": "你好"}')],
+    });
+    const result = await translator(actor, "bot-1", "hello", "auto", "zh");
+    expect(result).toEqual({
+      translatedText: "你好",
+      detectedLanguage: "en",
+      modelId: "model-1",
+      usedFallback: false,
+    });
+    expect("attempts" in result).toBe(false);
+  });
+
   it("strips a fenced JSON reply", async () => {
     const { translator } = harness({
       runs: [doneRun('```json\n{"detected": "ja", "text": "你好"}\n```')],
@@ -191,13 +205,18 @@ describe("createTranslator", () => {
     });
     resolveConnectedModel.mockImplementation(async (_scope, _provider, modelId) => {
       if (modelId === "model-1") throw new Error("not connected");
-      return { provider: "test-provider", id: modelId };
+      return { provider: "test-provider", id: modelId, connectionLabel: "GB中转" };
     });
-    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).resolves.toEqual({
+    const result = await translator(actor, "bot-1", "hello", "auto", "zh");
+    expect(result).toMatchObject({
       translatedText: "你好",
       detectedLanguage: "en",
       modelId: "model-2",
       usedFallback: true,
+      attempts: [
+        { model: "model-1", outcome: "skipped", errorMessage: "not connected" },
+        { model: "model-2", provider: "GB中转", outcome: "succeeded" },
+      ],
     });
     expect(run).toHaveBeenCalledTimes(1);
   });
@@ -215,12 +234,23 @@ describe("createTranslator", () => {
     resolveConnectedModel.mockImplementation(async (_scope, _provider, modelId) => ({
       provider: "test-provider",
       id: modelId,
+      connectionLabel: "主站",
     }));
-    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).resolves.toEqual({
+    const result = await translator(actor, "bot-1", "hello", "auto", "zh");
+    expect(result).toMatchObject({
       translatedText: "你好",
       detectedLanguage: "en",
       modelId: "model-2",
       usedFallback: true,
+      attempts: [
+        {
+          model: "model-1",
+          provider: "主站",
+          outcome: "failed",
+          errorMessage: "Translation produced no text",
+        },
+        { model: "model-2", provider: "主站", outcome: "succeeded" },
+      ],
     });
     expect(run).toHaveBeenCalledTimes(3);
   });

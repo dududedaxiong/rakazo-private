@@ -54,6 +54,57 @@ describe("thread message pages", () => {
     expect(byId.get("gone")).not.toHaveProperty("author");
   });
 
+  it("carries a valid switch timeline and drops a malformed one without losing the message", async () => {
+    const row = (id: string, modelSwitches: unknown) => ({
+      id,
+      threadId: "thread-1",
+      seq: 1,
+      role: "assistant",
+      blocks: [{ kind: "text", text: id }],
+      botId: "bot-1",
+      authorUserId: null,
+      replyToMessageId: null,
+      replyQuote: null,
+      replyTo: null,
+      runId: "run-1",
+      modelSwitches,
+      createdAt: new Date("2026-11-15T12:00:00.000Z"),
+    });
+    const timeline = {
+      attempts: [
+        {
+          model: "model-a",
+          provider: "主站",
+          outcome: "failed",
+          errorCode: "rate_limit",
+          at: "2026-11-15T12:00:00.000Z",
+        },
+        {
+          model: "model-b",
+          provider: "GB中转",
+          outcome: "succeeded",
+          at: "2026-11-15T12:00:01.000Z",
+        },
+      ],
+      finalModel: "model-b",
+    };
+    const rows = [
+      row("switched", timeline),
+      row("broken", { attempts: "nope" }),
+      row("plain", null),
+    ];
+    const prisma = {
+      message: { findMany: vi.fn(async () => rows) },
+      user: { findMany: vi.fn(async () => []) },
+      run: { findMany: vi.fn(async () => []) },
+    } as unknown as PrismaClient;
+    const page = await loadMessagePage(prisma, "thread-1", undefined, 3);
+    const byId = new Map(page.messages.map((message) => [message.id, message]));
+    expect(byId.get("switched")?.modelSwitches).toEqual(timeline);
+    expect(byId.get("broken")).not.toHaveProperty("modelSwitches");
+    expect(byId.get("plain")).not.toHaveProperty("modelSwitches");
+  });
+
   it("caches peer-run classification for live events", async () => {
     const findUnique = vi.fn(async () => ({ trigger: "bot_message" }));
     const prisma = { run: { findUnique } } as unknown as PrismaClient;

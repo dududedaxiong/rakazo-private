@@ -15,6 +15,7 @@ export { returnHelperOutcome, startBackgroundHelper } from "./background-helpers
 export * from "./background-job-handlers.js";
 export * from "./billing-emulator.js";
 export * from "./bot-avatar.js";
+export * from "./bot-media-generation.js";
 export * from "./bot-messages.js";
 export * from "./bot-package.js";
 export {
@@ -80,6 +81,7 @@ export * from "./elevenlabs-voice.js";
 export * from "./email-emulator.js";
 export * from "./email-provider.js";
 export * from "./executor.js";
+export type { ExecutorDeps } from "./executor-deps.js";
 export * from "./expo-push.js";
 export * from "./fake-browser.js";
 export * from "./fake-sandbox.js";
@@ -116,6 +118,7 @@ export * from "./mcp-server-tool.js";
 export * from "./mcp-transport.js";
 export * from "./media-generation-factory.js";
 export * from "./media-generation-provider.js";
+export * from "./media-generation-tools.js";
 export * from "./media-video-poll.js";
 export {
   AGENT_MEMORY_MAX_BYTES,
@@ -159,6 +162,7 @@ export * from "./pi-models.js";
 export * from "./pi-oauth.js";
 export * from "./pi-openai-compatible-provider.js";
 export * from "./pi-runtime.js";
+export { sanitizeProviderError } from "./pi-runtime-errors.js";
 export { TOOL_RESULT_TEXT_LIMIT } from "./pi-runtime-limits.js";
 export { serializeToolResult } from "./pi-runtime-tools.js";
 export * from "./pi-session.js";

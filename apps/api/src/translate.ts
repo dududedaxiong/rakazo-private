@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { AgentRunRequest, AgentRuntime, AgentRuntimeEvent } from "@rakazo/adapter-kit";
-import type { Actor, BotModelEntry } from "@rakazo/contracts";
+import { sanitizeProviderError } from "@rakazo/adapters";
+import type { Actor, BotModelEntry, ModelSwitchAttempt } from "@rakazo/contracts";
 import {
   parseBotModelList,
   resolveTargetLanguage,
@@ -8,6 +9,7 @@ import {
   TRANSLATION_SOURCE_LANGUAGE_LABELS,
   TRANSLATION_TARGET_LANGUAGE_LABELS,
 } from "@rakazo/contracts";
+import { createModelSwitchAttempt, recordModelSwitchAttempt } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { recordUsage } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
@@ -30,6 +32,8 @@ export type Translator = (
   modelId: string;
   /** True when the translation came from a fallback model, not the primary. */
   usedFallback: boolean;
+  /** Every model tried, in order; only present when more than the first was needed. */
+  attempts?: ModelSwitchAttempt[];
 }>;
 
 /** Thrown when a bot has no translation model picked; the route reports it as a bad request. */
@@ -85,12 +89,23 @@ export function createTranslator(deps: {
       await recordUsage(deps.prisma, event, { ...scope, operationId: id, operationKind: "setup" });
     };
     const failures: { modelId: string; reason: string }[] = [];
+    const attempts: ModelSwitchAttempt[] = [];
     for (const [index, entry] of models.entries()) {
       let model: AgentRunRequest["model"];
       try {
         model = await deps.resolveConnectedModel(scope, entry.provider, entry.model);
       } catch (error) {
         failures.push({ modelId: entry.model, reason: "not connected" });
+        // The connection label is unknown for a model that never resolved,
+        // so the timeline names the model alone.
+        recordModelSwitchAttempt(
+          attempts,
+          createModelSwitchAttempt({
+            model: entry.model,
+            outcome: "skipped",
+            error: "not connected",
+          }),
+        );
         if (signal?.aborted) break;
         getLogger().warn("translation model did not resolve", {
           model: entry.model,
@@ -110,8 +125,22 @@ export function createTranslator(deps: {
               ),
             ),
           });
-          if (result.translatedText)
-            return { ...result, modelId: entry.model, usedFallback: index > 0 };
+          if (result.translatedText) {
+            recordModelSwitchAttempt(
+              attempts,
+              createModelSwitchAttempt({
+                model: entry.model,
+                provider: model.connectionLabel,
+                outcome: "succeeded",
+              }),
+            );
+            return {
+              ...result,
+              modelId: entry.model,
+              usedFallback: index > 0,
+              ...(attempts.length > 1 ? { attempts } : {}),
+            };
+          }
           lastError = new Error("Translation produced no text");
         } catch (error) {
           lastError = error;
@@ -119,6 +148,18 @@ export function createTranslator(deps: {
         }
       }
       failures.push({ modelId: entry.model, reason: shortReason(lastError) });
+      recordModelSwitchAttempt(
+        attempts,
+        createModelSwitchAttempt({
+          model: entry.model,
+          provider: model.connectionLabel,
+          outcome: "failed",
+          error:
+            lastError instanceof Error
+              ? sanitizeProviderError(entry.provider, lastError.message)
+              : shortReason(lastError),
+        }),
+      );
       if (signal?.aborted) break;
     }
     const detail = failures.map((f) => `${f.modelId} (${f.reason})`).join(", ");

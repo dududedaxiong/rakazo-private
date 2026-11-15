@@ -5,6 +5,7 @@ import type {
   MediaGenerationProvider,
 } from "@rakazo/adapter-kit";
 import { mediaPollJob, runContinueJob } from "@rakazo/adapter-kit";
+import type { ModelSwitches } from "@rakazo/contracts";
 import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
 import { generateMediaFromTool, MEDIA_JOB_KIND } from "./media-generation-tools.js";
@@ -112,6 +113,8 @@ export function mediaDelivery(
       artifactId: string,
       modelId?: string,
       presetName?: string,
+      /** Kept in the saved job with the message: its switch timeline and extra prompt. */
+      meta?: { modelSwitches?: ModelSwitches; supplementaryPrompt?: string },
     ) => {
       const committed = await deps.prisma.$transaction(async (tx) => {
         // Commit completion with the message so a restarted poll cannot post twice, and a job
@@ -125,6 +128,10 @@ export function mediaDelivery(
               artifactId,
               ...(modelId ? { modelId } : {}),
               ...(presetName ? { presetName } : {}),
+              ...(meta?.modelSwitches ? { modelSwitches: meta.modelSwitches } : {}),
+              ...(meta?.supplementaryPrompt
+                ? { supplementaryPrompt: meta.supplementaryPrompt }
+                : {}),
             },
           },
         });
@@ -137,6 +144,8 @@ export function mediaDelivery(
           undefined,
           undefined,
           options.afterRun,
+          undefined,
+          meta?.modelSwitches,
         );
         await options.onSettled?.(tx, "completed");
         return message;

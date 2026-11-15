@@ -498,6 +498,7 @@ export async function resolveConnectedRunModel(
     provider,
     id: modelId,
     ...(credentialId ? { connectionId: credentialId } : {}),
+    ...(credential?.label ? { connectionLabel: credential.label } : {}),
     ...resolvedModelRunFields(resolved),
     thinkingLevel:
       ((thinkingLevel !== undefined
@@ -573,6 +574,7 @@ export async function resolveRunModel(
   return {
     provider,
     id,
+    ...(credential?.label ? { connectionLabel: credential.label } : {}),
     ...resolvedModelRunFields(resolved),
     thinkingLevel: thinkingLevel ?? resolved.thinkingLevel ?? null,
   };

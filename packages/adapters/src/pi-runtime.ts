@@ -448,6 +448,7 @@ export class PiAgentRuntime implements AgentRuntime {
           attempted: new Set<string>(),
           nextIndex: 0,
           backupOutcomes: new Map(),
+          switchAttempts: request.modelSwitchAttempts,
           selfRecoveries: 0,
           cutReplies: new WeakMap(),
           stream: (target, ctx, options) => {
@@ -521,6 +522,8 @@ export class PiAgentRuntime implements AgentRuntime {
               request: { ...request, model: computer.config, fallbackModels: [] },
               attempted: new Set(),
               backupOutcomes: new Map(),
+              // A computer-mode detour is not the chat's model switch.
+              switchAttempts: undefined,
             }
           : undefined;
         const setTarget = (target: RuntimeModelTarget) => {

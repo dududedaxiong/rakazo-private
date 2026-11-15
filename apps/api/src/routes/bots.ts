@@ -713,6 +713,7 @@ export function botsRoutes(ctx: RouterContext) {
             targetLanguage,
             modelId: result.modelId,
             usedFallback: result.usedFallback,
+            ...(result.attempts ? { attempts: result.attempts } : {}),
           };
         } catch (error) {
           if (error instanceof TranslationModelNotConfiguredError) {
