@@ -368,7 +368,34 @@ export function useMessageTranslation({
     await shareCopy(text);
   }, [shareCopy, state.status, translatedText]);
 
-  if (!expanded) return { actions, panel: null };
+  if (!expanded) {
+    // A folded translation keeps one line with its expand button, so the
+    // translation stays findable instead of vanishing until Translate is hit.
+    if (collapsed && state.status === "done") {
+      return {
+        actions,
+        panel: (
+          <div
+            data-testid="message-translation"
+            className="mt-2 flex w-full items-center gap-2 rounded-xl bg-link/10 px-4 py-2"
+          >
+            <span className="min-w-0 flex-1 truncate text-body-sm text-muted-foreground">
+              <Trans>Translation</Trans>
+            </span>
+            <Button
+              variant="text"
+              size="xs"
+              onClick={() => setCollapsed(false)}
+              className="shrink-0 font-normal"
+            >
+              <Trans>Expand</Trans>
+            </Button>
+          </div>
+        ),
+      };
+    }
+    return { actions, panel: null };
+  }
 
   const targetLanguage = resolveTranslationTargetLanguage(
     settings ?? { translationTargetLanguage: null },

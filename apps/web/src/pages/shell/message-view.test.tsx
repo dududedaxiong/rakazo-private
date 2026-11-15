@@ -686,21 +686,29 @@ describe("message translation", () => {
     expect(translationPanel()).toBeNull();
   });
 
-  it("collapses the translation and does not auto-expand it again", async () => {
+  it("collapses the translation to one line and does not auto-expand it again", async () => {
     const { translate } = renderTranslated({
       peerBot: () => ({ ...translatingBot("bot-1")!, autoTranslate: true }),
       isLastMessage: true,
     });
     await flush();
-    expect(translationPanel()).not.toBeNull();
+    expect(translationPanel()?.textContent).toContain("Hark AI 是一款新的 AI 搜索产品。");
     const collapse = container.querySelector<HTMLButtonElement>(
       'button[aria-label="Collapse translation"]',
     );
     await act(async () => {
       collapse?.click();
     });
-    expect(translationPanel()).toBeNull();
+    // The folded row stays: one line naming the translation, with Expand.
+    expect(translationPanel()?.textContent).toContain("Translation");
+    expect(translationPanel()?.textContent).not.toContain("Hark AI 是一款新的 AI 搜索产品。");
+    expect(buttonByText("Expand")).not.toBeUndefined();
     await flush();
+    expect(translate).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      buttonByText("Expand")?.click();
+    });
+    expect(translationPanel()?.textContent).toContain("Hark AI 是一款新的 AI 搜索产品。");
     expect(translate).toHaveBeenCalledTimes(1);
   });
 

@@ -232,6 +232,33 @@ describe("MediaResult switch history", () => {
   });
 });
 
+describe("MediaResult collapse", () => {
+  it("folds to its title and model line with Show, and expands without re-fetching", async () => {
+    const { media } = renderResult();
+    expect(buttonByText("Collapse")).not.toBeUndefined();
+    expect(buttonByText("Preview")).not.toBeUndefined();
+    await act(async () => {
+      buttonByText("Collapse")?.click();
+    });
+    // The preview and actions hide; the title and model line stay so the
+    // folded row still says what was folded.
+    expect(buttonByText("Preview")).toBeUndefined();
+    expect(buttonByText("Download")).toBeUndefined();
+    expect(container.textContent).toContain("sunset.png");
+    expect(container.textContent).toContain("model-a");
+    expect(container.textContent).toContain("水彩");
+    expect(buttonByText("Show")).not.toBeUndefined();
+    await act(async () => {
+      buttonByText("Show")?.click();
+    });
+    expect(buttonByText("Show")).toBeUndefined();
+    expect(buttonByText("Preview")).not.toBeUndefined();
+    expect(buttonByText("Collapse")).not.toBeUndefined();
+    expect(media.regenerate).not.toHaveBeenCalled();
+    expect(media.getSupplementaryPrompt).not.toHaveBeenCalled();
+  });
+});
+
 describe("MediaResult preview title bar", () => {
   const flush = () =>
     act(async () => {

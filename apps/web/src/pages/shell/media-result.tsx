@@ -379,8 +379,13 @@ export function MediaResult({
   );
 
   if (collapsed) {
+    // The folded result keeps its title and model line, so the folded row
+    // still says what was folded; only the preview and actions hide.
     return (
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <span className="block max-w-44 truncate text-body-sm font-medium text-foreground">
+          {name}
+        </span>
         {markLine}
         <Button
           variant="text"
