@@ -59,6 +59,8 @@ import { computersAreUnavailable } from "../lib/computer-sandbox";
 import { desktopBridge } from "../lib/desktop";
 import { downloadConversationMarkdown } from "../lib/export-conversation";
 import { hasOpenDialog } from "../lib/has-open-dialog";
+import type { KeyHealthStatus } from "../lib/key-health";
+import { checkKeyForProvider } from "../lib/key-health";
 import type { ModelLocateTarget } from "../lib/model-locate";
 import { PagesProvider, usePagesForChat } from "../lib/pages";
 import { markAfterPaint, markOnce } from "../lib/performance";
@@ -1002,6 +1004,17 @@ function SpaceShell() {
     [active?.id, inGroup, setModelLocateRequest, setPanel],
   );
 
+  // Tests the failed run's connection key: a group's failed run belongs to
+  // one member, so its provider wins; otherwise the active bot's, then the
+  // account default's.
+  const checkFailedKey = useCallback(async (): Promise<KeyHealthStatus | undefined> => {
+    const failedBotId = inGroup ? activeSnapshot?.run?.botId : active?.id;
+    const bot = failedBotId ? (bots.find((entry) => entry.id === failedBotId) ?? active) : active;
+    const provider = bot?.modelProvider ?? bootstrapMe?.defaultProvider ?? undefined;
+    if (!provider) return undefined;
+    return checkKeyForProvider(rpc, provider);
+  }, [active, activeSnapshot?.run?.botId, bootstrapMe?.defaultProvider, bots, inGroup, rpc]);
+
   const replyTargetName = composer.replyTarget
     ? composer.replyTarget.role === "user"
       ? (otherAuthor(composer.replyTarget.author, userId)?.name ??
@@ -1407,6 +1420,7 @@ function SpaceShell() {
               onSpeakText={speakText}
               onOpenComputer={computerControls.onOpenComputer}
               onOpenImportSetup={openImportSetup}
+              onOpenModelSettings={() => openSettings("models")}
               rpc={rpc}
             />
           )}
@@ -1461,6 +1475,7 @@ function SpaceShell() {
                   } else openSettings("models");
                 }}
                 onOpenConnections={() => openSettings("models")}
+                onCheckKey={checkFailedKey}
                 runError={composer.displayedRunError}
                 runErrorId={composer.displayedRunErrorId}
                 onRunErrorPresented={composer.handleRunErrorPresented}

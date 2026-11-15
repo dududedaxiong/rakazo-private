@@ -130,6 +130,40 @@ function render(props: ComponentProps<typeof Transcript>) {
   act(() => root.render(<Transcript {...props} />));
 }
 
+it("shows a model-switch progress line under the messages while the run works", () => {
+  const switching: ThreadMessage = {
+    id: "progress:run",
+    threadId: "thread",
+    seq: 9999,
+    role: "bot",
+    createdAt: at(120),
+    blocks: [
+      {
+        kind: "progress",
+        text: "DeepSeek failed, trying backup model Kimi",
+        activity: true,
+      },
+    ],
+  };
+  const props = baseProps([...history(), switching]);
+  render(props);
+  // The switch line is the live run's activity text, shown under the
+  // messages while the fallback is being tried, not a chat bubble.
+  const status = container.querySelector('[role="status"]');
+  expect(status?.textContent).toContain("DeepSeek failed, trying backup model Kimi");
+
+  // Once the fallback replies, the switch line is gone and the reply stands.
+  render({
+    ...props,
+    transcript: foldPeerReplies([...history(), textMessage("m5", "bot", "Done")], {
+      includePeerReceipts: true,
+    }),
+    running: false,
+  });
+  expect(container.querySelector('[role="status"]')).toBeNull();
+  expect(container.textContent).not.toContain("DeepSeek failed");
+});
+
 it("drops the quote pill when a streaming edit replaces the selected nodes", async () => {
   Range.prototype.getBoundingClientRect = () =>
     ({ top: 0, bottom: 0, left: 0, width: 0 }) as DOMRect;

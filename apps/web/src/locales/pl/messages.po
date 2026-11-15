@@ -1699,13 +1699,29 @@ msgstr "Zmień {name}"
 msgid "Change {title}"
 msgstr "Zmień {title}"
 
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Change model"
+msgstr ""
+
 #: src/pages/shell/composer-error.tsx
+#: src/pages/shell/message-translation.tsx
+#: src/pages/shell/model-error-actions.tsx
 msgid "Change model"
 msgstr "Zmień model"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "Zmień hasło"
+
+#: src/pages/shell/model-error-actions.tsx
+msgid "Change provider"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Change provider"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Change server"
@@ -1758,6 +1774,10 @@ msgstr "Czaty"
 msgid "Check again"
 msgstr "Sprawdź ponownie"
 
+#: src/pages/model-settings/providers-section.tsx
+msgid "Check all"
+msgstr ""
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Check every"
 msgstr "Sprawdzaj co"
@@ -1778,6 +1798,14 @@ msgstr "Sprawdź zaimportowane umiejętności"
 #: src/pages/shell/use-routine-editor.ts
 msgid "Check in."
 msgstr "Sprawdź, co się dzieje."
+
+#: src/pages/shell/model-error-actions.tsx
+msgid "Check network"
+msgstr ""
+
+#: src/pages/model-settings/key-health-status.tsx
+msgid "Check not supported"
+msgstr ""
 
 #: src/components/BotPackageImport.tsx
 #: src/components/BotPackageSkillsView.tsx
@@ -1817,9 +1845,15 @@ msgstr "Sprawdzanie konfiguracji komputera…"
 msgid "Checking connection…"
 msgstr "Sprawdzanie połączenia…"
 
+#: src/pages/shell/model-error-actions.tsx
+msgid "Checking key…"
+msgstr ""
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
 #: src/pages/HostComputerPrompt.tsx
+#: src/pages/model-settings/key-health-status.tsx
+#: src/pages/model-settings/providers-section.tsx
 msgid "Checking…"
 msgstr "Sprawdzanie…"
 
@@ -1832,7 +1866,6 @@ msgid "Choose a file"
 msgstr "Wybierz plik"
 
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
 msgstr "Wybierz model"
 
@@ -2192,7 +2225,7 @@ msgid "Connect a chat app"
 msgstr "Połącz komunikator"
 
 #: src/pages/onboarding/model-step.tsx
-#: src/pages/shell/composer-error.tsx
+#: src/pages/shell/model-error-actions.tsx
 msgid "Connect a model"
 msgstr "Połącz model"
 
@@ -2800,6 +2833,10 @@ msgstr "Nie udało się wyświetlić podglądu tego pakietu."
 msgid "Could not reach the model server."
 msgstr "Nie udało się połączyć z serwerem modelu."
 
+#: src/lib/key-health.ts
+msgid "Could not reach the provider"
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
@@ -2819,10 +2856,6 @@ msgstr "Nie udało się odczytać tych plików"
 #: src/components/BotPackageImport.tsx
 msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
 msgstr "Nie udało się odczytać tego pakietu. Użyj pliku JSON w kodowaniu UTF-8 o rozmiarze do 4 MiB."
-
-#: src/pages/shell/media-result.tsx
-msgid "Could not regenerate"
-msgstr "Nie można wygenerować ponownie"
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not reject plugin"
@@ -3549,7 +3582,7 @@ msgstr "Aktualizacja aplikacji komputerowej"
 
 #: src/components/admin/AdminUsers.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/composer-error.tsx
+#: src/pages/shell/model-error-actions.tsx
 msgid "Details"
 msgstr "Szczegóły"
 
@@ -4736,6 +4769,10 @@ msgstr "Nieprawidłowy kod"
 msgid "Invalid invite code"
 msgstr "Nieprawidłowy kod zaproszenia"
 
+#: src/pages/model-settings/key-health-status.tsx
+msgid "Invalid key"
+msgstr ""
+
 #: src/components/SpaceMembersSettings.tsx
 msgid "Invite"
 msgstr "Zaproś"
@@ -4865,6 +4902,22 @@ msgstr "Zachowywanie…"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "key"
 msgstr "klucz"
+
+#: src/lib/key-health.ts
+msgid "Key check is not available"
+msgstr ""
+
+#: src/lib/key-health.ts
+msgid "Key check timed out"
+msgstr ""
+
+#: src/lib/key-health.ts
+msgid "Key is invalid"
+msgstr ""
+
+#: src/lib/key-health.ts
+msgid "Key works"
+msgstr ""
 
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 #: src/pages/shell/use-palette-actions.ts
@@ -5925,6 +5978,7 @@ msgstr "Brak"
 
 #: src/components/admin/AdminIpLimits.tsx
 #: src/lib/ticket-priority.ts
+#: src/pages/model-settings/key-health-status.tsx
 #: src/pages/shell/model-switch-menu.tsx
 msgid "Normal"
 msgstr "Normalny"
@@ -5937,6 +5991,10 @@ msgstr "Nieprawidłowa umiejętność"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Not added: {0}"
 msgstr "Nie dodano: {0}"
+
+#: src/pages/model-settings/key-health-status.tsx
+msgid "Not checked"
+msgstr ""
 
 #: src/components/McpServerHealthLine.tsx
 msgid "Not checked yet"
@@ -6992,7 +7050,6 @@ msgstr "Otwórz ponownie"
 msgid "Replace API key"
 msgstr "Zastąp klucz API"
 
-#: src/pages/shell/composer-error.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "Zastąp klucz"
@@ -7145,6 +7202,11 @@ msgstr "Przywracanie obszaru roboczego"
 msgid "Resume import"
 msgstr "Wznów import"
 
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Retry"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 #: src/components/admin/AdminAppDownloadSettings.tsx
 #: src/components/admin/AdminAuditLog.tsx
@@ -7168,7 +7230,7 @@ msgstr "Wznów import"
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
-#: src/pages/shell/message-translation.tsx
+#: src/pages/shell/model-error-actions.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "Ponów"
@@ -8311,6 +8373,15 @@ msgstr "Wyniki testów · {label}"
 msgid "Test run"
 msgstr "Uruchomienie testowe"
 
+#: src/pages/shell/model-error-actions.tsx
+msgid "Test this key"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Test this key"
+msgstr ""
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Test WebDAV connection"
 msgstr "Testuj połączenie WebDAV"
@@ -8519,6 +8590,10 @@ msgstr "To czyści całe użycie w tej przestrzeni — uruchomienia, tokeny, kos
 msgid "this computer"
 msgstr "ten komputer"
 
+#: src/lib/key-health.ts
+msgid "This connection cannot be checked"
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This connection's request limit is too small. Choose another model."
@@ -8661,6 +8736,7 @@ msgstr "czwartek"
 msgid "Time of day"
 msgstr "Pora dnia"
 
+#: src/pages/model-settings/key-health-status.tsx
 #: src/pages/model-settings/model-health-dialog.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Timed out"
@@ -8810,7 +8886,6 @@ msgid "Translation"
 msgstr "Tłumaczenie"
 
 #: src/pages/Shell.tsx
-#: src/pages/shell/message-translation.tsx
 msgid "Translation failed"
 msgstr "Tłumaczenie nie powiodło się"
 
@@ -8855,6 +8930,10 @@ msgstr "Zaufane witryny"
 #: src/pages/SpaceSearch.tsx
 msgid "Try again"
 msgstr "Spróbuj ponownie"
+
+#: src/pages/shell/model-error-actions.tsx
+msgid "Try again later"
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Try the test again."
@@ -8918,6 +8997,10 @@ msgstr "Włącz mikrofon"
 #: src/pages/BotContextMenu.tsx
 msgid "Unpin"
 msgstr "Odepnij"
+
+#: src/pages/model-settings/key-health-status.tsx
+msgid "Unreachable"
+msgstr ""
 
 #: src/pages/ActivityList.tsx
 msgid "Unread"

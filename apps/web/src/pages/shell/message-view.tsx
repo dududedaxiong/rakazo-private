@@ -152,6 +152,7 @@ export const MessageView = memo(function MessageView({
   onSpeakText,
   onOpenComputer,
   onOpenImportSetup,
+  onOpenModelSettings,
   rpc,
   showToolActivity,
   onReply,
@@ -242,6 +243,8 @@ export const MessageView = memo(function MessageView({
   onOpenComputer: (botId?: string) => void;
   /** Opens where an imported item's setup is finished. */
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
+  /** Opens the supplier settings, for a media quota failure's provider switch. */
+  onOpenModelSettings?: () => void;
   rpc: ReturnType<typeof createSpaceRpc>;
   showToolActivity: boolean;
   onReply: (message: ThreadMessage) => void;
@@ -784,6 +787,7 @@ export const MessageView = memo(function MessageView({
                     onLocateModel={onLocateModel}
                     onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}
                     regenerateDisabled={regenerateDisabled}
+                    onOpenModelSettings={onOpenModelSettings}
                   />
                 ) : (
                   <ArtifactImage
@@ -825,6 +829,7 @@ export const MessageView = memo(function MessageView({
                     onLocateModel={onLocateModel}
                     onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}
                     regenerateDisabled={regenerateDisabled}
+                    onOpenModelSettings={onOpenModelSettings}
                   />
                 ) : (
                   <ArtifactFileCard

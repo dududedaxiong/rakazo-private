@@ -19,6 +19,7 @@ import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { favoriteSnippet, translationFavoriteId, useMessageFavorite } from "../../lib/favorites";
+import { checkKeyForProvider } from "../../lib/key-health";
 import type { ModelLocateTarget } from "../../lib/model-locate";
 import { modelStatusFromProbe, recordModelStatus } from "../../lib/model-status";
 import type { createSpaceRpc } from "../../lib/rpc";
@@ -38,6 +39,7 @@ import {
   translationLanguageLabel,
 } from "../../lib/translation";
 import { errorText } from "../../lib/user-error";
+import { ModelErrorActions } from "./model-error-actions";
 import { ModelSwitchHistoryEntry } from "./model-switch-history-dialog";
 import { ModelSwitchMenu } from "./model-switch-menu";
 
@@ -232,7 +234,12 @@ export function useMessageTranslation({
         setState({ status: "done", result });
       } catch (err) {
         recordModelStatus(primaryKey, { state: "unavailable", seconds: null });
-        setState({ status: "error", message: errorText(err, t`Translation failed`) });
+        // The raw error, so the failure prompt can name the cause; the
+        // prompt itself turns it into plain language.
+        setState({
+          status: "error",
+          message: err instanceof Error ? err.message : String(err),
+        });
       }
     },
     [botId, collapsed, rpc, settings, state.status, t, text],
@@ -383,6 +390,19 @@ export function useMessageTranslation({
       {displayName(doneResult.modelId, t`Model`)}
     </ModelSwitchMenu>
   ) : null;
+  // The failure prompt's model switch: the same menu, with a plain trigger.
+  const modelPicker = (
+    <ModelSwitchMenu
+      label={t`Translation model`}
+      models={menuModels}
+      currentKey={currentModelKey}
+      applyingKey={applyingModelKey}
+      onSelect={(entry) => void switchModel(entry)}
+    >
+      <Trans>Change model</Trans>
+    </ModelSwitchMenu>
+  );
+  const translationProvider = settings?.translationModelProvider;
   const languageMenu = doneResult ? (
     <LanguageSwitchMenu
       sourceLanguage={sourceLanguage}
@@ -416,16 +436,16 @@ export function useMessageTranslation({
           <Trans>Translating…</Trans>
         </p>
       ) : state.status === "error" ? (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="text-body text-destructive">{state.message}</span>
-          <button
-            type="button"
-            onClick={() => void translate()}
-            className="text-body text-link"
-            aria-label={t`Retry translation`}
-          >
-            <Trans>Retry</Trans>
-          </button>
+        <div className="text-body text-destructive">
+          <ModelErrorActions
+            error={state.message}
+            onCheckKey={
+              translationProvider ? () => checkKeyForProvider(rpc, translationProvider) : undefined
+            }
+            onRetry={() => void translate()}
+            retryAriaLabel={t`Retry translation`}
+            modelPicker={modelPicker}
+          />
         </div>
       ) : (
         <>

@@ -23,6 +23,8 @@ const models = vi.hoisted(() => ({
   rename: vi.fn(),
   setDefault: vi.fn(),
   probeOpenAiCompatible: vi.fn(),
+  checkKeys: vi.fn(),
+  checkKey: vi.fn(),
   beginOAuth: vi.fn(),
   cancelOAuth: vi.fn(),
   completeOAuth: vi.fn(),
@@ -1585,7 +1587,9 @@ function providersSection() {
 /** Opens a connection's page from the Providers list. */
 async function openProvider(name: string) {
   await click(
-    [...providersSection().querySelectorAll("button")].find((entry) => entry.textContent === name),
+    [...providersSection().querySelectorAll("button")].find(
+      (entry) => entry.querySelector('[data-testid="model-provider-name"]')?.textContent === name,
+    ),
   );
 }
 
@@ -1601,8 +1605,8 @@ it("lists every connection under Providers and adds another for a connected prov
   const view = await renderSettings();
   try {
     expect(
-      [...providersSection().querySelectorAll('[data-testid^="model-provider-"]')].map(
-        (row) => row.textContent,
+      [...providersSection().querySelectorAll('li[data-testid^="model-provider-"]')].map(
+        (row) => row.querySelector('[data-testid="model-provider-name"]')?.textContent,
       ),
     ).toEqual(["DeepSeek", "DeepSeek (Work)"]);
     await click(buttons(providersSection() as HTMLElement, "Add provider")[0]);
@@ -1622,6 +1626,77 @@ it("lists every connection under Providers and adds another for a connected prov
     );
     expect(models.setRole).not.toHaveBeenCalled();
     expect(titles(view.container)).toEqual([]);
+  } finally {
+    await view.unmount();
+  }
+});
+
+it("checks keys on open and marks a bad key red with its check time", async () => {
+  models.checkKeys.mockResolvedValue({
+    results: [
+      {
+        credentialId: "cred-deepseek",
+        status: "invalid_key",
+        checkedAt: "2026-11-15T12:00:00.000Z",
+      },
+    ],
+  });
+  models.credentials.mockResolvedValue([deepseekCredential]);
+  const view = await renderSettings();
+  try {
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(models.checkKeys).toHaveBeenCalledWith({ credentialIds: ["cred-deepseek"] });
+    const row = document.querySelector('[data-testid="model-provider-cred-deepseek"]')!;
+    expect(row.textContent).toContain("Invalid key");
+    const line = [...row.querySelectorAll("span")].find(
+      (entry) => entry.children.length === 0 && entry.textContent?.includes("Invalid key"),
+    )!;
+    expect(line.className).toContain("text-destructive");
+    // The row shows when the check ran.
+    expect(row.textContent).toMatch(/\d{1,2}:\d{2}/);
+  } finally {
+    await view.unmount();
+  }
+});
+
+it("shows Not checked when the probe is absent, and Check all re-probes", async () => {
+  models.checkKeys.mockResolvedValue({ results: [] });
+  models.credentials.mockResolvedValue([deepseekCredential]);
+  const view = await renderSettings();
+  try {
+    const row = document.querySelector('[data-testid="model-provider-cred-deepseek"]')!;
+    expect(row.textContent).toContain("Not checked");
+    models.checkKeys.mockResolvedValue({
+      results: [
+        {
+          credentialId: "cred-deepseek",
+          status: "ok",
+          checkedAt: "2026-11-15T12:00:00.000Z",
+        },
+      ],
+    });
+    await click(buttons(view.container, "Check all")[0]);
+    expect(models.checkKeys).toHaveBeenCalledWith({ credentialIds: ["cred-deepseek"] });
+    expect(row.textContent).toContain("Normal");
+  } finally {
+    await view.unmount();
+  }
+});
+
+it("shows the persisted check without waiting for a probe", async () => {
+  models.checkKeys.mockResolvedValue({ results: [] });
+  models.credentials.mockResolvedValue([
+    {
+      ...deepseekCredential,
+      keyHealth: { status: "ok", checkedAt: "2026-11-15T12:00:00.000Z" },
+    },
+  ]);
+  const view = await renderSettings();
+  try {
+    const row = document.querySelector('[data-testid="model-provider-cred-deepseek"]')!;
+    expect(row.textContent).toContain("Normal");
   } finally {
     await view.unmount();
   }
@@ -1727,7 +1802,11 @@ it("shows what a disconnect left, not a read sent before it", async () => {
     )
     .mockResolvedValue([deepseekCredential]);
   const providerNames = () =>
-    [...providersSection().querySelectorAll("button")].map((entry) => entry.textContent);
+    [...providersSection().querySelectorAll("button")].map(
+      (entry) =>
+        entry.querySelector('[data-testid="model-provider-name"]')?.textContent ??
+        entry.textContent,
+    );
   const view = await renderSettings(true, queryClient);
   try {
     expect(providerNames()).toContain("DeepSeek (Work)");

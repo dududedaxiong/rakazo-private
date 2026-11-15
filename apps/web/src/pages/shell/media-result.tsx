@@ -30,6 +30,7 @@ import type { ModelLocateTarget } from "../../lib/model-locate";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";
 import { ArtifactImage } from "./message-cards";
+import { toastModelError } from "./model-error-actions";
 import { ModelSwitchHistoryDialog } from "./model-switch-history-dialog";
 import { ModelSwitchMenu } from "./model-switch-menu";
 
@@ -109,6 +110,7 @@ export function MediaResult({
   onLocateModel,
   onRegenerate,
   regenerateDisabled,
+  onOpenModelSettings,
 }: {
   kind: "image" | "video";
   target: ArtifactTarget;
@@ -137,6 +139,8 @@ export function MediaResult({
   onRegenerate?: () => Promise<void>;
   /** A send or a run is in progress, so a regenerate would wait. */
   regenerateDisabled?: boolean;
+  /** Opens the supplier settings, for a quota failure's provider switch. */
+  onOpenModelSettings?: () => void;
 }) {
   const { t } = useLingui();
   const [collapsed, setCollapsed] = useState(false);
@@ -276,7 +280,16 @@ export function MediaResult({
       const result = await regenerateMedia(rpc, artifactId);
       toast(result.status === "queued" ? t`Regenerating…` : t`Regenerated`);
     } catch (err) {
-      toast(errorText(err, t`Could not regenerate`));
+      toastModelError(err, {
+        rpc,
+        provider: primary?.provider,
+        model: primary?.model,
+        botId,
+        kind,
+        onLocateModel,
+        onOpenModelSettings,
+        onRetry: () => void regenerateMediaResult(),
+      });
     } finally {
       setRegenerating(false);
     }

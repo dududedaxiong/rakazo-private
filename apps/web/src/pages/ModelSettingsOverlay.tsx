@@ -24,6 +24,7 @@ import { useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import type { ModelCredential } from "../lib/model-auth";
 import { useSpaceQueries } from "../lib/query";
+import { useSpaceRpc } from "../lib/space-rpc";
 import type { ModelRoleConnectIntent } from "./ModelRoleSettings";
 import { ModelRoleSettings, useModelRole } from "./ModelRoleSettings";
 import { CompatibleModelFields } from "./model-settings/compatible-model-fields";
@@ -31,6 +32,7 @@ import { CompatibleKeyControls, ConnectionControls } from "./model-settings/conn
 import { ConnectionNameField, ProvidersSection } from "./model-settings/providers-section";
 import type { ConnectableProvider } from "./model-settings/role-model-picker";
 import { SpaceBotsModelButton } from "./model-settings/space-bots-model";
+import { useKeyHealth } from "./model-settings/use-key-health";
 import { useModelSettings } from "./model-settings/use-model-settings";
 
 export function ModelSettingsOverlay({
@@ -86,6 +88,9 @@ export function ModelSettingsOverlay({
   // Where the connection form opens: under a role's list, under a provider row, or at the
   // end of Providers when adding one. The rest of the page stays where it was.
   const [connectionAt, setConnectionAt] = useState<string | null>(null);
+  const rpc = useSpaceRpc();
+  // The list probe runs once when the page opens; "Check all" re-runs it.
+  const keyHealth = useKeyHealth({ rpc, credentials, enabled: Boolean(me) });
   const panelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     panelRef.current?.scrollIntoView?.({ block: "nearest" });
@@ -384,6 +389,10 @@ export function ModelSettingsOverlay({
               providers={allProviders}
               name={connectionName}
               disabled={busy}
+              healthById={keyHealth.healthById}
+              checkingIds={keyHealth.checkingIds}
+              onCheckAll={() => void keyHealth.checkAll()}
+              checkingAll={keyHealth.checkingAll}
               onAdd={(next) => openConnection(next, null, null, "providers:add")}
               onOpen={(entry) =>
                 connectionAt === `providers:${entry.id}`

@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import { i18n } from "@lingui/core";
 import type { ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";
@@ -50,6 +51,7 @@ let root: Root;
 
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  i18n.activate("en");
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -310,7 +312,7 @@ describe("MediaResult preview title bar", () => {
     expect(toastMock).toHaveBeenCalledWith("Regenerated");
   });
 
-  it("toasts when regeneration fails", async () => {
+  it("toasts an unknown regeneration failure with the raw error as its description", async () => {
     const { media } = renderResult();
     media.regenerate.mockRejectedValueOnce(new Error("offline"));
     await openPreview();
@@ -319,6 +321,75 @@ describe("MediaResult preview title bar", () => {
       container.querySelector<HTMLButtonElement>('button[aria-label="Regenerate"]')?.click();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(toastMock).toHaveBeenCalledWith("offline");
+    expect(toastMock).toHaveBeenCalledWith("The model provider returned an error.", {
+      description: "offline",
+    });
+  });
+
+  it("toasts a rejected key with a key-test action", async () => {
+    const checkKey = vi.fn(async () => ({
+      credentialId: "c1",
+      status: "invalid_key" as const,
+      checkedAt: "2026-11-15T12:00:00.000Z",
+    }));
+    const media = {
+      getSupplementaryPrompt: vi.fn(async () => ({ supplementaryPrompt: "" })),
+      setSupplementaryPrompt: vi.fn(async () => ({ ok: true as const })),
+      regenerate: vi.fn(async () => ({ ok: true as const, status: "completed" as const })),
+    };
+    media.regenerate.mockRejectedValueOnce(new Error('401: {"message":"Invalid API key"}'));
+    renderResult({
+      rpc: {
+        media,
+        models: {
+          credentials: vi.fn(async () => [{ id: "c1", provider: "p1" }]),
+          checkKey,
+        },
+      },
+    });
+    await openPreview();
+    await flush();
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="Regenerate"]')?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.stringContaining("rejected the API key"),
+      expect.objectContaining({ action: expect.objectContaining({ label: "Test this key" }) }),
+    );
+    const action = (
+      toastMock.mock.calls.at(-1)![1] as { action: { label: string; onClick: () => void } }
+    ).action;
+    await act(async () => {
+      action.onClick();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(checkKey).toHaveBeenCalledWith({ credentialId: "c1" });
+    expect(toastMock).toHaveBeenLastCalledWith("Key is invalid");
+  });
+
+  it("toasts a rate limit with a retry action", async () => {
+    const { media } = renderResult();
+    media.regenerate
+      .mockRejectedValueOnce(new Error('429: {"message":"Too many requests"}'))
+      .mockResolvedValueOnce({ ok: true as const, status: "completed" as const });
+    await openPreview();
+    await flush();
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="Regenerate"]')?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.stringContaining("rate limiting"),
+      expect.objectContaining({ action: expect.objectContaining({ label: "Retry" }) }),
+    );
+    const action = (
+      toastMock.mock.calls.at(-1)![1] as { action: { label: string; onClick: () => void } }
+    ).action;
+    await act(async () => {
+      action.onClick();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(media.regenerate).toHaveBeenCalledTimes(2);
   });
 });

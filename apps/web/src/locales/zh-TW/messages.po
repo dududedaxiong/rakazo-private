@@ -1700,13 +1700,29 @@ msgstr "更改 {name}"
 msgid "Change {title}"
 msgstr "更改 {title}"
 
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Change model"
+msgstr "換個模型"
+
 #: src/pages/shell/composer-error.tsx
+#: src/pages/shell/message-translation.tsx
+#: src/pages/shell/model-error-actions.tsx
 msgid "Change model"
 msgstr "更換模型"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "修改密碼"
+
+#: src/pages/shell/model-error-actions.tsx
+msgid "Change provider"
+msgstr "換供應商"
+
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Change provider"
+msgstr "換供應商"
 
 #: src/pages/Auth.tsx
 msgid "Change server"
@@ -1759,6 +1775,10 @@ msgstr "聊天"
 msgid "Check again"
 msgstr "再次檢查"
 
+#: src/pages/model-settings/providers-section.tsx
+msgid "Check all"
+msgstr "全部檢測"
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Check every"
 msgstr "檢查間隔"
@@ -1779,6 +1799,14 @@ msgstr ""
 #: src/pages/shell/use-routine-editor.ts
 msgid "Check in."
 msgstr "報到。"
+
+#: src/pages/shell/model-error-actions.tsx
+msgid "Check network"
+msgstr "檢查網絡"
+
+#: src/pages/model-settings/key-health-status.tsx
+msgid "Check not supported"
+msgstr "不支援檢測"
 
 #: src/components/BotPackageImport.tsx
 #: src/components/BotPackageSkillsView.tsx
@@ -1818,9 +1846,15 @@ msgstr "正在檢查電腦設定…"
 msgid "Checking connection…"
 msgstr "正在檢查連線…"
 
+#: src/pages/shell/model-error-actions.tsx
+msgid "Checking key…"
+msgstr "正在檢測金鑰…"
+
 #: src/components/ComputersUnavailableHint.tsx
 #: src/components/DesktopUpdates.tsx
 #: src/pages/HostComputerPrompt.tsx
+#: src/pages/model-settings/key-health-status.tsx
+#: src/pages/model-settings/providers-section.tsx
 msgid "Checking…"
 msgstr "正在檢查…"
 
@@ -1833,7 +1867,6 @@ msgid "Choose a file"
 msgstr "選擇檔案"
 
 #: src/pages/ModelSettingsOverlay.tsx
-#: src/pages/shell/composer-error.tsx
 msgid "Choose a model"
 msgstr "選擇模型"
 
@@ -2193,7 +2226,7 @@ msgid "Connect a chat app"
 msgstr "連結聊天應用程式"
 
 #: src/pages/onboarding/model-step.tsx
-#: src/pages/shell/composer-error.tsx
+#: src/pages/shell/model-error-actions.tsx
 msgid "Connect a model"
 msgstr "連線模型"
 
@@ -2801,6 +2834,10 @@ msgstr ""
 msgid "Could not reach the model server."
 msgstr "無法連線到模型伺服器。"
 
+#: src/lib/key-health.ts
+msgid "Could not reach the provider"
+msgstr "無法連接供應商"
+
 #: src/components/AccountDataSettings.tsx
 #: src/components/PasskeyOffer.tsx
 #: src/components/PasskeySettings.tsx
@@ -2820,10 +2857,6 @@ msgstr "無法讀取這些檔案"
 #: src/components/BotPackageImport.tsx
 msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
 msgstr ""
-
-#: src/pages/shell/media-result.tsx
-msgid "Could not regenerate"
-msgstr "重新生成失敗"
 
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not reject plugin"
@@ -3550,7 +3583,7 @@ msgstr "桌面版更新"
 
 #: src/components/admin/AdminUsers.tsx
 #: src/pages/RoutineRunHistory.tsx
-#: src/pages/shell/composer-error.tsx
+#: src/pages/shell/model-error-actions.tsx
 msgid "Details"
 msgstr "詳細資訊"
 
@@ -4737,6 +4770,10 @@ msgstr "驗證碼無效"
 msgid "Invalid invite code"
 msgstr "邀請碼無效"
 
+#: src/pages/model-settings/key-health-status.tsx
+msgid "Invalid key"
+msgstr "金鑰無效"
+
 #: src/components/SpaceMembersSettings.tsx
 msgid "Invite"
 msgstr "邀請"
@@ -4866,6 +4903,22 @@ msgstr "保留中…"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "key"
 msgstr "金鑰"
+
+#: src/lib/key-health.ts
+msgid "Key check is not available"
+msgstr "金鑰檢測暫不可用"
+
+#: src/lib/key-health.ts
+msgid "Key check timed out"
+msgstr "金鑰檢測逾時"
+
+#: src/lib/key-health.ts
+msgid "Key is invalid"
+msgstr "金鑰無效"
+
+#: src/lib/key-health.ts
+msgid "Key works"
+msgstr "金鑰有效"
 
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 #: src/pages/shell/use-palette-actions.ts
@@ -5926,6 +5979,7 @@ msgstr "無"
 
 #: src/components/admin/AdminIpLimits.tsx
 #: src/lib/ticket-priority.ts
+#: src/pages/model-settings/key-health-status.tsx
 #: src/pages/shell/model-switch-menu.tsx
 msgid "Normal"
 msgstr "一般"
@@ -5938,6 +5992,10 @@ msgstr "不是有效的技能"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Not added: {0}"
 msgstr "未新增：{0}"
+
+#: src/pages/model-settings/key-health-status.tsx
+msgid "Not checked"
+msgstr "未檢測"
 
 #: src/components/McpServerHealthLine.tsx
 msgid "Not checked yet"
@@ -6993,7 +7051,6 @@ msgstr "重新開啟"
 msgid "Replace API key"
 msgstr "替換 API 金鑰"
 
-#: src/pages/shell/composer-error.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "替換金鑰"
@@ -7146,6 +7203,11 @@ msgstr "正在還原工作空間"
 msgid "Resume import"
 msgstr ""
 
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Retry"
+msgstr "重試"
+
 #: src/components/AccountAccess.tsx
 #: src/components/admin/AdminAppDownloadSettings.tsx
 #: src/components/admin/AdminAuditLog.tsx
@@ -7169,7 +7231,7 @@ msgstr ""
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
-#: src/pages/shell/message-translation.tsx
+#: src/pages/shell/model-error-actions.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "重試"
@@ -8312,6 +8374,15 @@ msgstr "測試結果 · {label}"
 msgid "Test run"
 msgstr "測試執行"
 
+#: src/pages/shell/model-error-actions.tsx
+msgid "Test this key"
+msgstr "去測這個金鑰"
+
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Test this key"
+msgstr "去測這個金鑰"
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Test WebDAV connection"
 msgstr "測試 WebDAV 連線"
@@ -8520,6 +8591,10 @@ msgstr "將清空目前空間的全部用量——執行次數、Token、費用�
 msgid "this computer"
 msgstr "這臺電腦"
 
+#: src/lib/key-health.ts
+msgid "This connection cannot be checked"
+msgstr "該連接不支援檢測"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This connection's request limit is too small. Choose another model."
@@ -8662,6 +8737,7 @@ msgstr "週四"
 msgid "Time of day"
 msgstr "時間"
 
+#: src/pages/model-settings/key-health-status.tsx
 #: src/pages/model-settings/model-health-dialog.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Timed out"
@@ -8811,7 +8887,6 @@ msgid "Translation"
 msgstr "翻譯"
 
 #: src/pages/Shell.tsx
-#: src/pages/shell/message-translation.tsx
 msgid "Translation failed"
 msgstr "翻譯失敗"
 
@@ -8856,6 +8931,10 @@ msgstr "受信任的網站"
 #: src/pages/SpaceSearch.tsx
 msgid "Try again"
 msgstr "重試"
+
+#: src/pages/shell/model-error-actions.tsx
+msgid "Try again later"
+msgstr "稍後再試"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Try the test again."
@@ -8919,6 +8998,10 @@ msgstr "取消靜音"
 #: src/pages/BotContextMenu.tsx
 msgid "Unpin"
 msgstr "取消置頂"
+
+#: src/pages/model-settings/key-health-status.tsx
+msgid "Unreachable"
+msgstr "無法連接"
 
 #: src/pages/ActivityList.tsx
 msgid "Unread"

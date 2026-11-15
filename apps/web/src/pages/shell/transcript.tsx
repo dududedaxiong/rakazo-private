@@ -130,6 +130,7 @@ export const Transcript = memo(function Transcript({
   onSpeakText,
   onOpenComputer,
   onOpenImportSetup,
+  onOpenModelSettings,
   rpc,
 }: {
   scrollRef: RefObject<HTMLDivElement | null>;
@@ -217,6 +218,8 @@ export const Transcript = memo(function Transcript({
   onSpeakText?: (text: string, opts: { botId: string; messageId: string }) => void;
   onOpenComputer: (botId?: string) => void;
   onOpenImportSetup?: (target: ImportSetupTarget) => void;
+  /** Opens the supplier settings, for a media quota failure's provider switch. */
+  onOpenModelSettings?: () => void;
   rpc: ReturnType<typeof createSpaceRpc>;
 }) {
   const { t } = useLingui();
@@ -751,6 +754,7 @@ export const Transcript = memo(function Transcript({
                       onSpeakText={onSpeakText}
                       onOpenComputer={onOpenComputer}
                       onOpenImportSetup={onOpenImportSetup}
+                      onOpenModelSettings={onOpenModelSettings}
                       rpc={rpc}
                       showToolActivity={showToolActivity}
                       onReply={onReply}

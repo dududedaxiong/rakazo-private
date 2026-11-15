@@ -137,38 +137,85 @@ it("shows a readable run error with raw details, while preserving send errors", 
 });
 
 it.each([
-  ['402: {"message":"You have no credits remaining."}', "Choose a model", "models"],
+  [
+    '402: {"message":"You have no credits remaining."}',
+    ["Change provider"],
+    { models: 0, connections: 1, dismiss: 0 },
+  ],
   [
     '403: {"type":"FreeTierError","message":"This free tier can only be used from within its own app."}',
-    "Choose a model",
-    "models",
+    ["Change model"],
+    { models: 1, connections: 0, dismiss: 0 },
   ],
-  ['404: {"message":"Model example-model does not exist"}', "Choose a model", "models"],
-  ['401: {"message":"Invalid API key"}', "Replace key", "connections"],
-  ["Connect a model in Settings before running bots.", "Connect a model", "connections"],
-  ["Request timed out.", null, null],
-  ['429: {"message":"Too many requests"}', null, null],
-] as const)("offers the one action that fixes %s", (runError, label, opens) => {
+  [
+    '404: {"message":"Model example-model does not exist"}',
+    ["Change model"],
+    { models: 1, connections: 0, dismiss: 0 },
+  ],
+  [
+    '401: {"message":"Invalid API key"}',
+    ["Change provider"],
+    { models: 0, connections: 1, dismiss: 0 },
+  ],
+  [
+    "Connect a model in Settings before running bots.",
+    ["Connect a model"],
+    { models: 0, connections: 1, dismiss: 0 },
+  ],
+  [
+    "Request timed out.",
+    ["Check network", "Change model"],
+    { models: 1, connections: 0, dismiss: 1 },
+  ],
+  [
+    '429: {"message":"Too many requests"}',
+    ["Try again later", "Change model"],
+    { models: 1, connections: 0, dismiss: 1 },
+  ],
+] as const)("offers the actions that fix %s", (runError, labels, calls) => {
   const onOpenModels = vi.fn();
   const onOpenConnections = vi.fn();
+  const onDismissError = vi.fn();
   renderComposer(async () => true, {
     runError,
     runErrorId: "failed-run",
     onOpenModels,
     onOpenConnections,
+    onDismissError,
   });
   const actions = container?.querySelectorAll<HTMLButtonElement>(
     '[data-testid="composer-error-action"]',
   );
-  expect(actions?.length).toBe(label ? 1 : 0);
-  if (!label) return;
-  expect(actions?.[0]?.textContent).toBe(label);
-  act(() => actions?.[0]?.click());
-  expect(onOpenModels).toHaveBeenCalledTimes(opens === "models" ? 1 : 0);
-  expect(onOpenConnections).toHaveBeenCalledTimes(opens === "connections" ? 1 : 0);
+  expect([...(actions ?? [])].map((button) => button.textContent)).toEqual(labels);
+  for (const action of actions ?? []) act(() => action.click());
+  expect(onOpenModels).toHaveBeenCalledTimes(calls.models);
+  expect(onOpenConnections).toHaveBeenCalledTimes(calls.connections);
+  expect(onDismissError).toHaveBeenCalledTimes(calls.dismiss);
 
   rerenderComposer({ sendError: "Could not send the message." });
   expect(container?.querySelector('[data-testid="composer-error-action"]')).toBeNull();
+});
+
+it("offers a key test for a rejected key when the check is wired", async () => {
+  const onCheckKey = vi.fn(async () => "ok" as const);
+  const onOpenConnections = vi.fn();
+  renderComposer(async () => true, {
+    runError: '401: {"message":"Invalid API key"}',
+    runErrorId: "failed-run",
+    onCheckKey,
+    onOpenConnections,
+  });
+  const actions = container?.querySelectorAll<HTMLButtonElement>(
+    '[data-testid="composer-error-action"]',
+  );
+  expect([...(actions ?? [])].map((button) => button.textContent)).toEqual([
+    "Test this key",
+    "Change provider",
+  ]);
+  await act(async () => {
+    actions?.[0]?.click();
+  });
+  expect(onCheckKey).toHaveBeenCalledOnce();
 });
 
 it.each([MODEL_REQUIRED_SEND_ERROR, `  ${MODEL_REQUIRED_SEND_ERROR}  `])(

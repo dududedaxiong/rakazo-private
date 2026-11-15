@@ -46,6 +46,7 @@ import {
   writeComposerRetryNonce,
 } from "../../lib/composer-draft";
 import { hasOpenDialog } from "../../lib/has-open-dialog";
+import type { KeyHealthStatus } from "../../lib/key-health";
 import { usePageSession } from "../../lib/pages";
 import { isFilePaste } from "../../lib/pending-attachments";
 import { ComposerReplyPreview } from "./chat-context";
@@ -79,6 +80,7 @@ const ComposerBody = memo(function Composer({
   onDraftEdited,
   onOpenModels,
   onOpenConnections,
+  onCheckKey,
   runError,
   runErrorId,
   onRunErrorPresented,
@@ -115,6 +117,8 @@ const ComposerBody = memo(function Composer({
   onDraftEdited?: () => void;
   onOpenModels: () => void;
   onOpenConnections: () => void;
+  /** Tests the failed run's connection key; the result toasts. */
+  onCheckKey?: () => Promise<KeyHealthStatus | undefined>;
   runError: string | null;
   runErrorId: string | null;
   onRunErrorPresented: (runId: string) => void;
@@ -558,6 +562,7 @@ const ComposerBody = memo(function Composer({
         onRunErrorPresented={onRunErrorPresented}
         onOpenModels={onOpenModels}
         onOpenConnections={onOpenConnections}
+        onCheckKey={onCheckKey}
         onDismissError={onDismissError}
         textareaRef={textareaRef}
       />

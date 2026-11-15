@@ -17,10 +17,12 @@ import {
 import { ChevronRight, Plus } from "lucide-react";
 import type { ReactNode } from "react";
 import { useId, useRef, useState } from "react";
+import type { KeyHealth } from "../../lib/key-health";
 import type { ModelCredential } from "../../lib/model-auth";
 import { useSpaceRpc } from "../../lib/space-rpc";
 import { useListSearch } from "../../lib/use-list-search";
 import { errorText } from "../../lib/user-error";
+import { KeyHealthLine } from "./key-health-status";
 import type { ConnectableProvider } from "./role-model-picker";
 
 /** Every connection the member has, with the way to add another, even for a connected provider. */
@@ -33,6 +35,10 @@ export function ProvidersSection({
   onOpen,
   panel,
   panelAt,
+  healthById,
+  checkingIds,
+  onCheckAll,
+  checkingAll,
 }: {
   credentials: ModelCredential[];
   /** Every provider that can be connected, connected ones included. */
@@ -46,12 +52,33 @@ export function ProvidersSection({
   panel?: ReactNode;
   /** The connection id the form belongs to, or "add" for a new one. */
   panelAt?: string | null;
+  /** The last key check per connection, from the page's probe. */
+  healthById?: Record<string, KeyHealth>;
+  /** Connections whose key check is running. */
+  checkingIds?: ReadonlySet<string>;
+  /** Re-probes every connection's key. */
+  onCheckAll?: () => void;
+  checkingAll?: boolean;
 }) {
   return (
     <section className="mb-8" data-testid="model-providers">
-      <SectionHeading className="mb-2.5">
-        <Trans>Providers</Trans>
-      </SectionHeading>
+      <div className="mb-2.5 flex items-end justify-between gap-2">
+        <SectionHeading>
+          <Trans>Providers</Trans>
+        </SectionHeading>
+        {onCheckAll ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="-me-2 shrink-0 text-muted-foreground"
+            disabled={disabled || checkingAll || credentials.length === 0}
+            onClick={onCheckAll}
+          >
+            {checkingAll ? <Trans>Checking…</Trans> : <Trans>Check all</Trans>}
+          </Button>
+        ) : null}
+      </div>
       <ul className="divide-y divide-border rounded-xl border border-border">
         {[...credentials]
           // Saving a key reorders the account's connections; this list stays put.
@@ -64,8 +91,17 @@ export function ProvidersSection({
                 onClick={() => onOpen(credential)}
                 className="flex min-h-[52px] w-full items-center gap-2.5 py-2 ps-3 pe-3 text-start outline-none first:rounded-t-xl hover:bg-accent/50 focus-visible:ring-3 focus-visible:ring-ring/50"
               >
-                <span className="min-w-0 flex-1 truncate text-body-lg text-foreground">
-                  {nameOf(credential)}
+                <span className="min-w-0 flex-1">
+                  <span
+                    data-testid="model-provider-name"
+                    className="block truncate text-body-lg text-foreground"
+                  >
+                    {nameOf(credential)}
+                  </span>
+                  <KeyHealthLine
+                    health={healthById?.[credential.id]}
+                    checking={checkingIds?.has(credential.id)}
+                  />
                 </span>
                 {credential.reconnectRequired ? (
                   <span className="shrink-0 text-body-sm text-warning">

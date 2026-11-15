@@ -1,11 +1,11 @@
-import { i18n } from "@lingui/core";
 import { useLingui } from "@lingui/react/macro";
-import { isModelRequiredSendError, normalizeRunError } from "@rakazo/core";
+import { isModelRequiredSendError } from "@rakazo/core";
 import { Button } from "@rakazo/ui-web";
 import { FileIcon, X } from "lucide-react";
 import type { RefObject } from "react";
 import { useEffect, useId, useRef } from "react";
-import { translateRunError } from "../../lib/run-error";
+import type { KeyHealthStatus } from "../../lib/key-health";
+import { ModelErrorActions } from "./model-error-actions";
 
 export function ComposerError({
   sendError,
@@ -16,6 +16,7 @@ export function ComposerError({
   onRunErrorPresented,
   onOpenModels,
   onOpenConnections,
+  onCheckKey,
   onDismissError,
   textareaRef,
 }: {
@@ -28,6 +29,8 @@ export function ComposerError({
   onRunErrorPresented: (runId: string) => void;
   onOpenModels: () => void;
   onOpenConnections: () => void;
+  /** Tests the failed run's connection key; the result toasts. */
+  onCheckKey?: () => Promise<KeyHealthStatus | undefined>;
   onDismissError: () => void;
   textareaRef: RefObject<HTMLTextAreaElement | null>;
 }) {
@@ -111,21 +114,7 @@ export function ComposerError({
     }
     return cleanup;
   }, [onRunErrorPresented, runError, runErrorId]);
-  const normalizedRunError = runError
-    ? normalizeRunError(runError, translateRunError, i18n.locale || "en")
-    : null;
-  // The one action that fixes the failure; a transient one already says to try again.
-  const recovery = sendError ? undefined : normalizedRunError?.recovery;
-  const recoveryAction =
-    recovery === "model"
-      ? { label: t`Choose a model`, onClick: onOpenModels }
-      : recovery === "connection"
-        ? {
-            label: normalizedRunError?.kind === "auth" ? t`Replace key` : t`Connect a model`,
-            onClick: onOpenConnections,
-          }
-        : null;
-
+  // The prompt below names the fix; a send error has none, it is the message.
   const warning = Boolean(sendError) && imageConfirmation;
   return sendError || runError ? (
     <div
@@ -144,9 +133,18 @@ export function ComposerError({
           >
             {sendError}
           </button>
-        ) : (
-          (sendError ?? normalizedRunError?.summary ?? null)
-        )}
+        ) : sendError ? (
+          sendError
+        ) : runError ? (
+          <ModelErrorActions
+            error={runError}
+            onOpenModels={onOpenModels}
+            onOpenConnections={onOpenConnections}
+            onCheckKey={onCheckKey}
+            onDismiss={onDismissError}
+            actionTestId="composer-error-action"
+          />
+        ) : null}
         {warning && onSendAsFile ? (
           <div className="mt-2 flex flex-wrap gap-2">
             <Button
@@ -166,27 +164,6 @@ export function ComposerError({
               {t`The bot can use the file but won't see the picture.`}
             </p>
           </div>
-        ) : null}
-        {recoveryAction ? (
-          <>
-            {" "}
-            <button
-              type="button"
-              data-testid="composer-error-action"
-              onClick={recoveryAction.onClick}
-              className="font-medium underline underline-offset-2 hover:text-foreground"
-            >
-              {recoveryAction.label}
-            </button>
-          </>
-        ) : null}
-        {!sendError && runError ? (
-          <details key={runError} className="mt-1">
-            <summary className="w-fit cursor-pointer">{t`Details`}</summary>
-            <pre className="mt-2 whitespace-pre-wrap break-words text-label">
-              {normalizedRunError?.details}
-            </pre>
-          </details>
         ) : null}
       </div>
       <button
