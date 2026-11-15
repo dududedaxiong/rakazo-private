@@ -689,6 +689,110 @@ export async function probeOpenAiCompatibleModels(
   }
 }
 
+/**
+ * What a key-health probe found. "unsupported" means the key cannot be
+ * judged from this endpoint: the list interface is missing and no single
+ * model could be named for a one-question fallback.
+ */
+export type CredentialKeyHealthStatus =
+  | "ok"
+  | "invalid_key"
+  | "unreachable"
+  | "timeout"
+  | "unsupported";
+
+export type OpenAiCompatibleKeyHealth = {
+  status: CredentialKeyHealthStatus;
+  /** Models the list returned; absent when no list was read. */
+  modelCount?: number;
+};
+
+/** One short completion to prove the key when the models list is missing. */
+const KEY_HEALTH_FALLBACK_TIMEOUT_MS = 5_000;
+const KEY_HEALTH_PROBE_STATUS = /Model server returned (\d{3})\./;
+
+/**
+ * Check one key against its models list, spending no tokens. A list that
+ * answers proves the key; a 401/403 condemns it; a timeout or other failure
+ * says the endpoint could not be reached. When the endpoint has no list
+ * interface (404, or a body with no list), one named model gets a single
+ * short question instead — a working answer still proves the key.
+ */
+export async function probeOpenAiCompatibleKeyHealth(
+  input: {
+    baseUrl: string;
+    apiKey?: string;
+    headers?: Record<string, string>;
+    apiProtocol?: ModelApiProtocol;
+    authMode?: ModelAuthMode;
+    userAgent?: string;
+    /** One model to test when the list interface is missing. */
+    modelId?: string;
+  },
+  fetchImpl?: typeof fetch,
+  signal?: AbortSignal,
+  opts?: OpenAiCompatibleUrlPolicy & { catalogProbe?: boolean },
+): Promise<OpenAiCompatibleKeyHealth> {
+  let modelIds: string[];
+  try {
+    modelIds = await probeOpenAiCompatibleModels(input, fetchImpl, signal, opts);
+    return { status: "ok", modelCount: modelIds.length };
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    const message = error instanceof Error ? error.message : "";
+    if (/timed out/i.test(message)) return { status: "timeout" };
+    const probeStatus = KEY_HEALTH_PROBE_STATUS.exec(message)?.[1];
+    if (
+      probeStatus === "401" ||
+      probeStatus === "403" ||
+      message.includes(MODEL_KEY_REJECTED_ERROR)
+    ) {
+      return { status: "invalid_key" };
+    }
+    const noList = probeStatus === "404" || /did not include a models list/i.test(message);
+    if (!noList) return { status: "unreachable" };
+    if (!input.modelId) return { status: "unsupported" };
+    const fallbackController = new AbortController();
+    const fallbackTimeout = setTimeout(
+      () => fallbackController.abort(),
+      KEY_HEALTH_FALLBACK_TIMEOUT_MS,
+    );
+    const fallbackSignal = signal
+      ? AbortSignal.any([signal, fallbackController.signal])
+      : fallbackController.signal;
+    try {
+      const report = await probeModelHealth(
+        { ...input, models: [input.modelId] },
+        fetchImpl,
+        fallbackSignal,
+        opts,
+      );
+      const state = report.results[0]?.state;
+      // A reply — even an empty or rate-limited one — proves the key works.
+      if (state === "ok" || state === "empty" || state === "limited") return { status: "ok" };
+      if (state === "auth") return { status: "invalid_key" };
+      if (state === "timeout") return { status: "timeout" };
+      // The named model does not exist, so the key stays unjudged.
+      if (state === "notfound") return { status: "unsupported" };
+      return { status: "unreachable" };
+    } catch (fallbackError) {
+      if (signal?.aborted) throw fallbackError;
+      if (fallbackController.signal.aborted) return { status: "timeout" };
+      const fallbackMessage = fallbackError instanceof Error ? fallbackError.message : "";
+      if (/timed out/i.test(fallbackMessage)) return { status: "timeout" };
+      if (
+        /returned 401|returned 403/.test(fallbackMessage) ||
+        fallbackMessage.includes(MODEL_KEY_REJECTED_ERROR)
+      ) {
+        return { status: "invalid_key" };
+      }
+      return { status: "unreachable" };
+    } finally {
+      clearTimeout(fallbackTimeout);
+    }
+  }
+}
+
 /** One short question every model answers; the reply only has to prove the model runs. */
 const MODEL_HEALTH_PROMPT = "1+1等于几？只回数字。";
 const MODEL_HEALTH_MAX_TOKENS = 100;

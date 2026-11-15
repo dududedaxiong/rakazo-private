@@ -539,6 +539,88 @@ export function normalizeRunError(
   };
 }
 
+/**
+ * The one user-facing failure class a client shows for a model error, shared
+ * by chat, image, video and translation callers. It reuses normalizeRunError
+ * so every surface classifies the same provider failure the same way.
+ */
+export type ModelErrorUserFacingKey =
+  | "invalid_key"
+  | "model_not_found"
+  | "rate_limited"
+  | "timeout"
+  | "connection"
+  | "quota"
+  | "unknown";
+
+/** Connection failures with no provider status: the endpoint never answered. */
+const MODEL_CONNECTION_FAILURE = /^connection error\.?$/i;
+const MODEL_CONNECTION_LANGUAGE =
+  /ECONNREFUSED|connection refused|ENOTFOUND|getaddrinfo|EHOSTUNREACH|ENETUNREACH|EAI_AGAIN/i;
+/** The provider took too long: a timeout status, or timeout language. */
+const MODEL_TIMEOUT_LANGUAGE =
+  /timed?[_ -]?out|ETIMEDOUT|stream ended|\bterminated\b|socket hang up|ECONNRESET|connection reset|fetch failed|network error/i;
+
+/**
+ * Map a run failure to the key the client shows, with the recovery action
+ * normalizeRunError already chose. A 403 that refuses the model to the
+ * account (kind "access") is not a bad key, so it stays "unknown" with a
+ * pick-another-model recovery instead of "invalid_key".
+ */
+export function describeModelError(details: string): {
+  key: ModelErrorUserFacingKey;
+  recovery?: "connection" | "model";
+} {
+  const { kind, status, recovery, providerMessage } = normalizeRunError(details);
+  const result = (key: ModelErrorUserFacingKey) => ({
+    key,
+    ...(recovery ? { recovery } : {}),
+  });
+  // A 403 is a bad key unless normalizeRunError already named it something
+  // else: a quota refusal (credit/spending), an access refusal, or an
+  // unusable-output failure keep their own class below.
+  if (
+    kind === "auth" ||
+    kind === "key" ||
+    status === 401 ||
+    (status === 403 &&
+      kind !== "access" &&
+      kind !== "credit" &&
+      kind !== "spending" &&
+      kind !== "output")
+  ) {
+    return result("invalid_key");
+  }
+  if (
+    kind === "model" ||
+    status === 404 ||
+    status === 410 ||
+    // The model-unavailable pattern anchors at the message start, so it runs
+    // against the provider's own message, not the status-prefixed envelope.
+    (status === 503 && MODEL_UNAVAILABLE.test(providerMessage ?? details))
+  ) {
+    return result("model_not_found");
+  }
+  if (kind === "rate" || status === 429) {
+    return result("rate_limited");
+  }
+  // Same precedence as normalizeRunError: a refused or unresolvable host is
+  // a connection failure even when the text also says the fetch failed.
+  if (
+    status === undefined &&
+    (MODEL_CONNECTION_FAILURE.test(details.trim()) || MODEL_CONNECTION_LANGUAGE.test(details))
+  ) {
+    return result("connection");
+  }
+  if (status === 408 || status === 504 || MODEL_TIMEOUT_LANGUAGE.test(details)) {
+    return result("timeout");
+  }
+  if (kind === "credit" || kind === "spending") {
+    return result("quota");
+  }
+  return result("unknown");
+}
+
 function parseJson(text: string): unknown {
   try {
     return JSON.parse(text);

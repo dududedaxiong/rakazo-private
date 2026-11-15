@@ -1428,6 +1428,103 @@ describe("Pi runtime ordered model fallback", () => {
     expect(events.at(-1)).toEqual({ type: "done", text: "Recovered." });
   });
 
+  it("notifies progress when the primary fails and the backup answers", async () => {
+    const input = request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]);
+    const onModelSwitchProgress = vi.fn();
+    input.onModelSwitchProgress = onModelSwitchProgress;
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
+      target.provider === primary.provider
+        ? stream(
+            target,
+            message(target, [], "error", "You have hit your ChatGPT usage limit (plus plan)."),
+          )
+        : stream(target, message(target, [{ type: "text", text: "backup answer" }], "stop")),
+    );
+
+    const events = await run(input);
+
+    expect(events.at(-1)).toEqual({ type: "done", text: "backup answer" });
+    expect(onModelSwitchProgress).toHaveBeenCalledExactlyOnceWith({
+      fromModelId: primary.id,
+      toModelId: backupA.id,
+      stalled: false,
+    });
+  });
+
+  it("notifies progress as stalled when the primary stalls mid-stream", async () => {
+    const input = request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]);
+    const onModelSwitchProgress = vi.fn();
+    input.onModelSwitchProgress = onModelSwitchProgress;
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) => {
+      if (target.provider === primary.provider) {
+        return streamStalledAfterText(target, "Stalled partial.");
+      }
+      return stream(target, message(target, [{ type: "text", text: "Recovered." }], "stop"));
+    });
+
+    await run(input);
+
+    expect(onModelSwitchProgress).toHaveBeenCalledExactlyOnceWith({
+      fromModelId: primary.id,
+      toModelId: backupA.id,
+      stalled: true,
+    });
+  });
+
+  it("notifies progress as stalled on a first-token idle timeout", async () => {
+    const input = request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]);
+    const onModelSwitchProgress = vi.fn();
+    input.onModelSwitchProgress = onModelSwitchProgress;
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
+      target.provider === primary.provider
+        ? stream(target, message(target, [], "error", MODEL_STREAM_IDLE_TIMEOUT_MESSAGE))
+        : stream(target, message(target, [{ type: "text", text: "Recovered." }], "stop")),
+    );
+
+    await run(input);
+
+    expect(onModelSwitchProgress).toHaveBeenCalledExactlyOnceWith({
+      fromModelId: primary.id,
+      toModelId: backupA.id,
+      stalled: true,
+    });
+  });
+
+  it("does not notify when the primary answers at once", async () => {
+    const input = request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]);
+    const onModelSwitchProgress = vi.fn();
+    input.onModelSwitchProgress = onModelSwitchProgress;
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
+      stream(target, message(target, [{ type: "text", text: "primary answer" }], "stop")),
+    );
+
+    const events = await run(input);
+
+    expect(events.at(-1)).toEqual({ type: "done", text: "primary answer" });
+    expect(providerState.stream).toHaveBeenCalledTimes(1);
+    expect(onModelSwitchProgress).not.toHaveBeenCalled();
+  });
+
+  it("still switches when the progress notice itself fails", async () => {
+    const input = request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]);
+    input.onModelSwitchProgress = vi.fn(async () => {
+      throw new Error("notice failed");
+    });
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
+      target.provider === primary.provider
+        ? stream(
+            target,
+            message(target, [], "error", "You have hit your ChatGPT usage limit (plus plan)."),
+          )
+        : stream(target, message(target, [{ type: "text", text: "backup answer" }], "stop")),
+    );
+
+    const events = await run(input);
+
+    expect(events.at(-1)).toEqual({ type: "done", text: "backup answer" });
+    expect(providerState.stream).toHaveBeenCalledTimes(2);
+  });
+
   it("fails with every stalled attempt listed when all fallbacks stall before the first token", async () => {
     providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
       stream(target, message(target, [], "error", MODEL_STREAM_IDLE_TIMEOUT_MESSAGE)),

@@ -7,6 +7,7 @@ import {
   catalogModelLabel,
   catalogModelServesAgents,
   catalogProviderProbeBaseUrl,
+  checkModelCredentialKeyHealth,
   hiddenCatalogModel,
   listPiCatalog,
   offeredCatalog,
@@ -216,6 +217,87 @@ describe("catalog provider authentication", () => {
     for (const provider of ["openai-compatible", "local", "anthropic", "fixture-provider"]) {
       await verifyCatalogProviderApiKey({ provider, apiKey: "fixture-key" }, fetchImpl);
     }
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+describe("credential key health", () => {
+  it("reports an OAuth connection as unsupported without calling the provider", async () => {
+    const fetchImpl = vi.fn<typeof fetch>();
+    await expect(
+      checkModelCredentialKeyHealth({
+        provider: "openai",
+        secret: { kind: "oauth", reconnectRequired: true },
+        fetchImpl,
+      }),
+    ).resolves.toMatchObject({ status: "unsupported" });
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("checks an OpenAI-compatible connection against its own models list", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () =>
+      Response.json({ data: [{ id: "fixture-model" }] }),
+    );
+    const result = await checkModelCredentialKeyHealth({
+      provider: "openai-compatible",
+      secret: {
+        kind: "openai_compatible",
+        baseUrl: "http://127.0.0.1:8000/v1",
+        apiKey: "fixture-key",
+      },
+      allowPrivate: true,
+      fetchImpl,
+    });
+    expect(result).toEqual({
+      status: "ok",
+      checkedAt: expect.any(String),
+      modelCount: 1,
+    });
+    expect(String(fetchImpl.mock.calls[0]?.[0])).toBe("http://127.0.0.1:8000/v1/models");
+  });
+
+  it("reports a rejected OpenAI-compatible key as invalid_key", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async () => new Response("rejected", { status: 401 }));
+    await expect(
+      checkModelCredentialKeyHealth({
+        provider: "openai-compatible",
+        secret: {
+          kind: "openai_compatible",
+          baseUrl: "http://127.0.0.1:8000/v1",
+          apiKey: "fixture-key",
+        },
+        allowPrivate: true,
+        fetchImpl,
+      }),
+    ).resolves.toMatchObject({ status: "invalid_key" });
+  });
+
+  it("checks a catalog provider key against its pinned list URL", async () => {
+    const fetchImpl = vi.fn<typeof fetch>(async (input: RequestInfo | URL) => {
+      if (String(input).endsWith("/key")) return new Response("{}", { status: 200 });
+      return Response.json({ data: [{ id: "fixture-model" }] });
+    });
+    const result = await checkModelCredentialKeyHealth({
+      provider: "openrouter",
+      secret: { kind: "api_key", key: "fixture-key" },
+      fetchImpl,
+    });
+    expect(result).toMatchObject({ status: "ok", modelCount: 1 });
+    expect(fetchImpl.mock.calls.map(([url]) => String(url))).toEqual([
+      "https://openrouter.ai/api/v1/key",
+      "https://openrouter.ai/api/v1/models",
+    ]);
+  });
+
+  it("reports a provider with no pinned list URL as unsupported", async () => {
+    const fetchImpl = vi.fn<typeof fetch>();
+    await expect(
+      checkModelCredentialKeyHealth({
+        provider: "fixture-provider",
+        secret: { kind: "api_key", key: "fixture-key" },
+        fetchImpl,
+      }),
+    ).resolves.toMatchObject({ status: "unsupported" });
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 });

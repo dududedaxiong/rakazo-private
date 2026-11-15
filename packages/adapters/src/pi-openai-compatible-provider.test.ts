@@ -27,6 +27,7 @@ import {
   prepareOpenAiCompatibleConnect,
   probeMediaModel,
   probeModelHealth,
+  probeOpenAiCompatibleKeyHealth,
   probeOpenAiCompatibleModels,
   registerOpenAiCompatibleCatalog,
   registerOpenAiCompatibleRuntime,
@@ -1809,6 +1810,127 @@ describe("model health probe", () => {
     }) as typeof fetch;
     await expect(
       probeModelHealth({ baseUrl, models: ["a"] }, fetchImpl, caller.signal, OWNER),
+    ).rejects.toMatchObject({ name: "AbortError" });
+  });
+});
+
+describe("key health probe", () => {
+  const baseUrl = "http://127.0.0.1:8000/v1";
+
+  it("reports ok with the listed model count", async () => {
+    const fetchImpl = (async () =>
+      Response.json({ data: [{ id: "a" }, { id: "b" }] })) as typeof fetch;
+    await expect(
+      probeOpenAiCompatibleKeyHealth(
+        { baseUrl, apiKey: "fixture-key" },
+        fetchImpl,
+        undefined,
+        OWNER,
+      ),
+    ).resolves.toEqual({ status: "ok", modelCount: 2 });
+  });
+
+  it.each([401, 403])("reports a rejected key (%i) as invalid_key", async (status) => {
+    const fetchImpl = (async () => new Response("rejected", { status })) as typeof fetch;
+    await expect(
+      probeOpenAiCompatibleKeyHealth(
+        { baseUrl, apiKey: "fixture-key" },
+        fetchImpl,
+        undefined,
+        OWNER,
+      ),
+    ).resolves.toEqual({ status: "invalid_key" });
+  });
+
+  it("reports a probe timeout as timeout", async () => {
+    const fetchImpl = (async () => {
+      const error = new Error("The operation was aborted.");
+      error.name = "AbortError";
+      throw error;
+    }) as typeof fetch;
+    await expect(
+      probeOpenAiCompatibleKeyHealth(
+        { baseUrl, apiKey: "fixture-key" },
+        fetchImpl,
+        undefined,
+        OWNER,
+      ),
+    ).resolves.toEqual({ status: "timeout" });
+  });
+
+  it("reports a transport failure as unreachable", async () => {
+    const fetchImpl = (async () => {
+      throw new TypeError("fetch failed");
+    }) as typeof fetch;
+    await expect(
+      probeOpenAiCompatibleKeyHealth(
+        { baseUrl, apiKey: "fixture-key" },
+        fetchImpl,
+        undefined,
+        OWNER,
+      ),
+    ).resolves.toEqual({ status: "unreachable" });
+  });
+
+  it("falls back to one short question when the list interface is missing", async () => {
+    const seen: string[] = [];
+    const fetchImpl = (async (input: RequestInfo | URL, _init?: RequestInit) => {
+      const url = String(input);
+      seen.push(url);
+      if (url.endsWith("/models")) return new Response("not here", { status: 404 });
+      return Response.json({ choices: [{ message: { content: "2" } }] });
+    }) as typeof fetch;
+    await expect(
+      probeOpenAiCompatibleKeyHealth(
+        { baseUrl, apiKey: "fixture-key", modelId: "fixture-model" },
+        fetchImpl,
+        undefined,
+        OWNER,
+      ),
+    ).resolves.toEqual({ status: "ok" });
+    expect(seen).toEqual([
+      "http://127.0.0.1:8000/v1/models",
+      "http://127.0.0.1:8000/v1/chat/completions",
+    ]);
+  });
+
+  it("reports unsupported when the list is missing and no model was named", async () => {
+    const fetchImpl = (async () => new Response("not here", { status: 404 })) as typeof fetch;
+    await expect(
+      probeOpenAiCompatibleKeyHealth(
+        { baseUrl, apiKey: "fixture-key" },
+        fetchImpl,
+        undefined,
+        OWNER,
+      ),
+    ).resolves.toEqual({ status: "unsupported" });
+  });
+
+  it("reports unsupported when the fallback model does not exist", async () => {
+    const fetchImpl = (async (input: RequestInfo | URL) => {
+      if (String(input).endsWith("/models")) return new Response("not here", { status: 404 });
+      return new Response(JSON.stringify({ error: { message: "Model not found" } }), {
+        status: 404,
+      });
+    }) as typeof fetch;
+    await expect(
+      probeOpenAiCompatibleKeyHealth(
+        { baseUrl, apiKey: "fixture-key", modelId: "gone-model" },
+        fetchImpl,
+        undefined,
+        OWNER,
+      ),
+    ).resolves.toEqual({ status: "unsupported" });
+  });
+
+  it("lets the caller's cancel abort the check", async () => {
+    const caller = new AbortController();
+    caller.abort();
+    const fetchImpl = (async () => {
+      throw new DOMException("The operation was aborted.", "AbortError");
+    }) as typeof fetch;
+    await expect(
+      probeOpenAiCompatibleKeyHealth({ baseUrl }, fetchImpl, caller.signal, OWNER),
     ).rejects.toMatchObject({ name: "AbortError" });
   });
 });

@@ -1,6 +1,7 @@
 import { ORPCError } from "@orpc/server";
 import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
 import {
+  checkModelCredentialKeyHealth,
   compatibleEndpointPreset,
   listPiCatalog,
   ModelSignInError,
@@ -20,7 +21,7 @@ import {
   storedOpenAiCompatibleProbeKey,
   UNAVAILABLE_MODEL_FOR_AUTH_MESSAGE,
 } from "@rakazo/adapters";
-import type { ThinkingLevel } from "@rakazo/contracts";
+import type { Actor, ModelKeyHealthResult, ThinkingLevel } from "@rakazo/contracts";
 import {
   backupChoiceKey,
   canonicalPiProviderId,
@@ -55,7 +56,93 @@ import {
   throwIfAborted,
 } from "../model-credentials.js";
 import { assertCompatibleDefaultChange } from "../model-pins.js";
+import type { RouterDeps } from "../router.js";
 import type { RouterContext } from "./context.js";
+
+type CredentialKeyCheckDeps = Pick<
+  RouterDeps,
+  "prisma" | "secrets" | "modelConnectionFetch" | "env"
+>;
+
+/**
+ * Probe one connection's key and persist the outcome. A secret that cannot
+ * be read leaves the key unjudged ("unsupported"), and one bad row never
+ * fails a whole checkKeys batch. The outcome is still returned when the row
+ * disappears mid-check.
+ */
+async function checkCredentialKey(
+  deps: CredentialKeyCheckDeps,
+  actor: Actor,
+  signal: AbortSignal | undefined,
+  credential: { id: string; provider: string; secretId: string },
+): Promise<ModelKeyHealthResult> {
+  const unsupported: ModelKeyHealthResult = {
+    credentialId: credential.id,
+    status: "unsupported",
+    checkedAt: new Date().toISOString(),
+  };
+  const persist = async (result: ModelKeyHealthResult): Promise<ModelKeyHealthResult> => {
+    try {
+      await deps.prisma.userModelCredential.update({
+        where: { id: credential.id },
+        data: {
+          keyHealthStatus: result.status,
+          keyHealthCheckedAt: new Date(result.checkedAt),
+        },
+      });
+    } catch {
+      // A row deleted mid-check still reports its probe outcome.
+    }
+    return result;
+  };
+  const secret = await deps.prisma.secret.findFirst({
+    where: { id: credential.secretId, userId: actor.userId, spaceId: null },
+    select: { ciphertext: true },
+  });
+  if (!secret) return persist(unsupported);
+  let plaintext: string;
+  try {
+    plaintext = await deps.secrets.load(secret.ciphertext, credential.secretId);
+  } catch {
+    return persist(unsupported);
+  }
+  let parsed: ReturnType<typeof parseModelSecret>;
+  try {
+    parsed = parseModelSecret(plaintext);
+  } catch {
+    return persist(unsupported);
+  }
+  // One model for the single-question fallback when the list is missing.
+  let modelId = parsed.kind === "openai_compatible" ? parsed.enabledModelIds?.[0] : undefined;
+  if (!modelId && parsed.kind === "openai_compatible") {
+    const preference = await deps.prisma.userModelPreference.findFirst({
+      where: { credentialId: credential.id, userId: actor.userId },
+      select: { modelId: true },
+    });
+    modelId = preference?.modelId ?? undefined;
+  }
+  let health: Omit<ModelKeyHealthResult, "credentialId" | "checkedAt"> & {
+    checkedAt: string;
+  };
+  try {
+    health = await checkModelCredentialKeyHealth({
+      provider: credential.provider,
+      secret: parsed,
+      ...(modelId ? { modelId } : {}),
+      fetchImpl: deps.modelConnectionFetch,
+      ...(signal ? { signal } : {}),
+      allowPrivate: mayUsePrivateEndpoint(deps),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") throw error;
+    return persist({
+      credentialId: credential.id,
+      status: "unreachable",
+      checkedAt: new Date().toISOString(),
+    });
+  }
+  return persist({ credentialId: credential.id, ...health });
+}
 
 export function modelsRoutes(ctx: RouterContext) {
   const {
@@ -359,6 +446,29 @@ export function modelsRoutes(ctx: RouterContext) {
             message: error instanceof Error ? error.message : "Could not test this connection",
           });
         }
+      }),
+      checkKey: authed.models.checkKey.handler(async ({ context, input }) => {
+        const credential = await deps.prisma.userModelCredential.findFirst({
+          where: { id: input.credentialId, userId: context.actor.userId },
+        });
+        if (!credential) throw new ORPCError("NOT_FOUND", { message: "Connection not found" });
+        return checkCredentialKey(deps, context.actor, context.signal, credential);
+      }),
+      checkKeys: authed.models.checkKeys.handler(async ({ context, input }) => {
+        const credentials = await deps.prisma.userModelCredential.findMany({
+          where: {
+            userId: context.actor.userId,
+            ...(input.credentialIds?.length ? { id: { in: input.credentialIds } } : {}),
+          },
+          orderBy: newestModelCredentialOrder,
+        });
+        // Every connection probes at once; a slow one never holds up the rest.
+        const results = await Promise.all(
+          credentials.map((credential) =>
+            checkCredentialKey(deps, context.actor, context.signal, credential),
+          ),
+        );
+        return { results };
       }),
       beginOAuth: authed.models.beginOAuth.handler(async ({ context, input }) => {
         // An older app's sign-in renews the provider's newest connection, bound now so a

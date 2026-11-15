@@ -83,6 +83,17 @@ export interface FallbackStreamState {
   switchAttempts?: ModelSwitchAttempt[];
   /** Calls repeated, given more room or continued after a cut; bounded per run. */
   selfRecoveries: number;
+  /**
+   * Notice that the runtime is switching to a backup model, before the next
+   * model streams. A failing notice must never stall the switch, so the
+   * caller is awaited only inside a guard. Absent where nothing renders it
+   * (subagents, scripted runs).
+   */
+  onSwitchProgress?: (
+    from: RuntimeModelTarget,
+    to: RuntimeModelTarget,
+    stalled: boolean,
+  ) => void | Promise<void>;
   /** More room for the next call, after a call ran out of it inside a tool call. */
   nextCallRecovery?: { maxTokens?: number; thinkingLevel?: ModelThinkingLevel };
   /**
@@ -355,6 +366,24 @@ export function fallbackAwareModelStream(
       status: "failed",
       reason: sanitizeProviderError(target.config.provider, error),
     });
+  };
+  /**
+   * The one switch entry, shared by failure switches and stall switches:
+   * tell the user once, then move the run to the backup. A failing progress
+   * notice never stalls the switch.
+   */
+  const switchToBackup = async (
+    current: RuntimeModelTarget,
+    next: RuntimeModelTarget,
+    stalled: boolean,
+  ) => {
+    try {
+      await state.onSwitchProgress?.(current, next, stalled);
+    } catch {
+      // A progress notice must never stall the switch.
+    }
+    state.messagesBeforeSwitch = context.messages.length;
+    await state.onSwitch(next);
   };
   const finishWithThrownError = (target: RuntimeModelTarget, error: unknown) => {
     const message = error instanceof Error ? error.message : String(error);
@@ -695,8 +724,11 @@ export function fallbackAwareModelStream(
                     nextModel: next.config.id,
                   });
                 }
-                state.messagesBeforeSwitch = context.messages.length;
-                await state.onSwitch(next);
+                await switchToBackup(
+                  target,
+                  next,
+                  event.error.errorMessage === MODEL_STREAM_IDLE_TIMEOUT_MESSAGE,
+                );
                 if (failIfAborted(target)) return;
                 // A raised budget or lower thinking level fitted the failed model, not this one.
                 outputBudget = undefined;
@@ -767,8 +799,7 @@ export function fallbackAwareModelStream(
                   nextProvider: next.config.provider,
                   nextModel: next.config.id,
                 });
-                state.messagesBeforeSwitch = context.messages.length;
-                await state.onSwitch(next);
+                await switchToBackup(target, next, true);
                 if (failIfAborted(target)) return;
                 // A raised budget or lower thinking level fitted the failed model, not this one.
                 outputBudget = undefined;

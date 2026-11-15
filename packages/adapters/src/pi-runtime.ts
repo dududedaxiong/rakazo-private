@@ -451,6 +451,13 @@ export class PiAgentRuntime implements AgentRuntime {
           switchAttempts: request.modelSwitchAttempts,
           selfRecoveries: 0,
           cutReplies: new WeakMap(),
+          onSwitchProgress: async (from, to, stalled) => {
+            await request.onModelSwitchProgress?.({
+              fromModelId: from.config.id,
+              toModelId: to.config.id,
+              stalled,
+            });
+          },
           stream: (target, ctx, options) => {
             if (hasCurrentImages && !target.model.input.includes("image")) {
               throw new Error(MODEL_IMAGE_INPUT_ERROR);

@@ -171,6 +171,7 @@ async function runTurn({
         create: vi.fn(async () => ({ id: "attempt-1" })),
         update: vi.fn(),
         updateMany: vi.fn(async () => ({ count: 1 })),
+        findMany: vi.fn(async () => []),
       },
       thread: {
         findUniqueOrThrow: vi.fn(async () => ({
@@ -229,6 +230,7 @@ async function runTurn({
     run: prisma.run,
   });
   const finalizeRun = vi.fn(async () => ({ continuationRunId: null }));
+  const events = { append: vi.fn(async () => undefined), finalizeRun };
   const executor = createRunExecutor({
     prisma,
     billingEnabled: false,
@@ -249,12 +251,12 @@ async function runTurn({
     home: { commit: vi.fn(async () => "fixture-revision") },
     memory: { read: async () => ({ documents: [] }) },
     memoryProviders: { resolve: async () => null },
-    events: { append: vi.fn(async () => undefined), finalizeRun },
+    events,
     jobs: { enqueue: vi.fn(async () => undefined) },
     secrets: [],
   } as unknown as Parameters<typeof createRunExecutor>[0]);
   await executor.continueRun("run-1", "worker-1");
-  return { request, run, runtimeRun, finalizeRun };
+  return { request, run, runtimeRun, finalizeRun, events };
 }
 
 describe("a main model that cannot start runs on the member's backup", () => {
@@ -312,6 +314,63 @@ describe("a main model that cannot start runs on the member's backup", () => {
     expect(runtimeRun).not.toHaveBeenCalled();
     expect(finalizeRun).toHaveBeenCalledWith(
       expect.objectContaining({ outcome: "failed", error: OAUTH_RECONNECT_REQUIRED_ERROR }),
+    );
+  });
+});
+
+describe("a fallback switch tells the thread", () => {
+  it("posts a progress line naming both models", async () => {
+    // The primary's sign-in is expired, so the run refreshes it like the
+    // sign-in test above; the switch notice itself is exercised directly.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ error: "invalid_grant", error_description: "revoked" }), {
+            status: 400,
+          }),
+      ),
+    );
+    const { request, events } = await runTurn({ primaryConnected: true });
+    expect(request?.onModelSwitchProgress).toBeTypeOf("function");
+
+    await request?.onModelSwitchProgress?.({
+      fromModelId: PRIMARY.modelId,
+      toModelId: BACKUP.modelId,
+      stalled: false,
+    });
+    // The run-scoped events wrapper adds the run lease; the payload is what matters.
+    expect(events.append).toHaveBeenCalledWith(
+      expect.objectContaining({
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        type: "thread.progress",
+        runId: "run-1",
+        payload: {
+          text: "gpt-6-luna 失败，正在切换到备用模型 openai/gpt-4o…",
+          activity: true,
+        },
+      }),
+    );
+
+    await request?.onModelSwitchProgress?.({
+      fromModelId: PRIMARY.modelId,
+      toModelId: BACKUP.modelId,
+      stalled: true,
+    });
+    expect(events.append).toHaveBeenCalledWith(
+      expect.objectContaining({
+        spaceId: "space-1",
+        threadId: "thread-1",
+        botId: "bot-1",
+        type: "thread.progress",
+        runId: "run-1",
+        payload: {
+          text: "gpt-6-luna 长时间无响应，正在切换到备用模型 openai/gpt-4o…",
+          activity: true,
+        },
+      }),
     );
   });
 });

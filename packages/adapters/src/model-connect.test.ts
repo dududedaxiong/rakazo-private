@@ -417,6 +417,28 @@ describe("modelCredentialDto", () => {
     });
   });
 
+  it("exposes the persisted key-health outcome and omits an invalid one", () => {
+    const row = {
+      id: "cred-1",
+      provider: "openai-compatible",
+      label: "Local MLX",
+      isDefault: false,
+    };
+    expect(
+      modelCredentialDto({
+        ...row,
+        keyHealthStatus: "invalid_key",
+        keyHealthCheckedAt: new Date("2026-11-15T12:00:00.000Z"),
+      }),
+    ).toMatchObject({
+      keyHealth: { status: "invalid_key", checkedAt: "2026-11-15T12:00:00.000Z" },
+    });
+    expect(modelCredentialDto(row)).not.toHaveProperty("keyHealth");
+    expect(
+      modelCredentialDto({ ...row, keyHealthStatus: "bogus", keyHealthCheckedAt: new Date() }),
+    ).not.toHaveProperty("keyHealth");
+  });
+
   it.each([
     { name: "legacy secret", enabledModelIds: undefined, expected: undefined },
     { name: "listed secret with the default", enabledModelIds: ["Y", "X"], expected: ["Y", "X"] },

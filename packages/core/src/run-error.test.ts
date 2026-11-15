@@ -2,6 +2,7 @@ import { COMPUTER_PROVIDER_UNAVAILABLE_ERROR, COMPUTER_RATE_LIMIT_ERROR } from "
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   APPROVED_ACTION_NOT_RUN_ERROR,
+  describeModelError,
   HOSTED_MODEL_CREDITS_REQUIRED_ERROR,
   isImageInputConfirmation,
   isModelRequiredSendError,
@@ -570,6 +571,48 @@ it.each([
   const error = normalizeRunError(details);
   expect(error.kind).toBe(kind);
   expect(error.period).toBe(period);
+});
+
+describe("describeModelError", () => {
+  it.each([
+    // A rejected key: the fix is another connection.
+    [
+      '401: {"message":"Incorrect API key: <redacted>; https://api.openai.com"}',
+      "invalid_key",
+      "connection",
+    ],
+    ['403: {"message":"Unauthorized API key"}', "invalid_key", "connection"],
+    ["403: OpenRouter weekly key limit exceeded", "invalid_key", "connection"],
+    // A model the provider cannot serve: the fix is another model.
+    ['404: {"error":{"message":"Model fake-model does not exist"}}', "model_not_found", "model"],
+    ['503: {"message":"The model is unavailable right now."}', "model_not_found", undefined],
+    ['503: {"message":"Unsupported model fixture-model"}', "model_not_found", undefined],
+    // A plain 503 overload names no model, so it stays unknown.
+    ['503: {"message":"Service Unavailable"}', "unknown", undefined],
+    // A short rate window: retry shortly.
+    ['429: {"message":"Too many requests"}', "rate_limited", undefined],
+    // The provider took too long.
+    ["Request timed out", "timeout", undefined],
+    ['504: {"message":"Gateway error"}', "timeout", undefined],
+    // The endpoint never answered.
+    ["Connection error.", "connection", undefined],
+    ["fetch failed: connect ECONNREFUSED 127.0.0.1:11434", "connection", undefined],
+    // Out of money or quota: the fix is another model.
+    [
+      '402: {"message":"Insufficient Balance (request_id: fake-request)","type":"unknown_error","param":null,"code":"invalid_request_error"}',
+      "quota",
+      "model",
+    ],
+    ["402: Monthly spending limit exceeded", "quota", "model"],
+    // A 403 that refuses the model to the account is not a bad key.
+    ['403: {"message":"Policy blocked the request"}', "unknown", "model"],
+    // Nothing recognizable.
+    ["Something unexpected happened", "unknown", undefined],
+  ])("maps %s to %s", (details, key, recovery) => {
+    expect(describeModelError(details)).toEqual(
+      recovery === undefined ? { key } : { key, recovery },
+    );
+  });
 });
 
 describe("isModelRequiredSendError", () => {

@@ -13,12 +13,15 @@ import {
   MODEL_KEY_REJECTED_ERROR,
 } from "@rakazo/contracts";
 import { cloudflareRoutingFields } from "./cloudflare-ai-gateway.js";
+import type { StoredModelSecret } from "./model-secret.js";
 import { COMPATIBLE_ENDPOINT_PRESETS } from "./openai-compatible-url.js";
 import { LOCAL_PROVIDER_ID, registerLocalProvider } from "./pi-local-provider.js";
 import { applyPiModelCompatibility } from "./pi-model-compat.js";
 import { loadProviderOAuth, SUBSCRIPTION_SIGN_IN_PROVIDERS } from "./pi-oauth.js";
+import type { CredentialKeyHealthStatus } from "./pi-openai-compatible-provider.js";
 import {
   OPENAI_COMPATIBLE_PROVIDER_ID,
+  probeOpenAiCompatibleKeyHealth,
   probeOpenAiCompatibleModels,
   registerOpenAiCompatibleCatalog,
 } from "./pi-openai-compatible-provider.js";
@@ -229,6 +232,72 @@ export async function probeCatalogProviderModels(
     allowPublic: true,
     catalogProbe: true,
   });
+}
+
+export type CredentialKeyHealth = {
+  status: CredentialKeyHealthStatus;
+  checkedAt: string;
+  /** Models the list returned; absent when no list was read. */
+  modelCount?: number;
+};
+
+/**
+ * Check one saved connection's key without spending tokens. An
+ * OpenAI-compatible connection probes its own base URL; a catalog
+ * provider's key probes the provider's pinned list URL. OAuth
+ * connections have no key to check, so they report "unsupported" instead
+ * of failing. A catalog provider with no pinned list URL is likewise
+ * unjudgeable from here.
+ */
+export async function checkModelCredentialKeyHealth(input: {
+  provider: string;
+  secret: StoredModelSecret;
+  /** One model to test when the list interface is missing. */
+  modelId?: string;
+  fetchImpl?: typeof fetch;
+  signal?: AbortSignal;
+  allowPrivate?: boolean;
+}): Promise<CredentialKeyHealth> {
+  const checkedAt = new Date().toISOString();
+  const { secret } = input;
+  if (secret.kind === "oauth") return { status: "unsupported", checkedAt };
+  if (secret.kind === "openai_compatible") {
+    const { status, modelCount } = await probeOpenAiCompatibleKeyHealth(
+      {
+        baseUrl: secret.baseUrl,
+        apiKey: secret.apiKey,
+        headers: secret.headers,
+        apiProtocol: secret.apiProtocol,
+        authMode: secret.authMode,
+        modelId: input.modelId,
+      },
+      input.fetchImpl,
+      input.signal,
+      { allowPrivate: input.allowPrivate },
+    );
+    return { status, checkedAt, ...(modelCount !== undefined ? { modelCount } : {}) };
+  }
+  try {
+    const models = await probeCatalogProviderModels(
+      { provider: input.provider, apiKey: secret.key },
+      input.fetchImpl,
+      input.signal,
+    );
+    return { status: "ok", checkedAt, modelCount: models.length };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    if (
+      message.includes(MODEL_KEY_REJECTED_ERROR) ||
+      /Model server returned 401|Model server returned 403/.test(message)
+    ) {
+      return { status: "invalid_key", checkedAt };
+    }
+    if (/timed out/i.test(message)) return { status: "timeout", checkedAt };
+    if (/cannot be tested without saving/i.test(message)) {
+      return { status: "unsupported", checkedAt };
+    }
+    return { status: "unreachable", checkedAt };
+  }
 }
 
 /** Wire protocols whose registry base URL also serves GET {base}/models. */

@@ -212,6 +212,7 @@ import {
   ModelConnectionTargetSchema,
   ModelCredentialSchema,
   ModelHealthReportSchema,
+  ModelKeyHealthResultSchema,
   ModelOAuthBeginSchema,
   OPENAI_COMPATIBLE_PROVIDER_ID,
 } from "./model-connections.js";
@@ -618,6 +619,12 @@ export const appContract = {
     testProvider: oc
       .input(z.object({ credentialId: z.string(), modelId: z.string().optional() }))
       .output(ModelHealthReportSchema),
+    /** Probe one connection's key against its models list; never spends tokens. */
+    checkKey: oc.input(z.object({ credentialId: Id })).output(ModelKeyHealthResultSchema),
+    /** Probe several connections at once; omitted ids mean all of the caller's. */
+    checkKeys: oc
+      .input(z.object({ credentialIds: z.array(Id).optional() }))
+      .output(z.object({ results: z.array(ModelKeyHealthResultSchema) })),
     probeCatalog: oc
       .input(
         z.object({

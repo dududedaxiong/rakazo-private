@@ -933,6 +933,10 @@ model UserModelCredential {
   label       String
   secretId    String
   supportsImages Boolean              @default(false)
+  /// Last key-health probe outcome (ok / invalid_key / unreachable / timeout /
+  /// unsupported); only the status is stored, never the key.
+  keyHealthStatus String?
+  keyHealthCheckedAt DateTime?
   createdAt   DateTime               @default(now())
   updatedAt   DateTime               @updatedAt
   preferences SpaceModelPreference[]

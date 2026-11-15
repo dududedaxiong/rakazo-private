@@ -1,5 +1,6 @@
 import { getSupportedThinkingLevels } from "@earendil-works/pi-ai";
 import type {
+  KeyHealthStatus,
   ModelAuthMode,
   ModelConnectInput,
   ModelCredential,
@@ -305,6 +306,29 @@ function endpointName(baseUrl: string): { endpointName?: string } {
   return preset ? { endpointName: preset.name } : {};
 }
 
+const KEY_HEALTH_STATUSES: ReadonlySet<string> = new Set([
+  "ok",
+  "invalid_key",
+  "unreachable",
+  "timeout",
+  "unsupported",
+]);
+
+/** The persisted probe outcome, when the row carries a valid one. */
+function modelCredentialKeyHealth(row: {
+  keyHealthStatus?: string | null;
+  keyHealthCheckedAt?: Date | string | null;
+}): Pick<ModelCredential, "keyHealth"> {
+  const { keyHealthStatus, keyHealthCheckedAt } = row;
+  if (!keyHealthStatus || !KEY_HEALTH_STATUSES.has(keyHealthStatus) || !keyHealthCheckedAt) {
+    return {};
+  }
+  const checkedAt =
+    keyHealthCheckedAt instanceof Date ? keyHealthCheckedAt.toISOString() : keyHealthCheckedAt;
+  if (Number.isNaN(Date.parse(checkedAt))) return {};
+  return { keyHealth: { status: keyHealthStatus as KeyHealthStatus, checkedAt } };
+}
+
 export function modelCredentialDto(
   row: {
     id: string;
@@ -315,6 +339,9 @@ export function modelCredentialDto(
     defaultModel?: string | null;
     thinkingLevel?: string | null;
     supportsImages?: boolean;
+    /** Last persisted key-health probe outcome; absent until first checked. */
+    keyHealthStatus?: string | null;
+    keyHealthCheckedAt?: Date | string | null;
   },
   plaintext?: string,
 ): ModelCredential {
@@ -328,6 +355,7 @@ export function modelCredentialDto(
     // Space-scoped effort stored beside the preference's modelId; the
     // openai-compatible secret may still contribute below when unset.
     ...(row.thinkingLevel ? { thinkingLevel: row.thinkingLevel as ThinkingLevel } : {}),
+    ...modelCredentialKeyHealth(row),
   };
   if (row.provider !== CONTRACT_OPENAI_COMPAT) {
     if (!plaintext) return credential;

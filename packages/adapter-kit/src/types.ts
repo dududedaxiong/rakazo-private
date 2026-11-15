@@ -627,6 +627,16 @@ export interface AgentRunRequest {
   /** Persist the selected backup against the active run lease before requesting it. */
   /** `computerMode` is set when the switch enters computer mode rather than changing the run's model. */
   onModelChange?: (provider: string, modelId: string, computerMode?: boolean) => Promise<void>;
+  /**
+   * Notice that the runtime is switching to a backup model, so the caller
+   * can tell the user. `stalled` means the previous model went quiet
+   * instead of erroring. Only called when a switch really happens.
+   */
+  onModelSwitchProgress?: (notice: {
+    fromModelId: string;
+    toModelId: string;
+    stalled: boolean;
+  }) => void | Promise<void>;
   /** Resolve an explicitly requested helper model within the active user and space scope. */
   resolveModel?: (provider: string, modelId: string) => Promise<AgentRunModel>;
   resumeFromCheckpoint?: string;

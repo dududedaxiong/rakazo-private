@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { Id, ThinkingLevelSchema } from "./ids.js";
+import { Id, IsoDate, ThinkingLevelSchema } from "./ids.js";
 import { ModelHeadersSchema } from "./model-headers.js";
 import { SettingsScopeSchema } from "./settings-scope.js";
 
@@ -154,6 +154,31 @@ export const ModelHealthReportSchema = z.object({
 });
 export type ModelHealthReport = z.infer<typeof ModelHealthReportSchema>;
 
+/** The outcome of probing one connection's key against its models list. */
+export const KeyHealthStatusSchema = z.enum([
+  "ok",
+  "invalid_key",
+  "unreachable",
+  "timeout",
+  "unsupported",
+]);
+export type KeyHealthStatus = z.infer<typeof KeyHealthStatusSchema>;
+
+/** A persisted probe outcome: only the status and when it was checked. */
+export const ModelKeyHealthSchema = z.object({
+  status: KeyHealthStatusSchema,
+  checkedAt: IsoDate,
+});
+export type ModelKeyHealth = z.infer<typeof ModelKeyHealthSchema>;
+
+/** One connection's probe result, as a key-health check returns it. */
+export const ModelKeyHealthResultSchema = ModelKeyHealthSchema.extend({
+  credentialId: Id,
+  /** Models the list returned; absent when no list was read. */
+  modelCount: z.number().int().nonnegative().optional(),
+});
+export type ModelKeyHealthResult = z.infer<typeof ModelKeyHealthResultSchema>;
+
 export const ModelCredentialSchema = z.object({
   /** Computed space preference order; credentials themselves remain newest first. */
   preferenceRank: z.number().int().nonnegative().optional(),
@@ -190,6 +215,8 @@ export const ModelCredentialSchema = z.object({
    * owner has to sign in again. Model choices on this connection are kept.
    */
   reconnectRequired: z.boolean().optional(),
+  /** Last key-health probe outcome, persisted; absent until first checked. */
+  keyHealth: ModelKeyHealthSchema.optional(),
 });
 export type ModelCredential = z.infer<typeof ModelCredentialSchema>;
 

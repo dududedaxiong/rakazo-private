@@ -8,6 +8,7 @@ import {
   expandSkillReferencesInPrompt,
   formatSkillRunPrompt,
   formatSkillsCatalogInstruction,
+  isBackgroundRunTrigger,
   isCallClientNonce,
   isMessagingChannelRun,
   isOwnerStartedRun,
@@ -1915,6 +1916,27 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 }
                 activeModel["model.provider"] = provider;
                 activeModel["model.id"] = modelId;
+              },
+              onModelSwitchProgress: async ({ fromModelId, toModelId, stalled }) => {
+                // Routine and background runs have no live thread to show this
+                // on; the switch itself still happens. The notice is
+                // fire-and-forget, so it can never stall the switch.
+                if (run.trigger === "routine" || isBackgroundRunTrigger(run.trigger)) return;
+                await deps.events
+                  .append({
+                    spaceId: run.spaceId,
+                    threadId: thread.id,
+                    botId: bot.id,
+                    type: "thread.progress",
+                    runId,
+                    payload: {
+                      text: stalled
+                        ? `${fromModelId} 长时间无响应，正在切换到备用模型 ${toModelId}…`
+                        : `${fromModelId} 失败，正在切换到备用模型 ${toModelId}…`,
+                      activity: true,
+                    },
+                  })
+                  .catch(() => undefined);
               },
               resumeFromCheckpoint: takeoverResume?.checkpoint,
               turnCheckpoint,
