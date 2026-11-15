@@ -124,12 +124,16 @@ describe("translateBotMessage", () => {
       sourceLanguage: "auto",
       targetLanguage: "auto",
     });
-    expect(mocks.rpc).toHaveBeenCalledWith("bots/translate", {
-      botId: "bot-1",
-      text: "Hello",
-      sourceLanguage: "auto",
-      targetLanguage: "en",
-    });
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      "bots/translate",
+      {
+        botId: "bot-1",
+        text: "Hello",
+        sourceLanguage: "auto",
+        targetLanguage: "en",
+      },
+      { timeoutMs: 60_000 },
+    );
     expect(result.translatedText).toBe("你好");
   });
 
@@ -152,12 +156,16 @@ describe("translateBotMessage", () => {
       },
       "zh-CN",
     );
-    expect(mocks.rpc).toHaveBeenCalledWith("bots/translate", {
-      botId: "bot-1",
-      text: "Hello",
-      sourceLanguage: "en",
-      targetLanguage: "fr",
-    });
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      "bots/translate",
+      {
+        botId: "bot-1",
+        text: "Hello",
+        sourceLanguage: "en",
+        targetLanguage: "fr",
+      },
+      { timeoutMs: 60_000 },
+    );
     expect(mocks.deviceLanguage).not.toHaveBeenCalled();
   });
 });

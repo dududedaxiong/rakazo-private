@@ -137,6 +137,14 @@ export type BotTranslationResult = {
 };
 
 /**
+ * The translate RPC outlives the default 8s RPC timeout: the server allows
+ * 30s per model attempt and retries across the fallback chain, so a slow
+ * translation would otherwise abort at 8s and read as "could not reach the
+ * server" while the web (which has no such timeout) succeeds.
+ */
+export const TRANSLATE_RPC_TIMEOUT_MS = 60_000;
+
+/**
  * Translates one message through rpc.bots.translate, resolving an "auto"
  * target from the system language first; an "auto" source goes to the
  * server as-is for the model to detect. Pass `deviceTag` in tests to skip
@@ -152,10 +160,14 @@ export async function translateBotMessage(
     settings.targetLanguage,
     deviceTag ?? (await deviceLanguage()),
   );
-  return rpc("bots/translate", {
-    botId,
-    text,
-    sourceLanguage: settings.sourceLanguage,
-    targetLanguage,
-  });
+  return rpc(
+    "bots/translate",
+    {
+      botId,
+      text,
+      sourceLanguage: settings.sourceLanguage,
+      targetLanguage,
+    },
+    { timeoutMs: TRANSLATE_RPC_TIMEOUT_MS },
+  );
 }
