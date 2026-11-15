@@ -1547,6 +1547,18 @@ export const VoiceCatalogEntrySchema = z.object({
   speechModel: z.boolean().optional(),
   /** The provider can list its voices for one language, so the picker may offer a filter. */
   languages: z.boolean().optional(),
+  /**
+   * A hosted OpenAI-compatible service this entry prefills: the connection is
+   * stored under that provider. A preset without a speech model only transcribes.
+   */
+  preset: z
+    .object({
+      provider: z.string(),
+      baseUrl: z.string(),
+      sttModel: z.string().optional(),
+      ttsModel: z.string().optional(),
+    })
+    .optional(),
 });
 export type VoiceCatalogEntry = z.infer<typeof VoiceCatalogEntrySchema>;
 

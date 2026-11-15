@@ -1,3 +1,4 @@
+import type { VoiceCatalogEntry } from "./domain.js";
 import type { CompatibleEndpointPreset, ModelCatalogEntry } from "./model-connections.js";
 
 /** Every hosted service the catalog offers for compatible connections. */
@@ -8,6 +9,24 @@ export function compatibleEndpointPresets(
   const presets = catalog.flatMap((entry) => entry.endpointPresets ?? []);
   return presets.filter(
     (preset, index) => presets.findIndex((other) => other.baseUrl === preset.baseUrl) === index,
+  );
+}
+
+/** The preset entry behind a saved compatible voice connection, if its address matches one. */
+export function matchVoicePresetEntry(
+  catalog: readonly VoiceCatalogEntry[],
+  provider: string | null | undefined,
+  endpoint: string | undefined,
+): VoiceCatalogEntry | undefined {
+  if (!provider || !endpoint) return undefined;
+  let normalized: string;
+  try {
+    normalized = normalizeOpenAiCompatibleBaseUrl(endpoint);
+  } catch {
+    return undefined;
+  }
+  return catalog.find(
+    (entry) => entry.preset?.provider === provider && entry.preset.baseUrl === normalized,
   );
 }
 

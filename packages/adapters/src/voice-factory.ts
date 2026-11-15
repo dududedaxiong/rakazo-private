@@ -46,6 +46,17 @@ export const VOICE_CATALOG = [
     languages: true,
   },
   {
+    id: "groq",
+    name: "Groq",
+    description: "Fast Whisper transcription.",
+    transcribe: true,
+    preset: {
+      provider: OPENAI_COMPATIBLE_VOICE_PROVIDER_ID,
+      baseUrl: "https://api.groq.com/openai/v1",
+      sttModel: "whisper-large-v3-turbo",
+    },
+  },
+  {
     id: OPENAI_COMPATIBLE_VOICE_PROVIDER_ID,
     name: "Third-party model",
     description: "Any OpenAI-compatible speech server, like Kokoro or Whisper.",
@@ -65,12 +76,19 @@ export function scriptedVoiceEnabled() {
 export function listVoiceCatalog(
   options: { allowPrivateEndpoint?: boolean } = {},
 ): VoiceCatalogEntry[] {
-  const catalog = VOICE_CATALOG.filter(
-    (entry) =>
+  // A preset is a hosted service on the compatible provider: it shows only
+  // where public hosts are allowed, while the compatible row itself also
+  // shows for a private endpoint the operator allows.
+  const catalog = VOICE_CATALOG.filter((entry) => {
+    if (entry.preset?.provider === OPENAI_COMPATIBLE_VOICE_PROVIDER_ID) {
+      return openAiCompatAllowPublicHosts();
+    }
+    return (
       entry.id !== OPENAI_COMPATIBLE_VOICE_PROVIDER_ID ||
       options.allowPrivateEndpoint === true ||
-      openAiCompatAllowPublicHosts(),
-  );
+      openAiCompatAllowPublicHosts()
+    );
+  });
   return [
     ...(macOsSayAvailable() ? [MACOS_VOICE_CATALOG_ENTRY] : []),
     ...catalog,
@@ -94,7 +112,9 @@ export function createVoiceProvider(
   kind: string,
   options: { allowPrivateEndpoint?: boolean } = {},
 ): VoiceProvider {
-  switch (kind) {
+  // A preset entry is only a shortcut: the connection runs on its provider.
+  const resolved = VOICE_CATALOG.find((entry) => entry.id === kind)?.preset?.provider ?? kind;
+  switch (resolved) {
     case "elevenlabs":
       return new ElevenLabsVoiceProvider();
     case "openai":

@@ -54,6 +54,7 @@ describe("createVoiceProvider", () => {
       "openai",
       "cartesia",
       "fish-audio",
+      "groq",
       "openai-compatible",
     ]);
     expect(listVoiceCatalog().map((entry) => entry.id)).toEqual([
@@ -62,6 +63,18 @@ describe("createVoiceProvider", () => {
       "cartesia",
       "fish-audio",
     ]);
+    expect(VOICE_CATALOG.find((entry) => entry.id === "groq")).toMatchObject({
+      name: "Groq",
+      transcribe: true,
+      preset: {
+        provider: "openai-compatible",
+        baseUrl: "https://api.groq.com/openai/v1",
+        sttModel: "whisper-large-v3-turbo",
+      },
+    });
+    // A preset entry is only a shortcut: the connection runs on its provider.
+    expect(createVoiceProvider("groq").describe().id).toBe("openai-compatible");
+    expect(isVoiceProviderId("groq")).toBe(true);
     expect(createVoiceProvider("elevenlabs").describe().id).toBe("elevenlabs");
     expect(createVoiceProvider("openai").describe().capabilities.transcribe).toBe(true);
     expect(createVoiceProvider("cartesia").describe().capabilities.transcribe).toBe(false);
@@ -77,13 +90,19 @@ describe("createVoiceProvider", () => {
   it("shows self-hosted speech only when the operator allows custom endpoints", () => {
     vi.stubEnv("RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC", "0");
     expect(listVoiceCatalog().some((entry) => entry.id === "openai-compatible")).toBe(false);
+    expect(listVoiceCatalog().some((entry) => entry.id === "groq")).toBe(false);
     expect(
       listVoiceCatalog({ allowPrivateEndpoint: true }).some(
         (entry) => entry.id === "openai-compatible",
       ),
     ).toBe(true);
+    // A preset is a public hosted service, so a private allowance alone does not show it.
+    expect(
+      listVoiceCatalog({ allowPrivateEndpoint: true }).some((entry) => entry.id === "groq"),
+    ).toBe(false);
     vi.stubEnv("RAKAZO_OPENAI_COMPAT_ALLOW_PUBLIC", "");
     expect(listVoiceCatalog().some((entry) => entry.id === "openai-compatible")).toBe(true);
+    expect(listVoiceCatalog().some((entry) => entry.id === "groq")).toBe(true);
   });
 
   it("adds the scripted fixture only when the agent runtime is scripted", () => {

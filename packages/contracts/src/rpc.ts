@@ -1762,7 +1762,17 @@ export const appContract = {
           full: z.boolean().optional(),
         }),
       )
-      .output(z.object({ ready: z.boolean(), utterances: z.array(z.string()) })),
+      .output(
+        z.object({
+          ready: z.boolean(),
+          utterances: z.array(z.string()),
+          /**
+           * The resolved connection only transcribes; the caller reads aloud
+           * with a local voice instead of asking it to speak.
+           */
+          transcribeOnly: z.boolean().optional(),
+        }),
+      ),
   },
   externalConversations: {
     updatePolicy: oc

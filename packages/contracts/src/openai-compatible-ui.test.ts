@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   compatibleEndpointPresets,
   matchCompatibleEndpointPreset,
+  matchVoicePresetEntry,
   normalizeOpenAiCompatibleBaseUrl,
   openAiCompatibleConnectReady,
   savedCompatibleEndpointMatches,
@@ -113,4 +114,45 @@ it.each(["", "https://", "https://other.test", "https://hosted.example.test/v2"]
 );
 it("does not match a missing saved endpoint", () => {
   expect(savedCompatibleEndpointMatches(PRESET_BASE_URL, undefined)).toBe(false);
+});
+
+describe("matchVoicePresetEntry", () => {
+  const catalog = [
+    {
+      id: "groq",
+      name: "Groq",
+      description: "Fast Whisper transcription.",
+      transcribe: true,
+      preset: {
+        provider: "openai-compatible",
+        baseUrl: "https://api.groq.com/openai/v1",
+        sttModel: "whisper-large-v3-turbo",
+      },
+    },
+    {
+      id: "openai-compatible",
+      name: "Third-party model",
+      description: "",
+      transcribe: true,
+    },
+  ];
+
+  it.each([
+    "https://api.groq.com/openai/v1",
+    "https://api.groq.com/openai/v1/",
+    "https://api.groq.com/openai",
+  ])("matches the saved Groq address %s", (endpoint) => {
+    expect(matchVoicePresetEntry(catalog, "openai-compatible", endpoint)?.id).toBe("groq");
+  });
+
+  it.each([
+    [undefined, "https://api.groq.com/openai/v1"],
+    ["openai-compatible", undefined],
+    ["openai-compatible", "not a url"],
+    ["openai-compatible", "https://api.groq.com/openai/v2"],
+    ["openai-compatible", "https://other.example.test/v1"],
+    ["elevenlabs", "https://api.groq.com/openai/v1"],
+  ])("matches no preset entry for %s / %s", (provider, endpoint) => {
+    expect(matchVoicePresetEntry(catalog, provider, endpoint)).toBeUndefined();
+  });
 });
