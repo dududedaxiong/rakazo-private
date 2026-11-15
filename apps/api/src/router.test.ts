@@ -5220,6 +5220,14 @@ describe("provider model health check", () => {
     expect(JSON.stringify(report)).not.toContain("fake-saved-key");
   });
 
+  it("probes only the requested model when a modelId is given", async () => {
+    const { client } = fixture();
+    const report = await client.models.testProvider({ credentialId: "cred-1", modelId: "good" });
+    expect(report.total).toBe(1);
+    expect(report.ok).toEqual(["good"]);
+    expect(report.results.map((result) => result.model)).toEqual(["good"]);
+  });
+
   it("lists models from the server when the connection has no enabled list", async () => {
     const { client } = fixture({
       stored: JSON.stringify({ kind: "openai_compatible", baseUrl, apiKey: "fake-saved-key" }),

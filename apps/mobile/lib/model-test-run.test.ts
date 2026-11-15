@@ -79,12 +79,12 @@ function harness(nowMs: number) {
       map.set(key, value);
     },
   };
-  const calls: string[] = [];
+  const calls: Array<{ credentialId: string; modelId?: string }> = [];
   const pending = new Map<string, DeferredReport>();
   let active = 0;
   let maxActive = 0;
-  const testProvider = async (credentialId: string) => {
-    calls.push(credentialId);
+  const testProvider = async (credentialId: string, _signal: AbortSignal, modelId?: string) => {
+    calls.push({ credentialId, modelId });
     active += 1;
     maxActive = Math.max(maxActive, active);
     const deferred = deferredReport();
@@ -260,6 +260,9 @@ describe("model test run store", () => {
     const target = items[1]!;
     const done = h.store.retestOne(target);
     expect(h.store.getSnapshot().testingKeys.has(target.key)).toBe(true);
+    // The retest probes only that model, not the whole connection.
+    expect(h.calls.at(-1)).toEqual({ credentialId: "cred-1", modelId: "m2" });
+    expect(h.calls[0]).toEqual({ credentialId: "cred-1", modelId: undefined });
     h.pending.get("cred-1")?.resolve(reportFor([{ model: "m2", state: "ok", seconds: 1.5 }]));
     await expect(done).resolves.toBe(true);
     await flush();

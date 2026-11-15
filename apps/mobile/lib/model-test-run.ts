@@ -50,7 +50,12 @@ const MODEL_TEST_RUN_STORAGE_KEY = "rakazo.model-test-run";
 const PERSISTED_VERSION = 1;
 
 export type ModelTestRunDeps = {
-  testProvider: (credentialId: string, signal: AbortSignal) => Promise<ModelHealthReport>;
+  /** Probes a connection; with a modelId only that model is probed. */
+  testProvider: (
+    credentialId: string,
+    signal: AbortSignal,
+    modelId?: string,
+  ) => Promise<ModelHealthReport>;
   storage: {
     getItemAsync: (key: string) => Promise<string | null>;
     setItemAsync: (key: string, value: string) => Promise<void>;
@@ -511,7 +516,7 @@ export function createModelTestRunStore(deps: ModelTestRunDeps) {
     const controller = new AbortController();
     setSnapshot({ ...snapshot, testingKeys: new Set([...snapshot.testingKeys, item.key]) });
     try {
-      const report = await deps.testProvider(item.credentialId, controller.signal);
+      const report = await deps.testProvider(item.credentialId, controller.signal, item.modelId);
       const current = getSnapshot();
       if (current.status === "running" || !current.testingKeys.has(item.key)) return false;
       const row = report.results.find((entry) => entry.model === item.modelId);
@@ -584,12 +589,11 @@ let singleton: ModelTestRunStore | null = null;
 /** The shared run the picker sheet drives; created once with the live RPC and storage. */
 export function getModelTestRunStore(): ModelTestRunStore {
   singleton ??= createModelTestRunStore({
-    testProvider: (credentialId, signal) =>
-      rpc(
-        "models/testProvider",
-        { credentialId },
-        { timeoutMs: MODEL_TEST_RUN_TIMEOUT_MS, signal },
-      ),
+    testProvider: (credentialId, signal, modelId) =>
+      rpc("models/testProvider", modelId ? { credentialId, modelId } : { credentialId }, {
+        timeoutMs: MODEL_TEST_RUN_TIMEOUT_MS,
+        signal,
+      }),
     storage: SecureStore,
   });
   return singleton;

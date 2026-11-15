@@ -340,7 +340,13 @@ export function modelsRoutes(ctx: RouterContext) {
               headers: parsed.headers,
               apiProtocol: parsed.apiProtocol,
               authMode: parsed.authMode,
-              models: parsed.enabledModelIds?.length ? parsed.enabledModelIds : undefined,
+              // A single-model retest probes only that model; without one the
+              // whole connection's enabled list is probed, as before.
+              models: input.modelId
+                ? [input.modelId]
+                : parsed.enabledModelIds?.length
+                  ? parsed.enabledModelIds
+                  : undefined,
             },
             compatibleEndpointPreset(parsed.baseUrl) ? deps.modelConnectionFetch : undefined,
             context.signal,

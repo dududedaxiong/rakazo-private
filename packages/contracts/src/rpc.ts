@@ -615,7 +615,9 @@ export const appContract = {
         }),
       )
       .output(z.object({ models: z.array(z.string()) })),
-    testProvider: oc.input(z.object({ credentialId: z.string() })).output(ModelHealthReportSchema),
+    testProvider: oc
+      .input(z.object({ credentialId: z.string(), modelId: z.string().optional() }))
+      .output(ModelHealthReportSchema),
     probeCatalog: oc
       .input(
         z.object({

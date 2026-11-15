@@ -2364,7 +2364,10 @@ describe("thread model picker sheet", () => {
     await act(async () => menuButton("Retest this model")!.click());
     await settleRun();
     expect(mocks.testProvider).toHaveBeenCalledTimes(2);
-    expect(mocks.testProvider).toHaveBeenLastCalledWith({ credentialId: CREDENTIAL_ID });
+    expect(mocks.testProvider).toHaveBeenLastCalledWith({
+      credentialId: CREDENTIAL_ID,
+      modelId: "vendor/model-2",
+    });
     // The retest kept the other model's result.
     expect(container.textContent).toContain("Usable · Latency 1s · Text ·");
     expect(container.textContent).toContain("No permission · 1s · Text ·");
