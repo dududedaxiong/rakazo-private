@@ -1866,6 +1866,7 @@ export const PL_MESSAGES: Record<string, string> = {
   "Add backup": "Dodaj zapasowy",
   "Add image backup": "Dodaj zapasowy model obrazu",
   "Add video backup": "Dodaj zapasowy model wideo",
+  "Add translation backup": "Dodaj zapasowy model tłumaczenia",
   "Auth method": "Metoda uwierzytelniania",
   "Connection name": "Nazwa połączenia",
   "Could not test this model": "Nie udało się przetestować tego modelu",

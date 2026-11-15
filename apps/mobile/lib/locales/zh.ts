@@ -1911,6 +1911,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Add backup": "添加备选",
   "Add video backup": "添加视频备选",
   "Add image backup": "添加图片备选",
+  "Add translation backup": "添加翻译备选",
   "Set as primary": "设为主用",
   "Test this model": "测试该模型",
   "Edit preset": "编辑预设",

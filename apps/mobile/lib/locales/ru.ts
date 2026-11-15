@@ -1915,6 +1915,7 @@ export const RU_MESSAGES: Record<string, string> = {
   "Add backup": "Добавить резервный",
   "Add image backup": "Добавить резервную модель изображений",
   "Add video backup": "Добавить резервную модель видео",
+  "Add translation backup": "Добавить резервную модель перевода",
   "Auth method": "Способ аутентификации",
   "Connection name": "Имя подключения",
   "Could not test this model": "Не удалось проверить эту модель",

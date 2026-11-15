@@ -84,6 +84,7 @@ import {
   useThreadVoiceCall,
 } from "../../lib/thread-voice";
 import { liveEndRunError } from "../../lib/thread-window";
+import { translationSettingsFromBot } from "../../lib/translation";
 import { getVoicePlaybackState, stopVoicePlayback, subscribeVoicePlayback } from "../../lib/voice";
 import { ChatTitleHero, chatTitleHeroHeight } from "../chat-title-hero";
 import { FailedSendBubble } from "../failed-send-bubble";
@@ -177,6 +178,8 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   // The media models saved from the sheet, until the chat's bot list catches up with it.
   const [videoOverride, setVideoOverride] = useState<ThreadModelSave | null>(null);
   const [imageOverride, setImageOverride] = useState<ThreadModelSave | null>(null);
+  // The translation model saved from the sheet, until the chat's bot list catches up with it.
+  const [translationOverride, setTranslationOverride] = useState<ThreadModelSave | null>(null);
   const [mediaOpen, setMediaOpen] = useState(false);
   // The computer model, fetched here so the shortcut row and the bot menu share one picker.
   const [computerChoice, setComputerChoice] = useState<ModelRoleChoice | null>(null);
@@ -1037,6 +1040,11 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   const imagePrimary = primaryBotModel(currentBot?.imageModels);
   const imageProvider = imageOverride !== null ? imageOverride.provider : imagePrimary?.provider;
   const imageModelId = imageOverride !== null ? imageOverride.modelId : imagePrimary?.model;
+  const translationSettings = translationSettingsFromBot(currentBot);
+  const translationProvider =
+    translationOverride !== null ? translationOverride.provider : translationSettings.modelProvider;
+  const translationModelId =
+    translationOverride !== null ? translationOverride.modelId : translationSettings.modelId;
   const sheetKey =
     sheetRole === "main"
       ? mainProvider && mainModelId
@@ -1050,9 +1058,13 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
           ? imageProvider && imageModelId
             ? modelOptionKey(imageProvider, imageModelId)
             : ""
-          : computerChoice
-            ? modelOptionKey(computerChoice.provider, computerChoice.modelId)
-            : "";
+          : sheetRole === "translation"
+            ? translationProvider && translationModelId
+              ? modelOptionKey(translationProvider, translationModelId)
+              : ""
+            : computerChoice
+              ? modelOptionKey(computerChoice.provider, computerChoice.modelId)
+              : "";
 
   return (
     <View style={{ flex: 1 }}>
@@ -1312,7 +1324,9 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
                 ? currentBot?.videoModels
                 : sheetRole === "image"
                   ? currentBot?.imageModels
-                  : undefined
+                  : sheetRole === "translation"
+                    ? currentBot?.translationModels
+                    : undefined
             }
             onClose={() => {
               setSheetRole(null);
@@ -1330,6 +1344,8 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
                 setVideoOverride(choice);
               } else if (sheetRole === "image") {
                 setImageOverride(choice);
+              } else if (sheetRole === "translation") {
+                setTranslationOverride(choice);
               } else {
                 setComputerChoice(
                   choice.provider && choice.modelId
@@ -1354,6 +1370,15 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             activeImagePreset={currentBot?.activeImagePromptPreset ?? null}
             videoSaveDirectory={currentBot?.videoSaveDirectory ?? null}
             imageSaveDirectory={currentBot?.imageSaveDirectory ?? null}
+            translation={{
+              provider: translationProvider ?? null,
+              modelId: translationModelId ?? null,
+            }}
+            translationModels={currentBot?.translationModels ?? null}
+            translationSource={translationSettings.sourceLanguage}
+            translationTarget={translationSettings.targetLanguage}
+            autoTranslate={translationSettings.autoTranslate}
+            showTranslationActions={translationSettings.showTranslationActions}
             showMediaFavorite={currentBot?.showMediaFavorite ?? true}
             showMediaShare={currentBot?.showMediaShare ?? true}
             showMediaPreview={currentBot?.showMediaPreview ?? true}
@@ -1361,6 +1386,34 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             onPickRole={(role) => {
               setMediaOpen(false);
               setSheetRole(role);
+            }}
+            onPickTranslation={() => {
+              setMediaOpen(false);
+              setSheetRole("translation");
+            }}
+            onTranslationSourceChange={(source) => {
+              if (!botId) return;
+              void rpc("bots/update", { botId, translationSourceLanguage: source })
+                .then(() => refreshMentionBots())
+                .catch(() => undefined);
+            }}
+            onTranslationTargetChange={(target) => {
+              if (!botId) return;
+              void rpc("bots/update", { botId, translationTargetLanguage: target })
+                .then(() => refreshMentionBots())
+                .catch(() => undefined);
+            }}
+            onToggleAutoTranslate={(value) => {
+              if (!botId) return;
+              void rpc("bots/update", { botId, autoTranslate: value })
+                .then(() => refreshMentionBots())
+                .catch(() => undefined);
+            }}
+            onToggleTranslationActions={(value) => {
+              if (!botId) return;
+              void rpc("bots/update", { botId, showTranslationActions: value })
+                .then(() => refreshMentionBots())
+                .catch(() => undefined);
             }}
             onPickPreset={(role, name) => {
               if (!botId) return;

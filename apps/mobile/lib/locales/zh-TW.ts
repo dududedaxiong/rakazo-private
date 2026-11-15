@@ -1939,6 +1939,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Add backup": "新增備選",
   "Add image backup": "新增圖片備選",
   "Add video backup": "新增影片備選",
+  "Add translation backup": "新增翻譯備選",
   "Auth method": "驗證方式",
   "Connection name": "連線名稱",
   "Could not test this model": "無法測試此模型",

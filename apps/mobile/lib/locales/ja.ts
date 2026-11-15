@@ -1905,6 +1905,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Add backup": "バックアップを追加",
   "Add image backup": "画像のバックアップを追加",
   "Add video backup": "動画のバックアップを追加",
+  "Add translation backup": "翻訳のバックアップを追加",
   "Auth method": "認証方法",
   "Connection name": "接続名",
   "Could not test this model": "このモデルをテストできませんでした",

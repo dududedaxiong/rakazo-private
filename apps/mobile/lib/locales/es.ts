@@ -1827,6 +1827,7 @@ export const ES_MESSAGES: Record<string, string> = {
   "Add backup": "Añadir respaldo",
   "Add image backup": "Añadir respaldo de imagen",
   "Add video backup": "Añadir respaldo de vídeo",
+  "Add translation backup": "Añadir respaldo de traducción",
   "Auth method": "Método de autenticación",
   "Connection name": "Nombre de la conexión",
   "Could not test this model": "No se pudo probar este modelo",

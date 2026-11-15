@@ -12,6 +12,10 @@ const picked = vi.hoisted(() => ({
   presetsChange: null as { role: string; count: number } | null,
   saveDirectory: null as { role: string; value: string | null } | null,
   toggle: null as { action: string; value: boolean } | null,
+  translationSource: null as string | null,
+  translationTarget: null as string | null,
+  autoTranslate: null as boolean | null,
+  translationActions: null as boolean | null,
 }));
 
 vi.mock("./appearance", () => ({
@@ -22,6 +26,9 @@ vi.mock("./appearance", () => ({
     link: "#2f6bff",
   }),
 }));
+// The sheet reads translation helpers, which import the API client; the
+// client pulls expo-secure-store, which needs the native __DEV__ global.
+vi.mock("./api", () => ({ rpc: vi.fn() }));
 vi.mock("./i18n", () => ({
   useI18n: () => ({
     t: (key: string, values?: Record<string, string | number>) =>
@@ -100,6 +107,35 @@ vi.mock("../components/native-switch", () => ({
       accessibilityLabel,
     ),
 }));
+vi.mock("../components/menu-picker", () => ({
+  MenuPicker: ({
+    label,
+    choices,
+    value,
+    onChange,
+  }: {
+    label: string;
+    choices: { key: string; label: string }[];
+    value: string;
+    onChange: (key: string) => void;
+  }) =>
+    createElement(
+      "div",
+      { "aria-label": label },
+      createElement(
+        "span",
+        null,
+        `${label}: ${choices.find((choice) => choice.key === value)?.label ?? value}`,
+      ),
+      choices.map((choice) =>
+        createElement(
+          "button",
+          { key: choice.key, type: "button", onClick: () => onChange(choice.key) },
+          choice.label,
+        ),
+      ),
+    ),
+}));
 vi.mock("../components/thread/prompt-preset-section", () => ({
   PromptPresetSection: ({
     presets,
@@ -144,6 +180,8 @@ const catalog = [
   { provider: "provider-a", id: "video-b", label: "Video B", billing: "metered" },
   { provider: "provider-a", id: "video-c", label: "Video C", billing: "metered" },
   { provider: "provider-a", id: "image-a", label: "Image A", billing: "metered" },
+  { provider: "provider-a", id: "translation-a", label: "Translation A", billing: "metered" },
+  { provider: "provider-a", id: "translation-b", label: "Translation B", billing: "metered" },
 ];
 
 let root: Root;
@@ -161,6 +199,23 @@ async function mountSheet(
     activeImagePreset?: string | null;
     videoSaveDirectory?: string | null;
     imageSaveDirectory?: string | null;
+    translation?: { provider: string | null; modelId: string | null };
+    translationModels?: { provider: string; model: string }[] | null;
+    translationSource?: "auto" | "zh" | "en" | "ja" | "ko";
+    translationTarget?:
+      | "auto"
+      | "zh"
+      | "en"
+      | "ja"
+      | "ko"
+      | "fr"
+      | "de"
+      | "es"
+      | "pt"
+      | "ru"
+      | "ar";
+    autoTranslate?: boolean;
+    showTranslationActions?: boolean;
     showMediaFavorite?: boolean;
     showMediaShare?: boolean;
     showMediaPreview?: boolean;
@@ -182,12 +237,35 @@ async function mountSheet(
         activeImagePreset={options.activeImagePreset ?? null}
         videoSaveDirectory={options.videoSaveDirectory ?? null}
         imageSaveDirectory={options.imageSaveDirectory ?? null}
+        translation={options.translation ?? { provider: "provider-a", modelId: "translation-a" }}
+        translationModels={
+          options.translationModels ?? [{ provider: "provider-a", model: "translation-a" }]
+        }
+        translationSource={options.translationSource ?? "auto"}
+        translationTarget={options.translationTarget ?? "auto"}
+        autoTranslate={options.autoTranslate ?? false}
+        showTranslationActions={options.showTranslationActions ?? true}
         showMediaFavorite={options.showMediaFavorite ?? true}
         showMediaShare={options.showMediaShare ?? true}
         showMediaPreview={options.showMediaPreview ?? true}
         showMediaDownload={options.showMediaDownload ?? true}
         onPickRole={(role) => {
           picked.role = role;
+        }}
+        onPickTranslation={() => {
+          picked.role = "translation";
+        }}
+        onTranslationSourceChange={(source) => {
+          picked.translationSource = source;
+        }}
+        onTranslationTargetChange={(target) => {
+          picked.translationTarget = target;
+        }}
+        onToggleAutoTranslate={(value) => {
+          picked.autoTranslate = value;
+        }}
+        onToggleTranslationActions={(value) => {
+          picked.translationActions = value;
         }}
         onPickPreset={(role, name) => {
           picked.preset = { role, name };
@@ -213,6 +291,10 @@ beforeEach(() => {
   picked.presetsChange = null;
   picked.saveDirectory = null;
   picked.toggle = null;
+  picked.translationSource = null;
+  picked.translationTarget = null;
+  picked.autoTranslate = null;
+  picked.translationActions = null;
   node = document.createElement("div");
   document.body.append(node);
   root = createRoot(node);
@@ -262,11 +344,22 @@ describe("ThreadMediaModelSheet", () => {
           activeImagePreset={null}
           videoSaveDirectory={null}
           imageSaveDirectory={null}
+          translation={{ provider: null, modelId: null }}
+          translationModels={null}
+          translationSource="auto"
+          translationTarget="auto"
+          autoTranslate={false}
+          showTranslationActions
           showMediaFavorite
           showMediaShare
           showMediaPreview
           showMediaDownload
           onPickRole={() => {}}
+          onPickTranslation={() => {}}
+          onTranslationSourceChange={() => {}}
+          onTranslationTargetChange={() => {}}
+          onToggleAutoTranslate={() => {}}
+          onToggleTranslationActions={() => {}}
           onPickPreset={() => {}}
           onPresetsChange={() => {}}
           onSaveDirectory={() => {}}
@@ -289,9 +382,7 @@ describe("ThreadMediaModelSheet", () => {
     expect(node.textContent).toContain("2. Video B");
     expect(node.textContent).toContain("3. Video C");
     expect(node.textContent).toContain("Add video backup");
-    const fallbackRow = node.querySelector<HTMLButtonElement>(
-      '[aria-label="Backup 2: Video B"]',
-    );
+    const fallbackRow = node.querySelector<HTMLButtonElement>('[aria-label="Backup 2: Video B"]');
     expect(fallbackRow).not.toBeNull();
     await act(async () => fallbackRow!.click());
     expect(picked.role).toBe("video");
@@ -331,10 +422,8 @@ describe("ThreadMediaModelSheet", () => {
     const inputs = [...node.querySelectorAll("input")];
     // The image section comes first, so its directory input is first.
     const input = inputs[0]!;
-    const setter = Object.getOwnPropertyDescriptor(
-      window.HTMLInputElement.prototype,
-      "value",
-    )!.set!;
+    const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")!
+      .set!;
     await act(async () => {
       setter.call(input, "MyAlbum");
       input.dispatchEvent(new Event("input", { bubbles: true }));
@@ -353,5 +442,72 @@ describe("ThreadMediaModelSheet", () => {
     expect(toggle!.getAttribute("aria-pressed")).toBe("true");
     await act(async () => toggle!.click());
     expect(picked.toggle).toEqual({ action: "favorite", value: false });
+  });
+
+  it("puts the translation section after video and before the actions", async () => {
+    await mountSheet();
+    const text = node.textContent ?? "";
+    expect(text).toContain("Translation settings");
+    expect(text).toContain("Translation model");
+    expect(text).toContain("Translation A");
+    expect(
+      text.indexOf("Image generation settings") < text.indexOf("Video generation settings") &&
+        text.indexOf("Video generation settings") < text.indexOf("Translation settings") &&
+        text.indexOf("Translation settings") < text.indexOf("Generated media actions"),
+    ).toBe(true);
+  });
+
+  it("numbers translation fallbacks and opens its picker on tap", async () => {
+    await mountSheet({
+      translationModels: [
+        { provider: "provider-a", model: "translation-a" },
+        { provider: "provider-a", model: "translation-b" },
+      ],
+    });
+    expect(node.textContent).toContain("2. Translation B");
+    expect(node.textContent).toContain("Add translation backup");
+    const translationRow = node.querySelector<HTMLButtonElement>(
+      '[aria-label="Translation model: Translation A"]',
+    );
+    expect(translationRow).not.toBeNull();
+    await act(async () => translationRow!.click());
+    expect(picked.role).toBe("translation");
+  });
+
+  it("shows the translation direction and picks a source language", async () => {
+    await mountSheet();
+    expect(node.textContent).toContain("Translation direction");
+    expect(node.textContent).toContain("自动检测 → 自动");
+    const chip = node.querySelector<HTMLButtonElement>('[aria-label="中文"]');
+    expect(chip).not.toBeNull();
+    await act(async () => chip!.click());
+    expect(picked.translationSource).toBe("zh");
+  });
+
+  it("picks a target language", async () => {
+    await mountSheet();
+    expect(node.textContent).toContain("Target language: 自动（跟随系统语言）");
+    const option = [...node.querySelectorAll("button")].find(
+      (button) => button.textContent === "法语",
+    );
+    expect(option).not.toBeUndefined();
+    await act(async () => option!.click());
+    expect(picked.translationTarget).toBe("fr");
+  });
+
+  it("toggles auto-translate and translation actions", async () => {
+    await mountSheet({ autoTranslate: false, showTranslationActions: true });
+    const autoToggle = node.querySelector<HTMLButtonElement>('[aria-label="Auto-translate"]');
+    expect(autoToggle).not.toBeNull();
+    expect(autoToggle!.getAttribute("aria-pressed")).toBe("false");
+    await act(async () => autoToggle!.click());
+    expect(picked.autoTranslate).toBe(true);
+    const actionsToggle = node.querySelector<HTMLButtonElement>(
+      '[aria-label="Show read-aloud, share, and favorite on translations"]',
+    );
+    expect(actionsToggle).not.toBeNull();
+    expect(actionsToggle!.getAttribute("aria-pressed")).toBe("true");
+    await act(async () => actionsToggle!.click());
+    expect(picked.translationActions).toBe(false);
   });
 });

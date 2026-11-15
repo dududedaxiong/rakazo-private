@@ -1889,6 +1889,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Add backup": "Backup hinzufügen",
   "Add image backup": "Bild-Backup hinzufügen",
   "Add video backup": "Video-Backup hinzufügen",
+  "Add translation backup": "Übersetzungs-Backup hinzufügen",
   "Auth method": "Authentifizierungsmethode",
   "Connection name": "Verbindungsname",
   "Could not test this model": "Dieses Modell konnte nicht getestet werden",

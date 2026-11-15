@@ -1873,6 +1873,7 @@ export const NL_MESSAGES: Record<string, string> = {
   "Add backup": "Back-up toevoegen",
   "Add image backup": "Afbeeldingsback-up toevoegen",
   "Add video backup": "Videoback-up toevoegen",
+  "Add translation backup": "Vertalingsback-up toevoegen",
   "Auth method": "Authenticatiemethode",
   "Connection name": "Verbindingsnaam",
   "Could not test this model": "Dit model kon niet worden getest",
