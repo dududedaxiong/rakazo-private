@@ -1,10 +1,16 @@
 import * as Clipboard from "expo-clipboard";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ViewStyle } from "react-native";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 import { rpc } from "../../lib/api";
 import { useI18n } from "../../lib/i18n";
 import { shareMessageText } from "../../lib/message-context-menu";
+import {
+  describeModelError,
+  modelErrorActionKinds,
+  modelErrorActionLabel,
+  modelErrorSummary,
+} from "../../lib/model-error";
 import { finalSwitchAttempt, translationModelSwitches } from "../../lib/model-switches";
 import { useMobileTokens, useResolvedAppearance } from "../../lib/native";
 import type {
@@ -284,13 +290,79 @@ export function MessageTranslationView({
   modelProvider?: string | null;
   onShowTimeline?: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const tokens = useMobileTokens();
   const colorScheme = useResolvedAppearance();
   const blue = colorScheme === "dark" ? tokens.link : "#2f6bff";
   const background = colorScheme === "dark" ? tokens.accent : "#e8f1ff";
   const { status, result, error, expanded } = translation;
   const [languageSheetOpen, setLanguageSheetOpen] = useState(false);
+  const [keyChecking, setKeyChecking] = useState(false);
+  const [errorDetailsOpen, setErrorDetailsOpen] = useState(false);
+  // The failure in plain language, and the button that fixes its class.
+  // Retrying an invalid key or a missing model cannot help, so those offer
+  // the fix instead; a transient failure keeps its retry.
+  const translationErrorSummary = error ? modelErrorSummary(t, error, locale, false) : null;
+  const translationErrorKey = error ? describeModelError(error).key : "unknown";
+  // The key check and the provider settings live behind a tap, so their
+  // modules (API layer, router) load only then — the message row itself
+  // stays light enough to render without them.
+  const testTranslationKey = () => {
+    if (!modelProvider || keyChecking) return;
+    setKeyChecking(true);
+    void (async () => {
+      try {
+        const { checkKeyForProvider } = await import("../../lib/key-health");
+        const checked = await checkKeyForProvider(modelProvider);
+        if (!checked) {
+          Alert.alert(t("Could not check this key"));
+          return;
+        }
+        const { keyCheckAlert } = await import("../../lib/model-error-alert");
+        keyCheckAlert(t, checked.result);
+      } catch (err) {
+        Alert.alert(t("Could not check this key"), errorText(err, t("Try again.")));
+      } finally {
+        setKeyChecking(false);
+      }
+    })();
+  };
+  const translationErrorActions: { label: string; onPress: () => void; busy?: boolean }[] = [];
+  for (const kind of modelErrorActionKinds(translationErrorKey)) {
+    if (kind === "test-key") {
+      if (modelProvider)
+        translationErrorActions.push({
+          label: modelErrorActionLabel(t, kind),
+          onPress: testTranslationKey,
+          busy: keyChecking,
+        });
+    } else if (kind === "switch-provider") {
+      translationErrorActions.push({
+        label: modelErrorActionLabel(t, kind),
+        onPress: () => {
+          void import("../../lib/model-settings").then(({ openModelSettings }) =>
+            openModelSettings(),
+          );
+        },
+      });
+    } else if (kind === "change-model") {
+      if (onSwitchModel)
+        translationErrorActions.push({
+          label: modelErrorActionLabel(t, kind),
+          onPress: onSwitchModel,
+        });
+    } else if (kind === "try-later" || kind === "check-network") {
+      translationErrorActions.push({
+        label: modelErrorActionLabel(t, kind),
+        onPress: () => translation.collapse(),
+      });
+    } else if (kind === "retry") {
+      translationErrorActions.push({
+        label: modelErrorActionLabel(t, kind),
+        onPress: () => translation.translate(),
+      });
+    }
+  }
 
   if (!expanded || status === "idle") return null;
 
@@ -421,17 +493,41 @@ export function MessageTranslationView({
         ) : status === "error" ? (
           <>
             <Text style={{ color: tokens.destructive, fontSize: 14 }}>
-              {error ?? t("Translation failed. Try again.")}
+              {translationErrorSummary ?? t("Translation failed. Try again.")}
             </Text>
-            <View style={{ flexDirection: "row", gap: 16, marginTop: 10 }}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={t("Retry")}
-                onPress={() => translation.translate()}
-                hitSlop={8}
+            {errorDetailsOpen && error ? (
+              <Text
+                selectable
+                style={{ color: tokens.mutedForeground, fontSize: 13, marginTop: 8 }}
               >
-                <Text style={{ color: blue, fontSize: 14 }}>{t("Retry")}</Text>
-              </Pressable>
+                {error}
+              </Text>
+            ) : null}
+            <View style={{ flexDirection: "row", gap: 16, marginTop: 10, flexWrap: "wrap" }}>
+              {translationErrorActions.map((action) => (
+                <Pressable
+                  key={action.label}
+                  accessibilityRole="button"
+                  accessibilityLabel={action.label}
+                  disabled={action.busy}
+                  onPress={action.onPress}
+                  hitSlop={8}
+                >
+                  <Text style={{ color: blue, fontSize: 14, opacity: action.busy ? 0.5 : 1 }}>
+                    {action.label}
+                  </Text>
+                </Pressable>
+              ))}
+              {translationErrorKey === "unknown" && error ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("Details")}
+                  onPress={() => setErrorDetailsOpen((open) => !open)}
+                  hitSlop={8}
+                >
+                  <Text style={{ color: blue, fontSize: 14 }}>{t("Details")}</Text>
+                </Pressable>
+              ) : null}
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel={t("Collapse")}

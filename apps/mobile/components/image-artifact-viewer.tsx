@@ -20,6 +20,7 @@ import type { ImageSize } from "../lib/inline-image";
 import { fitImageSize } from "../lib/inline-image";
 import { saveGeneratedMedia } from "../lib/media-folders";
 import { regenerateMedia } from "../lib/media-supplementary";
+import { showModelErrorAlert } from "../lib/model-error-alert";
 import { iosAtLeast } from "../lib/native-controls";
 import { errorText } from "../lib/user-error";
 import { GlassIconButton } from "./glass-icon-button";
@@ -241,7 +242,7 @@ export function ImageArtifactViewer({
   showShare?: boolean;
   onClose: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const tokens = mobileTokens();
   const insets = useSafeAreaInsets();
   const dismissY = useSharedValue(0);
@@ -331,9 +332,7 @@ export function ImageArtifactViewer({
         }
         setReloadKey((key) => key + 1);
       })
-      .catch((error: unknown) =>
-        Alert.alert(t("Could not regenerate"), errorText(error, t("Try again."))),
-      )
+      .catch((error: unknown) => showModelErrorAlert(t, error, { retry: regenerate, locale }))
       .finally(() => setRegenerating(false));
   };
 

@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { Alert } from "react-native";
 import { rpc } from "../../lib/api";
 import type { AvailableModel, AvailableModelProbe } from "../../lib/available-model-probe";
 import {
@@ -11,10 +12,15 @@ import {
   TEST_PROVIDER_TIMEOUT_MS,
 } from "../../lib/available-model-probe";
 import { useI18n } from "../../lib/i18n";
+import { checkKeyForProvider } from "../../lib/key-health";
 import type { MobileSnapshot } from "../../lib/mobile-types";
+import type { ModelErrorActionKind } from "../../lib/model-error";
+import { describeModelError, modelErrorActionLabel } from "../../lib/model-error";
+import { keyCheckAlert } from "../../lib/model-error-alert";
 import { openModelSettings } from "../../lib/model-settings";
 import { getModelTestRunStore } from "../../lib/model-test-run";
 import { runErrorActionLabel } from "../../lib/run-error-presentation";
+import { errorText } from "../../lib/user-error";
 import { useRunError } from "../run-error-sheet";
 
 type ProbeState = Pick<AvailableModelProbe, "status" | "models">;
@@ -45,25 +51,96 @@ export function useThreadRunError(
   const handled = handledRunId !== null && handledRunId === failedRunId;
   const label = normalizedRunError ? runErrorActionLabel(t, normalizedRunError) : null;
   const runBotId = run?.botId ?? botId;
-  const runErrorAction = label
-    ? {
-        label,
-        // Without a bot to change, the model settings pick the default model instead.
-        onPress:
-          normalizedRunError?.recovery === "model" && runBotId
-            ? () => {
-                setDetailsOpen(false);
-                router.push({
-                  pathname: "/bot-settings",
-                  params: { botId: runBotId, focus: "model" },
-                });
-              }
-            : () => {
-                setDetailsOpen(false);
-                openModelSettings();
-              },
-      }
-    : null;
+  // The plain-language class of the failure: it picks the button the shared
+  // classifier's recovery misses — a quota is fixed by switching provider,
+  // and a transient failure still offers another model.
+  const describedKey = runError ? describeModelError(runError).key : null;
+  const openModelPicker = useCallback(() => {
+    setDetailsOpen(false);
+    if (runBotId)
+      router.push({ pathname: "/bot-settings", params: { botId: runBotId, focus: "model" } });
+    else openModelSettings();
+  }, [router, runBotId]);
+  const runErrorAction =
+    describedKey === "quota"
+      ? {
+          label: t("Switch provider"),
+          onPress: () => {
+            setDetailsOpen(false);
+            openModelSettings();
+          },
+        }
+      : describedKey === "rate_limited" ||
+          describedKey === "timeout" ||
+          describedKey === "connection"
+        ? { label: t("Change model"), onPress: openModelPicker }
+        : label
+          ? {
+              label,
+              // Without a bot to change, the model settings pick the default model instead.
+              onPress:
+                normalizedRunError?.recovery === "model" && runBotId
+                  ? () => {
+                      setDetailsOpen(false);
+                      router.push({
+                        pathname: "/bot-settings",
+                        params: { botId: runBotId, focus: "model" },
+                      });
+                    }
+                  : () => {
+                      setDetailsOpen(false);
+                      openModelSettings();
+                    },
+            }
+          : null;
+  // An invalid key gets the list-probe check next to the replace action: it
+  // costs no tokens and says whether the saved key itself is the problem.
+  const [keyChecking, setKeyChecking] = useState(false);
+  const testKey = useCallback(() => {
+    if (!mainProvider || keyChecking) return;
+    setKeyChecking(true);
+    void checkKeyForProvider(mainProvider).then(
+      (checked) => {
+        setKeyChecking(false);
+        if (!checked) {
+          Alert.alert(t("Could not check this key"));
+          return;
+        }
+        keyCheckAlert(t, checked.result);
+      },
+      (err: unknown) => {
+        setKeyChecking(false);
+        Alert.alert(t("Could not check this key"), errorText(err, t("Try again.")));
+      },
+    );
+  }, [mainProvider, keyChecking, t]);
+  const runErrorExtraActions: {
+    kind: ModelErrorActionKind;
+    label: string;
+    onPress: () => void;
+    busy?: boolean;
+  }[] =
+    describedKey === "invalid_key" && mainProvider
+      ? [
+          {
+            kind: "test-key",
+            label: modelErrorActionLabel(t, "test-key"),
+            onPress: testKey,
+            busy: keyChecking,
+          },
+        ]
+      : [];
+  // A transient failure's way out of the details sheet is a labeled dismiss;
+  // the inline notice stays until the next run, so it gets no dismiss button.
+  const runErrorDismissAction: { label: string; onPress: () => void } | null =
+    describedKey === "rate_limited"
+      ? { label: modelErrorActionLabel(t, "try-later"), onPress: () => setDetailsOpen(false) }
+      : describedKey === "timeout" || describedKey === "connection"
+        ? {
+            label: modelErrorActionLabel(t, "check-network"),
+            onPress: () => setDetailsOpen(false),
+          }
+        : null;
 
   const probeAvailable = !handled && isProviderModelError(normalizedRunError);
   // The picker sheet's same-day test run: subscribing hydrates its stored
@@ -138,6 +215,9 @@ export function useThreadRunError(
     runError,
     normalizedRunError,
     runErrorAction,
+    runErrorExtraActions,
+    runErrorDismissAction,
+    keyChecking,
     detailsOpen,
     setDetailsOpen,
     handled,

@@ -21,6 +21,8 @@ import { SpaceBotsModel } from "../../components/space-bots-model";
 import { rpc } from "../../lib/api";
 import { mobileTokens } from "../../lib/appearance";
 import { useI18n } from "../../lib/i18n";
+import type { KeyHealth } from "../../lib/key-health";
+import { checkKeys } from "../../lib/key-health";
 import type { MobileBot, MobileModel, MobileModelCredential } from "../../lib/mobile-types";
 import type { ModelConnectionRequest } from "../../lib/model-connection-request";
 import { closeModelConnection, openModelConnection } from "../../lib/model-connection-request";
@@ -67,6 +69,9 @@ export default function Models() {
     noBots;
   const [error, setError] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [keyHealth, setKeyHealth] = useState<Map<string, KeyHealth>>(new Map());
+  const [checkingKeys, setCheckingKeys] = useState(false);
+  const checkedKeyIdsRef = useRef("");
   const openedRef = useRef(false);
   const pickerRequestRef = useRef<string | null>(null);
   const connectionRequestRef = useRef<string | null>(null);
@@ -237,6 +242,54 @@ export default function Models() {
     await load();
   }
 
+  /**
+   * Checks the visible connections with the list probe when the page opens.
+   * A failed entry never blocks the page: its row keeps the last stored
+   * health, or "not checked". Runs once per connection set.
+   */
+  const checkVisibleKeys = useCallback(async (credentialIds: string[]) => {
+    if (credentialIds.length === 0) return;
+    const key = credentialIds.join(",");
+    if (checkedKeyIdsRef.current === key) return;
+    checkedKeyIdsRef.current = key;
+    try {
+      const results = await checkKeys(credentialIds);
+      setKeyHealth((current) => {
+        const next = new Map(current);
+        for (const result of results) next.set(result.credentialId, result);
+        return next;
+      });
+    } catch {
+      // The rows fall back to their stored health; nothing here may fail the page.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (target.scope !== "account") return;
+    void checkVisibleKeys(credentials.map((entry) => entry.id));
+  }, [credentials, target.scope, checkVisibleKeys]);
+
+  /** Re-checks every connection and reloads the list for its stored health. */
+  const checkAllKeys = useCallback(async () => {
+    const credentialIds = credentials.map((entry) => entry.id);
+    if (credentialIds.length === 0 || checkingKeys) return;
+    setCheckingKeys(true);
+    try {
+      const results = await checkKeys(credentialIds);
+      checkedKeyIdsRef.current = credentialIds.join(",");
+      setKeyHealth((current) => {
+        const next = new Map(current);
+        for (const result of results) next.set(result.credentialId, result);
+        return next;
+      });
+      await load();
+    } catch (err) {
+      setError(errorText(err, t("Could not check keys")));
+    } finally {
+      setCheckingKeys(false);
+    }
+  }, [credentials, checkingKeys, load, t]);
+
   // Only the first visit waits; a revisit paints what it saw last and refreshes behind it.
   if (!me && !loadError) {
     return (
@@ -309,6 +362,9 @@ export default function Models() {
               <ModelProviders
                 catalog={catalog}
                 credentials={credentials}
+                keyHealth={keyHealth}
+                checkingKeys={checkingKeys}
+                onCheckAllKeys={() => void checkAllKeys()}
                 onManage={manage}
                 onAdd={addProvider}
                 onRename={(credential, label) =>

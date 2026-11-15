@@ -7,6 +7,9 @@ import {
 } from "@rakazo/contracts";
 import { Alert, Platform } from "react-native";
 import { useI18n } from "../lib/i18n";
+import type { KeyHealth } from "../lib/key-health";
+import { keyHealthFromCredential, keyHealthLabel } from "../lib/key-health";
+import { useMobileTokens } from "../lib/native";
 import { RowMenu } from "./model-role-settings";
 import { SettingsGroup, SettingsRow } from "./settings-group";
 
@@ -14,6 +17,9 @@ import { SettingsGroup, SettingsRow } from "./settings-group";
 export function ModelProviders({
   catalog,
   credentials,
+  keyHealth,
+  checkingKeys = false,
+  onCheckAllKeys,
   onManage,
   onAdd,
   onRename,
@@ -21,12 +27,19 @@ export function ModelProviders({
 }: {
   catalog: ModelCatalogEntry[];
   credentials: ModelCredential[];
+  /** Fresh check results for this visit; a row without one falls back to its persisted health. */
+  keyHealth?: Map<string, KeyHealth>;
+  /** A whole-list check is running; the check-all row reads busy meanwhile. */
+  checkingKeys?: boolean;
+  /** Re-checks every connection with the list probe. */
+  onCheckAllKeys?: () => void;
   onManage: (credential: ModelCredential) => void;
   onAdd: () => void;
   onRename: (credential: ModelCredential, label: string) => void;
   onDisconnect: (credential: ModelCredential) => void;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const tokens = useMobileTokens();
   const providerName = (credential: ModelCredential) =>
     catalog.find(
       (entry) =>
@@ -36,14 +49,20 @@ export function ModelProviders({
     .map((credential) => {
       const provider = providerName(credential);
       const name = connectionDisplayName(credential, provider);
+      const health = keyHealth?.get(credential.id) ?? keyHealthFromCredential(credential);
+      // Every row names its key state: a fresh check, the last stored one,
+      // or that no check has run yet.
+      const healthLine = keyHealthLabel(t, health, locale);
+      const baseDetail = credential.reconnectRequired
+        ? t("Sign in again")
+        : name.startsWith(provider)
+          ? undefined
+          : provider;
       return {
         credential,
         name,
-        detail: credential.reconnectRequired
-          ? t("Sign in again")
-          : name.startsWith(provider)
-            ? undefined
-            : provider,
+        detail: baseDetail ? `${baseDetail} · ${healthLine.text}` : healthLine.text,
+        invalidKey: healthLine.invalid,
       };
     })
     .sort((left, right) => left.name.localeCompare(right.name));
@@ -81,7 +100,7 @@ export function ModelProviders({
 
   return (
     <SettingsGroup accessibilityLabel={t("Providers")} label={t("Providers")}>
-      {rows.map(({ credential, name, detail }) => {
+      {rows.map(({ credential, name, detail, invalidKey }) => {
         const actions: MenuAction[] = [
           ...(Platform.OS === "ios" ? [{ id: "rename", title: t("Rename") }] : []),
           {
@@ -101,6 +120,7 @@ export function ModelProviders({
               accessibilityRole="button"
               title={name}
               detail={detail}
+              detailColor={invalidKey ? tokens.destructive : undefined}
               chevron="right"
               onPress={() => onManage(credential)}
               accessibilityActions={actions.map((action) => ({
@@ -115,6 +135,14 @@ export function ModelProviders({
         );
       })}
       <SettingsRow key="add" title={t("Add provider")} onPress={onAdd} />
+      {onCheckAllKeys ? (
+        <SettingsRow
+          key="check-all"
+          title={checkingKeys ? t("Checking keys…") : t("Check all keys")}
+          onPress={onCheckAllKeys}
+          disabled={checkingKeys}
+        />
+      ) : null}
     </SettingsGroup>
   );
 }

@@ -13,6 +13,7 @@ export function ThreadErrorNotice({
   resetAt,
   onDetails,
   action,
+  extraActions,
   modelProbe,
   userId,
 }: {
@@ -22,6 +23,8 @@ export function ThreadErrorNotice({
   onDetails?: () => void;
   /** The one action that fixes the failure. */
   action?: { label: string; onPress: () => void } | null;
+  /** Further fixes for the failure class, as quiet text rows under the main one. */
+  extraActions?: { label: string; onPress: () => void; busy?: boolean }[] | null;
   /** The one-click test for another working model; null when it does not apply. */
   modelProbe?: AvailableModelProbe | null;
   /** The account whose interface settings style the error text. */
@@ -47,6 +50,7 @@ export function ThreadErrorNotice({
     (summary && error) ||
     upcomingReset ||
     action ||
+    (extraActions?.length ?? 0) > 0 ||
     modelProbe?.available ||
     (summary && onDetails);
   return (
@@ -96,6 +100,14 @@ export function ThreadErrorNotice({
             </Text>
           ) : null}
           {action ? <RunErrorAction label={action.label} onPress={action.onPress} /> : null}
+          {extraActions?.map((extra) => (
+            <RunErrorTextAction
+              key={extra.label}
+              label={extra.label}
+              onPress={extra.onPress}
+              busy={extra.busy}
+            />
+          ))}
           {modelProbe ? <ModelProbeActions probe={modelProbe} /> : null}
           {summary && onDetails ? (
             <RunErrorTextAction label={t("Details")} onPress={onDetails} />

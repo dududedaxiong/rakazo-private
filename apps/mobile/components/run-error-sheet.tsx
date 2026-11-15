@@ -5,6 +5,7 @@ import { Platform, ScrollView, Text, useWindowDimensions, View } from "react-nat
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { AvailableModelProbe } from "../lib/available-model-probe";
 import { useI18n } from "../lib/i18n";
+import { modelErrorTranslator } from "../lib/model-error";
 import { useMobileTokens } from "../lib/native";
 import { runErrorDiagnostic, runErrorWhatHappened } from "../lib/run-error-presentation";
 import { NativeSymbol } from "./native-symbol";
@@ -17,20 +18,7 @@ export function useRunError(details: string | null, includeReset = true) {
   const { t, locale } = useI18n();
   const [clockVersion, refreshClock] = useReducer((version: number) => version + 1, 0);
   const error = details
-    ? normalizeRunError(
-        details,
-        (message, values) => {
-          if (!includeReset && message === "{summary} Resets {date}.")
-            return String(values?.summary ?? "");
-          if (message === "Your OpenRouter") return "OpenRouter";
-          if (message === "Your OpenAI") return "OpenAI";
-          if (message === "Your Anthropic") return "Anthropic";
-          if (message === "Your model provider") return t("Model provider");
-          return t(message, values);
-        },
-        locale,
-        Date.now(),
-      )
+    ? normalizeRunError(details, modelErrorTranslator(t, includeReset), locale, Date.now())
     : null;
   useEffect(() => {
     if (!error?.resetAt) return;
@@ -47,12 +35,18 @@ export function RunErrorSheet({
   details,
   onClose,
   action,
+  extraActions,
+  dismissAction,
   modelProbe,
 }: {
   details: string | null;
   onClose: () => void;
   /** The one action that fixes the failure. */
   action?: { label: string; onPress: () => void } | null;
+  /** Further fixes for the failure class, as quiet text rows under the main one. */
+  extraActions?: { label: string; onPress: () => void; busy?: boolean }[] | null;
+  /** A labeled way to dismiss a transient failure. */
+  dismissAction?: { label: string; onPress: () => void } | null;
   /** The one-click test for another working model; null when it does not apply. */
   modelProbe?: AvailableModelProbe | null;
 }) {
@@ -123,7 +117,18 @@ export function RunErrorSheet({
             {runErrorWhatHappened(t, error)}
           </Text>
           {action ? <RunErrorAction label={action.label} onPress={action.onPress} /> : null}
+          {extraActions?.map((extra) => (
+            <RunErrorTextAction
+              key={extra.label}
+              label={extra.label}
+              onPress={extra.onPress}
+              busy={extra.busy}
+            />
+          ))}
           {modelProbe ? <ModelProbeActions probe={modelProbe} /> : null}
+          {dismissAction ? (
+            <RunErrorTextAction label={dismissAction.label} onPress={dismissAction.onPress} />
+          ) : null}
           <RunErrorTextAction
             label={t("Technical details")}
             expanded={technical}

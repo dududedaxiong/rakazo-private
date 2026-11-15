@@ -640,6 +640,8 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     runError,
     normalizedRunError,
     runErrorAction,
+    runErrorExtraActions,
+    runErrorDismissAction,
     detailsOpen,
     setDetailsOpen,
     handled: runErrorHandled,
@@ -1027,6 +1029,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       resetAt={visibleRunError?.resetAt}
       onDetails={() => setDetailsOpen(true)}
       action={visibleRunError ? runErrorAction : null}
+      extraActions={visibleRunError ? runErrorExtraActions : null}
       modelProbe={visibleRunError ? modelProbe : null}
       userId={userId}
     />
@@ -1517,6 +1520,8 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
           details={detailsOpen ? runError : null}
           onClose={() => setDetailsOpen(false)}
           action={runErrorAction}
+          extraActions={runErrorExtraActions}
+          dismissAction={runErrorDismissAction}
           modelProbe={modelProbe}
         />
         {quoteTarget ? (

@@ -35,6 +35,7 @@ import { t, useI18n } from "../lib/i18n";
 import { saveGeneratedMedia } from "../lib/media-folders";
 import { regenerateMedia } from "../lib/media-supplementary";
 import { presentMessageActionSheet } from "../lib/message-action-sheet";
+import { showModelErrorAlert } from "../lib/model-error-alert";
 import { native, useResolvedAppearance, useThemedStyles } from "../lib/native";
 import { iosAtLeast } from "../lib/native-controls";
 import { useSideInsets } from "../lib/side-insets";
@@ -94,7 +95,7 @@ export default function ArtifactDetailScreen() {
   const navigation = useNavigation();
   const router = useRouter();
   const headerInset = useFloatingHeaderInset();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const colorScheme = useResolvedAppearance();
   const styles = useThemedStyles(createStyles);
 
@@ -247,11 +248,9 @@ export default function ArtifactDetailScreen() {
           setSelectedVersionId(result.artifactId);
         }
       })
-      .catch((error: unknown) =>
-        Alert.alert(t("Could not regenerate"), errorText(error, t("Try again."))),
-      )
+      .catch((error: unknown) => showModelErrorAlert(t, error, { retry: regenerate, locale }))
       .finally(() => setRegenerating(false));
-  }, [content, regenerating]);
+  }, [content, locale, regenerating, t]);
 
   // The media toggles gate only image and video artifacts; documents and
   // other files always keep Share, and never show Download.

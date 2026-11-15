@@ -1913,7 +1913,12 @@ describe("several connections for one provider", () => {
     await renderModels();
     expect(
       [...section("Providers").querySelectorAll("button")].map((button) => button.textContent),
-    ).toEqual(["OpenRouter", "OpenRouter (Work)", "Add provider"]);
+    ).toEqual([
+      "OpenRouterKey not checked",
+      "OpenRouter (Work)Key not checked",
+      "Add provider",
+      "Check all keys",
+    ]);
     expect(mocks.menus.get("OpenRouter (Work)")!.actions.map((action) => action.title)).toEqual([
       "Rename",
       "Replace API key",

@@ -13,6 +13,7 @@ import type { MobileSnapshot } from "./mobile-types";
 const routerPush = vi.hoisted(() => vi.fn());
 const rpcMock = vi.hoisted(() => vi.fn());
 const openModelSettings = vi.hoisted(() => vi.fn());
+const alertMock = vi.hoisted(() => vi.fn());
 
 vi.mock("expo-router", () => ({ useRouter: () => ({ push: routerPush }) }));
 vi.mock("./api", () => ({ rpc: rpcMock }));
@@ -42,6 +43,7 @@ vi.mock("react-native", async () => {
     ScrollView: ({ children }: { children?: ReactNode }) => h("div", null, children),
     Modal: ({ children }: { children?: ReactNode }) => h("div", null, children),
     ActivityIndicator: () => h("span", null, "busy"),
+    Alert: { alert: alertMock },
     useWindowDimensions: () => ({ fontScale: 1, height: 800, width: 400 }),
   };
 });
@@ -161,6 +163,12 @@ describe("useThreadRunError model probe", () => {
           return body?.credentialId === "cred-main"
             ? report("openai-compatible", [])
             : report("anthropic", ["claude-sonnet"]);
+        case "models/checkKey":
+          return {
+            credentialId: body?.credentialId ?? "cred-main",
+            status: "ok",
+            checkedAt: "2026-11-15T12:00:00.000Z",
+          };
         case "bots/update":
           return { id: "bot-1" };
         default:
@@ -179,6 +187,7 @@ describe("useThreadRunError model probe", () => {
     latest = null;
     rpcMock.mockReset();
     routerPush.mockReset();
+    alertMock.mockClear();
   });
 
   it("offers the probe for a provider auth failure", async () => {
@@ -186,6 +195,44 @@ describe("useThreadRunError model probe", () => {
     expect(result.modelProbe.available).toBe(true);
     expect(result.modelProbe.status).toBe("idle");
     expect(result.runErrorAction?.label).toBe("Replace key");
+  });
+
+  it("offers a token-free key check for an invalid key and reports the result", async () => {
+    const result = await renderHook(failedRun(authDetails));
+    expect(result.runErrorExtraActions.map((action) => action.label)).toEqual(["Test this key"]);
+    await act(async () => {
+      result.runErrorExtraActions[0]?.onPress();
+      await flush();
+    });
+    expect(rpcMock).toHaveBeenCalledWith(
+      "models/checkKey",
+      { credentialId: "cred-main" },
+      { timeoutMs: 5_000 },
+    );
+    expect(alertMock).toHaveBeenCalledWith("Key check", "This key works.");
+  });
+
+  it("offers another model and a labeled dismiss for a rate limit", async () => {
+    const result = await renderHook(
+      failedRun('429: {"error": {"message": "rate limit exceeded"}}'),
+    );
+    expect(result.runErrorAction?.label).toBe("Change model");
+    expect(result.runErrorDismissAction?.label).toBe("Try again later");
+  });
+
+  it("offers another model and a network check for a timeout", async () => {
+    const result = await renderHook(failedRun("The request timed out after 30s"));
+    expect(result.runErrorAction?.label).toBe("Change model");
+    expect(result.runErrorDismissAction?.label).toBe("Check network");
+  });
+
+  it("offers a provider switch for an out-of-quota failure", async () => {
+    const result = await renderHook(failedRun('402: {"error": {"message": "insufficient quota"}}'));
+    expect(result.runErrorAction?.label).toBe("Switch provider");
+    await act(async () => {
+      result.runErrorAction?.onPress();
+    });
+    expect(openModelSettings).toHaveBeenCalledTimes(1);
   });
 
   it("offers no probe for a failure without provider recovery", async () => {
