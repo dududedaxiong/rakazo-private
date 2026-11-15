@@ -134,7 +134,7 @@ export function useMessageTranslation({
 
 /**
  * The expanded translation area: a light-blue box under the message with a
- * "翻译 · 用 {model} 翻译 · {source}译{target}" header, the translated text,
+ * "翻译 · 用 {model} 翻译 · {source} to {target}" header, the translated text,
  * and copy / collapse actions. Loading and failure render in place.
  * Read-aloud, share, and favorite act on the translated text; each renders
  * only when its handler is provided and the bot shows translation actions.
@@ -221,7 +221,7 @@ export function MessageTranslationView({
           <Text style={{ fontSize: 13 }}>
             <Text style={{ color: blue, fontWeight: "700" }}>{t("Translate")}</Text>
             <Text style={{ color: tokens.mutedForeground }} {...modelTextProps}>
-              {"  "}
+              {" · "}
               {modelLine}
             </Text>
           </Text>

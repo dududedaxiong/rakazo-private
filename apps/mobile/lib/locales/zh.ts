@@ -1873,9 +1873,9 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Translation failed. Try again.": "翻译失败，请重试。",
   "Copy translation": "复制译文",
   Collapse: "收起",
-  "Translated with {model} · {source} to {target}": "用 {model} 翻译 · {source}译{target}",
+  "Translated with {model} · {source} to {target}": "用 {model} 翻译 · {source} to {target}",
   "Translated with {model} (backup) · {source} to {target}":
-    "用 {model}（备选）翻译 · {source}译{target}",
+    "用 {model}（备选）翻译 · {source} to {target}",
   "Choose a translation model in Model settings first.": "请先在模型设置里选择翻译模型。",
   "Translation model": "翻译模型",
   "Translation settings": "翻译设置",

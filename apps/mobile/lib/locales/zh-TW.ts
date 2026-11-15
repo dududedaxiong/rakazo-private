@@ -1868,7 +1868,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Translation failed. Try again.": "翻譯失敗，請重試。",
   "Copy translation": "複製譯文",
   Collapse: "收起",
-  "Translated with {model} · {source} to {target}": "用 {model} 翻譯 · {source}譯{target}",
+  "Translated with {model} · {source} to {target}": "用 {model} 翻譯 · {source} to {target}",
   "Choose a translation model in Model settings first.": "請先在模型設定裡選擇翻譯模型。",
   "Translation model": "翻譯模型",
   "Translation settings": "翻譯設定",
@@ -1962,7 +1962,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   Test: "測試",
   "Test this model": "測試此模型",
   "Translated with {model} (backup) · {source} to {target}":
-    "用 {model}（備選）翻譯 · {source}譯{target}",
+    "用 {model}（備選）翻譯 · {source} to {target}",
   "Video generation model": "影片生成模型",
   "Video prompt preset": "影片提示詞預設",
   "Video prompt presets": "影片提示詞預設",
