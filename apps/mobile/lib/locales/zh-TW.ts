@@ -1738,6 +1738,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Keep this device": "保留本機",
   "Keep the server": "保留伺服器",
   Backup: "備份",
+  Fallback: "備選",
   "Not set up": "未設定",
   "Use an https address.": "請用 https 位址。",
   "That server address is not valid.": "伺服器位址無效。",

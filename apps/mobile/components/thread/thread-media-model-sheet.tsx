@@ -191,7 +191,7 @@ export function ThreadMediaModelSheet({
           <Pressable
             key={`${entry.provider}:${entry.model}`}
             accessibilityRole="button"
-            accessibilityLabel={`${t("Backup")} ${number}: ${labelForEntry(entry)}`}
+            accessibilityLabel={`${t("Fallback")} ${number}: ${labelForEntry(entry)}`}
             onPress={onPick}
             style={{
               flexDirection: "row",
@@ -207,7 +207,7 @@ export function ThreadMediaModelSheet({
                 {number}. {labelForEntry(entry)}
               </Text>
               <Text style={{ color: tokens.mutedForeground, fontSize: 13, marginTop: 2 }}>
-                {t("Backup")}
+                {t("Fallback")}
               </Text>
             </View>
             <Chevron />

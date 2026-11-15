@@ -1743,6 +1743,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Keep this device": "保留本机",
   "Keep the server": "保留服务器",
   Backup: "备份",
+  Fallback: "备选",
   "Not set up": "未设置",
   "Use an https address.": "请用 https 地址。",
   "That server address is not valid.": "服务器地址无效。",

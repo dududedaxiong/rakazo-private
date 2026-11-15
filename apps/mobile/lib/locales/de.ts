@@ -1928,6 +1928,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "At least 12 characters (16 recommended)": "Mindestens 12 Zeichen (16 empfohlen)",
   "Backed up": "Gesichert",
   Backup: "Backup",
+  Fallback: "Ersatz",
   "Backup directory": "Backup-Verzeichnis",
   "Backup is up to date": "Backup ist aktuell",
   "Backup password": "Backup-Passwort",

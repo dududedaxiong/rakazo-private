@@ -1903,6 +1903,7 @@ export const PL_MESSAGES: Record<string, string> = {
   "At least 12 characters (16 recommended)": "Co najmniej 12 znaków (zalecane 16)",
   "Backed up": "Utworzono kopię zapasową",
   Backup: "Kopia zapasowa",
+  Fallback: "Zapasowy",
   "Backup directory": "Katalog kopii zapasowej",
   "Backup is up to date": "Kopia zapasowa jest aktualna",
   "Backup password": "Hasło kopii zapasowej",

@@ -1863,6 +1863,7 @@ export const ES_MESSAGES: Record<string, string> = {
   "At least 12 characters (16 recommended)": "Al menos 12 caracteres (se recomiendan 16)",
   "Backed up": "Copia realizada",
   Backup: "Copia de seguridad",
+  Fallback: "Alternativo",
   "Backup directory": "Directorio de la copia de seguridad",
   "Backup is up to date": "La copia de seguridad está actualizada",
   "Backup password": "Contraseña de la copia de seguridad",

@@ -1939,6 +1939,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "At least 12 characters (16 recommended)": "12文字以上（16文字推奨）",
   "Backed up": "バックアップ済み",
   Backup: "バックアップ",
+  Fallback: "予備",
   "Backup directory": "バックアップディレクトリ",
   "Backup is up to date": "バックアップは最新です",
   "Backup password": "バックアップパスワード",

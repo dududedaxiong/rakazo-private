@@ -382,7 +382,7 @@ describe("ThreadMediaModelSheet", () => {
     expect(node.textContent).toContain("2. Video B");
     expect(node.textContent).toContain("3. Video C");
     expect(node.textContent).toContain("Add video backup");
-    const fallbackRow = node.querySelector<HTMLButtonElement>('[aria-label="Backup 2: Video B"]');
+    const fallbackRow = node.querySelector<HTMLButtonElement>('[aria-label="Fallback 2: Video B"]');
     expect(fallbackRow).not.toBeNull();
     await act(async () => fallbackRow!.click());
     expect(picked.role).toBe("video");

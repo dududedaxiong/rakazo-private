@@ -1911,6 +1911,7 @@ export const NL_MESSAGES: Record<string, string> = {
   "At least 12 characters (16 recommended)": "Minimaal 12 tekens (16 aanbevolen)",
   "Backed up": "Back-up gemaakt",
   Backup: "Back-up",
+  Fallback: "Reserve",
   "Backup directory": "Back-upmap",
   "Backup is up to date": "Back-up is up-to-date",
   "Backup password": "Back-upwachtwoord",

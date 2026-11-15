@@ -1952,6 +1952,7 @@ export const RU_MESSAGES: Record<string, string> = {
   "At least 12 characters (16 recommended)": "Не менее 12 символов (рекомендуется 16)",
   "Backed up": "Резервная копия создана",
   Backup: "Резервная копия",
+  Fallback: "Резервный",
   "Backup directory": "Каталог резервной копии",
   "Backup is up to date": "Резервная копия актуальна",
   "Backup password": "Пароль резервной копии",
