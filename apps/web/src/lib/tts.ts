@@ -112,9 +112,9 @@ export class Speaker {
     const spaceId = opts.spaceId ?? selectedSpaceId();
 
     this.set({ status: "preparing", botId: opts.botId, messageId: opts.messageId });
-    let utterances: string[];
+    let prepared: { utterances: string[]; transcribeOnly: boolean };
     try {
-      utterances = await withAbort(
+      prepared = await withAbort(
         this.prepare(text, opts, controller.signal, spaceId),
         controller.signal,
       );
@@ -125,6 +125,13 @@ export class Speaker {
       return failure;
     }
     if (!live()) return;
+    // A connection that only transcribes cannot read aloud; the browser's own voice reads.
+    if (prepared.transcribeOnly) {
+      const failure = await this.speakLocally(prepared.utterances, opts, live);
+      if (this.request === controller) this.request = null;
+      return failure;
+    }
+    const utterances = prepared.utterances;
     if (!utterances.length) {
       this.set(IDLE);
       if (this.request === controller) this.request = null;
@@ -183,15 +190,76 @@ export class Speaker {
     opts: SpeakOptions,
     signal: AbortSignal,
     spaceId: string | null,
-  ): Promise<string[]> {
+  ): Promise<{ utterances: string[]; transcribeOnly: boolean }> {
     const body = await rpc.voice.prepare(
       { text, voiceId: opts.voiceId, botId: opts.botId, scope: opts.scope, full: opts.full },
       { signal, context: { spaceId } },
     );
-    if (!body.ready) {
+    if (!body.ready && !body.transcribeOnly) {
       throw new Error(t`Add a voice provider key and pick a voice in Voice settings.`);
     }
-    return body.utterances ?? [];
+    return { utterances: body.utterances ?? [], transcribeOnly: body.transcribeOnly === true };
+  }
+
+  /** The browser's own voice, for connections that only transcribe. */
+  private async speakLocally(
+    utterances: string[],
+    opts: SpeakOptions,
+    live: () => boolean,
+  ): Promise<string | undefined> {
+    const synthesis =
+      typeof globalThis.speechSynthesis === "undefined" ? null : globalThis.speechSynthesis;
+    if (!synthesis) {
+      const failure = t`Add a voice provider key and pick a voice in Voice settings.`;
+      this.set({ ...IDLE, error: failure });
+      return failure;
+    }
+    let playedAny = false;
+    let lastFailure: string | undefined;
+    for (let i = 0; i < utterances.length; i += 1) {
+      if (!live()) return;
+      const text = utterances[i] ?? "";
+      this.set({
+        status: "speaking",
+        botId: opts.botId,
+        messageId: opts.messageId,
+        caption: text,
+        segmentIndex: i,
+        segmentTotal: utterances.length,
+      });
+      const spoken = await new Promise<boolean>((resolve) => {
+        const utterance = new SpeechSynthesisUtterance(text);
+        let done = false;
+        const finish = (ok: boolean) => {
+          if (done) return;
+          done = true;
+          if (this.settlePlayback === cancel) this.settlePlayback = null;
+          resolve(ok);
+        };
+        const cancel = () => {
+          synthesis.cancel();
+          finish(false);
+        };
+        this.settlePlayback = cancel;
+        utterance.onend = () => finish(true);
+        utterance.onerror = () => finish(false);
+        try {
+          synthesis.speak(utterance);
+        } catch {
+          finish(false);
+        }
+      });
+      if (!live()) return;
+      if (spoken) playedAny = true;
+      else lastFailure = t`The browser could not read this aloud.`;
+    }
+    if (!playedAny && live() && lastFailure) {
+      this.set({ ...IDLE, error: lastFailure });
+    } else if (live()) {
+      this.set(IDLE);
+    }
+    if (!playedAny && live()) return lastFailure;
+    return;
   }
 
   private async render(

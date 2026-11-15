@@ -973,6 +973,107 @@ it("saves a typed self-hosted voice on blur without dropping other unsaved edits
   }
 });
 
+it("prefills a preset entry and connects it under its provider", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  voice.connect.mockReset();
+  const groq = {
+    id: "groq",
+    name: "Groq",
+    description: "",
+    transcribe: true,
+    preset: {
+      provider: "openai-compatible",
+      baseUrl: "https://api.groq.com/openai/v1",
+      sttModel: "whisper-large-v3-turbo",
+    },
+  };
+  voice.catalog.mockResolvedValue([
+    { id: "fish-audio", name: "Fish Audio", description: "", transcribe: true },
+    groq,
+    { id: "openai-compatible", name: "Third-party model", description: "", transcribe: true },
+  ]);
+  voice.credentials.mockResolvedValue([]);
+  voice.status.mockResolvedValue({
+    configured: false,
+    ready: false,
+    transcribe: false,
+    provider: null,
+    voiceId: "",
+  });
+  voice.voices.mockResolvedValue([]);
+  voice.connect.mockResolvedValue({
+    id: "cred-groq",
+    provider: "openai-compatible",
+    hasKey: true,
+    isDefault: true,
+    voiceId: "",
+    speechModel: "",
+    transcribe: true,
+    endpoint: "https://api.groq.com/openai/v1",
+    sttModel: "whisper-large-v3-turbo",
+  });
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  const type = async (input: HTMLInputElement, value: string) => {
+    await act(async () => {
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
+      setter?.call(input, value);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+  };
+  const chooseProvider = (value: string) => {
+    const select = container.querySelector("select");
+    if (!select) throw new Error("Missing provider select");
+    select.value = value;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  try {
+    await act(async () => {
+      root.render(
+        withQueries(<VoiceSettingsOverlay embedded scope="account" onClose={() => undefined} />),
+      );
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(async () => {
+      chooseProvider("groq");
+    });
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(labelledInput(container, "Server URL").value).toBe("https://api.groq.com/openai/v1");
+    expect(labelledInput(container, "Transcription model").value).toBe("whisper-large-v3-turbo");
+    expect(speechModelInput(container)).toBeUndefined();
+    expect(labelledInput(container, "API key").placeholder).toBe("Paste your API key");
+    expect(container.textContent).toContain(
+      "Groq only transcribes speech. Reading aloud still uses the on-device voice.",
+    );
+
+    await type(labelledInput(container, "API key"), "gsk-test-key-123");
+    await act(async () => {
+      [...container.querySelectorAll("button")]
+        .find((button) => button.textContent === "Connect")
+        ?.click();
+    });
+
+    expect(voice.connect).toHaveBeenCalledWith({
+      scope: "account",
+      provider: "openai-compatible",
+      apiKey: "gsk-test-key-123",
+      voiceId: undefined,
+      baseUrl: "https://api.groq.com/openai/v1",
+      sttModel: "whisper-large-v3-turbo",
+    });
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+  }
+});
+
 it("connects a keyless provider without asking for a key", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   voice.catalog.mockResolvedValue([

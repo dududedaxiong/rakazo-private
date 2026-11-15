@@ -28,7 +28,9 @@ describe("Speaker", () => {
   it("interrupting before audio arrives leaves the speaker idle", async () => {
     const speaker = new Speaker();
     vi.spyOn(
-      speaker as unknown as { prepare: () => Promise<string[]> },
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
       "prepare",
     ).mockImplementation(() => new Promise(() => undefined));
     const pending = speaker.speak("Hello there.", { messageId: "m1" });
@@ -40,14 +42,19 @@ describe("Speaker", () => {
   it("does not report a failure for a request a newer one replaced", async () => {
     const speaker = new Speaker();
     let fail: (error: Error) => void = () => undefined;
-    vi.spyOn(speaker as unknown as { prepare: () => Promise<string[]> }, "prepare")
+    vi.spyOn(
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
+      "prepare",
+    )
       .mockImplementationOnce(
         () =>
           new Promise((_resolve, reject) => {
             fail = reject;
           }),
       )
-      .mockResolvedValueOnce([]);
+      .mockResolvedValueOnce({ utterances: [], transcribeOnly: false });
     const first = speaker.speak("First.", { messageId: "m1" });
     await speaker.speak("Second.", { messageId: "m2" });
     fail(new Error("Your voice provider is out of credit."));
@@ -58,7 +65,9 @@ describe("Speaker", () => {
   it("resolves with an error snapshot instead of rejecting", async () => {
     const speaker = new Speaker();
     vi.spyOn(
-      speaker as unknown as { prepare: () => Promise<string[]> },
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
       "prepare",
     ).mockRejectedValue(new Error("ElevenLabs rejected that key."));
     await expect(speaker.speak("Hi there.")).resolves.toBe("ElevenLabs rejected that key.");
@@ -68,9 +77,11 @@ describe("Speaker", () => {
   it("keeps reading after a middle utterance fails to render", async () => {
     const speaker = new Speaker();
     vi.spyOn(
-      speaker as unknown as { prepare: () => Promise<string[]> },
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
       "prepare",
-    ).mockResolvedValue(["First.", "Second.", "Third."]);
+    ).mockResolvedValue({ utterances: ["First.", "Second.", "Third."], transcribeOnly: false });
     const requested: string[] = [];
     vi.stubGlobal(
       "fetch",
@@ -119,9 +130,11 @@ describe("Speaker", () => {
   it("skips a segment whose audio never starts instead of stalling", async () => {
     const speaker = new Speaker();
     vi.spyOn(
-      speaker as unknown as { prepare: () => Promise<string[]> },
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
       "prepare",
-    ).mockResolvedValue(["First."]);
+    ).mockResolvedValue({ utterances: ["First."], transcribeOnly: false });
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response(new Blob(["audio"]), { status: 200 })),
@@ -152,9 +165,11 @@ describe("Speaker", () => {
   it("tags each spoken segment with its caption and position", async () => {
     const speaker = new Speaker();
     vi.spyOn(
-      speaker as unknown as { prepare: () => Promise<string[]> },
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
       "prepare",
-    ).mockResolvedValue(["First.", "Second.", "Third."]);
+    ).mockResolvedValue({ utterances: ["First.", "Second.", "Third."], transcribeOnly: false });
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => new Response(new Blob(["audio"]), { status: 200 })),
@@ -200,9 +215,11 @@ describe("Speaker", () => {
   it("reports the failure when every utterance fails to render", async () => {
     const speaker = new Speaker();
     vi.spyOn(
-      speaker as unknown as { prepare: () => Promise<string[]> },
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
       "prepare",
-    ).mockResolvedValue(["First.", "Second."]);
+    ).mockResolvedValue({ utterances: ["First.", "Second."], transcribeOnly: false });
     vi.stubGlobal(
       "fetch",
       vi.fn(async () => {
@@ -250,13 +267,13 @@ describe("Speaker", () => {
             opts: unknown,
             signal: AbortSignal,
             spaceId: string | null,
-          ) => Promise<string[]>;
+          ) => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
         },
         "prepare",
       )
       .mockImplementation(async () => {
         changeSelectedSpace("space-other");
-        return ["Hello."];
+        return { utterances: ["Hello."], transcribeOnly: false };
       });
     await speaker.speak("Hello.", { messageId: "m1", spaceId });
 
@@ -283,9 +300,11 @@ describe("Speaker", () => {
     );
     const speaker = new Speaker();
     vi.spyOn(
-      speaker as unknown as { prepare: () => Promise<string[]> },
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
       "prepare",
-    ).mockResolvedValue(["Hello."]);
+    ).mockResolvedValue({ utterances: ["Hello."], transcribeOnly: false });
 
     await expect(speaker.speak("Hello.")).resolves.toBe("Voice response is too large.");
 
@@ -308,9 +327,11 @@ describe("Speaker", () => {
     );
     const speaker = new Speaker();
     vi.spyOn(
-      speaker as unknown as { prepare: () => Promise<string[]> },
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
       "prepare",
-    ).mockResolvedValue(["Hello."]);
+    ).mockResolvedValue({ utterances: ["Hello."], transcribeOnly: false });
 
     await expect(speaker.speak("Hello.")).resolves.toBe(copy);
 
@@ -332,14 +353,63 @@ describe("Speaker", () => {
     );
     const speaker = new Speaker();
     vi.spyOn(
-      speaker as unknown as { prepare: () => Promise<string[]> },
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
       "prepare",
-    ).mockResolvedValue(["Hello."]);
+    ).mockResolvedValue({ utterances: ["Hello."], transcribeOnly: false });
 
     const pending = speaker.speak("Hello.");
     await vi.advanceTimersByTimeAsync(VOICE_RESPONSE_TIMEOUT_MS);
     await pending;
 
     expect(speaker.state.error).toBe("Voice request timed out.");
+  });
+
+  it("reads aloud with the browser voice when the connection only transcribes", async () => {
+    const spoken: string[] = [];
+    vi.stubGlobal(
+      "SpeechSynthesisUtterance",
+      class {
+        text: string;
+        onend: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        constructor(text: string) {
+          this.text = text;
+        }
+      },
+    );
+    vi.stubGlobal("speechSynthesis", {
+      speak: vi.fn((utterance: { text: string; onend: (() => void) | null }) => {
+        spoken.push(utterance.text);
+        queueMicrotask(() => utterance.onend?.());
+      }),
+      cancel: vi.fn(),
+    });
+    const speaker = new Speaker();
+    vi.spyOn(
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
+      "prepare",
+    ).mockResolvedValue({ utterances: ["Hello.", "World."], transcribeOnly: true });
+
+    await expect(speaker.speak("Hello. World.")).resolves.toBeUndefined();
+    expect(spoken).toEqual(["Hello.", "World."]);
+    expect(speaker.state.status).toBe("idle");
+  });
+
+  it("reports a missing browser voice when the connection only transcribes", async () => {
+    const speaker = new Speaker();
+    vi.spyOn(
+      speaker as unknown as {
+        prepare: () => Promise<{ utterances: string[]; transcribeOnly: boolean }>;
+      },
+      "prepare",
+    ).mockResolvedValue({ utterances: ["Hello."], transcribeOnly: true });
+
+    await expect(speaker.speak("Hello.")).resolves.toBe(
+      "Add a voice provider key and pick a voice in Voice settings.",
+    );
   });
 });

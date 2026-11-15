@@ -9,6 +9,7 @@ import type {
 import {
   DEFAULT_COMPATIBLE_STT_MODEL,
   DEFAULT_COMPATIBLE_TTS_MODEL,
+  matchVoicePresetEntry,
   OPENAI_COMPATIBLE_PROVIDER_ID,
 } from "@rakazo/contracts";
 import { fetchFresh } from "@rakazo/core/query";
@@ -60,8 +61,9 @@ export function VoiceSettingsOverlay({
     const credentials = queryClient.getQueryData(queries.voice.credentials.queryKey(scoped));
     const status = queryClient.getQueryData(queries.voice.status.queryKey(scoped));
     if (!catalog || !credentials || !status) return null;
-    const provider = selectedProvider(catalog, [status.provider]);
-    const credential = credentials.find((entry) => entry.provider === provider);
+    const provider = selectedProvider(catalog, credentials, [status.provider]);
+    const entry = catalog.find((item) => item.id === provider);
+    const credential = entry ? credentialForEntry(catalog, credentials, entry) : undefined;
     const voices = credential
       ? (queryClient.getQueryData(queries.voice.voices.queryKey({ input: { provider, scope } })) ??
         [])
@@ -125,15 +127,19 @@ export function VoiceSettingsOverlay({
   /**
    * Fill the form from the provider's saved credential; voices load without blocking the form.
    * A background refresh of the provider already on screen keeps only the fields the user has
-   * edited; the rest follow the saved settings, which may have changed elsewhere.
+   * edited; the rest follow the saved settings, which may have changed elsewhere. A preset
+   * entry without a saved connection prefills its hosted service instead.
    */
   function showProvider(
     nextProvider: string,
     nextCredentials: VoiceCredential[],
+    nextCatalog: VoiceCatalogEntry[],
     keepForm = false,
   ) {
     const request = ++voicesRequest.current;
-    const cred = nextCredentials.find((entry) => entry.provider === nextProvider);
+    const entry = nextCatalog.find((item) => item.id === nextProvider);
+    const rpcProvider = entry?.preset?.provider ?? nextProvider;
+    const cred = entry ? credentialForEntry(nextCatalog, nextCredentials, entry) : undefined;
     const activeVoice = cred?.voiceId ?? "";
     const keep = (field: EditableField) => keepForm && edited.current.has(field);
     if (!keepForm) {
@@ -144,14 +150,14 @@ export function VoiceSettingsOverlay({
     }
     if (!keep("voiceId")) setVoiceId(activeVoice);
     if (!keep("speechModel")) setSpeechModel(cred?.speechModel ?? "");
-    if (!keep("baseUrl")) setBaseUrl(cred?.endpoint ?? "");
+    if (!keep("baseUrl")) setBaseUrl(cred?.endpoint ?? entry?.preset?.baseUrl ?? "");
     if (!keep("ttsModel")) setTtsModel(cred?.ttsModel ?? "");
-    if (!keep("sttModel")) setSttModel(cred?.sttModel ?? "");
+    if (!keep("sttModel")) setSttModel(cred?.sttModel ?? entry?.preset?.sttModel ?? "");
     if (!cred) return Promise.resolve();
     return queryClient
       .fetchQuery(
         queries.voice.voices.queryOptions({
-          input: { provider: nextProvider, scope },
+          input: { provider: rpcProvider, scope },
           staleTime: 0,
         }),
       )
@@ -175,29 +181,35 @@ export function VoiceSettingsOverlay({
       fetchFresh(queryClient, queries.voice.status.queryOptions(scoped), { reuse }),
     ]);
     const current = providerRef.current;
-    const selected = selectedProvider(nextCatalog, [nextProvider, current, nextStatus.provider]);
+    const selected = selectedProvider(nextCatalog, nextCredentials, [
+      nextProvider,
+      current,
+      nextStatus.provider,
+    ]);
     setCatalog(nextCatalog);
     setCredentials(nextCredentials);
     setStatus(nextStatus);
-    await showProvider(selected, nextCredentials, keepForm && selected === current);
+    await showProvider(selected, nextCredentials, nextCatalog, keepForm && selected === current);
   }
 
   async function chooseProvider(nextProvider: string) {
     setApiKey("");
     setError(null);
     setNotice(null);
-    const cred = credentials.find((entry) => entry.provider === nextProvider);
+    const nextEntry = catalog.find((entry) => entry.id === nextProvider);
+    const nextRpcProvider = nextEntry?.preset?.provider ?? nextProvider;
+    const cred = nextEntry ? credentialForEntry(catalog, credentials, nextEntry) : undefined;
     if (
       catalog.find((entry) => entry.id === nextProvider)?.keyless &&
       cred?.voiceId &&
-      status?.provider !== nextProvider
+      status?.provider !== nextRpcProvider
     ) {
       markPending("voice");
       try {
         const saved = await rpc.voice.setVoice({
           scope,
           voiceId: cred.voiceId,
-          provider: nextProvider,
+          provider: nextRpcProvider,
         });
         setStatus(saved);
         queryClient.setQueryData(queries.voice.status.queryKey(scoped), saved);
@@ -208,7 +220,7 @@ export function VoiceSettingsOverlay({
         markPending(null);
       }
     }
-    await showProvider(nextProvider, credentials).catch((err: unknown) =>
+    await showProvider(nextProvider, credentials, catalog).catch((err: unknown) =>
       setError(errorText(err, t`Could not load voice settings`)),
     );
   }
@@ -220,7 +232,7 @@ export function VoiceSettingsOverlay({
   }, []);
 
   const selected = catalog.find((entry) => entry.id === provider) ?? catalog[0];
-  const credential = credentials.find((entry) => entry.provider === provider);
+  const credential = selected ? credentialForEntry(catalog, credentials, selected) : undefined;
   const hiddenSelfHosted =
     !catalog.some((entry) => entry.id === OPENAI_COMPATIBLE_PROVIDER_ID) &&
     credentials.some((entry) => entry.provider === OPENAI_COMPATIBLE_PROVIDER_ID);
@@ -230,10 +242,19 @@ export function VoiceSettingsOverlay({
   );
 
   const selfHosted = selected?.id === OPENAI_COMPATIBLE_PROVIDER_ID;
+  /** A preset entry prefills its hosted service; the connection lives on the preset's provider. */
+  const isPreset = Boolean(selected?.preset);
+  const rpcProvider = selected?.preset?.provider ?? selected?.id;
   // Connections are managed from the account; a Space can still connect one it lacks.
   const managesConnection = scope === "account" || !credential;
   const keyless = Boolean(selected?.keyless);
-  const canConnect = keyless || (selfHosted ? Boolean(baseUrl.trim()) : apiKey.trim().length >= 8);
+  const canConnect =
+    keyless ||
+    (isPreset
+      ? Boolean(baseUrl.trim()) && apiKey.trim().length >= 8
+      : selfHosted
+        ? Boolean(baseUrl.trim())
+        : apiKey.trim().length >= 8);
 
   async function connectKey() {
     if (!selected || !canConnect) return;
@@ -248,18 +269,21 @@ export function VoiceSettingsOverlay({
       try {
         connected = await rpc.voice.connect({
           scope,
-          provider: selected.id,
+          provider: rpcProvider ?? selected.id,
           apiKey: sentApiKey.trim(),
           // The server drops this voice when the address or speech model really changed.
           voiceId: voiceId || undefined,
           ...(selected.speechModel ? { speechModel: speechModel.trim() } : {}),
+          // A preset carries only its transcription model; the speech model stays the default.
           ...(selfHosted
             ? {
                 baseUrl: baseUrl.trim(),
                 ttsModel: ttsModel.trim() || undefined,
                 sttModel: sttModel.trim() || undefined,
               }
-            : {}),
+            : isPreset
+              ? { baseUrl: baseUrl.trim(), sttModel: sttModel.trim() || undefined }
+              : {}),
         });
       } catch (err) {
         setError(errorText(err, t`Could not connect this voice provider`));
@@ -283,7 +307,7 @@ export function VoiceSettingsOverlay({
         : [...credentials, connected];
       setCredentials(nextCredentials);
       queryClient.setQueryData(queries.voice.credentials.queryKey(scoped), nextCredentials);
-      void showProvider(selected.id, nextCredentials, true).catch(() => undefined);
+      void showProvider(selected.id, nextCredentials, catalog, true).catch(() => undefined);
       // The connect is saved; a failed read after it only leaves the form behind.
       await refresh(selected.id, { keepForm: true }).catch((err: unknown) =>
         setError(errorText(err, t`Could not load voice settings`)),
@@ -317,7 +341,7 @@ export function VoiceSettingsOverlay({
     setError(null);
     try {
       try {
-        await rpc.voice.setVoice({ scope, voiceId: nextVoiceId, provider: selected?.id });
+        await rpc.voice.setVoice({ scope, voiceId: nextVoiceId, provider: rpcProvider });
       } catch (err) {
         setError(errorText(err, t`Could not save that voice`));
         return;
@@ -342,7 +366,7 @@ export function VoiceSettingsOverlay({
     try {
       const saved = await rpc.voice.setSpeechModel({
         scope,
-        provider: selected.id,
+        provider: rpcProvider ?? selected.id,
         speechModel: next,
       });
       setSpeechModel(saved.speechModel);
@@ -430,7 +454,7 @@ export function VoiceSettingsOverlay({
         <>
           {managesConnection ? (
             <>
-              {selfHosted ? (
+              {selfHosted || isPreset ? (
                 <Field className="mt-5">
                   <FieldLabel htmlFor={baseUrlId}>
                     <Trans>Server URL</Trans>
@@ -471,42 +495,42 @@ export function VoiceSettingsOverlay({
                 </Field>
               )}
               {selfHosted ? (
-                <>
-                  <Field className="mt-5">
-                    <FieldLabel htmlFor={ttsModelId}>
-                      <Trans>Speech model</Trans>
-                    </FieldLabel>
-                    <Input
-                      id={ttsModelId}
-                      autoComplete="off"
-                      spellCheck={false}
-                      value={ttsModel}
-                      maxLength={200}
-                      onChange={(event) => {
-                        edited.current.add("ttsModel");
-                        setTtsModel(event.target.value);
-                      }}
-                      placeholder={DEFAULT_COMPATIBLE_TTS_MODEL}
-                    />
-                  </Field>
-                  <Field className="mt-5">
-                    <FieldLabel htmlFor={sttModelId}>
-                      <Trans>Transcription model</Trans>
-                    </FieldLabel>
-                    <Input
-                      id={sttModelId}
-                      autoComplete="off"
-                      spellCheck={false}
-                      value={sttModel}
-                      maxLength={200}
-                      onChange={(event) => {
-                        edited.current.add("sttModel");
-                        setSttModel(event.target.value);
-                      }}
-                      placeholder={DEFAULT_COMPATIBLE_STT_MODEL}
-                    />
-                  </Field>
-                </>
+                <Field className="mt-5">
+                  <FieldLabel htmlFor={ttsModelId}>
+                    <Trans>Speech model</Trans>
+                  </FieldLabel>
+                  <Input
+                    id={ttsModelId}
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={ttsModel}
+                    maxLength={200}
+                    onChange={(event) => {
+                      edited.current.add("ttsModel");
+                      setTtsModel(event.target.value);
+                    }}
+                    placeholder={DEFAULT_COMPATIBLE_TTS_MODEL}
+                  />
+                </Field>
+              ) : null}
+              {selfHosted || isPreset ? (
+                <Field className="mt-5">
+                  <FieldLabel htmlFor={sttModelId}>
+                    <Trans>Transcription model</Trans>
+                  </FieldLabel>
+                  <Input
+                    id={sttModelId}
+                    autoComplete="off"
+                    spellCheck={false}
+                    value={sttModel}
+                    maxLength={200}
+                    onChange={(event) => {
+                      edited.current.add("sttModel");
+                      setSttModel(event.target.value);
+                    }}
+                    placeholder={DEFAULT_COMPATIBLE_STT_MODEL}
+                  />
+                </Field>
               ) : null}
               {keyless && credential ? null : (
                 <Button
@@ -520,7 +544,7 @@ export function VoiceSettingsOverlay({
                     <Trans>Connecting…</Trans>
                   ) : keyless ? (
                     <Trans>Turn on</Trans>
-                  ) : credential && selfHosted ? (
+                  ) : credential && (selfHosted || isPreset) ? (
                     <Trans>Reconnect</Trans>
                   ) : credential ? (
                     <Trans>Replace key</Trans>
@@ -529,6 +553,13 @@ export function VoiceSettingsOverlay({
                   )}
                 </Button>
               )}
+              {isPreset ? (
+                <p className="mt-3 text-body text-muted-foreground">
+                  <Trans>
+                    Groq only transcribes speech. Reading aloud still uses the on-device voice.
+                  </Trans>
+                </p>
+              ) : null}
               {credential ? (
                 <Button
                   type="button"
@@ -550,7 +581,7 @@ export function VoiceSettingsOverlay({
             </>
           ) : null}
 
-          {credential ? (
+          {credential && !isPreset ? (
             <>
               <Field className="mt-6">
                 <FieldLabel htmlFor={voiceSelectId}>
@@ -690,9 +721,26 @@ export function VoiceSettingsOverlay({
 
 function selectedProvider(
   catalog: VoiceCatalogEntry[],
+  credentials: VoiceCredential[],
   preferred: Array<string | null | undefined>,
 ): string {
-  return preferred.find((id) => catalog.some((entry) => entry.id === id)) ?? catalog[0]?.id ?? "";
+  const picked =
+    preferred.find((id) => catalog.some((entry) => entry.id === id)) ?? catalog[0]?.id ?? "";
+  // A saved connection shows as its preset entry when the address matches one.
+  const cred = credentials.find((entry) => entry.provider === picked);
+  return matchVoicePresetEntry(catalog, picked, cred?.endpoint)?.id ?? picked;
+}
+
+/** The credential a catalog entry connects with: its own provider, or its preset's. */
+function credentialForEntry(
+  catalog: VoiceCatalogEntry[],
+  credentials: VoiceCredential[],
+  entry: VoiceCatalogEntry,
+): VoiceCredential | undefined {
+  if (!entry.preset) return credentials.find((cred) => cred.provider === entry.id);
+  return credentials.find(
+    (cred) => matchVoicePresetEntry(catalog, cred.provider, cred.endpoint)?.id === entry.id,
+  );
 }
 
 const NO_VOICES: VoiceInfo[] = [];
