@@ -12,29 +12,34 @@ import { useMobileTokens, useResolvedAppearance } from "../lib/native";
 import { BottomSheetShell, SheetHeader } from "./bottom-sheet-shell";
 
 /**
- * The tappable "当前模型:" line under a message that switched models: the
- * mark text itself, with the final model bolded. Only rendered when the
- * message carries a switch timeline; anything without one keeps its plain
- * mark text untouched.
+ * The tappable "当前模型:" line under a message: the mark text itself,
+ * with the final model bolded. With a switch timeline it opens the
+ * timeline; with only the trailing mark it opens the model list instead.
+ * Only rendered when the message carries a timeline or a mark; anything
+ * without either keeps its text untouched.
  */
 export function ModelSwitchBar({
   switches,
+  model,
   presetName,
   onPress,
 }: {
-  switches: ModelSwitchTimeline;
+  /** The switch timeline, when the message carries one. */
+  switches?: ModelSwitchTimeline;
+  /** The model the trailing mark names, when the message carries no timeline. */
+  model?: string;
   /** The prompt preset from the media mark, when the message is generated media. */
   presetName?: string;
   onPress: () => void;
 }) {
   const { t } = useI18n();
   const tokens = useMobileTokens();
-  const finalModel = switches.finalModel;
-  const provider = finalSwitchProvider(switches);
+  const finalModel = switches?.finalModel ?? model ?? "";
+  const provider = switches ? finalSwitchProvider(switches) : undefined;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={t("Switch history")}
+      accessibilityLabel={switches ? t("Switch history") : t("Change model")}
       onPress={onPress}
       hitSlop={4}
       style={{ marginTop: 8 }}

@@ -162,6 +162,15 @@ function FavoriteCard({
     autoTranslate: false,
     composing: false,
   });
+  // A finished translation that is only folded away reopens instead of
+  // spending another translation call.
+  const handleTranslatePress = () => {
+    if (translation.status === "done" && translation.result && !translation.expanded) {
+      translation.expand();
+      return;
+    }
+    translation.translate();
+  };
 
   return (
     <View
@@ -210,7 +219,7 @@ function FavoriteCard({
         >
           <Text style={{ color: tokens.mutedForeground, fontSize: 14 }}>{t("Delete")}</Text>
         </Pressable>
-        {bot ? <TranslateButton label={t("Translate")} onPress={translation.translate} /> : null}
+        {bot ? <TranslateButton label={t("Translate")} onPress={handleTranslatePress} /> : null}
       </View>
       <MessageTranslationView
         translation={translation}

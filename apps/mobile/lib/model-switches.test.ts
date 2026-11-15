@@ -1,6 +1,7 @@
 import type { ModelSwitchAttempt } from "@rakazo/contracts";
 import { describe, expect, it } from "vitest";
 import {
+  currentModelBar,
   finalSwitchAttempt,
   finalSwitchProvider,
   hasModelSwitches,
@@ -181,6 +182,49 @@ describe("current-model mark parsing", () => {
     expect(hasModelSwitches({ modelSwitches: { attempts, finalModel: "x" } })).toBe(true);
     expect(hasModelSwitches({ modelSwitches: { attempts: [], finalModel: "x" } })).toBe(false);
     expect(hasModelSwitches({})).toBe(false);
+  });
+});
+
+describe("current-model bar", () => {
+  const mark = { modelId: "deepseek-flash" };
+  const markedPreset = { modelId: "model-x", presetName: "默认预设" };
+  const withTimeline = {
+    role: "bot",
+    modelSwitches: { attempts, finalModel: "krisphyn-DeepSeek-V4-Pro" },
+  };
+
+  it("opens the timeline when the message carries switches", () => {
+    expect(currentModelBar(withTimeline, mark)).toEqual({
+      kind: "timeline",
+      switches: withTimeline.modelSwitches,
+    });
+    expect(currentModelBar(withTimeline, markedPreset)).toEqual({
+      kind: "timeline",
+      switches: withTimeline.modelSwitches,
+      presetName: "默认预设",
+    });
+  });
+
+  it("opens the model list when the message only carries the mark", () => {
+    expect(currentModelBar({ role: "bot" }, mark)).toEqual({
+      kind: "mark",
+      model: "deepseek-flash",
+    });
+    expect(currentModelBar({ role: "bot" }, markedPreset)).toEqual({
+      kind: "mark",
+      model: "model-x",
+      presetName: "默认预设",
+    });
+    // An empty timeline is no timeline: the mark still opens the list.
+    expect(
+      currentModelBar({ role: "bot", modelSwitches: { attempts: [], finalModel: "x" } }, mark),
+    ).toEqual({ kind: "mark", model: "deepseek-flash" });
+  });
+
+  it("shows no bar without a mark, or on a user message", () => {
+    expect(currentModelBar(withTimeline, null)).toBeNull();
+    expect(currentModelBar({ role: "bot" }, null)).toBeNull();
+    expect(currentModelBar({ role: "user" }, mark)).toBeNull();
   });
 });
 

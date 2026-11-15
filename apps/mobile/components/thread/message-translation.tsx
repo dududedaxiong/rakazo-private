@@ -72,6 +72,8 @@ export type MessageTranslation = {
   expanded: boolean;
   translate: (override?: TranslationLanguageSwitch) => void;
   collapse: () => void;
+  /** Reopens a folded translation without re-translating it. */
+  expand: () => void;
   /** The languages in effect, including a just-switched pair the bot snapshot has not caught up with yet. */
   settings: BotTranslationSettings;
   /** Saves a new language pair on the bot, then re-translates with it. */
@@ -223,6 +225,11 @@ export function useMessageTranslation({
     setExpanded(false);
   }, []);
 
+  const expand = useCallback(() => {
+    collapsedRef.current = false;
+    setExpanded(true);
+  }, []);
+
   const languageOverride = languageOverrideRef.current;
   const effectiveSettings: BotTranslationSettings = {
     ...argsRef.current.settings,
@@ -241,6 +248,7 @@ export function useMessageTranslation({
     expanded,
     translate,
     collapse,
+    expand,
     settings: effectiveSettings,
     switchLanguage,
     languageApplying,
@@ -364,7 +372,9 @@ export function MessageTranslationView({
     }
   }
 
-  if (!expanded || status === "idle") return null;
+  // Nothing translated yet: no panel at all. A folded translation keeps a
+  // slim row instead, so it can be opened again without re-translating.
+  if (status === "idle") return null;
 
   // Tapping the model name opens the picker; without a handler it is plain text.
   const modelTextProps = onSwitchModel
@@ -414,7 +424,21 @@ export function MessageTranslationView({
           ...style,
         }}
       >
-        {status === "loading" ? (
+        {!expanded ? (
+          <View
+            style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
+          >
+            <Text style={{ color: tokens.mutedForeground, fontSize: 13 }}>{t("Translate")}</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t("Show")}
+              onPress={translation.expand}
+              hitSlop={8}
+            >
+              <Text style={{ color: blue, fontSize: 14 }}>{t("Show")}</Text>
+            </Pressable>
+          </View>
+        ) : status === "loading" ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <ActivityIndicator size="small" color={blue} />
             <Text style={{ color: tokens.mutedForeground, fontSize: 14 }}>{t("Translating…")}</Text>

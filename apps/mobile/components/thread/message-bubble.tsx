@@ -592,6 +592,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                   name={attachment.name ?? t("Image")}
                   mimeType={attachment.mimeType ?? "image/png"}
                   labelColor={outgoing ? tokens.chatUserForeground : tokens.foreground}
+                  collapsible={!outgoing}
                   pressableProps={actionProps}
                   onOpen={() =>
                     onPreviewImage({

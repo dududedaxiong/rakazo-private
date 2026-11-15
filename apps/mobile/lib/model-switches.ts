@@ -117,6 +117,28 @@ export function hasModelSwitches(message: { modelSwitches?: ModelSwitches }): bo
   return (message.modelSwitches?.attempts.length ?? 0) > 0;
 }
 
+/** Which tappable "当前模型:" bar a bot reply gets, if any. */
+export type CurrentModelBar =
+  | { kind: "timeline"; switches: ModelSwitches; presetName?: string }
+  | { kind: "mark"; model: string; presetName?: string };
+
+/**
+ * The bar for a bot reply: the switch-history bar when it carries a
+ * timeline, the model-list bar when it only carries the trailing mark,
+ * none otherwise. A user message, or a reply with neither, keeps its
+ * text as-is.
+ */
+export function currentModelBar(
+  message: { role: string; modelSwitches?: ModelSwitches },
+  mark: { modelId: string; presetName?: string } | null,
+): CurrentModelBar | null {
+  if (message.role !== "bot" || !mark) return null;
+  if (message.modelSwitches && hasModelSwitches(message)) {
+    return { kind: "timeline", switches: message.modelSwitches, presetName: mark.presetName };
+  }
+  return { kind: "mark", model: mark.modelId, presetName: mark.presetName };
+}
+
 /**
  * The picker row a switch-history tap locates, by model id plus the
  * connection display name — so two rows for the same model on different

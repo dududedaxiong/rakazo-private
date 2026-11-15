@@ -52,7 +52,7 @@ import type { MobileBot, MobileMessage, MobileSnapshot } from "../../lib/mobile-
 import { blockText } from "../../lib/mobile-types";
 import type { ModelSwitchTimeline } from "../../lib/model-switches";
 import {
-  hasModelSwitches,
+  currentModelBar,
   parseCurrentModelMark,
   stripCurrentModelMarkBlocks,
   translationModelSwitches,
@@ -595,6 +595,15 @@ export const MessageRow = memo(function MessageRow({
     autoTranslate: translationSettings.autoTranslate,
     composing: liveMessageComposing(message.blocks),
   });
+  // A finished translation that is only folded away reopens instead of
+  // spending another translation call; anything else translates as before.
+  const handleTranslatePress = useCallback(() => {
+    if (translation.status === "done" && translation.result && !translation.expanded) {
+      translation.expand();
+      return;
+    }
+    translation.translate();
+  }, [translation]);
   const [translationPickerOpen, setTranslationPickerOpen] = useState(false);
   // A variable, not a literal: Biome reads a literal role prop as an ARIA
   // role, and "translation" is a picker role, not an ARIA role.
@@ -604,21 +613,20 @@ export const MessageRow = memo(function MessageRow({
     translationSettings.modelProvider && translationSettings.modelId
       ? modelOptionKey(translationSettings.modelProvider, translationSettings.modelId)
       : "";
-  // A message that switched models carries its timeline; the mark line it
-  // also carries ("当前模型: X") leaves the bubble and becomes the tappable
-  // bottom bar instead. Messages without a timeline keep their text as-is.
-  const modelSwitches = message.role === "bot" ? message.modelSwitches : undefined;
+  // A bot reply's trailing "当前模型: X" mark leaves the bubble and
+  // becomes the tappable bottom bar instead: the switch-history bar when
+  // the message carries a timeline, the model-list bar when it only
+  // carries the mark. Messages without a mark keep their text as-is.
   const switchMark = useMemo(
-    () => (modelSwitches ? parseCurrentModelMark(blockText(message)) : null),
-    [message, modelSwitches],
+    () => (message.role === "bot" ? parseCurrentModelMark(blockText(message)) : null),
+    [message],
   );
   const displayMessage = useMemo(
     () =>
-      modelSwitches && switchMark
-        ? { ...message, blocks: stripCurrentModelMarkBlocks(message.blocks) }
-        : message,
-    [message, modelSwitches, switchMark],
+      switchMark ? { ...message, blocks: stripCurrentModelMarkBlocks(message.blocks) } : message,
+    [message, switchMark],
   );
+  const modelBar = useMemo(() => currentModelBar(message, switchMark), [message, switchMark]);
   const mediaKind: "image" | "video" | null = hasGeneratedMedia
     ? message.blocks.some(
         (block) => block.kind === "file" && (block.mimeType ?? "").startsWith("video/"),
@@ -780,14 +788,27 @@ export const MessageRow = memo(function MessageRow({
               {bubble}
             </MessageContextMenu>
           )}
-          {modelSwitches && hasModelSwitches({ modelSwitches }) ? (
+          {modelBar?.kind === "timeline" ? (
             <ModelSwitchBar
-              switches={modelSwitches}
-              presetName={switchMark?.presetName}
+              switches={modelBar.switches}
+              presetName={modelBar.presetName}
               onPress={() =>
                 setTimeline({
-                  switches: modelSwitches,
+                  switches: modelBar.switches,
                   role: switchRole,
+                  selectedKey: switchSelectedKey,
+                  currentModels: switchModels,
+                })
+              }
+            />
+          ) : modelBar?.kind === "mark" ? (
+            <ModelSwitchBar
+              model={modelBar.model}
+              presetName={modelBar.presetName}
+              onPress={() =>
+                setLocatePicker({
+                  role: switchRole,
+                  locate: { model: modelBar.model, provider: null },
                   selectedKey: switchSelectedKey,
                   currentModels: switchModels,
                 })
@@ -835,7 +856,7 @@ export const MessageRow = memo(function MessageRow({
               onFavorite={actions.favorite ? () => actions.favorite!(message) : undefined}
               favorited={favorited ?? false}
               onRegenerate={readOnly ? undefined : regenerateMessage}
-              onTranslate={canTranslate ? translation.translate : undefined}
+              onTranslate={canTranslate ? handleTranslatePress : undefined}
             />
           ) : null}
           {canTranslate ? (
