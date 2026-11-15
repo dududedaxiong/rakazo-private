@@ -16,8 +16,15 @@ vi.mock("react-native", async () => {
   return {
     ActionSheetIOS: {},
     Alert: { alert: vi.fn() },
+    // The row now imports the switch-history sheet, whose bottom sheet reads
+    // the appearance module at import time.
+    Appearance: {
+      getColorScheme: () => "light",
+      addChangeListener: () => ({ remove: () => undefined }),
+    },
     Platform: { OS: "ios", select: (options: { ios?: unknown }) => options.ios },
     Share: { share: async () => ({}) },
+    Text: "span",
     View: "div",
     Pressable: ({ children, style }: { children?: unknown; style?: unknown }) =>
       createElement(
@@ -39,6 +46,8 @@ vi.mock("react-native-reanimated", () => ({
   ZoomIn: {},
 }));
 vi.mock("expo-clipboard", () => ({ setStringAsync: mocks.setStringAsync }));
+vi.mock("expo-localization", () => ({ getLocales: () => [{ languageTag: "en-US" }] }));
+vi.mock("expo-modules-core", () => ({ requireNativeModule: vi.fn() }));
 vi.mock("expo-secure-store", () => ({}));
 vi.mock("./voice", () => ({ stopVoicePlayback: vi.fn() }));
 vi.mock("@rakazo/chat-ui/native", () => ({ markdownCodeBlocks: mocks.markdownCodeBlocks }));
@@ -52,6 +61,12 @@ vi.mock("./message-action-sheet", () => ({ presentMessageActionSheet: vi.fn() })
 vi.mock("../components/message-action-menu", () => ({ presentMessageMenu: vi.fn() }));
 vi.mock("../components/message-context-menu", () => ({
   MessageContextMenu: ({ children }: { children: unknown }) => children,
+}));
+vi.mock("../components/thread/thread-model-picker-sheet", () => ({
+  ThreadModelPickerSheet: () => null,
+}));
+vi.mock("../components/thread/message-selection-bar", () => ({
+  MessageSelectCheckbox: () => null,
 }));
 vi.mock("../components/bot-avatar", () => ({ BotAvatar: () => null }));
 vi.mock("../components/native-symbol", () => ({ NativeSymbol: () => null }));

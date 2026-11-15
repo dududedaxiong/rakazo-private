@@ -30,6 +30,12 @@ vi.mock("react-native", async () => {
   return {
     ActionSheetIOS: {},
     Alert: { alert: vi.fn() },
+    // The row now imports the switch-history sheet, whose bottom sheet reads
+    // the appearance module at import time.
+    Appearance: {
+      getColorScheme: () => "light",
+      addChangeListener: () => ({ remove: () => undefined }),
+    },
     Platform: {
       get OS() {
         return mocks.os;

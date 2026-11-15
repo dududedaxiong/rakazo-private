@@ -19,9 +19,11 @@ import { imageDismissBackdropOpacity, shouldDismissImage } from "../lib/image-di
 import type { ImageSize } from "../lib/inline-image";
 import { fitImageSize } from "../lib/inline-image";
 import { saveGeneratedMedia } from "../lib/media-folders";
+import { regenerateMedia } from "../lib/media-supplementary";
 import { iosAtLeast } from "../lib/native-controls";
 import { errorText } from "../lib/user-error";
 import { GlassIconButton } from "./glass-icon-button";
+import { MediaViewerTitleBar } from "./media-viewer-title-bar";
 
 export type ImageArtifactPreviewTarget = {
   artifactId: string;
@@ -217,6 +219,9 @@ function ZoomableImage({
  * Full-screen image viewer: zoom, share or export through the system sheet, close. Rendered as
  * a transparent stack screen (see app/image.tsx) so dragging reveals the thread underneath.
  * A React Native Modal instead leaves the viewer black on iOS after cancelling the share sheet.
+ * The header names the file on the left, with share, regenerate, download, and close on the
+ * right; the title bar under it switches the prompt preset, supplementary prompt, and model
+ * for the next generation.
  */
 export function ImageArtifactViewer({
   threadTarget,
@@ -263,6 +268,11 @@ export function ImageArtifactViewer({
   const targetGroupId = "groupId" in threadTarget ? threadTarget.groupId : undefined;
   const requestTarget = (): MobileArtifactTarget =>
     targetBotId !== undefined ? { botId: targetBotId } : { groupId: targetGroupId! };
+  // A completed regeneration may hand back a new artifact; the viewer then
+  // loads that file instead of the one it opened with.
+  const [activeArtifactId, setActiveArtifactId] = useState(target.artifactId);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [regenerating, setRegenerating] = useState(false);
   const fail = (error: unknown) =>
     setState({
       status: "error",
@@ -271,7 +281,8 @@ export function ImageArtifactViewer({
 
   useEffect(() => {
     let cancelled = false;
-    void imageArtifactPreview(requestTarget(), target.artifactId, target.mimeType)
+    setState({ status: "loading" });
+    void imageArtifactPreview(requestTarget(), activeArtifactId, target.mimeType)
       .then(({ uri, size }) => {
         if (!cancelled) setState({ status: "ready", uri, natural: size });
       })
@@ -282,18 +293,18 @@ export function ImageArtifactViewer({
       cancelled = true;
     };
     // The request target is derived from the two ids below.
-  }, [targetBotId, targetGroupId, target.artifactId, target.mimeType]);
+  }, [targetBotId, targetGroupId, activeArtifactId, target.mimeType, reloadKey]);
 
   // Re-resolve the file before sharing: it re-downloads when the OS purged the cache since load.
   const share = () =>
-    void imageArtifactUri(requestTarget(), target.artifactId, target.mimeType)
+    void imageArtifactUri(requestTarget(), activeArtifactId, target.mimeType)
       .then((uri) => shareLocalFile(uri, target.mimeType, target.name))
       .catch((error) => Alert.alert(t("Could not share image"), errorText(error, t("Try again."))));
 
   // Download saves the image into the App's local folder, under the bot's
   // image directory, instead of only keeping it in the cache.
   const download = () =>
-    void imageArtifactUri(requestTarget(), target.artifactId, target.mimeType)
+    void imageArtifactUri(requestTarget(), activeArtifactId, target.mimeType)
       .then((uri) => {
         saveGeneratedMedia(uri, target.mimeType, target.name, {
           imageSaveDirectory: saveDirectory ?? null,
@@ -301,6 +312,30 @@ export function ImageArtifactViewer({
         Alert.alert(t("Saved {name} locally", { name: target.name }));
       })
       .catch((error) => Alert.alert(t("Could not save image"), errorText(error, t("Try again."))));
+
+  // Re-renders this image with its prompt preset plus supplementary prompt.
+  // A completed regeneration loads the new file here; a queued one finishes
+  // in the background and the new file arrives as its own message.
+  const regenerate = () => {
+    if (regenerating) return;
+    setRegenerating(true);
+    void regenerateMedia(activeArtifactId)
+      .then((result) => {
+        if (result.status === "queued") {
+          Alert.alert(t("Regenerating…"));
+          return;
+        }
+        if (result.artifactId && result.artifactId !== activeArtifactId) {
+          setActiveArtifactId(result.artifactId);
+          return;
+        }
+        setReloadKey((key) => key + 1);
+      })
+      .catch((error: unknown) =>
+        Alert.alert(t("Could not regenerate"), errorText(error, t("Try again."))),
+      )
+      .finally(() => setRegenerating(false));
+  };
 
   return (
     // Insets come from the SafeAreaProvider mounted by app/image.tsx, seeded with the window
@@ -324,32 +359,48 @@ export function ImageArtifactViewer({
           },
         ]}
       >
-        <GlassIconButton
-          accessibilityLabel={t("Close image")}
-          ios="xmark"
-          android="close"
-          iconSize={18}
-          onPress={close}
-        />
-        {showShare ? (
+        <Text numberOfLines={1} style={[styles.headerTitle, { color: tokens.foreground }]}>
+          {target.name}
+        </Text>
+        <View style={styles.headerActions}>
+          {showShare ? (
+            <GlassIconButton
+              accessibilityLabel={t("Share {name}", { name: target.name })}
+              ios="square.and.arrow.up"
+              android="share-social-outline"
+              iconSize={18}
+              onPress={share}
+            />
+          ) : null}
           <GlassIconButton
-            accessibilityLabel={t("Share {name}", { name: target.name })}
-            ios="square.and.arrow.up"
-            android="share-social-outline"
+            accessibilityLabel={t("Regenerate")}
+            ios="arrow.clockwise"
+            android="refresh-outline"
             iconSize={18}
-            onPress={share}
+            disabled={regenerating}
+            onPress={regenerate}
           />
-        ) : null}
-        {showDownload ? (
+          {showDownload ? (
+            <GlassIconButton
+              accessibilityLabel={t("Download")}
+              ios="square.and.arrow.down"
+              android="download-outline"
+              iconSize={18}
+              onPress={download}
+            />
+          ) : null}
           <GlassIconButton
-            accessibilityLabel={t("Download")}
-            ios="square.and.arrow.down"
-            android="download-outline"
+            accessibilityLabel={t("Close image")}
+            ios="xmark"
+            android="close"
             iconSize={18}
-            onPress={download}
+            onPress={close}
           />
-        ) : null}
+        </View>
       </View>
+      {targetBotId ? (
+        <MediaViewerTitleBar kind="image" artifactId={activeArtifactId} botId={targetBotId} />
+      ) : null}
       <View
         style={styles.stage}
         onLayout={(event) => {
@@ -390,7 +441,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 12,
+    gap: 8,
   },
+  headerTitle: { flex: 1, minWidth: 0, fontSize: 15, fontWeight: "600" },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
   stage: { flex: 1, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   message: { fontSize: 15, textAlign: "center", padding: 24 },
 });

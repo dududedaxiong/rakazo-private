@@ -10,6 +10,7 @@ import { chatModelPickerChoices } from "../../lib/chat-model";
 import { useI18n } from "../../lib/i18n";
 import type { MobileMe, MobileModelCredential } from "../../lib/mobile-types";
 import { removableModel, removeModelFromConnection } from "../../lib/model-removal";
+import { locateModelChoiceKey } from "../../lib/model-switches";
 import type { ModelTestResult } from "../../lib/model-test-result";
 import { formatModelTestClock } from "../../lib/model-test-result";
 import {
@@ -49,6 +50,8 @@ export function ThreadModelPickerSheet({
   selectedKey,
   /** The bot's current ordered list for the video/image role; a pick moves to its front. */
   currentModels,
+  /** A model a switch-history tap wants located: scrolled to and tagged, not selected. */
+  locate,
   onClose,
   onSaved,
 }: {
@@ -58,6 +61,7 @@ export function ThreadModelPickerSheet({
   userId: string;
   selectedKey: string;
   currentModels?: readonly BotModelEntry[] | null;
+  locate?: { model: string; provider?: string | null } | null;
   onClose: () => void;
   onSaved: (choice: ThreadModelSave) => void;
 }) {
@@ -74,6 +78,13 @@ export function ThreadModelPickerSheet({
   const [saving, setSaving] = useState(false);
   const [menuChoice, setMenuChoice] = useState<ChatModelChoice | null>(null);
   const [onlyAvailable, setOnlyAvailable] = useState(false);
+  /**
+   * The row a switch-history tap locates: matched by model id plus the
+   * connection display name (providerLabel), so two rows for the same model
+   * on different connections stay distinct. Falls back to the model id
+   * alone, then to no highlight when the model is not listed.
+   */
+  const locateKey = useMemo(() => locateModelChoiceKey(choices ?? [], locate), [choices, locate]);
   const testRun = getModelTestRunStore();
   const testSnapshot = useSyncExternalStore(testRun.subscribe, testRun.getSnapshot);
   const title =
@@ -468,6 +479,7 @@ export function ThreadModelPickerSheet({
         <ModelPickerList
           choices={choices}
           selectedKey={selectedKey}
+          locateKey={locateKey}
           error={loadError}
           onSelect={(choice) => setMenuChoice(choice)}
           isRemovable={(choice) =>

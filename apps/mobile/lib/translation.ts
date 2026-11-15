@@ -1,5 +1,6 @@
 import type {
   BotModelEntry,
+  ModelSwitchAttempt,
   TranslationSourceLanguage,
   TranslationTargetLanguage,
 } from "@rakazo/contracts";
@@ -134,6 +135,11 @@ export type BotTranslationResult = {
   modelId: string;
   /** True when the translation came from a fallback model, not the primary. */
   usedFallback: boolean;
+  /**
+   * The models tried for this translation, in order; only present once the
+   * server sends it. Without it the panel shows a single succeeded attempt.
+   */
+  attempts?: ModelSwitchAttempt[];
 };
 
 /**

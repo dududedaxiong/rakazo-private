@@ -1,6 +1,11 @@
 import { markdownCodeBlocks } from "@rakazo/chat-ui/native";
-import type { BotAvatarSet, LoginFieldInput, MessageReaction } from "@rakazo/contracts";
-import { canReactToThreadMessage, MESSAGE_REACTIONS } from "@rakazo/contracts";
+import type {
+  BotAvatarSet,
+  BotModelEntry,
+  LoginFieldInput,
+  MessageReaction,
+} from "@rakazo/contracts";
+import { canReactToThreadMessage, MESSAGE_REACTIONS, primaryBotModel } from "@rakazo/contracts";
 import type { ChildBotBlock, PeerExchange } from "@rakazo/core";
 import {
   canMarkMessageUnread,
@@ -45,6 +50,13 @@ import { messageHasInlineControls, quotableMessageSegments } from "../../lib/mes
 import { messageRowLayout } from "../../lib/message-row-layout";
 import type { MobileBot, MobileMessage, MobileSnapshot } from "../../lib/mobile-types";
 import { blockText } from "../../lib/mobile-types";
+import type { ModelSwitchTimeline } from "../../lib/model-switches";
+import {
+  hasModelSwitches,
+  parseCurrentModelMark,
+  stripCurrentModelMarkBlocks,
+  translationModelSwitches,
+} from "../../lib/model-switches";
 import { useMobileTokens, useResolvedAppearance } from "../../lib/native";
 import type { OverlaySpeechProgress } from "../../lib/overlay-speech";
 import { selectableTextFromMarkdown } from "../../lib/selectable-text";
@@ -55,6 +67,7 @@ import { BotAvatar } from "../bot-avatar";
 import type { ImageArtifactPreviewTarget } from "../image-artifact-viewer";
 import { presentMessageMenu } from "../message-action-menu";
 import { MessageContextMenu } from "../message-context-menu";
+import { ModelSwitchBar, ModelSwitchTimelineSheet } from "../model-switch-timeline-sheet";
 import { NativeSymbol } from "../native-symbol";
 import { ReplyLine } from "../reply-line";
 import { TimeSeparator } from "../time-separator";
@@ -591,6 +604,58 @@ export const MessageRow = memo(function MessageRow({
     translationSettings.modelProvider && translationSettings.modelId
       ? modelOptionKey(translationSettings.modelProvider, translationSettings.modelId)
       : "";
+  // A message that switched models carries its timeline; the mark line it
+  // also carries ("当前模型: X") leaves the bubble and becomes the tappable
+  // bottom bar instead. Messages without a timeline keep their text as-is.
+  const modelSwitches = message.role === "bot" ? message.modelSwitches : undefined;
+  const switchMark = useMemo(
+    () => (modelSwitches ? parseCurrentModelMark(blockText(message)) : null),
+    [message, modelSwitches],
+  );
+  const displayMessage = useMemo(
+    () =>
+      modelSwitches && switchMark
+        ? { ...message, blocks: stripCurrentModelMarkBlocks(message.blocks) }
+        : message,
+    [message, modelSwitches, switchMark],
+  );
+  const mediaKind: "image" | "video" | null = hasGeneratedMedia
+    ? message.blocks.some(
+        (block) => block.kind === "file" && (block.mimeType ?? "").startsWith("video/"),
+      )
+      ? "video"
+      : "image"
+    : null;
+  // The timeline opens the list its message belongs to: chat, image, video,
+  // or translation. The selected key is the bot's current model for that list.
+  const switchRole: ThreadModelPickerRole = mediaKind ?? "main";
+  const switchModels =
+    mediaKind === "image"
+      ? messageBot?.imageModels
+      : mediaKind === "video"
+        ? messageBot?.videoModels
+        : undefined;
+  const switchSelectedKey = (() => {
+    if (switchRole === "main") {
+      return messageBot?.modelProvider && messageBot?.modelId
+        ? modelOptionKey(messageBot.modelProvider, messageBot.modelId)
+        : "";
+    }
+    const primary = primaryBotModel(switchModels ?? null);
+    return primary ? modelOptionKey(primary.provider, primary.model) : "";
+  })();
+  const [timeline, setTimeline] = useState<{
+    switches: ModelSwitchTimeline;
+    role: ThreadModelPickerRole;
+    selectedKey: string;
+    currentModels?: readonly BotModelEntry[] | null;
+  } | null>(null);
+  const [locatePicker, setLocatePicker] = useState<{
+    role: ThreadModelPickerRole;
+    locate: { model: string; provider?: string | null };
+    selectedKey: string;
+    currentModels?: readonly BotModelEntry[] | null;
+  } | null>(null);
   // A search hit tints the row yellow; the current hit is stronger than a plain
   // hit, and both outrank the jump highlight.
   const rowHighlight =
@@ -611,7 +676,7 @@ export const MessageRow = memo(function MessageRow({
         mentions={mentions}
         botId={bubbleBotId}
         groupId={groupId}
-        message={message}
+        message={displayMessage}
         authorName={authorName}
         botName={botName}
         showBotSenderName={showBotSenderName}
@@ -715,6 +780,20 @@ export const MessageRow = memo(function MessageRow({
               {bubble}
             </MessageContextMenu>
           )}
+          {modelSwitches && hasModelSwitches({ modelSwitches }) ? (
+            <ModelSwitchBar
+              switches={modelSwitches}
+              presetName={switchMark?.presetName}
+              onPress={() =>
+                setTimeline({
+                  switches: modelSwitches,
+                  role: switchRole,
+                  selectedKey: switchSelectedKey,
+                  currentModels: switchModels,
+                })
+              }
+            />
+          ) : null}
           {speaking && speechProgress ? (
             <View style={{ marginTop: 4, gap: 2 }}>
               <Text
@@ -779,6 +858,21 @@ export const MessageRow = memo(function MessageRow({
                   : undefined
               }
               onSwitchModel={messageBot?.id ? () => setTranslationPickerOpen(true) : undefined}
+              modelProvider={translationSettings.modelProvider}
+              onShowTimeline={
+                translation.result && messageBot
+                  ? () =>
+                      setTimeline({
+                        switches: translationModelSwitches(
+                          translation.result!,
+                          translationSettings.modelProvider,
+                        ),
+                        role: "translation",
+                        selectedKey: translationSelectedKey,
+                        currentModels: messageBot.translationModels,
+                      })
+                  : undefined
+              }
             />
           ) : null}
           {displayedReactions.size > 0 ? (
@@ -836,6 +930,37 @@ export const MessageRow = memo(function MessageRow({
             // re-translating now uses the model just picked.
             translation.translate();
           }}
+        />
+      ) : null}
+      {timeline && messageBot ? (
+        <ModelSwitchTimelineSheet
+          visible
+          switches={timeline.switches}
+          onClose={() => setTimeline(null)}
+          onLocateModel={(attempt) => {
+            // The picker replaces the timeline; closing the timeline first
+            // keeps two native sheets from stacking.
+            setTimeline(null);
+            setLocatePicker({
+              role: timeline.role,
+              locate: { model: attempt.model, provider: attempt.provider ?? null },
+              selectedKey: timeline.selectedKey,
+              currentModels: timeline.currentModels,
+            });
+          }}
+        />
+      ) : null}
+      {locatePicker && messageBot ? (
+        <ThreadModelPickerSheet
+          visible
+          role={locatePicker.role}
+          botId={messageBot.id}
+          userId={userId ?? ""}
+          selectedKey={locatePicker.selectedKey}
+          currentModels={locatePicker.currentModels}
+          locate={locatePicker.locate}
+          onClose={() => setLocatePicker(null)}
+          onSaved={() => setLocatePicker(null)}
         />
       ) : null}
     </View>

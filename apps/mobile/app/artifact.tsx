@@ -16,6 +16,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { MediaViewerTitleBar } from "../components/media-viewer-title-bar";
 import { NativeSymbol } from "../components/native-symbol";
 import { PdfPreview } from "../components/pdf-preview";
 import { SandboxedHtmlPreview } from "../components/sandboxed-html-preview";
@@ -32,6 +33,7 @@ import {
 import { useFloatingHeaderInset } from "../lib/floating-header";
 import { t, useI18n } from "../lib/i18n";
 import { saveGeneratedMedia } from "../lib/media-folders";
+import { regenerateMedia } from "../lib/media-supplementary";
 import { presentMessageActionSheet } from "../lib/message-action-sheet";
 import { native, useResolvedAppearance, useThemedStyles } from "../lib/native";
 import { iosAtLeast } from "../lib/native-controls";
@@ -224,6 +226,33 @@ export default function ArtifactDetailScreen() {
     }
   }, [content, t, imageSaveDirectory, videoSaveDirectory]);
 
+  // Video plays in the system player with the native header, so there is no
+  // app header to rearrange: the file name is already the header title, and
+  // regenerate joins share and download there. A completed regeneration
+  // loads the new file; a queued one finishes in the background.
+  const [regenerating, setRegenerating] = useState(false);
+  const isVideo = content.status === "ready" && content.preview.kind === "video";
+  const videoBotId = imageTarget && "botId" in imageTarget ? imageTarget.botId : undefined;
+  const regenerate = useCallback(() => {
+    if (content.status !== "ready" || regenerating) return;
+    const artifactId = content.artifact.id;
+    setRegenerating(true);
+    void regenerateMedia(artifactId)
+      .then((result) => {
+        if (result.status === "queued") {
+          Alert.alert(t("Regenerating…"));
+          return;
+        }
+        if (result.artifactId && result.artifactId !== artifactId) {
+          setSelectedVersionId(result.artifactId);
+        }
+      })
+      .catch((error: unknown) =>
+        Alert.alert(t("Could not regenerate"), errorText(error, t("Try again."))),
+      )
+      .finally(() => setRegenerating(false));
+  }, [content, regenerating]);
+
   // The media toggles gate only image and video artifacts; documents and
   // other files always keep Share, and never show Download.
   const isMedia =
@@ -247,6 +276,17 @@ export default function ArtifactDetailScreen() {
                 style={styles.headerButton}
               >
                 <NativeSymbol ios="square.and.arrow.up" android="share-social-outline" size={19} />
+              </Pressable>
+            ) : null}
+            {isVideo ? (
+              <Pressable
+                accessibilityLabel={t("Regenerate")}
+                hitSlop={8}
+                disabled={regenerating}
+                onPress={regenerate}
+                style={styles.headerButton}
+              >
+                <NativeSymbol ios="arrow.clockwise" android="refresh-outline" size={19} />
               </Pressable>
             ) : null}
             {showDownloadButton ? (
@@ -289,6 +329,16 @@ export default function ArtifactDetailScreen() {
                           },
                         ]
                       : []),
+                    ...(isVideo
+                      ? [
+                          {
+                            type: "button" as const,
+                            label: t("Regenerate"),
+                            icon: { type: "sfSymbol" as const, name: "arrow.clockwise" },
+                            onPress: regenerate,
+                          },
+                        ]
+                      : []),
                     ...(showDownloadButton
                       ? [
                           {
@@ -321,6 +371,9 @@ export default function ArtifactDetailScreen() {
     showDownloadButton,
     styles,
     t,
+    isVideo,
+    regenerate,
+    regenerating,
   ]);
 
   const scrolling =
@@ -346,6 +399,13 @@ export default function ArtifactDetailScreen() {
   return (
     <View style={[styles.screen, { paddingTop: scrolling ? 0 : headerInset }]}>
       {scrolling ? null : versionPicker}
+      {isVideo && videoBotId ? (
+        <MediaViewerTitleBar
+          kind="video"
+          artifactId={content.status === "ready" ? content.artifact.id : artifactId}
+          botId={videoBotId}
+        />
+      ) : null}
       <View style={styles.body}>
         {content.status === "loading" ? (
           <View style={styles.centered}>

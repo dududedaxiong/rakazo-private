@@ -54,6 +54,7 @@ export type ModelPickerTestDisplay = {
 export function ModelPickerList({
   choices,
   selectedKey,
+  locateKey,
   onSelect,
   error,
   providerLabel,
@@ -67,6 +68,8 @@ export function ModelPickerList({
   /** Providers that need a connection first, listed after the models. */
   connectChoices?: readonly ChatModelChoice[];
   selectedKey: string;
+  /** A row to scroll to and tag "located here", from a switch-history tap. */
+  locateKey?: string | null;
   onSelect: (choice: ChatModelChoice) => void;
   error?: string | null;
   emptyMessage?: string;
@@ -197,15 +200,18 @@ export function ModelPickerList({
     const state = initialScroll.current;
     if (state.handled || state.cancelled || choices === null) return;
     state.ready = true;
+    // A locate target outranks the selection: the list opens on the model
+    // a switch-history tap named, not on the bot's current model.
+    const targetKey = locateKey ?? selectedKey;
     state.target = null;
     for (const [sectionIndex, section] of sections.entries()) {
-      const itemIndex = section.data.findIndex((item) => item.key === selectedKey);
+      const itemIndex = section.data.findIndex((item) => item.key === targetKey);
       if (itemIndex !== -1) {
-        state.target = { sectionIndex, itemIndex, key: selectedKey };
+        state.target = { sectionIndex, itemIndex, key: targetKey };
         break;
       }
     }
-  }, [choices, sections, selectedKey]);
+  }, [choices, sections, selectedKey, locateKey]);
 
   // Viewability is reported after layout, including when an async catalog arrives.
   const revealInitialSelection = useCallback(
@@ -356,6 +362,7 @@ export function ModelPickerList({
       }
       renderItem={({ item, index, section }) => {
         const selected = item.key === selectedKey;
+        const located = locateKey != null && item.key === locateKey;
         const testLine =
           test?.hasRun && !section.connect
             ? modelTestRowLine({
@@ -373,6 +380,10 @@ export function ModelPickerList({
               styles.cell,
               index === 0 && styles.first,
               index === section.data.length - 1 && styles.last,
+              // The located row keeps the list's own background and gains the
+              // accent wash, so it reads as "this is the one" without a second
+              // checkmark fighting the selected row's.
+              located && { backgroundColor: mobileTokens.accent },
             ]}
           >
             <SettingsRow
@@ -387,8 +398,19 @@ export function ModelPickerList({
               value={section.connect ? t("Connect") : undefined}
               chevron={section.connect ? "right" : undefined}
               trailing={
-                item.images === false || selected ? (
+                located || item.images === false || selected ? (
                   <View style={styles.trailing}>
+                    {located ? (
+                      <Text
+                        style={{
+                          color: mobileTokens.link,
+                          fontSize: 13,
+                          fontWeight: "600",
+                        }}
+                      >
+                        {t("Located here")}
+                      </Text>
+                    ) : null}
                     {item.images === false ? <TextOnlyMark /> : null}
                     {selected ? <Checkmark /> : null}
                   </View>

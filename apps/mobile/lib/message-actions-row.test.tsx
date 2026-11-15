@@ -22,6 +22,12 @@ vi.mock("react-native", async () => {
   return {
     ActionSheetIOS: {},
     Alert: { alert: vi.fn() },
+    // The row now imports the switch-history sheet, whose bottom sheet reads
+    // the appearance module at import time.
+    Appearance: {
+      getColorScheme: () => "light",
+      addChangeListener: () => ({ remove: () => undefined }),
+    },
     Platform: { OS: "ios", select: (options: { ios?: unknown }) => options.ios },
     Share: { share: mocks.share },
     View: ({ children, style }: { children?: unknown; style?: unknown }) =>
@@ -77,6 +83,8 @@ vi.mock("react-native-reanimated", async () => {
   };
 });
 vi.mock("expo-clipboard", () => ({ setStringAsync: mocks.setStringAsync }));
+vi.mock("expo-localization", () => ({ getLocales: () => [{ languageTag: "en-US" }] }));
+vi.mock("expo-modules-core", () => ({ requireNativeModule: vi.fn() }));
 vi.mock("expo-secure-store", () => ({}));
 vi.mock("./voice", () => ({ stopVoicePlayback: mocks.stopVoicePlayback }));
 vi.mock("@rakazo/chat-ui/native", () => ({ markdownCodeBlocks: mocks.markdownCodeBlocks }));
@@ -97,6 +105,12 @@ vi.mock("./message-action-sheet", () => ({ presentMessageActionSheet: vi.fn() })
 vi.mock("../components/message-action-menu", () => ({ presentMessageMenu: vi.fn() }));
 vi.mock("../components/message-context-menu", () => ({
   MessageContextMenu: ({ children }: { children: unknown }) => children,
+}));
+vi.mock("../components/thread/thread-model-picker-sheet", () => ({
+  ThreadModelPickerSheet: () => null,
+}));
+vi.mock("../components/thread/message-selection-bar", () => ({
+  MessageSelectCheckbox: () => null,
 }));
 vi.mock("../components/bot-avatar", () => ({ BotAvatar: () => null }));
 vi.mock("../components/reply-line", () => ({ ReplyLine: () => null }));
@@ -232,9 +246,16 @@ beforeEach(() => {
 });
 
 describe("MessageRow action row", () => {
-  it("shows the five v12 buttons in order under a bot reply", () => {
+  it("shows the six buttons in order under a bot reply", () => {
     const { container } = renderRow();
-    expect(labels(container)).toEqual(["Copy", "Speak message", "Share", "Favorite", "Regenerate"]);
+    expect(labels(container)).toEqual([
+      "Copy",
+      "Speak message",
+      "Share",
+      "Favorite",
+      "Translate",
+      "Regenerate",
+    ]);
   });
 
   it("lays the row out as the mockup does: 36×36 tiles, 6pt apart, regenerate pushed right", () => {
@@ -247,12 +268,14 @@ describe("MessageRow action row", () => {
       marginTop: 10,
       marginBottom: 20,
     });
-    // Four tiles, a flex spacer, then the regenerate tile.
-    expect(row.children).toHaveLength(6);
+    // Five tiles and the translate pill, a flex spacer, then the regenerate tile.
+    expect(row.children).toHaveLength(7);
     expect(
-      JSON.parse((row.children[4] as HTMLElement).getAttribute("data-style") ?? "{}"),
+      JSON.parse((row.children[5] as HTMLElement).getAttribute("data-style") ?? "{}"),
     ).toMatchObject({ flex: 1 });
     for (const button of buttons(container)) {
+      // The translate action is a wide blue pill, not a 36px tile.
+      if (button.getAttribute("aria-label") === "Translate") continue;
       const style = JSON.parse(button.getAttribute("data-style") ?? "{}");
       expect(style).toMatchObject({ width: 36, height: 36, borderRadius: 10 });
     }
@@ -261,6 +284,7 @@ describe("MessageRow action row", () => {
       { ios: "speaker.wave.2", android: "volume-high-outline", size: 19 },
       { ios: "paperplane", android: "paper-plane-outline", size: 19 },
       { ios: "bookmark", android: "bookmark-outline", size: 19 },
+      { ios: "globe", android: "globe-outline", size: 17 },
       { ios: "arrow.clockwise", android: "refresh-outline", size: 19 },
     ]);
   });
@@ -312,7 +336,7 @@ describe("MessageRow action row", () => {
 
   it("regenerates the reply", async () => {
     const { container, actions } = renderRow();
-    await click(buttons(container)[4]!);
+    await click(buttons(container)[5]!);
     expect(actions.regenerate).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({ id: "m1" }),
     );
@@ -323,9 +347,9 @@ describe("MessageRow action row", () => {
     expect(labels(renderRow({ id: "progress:1" }).container)).toEqual([]);
   });
 
-  it("keeps copy, speak, share and favorite in read-only history without regenerate", () => {
+  it("keeps copy, speak, share, favorite and translate in read-only history without regenerate", () => {
     const { container } = renderRow({ readOnly: true });
-    expect(labels(container)).toEqual(["Copy", "Speak message", "Share", "Favorite"]);
+    expect(labels(container)).toEqual(["Copy", "Speak message", "Share", "Favorite", "Translate"]);
   });
 
   it("pulses only the speaking message's speaker icon", () => {
