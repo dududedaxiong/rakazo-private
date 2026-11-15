@@ -59,6 +59,7 @@ import { computersAreUnavailable } from "../lib/computer-sandbox";
 import { desktopBridge } from "../lib/desktop";
 import { downloadConversationMarkdown } from "../lib/export-conversation";
 import { hasOpenDialog } from "../lib/has-open-dialog";
+import type { ModelLocateTarget } from "../lib/model-locate";
 import { PagesProvider, usePagesForChat } from "../lib/pages";
 import { markAfterPaint, markOnce } from "../lib/performance";
 import { usePreloadRecoveryState } from "../lib/preload-recovery";
@@ -198,7 +199,14 @@ function SpaceShell() {
   const botsSidebarDensity = botsSidebarDensityPreference.use();
   const enterToSend = composerEnterToSendPreference.use();
   const rightPanel = useRightPanel({ searchParams, setSearchParams });
-  const { panel, setPanel, modelFocusRequest, setModelFocusRequest } = rightPanel;
+  const {
+    panel,
+    setPanel,
+    modelFocusRequest,
+    setModelFocusRequest,
+    modelLocateRequest,
+    setModelLocateRequest,
+  } = rightPanel;
   const lastBotTab = useRef<Panel>("routines");
   if (
     panel === "routines" ||
@@ -982,6 +990,18 @@ function SpaceShell() {
     );
   }
 
+  // A model named in a switch timeline: open that bot's settings and scroll
+  // its model list to the row. The request is set after the panel opens so
+  // the panel switch does not clear it.
+  const locateBotModel = useCallback(
+    (target: ModelLocateTarget) => {
+      if (target.botId === active?.id && !inGroup) setPanel("settings");
+      else openChatSettings("bot", target.botId);
+      setModelLocateRequest({ ...target, requestId: Date.now() });
+    },
+    [active?.id, inGroup, setModelLocateRequest, setPanel],
+  );
+
   const replyTargetName = composer.replyTarget
     ? composer.replyTarget.role === "user"
       ? (otherAuthor(composer.replyTarget.author, userId)?.name ??
@@ -1365,6 +1385,7 @@ function SpaceShell() {
               }
               onLoadOlder={loadOlder}
               onOpenBot={openBot}
+              onLocateModel={locateBotModel}
               onAnswer={composer.answerMessage}
               onReply={replyToMessage}
               onMarkUnread={markMessageUnread}
@@ -1587,6 +1608,7 @@ function SpaceShell() {
         openBot={openBot}
         openCreatedBot={openCreatedBot}
         modelFocusRequest={modelFocusRequest}
+        modelLocateRequest={modelLocateRequest}
         openSettings={openSettings}
         memoryProviderConfigured={memoryProviderConfig != null}
         setAgentSkills={setAgentSkills}

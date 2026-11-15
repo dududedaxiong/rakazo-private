@@ -577,6 +577,10 @@ msgstr "**목요일**\n"
 msgid "/ month"
 msgstr "/ 월"
 
+#: src/pages/shell/media-result.tsx
+msgid "+ Add"
+msgstr ""
+
 #. placeholder {0}: test.modelId
 #. placeholder {1}: test.seconds
 #: src/pages/shell/bot-settings-sections.tsx
@@ -610,6 +614,10 @@ msgstr "스페이스 1개"
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
+msgstr ""
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "429 rate limit"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
@@ -1278,6 +1286,10 @@ msgstr "인증에 실패했습니다."
 msgid "Authorization code"
 msgstr "인증 코드"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Authorization failed"
+msgstr ""
+
 #: src/pages/McpServerForm.tsx
 msgid "Authorization parameters (optional)"
 msgstr "인증 매개변수(선택 사항)"
@@ -1620,6 +1632,7 @@ msgstr "이미지를 읽을 수 없음"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-selection.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
@@ -2256,6 +2269,10 @@ msgstr "연결 중…"
 msgid "Connection"
 msgstr "연결"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Connection error"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Connection name"
@@ -2803,6 +2820,10 @@ msgstr "이 파일을 읽지 못했습니다"
 msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
 msgstr ""
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not regenerate"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not reject plugin"
 msgstr "플러그인을 거부하지 못했습니다"
@@ -2950,6 +2971,10 @@ msgstr "스킬을 저장하지 못했습니다"
 #: src/components/SpendingLimitSettings.tsx
 msgid "Could not save spending limit"
 msgstr "지출 한도를 저장하지 못했습니다"
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not save supplementary prompt"
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Could not save that choice"
@@ -3265,6 +3290,7 @@ msgid "Currency"
 msgstr "통화"
 
 #: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Current model"
 msgstr ""
 
@@ -3351,6 +3377,7 @@ msgstr "거절"
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Default"
 msgstr "기본값"
 
@@ -4051,6 +4078,7 @@ msgstr "실패"
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Failed"
 msgstr "실패"
 
@@ -4187,6 +4215,10 @@ msgstr "구독 로그인을 마친 뒤 다시 테스트하세요."
 #: src/components/CloudAgentCard.tsx
 msgid "finished"
 msgstr "완료"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Finished, current model"
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
@@ -4490,6 +4522,10 @@ msgstr "샘플이 들렸다면 음성 설정이 완료되었습니다."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "무시"
+
+#: src/pages/shell/media-result.tsx
+msgid "Image generation"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image generation model"
@@ -5042,6 +5078,10 @@ msgstr "로컬 컴퓨터에 액세스하려면 최신 데스크톱 앱이 필요
 msgid "Local file"
 msgstr "로컬 파일"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Located here"
+msgstr ""
+
 #: src/components/AccountMenu.tsx
 #: src/components/SidebarFooter.tsx
 msgid "Log out"
@@ -5352,6 +5392,7 @@ msgstr "모드"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Model"
 msgstr "모델"
@@ -5933,6 +5974,10 @@ msgstr "나중에"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Not selected"
+msgstr ""
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Not supported"
 msgstr ""
 
 #: src/pages/shell/agent-import-plan.tsx
@@ -6531,6 +6576,10 @@ msgstr ""
 msgid "Queued"
 msgstr "대기 중"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Quota exceeded"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Rakazo"
@@ -6715,6 +6764,14 @@ msgstr "새로고침 중…"
 
 #: src/pages/shell/media-result.tsx
 msgid "Regenerate"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerated"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerating…"
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
@@ -7275,6 +7332,7 @@ msgstr "토요일"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Save"
 msgstr "저장"
 
@@ -7822,6 +7880,7 @@ msgid "Skip or deploy key"
 msgstr "건너뛰거나 배포 키"
 
 #: src/pages/shell/message-view.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Skipped"
 msgstr "건너뜀"
 
@@ -8097,6 +8156,10 @@ msgstr "구독 URL"
 msgid "Sunday"
 msgstr "일요일"
 
+#: src/pages/shell/media-result.tsx
+msgid "Supplementary prompt"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Supports images"
@@ -8111,6 +8174,11 @@ msgstr "사고 모드 지원"
 msgid "Switch"
 msgstr "전환"
 
+#: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch history"
+msgstr ""
+
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Switch model and retry"
 msgstr ""
@@ -8119,6 +8187,12 @@ msgstr ""
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switch persona"
 msgstr "페르소나 전환"
+
+#. placeholder {0}: displayName(next.model, t`Model`)
+#. placeholder {1}: next.provider ? ` · ${next.provider}` : ""
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch to {0}{1}"
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Switch to {tierTargetName}?"
@@ -8588,6 +8662,7 @@ msgid "Time of day"
 msgstr "실행 시각"
 
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Timed out"
 msgstr ""
 
@@ -9122,6 +9197,10 @@ msgstr "확인 중…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "버전"
+
+#: src/pages/shell/media-result.tsx
+msgid "Video generation"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"

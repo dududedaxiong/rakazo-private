@@ -39,6 +39,7 @@ import type { ArtifactTarget } from "../../lib/artifact-open";
 import { favoriteSnippet, useMessageFavorite } from "../../lib/favorites";
 import { parseMediaMark } from "../../lib/media-mark";
 import { messageProviderLabel } from "../../lib/messaging";
+import type { ModelLocateTarget } from "../../lib/model-locate";
 import type { PageBlock } from "../../lib/page-cards";
 import { useOpenPage } from "../../lib/pages";
 import type { createSpaceRpc } from "../../lib/rpc";
@@ -64,6 +65,7 @@ import {
 } from "./message-cards";
 import { MessageHoverActions } from "./message-hover-actions";
 import { useMessageTranslation } from "./message-translation";
+import { ModelSwitchHistoryEntry } from "./model-switch-history-dialog";
 import { StuckRunActions } from "./stuck-run-actions";
 import type { SpeakingProgress } from "./use-read-aloud";
 
@@ -122,6 +124,7 @@ export const MessageView = memo(function MessageView({
   isPageSuperseded,
   onAnswer,
   onOpenBot,
+  onLocateModel,
   onOpenPeerMessages,
   peerExchange,
   speakerName,
@@ -177,6 +180,8 @@ export const MessageView = memo(function MessageView({
     remember?: false,
   ) => Promise<void>;
   onOpenBot: (botId: string) => void;
+  /** Opens the bot's settings at the model named in a switch timeline. */
+  onLocateModel?: (target: ModelLocateTarget) => void;
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
   /** The adjacent receipts represented by this peer line. */
   peerExchange?: PeerExchange;
@@ -330,6 +335,7 @@ export const MessageView = memo(function MessageView({
     speaking,
     speakDisabled: callHoldsSpeaker,
     onBotChanged,
+    onLocateModel,
   });
   /** The segment sounding now, with its position; a single-segment read needs no progress. */
   const readAloudProgress =
@@ -477,6 +483,25 @@ export const MessageView = memo(function MessageView({
                     );
                   }
                   if (block.kind === "text" || block.kind === "progress") {
+                    // A fallback mark is its own text block: with a switch
+                    // timeline it opens the history instead of reading as prose.
+                    if (
+                      block.kind === "text" &&
+                      message.modelSwitches &&
+                      parseMediaMark(block.text)
+                    ) {
+                      return (
+                        <div key={i} className="px-1">
+                          <ModelSwitchHistoryEntry
+                            attempts={message.modelSwitches.attempts}
+                            finalModel={message.modelSwitches.finalModel}
+                            kind="chat"
+                            botId={message.botId}
+                            onLocateModel={onLocateModel}
+                          />
+                        </div>
+                      );
+                    }
                     return (
                       <div
                         key={i}
@@ -755,6 +780,8 @@ export const MessageView = memo(function MessageView({
                     presets={bot?.imagePromptPresets}
                     activePreset={bot?.activeImagePromptPreset}
                     favorite={favorite}
+                    modelSwitches={message.modelSwitches}
+                    onLocateModel={onLocateModel}
                     onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}
                     regenerateDisabled={regenerateDisabled}
                   />
@@ -794,6 +821,8 @@ export const MessageView = memo(function MessageView({
                     presets={bot?.videoPromptPresets}
                     activePreset={bot?.activeVideoPromptPreset}
                     favorite={favorite}
+                    modelSwitches={message.modelSwitches}
+                    onLocateModel={onLocateModel}
                     onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}
                     regenerateDisabled={regenerateDisabled}
                   />
@@ -844,7 +873,26 @@ export const MessageView = memo(function MessageView({
               parseMediaMark(block.text)
             )
               return null;
+            // A fallback mark at the end of a reply: with a switch timeline
+            // it is a tappable history entry, not a prose bubble. Without
+            // one (old messages) it reads exactly as before.
             const firstText = i === textAnchorIndex;
+            if (message.modelSwitches && parseMediaMark(block.text)) {
+              return (
+                <div key={i} className="flex flex-col items-start">
+                  <div className="flex justify-start px-1">
+                    <ModelSwitchHistoryEntry
+                      attempts={message.modelSwitches.attempts}
+                      finalModel={message.modelSwitches.finalModel}
+                      kind="chat"
+                      botId={message.botId}
+                      onLocateModel={onLocateModel}
+                    />
+                  </div>
+                  {firstText ? translation.panel : null}
+                </div>
+              );
+            }
             return (
               <div
                 key={i}

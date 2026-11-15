@@ -34,6 +34,8 @@ describe("displayName", () => {
     "123",
     "Gpt4o",
     "Chat42",
+    "krisphyn-DeepSeek-V4-Pro",
+    "deepseek-v4.1-flash",
     "AlexandertheGreat",
     "Ada Lovelace",
     "CustomerSupportBot2026",

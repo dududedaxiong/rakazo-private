@@ -577,6 +577,10 @@ msgstr "**गुरुवार**\n"
 msgid "/ month"
 msgstr "/ महीना"
 
+#: src/pages/shell/media-result.tsx
+msgid "+ Add"
+msgstr ""
+
 #. placeholder {0}: test.modelId
 #. placeholder {1}: test.seconds
 #: src/pages/shell/bot-settings-sections.tsx
@@ -610,6 +614,10 @@ msgstr "1 स्पेस"
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
+msgstr ""
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "429 rate limit"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
@@ -1278,6 +1286,10 @@ msgstr "प्रमाणीकरण विफल रहा।"
 msgid "Authorization code"
 msgstr "प्राधिकरण कोड"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Authorization failed"
+msgstr ""
+
 #: src/pages/McpServerForm.tsx
 msgid "Authorization parameters (optional)"
 msgstr "ऑथराइज़ेशन पैरामीटर (वैकल्पिक)"
@@ -1620,6 +1632,7 @@ msgstr "तस्वीरें नहीं पढ़ सकता"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-selection.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
@@ -2256,6 +2269,10 @@ msgstr "कनेक्ट हो रहा है…"
 msgid "Connection"
 msgstr "कनेक्शन"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Connection error"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Connection name"
@@ -2803,6 +2820,10 @@ msgstr "ये फ़ाइलें पढ़ी नहीं जा सकी�
 msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
 msgstr ""
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not regenerate"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not reject plugin"
 msgstr "प्लगइन अस्वीकार नहीं हो सका"
@@ -2950,6 +2971,10 @@ msgstr "स्किल सहेजी नहीं जा सकी"
 #: src/components/SpendingLimitSettings.tsx
 msgid "Could not save spending limit"
 msgstr "खर्च सीमा सहेजी नहीं जा सकी"
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not save supplementary prompt"
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Could not save that choice"
@@ -3265,6 +3290,7 @@ msgid "Currency"
 msgstr "मुद्रा"
 
 #: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Current model"
 msgstr ""
 
@@ -3351,6 +3377,7 @@ msgstr "अस्वीकार करें"
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Default"
 msgstr "डिफ़ॉल्ट"
 
@@ -4051,6 +4078,7 @@ msgstr "असफल"
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Failed"
 msgstr "विफल"
 
@@ -4187,6 +4215,10 @@ msgstr "सब्सक्रिप्शन साइन-इन पूरा �
 #: src/components/CloudAgentCard.tsx
 msgid "finished"
 msgstr "पूर्ण"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Finished, current model"
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
@@ -4490,6 +4522,10 @@ msgstr "अगर आपने वह सुना, तो आवाज़ त�
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "अनदेखा करें"
+
+#: src/pages/shell/media-result.tsx
+msgid "Image generation"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image generation model"
@@ -5042,6 +5078,10 @@ msgstr "स्थानीय कंप्यूटर पहुँच के �
 msgid "Local file"
 msgstr "स्थानीय फ़ाइल"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Located here"
+msgstr ""
+
 #: src/components/AccountMenu.tsx
 #: src/components/SidebarFooter.tsx
 msgid "Log out"
@@ -5352,6 +5392,7 @@ msgstr "मोड"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Model"
 msgstr "मॉडल"
@@ -5933,6 +5974,10 @@ msgstr "अभी नहीं"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Not selected"
+msgstr ""
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Not supported"
 msgstr ""
 
 #: src/pages/shell/agent-import-plan.tsx
@@ -6531,6 +6576,10 @@ msgstr ""
 msgid "Queued"
 msgstr "कतार में"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Quota exceeded"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Rakazo"
@@ -6715,6 +6764,14 @@ msgstr "रीफ़्रेश हो रहा है…"
 
 #: src/pages/shell/media-result.tsx
 msgid "Regenerate"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerated"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerating…"
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
@@ -7275,6 +7332,7 @@ msgstr "शनिवार"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Save"
 msgstr "सहेजें"
 
@@ -7822,6 +7880,7 @@ msgid "Skip or deploy key"
 msgstr "छोड़ें या डिप्लॉय कुंजी दें"
 
 #: src/pages/shell/message-view.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Skipped"
 msgstr "छोड़ा गया"
 
@@ -8097,6 +8156,10 @@ msgstr "सदस्यता URL"
 msgid "Sunday"
 msgstr "रविवार"
 
+#: src/pages/shell/media-result.tsx
+msgid "Supplementary prompt"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Supports images"
@@ -8111,6 +8174,11 @@ msgstr "सोचने की क्षमता का समर्थन क�
 msgid "Switch"
 msgstr "बदलें"
 
+#: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch history"
+msgstr ""
+
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Switch model and retry"
 msgstr ""
@@ -8119,6 +8187,12 @@ msgstr ""
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switch persona"
 msgstr "पर्सोना बदलें"
+
+#. placeholder {0}: displayName(next.model, t`Model`)
+#. placeholder {1}: next.provider ? ` · ${next.provider}` : ""
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch to {0}{1}"
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Switch to {tierTargetName}?"
@@ -8588,6 +8662,7 @@ msgid "Time of day"
 msgstr "दिन का समय"
 
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Timed out"
 msgstr ""
 
@@ -9122,6 +9197,10 @@ msgstr "पुष्टि की जा रही है…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "संस्करण"
+
+#: src/pages/shell/media-result.tsx
+msgid "Video generation"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"

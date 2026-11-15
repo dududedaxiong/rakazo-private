@@ -577,6 +577,10 @@ msgstr "**Czwartek**\n"
 msgid "/ month"
 msgstr "/ miesiąc"
 
+#: src/pages/shell/media-result.tsx
+msgid "+ Add"
+msgstr "+ Dodaj"
+
 #. placeholder {0}: test.modelId
 #. placeholder {1}: test.seconds
 #: src/pages/shell/bot-settings-sections.tsx
@@ -611,6 +615,10 @@ msgstr "1 przestrzeń"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
 msgstr "30 dni"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "429 rate limit"
+msgstr "Limit 429"
 
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -1278,6 +1286,10 @@ msgstr "Uwierzytelnianie nie powiodło się."
 msgid "Authorization code"
 msgstr "Kod autoryzacji"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Authorization failed"
+msgstr "Autoryzacja nie powiodła się"
+
 #: src/pages/McpServerForm.tsx
 msgid "Authorization parameters (optional)"
 msgstr "Parametry autoryzacji (opcjonalnie)"
@@ -1620,6 +1632,7 @@ msgstr "Nie odczytuje obrazów"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-selection.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
@@ -2256,6 +2269,10 @@ msgstr "Łączenie…"
 msgid "Connection"
 msgstr "Połączenie"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Connection error"
+msgstr "Błąd połączenia"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Connection name"
@@ -2803,6 +2820,10 @@ msgstr "Nie udało się odczytać tych plików"
 msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
 msgstr "Nie udało się odczytać tego pakietu. Użyj pliku JSON w kodowaniu UTF-8 o rozmiarze do 4 MiB."
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not regenerate"
+msgstr "Nie można wygenerować ponownie"
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not reject plugin"
 msgstr "Nie udało się odrzucić wtyczki"
@@ -2950,6 +2971,10 @@ msgstr "Nie udało się zapisać umiejętności"
 #: src/components/SpendingLimitSettings.tsx
 msgid "Could not save spending limit"
 msgstr "Nie udało się zapisać limitu wydatków"
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not save supplementary prompt"
+msgstr "Nie można zapisać dodatkowego promptu"
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Could not save that choice"
@@ -3265,8 +3290,9 @@ msgid "Currency"
 msgstr "Waluta"
 
 #: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Current model"
-msgstr ""
+msgstr "Bieżący model"
 
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3351,6 +3377,7 @@ msgstr "Odrzuć"
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Default"
 msgstr "Domyślne"
 
@@ -4051,6 +4078,7 @@ msgstr "błąd"
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Failed"
 msgstr "Błąd"
 
@@ -4187,6 +4215,10 @@ msgstr "Dokończ logowanie przez subskrypcję, a potem ponów test."
 #: src/components/CloudAgentCard.tsx
 msgid "finished"
 msgstr "ukończono"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Finished, current model"
+msgstr "Ukończono, bieżący model"
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
@@ -4337,7 +4369,7 @@ msgstr "Przyznawanie…"
 
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Groq only transcribes speech. Reading aloud still uses the on-device voice."
-msgstr ""
+msgstr "Groq tylko transkrybuje mowę. Czytanie na głos nadal korzysta z głosu w urządzeniu."
 
 #: src/lib/identity-display.ts
 #: src/pages/MessagingSettingsPanel.tsx
@@ -4490,6 +4522,10 @@ msgstr "Jeśli było słychać próbkę, głos jest gotowy."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "Ignoruj"
+
+#: src/pages/shell/media-result.tsx
+msgid "Image generation"
+msgstr "Generowanie obrazu"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image generation model"
@@ -5042,6 +5078,10 @@ msgstr "Dostęp do lokalnego komputera wymaga najnowszej aplikacji komputerowej.
 msgid "Local file"
 msgstr "Plik lokalny"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Located here"
+msgstr "Znaleziono tutaj"
+
 #: src/components/AccountMenu.tsx
 #: src/components/SidebarFooter.tsx
 msgid "Log out"
@@ -5352,6 +5392,7 @@ msgstr "Tryb"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Model"
 msgstr "Model"
@@ -5934,6 +5975,10 @@ msgstr "Nie teraz"
 #: src/pages/shell/bot-panel.tsx
 msgid "Not selected"
 msgstr "Nie wybrano"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Not supported"
+msgstr "Nieobsługiwane"
 
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/import-status.ts
@@ -6531,6 +6576,10 @@ msgstr "Wprowadź konto i hasło w osobnych polach, nie w adresie."
 msgid "Queued"
 msgstr "W kolejce"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Quota exceeded"
+msgstr "Przekroczono limit"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Rakazo"
@@ -6716,6 +6765,14 @@ msgstr "Odświeżanie…"
 #: src/pages/shell/media-result.tsx
 msgid "Regenerate"
 msgstr "Wygeneruj ponownie"
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerated"
+msgstr "Wygenerowano ponownie"
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerating…"
+msgstr "Generowanie ponownie…"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Region"
@@ -7275,6 +7332,7 @@ msgstr "sobota"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Save"
 msgstr "Zapisz"
 
@@ -7822,6 +7880,7 @@ msgid "Skip or deploy key"
 msgstr "Pomiń lub użyj klucza wdrożenia"
 
 #: src/pages/shell/message-view.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Skipped"
 msgstr "Pominięto"
 
@@ -8097,6 +8156,10 @@ msgstr "Adres URL subskrypcji"
 msgid "Sunday"
 msgstr "niedziela"
 
+#: src/pages/shell/media-result.tsx
+msgid "Supplementary prompt"
+msgstr "Dodatkowy prompt"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Supports images"
@@ -8111,6 +8174,11 @@ msgstr "Obsługuje rozumowanie"
 msgid "Switch"
 msgstr "Przełącz"
 
+#: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch history"
+msgstr "Historia przełączania"
+
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Switch model and retry"
 msgstr "Zmień model i spróbuj ponownie"
@@ -8119,6 +8187,12 @@ msgstr "Zmień model i spróbuj ponownie"
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switch persona"
 msgstr "Zmień personę"
+
+#. placeholder {0}: displayName(next.model, t`Model`)
+#. placeholder {1}: next.provider ? ` · ${next.provider}` : ""
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch to {0}{1}"
+msgstr "Przełącz na{0}{1}"
 
 #: src/components/ModelCredits.tsx
 msgid "Switch to {tierTargetName}?"
@@ -8273,7 +8347,7 @@ msgstr "Przeglądarka bota pozostaje zalogowana dla wszystkich w tej przestrzeni
 
 #: src/lib/tts.ts
 msgid "The browser could not read this aloud."
-msgstr ""
+msgstr "Przeglądarka nie mogła odczytać tego na głos."
 
 #: src/lib/dictation.ts
 msgid "The browser keeps dropping the microphone. Start dictation again to retry."
@@ -8588,6 +8662,7 @@ msgid "Time of day"
 msgstr "Pora dnia"
 
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Timed out"
 msgstr "Przekroczono czas oczekiwania"
 
@@ -9122,6 +9197,10 @@ msgstr "Weryfikowanie…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Wersja"
+
+#: src/pages/shell/media-result.tsx
+msgid "Video generation"
+msgstr "Generowanie wideo"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"

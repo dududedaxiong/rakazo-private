@@ -428,7 +428,7 @@ describe("message translation", () => {
 
   function renderTranslated(
     props: Partial<ComponentProps<typeof MessageView>> = {},
-    result = translated,
+    result: typeof translated & { attempts?: unknown } = translated,
   ) {
     const translate = vi.fn(async () => result);
     const update = vi.fn(async () => ({}));
@@ -486,6 +486,78 @@ describe("message translation", () => {
     expect(panel?.textContent).toContain(
       "Translated with deepseek-v4.1-flash (backup) · English to 中文",
     );
+  });
+
+  it("shows a current-model row under a translation, opening its timeline", async () => {
+    renderTranslated();
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const panel = translationPanel();
+    const entry = panel?.querySelector('[data-testid="model-switch-history-entry"]');
+    expect(entry?.textContent).toContain("Current model: deepseek-v4.1-flash · deepseek");
+    expect(document.querySelector('[data-testid="model-switch-history"]')).toBeNull();
+    await act(async () => {
+      (entry as HTMLButtonElement | null)?.click();
+    });
+    const dialog = document.querySelector('[data-testid="model-switch-history"]');
+    expect(dialog?.textContent).toContain("Switch history");
+    // No fallback was walked, so the timeline is only the finishing line.
+    expect(dialog?.textContent).toContain("Finished, current model");
+    expect(dialog?.textContent).not.toContain("Switch to");
+  });
+
+  it("opens the translation timeline with its failed attempts", async () => {
+    const onLocateModel = vi.fn();
+    renderTranslated(
+      { onLocateModel },
+      {
+        ...translated,
+        modelId: "glm-5.3-flash",
+        usedFallback: true,
+        attempts: [
+          {
+            model: "deepseek-v4.1-flash",
+            provider: "deepseek",
+            outcome: "failed",
+            errorCode: "rate_limit",
+            errorMessage: "429 slow down",
+            at: "2026-11-15T10:00:00.000Z",
+          },
+          {
+            model: "glm-5.3-flash",
+            provider: "test",
+            outcome: "succeeded",
+            at: "2026-11-15T10:00:01.000Z",
+          },
+        ],
+      },
+    );
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const panel = translationPanel();
+    const entry = panel?.querySelector('[data-testid="model-switch-history-entry"]');
+    expect(entry?.textContent).toContain("Current model: glm-5.3-flash · test");
+    await act(async () => {
+      (entry as HTMLButtonElement | null)?.click();
+    });
+    const dialog = document.querySelector('[data-testid="model-switch-history"]');
+    expect(dialog?.textContent).toContain("429 rate limit");
+    const modelButton = [...document.querySelectorAll("button")].find(
+      (button) => button.textContent === "deepseek-v4.1-flash",
+    );
+    await act(async () => {
+      modelButton?.click();
+    });
+    expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
+      kind: "translation",
+      botId: "bot-1",
+      model: "deepseek-v4.1-flash",
+      provider: "deepseek",
+    });
   });
 
   it("lists connected models the bot has not configured in the switch menu", async () => {
@@ -1065,7 +1137,17 @@ describe("generated media result", () => {
       (el) => el.textContent?.trim() === text,
     );
 
-  function renderMedia() {
+  function renderMedia(modelSwitches?: {
+    attempts: {
+      model: string;
+      provider?: string;
+      outcome: "failed" | "skipped" | "succeeded";
+      errorCode?: string;
+      errorMessage?: string;
+      at: string;
+    }[];
+    finalModel: string;
+  }) {
     const update = vi.fn(async () => ({}));
     const onRegenerate = vi.fn(async () => undefined);
     const favorites = {
@@ -1087,6 +1169,7 @@ describe("generated media result", () => {
           { kind: "image", artifactId: "art-1", mimeType: "image/png", name: "generated-1.png" },
           { kind: "text", text: "经 model-a · 水彩" },
         ],
+        modelSwitches,
       },
       peerBot: mediaBot,
       rpc: { bots: { update }, favorites } as never,
@@ -1157,6 +1240,145 @@ describe("generated media result", () => {
     expect(buttonByText("Show")).not.toBeUndefined();
     act(() => buttonByText("Show")?.click());
     expect(buttonByText("Preview")).not.toBeUndefined();
+  });
+
+  it("shows a switch-history button only when the message switched models", async () => {
+    renderMedia();
+    await flush();
+    expect(buttonByText("Switch history")).toBeUndefined();
+    renderMedia({
+      attempts: [
+        {
+          model: "model-a",
+          provider: "p1",
+          outcome: "failed",
+          errorCode: "rate_limit",
+          errorMessage: "slow down",
+          at: "2026-11-15T10:00:00.000Z",
+        },
+        { model: "model-b", provider: "p2", outcome: "succeeded", at: "2026-11-15T10:00:01.000Z" },
+      ],
+      finalModel: "model-b",
+    });
+    await flush();
+    expect(buttonByText("Switch history")).not.toBeUndefined();
+    await act(async () => {
+      buttonByText("Switch history")?.click();
+    });
+    const dialog = document.querySelector('[data-testid="model-switch-history"]');
+    expect(dialog?.textContent).toContain("Switch history");
+    expect(dialog?.textContent).toContain("429 rate limit");
+  });
+});
+
+describe("model switch history", () => {
+  const switches = {
+    attempts: [
+      {
+        model: "model-a",
+        provider: "p1",
+        outcome: "failed" as const,
+        errorCode: "rate_limit",
+        errorMessage: "slow down",
+        at: "2026-11-15T10:00:00.000Z",
+      },
+      {
+        model: "model-b",
+        provider: "p2",
+        outcome: "succeeded" as const,
+        at: "2026-11-15T10:00:01.000Z",
+      },
+    ],
+    finalModel: "model-b",
+  };
+  const historyEntry = () => container.querySelector('[data-testid="model-switch-history-entry"]');
+  const historyDialog = () => document.querySelector('[data-testid="model-switch-history"]');
+
+  it("opens the timeline from a fallback mark, and locates its model", async () => {
+    const onLocateModel = vi.fn();
+    renderView(
+      "bot",
+      [
+        { kind: "text", text: "Here is the answer." },
+        { kind: "text", text: "当前模型: model-b" },
+      ],
+      {
+        message: {
+          id: "message",
+          threadId: "thread",
+          seq: 1,
+          role: "bot",
+          botId: "bot-1",
+          createdAt: new Date().toISOString(),
+          blocks: [
+            { kind: "text", text: "Here is the answer." },
+            { kind: "text", text: "当前模型: model-b" },
+          ],
+          modelSwitches: switches,
+        },
+        onLocateModel,
+      },
+    );
+    expect(historyEntry()?.textContent).toContain("Current model: model-b · p2");
+    expect(historyDialog()).toBeNull();
+    await act(async () => {
+      (historyEntry() as HTMLButtonElement | null)?.click();
+    });
+    expect(historyDialog()?.textContent).toContain("Switch history");
+    expect(historyDialog()?.textContent).toContain("429 rate limit");
+    const modelButton = [...document.querySelectorAll("button")].find(
+      (button) => button.textContent === "model-a",
+    );
+    await act(async () => {
+      modelButton?.click();
+    });
+    expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
+      kind: "chat",
+      botId: "bot-1",
+      model: "model-a",
+      provider: "p1",
+    });
+  });
+
+  it("keeps a mark without a timeline as plain text", () => {
+    renderView("bot", [
+      { kind: "text", text: "Here is the answer." },
+      { kind: "text", text: "当前模型: model-b" },
+    ]);
+    expect(historyEntry()).toBeNull();
+    expect(container.textContent).toContain("当前模型: model-b");
+  });
+
+  it("opens the timeline from a mark in a non-narration reply", async () => {
+    renderView(
+      "bot",
+      [
+        { kind: "meta", text: "started" },
+        { kind: "text", text: "Here is the answer." },
+        { kind: "text", text: "当前模型: model-b" },
+      ],
+      {
+        message: {
+          id: "message",
+          threadId: "thread",
+          seq: 1,
+          role: "bot",
+          botId: "bot-1",
+          createdAt: new Date().toISOString(),
+          blocks: [
+            { kind: "meta", text: "started" },
+            { kind: "text", text: "Here is the answer." },
+            { kind: "text", text: "当前模型: model-b" },
+          ],
+          modelSwitches: switches,
+        },
+      },
+    );
+    expect(historyEntry()?.textContent).toContain("Current model: model-b · p2");
+    await act(async () => {
+      (historyEntry() as HTMLButtonElement | null)?.click();
+    });
+    expect(historyDialog()?.textContent).toContain("Switch history");
   });
 });
 

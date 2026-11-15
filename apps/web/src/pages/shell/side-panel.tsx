@@ -13,6 +13,7 @@ import { useRef } from "react";
 import { BotPackageTools } from "../../components/BotPackageTools";
 import { ComputerMaintenanceActions } from "../../components/ComputerMaintenanceActions";
 import { PagesList } from "../../components/pages/PagesList";
+import type { ModelLocateRequest } from "../../lib/model-locate";
 import type { Panel } from "../../lib/right-panel-state";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { computerPanelNeedsMaintenance } from "../../lib/thread-events";
@@ -49,6 +50,7 @@ export function ShellSidePanel({
   openBot,
   openCreatedBot,
   modelFocusRequest,
+  modelLocateRequest,
   openSettings,
   memoryProviderConfigured,
   setAgentSkills,
@@ -77,6 +79,8 @@ export function ShellSidePanel({
   openBot: (botId: string) => void;
   openCreatedBot: (bot: Bot) => void;
   modelFocusRequest: number;
+  /** A timeline model name asking for its row in the bot's settings. */
+  modelLocateRequest?: ModelLocateRequest | null;
   openSettings: (section: SettingsSection) => void;
   memoryProviderConfigured: boolean;
   setAgentSkills: (skills: AgentSkillCatalogEntry[]) => void;
@@ -213,6 +217,7 @@ export function ShellSidePanel({
                 />
               }
               focusModel={modelFocusRequest}
+              locateModel={modelLocateRequest ?? null}
               onOpenConnections={() => openSettings("models")}
               onBotUpdated={(updated) => {
                 setBots((current) =>

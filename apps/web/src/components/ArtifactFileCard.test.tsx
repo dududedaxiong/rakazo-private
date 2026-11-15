@@ -244,3 +244,55 @@ it("previews plain text in the app instead of only offering a download", async (
     ),
   );
 });
+
+it("renders preview header actions before Download and the title bar for video", async () => {
+  await act(async () =>
+    root?.render(
+      <ArtifactFileCard
+        target={{ botId: "bot-1" }}
+        artifactId="video-1"
+        name="clip.mp4"
+        mimeType="video/mp4"
+        size={3}
+        previewOpen
+        previewHeaderActions={
+          <button type="button" aria-label="Regenerate test">
+            ↻
+          </button>
+        }
+        previewTitleBar={<div data-testid="test-title-bar">Title bar</div>}
+      />,
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(document.body.querySelector('[data-testid="test-title-bar"]')).not.toBeNull(),
+  );
+  const dialogContent = document.body
+    .querySelector('[data-testid="test-title-bar"]')
+    ?.closest('[data-slot="dialog-content"]');
+  expect(dialogContent).not.toBeNull();
+  const buttons = [...(dialogContent?.querySelectorAll("button") ?? [])].map((button) =>
+    button.getAttribute("aria-label"),
+  );
+  expect(buttons.indexOf("Regenerate test")).toBeLessThan(buttons.indexOf("Download clip.mp4"));
+  expect(buttons).toContain("Download clip.mp4");
+});
+
+it("shows no title bar for non-media previews", async () => {
+  mocks.fetch.mockResolvedValue(new TextEncoder().encode("hello"));
+  await act(async () =>
+    root?.render(
+      <ArtifactFileCard
+        target={{ botId: "bot-1" }}
+        artifactId="notes-1"
+        name="notes.txt"
+        mimeType="text/plain"
+        size={5}
+        previewOpen
+        previewTitleBar={<div data-testid="test-title-bar">Title bar</div>}
+      />,
+    ),
+  );
+  await vi.waitFor(() => expect(document.body.querySelector("pre")).not.toBeNull());
+  expect(document.body.querySelector('[data-testid="test-title-bar"]')).toBeNull();
+});

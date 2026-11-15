@@ -6,7 +6,7 @@ import { artifactPreviewKind, isAttachmentAudioMimeType } from "@rakazo/contract
 import { fileSizeParts } from "@rakazo/core";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle, Spinner } from "@rakazo/ui-web";
 import { Code2, Download, FileText, Play, X } from "lucide-react";
-import type { RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 import { useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
@@ -25,6 +25,10 @@ type ArtifactFileCardProps = {
   /** Controlled preview; when absent the card opens its own preview on click. */
   previewOpen?: boolean;
   onPreviewOpenChange?: (open: boolean) => void;
+  /** Rendered in the preview header before Download; e.g. a regenerate button. */
+  previewHeaderActions?: ReactNode;
+  /** Rendered under the preview filename for image/video artifacts. */
+  previewTitleBar?: ReactNode;
 };
 
 function isTextPreview(mimeType: string) {
@@ -149,6 +153,8 @@ function FilePreview({
   name,
   mimeType,
   closeButtonRef,
+  previewHeaderActions,
+  previewTitleBar,
 }: ArtifactFileCardProps & { closeButtonRef: RefObject<HTMLButtonElement | null> }) {
   const { t } = useLingui();
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -190,6 +196,8 @@ function FilePreview({
     };
   }, [artifactId, targetBotId, targetGroupId, mimeType, t]);
   const kind = artifactPreviewKind(mimeType);
+  // The title bar only exists for generated media previews.
+  const isMediaPreview = mimeType.startsWith("image/") || mimeType.startsWith("video/");
 
   return (
     <>
@@ -197,6 +205,7 @@ function FilePreview({
         <DialogTitle className="min-w-0 flex-1 truncate text-body font-medium text-foreground">
           {name}
         </DialogTitle>
+        {previewHeaderActions}
         <IconTooltip label={t`Download ${name}`}>
           <Button
             variant="ghost"
@@ -232,6 +241,9 @@ function FilePreview({
         <div className="shrink-0 px-5 pt-4">
           <DownloadError message={downloadError} />
         </div>
+      ) : null}
+      {isMediaPreview && previewTitleBar ? (
+        <div className="shrink-0 border-b border-border px-5 py-2">{previewTitleBar}</div>
       ) : null}
       <div className="relative min-h-0 flex-1 overflow-y-auto">
         {state.status === "loading" ? (

@@ -38,6 +38,8 @@ import { InstructionSettings } from "../../components/InstructionSettings";
 import { PagesList } from "../../components/pages/PagesList";
 import { BotPersonaSection } from "../../components/prompt-templates/BotPersonaSection";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
+import type { ModelLocateRequest } from "../../lib/model-locate";
+import { modelLocateRowMatches } from "../../lib/model-locate";
 import { modelStatusFromProbe, recordModelStatus } from "../../lib/model-status";
 import { lazyComponent } from "../../lib/preload-recovery";
 import { useSpaceQueries } from "../../lib/query";
@@ -112,6 +114,7 @@ export function BotSettings({
   onExport,
   onClear,
   focusModel = 0,
+  locateModel,
   onOpenConnections,
   onBotUpdated,
   onOpenTemplateLibrary,
@@ -123,6 +126,8 @@ export function BotSettings({
   routines?: ReactNode;
   packageTools?: ReactNode;
   focusModel?: number;
+  /** A timeline model name asking for its row in these settings. */
+  locateModel?: ModelLocateRequest | null;
   onOpenConnections?: () => void;
   /** After a persona switch, so the roster and the header follow the updated bot. */
   onBotUpdated?: (bot: Bot) => void;
@@ -174,6 +179,30 @@ export function BotSettings({
       modelRef.current?.querySelector<HTMLElement>('[id$="-model"]')?.focus();
     }
   }, [tab, focusModel]);
+  // A located model row, highlighted with a tag until the next request.
+  const [locatedKey, setLocatedKey] = useState<string | null>(null);
+  useEffect(() => {
+    if (!locateModel || tab !== "settings") {
+      if (!locateModel) setLocatedKey(null);
+      return;
+    }
+    // The settings tab is the only panel in the DOM with this test id.
+    const root = document.querySelector<HTMLElement>('[data-testid="bot-settings-advanced"]');
+    if (!root) return;
+    const rows = [...root.querySelectorAll<HTMLElement>("[data-model-row]")];
+    const row = rows.find((el) => modelLocateRowMatches(el.dataset.modelRow ?? "", locateModel));
+    const target =
+      row ?? root.querySelector<HTMLElement>(`[data-model-section="${locateModel.kind}"]`);
+    if (target) {
+      setLocatedKey(
+        row?.dataset.modelRow ??
+          target.getAttribute("data-model-row") ??
+          target.querySelector("[data-model-row]")?.getAttribute("data-model-row") ??
+          null,
+      );
+      target.scrollIntoView?.({ block: "nearest" });
+    }
+  }, [locateModel, tab]);
   const [name, setName] = useState(bot.name);
   const savedNameRef = useRef(bot.name);
   const [description, setDescription] = useState(bot.description);
@@ -908,6 +937,7 @@ export function BotSettings({
               onOpenConnections={onOpenConnections}
               choices={modelChoices}
               value={selectedModelKey}
+              locatedKey={locatedKey}
               onModelChange={(key) => {
                 setModelKey(key);
                 setThinkingLevel("");
@@ -934,6 +964,7 @@ export function BotSettings({
             />
             <MediaModelGroup
               ids={ids}
+              locatedKey={locatedKey}
               videoChoices={videoChoices}
               videoValue={videoValue}
               onVideoModelChange={(key) => changeMediaModel("video", key)}
@@ -965,6 +996,7 @@ export function BotSettings({
             />
             <TranslationGroup
               ids={ids}
+              locatedKey={locatedKey}
               choices={translationModelChoices}
               value={selectedTranslationModelKey}
               onModelChange={setTranslationModel}

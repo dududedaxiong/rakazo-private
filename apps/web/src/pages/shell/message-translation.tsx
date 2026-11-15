@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotModelEntry, TranslateOutput } from "@rakazo/contracts";
+import type { BotModelEntry, ModelSwitchAttempt, TranslateOutput } from "@rakazo/contracts";
 import { moveBotModelToFront } from "@rakazo/contracts";
 import { displayName, modelOptionKey, stripLeadingOpaqueCodeLine } from "@rakazo/core";
 import {
@@ -19,6 +19,7 @@ import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { favoriteSnippet, translationFavoriteId, useMessageFavorite } from "../../lib/favorites";
+import type { ModelLocateTarget } from "../../lib/model-locate";
 import { modelStatusFromProbe, recordModelStatus } from "../../lib/model-status";
 import type { createSpaceRpc } from "../../lib/rpc";
 import type {
@@ -37,6 +38,7 @@ import {
   translationLanguageLabel,
 } from "../../lib/translation";
 import { errorText } from "../../lib/user-error";
+import { ModelSwitchHistoryEntry } from "./model-switch-history-dialog";
 import { ModelSwitchMenu } from "./model-switch-menu";
 
 type TranslationState =
@@ -130,6 +132,7 @@ export function useMessageTranslation({
   speaking = false,
   speakDisabled = false,
   onBotChanged,
+  onLocateModel,
 }: {
   messageId: string;
   text: string;
@@ -150,6 +153,8 @@ export function useMessageTranslation({
   speakDisabled?: boolean;
   /** After a model or language switch, so the roster follows the updated bot. */
   onBotChanged?: () => Promise<void>;
+  /** Opens the bot's settings at the model named in a switch timeline. */
+  onLocateModel?: (target: ModelLocateTarget) => void;
 }): { actions: ReactNode; panel: ReactNode } {
   const { t } = useLingui();
   const [state, setState] = useState<TranslationState>({ status: "idle" });
@@ -390,6 +395,20 @@ export function useMessageTranslation({
       {translationLanguageLabel(targetLanguage)}
     </LanguageSwitchMenu>
   ) : null;
+  // The switch timeline lives only in this panel: the server returns the
+  // attempts with the translation, and a translation that never switched
+  // carries just its one successful attempt.
+  const translationAttempts = (result: TranslateOutput): ModelSwitchAttempt[] => {
+    if (result.attempts?.length) return result.attempts;
+    return [
+      {
+        model: result.modelId,
+        provider: settings?.translationModelProvider ?? undefined,
+        outcome: "succeeded",
+        at: new Date().toISOString(),
+      },
+    ];
+  };
   const panel = (
     <div data-testid="message-translation" className="mt-2 w-full rounded-xl bg-link/10 px-4 py-3">
       {state.status === "loading" ? (
@@ -477,6 +496,17 @@ export function useMessageTranslation({
               <Trans>Collapse</Trans>
             </button>
           </div>
+          {doneResult ? (
+            <div className="mt-2">
+              <ModelSwitchHistoryEntry
+                attempts={translationAttempts(doneResult)}
+                finalModel={doneResult.modelId}
+                kind="translation"
+                botId={botId}
+                onLocateModel={onLocateModel}
+              />
+            </div>
+          ) : null}
           <CopyTextFallback
             open={copyFailed || shareCopyFailed}
             onOpenChange={() => {

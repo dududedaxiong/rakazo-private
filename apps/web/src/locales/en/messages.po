@@ -577,6 +577,10 @@ msgstr "**Thursday**\n"
 msgid "/ month"
 msgstr "/ month"
 
+#: src/pages/shell/media-result.tsx
+msgid "+ Add"
+msgstr "+ Add"
+
 #. placeholder {0}: test.modelId
 #. placeholder {1}: test.seconds
 #: src/pages/shell/bot-settings-sections.tsx
@@ -611,6 +615,10 @@ msgstr "1 space"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
 msgstr "30 days"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "429 rate limit"
+msgstr "429 rate limit"
 
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -1278,6 +1286,10 @@ msgstr "Authentication failed."
 msgid "Authorization code"
 msgstr "Authorization code"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Authorization failed"
+msgstr "Authorization failed"
+
 #: src/pages/McpServerForm.tsx
 msgid "Authorization parameters (optional)"
 msgstr "Authorization parameters (optional)"
@@ -1620,6 +1632,7 @@ msgstr "Can't read images"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-selection.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
@@ -2256,6 +2269,10 @@ msgstr "Connecting…"
 msgid "Connection"
 msgstr "Connection"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Connection error"
+msgstr "Connection error"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Connection name"
@@ -2803,6 +2820,10 @@ msgstr "Could not read these files"
 msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
 msgstr "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not regenerate"
+msgstr "Could not regenerate"
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not reject plugin"
 msgstr "Could not reject plugin"
@@ -2950,6 +2971,10 @@ msgstr "Could not save skill"
 #: src/components/SpendingLimitSettings.tsx
 msgid "Could not save spending limit"
 msgstr "Could not save spending limit"
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not save supplementary prompt"
+msgstr "Could not save supplementary prompt"
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Could not save that choice"
@@ -3265,6 +3290,7 @@ msgid "Currency"
 msgstr "Currency"
 
 #: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Current model"
 msgstr "Current model"
 
@@ -3351,6 +3377,7 @@ msgstr "Decline"
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Default"
 msgstr "Default"
 
@@ -4051,6 +4078,7 @@ msgstr "failed"
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Failed"
 msgstr "Failed"
 
@@ -4187,6 +4215,10 @@ msgstr "Finish subscription sign-in, then test again."
 #: src/components/CloudAgentCard.tsx
 msgid "finished"
 msgstr "finished"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Finished, current model"
+msgstr "Finished, current model"
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
@@ -4490,6 +4522,10 @@ msgstr "If you heard that, voice is ready."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "Ignore"
+
+#: src/pages/shell/media-result.tsx
+msgid "Image generation"
+msgstr "Image generation"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image generation model"
@@ -5042,6 +5078,10 @@ msgstr "Local computer access requires the latest desktop app."
 msgid "Local file"
 msgstr "Local file"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Located here"
+msgstr "Located here"
+
 #: src/components/AccountMenu.tsx
 #: src/components/SidebarFooter.tsx
 msgid "Log out"
@@ -5352,6 +5392,7 @@ msgstr "Mode"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Model"
 msgstr "Model"
@@ -5934,6 +5975,10 @@ msgstr "Not now"
 #: src/pages/shell/bot-panel.tsx
 msgid "Not selected"
 msgstr "Not selected"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Not supported"
+msgstr "Not supported"
 
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/import-status.ts
@@ -6531,6 +6576,10 @@ msgstr "Put the account and password in their own fields, not in the address."
 msgid "Queued"
 msgstr "Queued"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Quota exceeded"
+msgstr "Quota exceeded"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Rakazo"
@@ -6716,6 +6765,14 @@ msgstr "Refreshing…"
 #: src/pages/shell/media-result.tsx
 msgid "Regenerate"
 msgstr "Regenerate"
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerated"
+msgstr "Regenerated"
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerating…"
+msgstr "Regenerating…"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Region"
@@ -7275,6 +7332,7 @@ msgstr "Saturday"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Save"
 msgstr "Save"
 
@@ -7822,6 +7880,7 @@ msgid "Skip or deploy key"
 msgstr "Skip or deploy key"
 
 #: src/pages/shell/message-view.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Skipped"
 msgstr "Skipped"
 
@@ -8097,6 +8156,10 @@ msgstr "Subscription URL"
 msgid "Sunday"
 msgstr "Sunday"
 
+#: src/pages/shell/media-result.tsx
+msgid "Supplementary prompt"
+msgstr "Supplementary prompt"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Supports images"
@@ -8111,6 +8174,11 @@ msgstr "Supports thinking"
 msgid "Switch"
 msgstr "Switch"
 
+#: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch history"
+msgstr "Switch history"
+
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Switch model and retry"
 msgstr "Switch model and retry"
@@ -8119,6 +8187,12 @@ msgstr "Switch model and retry"
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switch persona"
 msgstr "Switch persona"
+
+#. placeholder {0}: displayName(next.model, t`Model`)
+#. placeholder {1}: next.provider ? ` · ${next.provider}` : ""
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch to {0}{1}"
+msgstr "Switch to {0}{1}"
 
 #: src/components/ModelCredits.tsx
 msgid "Switch to {tierTargetName}?"
@@ -8588,6 +8662,7 @@ msgid "Time of day"
 msgstr "Time of day"
 
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Timed out"
 msgstr "Timed out"
 
@@ -9122,6 +9197,10 @@ msgstr "Verifying…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
+
+#: src/pages/shell/media-result.tsx
+msgid "Video generation"
+msgstr "Video generation"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"

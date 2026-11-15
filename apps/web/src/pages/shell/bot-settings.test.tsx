@@ -510,3 +510,77 @@ it("defaults daily check-ins on and saves the opt-out", async () => {
   await flush();
   expect(onSave).toHaveBeenCalledWith({ dailyCheckIns: false });
 });
+
+describe("BotSettings model locate", () => {
+  const locatedBot = {
+    ...bot,
+    translationModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
+    imageModels: [
+      { provider: "p1", model: "model-a" },
+      { provider: "p2", model: "model-b" },
+    ],
+    videoModels: [{ provider: "p1", model: "model-a" }],
+  } as Bot;
+
+  async function renderLocated(locateModel: {
+    kind: "chat" | "translation" | "image" | "video";
+    botId: string;
+    model: string;
+    provider?: string;
+    requestId: number;
+  }) {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <BotSettings
+            bot={locatedBot}
+            locateModel={locateModel}
+            memoryProviderConfigured={false}
+            onSave={async () => undefined}
+            onExport={async () => undefined}
+            onClear={() => undefined}
+          />
+        </QueryClientProvider>,
+      );
+    });
+    await flush();
+  }
+
+  it("tags the translation model row a timeline name pointed at", async () => {
+    await renderLocated({
+      kind: "translation",
+      botId: "bot-1",
+      model: "deepseek-v4.1-flash",
+      provider: "deepseek",
+      requestId: 1,
+    });
+    const row = container.querySelector('[data-model-section="translation"]');
+    expect(row?.getAttribute("data-model-row")).not.toBeNull();
+    expect(row?.textContent).toContain("Located here");
+  });
+
+  it("tags a media fallback row by its model key", async () => {
+    await renderLocated({
+      kind: "image",
+      botId: "bot-1",
+      model: "model-b",
+      provider: "p2",
+      requestId: 2,
+    });
+    const rows = [...container.querySelectorAll("[data-model-row]")];
+    const located = rows.find((row) => row.textContent?.includes("Located here"));
+    expect(located?.textContent).toContain("model-b");
+  });
+
+  it("falls back to the section when the model is not in the list", async () => {
+    await renderLocated({
+      kind: "video",
+      botId: "bot-1",
+      model: "model-z",
+      provider: "p9",
+      requestId: 3,
+    });
+    const row = container.querySelector('[data-model-section="video"]');
+    expect(row?.textContent).toContain("Located here");
+  });
+});

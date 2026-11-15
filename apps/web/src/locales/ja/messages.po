@@ -577,6 +577,10 @@ msgstr "**木曜日**\n"
 msgid "/ month"
 msgstr "/ 月"
 
+#: src/pages/shell/media-result.tsx
+msgid "+ Add"
+msgstr ""
+
 #. placeholder {0}: test.modelId
 #. placeholder {1}: test.seconds
 #: src/pages/shell/bot-settings-sections.tsx
@@ -610,6 +614,10 @@ msgstr "1個のスペース"
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
+msgstr ""
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "429 rate limit"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
@@ -1278,6 +1286,10 @@ msgstr "認証に失敗しました。"
 msgid "Authorization code"
 msgstr "認証コード"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Authorization failed"
+msgstr ""
+
 #: src/pages/McpServerForm.tsx
 msgid "Authorization parameters (optional)"
 msgstr "認証パラメーター（任意）"
@@ -1620,6 +1632,7 @@ msgstr "画像を読み取れません"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-selection.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
@@ -2256,6 +2269,10 @@ msgstr "接続中…"
 msgid "Connection"
 msgstr "接続"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Connection error"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Connection name"
@@ -2803,6 +2820,10 @@ msgstr "これらのファイルを読み込めませんでした"
 msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
 msgstr ""
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not regenerate"
+msgstr ""
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not reject plugin"
 msgstr "プラグインを却下できませんでした"
@@ -2950,6 +2971,10 @@ msgstr "スキルを保存できませんでした"
 #: src/components/SpendingLimitSettings.tsx
 msgid "Could not save spending limit"
 msgstr "支出上限を保存できませんでした"
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not save supplementary prompt"
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Could not save that choice"
@@ -3265,6 +3290,7 @@ msgid "Currency"
 msgstr "通貨"
 
 #: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Current model"
 msgstr ""
 
@@ -3351,6 +3377,7 @@ msgstr "拒否"
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Default"
 msgstr "デフォルト"
 
@@ -4051,6 +4078,7 @@ msgstr "失敗"
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Failed"
 msgstr "失敗"
 
@@ -4187,6 +4215,10 @@ msgstr "サブスクリプションのログインを完了してから、もう
 #: src/components/CloudAgentCard.tsx
 msgid "finished"
 msgstr "完了"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Finished, current model"
+msgstr ""
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
@@ -4490,6 +4522,10 @@ msgstr "これが聞こえたら、音声の準備は完了です。"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "無視"
+
+#: src/pages/shell/media-result.tsx
+msgid "Image generation"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image generation model"
@@ -5042,6 +5078,10 @@ msgstr "ローカルコンピューターへのアクセスには最新のデス
 msgid "Local file"
 msgstr "ローカルファイル"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Located here"
+msgstr ""
+
 #: src/components/AccountMenu.tsx
 #: src/components/SidebarFooter.tsx
 msgid "Log out"
@@ -5352,6 +5392,7 @@ msgstr "モード"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Model"
 msgstr "モデル"
@@ -5933,6 +5974,10 @@ msgstr "今はしない"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Not selected"
+msgstr ""
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Not supported"
 msgstr ""
 
 #: src/pages/shell/agent-import-plan.tsx
@@ -6531,6 +6576,10 @@ msgstr ""
 msgid "Queued"
 msgstr "待機中"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Quota exceeded"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Rakazo"
@@ -6715,6 +6764,14 @@ msgstr "更新中…"
 
 #: src/pages/shell/media-result.tsx
 msgid "Regenerate"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerated"
+msgstr ""
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerating…"
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
@@ -7275,6 +7332,7 @@ msgstr "土曜日"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Save"
 msgstr "保存"
 
@@ -7822,6 +7880,7 @@ msgid "Skip or deploy key"
 msgstr "スキップまたはデプロイキーを使用"
 
 #: src/pages/shell/message-view.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Skipped"
 msgstr "スキップ"
 
@@ -8097,6 +8156,10 @@ msgstr "購読 URL"
 msgid "Sunday"
 msgstr "日曜日"
 
+#: src/pages/shell/media-result.tsx
+msgid "Supplementary prompt"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Supports images"
@@ -8111,6 +8174,11 @@ msgstr "思考に対応"
 msgid "Switch"
 msgstr "切り替え"
 
+#: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch history"
+msgstr ""
+
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Switch model and retry"
 msgstr ""
@@ -8119,6 +8187,12 @@ msgstr ""
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switch persona"
 msgstr "ペルソナを切り替え"
+
+#. placeholder {0}: displayName(next.model, t`Model`)
+#. placeholder {1}: next.provider ? ` · ${next.provider}` : ""
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch to {0}{1}"
+msgstr ""
 
 #: src/components/ModelCredits.tsx
 msgid "Switch to {tierTargetName}?"
@@ -8588,6 +8662,7 @@ msgid "Time of day"
 msgstr "時刻"
 
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Timed out"
 msgstr ""
 
@@ -9122,6 +9197,10 @@ msgstr "確認中…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "バージョン"
+
+#: src/pages/shell/media-result.tsx
+msgid "Video generation"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"

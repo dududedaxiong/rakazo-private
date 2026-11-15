@@ -13,7 +13,23 @@ const artifactMocks = vi.hoisted(() => ({
 vi.mock("../../lib/artifact-open", () => artifactMocks);
 
 vi.mock("./message-cards", () => ({
-  ArtifactImage: () => null,
+  // The preview slots render here so the title bar and regenerate action are
+  // testable without the real image lightbox.
+  ArtifactImage: ({
+    previewOpen,
+    previewTitleBar,
+    previewHeaderActions,
+  }: {
+    previewOpen?: boolean;
+    previewTitleBar?: ReactNode;
+    previewHeaderActions?: ReactNode;
+  }) =>
+    previewOpen ? (
+      <div data-testid="artifact-image-preview">
+        {previewHeaderActions}
+        {previewTitleBar}
+      </div>
+    ) : null,
 }));
 
 const toastMock = vi.hoisted(() => vi.fn());
@@ -51,7 +67,32 @@ function buttonByText(text: string) {
   return [...container.querySelectorAll("button")].find((button) => button.textContent === text);
 }
 
-function renderResult() {
+function renderResult(
+  overrides: {
+    mark?: { modelId: string; presetName?: string } | null;
+    modelSwitches?: {
+      attempts: {
+        model: string;
+        provider?: string;
+        outcome: "failed" | "skipped" | "succeeded";
+        errorCode?: string;
+        errorMessage?: string;
+        at: string;
+      }[];
+      finalModel: string;
+    } | null;
+    models?: { provider: string; model: string }[];
+    presets?: { name: string; prompt: string }[];
+    activePreset?: string | null;
+    rpc?: unknown;
+  } = {},
+) {
+  const media = {
+    getSupplementaryPrompt: vi.fn(async () => ({ supplementaryPrompt: "" })),
+    setSupplementaryPrompt: vi.fn(async () => ({ ok: true as const })),
+    regenerate: vi.fn(async () => ({ ok: true as const, status: "completed" as const })),
+  };
+  const rpc = (overrides.rpc ?? { media }) as never;
   act(() =>
     root.render(
       <MediaResult
@@ -60,16 +101,28 @@ function renderResult() {
         artifactId="art-1"
         name="sunset.png"
         mimeType="image/png"
-        mark={null}
+        mark={overrides.mark ?? { modelId: "model-a", presetName: "水彩" }}
         botId="bot-1"
-        rpc={{} as never}
-        models={[]}
-        presets={[]}
-        activePreset={null}
+        rpc={rpc}
+        modelSwitches={overrides.modelSwitches ?? null}
+        models={
+          overrides.models ?? [
+            { provider: "p1", model: "model-a" },
+            { provider: "p2", model: "model-b" },
+          ]
+        }
+        presets={
+          overrides.presets ?? [
+            { name: "水彩", prompt: "watercolor" },
+            { name: "油画", prompt: "oil painting" },
+          ]
+        }
+        activePreset={overrides.activePreset ?? "水彩"}
         favorite={{ favorited: false, busy: false, toggle: vi.fn(async () => true) }}
       />,
     ),
   );
+  return { media };
 }
 
 describe("MediaResult share", () => {
@@ -139,5 +192,133 @@ describe("MediaResult share", () => {
     // applies when the error carries no usable message.
     expect(toastMock).toHaveBeenCalledWith("offline");
     expect(buttonByText("Share")).not.toBeUndefined();
+  });
+});
+
+describe("MediaResult switch history", () => {
+  const switches = {
+    attempts: [
+      {
+        model: "model-a",
+        provider: "p1",
+        outcome: "failed" as const,
+        errorCode: "rate_limit",
+        errorMessage: "slow down",
+        at: "2026-11-15T10:00:00.000Z",
+      },
+      {
+        model: "model-b",
+        provider: "p2",
+        outcome: "succeeded" as const,
+        at: "2026-11-15T10:00:01.000Z",
+      },
+    ],
+    finalModel: "model-b",
+  };
+
+  it("shows no history button without a switch, and opens the timeline with one", async () => {
+    renderResult();
+    expect(buttonByText("Switch history")).toBeUndefined();
+    renderResult({ modelSwitches: switches });
+    expect(buttonByText("Switch history")).not.toBeUndefined();
+    await act(async () => {
+      buttonByText("Switch history")?.click();
+    });
+    const dialog = document.querySelector('[data-testid="model-switch-history"]');
+    expect(dialog?.textContent).toContain("Switch history");
+    expect(dialog?.textContent).toContain("429 rate limit");
+  });
+});
+
+describe("MediaResult preview title bar", () => {
+  const flush = () =>
+    act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+  async function openPreview() {
+    await act(async () => {
+      buttonByText("Preview")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+  }
+
+  function titleBar() {
+    return container.querySelector('[data-testid="media-preview-title-bar"]');
+  }
+
+  it("shows preset, supplementary prompt, and model in a wrapping row", async () => {
+    const { media } = renderResult();
+    media.getSupplementaryPrompt.mockResolvedValueOnce({ supplementaryPrompt: "bluer sky" });
+    await openPreview();
+    await flush();
+    expect(media.getSupplementaryPrompt).toHaveBeenCalledWith({ artifactId: "art-1" });
+    const bar = titleBar();
+    expect(bar?.textContent).toContain("Image generation:");
+    expect(bar?.textContent).toContain("水彩");
+    expect(bar?.textContent).toContain("Supplementary prompt:");
+    expect(bar?.textContent).toContain("bluer sky");
+    expect(bar?.textContent).toContain("Model:");
+    expect(bar?.textContent).toContain("model-a");
+    // jsdom has no layout; the wrap is the flex-wrap class on the row.
+    expect(bar?.className).toContain("flex-wrap");
+  });
+
+  it("shows + Add when no supplementary prompt is saved, and saves a new one", async () => {
+    const { media } = renderResult();
+    await openPreview();
+    await flush();
+    expect(titleBar()?.textContent).toContain("+ Add");
+    await act(async () => {
+      buttonByText("+ Add")?.click();
+    });
+    const input = container.querySelector<HTMLInputElement>(
+      '[data-testid="media-preview-title-bar"] input',
+    );
+    expect(input).not.toBeNull();
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
+        input!,
+        "bluer sky",
+      );
+      input!.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      buttonByText("Save")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(media.setSupplementaryPrompt).toHaveBeenCalledExactlyOnceWith({
+      artifactId: "art-1",
+      supplementaryPrompt: "bluer sky",
+    });
+    expect(titleBar()?.textContent).toContain("bluer sky");
+  });
+
+  it("regenerates from the preview header and toasts the result", async () => {
+    const { media } = renderResult();
+    await openPreview();
+    await flush();
+    const regenerate = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Regenerate"]',
+    );
+    expect(regenerate).not.toBeNull();
+    await act(async () => {
+      regenerate?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(media.regenerate).toHaveBeenCalledExactlyOnceWith({ artifactId: "art-1" });
+    expect(toastMock).toHaveBeenCalledWith("Regenerated");
+  });
+
+  it("toasts when regeneration fails", async () => {
+    const { media } = renderResult();
+    media.regenerate.mockRejectedValueOnce(new Error("offline"));
+    await openPreview();
+    await flush();
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('button[aria-label="Regenerate"]')?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(toastMock).toHaveBeenCalledWith("offline");
   });
 });

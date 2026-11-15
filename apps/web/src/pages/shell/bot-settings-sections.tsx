@@ -33,6 +33,15 @@ import { ChatModelPicker } from "./chat-model-picker";
 
 const rowLabelClass = "text-body text-foreground";
 
+/** The "you are here" tag on a model row a timeline name pointed at. */
+function LocatedTag() {
+  return (
+    <span className="shrink-0 rounded-full border border-primary/40 px-2 py-0.5 text-body-sm text-primary">
+      <Trans>Located here</Trans>
+    </span>
+  );
+}
+
 type MemoryScope = "isolated" | "shared" | null;
 
 export function ComputerModePicker({
@@ -130,6 +139,7 @@ export function ModelSection({
   onOpenConnections,
   choices,
   value,
+  locatedKey,
   onModelChange,
   thinkingOptions,
   thinkingLevel,
@@ -141,6 +151,8 @@ export function ModelSection({
   onOpenConnections?: () => void;
   choices: readonly ChatModelChoice[];
   value: string;
+  /** The model-option key a timeline name pointed at; that row is tagged. */
+  locatedKey?: string | null;
   onModelChange: (key: string) => void;
   thinkingOptions: ThinkingLevel[];
   thinkingLevel: string;
@@ -148,10 +160,12 @@ export function ModelSection({
   onThinkingLevelChange: (level: string) => void;
 }) {
   const { t } = useLingui();
+  const located = locatedKey !== null && locatedKey !== undefined && locatedKey === value;
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} data-model-section="chat">
       <div className="mb-2 flex items-center justify-between text-label font-medium text-muted-foreground pe-1">
         <Trans>Model</Trans>
+        {located ? <LocatedTag /> : null}
         {onOpenConnections ? (
           <Button
             variant="ghost"
@@ -163,8 +177,10 @@ export function ModelSection({
           </Button>
         ) : null}
       </div>
-      <div className="rounded-xl bg-muted/50 p-4 space-y-3">
-        <div className="flex min-h-11 items-center justify-between gap-3">
+      <div
+        className={`rounded-xl bg-muted/50 p-4 space-y-3 ${located ? "ring-1 ring-primary/40" : ""}`}
+      >
+        <div data-model-row={value} className="flex min-h-11 items-center justify-between gap-3">
           <label htmlFor={`${ids}-model`} className="sr-only">
             <Trans>Model</Trans>
           </label>
@@ -313,6 +329,7 @@ export function TranslationGroup({
   ids,
   choices,
   value,
+  locatedKey,
   onModelChange,
   sourceLanguage,
   onSourceLanguageChange,
@@ -326,6 +343,8 @@ export function TranslationGroup({
   ids: string;
   choices: readonly ChatModelChoice[];
   value: string;
+  /** The model-option key a timeline name pointed at; that row is tagged. */
+  locatedKey?: string | null;
   onModelChange: (key: string) => void;
   sourceLanguage: TranslationSourceLanguage;
   onSourceLanguageChange: (language: TranslationSourceLanguage) => void;
@@ -337,9 +356,14 @@ export function TranslationGroup({
   onShowTranslationActionsChange: (checked: boolean) => void;
 }) {
   const { t } = useLingui();
+  const located = locatedKey !== null && locatedKey !== undefined && locatedKey === value;
   return (
     <BotPanelGroup label={t`Translation`}>
-      <div className="flex min-h-11 items-center justify-between gap-3">
+      <div
+        data-model-section="translation"
+        data-model-row={value}
+        className={`flex min-h-11 items-center justify-between gap-3 ${located ? "rounded-lg bg-accent px-2" : ""}`}
+      >
         <label htmlFor={`${ids}-translation-model`} className={rowLabelClass}>
           <Trans>Translation model</Trans>
         </label>
@@ -351,6 +375,7 @@ export function TranslationGroup({
             onChange={onModelChange}
           />
         </div>
+        {located ? <LocatedTag /> : null}
       </div>
       <div className="flex min-h-11 items-center justify-between gap-3">
         <span className={rowLabelClass}>
@@ -453,6 +478,7 @@ export type MediaModelTestState =
  */
 export function MediaModelGroup({
   ids,
+  locatedKey,
   videoChoices,
   videoValue,
   onVideoModelChange,
@@ -483,6 +509,8 @@ export function MediaModelGroup({
   onImagePresetChange,
 }: {
   ids: string;
+  /** The model-option key a timeline name pointed at; that row is tagged. */
+  locatedKey?: string | null;
   videoChoices: readonly ChatModelChoice[];
   videoValue: string;
   onVideoModelChange: (key: string) => void;
@@ -518,6 +546,7 @@ export function MediaModelGroup({
       <MediaRoleSection
         ids={ids}
         kind="video"
+        locatedKey={locatedKey}
         modelLabel={t`Video generation model`}
         choices={videoChoices}
         value={videoValue}
@@ -538,6 +567,7 @@ export function MediaModelGroup({
       <MediaRoleSection
         ids={ids}
         kind="image"
+        locatedKey={locatedKey}
         modelLabel={t`Image generation model`}
         choices={imageChoices}
         value={imageValue}
@@ -562,6 +592,7 @@ export function MediaModelGroup({
 function MediaRoleSection({
   ids,
   kind,
+  locatedKey,
   modelLabel,
   choices,
   value,
@@ -581,6 +612,8 @@ function MediaRoleSection({
 }: {
   ids: string;
   kind: "video" | "image";
+  /** The model-option key a timeline name pointed at; that row is tagged. */
+  locatedKey?: string | null;
   modelLabel: string;
   choices: readonly ChatModelChoice[];
   value: string;
@@ -607,9 +640,14 @@ function MediaRoleSection({
   const canAdd = totalModels < BOT_MODEL_LIST_MAX && addChoices.length > 0;
   const primaryTest = test.status === "done" && test.modelKey === value ? test : null;
   const testingPrimary = test.status === "testing" && test.modelKey === value;
+  const locatedPrimary = locatedKey !== null && locatedKey !== undefined && locatedKey === value;
   return (
     <>
-      <div className="flex min-h-11 items-center justify-between gap-3">
+      <div
+        data-model-section={kind}
+        data-model-row={value}
+        className={`flex min-h-11 items-center justify-between gap-3 ${locatedPrimary ? "rounded-lg bg-accent px-2" : ""}`}
+      >
         <label htmlFor={`${ids}-${kind}-model`} className={rowLabelClass}>
           {modelLabel}
         </label>
@@ -630,6 +668,7 @@ function MediaRoleSection({
           >
             {testingPrimary ? t`Testing…` : t`Test`}
           </Button>
+          {locatedPrimary ? <LocatedTag /> : null}
         </div>
       </div>
       {primaryTest ? <MediaModelTestResult test={primaryTest} kind={kind} /> : null}
@@ -637,6 +676,7 @@ function MediaRoleSection({
         <MediaModelFallbackList
           label={t`Fallback models`}
           fallbacks={fallbacks}
+          locatedKey={locatedKey}
           addChoices={addChoices}
           canAdd={canAdd}
           onAdd={onAddFallback}
@@ -693,6 +733,7 @@ function MediaModelTestResult({
 function MediaModelFallbackList({
   label,
   fallbacks,
+  locatedKey,
   addChoices,
   canAdd,
   onAdd,
@@ -705,6 +746,8 @@ function MediaModelFallbackList({
 }: {
   label: string;
   fallbacks: readonly MediaModelFallback[];
+  /** The model-option key a timeline name pointed at; that row is tagged. */
+  locatedKey?: string | null;
   addChoices: readonly ChatModelChoice[];
   canAdd: boolean;
   onAdd: (key: string) => void;
@@ -723,15 +766,21 @@ function MediaModelFallbackList({
         {fallbacks.map((fallback, index) => {
           const testing = test.status === "testing" && test.modelKey === fallback.key;
           const tested = test.status === "done" && test.modelKey === fallback.key ? test : null;
+          const located =
+            locatedKey !== null && locatedKey !== undefined && locatedKey === fallback.key;
           return (
             <li key={fallback.key}>
-              <div className="flex min-h-9 items-center gap-2">
+              <div
+                data-model-row={fallback.key}
+                className={`flex min-h-9 items-center gap-2 ${located ? "rounded-lg bg-accent px-2" : ""}`}
+              >
                 <span
                   className="min-w-0 flex-1 truncate text-body text-muted-foreground"
                   dir="auto"
                 >
                   {displayName(fallback.label, t`Model`)}
                 </span>
+                {located ? <LocatedTag /> : null}
                 <Button
                   variant="outline"
                   size="sm"

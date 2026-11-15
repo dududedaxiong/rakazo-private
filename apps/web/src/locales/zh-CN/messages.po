@@ -577,6 +577,10 @@ msgstr "**星期四**\n"
 msgid "/ month"
 msgstr "/ 月"
 
+#: src/pages/shell/media-result.tsx
+msgid "+ Add"
+msgstr "+ 添加"
+
 #. placeholder {0}: test.modelId
 #. placeholder {1}: test.seconds
 #: src/pages/shell/bot-settings-sections.tsx
@@ -611,6 +615,10 @@ msgstr "1 个工作区"
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
 msgstr "30 天"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "429 rate limit"
+msgstr "429 速率触发"
 
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -1278,6 +1286,10 @@ msgstr "身份验证失败。"
 msgid "Authorization code"
 msgstr "授权码"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Authorization failed"
+msgstr "授权失败"
+
 #: src/pages/McpServerForm.tsx
 msgid "Authorization parameters (optional)"
 msgstr "授权参数（可选）"
@@ -1620,6 +1632,7 @@ msgstr "无法读取图像"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-selection.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
@@ -2256,6 +2269,10 @@ msgstr "正在连接…"
 msgid "Connection"
 msgstr "连接"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Connection error"
+msgstr "连接错误"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Connection name"
@@ -2803,6 +2820,10 @@ msgstr "无法读取这些文件"
 msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
 msgstr "无法读取此软件包。请使用 UTF-8 编码、最大 4 MiB 的 JSON 文件。"
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not regenerate"
+msgstr "重新生成失败"
+
 #: src/pages/PluginSubmissionsPanel.tsx
 msgid "Could not reject plugin"
 msgstr "无法拒绝插件"
@@ -2950,6 +2971,10 @@ msgstr "无法保存技能"
 #: src/components/SpendingLimitSettings.tsx
 msgid "Could not save spending limit"
 msgstr "无法保存支出上限"
+
+#: src/pages/shell/media-result.tsx
+msgid "Could not save supplementary prompt"
+msgstr "补充提示词保存失败"
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "Could not save that choice"
@@ -3265,6 +3290,7 @@ msgid "Currency"
 msgstr "币种"
 
 #: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Current model"
 msgstr "当前模型"
 
@@ -3351,6 +3377,7 @@ msgstr "拒绝"
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Default"
 msgstr "默认"
 
@@ -4051,6 +4078,7 @@ msgstr "失败"
 #: src/components/SubagentCard.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Failed"
 msgstr "失败"
 
@@ -4187,6 +4215,10 @@ msgstr "请完成订阅登录，然后重新测试。"
 #: src/components/CloudAgentCard.tsx
 msgid "finished"
 msgstr "已完成"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Finished, current model"
+msgstr "生成完毕，当前模型"
 
 #. js-lingui-explicit-id
 #: src/lib/browser-notifications.ts
@@ -4490,6 +4522,10 @@ msgstr "如果听到了，说明语音已就绪。"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "忽略"
+
+#: src/pages/shell/media-result.tsx
+msgid "Image generation"
+msgstr "图片生成"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image generation model"
@@ -5042,6 +5078,10 @@ msgstr "访问本机电脑需要最新版桌面应用。"
 msgid "Local file"
 msgstr "本地文件"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Located here"
+msgstr "定位到这里"
+
 #: src/components/AccountMenu.tsx
 #: src/components/SidebarFooter.tsx
 msgid "Log out"
@@ -5352,6 +5392,7 @@ msgstr "模式"
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Model"
 msgstr "模型"
@@ -5934,6 +5975,10 @@ msgstr "暂不"
 #: src/pages/shell/bot-panel.tsx
 msgid "Not selected"
 msgstr "未选择"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Not supported"
+msgstr "不支持"
 
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/import-status.ts
@@ -6531,6 +6576,10 @@ msgstr "账号和密码请填在各自的输入框里，不要写在地址里。
 msgid "Queued"
 msgstr "排队中"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Quota exceeded"
+msgstr "额度已用完"
+
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Rakazo"
@@ -6716,6 +6765,14 @@ msgstr "正在刷新…"
 #: src/pages/shell/media-result.tsx
 msgid "Regenerate"
 msgstr "重新生成"
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerated"
+msgstr "已重新生成"
+
+#: src/pages/shell/media-result.tsx
+msgid "Regenerating…"
+msgstr "正在重新生成…"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Region"
@@ -7275,6 +7332,7 @@ msgstr "周六"
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Save"
 msgstr "保存"
 
@@ -7822,6 +7880,7 @@ msgid "Skip or deploy key"
 msgstr "跳过或使用部署密钥"
 
 #: src/pages/shell/message-view.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Skipped"
 msgstr "已跳过"
 
@@ -8097,6 +8156,10 @@ msgstr "订阅地址"
 msgid "Sunday"
 msgstr "周日"
 
+#: src/pages/shell/media-result.tsx
+msgid "Supplementary prompt"
+msgstr "补充提示词"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Supports images"
@@ -8111,6 +8174,11 @@ msgstr "支持思考"
 msgid "Switch"
 msgstr "切换"
 
+#: src/pages/shell/media-result.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch history"
+msgstr "切换记录"
+
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Switch model and retry"
 msgstr "换模型重试"
@@ -8119,6 +8187,12 @@ msgstr "换模型重试"
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Switch persona"
 msgstr "切换人设"
+
+#. placeholder {0}: displayName(next.model, t`Model`)
+#. placeholder {1}: next.provider ? ` · ${next.provider}` : ""
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Switch to {0}{1}"
+msgstr "切换到{0}{1}"
 
 #: src/components/ModelCredits.tsx
 msgid "Switch to {tierTargetName}?"
@@ -8588,6 +8662,7 @@ msgid "Time of day"
 msgstr "时间"
 
 #: src/pages/model-settings/model-health-dialog.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Timed out"
 msgstr "超时"
 
@@ -9122,6 +9197,10 @@ msgstr "正在校验…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "版本"
+
+#: src/pages/shell/media-result.tsx
+msgid "Video generation"
+msgstr "视频生成"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video generation model"

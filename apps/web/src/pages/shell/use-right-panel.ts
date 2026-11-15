@@ -1,6 +1,7 @@
 import type { Routine } from "@rakazo/contracts";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { SetURLSearchParams } from "react-router-dom";
+import type { ModelLocateRequest } from "../../lib/model-locate";
 import type { Panel, RightPanelState } from "../../lib/right-panel-state";
 import {
   readRightPanelState,
@@ -17,6 +18,8 @@ export function useRightPanel({
   setSearchParams: SetURLSearchParams;
 }) {
   const [modelFocusRequest, setModelFocusRequest] = useState(0);
+  /** A timeline model name asking for its row in the bot's settings. */
+  const [modelLocateRequest, setModelLocateRequest] = useState<ModelLocateRequest | null>(null);
   const [panel, setPanelState] = useState<Panel>(null);
   const [restoredPanelKey, setRestoredPanelKey] = useState<string | null>(null);
   const panelStorageKeyRef = useRef<string | null>(null);
@@ -32,6 +35,7 @@ export function useRightPanel({
     pendingExplicitPanel.current = panelStorageKeyRef.current === null;
     setRestoredPanelKey(panelStorageKeyRef.current);
     setModelFocusRequest(0);
+    setModelLocateRequest(null);
     setPanelState(next);
     const currentSearch = panelSearch.current;
     if (currentSearch.searchParams.has("routine")) {
@@ -58,6 +62,8 @@ export function useRightPanel({
     openPanelInChat,
     modelFocusRequest,
     setModelFocusRequest,
+    modelLocateRequest,
+    setModelLocateRequest,
     restoredPanelKey,
     setRestoredPanelKey,
     panelStorageKeyRef,

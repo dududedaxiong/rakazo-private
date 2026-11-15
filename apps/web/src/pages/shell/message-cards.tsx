@@ -4,6 +4,7 @@ import type { MessageBlock } from "@rakazo/contracts";
 import { appConnectedInput, waitForConnection } from "@rakazo/core";
 import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web";
 import { X } from "lucide-react";
+import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { BuiCard, SuccessPop } from "../../components/ai/primitives";
 import { ErrorNotice } from "../../components/ErrorNotice";
@@ -516,6 +517,8 @@ export function ArtifactImage({
   name,
   previewOpen,
   onPreviewOpenChange,
+  previewHeaderActions,
+  previewTitleBar,
 }: {
   target: ArtifactTarget;
   artifactId: string;
@@ -523,6 +526,10 @@ export function ArtifactImage({
   /** Controlled preview; when absent the image opens its own lightbox on click. */
   previewOpen?: boolean;
   onPreviewOpenChange?: (open: boolean) => void;
+  /** Rendered in the preview header; e.g. a regenerate button. */
+  previewHeaderActions?: ReactNode;
+  /** Rendered under the preview filename for generated images. */
+  previewTitleBar?: ReactNode;
 }) {
   const { t } = useLingui();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -566,23 +573,48 @@ export function ArtifactImage({
       )}
       {src ? (
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent
-            showCloseButton={false}
-            className="w-auto max-w-none bg-transparent p-0 ring-0 sm:max-w-none"
-          >
-            <DialogTitle className="sr-only">{name}</DialogTitle>
-            <DialogClose
-              aria-label={t`Close image preview`}
-              render={<Button variant="ghost" size="icon-sm" className="absolute end-2 top-2" />}
+          {previewHeaderActions || previewTitleBar ? (
+            <DialogContent
+              showCloseButton={false}
+              className="flex w-auto max-w-[94vw] flex-col overflow-hidden rounded-2xl bg-card p-0 ring-1 ring-foreground/10 sm:max-w-none"
             >
-              <X />
-            </DialogClose>
-            <img
-              src={src}
-              alt={name}
-              className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain"
-            />
-          </DialogContent>
+              <DialogTitle className="sr-only">{name}</DialogTitle>
+              <div className="flex h-14 shrink-0 items-center gap-1 border-b border-border px-4">
+                <span className="min-w-0 flex-1 truncate text-body font-medium text-foreground">
+                  {name}
+                </span>
+                {previewHeaderActions}
+                <DialogClose
+                  aria-label={t`Close image preview`}
+                  render={<Button variant="ghost" size="icon-sm" className="shrink-0" />}
+                >
+                  <X />
+                </DialogClose>
+              </div>
+              {previewTitleBar ? (
+                <div className="shrink-0 border-b border-border px-4 py-2">{previewTitleBar}</div>
+              ) : null}
+              <img src={src} alt={name} className="max-h-[75vh] max-w-[90vw] object-contain" />
+            </DialogContent>
+          ) : (
+            <DialogContent
+              showCloseButton={false}
+              className="w-auto max-w-none bg-transparent p-0 ring-0 sm:max-w-none"
+            >
+              <DialogTitle className="sr-only">{name}</DialogTitle>
+              <DialogClose
+                aria-label={t`Close image preview`}
+                render={<Button variant="ghost" size="icon-sm" className="absolute end-2 top-2" />}
+              >
+                <X />
+              </DialogClose>
+              <img
+                src={src}
+                alt={name}
+                className="max-h-[85vh] max-w-[90vw] rounded-xl object-contain"
+              />
+            </DialogContent>
+          )}
         </Dialog>
       ) : null}
     </div>

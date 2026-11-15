@@ -41,6 +41,7 @@ import { ActiveBotGlyph } from "../../components/ai/CollaborationMarker";
 import { VoiceChatCard } from "../../components/call/VoiceChatCard";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { userMessageHasNoNormalReply } from "../../lib/message-resend";
+import type { ModelLocateTarget } from "../../lib/model-locate";
 import { projectPageCards } from "../../lib/page-cards";
 import {
   isDetachedRange,
@@ -98,6 +99,7 @@ export const Transcript = memo(function Transcript({
   onCallBack,
   onLoadOlder,
   onOpenBot,
+  onLocateModel,
   onAnswer,
   onReply,
   onMarkUnread,
@@ -156,6 +158,8 @@ export const Transcript = memo(function Transcript({
   onCallBack?: () => void;
   onLoadOlder: () => void | Promise<void>;
   onOpenBot: (botId: string) => void;
+  /** Opens the bot's settings at the model named in a switch timeline. */
+  onLocateModel?: (target: ModelLocateTarget) => void;
   onAnswer: (
     message: ThreadMessage,
     text: string,
@@ -704,6 +708,7 @@ export const Transcript = memo(function Transcript({
                       canAnswer={answerableAskIds.has(message.id)}
                       canDismiss={dismissableAskIds.has(message.id)}
                       onOpenBot={onOpenBot}
+                      onLocateModel={onLocateModel}
                       onOpenPeerMessages={onOpenPeerMessages}
                       peerExchange={exchanges.lines.get(message.id)}
                       onAnswer={onAnswer}
