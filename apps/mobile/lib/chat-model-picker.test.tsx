@@ -2133,7 +2133,7 @@ describe("thread composer quick cards", () => {
       "Main model: Model 2",
       "Computer model: Model 2",
       "Voice model: 晓晓 · 女声",
-      "Media model: What image and video generation needs",
+      "Other models: What image and video generation needs",
       "Computer: Online",
       "Routines: 3 running",
       "Favorites: No favorites",

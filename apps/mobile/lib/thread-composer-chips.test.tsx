@@ -124,19 +124,19 @@ afterEach(async () => {
   node.remove();
 });
 
-describe("ThreadComposerChips media model card", () => {
-  it("shows the media model card after the voice model card", async () => {
+describe("ThreadComposerChips other models card", () => {
+  it("shows the other models card after the voice model card", async () => {
     await mountChips();
     const text = node.textContent ?? "";
-    expect(text).toContain("Media model");
-    expect(text).toContain("Image and video generation");
-    expect(text.indexOf("Media model")).toBeGreaterThan(text.indexOf("Voice model"));
+    expect(text).toContain("Other models");
+    expect(text).toContain("What image and video generation needs");
+    expect(text.indexOf("Other models")).toBeGreaterThan(text.indexOf("Voice model"));
   });
 
-  it("opens the media sheet when the card is tapped", async () => {
+  it("opens the other models sheet when the card is tapped", async () => {
     await mountChips();
     const card = node.querySelector<HTMLButtonElement>(
-      '[aria-label="Media model: Image and video generation"]',
+      '[aria-label="Other models: What image and video generation needs"]',
     );
     expect(card).not.toBeNull();
     await act(async () => card!.click());
@@ -144,12 +144,12 @@ describe("ThreadComposerChips media model card", () => {
     expect(callbacks.pickModel).not.toHaveBeenCalled();
   });
 
-  it("still shows the card when no media model is set", async () => {
+  it("still shows the card when no image or video model is set", async () => {
     await mountChips({
       ...currentBot,
       videoModels: null,
       imageModels: null,
     } as unknown as MobileBot);
-    expect(node.textContent).toContain("Media model");
+    expect(node.textContent).toContain("Other models");
   });
 });

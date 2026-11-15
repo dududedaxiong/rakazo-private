@@ -8,8 +8,8 @@ import type { MobileModel } from "../../lib/mobile-types";
 import { BottomSheetShell, SheetHeader } from "../bottom-sheet-shell";
 import { NativeSwitch } from "../native-switch";
 import { Chevron } from "../row-accessories";
-import type { ThreadModelSave } from "./thread-model-picker-sheet";
 import { PromptPresetSection } from "./prompt-preset-section";
+import type { ThreadModelSave } from "./thread-model-picker-sheet";
 
 export type MediaModelRole = "video" | "image";
 
@@ -17,7 +17,7 @@ export type MediaModelRole = "video" | "image";
 export type MediaActionKind = "favorite" | "share" | "preview" | "download";
 
 /**
- * The 影图模式 panel from the chat's Media model card: two sections, one per
+ * The 其他模型 panel from the chat's Other models card: two sections, one per
  * kind, each with its ordered model list (primary plus fallbacks), its prompt
  * presets, and its save directory; then the switches for which actions show
  * on generated media. Model picks happen in the model picker sheet, in
@@ -104,9 +104,7 @@ export function ThreadMediaModelSheet({
     const presetsLabel = isVideo ? t("Video prompt presets") : t("Image prompt presets");
     const addBackupLabel = isVideo ? t("Add video backup") : t("Add image backup");
     const primaryKey =
-      primary.provider && primary.modelId
-        ? `${primary.provider}\u0000${primary.modelId}`
-        : null;
+      primary.provider && primary.modelId ? `${primary.provider}\u0000${primary.modelId}` : null;
     // The primary row already shows the first entry; list the rest numbered
     // by their position in the ordered list.
     const fallbacks = (models ?? [])
@@ -231,8 +229,8 @@ export function ThreadMediaModelSheet({
   ];
 
   return (
-    <BottomSheetShell visible={visible} label={t("Media model")} onClose={onClose}>
-      <SheetHeader title={t("Media model")} onClose={onClose} />
+    <BottomSheetShell visible={visible} label={t("Other models")} onClose={onClose}>
+      <SheetHeader title={t("Other models")} onClose={onClose} />
       {kindBlock("image")}
       {kindBlock("video")}
       <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
