@@ -242,6 +242,39 @@ describe("Pi history replay", () => {
     ]);
   });
 
+  it("strips a trailing legacy via mark from a replayed reply so the model cannot copy it", async () => {
+    const messages = await replay({
+      history: [
+        { id: "m1", role: "user", content: "Weather?" },
+        { id: "m2", role: "assistant", content: "Sunny today.\n经 deepseek-flash" },
+        { id: "m3", role: "user", content: "And tomorrow?" },
+        { id: "m4", role: "assistant", content: "Rainy.\n经 deepseek-flash · 默认" },
+      ],
+    });
+    expect(view(messages)).toEqual([
+      { role: "user", content: "Weather?" },
+      { role: "assistant", content: "Sunny today." },
+      { role: "user", content: "And tomorrow?" },
+      { role: "assistant", content: "Rainy." },
+    ]);
+  });
+
+  it("drops a reply that holds only a legacy via mark, and leaves other trailing lines alone", async () => {
+    const messages = await replay({
+      history: [
+        { id: "m1", role: "user", content: "Hi" },
+        { id: "m2", role: "assistant", content: "经 deepseek-flash" },
+        { id: "m3", role: "user", content: "Hi again" },
+        { id: "m4", role: "assistant", content: "经测试通过\n当前模型: deepseek-flash" },
+      ],
+    });
+    expect(view(messages)).toEqual([
+      { role: "user", content: "Hi" },
+      { role: "user", content: "Hi again" },
+      { role: "assistant", content: "经测试通过\n当前模型: deepseek-flash" },
+    ]);
+  });
+
   it("removes the current message from history by id or by raw text, whatever its label", async () => {
     const labelled = {
       id: "current",

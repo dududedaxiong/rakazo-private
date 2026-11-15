@@ -38,6 +38,20 @@ export function speakerText(speaker: string, text: string): string {
 }
 
 /**
+ * A trailing legacy "经 <model>" mark (optionally "经 <model> · <preset>" for
+ * generated media), the pre-2026-11-15 fallback attribution. The mark is a
+ * server artifact, never the model's own words, so it is dropped from the
+ * history the model reads: left in, the model copies it onto its own replies.
+ * Only a trailing line counts, and the model id holds no spaces or CJK, so a
+ * real sentence that happens to start with "经 " is left alone.
+ */
+const LEGACY_VIA_MARK_LINE = /(?:^|\n)经 [^\s\u4e00-\u9fff·]+(?: · [^\n]+)?\s*$/;
+
+export function stripLegacyViaMark(text: string): string {
+  return text.replace(LEGACY_VIA_MARK_LINE, "");
+}
+
+/**
  * Replays stored messages with their real roles. This bot's own replies are assistant turns;
  * a message with a `speaker` (another bot, or the human in a group) is a user turn that starts
  * with "[speaker]: ". A system line (a stop or expiry note) is a user turn that starts with
@@ -65,6 +79,9 @@ export function toHistory(
       ? history
       : history.filter((_, index) => index !== duplicatePromptIndex);
   return prior.flatMap((m): HistoryMessage[] => {
+    // The legacy "经 <model>" mark rides on stored replies; strip it before
+    // the model reads the history, or it copies the mark onto its own reply.
+    const content = stripLegacyViaMark(m.content);
     const created = m.createdAt ? Date.parse(m.createdAt) : Number.NaN;
     const common = {
       timestamp: Number.isNaN(created) ? 0 : created,
@@ -74,11 +91,11 @@ export function toHistory(
     };
     if (m.role === "assistant" && !m.speaker) {
       // A reply that holds only tool work has no text to replay.
-      if (!m.content.trim()) return [];
+      if (!content.trim()) return [];
       return [
         {
           role: "assistant" as const,
-          content: [{ type: "text" as const, text: m.content }],
+          content: [{ type: "text" as const, text: content }],
           ...HISTORY_ASSISTANT,
           usage: NO_USAGE,
           stopReason: "stop" as const,
@@ -86,13 +103,13 @@ export function toHistory(
         },
       ];
     }
-    if (m.role === "system" && !m.content.trim()) return [];
+    if (m.role === "system" && !content.trim()) return [];
     const text =
       m.role === "system"
-        ? `System note: ${neutralizeSpeakerLabels(m.content)}`
+        ? `System note: ${neutralizeSpeakerLabels(content)}`
         : m.speaker
-          ? speakerText(m.speaker, m.content)
-          : m.content;
+          ? speakerText(m.speaker, content)
+          : content;
     // Pictures ride on the human's turn only, never on a bot's.
     const images = m.role === "assistant" ? [] : toPiImages(m.images);
     return [
