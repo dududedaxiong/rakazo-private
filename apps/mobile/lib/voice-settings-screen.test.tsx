@@ -7,6 +7,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import VoiceSettings from "../app/(settings)/voice";
 import { saveDeviceVoiceEnabled } from "./device-voice";
 import { queryClient } from "./query";
+import { loadVoiceSource } from "./voice-direction";
 
 const mocks = vi.hoisted(() => ({
   calls: vi.fn(),
@@ -23,6 +24,7 @@ const mocks = vi.hoisted(() => ({
   saveOnDevice: vi.fn(async () => undefined),
   onDeviceStatus: vi.fn(async () => ({ stt: "missing", tts: "missing", progress: null })),
   reads: [] as string[],
+  sent: [] as Array<{ method: string; input?: unknown }>,
   rpc: null as null | ((method: string) => Promise<unknown>),
   typed: {} as Record<string, (value: string) => void>,
   t: (text: string) => text,
@@ -52,7 +54,8 @@ vi.mock("./api", () => ({
   currentApiBase: () => "https://app.example.test",
   selectedSpaceId: () => "space-fixture",
   captureApiRequestContext: async () => ({ apiBase: "https://app.example.test", headers: {} }),
-  rpc: async (method: string) => {
+  rpc: async (method: string, input?: unknown) => {
+    mocks.sent.push({ method, input });
     if (mocks.rpc) return mocks.rpc(method);
     if (mocks.failStatus && method === "voice/status") throw new Error("offline");
     mocks.reads.push(method);
@@ -73,6 +76,11 @@ vi.mock("./voice-direction", () => ({
   loadVoiceSource: vi.fn(async () => "auto"),
   saveVoiceSource: vi.fn(async () => undefined),
   serverVoiceSource: (provider: string) => `server:${provider}`,
+  serverProviderOf: (source: string) => {
+    if (!source.startsWith("server:")) return undefined;
+    const provider = source.slice("server:".length);
+    return provider && !/\s/.test(provider) ? provider : undefined;
+  },
 }));
 vi.mock("./dictation", () => ({ recognitionSupported: vi.fn(async () => false) }));
 vi.mock("./on-device-speech", () => ({
@@ -170,6 +178,7 @@ beforeEach(() => {
   mocks.failStatus = false;
   mocks.loadDevice.mockReset().mockResolvedValue(false);
   mocks.reads.length = 0;
+  mocks.sent.length = 0;
   mocks.rpc = null;
   mocks.calls.mockResolvedValue(true);
   mocks.waiting.mockResolvedValue(true);
@@ -405,4 +414,107 @@ it("toggles on-device voice without expanding its section", async () => {
   expect(mocks.saveOnDevice).toHaveBeenCalledWith(true);
   expect(toggle("On-device voice").checked).toBe(true);
   expect(container.textContent).not.toContain("Download voice models");
+});
+
+const groqCatalog = [
+  { id: "fish-audio", name: "Fish Audio", description: "", transcribe: true },
+  {
+    id: "groq",
+    name: "Groq",
+    description: "",
+    transcribe: true,
+    preset: {
+      provider: "openai-compatible",
+      baseUrl: "https://api.groq.com/openai/v1",
+      sttModel: "whisper-large-v3-turbo",
+    },
+  },
+  { id: "openai-compatible", name: "Third-party model", description: "", transcribe: true },
+];
+const groqCredential = {
+  id: "cred-groq",
+  provider: "openai-compatible",
+  hasKey: true,
+  isDefault: true,
+  voiceId: "",
+  speechModel: "",
+  transcribe: true,
+  endpoint: "https://api.groq.com/openai/v1",
+  sttModel: "whisper-large-v3-turbo",
+};
+
+it("prefills a preset entry and connects it under its provider", async () => {
+  mocks.rpc = async (method) =>
+    method === "voice/catalog"
+      ? groqCatalog
+      : method === "voice/credentials"
+        ? []
+        : method === "voice/status"
+          ? { configured: false, ready: false, provider: null }
+          : method === "voice/connect"
+            ? groqCredential
+            : [];
+  await render();
+  const button = (label: string) =>
+    [...container.querySelectorAll("button")].find((node) => node.textContent?.includes(label));
+  await act(async () => button("Groq")!.click());
+  const field = (label: string) =>
+    container.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!;
+  expect(field("Server URL").value).toBe("https://api.groq.com/openai/v1");
+  expect(field("Transcription model").value).toBe("whisper-large-v3-turbo");
+  expect(container.querySelector('input[aria-label="Speech model"]')).toBeNull();
+  expect(container.textContent).toContain(
+    "Groq only transcribes speech. Reading aloud still uses the on-device voice.",
+  );
+
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")!.set!.call(
+      field("API key"),
+      "gsk-test-key-123",
+    );
+    field("API key").dispatchEvent(new Event("input", { bubbles: true }));
+  });
+  await act(async () => button("Connect")!.click());
+  const sent = mocks.sent.filter((entry) => entry.method === "voice/connect");
+  expect(sent).toHaveLength(1);
+  expect(sent[0]?.input).toEqual({
+    provider: "openai-compatible",
+    scope: "account",
+    apiKey: "gsk-test-key-123",
+    voiceId: undefined,
+    baseUrl: "https://api.groq.com/openai/v1",
+    sttModel: "whisper-large-v3-turbo",
+  });
+});
+
+it("shows a connected preset entry as a voice source with a read-aloud note", async () => {
+  mocks.rpc = async (method) =>
+    method === "voice/catalog"
+      ? groqCatalog
+      : method === "voice/credentials"
+        ? [groqCredential]
+        : method === "voice/status"
+          ? {
+              configured: true,
+              ready: true,
+              transcribe: true,
+              provider: "openai-compatible",
+              voiceId: "",
+            }
+          : [];
+  vi.mocked(loadVoiceSource).mockImplementation(async (direction) =>
+    direction === "readAloud" ? "server:openai-compatible" : "auto",
+  );
+  try {
+    await render();
+    const groqButtons = [...container.querySelectorAll("button")].filter(
+      (node) => node.textContent === "Groq",
+    );
+    expect(groqButtons).toHaveLength(3);
+    expect(container.textContent).toContain(
+      "Not supported in Chinese yet. Reading aloud still uses the on-device voice.",
+    );
+  } finally {
+    vi.mocked(loadVoiceSource).mockImplementation(async () => "auto");
+  }
 });

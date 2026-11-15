@@ -474,6 +474,20 @@ async function speakPrepared(text: string, opts: SpeechOptions, epoch: number): 
       { requestContext },
     );
     if (!isCurrentSpeech(epoch)) return false;
+    if (!prepared.ready && prepared.transcribeOnly) {
+      // The pinned connection only transcribes, so it cannot read aloud;
+      // the on-device voice reads instead, then the phone's own voice.
+      if (await onDeviceTtsReady()) {
+        const spoken = await speakWithOnDeviceSpeech(text, opts.botId, opts.messageId, epoch);
+        if (!isCurrentSpeech(epoch)) return false;
+        if (!spoken && playback.status !== "idle") setPlayback(IDLE_PLAYBACK, null);
+        return spoken;
+      }
+      const spoken = await speakOnDevice(text, opts.botId, opts.messageId, epoch);
+      if (!isCurrentSpeech(epoch)) return false;
+      if (!spoken && playback.status !== "idle") setPlayback(IDLE_PLAYBACK, null);
+      return spoken;
+    }
     if (!prepared.ready) {
       if (playback.status !== "idle") setPlayback(IDLE_PLAYBACK, null);
       return false;

@@ -2,6 +2,7 @@ import type { VoiceCatalogEntry, VoiceCredential, VoiceInfo, VoiceStatus } from 
 import {
   DEFAULT_COMPATIBLE_STT_MODEL,
   DEFAULT_COMPATIBLE_TTS_MODEL,
+  matchVoicePresetEntry,
   OPENAI_COMPATIBLE_PROVIDER_ID,
 } from "@rakazo/contracts";
 import { fetchFresh, writeSaved } from "@rakazo/core/query";
@@ -68,6 +69,7 @@ import type { VoiceDirection, VoiceSourceId } from "../../lib/voice-direction";
 import {
   loadVoiceSource,
   saveVoiceSource,
+  serverProviderOf,
   serverVoiceSource,
   VOICE_SOURCE_AUTO,
 } from "../../lib/voice-direction";
@@ -89,11 +91,30 @@ const voiceReads = (target: SettingsTarget) => {
 const voicesRead = (target: SettingsTarget, provider: string) =>
   rpcQuery("voice/voices", { provider, scope: target.scope }, targetSpace(target));
 
-function pickProvider(catalog: VoiceCatalogEntry[], status: VoiceStatus, preferred?: string) {
-  return (
+function pickProvider(
+  catalog: VoiceCatalogEntry[],
+  credentials: VoiceCredential[],
+  status: VoiceStatus,
+  preferred?: string,
+) {
+  const picked =
     [preferred, status.provider].find((id) => catalog.some((entry) => entry.id === id)) ??
     catalog[0]?.id ??
-    ""
+    "";
+  // A saved connection shows as its preset entry when the address matches one.
+  const cred = credentials.find((entry) => entry.provider === picked);
+  return matchVoicePresetEntry(catalog, picked, cred?.endpoint)?.id ?? picked;
+}
+
+/** The credential a catalog entry connects with: its own provider, or its preset's. */
+function credentialForEntry(
+  catalog: VoiceCatalogEntry[],
+  credentials: VoiceCredential[],
+  entry: VoiceCatalogEntry,
+) {
+  if (!entry.preset) return credentials.find((cred) => cred.provider === entry.id);
+  return credentials.find(
+    (cred) => matchVoicePresetEntry(catalog, cred.provider, cred.endpoint)?.id === entry.id,
   );
 }
 
@@ -104,8 +125,9 @@ function cachedVoiceSettings(target: SettingsTarget) {
   const credentials = queryClient.getQueryData(reads.credentials.queryKey);
   const status = queryClient.getQueryData(reads.status.queryKey);
   if (!catalog || !credentials || !status) return null;
-  const provider = pickProvider(catalog, status);
-  const credential = credentials.find((entry) => entry.provider === provider);
+  const provider = pickProvider(catalog, credentials, status);
+  const entry = catalog.find((item) => item.id === provider);
+  const credential = entry ? credentialForEntry(catalog, credentials, entry) : undefined;
   const voices = credential ? queryClient.getQueryData(voicesRead(target, provider).queryKey) : [];
   return { catalog, credentials, status, provider, credential, voices: voices ?? [] };
 }
@@ -234,24 +256,29 @@ export default function VoiceSettings() {
       ]);
       if (revision !== loadRevision.current) return;
       setLoadError(null);
-      const selected = pickProvider(nextCatalog, nextStatus, nextProvider);
+      const selected = pickProvider(nextCatalog, nextCredentials, nextStatus, nextProvider);
       if (selected !== selectedProvider.current) edited.current.clear();
       setCatalog(nextCatalog);
       setCredentials(nextCredentials);
       setStatus(nextStatus);
       selectedProvider.current = selected;
       setProvider(selected);
-      const cred = nextCredentials.find((entry) => entry.provider === selected);
+      const entry = nextCatalog.find((item) => item.id === selected);
+      const cred = entry ? credentialForEntry(nextCatalog, nextCredentials, entry) : undefined;
       const fields: [VoiceField, (value: string) => void, string | undefined][] = [
         ["voiceId", setVoiceId, cred?.voiceId],
         ["speechModel", setSpeechModel, cred?.speechModel],
-        ["baseUrl", setBaseUrl, cred?.endpoint],
+        ["baseUrl", setBaseUrl, cred?.endpoint ?? entry?.preset?.baseUrl],
         ["ttsModel", setTtsModel, cred?.ttsModel],
-        ["sttModel", setSttModel, cred?.sttModel],
+        ["sttModel", setSttModel, cred?.sttModel ?? entry?.preset?.sttModel],
       ];
       for (const [field, set, value] of fields) if (!edited.current.has(field)) set(value ?? "");
       if (cred) {
-        const nextVoices = await fetchFresh(queryClient, voicesRead(target, selected), reuse);
+        const nextVoices = await fetchFresh(
+          queryClient,
+          voicesRead(target, entry?.preset?.provider ?? selected),
+          reuse,
+        );
         if (revision === loadRevision.current) setVoices(nextVoices);
       } else {
         setVoices([]);
@@ -580,12 +607,14 @@ export default function VoiceSettings() {
       if (deviceSettings && !(await saveDeviceVoice(false))) return;
       selectedProvider.current = nextProvider;
       setProvider(nextProvider);
-      const cred = credentials.find((entry) => entry.provider === nextProvider);
-      if (cred?.voiceId && status?.provider !== nextProvider) {
+      const nextEntry = catalog.find((entry) => entry.id === nextProvider);
+      const nextRpcProvider = nextEntry?.preset?.provider ?? nextProvider;
+      const cred = nextEntry ? credentialForEntry(catalog, credentials, nextEntry) : undefined;
+      if (cred?.voiceId && status?.provider !== nextRpcProvider) {
         try {
           const saved = await rpc("voice/setVoice", {
             voiceId: cred.voiceId,
-            provider: nextProvider,
+            provider: nextRpcProvider,
             scope,
           });
           setStatus(saved);
@@ -615,14 +644,23 @@ export default function VoiceSettings() {
   }
 
   const selected = catalog.find((entry) => entry.id === provider);
-  const credential = credentials.find((entry) => entry.provider === provider);
+  const credential = selected ? credentialForEntry(catalog, credentials, selected) : undefined;
   const hiddenSelfHosted =
     !catalog.some((entry) => entry.id === OPENAI_COMPATIBLE_PROVIDER_ID) &&
     credentials.some((entry) => entry.provider === OPENAI_COMPATIBLE_PROVIDER_ID);
 
   const selfHosted = selected?.id === OPENAI_COMPATIBLE_PROVIDER_ID;
+  /** A preset entry prefills its hosted service; the connection lives on the preset's provider. */
+  const isPreset = Boolean(selected?.preset);
+  const rpcProvider = selected?.preset?.provider ?? selected?.id;
   const keyless = Boolean(selected?.keyless);
-  const canConnect = keyless || (selfHosted ? Boolean(baseUrl.trim()) : apiKey.trim().length >= 8);
+  const canConnect =
+    keyless ||
+    (isPreset
+      ? Boolean(baseUrl.trim()) && apiKey.trim().length >= 8
+      : selfHosted
+        ? Boolean(baseUrl.trim())
+        : apiKey.trim().length >= 8);
 
   // One direction's source list: auto first, then the sources this phone can
   // actually use. A source that vanished (models deleted, connection removed)
@@ -643,7 +681,11 @@ export default function VoiceSettings() {
     for (const cred of serverOptions) {
       options.push({
         id: serverVoiceSource(cred.provider),
-        label: catalog.find((entry) => entry.id === cred.provider)?.name ?? cred.provider,
+        // A connection on a preset address shows as that preset, so Groq reads as Groq.
+        label:
+          matchVoicePresetEntry(catalog, cred.provider, cred.endpoint)?.name ??
+          catalog.find((entry) => entry.id === cred.provider)?.name ??
+          cred.provider,
       });
     }
     return options;
@@ -657,6 +699,17 @@ export default function VoiceSettings() {
   const effectiveReadAloudSource = readAloudOptions.some((option) => option.id === readAloudSource)
     ? readAloudSource
     : VOICE_SOURCE_AUTO;
+  // The read-aloud source behind a preset without a speech model only
+  // transcribes; reading aloud falls back to the on-device voice.
+  const readAloudCredential = serverProviderOf(effectiveReadAloudSource)
+    ? credentials.find((cred) => serverVoiceSource(cred.provider) === effectiveReadAloudSource)
+    : undefined;
+  const readAloudPreset = readAloudCredential
+    ? matchVoicePresetEntry(catalog, readAloudCredential.provider, readAloudCredential.endpoint)
+    : undefined;
+  const readAloudTranscribeOnly = Boolean(
+    readAloudPreset?.preset && readAloudPreset.preset.ttsModel === undefined,
+  );
 
   function voiceSourceRows(
     direction: VoiceDirection,
@@ -695,19 +748,22 @@ export default function VoiceSettings() {
     if (status) setLoadError(null);
     try {
       await rpc("voice/connect", {
-        provider: selected.id,
+        provider: rpcProvider ?? selected.id,
         scope,
         apiKey: apiKey.trim(),
         // The server drops this voice when the address or speech model really changed.
         voiceId: voiceId || undefined,
         ...(selected.speechModel ? { speechModel: speechModel.trim() } : {}),
+        // A preset carries only its transcription model; the speech model stays the default.
         ...(selfHosted
           ? {
               baseUrl: baseUrl.trim(),
               ttsModel: ttsModel.trim() || undefined,
               sttModel: sttModel.trim() || undefined,
             }
-          : {}),
+          : isPreset
+            ? { baseUrl: baseUrl.trim(), sttModel: sttModel.trim() || undefined }
+            : {}),
       });
       setApiKey("");
       await load(selected.id);
@@ -745,7 +801,7 @@ export default function VoiceSettings() {
     if (status) setLoadError(null);
     try {
       const saved = await rpc("voice/setSpeechModel", {
-        provider: selected.id,
+        provider: rpcProvider ?? selected.id,
         scope,
         speechModel: next,
       });
@@ -771,7 +827,7 @@ export default function VoiceSettings() {
     setVoiceId(nextVoiceId);
     setPending("voice");
     try {
-      await rpc("voice/setVoice", { voiceId: nextVoiceId, provider: selected?.id, scope });
+      await rpc("voice/setVoice", { voiceId: nextVoiceId, provider: rpcProvider, scope });
       await load(selected?.id);
     } catch (err) {
       setError(errorText(err, t("Could not save that voice")));
@@ -1075,6 +1131,11 @@ export default function VoiceSettings() {
             <View style={styles.group}>
               {voiceSourceRows("readAloud", readAloudOptions, effectiveReadAloudSource)}
             </View>
+            {readAloudTranscribeOnly ? (
+              <Text style={styles.note}>
+                {t("Not supported in Chinese yet. Reading aloud still uses the on-device voice.")}
+              </Text>
+            ) : null}
           </>
         ) : null}
         {/* Connections belong to the account, so a space never removes them. */}
@@ -1088,7 +1149,7 @@ export default function VoiceSettings() {
         ) : null}
         {selected && deviceVoiceReady && !deviceVoice ? (
           <>
-            {selfHosted ? (
+            {selfHosted || isPreset ? (
               <TextInput
                 accessibilityLabel={t("Server URL")}
                 autoCapitalize="none"
@@ -1139,6 +1200,10 @@ export default function VoiceSettings() {
                   placeholderTextColor={native.tertiaryLabel}
                   style={styles.input}
                 />
+              </>
+            ) : null}
+            {selfHosted || isPreset ? (
+              <>
                 <Text style={styles.fieldLabel}>{t("Transcription model")}</Text>
                 <TextInput
                   accessibilityLabel={t("Transcription model")}
@@ -1156,7 +1221,7 @@ export default function VoiceSettings() {
               <NativeActionButton
                 disabled={pending !== null || !canConnect}
                 label={
-                  credential && selfHosted
+                  credential && (selfHosted || isPreset)
                     ? t("Reconnect")
                     : credential
                       ? t("Replace key")
@@ -1165,6 +1230,11 @@ export default function VoiceSettings() {
                 onPress={() => void connect()}
               />
             )}
+            {isPreset ? (
+              <Text style={styles.note}>
+                {t("Groq only transcribes speech. Reading aloud still uses the on-device voice.")}
+              </Text>
+            ) : null}
             {credential && scope === "account" ? (
               <NativeActionButton
                 disabled={pending !== null}
@@ -1191,7 +1261,7 @@ export default function VoiceSettings() {
                 />
               </>
             ) : null}
-            {voices.length ? (
+            {voices.length && !isPreset ? (
               <View style={[styles.group, styles.voices]}>
                 {voices.map((voice, index) => (
                   <Pressable
@@ -1215,7 +1285,7 @@ export default function VoiceSettings() {
             ) : null}
           </>
         ) : null}
-        {deviceSettings && (deviceVoice || status?.ready) ? (
+        {deviceSettings && (deviceVoice || status?.ready) && !isPreset ? (
           <NativeActionButton
             disabled={pending !== null}
             label={t("Hear a sample")}
@@ -1299,6 +1369,7 @@ function createVoiceStyles() {
     logScroll: { flex: 1, maxHeight: 260 },
     logText: { color: native.secondaryLabel, fontSize: 12, fontFamily: "monospace" },
     fieldLabel: { color: native.label, marginTop: 16 },
+    note: { color: native.secondaryLabel, fontSize: 13, marginTop: 8 },
     input: {
       marginTop: 8,
       borderRadius: 12,

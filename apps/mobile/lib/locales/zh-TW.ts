@@ -860,6 +860,10 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   Speak: "朗讀",
   "Speech model": "語音模型",
   "Transcription model": "轉錄模型",
+  "Groq only transcribes speech. Reading aloud still uses the on-device voice.":
+    "Groq 僅用於語音轉寫，朗讀仍使用本機語音。",
+  "Not supported in Chinese yet. Reading aloud still uses the on-device voice.":
+    "暫不支援中文，朗讀仍使用本機語音。",
   Reconnect: "重新連線",
   Starting: "正在啟動",
   "Starting…": "正在啟動…",

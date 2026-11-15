@@ -190,6 +190,34 @@ describe("mobile speech", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it("reads aloud on-device when the pinned connection only transcribes", async () => {
+    vi.mocked(SecureStore.getItemAsync).mockImplementation(async (key) =>
+      key === READALOUD_VOICE_SOURCE_KEY
+        ? "server:openai-compatible"
+        : key === DEVICE_VOICE_KEY
+          ? "0"
+          : null,
+    );
+    vi.mocked(rpc).mockImplementation(async (proc) => {
+      if (proc === "aiConsent/status") return { version: "2026-09-14", recipients: [] } as never;
+      return { ready: false, transcribeOnly: true, utterances: ["Read this"] } as never;
+    });
+    vi.mocked(onDeviceSpeech.onDeviceTtsReady).mockResolvedValueOnce(true);
+    vi.mocked(onDeviceSpeech.speakOnDeviceSpeech).mockClear();
+    vi.mocked(onDeviceSpeech.speakOnDeviceSpeech).mockResolvedValueOnce(true);
+    vi.mocked(fetch).mockClear();
+
+    await expect(speakText("Read this", { botId: "bot-1" })).resolves.toBe(true);
+
+    expect(rpc).toHaveBeenCalledWith(
+      "voice/prepare",
+      { text: "Read this", voiceId: undefined, botId: "bot-1", provider: "openai-compatible" },
+      { requestContext: expect.objectContaining({ apiBase: "https://support.example" }) },
+    );
+    expect(onDeviceSpeech.speakOnDeviceSpeech).toHaveBeenCalledOnce();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
   it("speaks with the system voice when read-aloud is pinned to it", async () => {
     vi.mocked(SecureStore.getItemAsync).mockImplementation(async (key) =>
       key === READALOUD_VOICE_SOURCE_KEY ? "system" : key === DEVICE_VOICE_KEY ? "0" : null,
