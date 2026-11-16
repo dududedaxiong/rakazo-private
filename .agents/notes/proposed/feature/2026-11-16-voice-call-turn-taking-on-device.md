@@ -15,6 +15,8 @@ Status: proposed
 - 录音为 16kHz 单声道 PCM16 WAV，整段录完再送识别（DeepSeek ASR / OpenAI 兼容 `/audio/transcriptions` / 引擎自带语音模型三选一，按配置回退）；识别是整段出结果，不边说边出。
 - 单麦克风仲裁：同一时间只有一个语音功能占麦，别的先停。
 
+实现路径按省事程度排：**服务端 VAD**（onnxruntime-node 跑在服务端，一处实现、网页和 App 都能用；要补一条音频流通道，现在语音输入是整段文件上传）→ **网页 WASM**（onnxruntime-web + getUserMedia，纯前端、原型最快）→ **App 本机**（onnxruntime-react-native 有官方包，Expo 走 prebuild + config plugin 能接；难点在 Expo 里拿实时 PCM 音频流，现在按住说话是录完整段再发）。模型本身不用训，是现成的 ONNX 文件；难在音频管道和阈值调参，不在模型。
+
 只借鉴设计，不搬代码（AGPL-3.0）。
 
 ## Alternatives considered
