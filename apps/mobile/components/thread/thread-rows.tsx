@@ -59,7 +59,8 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
       select: (text) => rowActionsRef.current.select(text),
       enterSelection: (message) => rowActionsRef.current.enterSelection(message),
       speak: (message) => rowActionsRef.current.speak(message),
-      speakText: (message, text) => rowActionsRef.current.speakText?.(message, text),
+      speakText: (message, text, source) =>
+        rowActionsRef.current.speakText?.(message, text, source),
       react: (message, reaction) => rowActionsRef.current.react(message, reaction),
       favorite: (message) => rowActionsRef.current.favorite?.(message),
       favoriteTranslation: (message, translatedText) =>

@@ -903,6 +903,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
           segmentIndex: playback.segmentIndex ?? 0,
           segmentTotal: playback.segmentTotal,
           text: playback.caption,
+          ...(playback.source ? { source: playback.source } : {}),
         }
       : null);
 

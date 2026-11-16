@@ -197,7 +197,7 @@ export function useSpeakText({
   const { t } = useI18n();
   const showCouldNotSpeak = useCouldNotSpeakAlert();
   return useCallback(
-    (message: MobileMessage, text: string) => {
+    (message: MobileMessage, text: string, source?: "translation") => {
       if (getCallSnapshot()) return;
       if (stopOverlayChainForMessage(message.id)) return;
       const playback = getVoicePlaybackState();
@@ -213,6 +213,7 @@ export function useSpeakText({
             text,
             botId: speakerBotId,
             messageId: message.id,
+            ...(source ? { source } : {}),
             speaker: {
               name: memberName(members, speakerBotId) ?? displayName,
               color: speakerColorFor(mentionBots, members, speakerBotId),
@@ -242,7 +243,11 @@ function useCouldNotSpeakAlert() {
 }
 
 /** One read-aloud item, always tied to its message, so either engine can play it. */
-type SpeakItem = SpeechQueueItem & { messageId: string };
+type SpeakItem = SpeechQueueItem & {
+  messageId: string;
+  /** Which part of the message is sounding: the message, or its translation panel. */
+  source?: "translation";
+};
 
 /**
  * Plays read-aloud items on the on-device chain or the single playback. Each

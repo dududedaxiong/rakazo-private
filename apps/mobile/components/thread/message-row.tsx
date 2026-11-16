@@ -96,7 +96,7 @@ export type MessageRowActions = {
   enterSelection: (message: MobileMessage) => void;
   speak: (message: MobileMessage) => void;
   /** Reads given text, such as a translation, aloud. Absent where unsupported. */
-  speakText?: (message: MobileMessage, text: string) => void;
+  speakText?: (message: MobileMessage, text: string, source?: "translation") => void;
   react: (message: MobileMessage, reaction: MessageReaction) => Promise<boolean>;
   /** Toggles this bot reply in the thread's favorites. Absent where unsupported. */
   favorite?: (message: MobileMessage) => void;
@@ -714,6 +714,27 @@ export const MessageRow = memo(function MessageRow({
       />
     </ThreadReadOnlyContext.Provider>
   );
+  // Read-aloud progress reads under what is sounding: the message itself,
+  // or the translation panel when the translation is being read.
+  const readAloudProgress =
+    speaking && speechProgress ? (
+      <View style={{ marginTop: 4, gap: 2 }}>
+        <Text
+          numberOfLines={2}
+          style={{ color: tokens.mutedForeground, fontSize: 13, lineHeight: 18 }}
+        >
+          {speechProgress.text}
+        </Text>
+        <Text style={{ color: tokens.mutedForeground, fontSize: 12 }}>
+          {t("Segment {index} of {total}", {
+            index: speechProgress.segmentIndex + 1,
+            total: speechProgress.segmentTotal,
+          })}
+        </Text>
+      </View>
+    ) : null;
+  const translationProgress = speechProgress?.source === "translation" ? readAloudProgress : null;
+  const messageProgress = speechProgress?.source === "translation" ? null : readAloudProgress;
   return (
     <View
       key={message.id}
@@ -817,22 +838,7 @@ export const MessageRow = memo(function MessageRow({
               }
             />
           ) : null}
-          {speaking && speechProgress ? (
-            <View style={{ marginTop: 4, gap: 2 }}>
-              <Text
-                numberOfLines={2}
-                style={{ color: tokens.mutedForeground, fontSize: 13, lineHeight: 18 }}
-              >
-                {speechProgress.text}
-              </Text>
-              <Text style={{ color: tokens.mutedForeground, fontSize: 12 }}>
-                {t("Segment {index} of {total}", {
-                  index: speechProgress.segmentIndex + 1,
-                  total: speechProgress.segmentTotal,
-                })}
-              </Text>
-            </View>
-          ) : null}
+          {messageProgress}
           {message.role === "bot" &&
           !selecting &&
           !message.id.startsWith("progress:") &&
@@ -868,7 +874,7 @@ export const MessageRow = memo(function MessageRow({
               speaking={speaking}
               onSpeakText={
                 !onCall && actions.speakText
-                  ? (text) => actions.speakText!(message, text)
+                  ? (text) => actions.speakText!(message, text, "translation")
                   : undefined
               }
               favorited={translationFavorited}
@@ -898,6 +904,7 @@ export const MessageRow = memo(function MessageRow({
               }
             />
           ) : null}
+          {translationProgress}
           {displayedReactions.size > 0 ? (
             <View
               style={{

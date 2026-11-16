@@ -15,6 +15,8 @@ export interface OverlaySpeechItem {
   segmentIndex?: number;
   /** How many utterances its message splits into. */
   segmentTotal?: number;
+  /** Which part of the message is sounding: the message, or its translation panel. */
+  source?: "translation";
 }
 
 /** The utterance sounding now, for read-aloud progress under its message. */
@@ -23,6 +25,8 @@ export interface OverlaySpeechProgress {
   segmentIndex: number;
   segmentTotal: number;
   text: string;
+  /** Which part of the message is sounding: the message, or its translation panel. */
+  source?: "translation";
 }
 
 interface OverlayChain {
@@ -59,6 +63,7 @@ function rebuildCaches() {
           segmentIndex: item.segmentIndex ?? 0,
           segmentTotal: item.segmentTotal,
           text: item.text,
+          ...(item.source ? { source: item.source } : {}),
         }
       : null;
 }

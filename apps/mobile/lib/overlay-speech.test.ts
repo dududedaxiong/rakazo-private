@@ -155,6 +155,43 @@ describe("speakOverlayChain", () => {
     expect(getOverlaySpeechProgress()).toBeNull();
   });
 
+  it("carries the translation source on the progress, so the row can show it under the panel", async () => {
+    const first = {
+      text: "one",
+      messageId: "m1",
+      segmentIndex: 0,
+      segmentTotal: 2,
+      source: "translation" as const,
+    };
+    const second = {
+      text: "two",
+      messageId: "m1",
+      segmentIndex: 1,
+      segmentTotal: 2,
+      source: "translation" as const,
+    };
+    const done = speakOverlayChain([first, second]);
+    expect(getOverlaySpeechProgress()).toEqual({
+      messageId: "m1",
+      segmentIndex: 0,
+      segmentTotal: 2,
+      text: "one",
+      source: "translation",
+    });
+    mocks.speakCalls[0]!.resolve(true);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(getOverlaySpeechProgress()).toEqual({
+      messageId: "m1",
+      segmentIndex: 1,
+      segmentTotal: 2,
+      text: "two",
+      source: "translation",
+    });
+    mocks.speakCalls[1]!.resolve(true);
+    await expect(done).resolves.toBe(true);
+    expect(getOverlaySpeechProgress()).toBeNull();
+  });
+
   it("plays two chains at once without either stopping the other", async () => {
     const first = speakOverlayChain([item("a1", "aaa")]);
     const second = speakOverlayChain([item("b1", "bbb")]);

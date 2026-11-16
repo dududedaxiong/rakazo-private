@@ -54,6 +54,8 @@ type SpeechOptions = {
   segmentIndex?: number;
   /** How many utterances its message splits into. */
   segmentTotal?: number;
+  /** Which part of the message is sounding: the message, or its translation panel. */
+  source?: "translation";
   speaker?: PlaybackSpeaker;
   /** Tags this speech for its starter, so stopSpeaking(owner) cuts only this playback. */
   owner?: SpeechOwner;
@@ -76,6 +78,8 @@ export type VoicePlaybackState = {
   segmentTotal?: number;
   /** The utterance sounding now, for read-aloud progress. */
   caption?: string;
+  /** Which part of the message is sounding: the message, or its translation panel. */
+  source?: "translation";
   /** False when the active engine (Android on-device voice) can only stop, not pause. */
   canPause: boolean;
   speaker?: PlaybackSpeaker;
@@ -371,7 +375,12 @@ let resolvedReadAloud: VoiceSourceId = "auto";
 /** The read-aloud progress fields, only for a multi-utterance read. */
 function speechProgressFields(opts: SpeechOptions, text: string) {
   return opts.segmentTotal !== undefined && opts.segmentTotal > 1
-    ? { segmentIndex: opts.segmentIndex ?? 0, segmentTotal: opts.segmentTotal, caption: text }
+    ? {
+        segmentIndex: opts.segmentIndex ?? 0,
+        segmentTotal: opts.segmentTotal,
+        caption: text,
+        ...(opts.source ? { source: opts.source } : {}),
+      }
     : {};
 }
 
