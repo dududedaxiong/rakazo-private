@@ -134,11 +134,16 @@ export function createTranslator(deps: {
                 outcome: "succeeded",
               }),
             );
+            // The timeline always rides along, even for a single model: its
+            // provider is the connection's display name, which is what the
+            // clients show on the translation bar and use to locate the
+            // model in the list. Without it they fall back to the provider
+            // id, which every connection here shares.
             return {
               ...result,
               modelId: entry.model,
               usedFallback: index > 0,
-              ...(attempts.length > 1 ? { attempts } : {}),
+              attempts,
             };
           }
           lastError = new Error("Translation produced no text");

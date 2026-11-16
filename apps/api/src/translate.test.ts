@@ -54,7 +54,11 @@ function harness(options: {
     },
   );
   const prisma = { bot: { findFirst } };
-  const resolveConnectedModel = vi.fn(async () => ({ provider: "test-provider", id: "model-1" }));
+  const resolveConnectedModel = vi.fn(async () => ({
+    provider: "test-provider",
+    id: "model-1",
+    connectionLabel: "Test Connection",
+  }));
   const run = vi.fn();
   for (const next of options.runs) run.mockImplementationOnce(next);
   const runtime = { run };
@@ -88,7 +92,7 @@ describe("createTranslator", () => {
     const { translator, resolveConnectedModel } = harness({
       runs: [doneRun('{"detected": "en", "text": "你好"}')],
     });
-    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).resolves.toEqual({
+    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).resolves.toMatchObject({
       translatedText: "你好",
       detectedLanguage: "en",
       modelId: "model-1",
@@ -101,25 +105,26 @@ describe("createTranslator", () => {
     );
   });
 
-  it("carries no attempts when the first model answers", async () => {
+  it("carries its one attempt, with the connection label, when the first model answers", async () => {
     const { translator } = harness({
       runs: [doneRun('{"detected": "en", "text": "你好"}')],
     });
     const result = await translator(actor, "bot-1", "hello", "auto", "zh");
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       translatedText: "你好",
       detectedLanguage: "en",
       modelId: "model-1",
       usedFallback: false,
+      attempts: [{ model: "model-1", provider: "Test Connection", outcome: "succeeded" }],
     });
-    expect("attempts" in result).toBe(false);
+    expect(result.attempts).toHaveLength(1);
   });
 
   it("strips a fenced JSON reply", async () => {
     const { translator } = harness({
       runs: [doneRun('```json\n{"detected": "ja", "text": "你好"}\n```')],
     });
-    await expect(translator(actor, "bot-1", "こんにちは", "auto", "zh")).resolves.toEqual({
+    await expect(translator(actor, "bot-1", "こんにちは", "auto", "zh")).resolves.toMatchObject({
       translatedText: "你好",
       detectedLanguage: "ja",
       modelId: "model-1",
@@ -143,7 +148,7 @@ describe("createTranslator", () => {
     });
     await expect(
       translator(actor, "bot-1", "我查一下 Hark AI 的最新情况", "auto", "ko"),
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       translatedText: "최신 상황",
       detectedLanguage: "zh",
       modelId: "model-1",
@@ -167,7 +172,7 @@ describe("createTranslator", () => {
     const { translator, run } = harness({
       runs: [doneRun(""), doneRun('{"detected": "en", "text": "你好"}')],
     });
-    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).resolves.toEqual({
+    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).resolves.toMatchObject({
       translatedText: "你好",
       detectedLanguage: "en",
       modelId: "model-1",
@@ -279,7 +284,7 @@ describe("createTranslator", () => {
       bot: { translationModelProvider: "test-provider", translationModelId: "model-1" },
       runs: [doneRun('{"detected": "en", "text": "你好"}')],
     });
-    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).resolves.toEqual({
+    await expect(translator(actor, "bot-1", "hello", "auto", "zh")).resolves.toMatchObject({
       translatedText: "你好",
       detectedLanguage: "en",
       modelId: "model-1",
