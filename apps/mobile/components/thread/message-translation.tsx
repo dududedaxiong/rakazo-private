@@ -97,6 +97,8 @@ export function useMessageTranslation({
   settings,
   autoTranslate,
   composing,
+  messageId,
+  savedTranslation,
 }: {
   botId: string | undefined;
   text: string;
@@ -104,18 +106,26 @@ export function useMessageTranslation({
   autoTranslate: boolean;
   /** True while this reply is still streaming in. */
   composing: boolean;
+  /** The message being translated; the server keeps the result on it. */
+  messageId?: string;
+  /** A translation kept on this message; shown instead of translating again. */
+  savedTranslation?: BotTranslationResult | null;
 }): MessageTranslation {
   const { t } = useI18n();
-  const [status, setStatus] = useState<MessageTranslationStatus>("idle");
-  const [result, setResult] = useState<BotTranslationResult | null>(null);
+  // A kept translation opens already done and expanded, so a reloaded
+  // thread shows it instead of asking for a fresh one.
+  const [status, setStatus] = useState<MessageTranslationStatus>(
+    savedTranslation ? "done" : "idle",
+  );
+  const [result, setResult] = useState<BotTranslationResult | null>(savedTranslation ?? null);
   const [error, setError] = useState<string | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(Boolean(savedTranslation));
   const collapsedRef = useRef(false);
   const statusRef = useRef(status);
   statusRef.current = status;
   const composingRef = useRef(composing);
-  const argsRef = useRef({ botId, text, settings });
-  argsRef.current = { botId, text, settings };
+  const argsRef = useRef({ botId, text, settings, messageId });
+  argsRef.current = { botId, text, settings, messageId };
   const runRef = useRef(0);
   /**
    * A just-switched language pair, kept until the bot snapshot catches up:
@@ -128,7 +138,12 @@ export function useMessageTranslation({
 
   const translate = useCallback(
     (override?: TranslationLanguageSwitch) => {
-      const { botId: currentBotId, text: currentText, settings: currentSettings } = argsRef.current;
+      const {
+        botId: currentBotId,
+        text: currentText,
+        settings: currentSettings,
+        messageId: currentMessageId,
+      } = argsRef.current;
       if (!currentBotId || !currentText.trim()) return;
       collapsedRef.current = false;
       setExpanded(true);
@@ -151,7 +166,7 @@ export function useMessageTranslation({
       const runId = ++runRef.current;
       setStatus("loading");
       setError(null);
-      void translateBotMessage(currentBotId, currentText, effective)
+      void translateBotMessage(currentBotId, currentText, effective, null, currentMessageId)
         .then((next) => {
           if (runRef.current !== runId) return;
           setResult(next);

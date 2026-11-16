@@ -78,6 +78,7 @@ model User {
   botSections                 BotSection[]
   promptTemplates             PromptTemplate[]
   messageFavorites            MessageFavorite[]
+  messageTranslations         MessageTranslation[]
   botPackagePreviews          BotPackagePreview[]
   botPackageImports           BotPackageImport[]
   actionApprovalRules         ActionApprovalRule[]
@@ -168,6 +169,40 @@ model MessageFavorite {
   @@unique([userId, spaceId, botId, messageId])
   @@index([userId, spaceId, botId, createdAt])
   @@map("message_favorites")
+}
+
+/// A translation of one bot message, kept so it survives a reload. One row
+/// per message and target language; re-translating replaces it. The message
+/// itself is referenced by id only, like a favorite, so no message row is
+/// needed to keep the translation.
+model MessageTranslation {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spaceId   String
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  botId     String
+  bot       Bot      @relation(fields: [botId], references: [id], onDelete: Cascade)
+  /// The translated message's id.
+  messageId String
+  /// The language the message was translated into.
+  targetLanguage String
+  /// The language the translator detected in the source text.
+  sourceLanguage String
+  /// The translated text, as returned.
+  translatedText String
+  /// The model that produced it (the API id, e.g. deepseek-flash).
+  modelId   String
+  /// True when a fallback model produced it, not the primary.
+  usedFallback Boolean @default(false)
+  /// Every model tried, in order; only present when more than the first was needed.
+  attempts  Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, spaceId, messageId, targetLanguage])
+  @@index([userId, spaceId, messageId])
+  @@map("message_translations")
 }
 
 /// An admin-issued registration code. A code stays usable until it expires, is revoked, or
@@ -740,6 +775,7 @@ model Space {
   chatGroups                  ChatGroup[]
   botSecrets                  BotSecret[]
   messageFavorites            MessageFavorite[]
+  messageTranslations         MessageTranslation[]
   vaultCredentials            VaultCredential[]
   externalConversations       ExternalConversation[]
   agentSecrets                AgentSecret[]
@@ -1151,6 +1187,7 @@ model Bot {
   messagingInstallations MessagingInstallation[]
   messagingInstallSessions MessagingInstallSession[]
   messageFavorites  MessageFavorite[]
+  messageTranslations MessageTranslation[]
 }
 
 model BotPackagePreview {

@@ -168,4 +168,37 @@ describe("translateBotMessage", () => {
     );
     expect(mocks.deviceLanguage).not.toHaveBeenCalled();
   });
+
+  it("passes the message id so the server can keep the translation on it", async () => {
+    mocks.rpc.mockResolvedValue({
+      translatedText: "你好",
+      sourceLanguage: "en",
+      targetLanguage: "zh",
+      modelId: "gpt-5",
+    });
+    await translateBotMessage(
+      "bot-1",
+      "Hello",
+      {
+        ...DEFAULT_BOT_TRANSLATION_SETTINGS,
+        modelProvider: "openai",
+        modelId: "gpt-5",
+        sourceLanguage: "en",
+        targetLanguage: "zh",
+      },
+      null,
+      "msg-1",
+    );
+    expect(mocks.rpc).toHaveBeenCalledWith(
+      "bots/translate",
+      {
+        botId: "bot-1",
+        text: "Hello",
+        sourceLanguage: "en",
+        targetLanguage: "zh",
+        messageId: "msg-1",
+      },
+      { timeoutMs: 60_000 },
+    );
+  });
 });

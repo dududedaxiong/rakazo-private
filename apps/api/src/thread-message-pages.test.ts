@@ -105,6 +105,74 @@ describe("thread message pages", () => {
     expect(byId.get("plain")).not.toHaveProperty("modelSwitches");
   });
 
+  it("attaches a kept translation to its message, only for the viewing user", async () => {
+    const row = (id: string) => ({
+      id,
+      threadId: "thread-1",
+      seq: 1,
+      role: "assistant",
+      blocks: [{ kind: "text", text: id }],
+      botId: "bot-1",
+      authorUserId: null,
+      replyToMessageId: null,
+      replyQuote: null,
+      replyTo: null,
+      runId: "run-1",
+      modelSwitches: null,
+      createdAt: new Date("2026-11-15T12:00:00.000Z"),
+    });
+    const kept = {
+      messageId: "translated",
+      translatedText: "你好",
+      sourceLanguage: "en",
+      targetLanguage: "zh",
+      modelId: "model-a",
+      usedFallback: false,
+      attempts: null,
+      updatedAt: new Date("2026-11-15T12:00:00.000Z"),
+    };
+    const findTranslations = vi.fn(async () => [kept]);
+    const prisma = {
+      message: { findMany: vi.fn(async () => [row("translated"), row("plain")]) },
+      messageTranslation: { findMany: findTranslations },
+      user: { findMany: vi.fn(async () => []) },
+      run: { findMany: vi.fn(async () => []) },
+    } as unknown as PrismaClient;
+
+    const page = await loadMessagePage(
+      prisma,
+      "thread-1",
+      undefined,
+      2,
+      undefined,
+      false,
+      false,
+      "user-a",
+    );
+    const byId = new Map(page.messages.map((message) => [message.id, message]));
+    expect(findTranslations).toHaveBeenCalledWith({
+      where: {
+        userId: "user-a",
+        messageId: { in: expect.arrayContaining(["translated", "plain"]) },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+    expect(byId.get("translated")?.translation).toEqual({
+      translatedText: "你好",
+      sourceLanguage: "en",
+      targetLanguage: "zh",
+      modelId: "model-a",
+      usedFallback: false,
+    });
+    expect(byId.get("plain")).not.toHaveProperty("translation");
+
+    // Without a viewer the page carries no translations at all.
+    findTranslations.mockClear();
+    const anonymous = await loadMessagePage(prisma, "thread-1", undefined, 2);
+    expect(findTranslations).not.toHaveBeenCalled();
+    expect(anonymous.messages.every((message) => !("translation" in message))).toBe(true);
+  });
+
   it("caches peer-run classification for live events", async () => {
     const findUnique = vi.fn(async () => ({ trigger: "bot_message" }));
     const prisma = { run: { findUnique } } as unknown as PrismaClient;

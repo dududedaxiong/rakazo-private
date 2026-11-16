@@ -1,5 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotModelEntry, ModelSwitchAttempt, TranslateOutput } from "@rakazo/contracts";
+import type {
+  BotModelEntry,
+  ModelSwitchAttempt,
+  SavedMessageTranslation,
+  TranslateOutput,
+} from "@rakazo/contracts";
 import { moveBotModelToFront } from "@rakazo/contracts";
 import { displayName, modelOptionKey, stripLeadingOpaqueCodeLine } from "@rakazo/core";
 import {
@@ -126,6 +131,7 @@ export function useMessageTranslation({
   text,
   botId,
   settings,
+  savedTranslation,
   translationModels,
   availableModels,
   rpc,
@@ -140,6 +146,8 @@ export function useMessageTranslation({
   text: string;
   botId: string | undefined;
   settings: BotTranslationSettings | undefined;
+  /** A translation kept on this message; shown instead of translating again. */
+  savedTranslation?: SavedMessageTranslation | null;
   /** The bot's ordered translation models; the first is primary, rest are fallbacks. */
   translationModels?: readonly BotModelEntry[] | null;
   /** Every connected model; the menu lists these after the bot's configured ones. */
@@ -159,7 +167,11 @@ export function useMessageTranslation({
   onLocateModel?: (target: ModelLocateTarget) => void;
 }): { actions: ReactNode; panel: ReactNode } {
   const { t } = useLingui();
-  const [state, setState] = useState<TranslationState>({ status: "idle" });
+  // A kept translation opens already done, so a reloaded thread shows it
+  // instead of asking for a fresh one.
+  const [state, setState] = useState<TranslationState>(
+    savedTranslation ? { status: "done", result: savedTranslation } : { status: "idle" },
+  );
   const [collapsed, setCollapsed] = useState(false);
   const attemptedAutoRef = useRef(false);
   const [copied, copy, copyFailed, resetCopy, copyFailedText] = useCopyText();
@@ -186,7 +198,7 @@ export function useMessageTranslation({
   });
 
   useEffect(() => {
-    setState({ status: "idle" });
+    setState(savedTranslation ? { status: "done", result: savedTranslation } : { status: "idle" });
     setCollapsed(false);
     attemptedAutoRef.current = false;
   }, [messageId]);
@@ -224,6 +236,8 @@ export function useMessageTranslation({
             override?.targetLanguage !== undefined
               ? (override.targetLanguage ?? DEFAULT_TRANSLATION_TARGET_LANGUAGE)
               : resolveTranslationTargetLanguage(settings),
+          // The server keeps the result on this message, so it survives a reload.
+          messageId,
         });
         if (!result.usedFallback) {
           recordModelStatus(
@@ -316,10 +330,12 @@ export function useMessageTranslation({
 
   useEffect(() => {
     if (!isLastMessage || !settings?.autoTranslate || attemptedAutoRef.current) return;
+    // A kept translation already answers this message; do not re-translate it.
+    if (state.status === "done") return;
     if (!botId || !text.trim() || !hasTranslationModel(settings)) return;
     attemptedAutoRef.current = true;
     void translate();
-  }, [botId, isLastMessage, settings, text, translate]);
+  }, [botId, isLastMessage, settings, state.status, text, translate]);
 
   const expanded = state.status !== "idle" && !collapsed;
   // The menu lists every connected model, configured ones first, so a bot with

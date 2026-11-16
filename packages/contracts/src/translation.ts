@@ -55,6 +55,12 @@ export const TranslateInputSchema = z.object({
   text: z.string().min(1).max(8000),
   sourceLanguage: TranslationSourceLanguageSchema,
   targetLanguage: TranslationTargetLanguageSchema,
+  /**
+   * The message being translated. When present the server keeps the result
+   * on the message, so it survives a reload instead of living only in the
+   * panel that asked for it.
+   */
+  messageId: Id.optional(),
 });
 export type TranslateInput = z.infer<typeof TranslateInputSchema>;
 
@@ -69,6 +75,21 @@ export const TranslateOutputSchema = z.object({
   attempts: z.array(ModelSwitchAttemptSchema).optional(),
 });
 export type TranslateOutput = z.infer<typeof TranslateOutputSchema>;
+
+/**
+ * A translation kept on a message: the same shape as a translate result,
+ * without the request echo. The history loader attaches it, so a reloaded
+ * thread shows the translation it already has.
+ */
+export const SavedMessageTranslationSchema = z.object({
+  translatedText: z.string(),
+  sourceLanguage: z.string(),
+  targetLanguage: z.string(),
+  modelId: z.string(),
+  usedFallback: z.boolean(),
+  attempts: z.array(ModelSwitchAttemptSchema).optional(),
+});
+export type SavedMessageTranslation = z.infer<typeof SavedMessageTranslationSchema>;
 
 /**
  * Resolve a target language code to a concrete language. A concrete code

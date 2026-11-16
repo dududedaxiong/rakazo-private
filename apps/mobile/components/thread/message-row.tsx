@@ -594,6 +594,8 @@ export const MessageRow = memo(function MessageRow({
     settings: translationSettings,
     autoTranslate: translationSettings.autoTranslate,
     composing: liveMessageComposing(message.blocks),
+    messageId: message.id,
+    savedTranslation: message.translation ?? null,
   });
   // A finished translation that is only folded away reopens instead of
   // spending another translation call; anything else translates as before.

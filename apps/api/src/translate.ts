@@ -278,3 +278,66 @@ function parseTranslationResult(
       : sourceLanguage;
   return { text, detected };
 }
+
+/**
+ * Keeps a translation on its message, so it survives a reload. Only the
+ * message's own bot may keep one on it, and the row belongs to the user who
+ * asked, so a shared thread never shows another member's kept translation.
+ * Best-effort: a failed save never fails the translate itself.
+ */
+export async function keepMessageTranslation(deps: {
+  prisma: PrismaClient;
+  actor: Actor;
+  botId: string;
+  messageId: string;
+  targetLanguage: string;
+  result: {
+    translatedText: string;
+    detectedLanguage: string;
+    modelId: string;
+    usedFallback: boolean;
+    attempts?: ModelSwitchAttempt[];
+  };
+}): Promise<void> {
+  try {
+    const message = await deps.prisma.message.findFirst({
+      where: { id: deps.messageId, botId: deps.botId },
+      select: { id: true },
+    });
+    if (!message) return;
+    await deps.prisma.messageTranslation.upsert({
+      where: {
+        userId_spaceId_messageId_targetLanguage: {
+          userId: deps.actor.userId,
+          spaceId: deps.actor.spaceId,
+          messageId: deps.messageId,
+          targetLanguage: deps.targetLanguage,
+        },
+      },
+      create: {
+        userId: deps.actor.userId,
+        spaceId: deps.actor.spaceId,
+        botId: deps.botId,
+        messageId: deps.messageId,
+        targetLanguage: deps.targetLanguage,
+        sourceLanguage: deps.result.detectedLanguage,
+        translatedText: deps.result.translatedText,
+        modelId: deps.result.modelId,
+        usedFallback: deps.result.usedFallback,
+        ...(deps.result.attempts ? { attempts: deps.result.attempts } : {}),
+      },
+      update: {
+        sourceLanguage: deps.result.detectedLanguage,
+        translatedText: deps.result.translatedText,
+        modelId: deps.result.modelId,
+        usedFallback: deps.result.usedFallback,
+        ...(deps.result.attempts ? { attempts: deps.result.attempts } : {}),
+      },
+    });
+  } catch (error) {
+    getLogger().warn("kept translation did not save", {
+      messageId: deps.messageId,
+      reason: error instanceof Error ? error.message : String(error),
+    });
+  }
+}

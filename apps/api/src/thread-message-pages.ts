@@ -1,10 +1,15 @@
 import type {
   MessageAuthor,
   MessageBlock,
+  SavedMessageTranslation,
   ThreadMessage,
   ThreadMessagePage,
 } from "@rakazo/contracts";
-import { MessageBlock as MessageBlockSchema, ModelSwitchesSchema } from "@rakazo/contracts";
+import {
+  MessageBlock as MessageBlockSchema,
+  ModelSwitchAttemptSchema,
+  ModelSwitchesSchema,
+} from "@rakazo/contracts";
 import {
   BACKGROUND_RUN_TRIGGERS,
   callIdFromClientNonce,
@@ -34,6 +39,8 @@ export async function loadMessagePage(
   around?: { messageId?: string; seq?: number },
   includePeerRuns = false,
   includePeerReceipts = false,
+  /** The viewing user's id; their kept translations ride on the page. */
+  translationsUserId?: string,
 ): Promise<ThreadMessagePage> {
   if (around) {
     let targetSeq = around.seq;
@@ -66,7 +73,7 @@ export async function loadMessagePage(
       const messages = includePeerRuns ? rows : await withoutPeerRunMessages(prisma, rows);
       return {
         threadId,
-        messages: await toThreadMessages(prisma, messages),
+        messages: await toThreadMessages(prisma, messages, translationsUserId),
         olderCursor: hasOlder ? (first?.seq ?? null) : null,
         coveredThroughSeq,
       };
@@ -95,7 +102,7 @@ export async function loadMessagePage(
     if (hasSubstantive || includePeerReceipts || !hasOlder || includePeerRuns) {
       return {
         threadId,
-        messages: await toThreadMessages(prisma, visibleRows),
+        messages: await toThreadMessages(prisma, visibleRows, translationsUserId),
         olderCursor: hasOlder ? (pageRows[0]?.seq ?? null) : null,
       };
     }
@@ -284,15 +291,64 @@ type MessageRow = {
   createdAt: Date;
 };
 
-async function toThreadMessages(prisma: MessageDb, rows: MessageRow[]): Promise<ThreadMessage[]> {
+async function toThreadMessages(
+  prisma: MessageDb,
+  rows: MessageRow[],
+  translationsUserId?: string,
+): Promise<ThreadMessage[]> {
   const authors = await loadMessageAuthors(
     prisma,
     rows.flatMap((row) => [row.authorUserId, row.replyTo?.authorUserId]),
   );
-  return rows.map((row) => toThreadMessage(row, authors));
+  const translations = translationsUserId
+    ? await loadKeptTranslations(
+        prisma,
+        translationsUserId,
+        rows.map((row) => row.id),
+      )
+    : new Map<string, SavedMessageTranslation>();
+  return rows.map((row) => toThreadMessage(row, authors, translations.get(row.id)));
 }
 
-function toThreadMessage(row: MessageRow, authors: Map<string, MessageAuthor>): ThreadMessage {
+/**
+ * The viewing user's kept translations for these messages, latest first per
+ * message. A translation is theirs alone: the query is scoped to their id,
+ * so a shared thread never shows another member's kept translation.
+ */
+async function loadKeptTranslations(
+  prisma: MessageDb,
+  userId: string,
+  messageIds: string[],
+): Promise<Map<string, SavedMessageTranslation>> {
+  const byMessage = new Map<string, SavedMessageTranslation>();
+  if (messageIds.length === 0) return byMessage;
+  const kept = await prisma.messageTranslation.findMany({
+    where: { userId, messageId: { in: messageIds } },
+    orderBy: { updatedAt: "desc" },
+  });
+  for (const row of kept) {
+    if (byMessage.has(row.messageId)) continue;
+    // A malformed attempts list never breaks the page: the translation reads without one.
+    const attempts = row.attempts
+      ? ModelSwitchAttemptSchema.array().safeParse(row.attempts).data
+      : undefined;
+    byMessage.set(row.messageId, {
+      translatedText: row.translatedText,
+      sourceLanguage: row.sourceLanguage,
+      targetLanguage: row.targetLanguage,
+      modelId: row.modelId,
+      usedFallback: row.usedFallback,
+      ...(attempts ? { attempts } : {}),
+    });
+  }
+  return byMessage;
+}
+
+function toThreadMessage(
+  row: MessageRow,
+  authors: Map<string, MessageAuthor>,
+  translation?: SavedMessageTranslation,
+): ThreadMessage {
   const parent = row.replyTo?.threadId === row.threadId ? row.replyTo : null;
   const parsed = parent ? MessageBlockSchema.array().safeParse(parent.blocks) : undefined;
   const replyPreview =
@@ -318,6 +374,7 @@ function toThreadMessage(row: MessageRow, authors: Map<string, MessageAuthor>): 
     botId: row.botId ?? undefined,
     ...(author ? { author } : {}),
     ...(modelSwitches ? { modelSwitches } : {}),
+    ...(translation ? { translation } : {}),
     replyToMessageId: row.replyToMessageId ?? undefined,
     replyQuote: row.replyQuote ?? undefined,
     replyPreview,

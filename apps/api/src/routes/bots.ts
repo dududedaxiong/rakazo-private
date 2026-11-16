@@ -72,7 +72,7 @@ import { mayUsePrivateEndpoint } from "../mcp-servers.js";
 import { managedAppCatalog } from "../onboarding.js";
 import type { RouterDeps } from "../router.js";
 import { loadMessagePage } from "../thread-message-pages.js";
-import { TranslationModelNotConfiguredError } from "../translate.js";
+import { keepMessageTranslation, TranslationModelNotConfiguredError } from "../translate.js";
 import type { RouterContext } from "./context.js";
 import { computerContext, modelSetup, THREAD_MESSAGE_PAGE_SIZE } from "./shared.js";
 
@@ -707,6 +707,16 @@ export function botsRoutes(ctx: RouterContext) {
             targetLanguage,
             context.signal,
           );
+          if (input.messageId) {
+            await keepMessageTranslation({
+              prisma: deps.prisma,
+              actor: context.actor,
+              botId: input.botId,
+              messageId: input.messageId,
+              targetLanguage,
+              result,
+            });
+          }
           return {
             translatedText: result.translatedText,
             sourceLanguage: result.detectedLanguage,
@@ -1014,6 +1024,10 @@ export function botsRoutes(ctx: RouterContext) {
               group.thread!.id,
               undefined,
               THREAD_MESSAGE_PAGE_SIZE,
+              undefined,
+              undefined,
+              undefined,
+              context.actor.userId,
             )
           ).messages,
         };

@@ -327,6 +327,7 @@ export const MessageView = memo(function MessageView({
     text: translatableText,
     botId: message.botId,
     settings: translationSettings,
+    savedTranslation: message.translation,
     translationModels:
       message.role === "bot" && message.botId
         ? peerBot(message.botId)?.translationModels

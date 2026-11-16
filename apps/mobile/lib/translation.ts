@@ -161,6 +161,12 @@ export async function translateBotMessage(
   text: string,
   settings: BotTranslationSettings,
   deviceTag?: string | null,
+  /**
+   * The message being translated. When present the server keeps the result
+   * on the message, so it survives a reload instead of living only in the
+   * panel that asked for it.
+   */
+  messageId?: string | null,
 ): Promise<BotTranslationResult> {
   const targetLanguage = resolveTargetLanguage(
     settings.targetLanguage,
@@ -173,6 +179,7 @@ export async function translateBotMessage(
       text,
       sourceLanguage: settings.sourceLanguage,
       targetLanguage,
+      ...(messageId ? { messageId } : {}),
     },
     { timeoutMs: TRANSLATE_RPC_TIMEOUT_MS },
   );

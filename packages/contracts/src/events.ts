@@ -6,6 +6,7 @@ import { McpTransportSchema } from "./mcp.js";
 import { McpAppCspSchema } from "./mcp-app.js";
 import { ModelSwitchesSchema } from "./model-switches.js";
 import { PAGE_TITLE_MAX_LENGTH } from "./pages.js";
+import { SavedMessageTranslationSchema } from "./translation.js";
 
 export const ProductEventType = z.enum([
   "thread.message.created",
@@ -509,6 +510,8 @@ export const ThreadMessageSchema = z.object({
   runId: Id.optional(),
   /** The model-switch timeline; only present when a switch happened. */
   modelSwitches: ModelSwitchesSchema.optional(),
+  /** A translation kept on this message; only present when one was saved. */
+  translation: SavedMessageTranslationSchema.optional(),
   /** Set when the message was sent from a live voice call; groups one call's transcript. */
   callId: z.string().optional(),
   createdAt: z.string(),

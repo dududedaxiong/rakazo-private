@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { UpdateBotInput } from "./domain.js";
 import {
   resolveTargetLanguage,
+  SavedMessageTranslationSchema,
   TRANSLATION_SOURCE_LANGUAGE_LABELS,
   TRANSLATION_TARGET_LANGUAGE_LABELS,
   TranslateInputSchema,
@@ -48,6 +49,36 @@ describe("TranslateInputSchema", () => {
         targetLanguage: "zh",
       }),
     ).toEqual({ botId: BOT_ID, text: "hello", sourceLanguage: "auto", targetLanguage: "zh" });
+  });
+
+  it("accepts the message id that keeps the result on the message", () => {
+    expect(
+      TranslateInputSchema.parse({
+        botId: BOT_ID,
+        text: "hello",
+        sourceLanguage: "auto",
+        targetLanguage: "zh",
+        messageId: "msg-1",
+      }),
+    ).toEqual({
+      botId: BOT_ID,
+      text: "hello",
+      sourceLanguage: "auto",
+      targetLanguage: "zh",
+      messageId: "msg-1",
+    });
+  });
+
+  it("parses a kept translation like a translation result", () => {
+    const kept = {
+      translatedText: "你好",
+      sourceLanguage: "en",
+      targetLanguage: "zh",
+      modelId: "model-1",
+      usedFallback: true,
+    };
+    expect(SavedMessageTranslationSchema.parse(kept)).toEqual(kept);
+    expect(TranslateOutputSchema.parse(kept)).toEqual(kept);
   });
 
   it("rejects empty or oversized text", () => {

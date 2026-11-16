@@ -182,6 +182,7 @@ export function threadsRoutes(ctx: RouterContext) {
           input.around,
           input.includePeerRuns,
           input.includePeerReceipts,
+          context.actor.userId,
         );
       }),
       subscribe: authed.threads.subscribe.handler(async function* ({ context, input }) {
