@@ -23,6 +23,7 @@ import { ChevronDown, ChevronUp, Download, Pencil, Settings, X } from "lucide-re
 import type { ReactNode, RefObject } from "react";
 import { useState } from "react";
 import { thinkingLevelLabel } from "../../lib/model-catalog";
+import type { ModelLocateKind } from "../../lib/model-locate";
 import type { TranslationSourceLanguage, TranslationTargetLanguage } from "../../lib/translation";
 import {
   TRANSLATION_SOURCE_LANGUAGES,
@@ -140,6 +141,7 @@ export function ModelSection({
   choices,
   value,
   locatedKey,
+  locateKind,
   onModelChange,
   thinkingOptions,
   thinkingLevel,
@@ -153,6 +155,8 @@ export function ModelSection({
   value: string;
   /** The model-option key a timeline name pointed at; that row is tagged. */
   locatedKey?: string | null;
+  /** Which list a timeline name pointed at; its picker opens on the located row. */
+  locateKind?: ModelLocateKind | null;
   onModelChange: (key: string) => void;
   thinkingOptions: ThinkingLevel[];
   thinkingLevel: string;
@@ -160,7 +164,9 @@ export function ModelSection({
   onThinkingLevelChange: (level: string) => void;
 }) {
   const { t } = useLingui();
-  const located = locatedKey !== null && locatedKey !== undefined && locatedKey === value;
+  // The section itself is the locate target when the model is no longer
+  // listed: the timeline pointed here, so the section still carries the tag.
+  const located = locateKind === "chat" && (locatedKey == null || locatedKey === value);
   return (
     <div ref={containerRef} data-model-section="chat">
       <div className="mb-2 flex items-center justify-between text-label font-medium text-muted-foreground pe-1">
@@ -189,6 +195,8 @@ export function ModelSection({
               id={`${ids}-model`}
               choices={choices}
               value={value}
+              locatedKey={locatedKey}
+              autoOpen={locateKind === "chat"}
               onChange={onModelChange}
             />
           </div>
@@ -330,6 +338,7 @@ export function TranslationGroup({
   choices,
   value,
   locatedKey,
+  locateKind,
   onModelChange,
   sourceLanguage,
   onSourceLanguageChange,
@@ -345,6 +354,8 @@ export function TranslationGroup({
   value: string;
   /** The model-option key a timeline name pointed at; that row is tagged. */
   locatedKey?: string | null;
+  /** Which list a timeline name pointed at; its picker opens on the located row. */
+  locateKind?: ModelLocateKind | null;
   onModelChange: (key: string) => void;
   sourceLanguage: TranslationSourceLanguage;
   onSourceLanguageChange: (language: TranslationSourceLanguage) => void;
@@ -356,7 +367,9 @@ export function TranslationGroup({
   onShowTranslationActionsChange: (checked: boolean) => void;
 }) {
   const { t } = useLingui();
-  const located = locatedKey !== null && locatedKey !== undefined && locatedKey === value;
+  // The section itself is the locate target when the model is no longer
+  // listed: the timeline pointed here, so the section still carries the tag.
+  const located = locateKind === "translation" && (locatedKey == null || locatedKey === value);
   return (
     <BotPanelGroup label={t`Translation`}>
       <div
@@ -372,6 +385,8 @@ export function TranslationGroup({
             id={`${ids}-translation-model`}
             choices={choices}
             value={value}
+            locatedKey={locatedKey}
+            autoOpen={locateKind === "translation"}
             onChange={onModelChange}
           />
         </div>
@@ -479,6 +494,7 @@ export type MediaModelTestState =
 export function MediaModelGroup({
   ids,
   locatedKey,
+  locateKind,
   videoChoices,
   videoValue,
   onVideoModelChange,
@@ -511,6 +527,8 @@ export function MediaModelGroup({
   ids: string;
   /** The model-option key a timeline name pointed at; that row is tagged. */
   locatedKey?: string | null;
+  /** Which list a timeline name pointed at; its picker opens on the located row. */
+  locateKind?: ModelLocateKind | null;
   videoChoices: readonly ChatModelChoice[];
   videoValue: string;
   onVideoModelChange: (key: string) => void;
@@ -547,6 +565,7 @@ export function MediaModelGroup({
         ids={ids}
         kind="video"
         locatedKey={locatedKey}
+        locateKind={locateKind}
         modelLabel={t`Video generation model`}
         choices={videoChoices}
         value={videoValue}
@@ -568,6 +587,7 @@ export function MediaModelGroup({
         ids={ids}
         kind="image"
         locatedKey={locatedKey}
+        locateKind={locateKind}
         modelLabel={t`Image generation model`}
         choices={imageChoices}
         value={imageValue}
@@ -593,6 +613,7 @@ function MediaRoleSection({
   ids,
   kind,
   locatedKey,
+  locateKind,
   modelLabel,
   choices,
   value,
@@ -614,6 +635,8 @@ function MediaRoleSection({
   kind: "video" | "image";
   /** The model-option key a timeline name pointed at; that row is tagged. */
   locatedKey?: string | null;
+  /** Which list a timeline name pointed at; its picker opens on the located row. */
+  locateKind?: ModelLocateKind | null;
   modelLabel: string;
   choices: readonly ChatModelChoice[];
   value: string;
@@ -640,7 +663,7 @@ function MediaRoleSection({
   const canAdd = totalModels < BOT_MODEL_LIST_MAX && addChoices.length > 0;
   const primaryTest = test.status === "done" && test.modelKey === value ? test : null;
   const testingPrimary = test.status === "testing" && test.modelKey === value;
-  const locatedPrimary = locatedKey !== null && locatedKey !== undefined && locatedKey === value;
+  const locatedPrimary = locateKind === kind && (locatedKey == null || locatedKey === value);
   return (
     <>
       <div
@@ -657,6 +680,8 @@ function MediaRoleSection({
               id={`${ids}-${kind}-model`}
               choices={choices}
               value={value}
+              locatedKey={locatedKey}
+              autoOpen={locateKind === kind}
               onChange={onModelChange}
             />
           </div>

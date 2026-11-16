@@ -155,6 +155,28 @@ describe("ChatModelPicker", () => {
     expect(document.body.textContent).toContain("No matching models");
   });
 
+  it("tags the located row and opens on it for a timeline tap", () => {
+    const list = choices(11);
+    act(() =>
+      root.render(
+        <ChatModelPicker
+          id="model"
+          choices={list}
+          value="openrouter::vendor/model-2"
+          onChange={onChange}
+          locatedKey="openrouter::vendor/model-7"
+          autoOpen
+        />,
+      ),
+    );
+    // The list opens on the located row without a click.
+    expect(options()).toHaveLength(12);
+    const located = options().filter((option) => option.textContent?.includes("Located here"));
+    expect(located.map((option) => option.getAttribute("aria-label"))).toEqual([
+      "Model 7 (OpenRouter)",
+    ]);
+  });
+
   it("lets the popup flip vertically without switching axes", () => {
     render(choices(11), "");
     act(() => container.querySelector<HTMLButtonElement>("button#model")!.click());

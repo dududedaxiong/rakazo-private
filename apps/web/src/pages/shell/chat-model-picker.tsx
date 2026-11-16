@@ -15,7 +15,7 @@ import {
   PopoverTrigger,
 } from "@rakazo/ui-web";
 import { ChevronDownIcon } from "lucide-react";
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { TextOnlyMark } from "../../components/TextOnlyMark";
 import { readModelStatus } from "../../lib/model-status";
 import { useListSearch } from "../../lib/use-list-search";
@@ -27,15 +27,44 @@ export function ChatModelPicker({
   choices,
   value,
   onChange,
+  /** The model-option key a timeline name pointed at; that row is tagged. */
+  locatedKey,
+  /** Open the list on the located row, once, for a timeline tap. */
+  autoOpen,
 }: {
   id: string;
   choices: readonly ChatModelChoice[];
   value: string;
   onChange: (key: string) => void;
+  locatedKey?: string | null;
+  autoOpen?: boolean;
 }) {
   const { t } = useLingui();
   const imagesHintId = useId();
   const [open, setOpen] = useState(false);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  // A timeline tap opens the list on its row exactly once; closing it never
+  // reopens it until a new locate request arrives. A located key that is
+  // not one of this list's options (a fallback row, or a model that is no
+  // longer listed) opens nothing: its tag lives in the section instead.
+  const autoOpenedKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (
+      autoOpen &&
+      locatedKey &&
+      autoOpenedKey.current !== locatedKey &&
+      choices.some((choice) => choice.key === locatedKey)
+    ) {
+      autoOpenedKey.current = locatedKey;
+      setOpen(true);
+    }
+  }, [autoOpen, locatedKey, choices]);
+  useEffect(() => {
+    if (!open || !locatedKey) return;
+    listRef.current
+      ?.querySelector<HTMLElement>('[data-located-row="true"]')
+      ?.scrollIntoView?.({ block: "nearest" });
+  }, [open, locatedKey]);
   const { query, setQuery, showSearch, visible } = useListSearch(choices, {
     text: modelChoiceSearchText,
   });
@@ -107,7 +136,7 @@ export function ChatModelPicker({
               label={t`Search models`}
               placeholder={t`Search`}
             />
-            <CommandList className="min-h-0 max-h-80 flex-1 overflow-y-auto">
+            <CommandList ref={listRef} className="min-h-0 max-h-80 flex-1 overflow-y-auto">
               <CommandEmpty>
                 <Trans>No matching models</Trans>
               </CommandEmpty>
@@ -120,6 +149,7 @@ export function ChatModelPicker({
                       // cmdk falls back to the row's text for an empty value.
                       value={choice.key || "space-default"}
                       data-checked={choice.key === value}
+                      data-located-row={choice.key === locatedKey}
                       aria-describedby={choice.images === false ? imagesHintId : undefined}
                       onSelect={() => {
                         onChange(choice.key);
@@ -129,6 +159,11 @@ export function ChatModelPicker({
                       <span className="min-w-0 flex-1 truncate">
                         {choice.title ?? choice.label}
                       </span>
+                      {choice.key === locatedKey ? (
+                        <span className="shrink-0 rounded-full border border-primary/40 px-2 py-0.5 text-body-sm text-primary">
+                          <Trans>Located here</Trans>
+                        </span>
+                      ) : null}
                       <ModelStatusBadge status={readModelStatus(choice.key)} />
                       {choice.images === false ? (
                         <span className="shrink-0 text-muted-foreground">

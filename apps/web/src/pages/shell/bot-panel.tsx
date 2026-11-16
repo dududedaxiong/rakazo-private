@@ -19,6 +19,7 @@ import {
   primaryBotModel,
   resolveBotAvatarSet,
 } from "@rakazo/contracts";
+import type { ChatModelChoice } from "@rakazo/core";
 import {
   chatModelChoices,
   connectedModelChoices,
@@ -38,8 +39,8 @@ import { InstructionSettings } from "../../components/InstructionSettings";
 import { PagesList } from "../../components/pages/PagesList";
 import { BotPersonaSection } from "../../components/prompt-templates/BotPersonaSection";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
-import type { ModelLocateRequest } from "../../lib/model-locate";
-import { modelLocateRowMatches } from "../../lib/model-locate";
+import type { ModelLocateChoice, ModelLocateRequest } from "../../lib/model-locate";
+import { locateModelChoiceKey } from "../../lib/model-locate";
 import { modelStatusFromProbe, recordModelStatus } from "../../lib/model-status";
 import { lazyComponent } from "../../lib/preload-recovery";
 import { useSpaceQueries } from "../../lib/query";
@@ -100,6 +101,21 @@ function advancedValues(bot: Bot) {
 }
 
 export type BotPanelTab = "computer" | "routines" | "pages" | "settings" | "persona";
+
+/** A media fallback row as a locate candidate: its key carries the provider and model id. */
+function fallbackLocateChoice(
+  fallback: MediaModelFallback,
+  choices: readonly ChatModelChoice[],
+): ModelLocateChoice | null {
+  const parsed = parseModelOptionKey(fallback.key);
+  if (!parsed) return null;
+  return {
+    key: fallback.key,
+    modelId: parsed.modelId,
+    provider: parsed.provider,
+    providerLabel: choices.find((choice) => choice.key === fallback.key)?.providerLabel,
+  };
+}
 
 /** A bot's profile above its Computer, Routines, Pages and Advanced tabs. */
 export function BotSettings({
@@ -179,30 +195,6 @@ export function BotSettings({
       modelRef.current?.querySelector<HTMLElement>('[id$="-model"]')?.focus();
     }
   }, [tab, focusModel]);
-  // A located model row, highlighted with a tag until the next request.
-  const [locatedKey, setLocatedKey] = useState<string | null>(null);
-  useEffect(() => {
-    if (!locateModel || tab !== "settings") {
-      if (!locateModel) setLocatedKey(null);
-      return;
-    }
-    // The settings tab is the only panel in the DOM with this test id.
-    const root = document.querySelector<HTMLElement>('[data-testid="bot-settings-advanced"]');
-    if (!root) return;
-    const rows = [...root.querySelectorAll<HTMLElement>("[data-model-row]")];
-    const row = rows.find((el) => modelLocateRowMatches(el.dataset.modelRow ?? "", locateModel));
-    const target =
-      row ?? root.querySelector<HTMLElement>(`[data-model-section="${locateModel.kind}"]`);
-    if (target) {
-      setLocatedKey(
-        row?.dataset.modelRow ??
-          target.getAttribute("data-model-row") ??
-          target.querySelector("[data-model-row]")?.getAttribute("data-model-row") ??
-          null,
-      );
-      target.scrollIntoView?.({ block: "nearest" });
-    }
-  }, [locateModel, tab]);
   const [name, setName] = useState(bot.name);
   const savedNameRef = useRef(bot.name);
   const [description, setDescription] = useState(bot.description);
@@ -594,6 +586,70 @@ export function BotSettings({
     defaultEntry?.images,
   );
 
+  // A located model row, highlighted with a tag until the next request. This
+  // sits after every choices list it reads, so the dependency array never
+  // touches a binding that is still in its temporal dead zone.
+  const [locatedKey, setLocatedKey] = useState<string | null>(null);
+  useEffect(() => {
+    if (!locateModel || tab !== "settings") {
+      if (!locateModel) setLocatedKey(null);
+      return;
+    }
+    // Match against the model list itself, by model id plus the connection
+    // display name, so two rows for the same model on different connections
+    // stay distinct. A row key alone cannot tell them apart, because every
+    // connection here shares one provider id.
+    const choices =
+      locateModel.kind === "translation"
+        ? translationModelChoices
+        : locateModel.kind === "video"
+          ? videoChoices
+          : locateModel.kind === "image"
+            ? imageChoices
+            : modelChoices;
+    const currentKey =
+      locateModel.kind === "translation"
+        ? selectedTranslationModelKey
+        : locateModel.kind === "video"
+          ? videoValue
+          : locateModel.kind === "image"
+            ? imageValue
+            : selectedModelKey;
+    // Fallback rows are not picker options, so they are not in the choices
+    // list; a timeline name can still point at one. Match them by their
+    // key's provider and model id, with the connection label from the
+    // choices list when the same key is listed there.
+    const fallbackChoices: ModelLocateChoice[] =
+      locateModel.kind === "video"
+        ? videoFallbacks
+            .map((fallback) => fallbackLocateChoice(fallback, videoChoices))
+            .filter((choice): choice is ModelLocateChoice => choice !== null)
+        : locateModel.kind === "image"
+          ? imageFallbacks
+              .map((fallback) => fallbackLocateChoice(fallback, imageChoices))
+              .filter((choice): choice is ModelLocateChoice => choice !== null)
+          : [];
+    setLocatedKey(
+      locateModelChoiceKey([...choices, ...fallbackChoices], locateModel, currentKey || null),
+    );
+    // The settings tab is the only panel in the DOM with this test id.
+    const root = document.querySelector<HTMLElement>('[data-testid="bot-settings-advanced"]');
+    root
+      ?.querySelector<HTMLElement>(`[data-model-section="${locateModel.kind}"]`)
+      ?.scrollIntoView?.({ block: "nearest" });
+  }, [
+    locateModel,
+    tab,
+    modelChoices,
+    translationModelChoices,
+    videoChoices,
+    imageChoices,
+    selectedModelKey,
+    selectedTranslationModelKey,
+    videoValue,
+    imageValue,
+  ]);
+
   const effectiveProvider = selectedModel?.provider ?? me?.defaultProvider ?? null;
   const effectiveModelId = selectedModel?.modelId ?? me?.defaultModel ?? null;
   const effectiveEntry =
@@ -938,6 +994,7 @@ export function BotSettings({
               choices={modelChoices}
               value={selectedModelKey}
               locatedKey={locatedKey}
+              locateKind={locateModel?.kind ?? null}
               onModelChange={(key) => {
                 setModelKey(key);
                 setThinkingLevel("");
@@ -965,6 +1022,7 @@ export function BotSettings({
             <MediaModelGroup
               ids={ids}
               locatedKey={locatedKey}
+              locateKind={locateModel?.kind ?? null}
               videoChoices={videoChoices}
               videoValue={videoValue}
               onVideoModelChange={(key) => changeMediaModel("video", key)}
@@ -997,6 +1055,7 @@ export function BotSettings({
             <TranslationGroup
               ids={ids}
               locatedKey={locatedKey}
+              locateKind={locateModel?.kind ?? null}
               choices={translationModelChoices}
               value={selectedTranslationModelKey}
               onModelChange={setTranslationModel}
