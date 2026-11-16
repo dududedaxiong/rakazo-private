@@ -1,4 +1,5 @@
 import type { MessageBlock, ModelSwitchAttempt, ModelSwitches } from "@rakazo/contracts";
+import { sameModelId } from "@rakazo/core";
 
 /** A timeline a sheet can render, whether it came from a message or a translation. */
 export type ModelSwitchTimeline = {
@@ -155,13 +156,20 @@ export function locateModelChoiceKey(
   locate: { model: string; provider?: string | null } | null | undefined,
 ): string | null {
   if (!locate) return null;
+  // The model comparison bridges an API id and its catalog id
+  // (`deepseek-flash` and `deepseek-v4.1-flash`) on any provider, so a
+  // third-party connection locates exactly like a native one.
   const byConnection = choices.find(
     (choice) =>
-      choice.modelId === locate.model &&
+      choice.modelId != null &&
+      sameModelId(choice.modelId, locate.model) &&
       (choice.providerLabel === locate.provider || choice.provider === locate.provider),
   );
   if (byConnection) return byConnection.key;
-  return choices.find((choice) => choice.modelId === locate.model)?.key ?? null;
+  return (
+    choices.find((choice) => choice.modelId != null && sameModelId(choice.modelId, locate.model))
+      ?.key ?? null
+  );
 }
 
 /**

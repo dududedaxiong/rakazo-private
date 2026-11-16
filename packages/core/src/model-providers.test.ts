@@ -13,6 +13,7 @@ import {
   pickCatalogModelId,
   popularModelProvidersFirst,
   resolveSelectableModelId,
+  sameModelId,
   savedCompatibleModelIds,
   toggleEnabledModelId,
 } from "./model-providers.js";
@@ -585,5 +586,21 @@ describe("connectionMaxTokensField", () => {
     expect(connectionMaxTokensField("openai-compatible", 8_000)).toBe("8000");
     expect(connectionMaxTokensField("anthropic", undefined)).toBe("");
     expect(connectionMaxTokensField("anthropic", 2_000)).toBe("2000");
+  });
+});
+
+describe("sameModelId", () => {
+  it("matches the same id, and an API id with its catalog id in either direction", () => {
+    expect(sameModelId("deepseek-v4.1-flash", "deepseek-v4.1-flash")).toBe(true);
+    expect(sameModelId("deepseek-flash", "deepseek-v4.1-flash")).toBe(true);
+    expect(sameModelId("deepseek-v4.1-flash", "deepseek-flash")).toBe(true);
+    expect(sameModelId("DeepSeek-V4.1-Flash", "deepseek-flash")).toBe(true);
+  });
+
+  it("does not match a different model, or an empty id", () => {
+    expect(sameModelId("deepseek-v4.1-flash", "deepseek-v4-pro")).toBe(false);
+    expect(sameModelId("deepseek-flash", "deepseek-v4-pro")).toBe(false);
+    expect(sameModelId("", "deepseek-flash")).toBe(false);
+    expect(sameModelId("glm-5.3-flash", "deepseek-flash")).toBe(false);
   });
 });

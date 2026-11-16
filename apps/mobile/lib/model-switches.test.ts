@@ -37,6 +37,39 @@ describe("locate model choice key", () => {
     expect(locateModelChoiceKey(choices, { model: "model-z", provider: "主站" })).toBeNull();
     expect(locateModelChoiceKey(choices, null)).toBeNull();
   });
+
+  it("bridges an API id and its catalog id on a third-party connection", () => {
+    const deepseekChoices = [
+      {
+        key: "openai-compatible::deepseek-v4.1-flash",
+        modelId: "deepseek-v4.1-flash",
+        provider: "openai-compatible",
+        providerLabel: "测试",
+      },
+    ];
+    // The mark carries the API id; the list carries the catalog id.
+    expect(locateModelChoiceKey(deepseekChoices, { model: "deepseek-flash", provider: null })).toBe(
+      "openai-compatible::deepseek-v4.1-flash",
+    );
+    // And the other way round: the list carries the API id, the mark the catalog id.
+    expect(
+      locateModelChoiceKey(
+        [
+          {
+            key: "openai-compatible::deepseek-flash",
+            modelId: "deepseek-flash",
+            provider: "openai-compatible",
+            providerLabel: "测试",
+          },
+        ],
+        { model: "deepseek-v4.1-flash", provider: "测试" },
+      ),
+    ).toBe("openai-compatible::deepseek-flash");
+    // A different DeepSeek model still does not match.
+    expect(
+      locateModelChoiceKey(deepseekChoices, { model: "deepseek-v4-pro", provider: null }),
+    ).toBeNull();
+  });
 });
 
 const attempts: ModelSwitchAttempt[] = [

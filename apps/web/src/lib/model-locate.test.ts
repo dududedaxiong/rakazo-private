@@ -28,4 +28,32 @@ describe("model locate", () => {
       }),
     ).toBe(false);
   });
+
+  it("matches an API id and its catalog id on a third-party connection, either way", () => {
+    expect(
+      modelLocateRowMatches("openai-compatible::deepseek-v4.1-flash", {
+        model: "deepseek-flash",
+        provider: "openai-compatible",
+      }),
+    ).toBe(true);
+    expect(
+      modelLocateRowMatches("openai-compatible::deepseek-flash", {
+        model: "deepseek-v4.1-flash",
+        provider: "openai-compatible",
+      }),
+    ).toBe(true);
+    // A connection display name as the provider still locates by model.
+    expect(
+      modelLocateRowMatches("openai-compatible::deepseek-v4.1-flash", {
+        model: "deepseek-flash",
+        provider: "测试",
+      }),
+    ).toBe(true);
+    expect(
+      modelLocateRowMatches("openai-compatible::deepseek-v4-pro", {
+        model: "deepseek-v4.1-flash",
+        provider: "openai-compatible",
+      }),
+    ).toBe(false);
+  });
 });

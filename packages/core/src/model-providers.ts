@@ -190,6 +190,27 @@ function modelToken(value: string): string {
     .replace(/[^a-z0-9]+/g, "");
 }
 
+/**
+ * Whether two model ids name the same model: the same id by token, or an
+ * API id and its catalog id (`deepseek-flash` is the API id the DeepSeek
+ * API accepts; the catalog lists it as `deepseek-v4.1-flash`). The bridge
+ * is keyed on the model id alone, so it holds for any provider serving the
+ * model — native DeepSeek or a third-party connection — and in either
+ * direction. This is for locating a model in a list, never for choosing
+ * which id to submit: submission still uses the id the catalog resolved.
+ */
+export function sameModelId(a: string, b: string): boolean {
+  const tokenA = modelToken(a);
+  const tokenB = modelToken(b);
+  if (!tokenA || !tokenB) return false;
+  if (tokenA === tokenB) return true;
+  const displayA = DEEPSEEK_DISPLAY_MODEL_IDS[tokenA];
+  if (displayA && modelToken(displayA) === tokenB) return true;
+  const displayB = DEEPSEEK_DISPLAY_MODEL_IDS[tokenB];
+  if (displayB && modelToken(displayB) === tokenA) return true;
+  return false;
+}
+
 /** API id for a known DeepSeek display label, when it differs from `modelId`. */
 function canonicalApiModelId(provider: string, modelId: string): string | undefined {
   if (provider !== "deepseek") return undefined;
