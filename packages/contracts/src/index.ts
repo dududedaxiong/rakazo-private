@@ -51,6 +51,7 @@ export * from "./search.js";
 export * from "./security-events.js";
 export * from "./server-headers.js";
 export * from "./settings-scope.js";
+export * from "./shares.js";
 export * from "./space-availability.js";
 export * from "./terminal.js";
 export * from "./translation.js";

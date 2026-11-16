@@ -604,6 +604,7 @@ msgstr ""
 msgid "✗ Does not support video generation · {0}"
 msgstr ""
 
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "1 day"
 msgstr ""
@@ -612,7 +613,12 @@ msgstr ""
 msgid "1 space"
 msgstr "1 個空間"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "1 year"
+msgstr ""
+
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
 msgstr "30 天"
@@ -622,6 +628,7 @@ msgid "429 rate limit"
 msgstr "429 速率觸發"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "7 days"
 msgstr "7 天"
@@ -675,6 +682,14 @@ msgstr "約 {kb} KB 的記憶不再提供給機器人。"
 #: src/components/InfoTooltip.tsx
 msgid "About {label}"
 msgstr "關於 {label}"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Accent"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Accent color"
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Access key ID"
@@ -1386,6 +1401,18 @@ msgstr "立即備份"
 msgid "Backed up"
 msgstr "已備份"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Background"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Background color"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Background opacity"
+msgstr ""
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Backup directory"
 msgstr "備份目錄"
@@ -1700,16 +1727,16 @@ msgstr "更改 {name}"
 msgid "Change {title}"
 msgstr "更改 {title}"
 
-#. js-lingui-explicit-id
-#: src/pages/shell/model-error-actions.tsx
-msgid "Change model"
-msgstr "換個模型"
-
 #: src/pages/shell/composer-error.tsx
 #: src/pages/shell/message-translation.tsx
 #: src/pages/shell/model-error-actions.tsx
 msgid "Change model"
 msgstr "更換模型"
+
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Change model"
+msgstr "換個模型"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
@@ -2418,6 +2445,7 @@ msgstr "複製邀請連結"
 #: src/components/InviteDialog.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Copy link"
 msgstr "複製連結"
 
@@ -2570,6 +2598,10 @@ msgstr "無法建立空間"
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "Could not create the bot"
 msgstr "無法建立機器人"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Could not create the link. Try again."
+msgstr ""
 
 #: src/pages/Onboarding.tsx
 msgid "Could not create your bot"
@@ -3196,6 +3228,10 @@ msgstr "稽核日誌載入失敗"
 msgid "Couldn't load the overview"
 msgstr "總覽載入失敗"
 
+#: src/pages/SharedConversation.tsx
+msgid "Couldn't load this conversation. Try again."
+msgstr ""
+
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this page. Try again."
 msgstr "無法載入此頁面。請再試一次。"
@@ -3257,6 +3293,10 @@ msgstr "建立機器人"
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
 msgstr "建立群組"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Create link"
+msgstr ""
 
 #: src/components/CreateOrganizationDialog.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
@@ -3327,6 +3367,10 @@ msgstr "幣別"
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Current model"
 msgstr "當前模型"
+
+#: src/pages/SharedConversation.tsx
+msgid "Current model: {model}"
+msgstr ""
 
 #: src/components/AccountAccess.tsx
 #: src/pages/AccountSettingsOverlay.tsx
@@ -3748,6 +3792,10 @@ msgstr ""
 msgid "Download PDF"
 msgstr "下載 PDF"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Download PNG"
+msgstr ""
+
 #: src/pages/shell/media-result.tsx
 msgid "Downloading {name}"
 msgstr ""
@@ -4022,6 +4070,7 @@ msgid "Everyone in this bot's space can read the chats it gets from {linkApp}."
 msgstr "此機器人所在空間的每個人都能閱讀它從 {linkApp} 收到的聊天。"
 
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Expand"
 msgstr "展開"
@@ -4040,12 +4089,18 @@ msgid "expired"
 msgstr "已過期"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Expired"
 msgstr "已過期"
 
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr "到期"
+
+#. placeholder {0}: expiryLabel(item.expiresAt)
+#: src/components/ShareConversationDialog.tsx
+msgid "Expires {0}"
+msgstr ""
 
 #: src/components/vault/kinds.tsx
 msgid "Expires {expiry}"
@@ -4266,6 +4321,10 @@ msgstr "正在完成 MCP 連線…"
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Focus message"
 msgstr "移至訊息欄"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Font size"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
@@ -4676,6 +4735,10 @@ msgstr "包含 API 金鑰"
 msgid "Include memory"
 msgstr ""
 
+#: src/components/ShareCardDialog.tsx
+msgid "Include the question"
+msgstr ""
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
 msgstr "來電"
@@ -4683,6 +4746,10 @@ msgstr "來電"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Inherit default"
 msgstr "沿用預設"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Ink"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Input"
@@ -5017,6 +5084,10 @@ msgstr "連結已複製"
 msgid "Link DMs"
 msgstr "連結私訊"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "Link expires in"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 msgid "Link SSO"
 msgstr "關聯 SSO"
@@ -5105,6 +5176,7 @@ msgstr "正在載入語音供應商…"
 #: src/components/PageLoading.tsx
 #: src/components/prompt-templates/BotPersonaSection.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/components/SpaceMembersSettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
@@ -5115,6 +5187,7 @@ msgstr "正在載入語音供應商…"
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
+#: src/pages/SharedConversation.tsx
 #: src/pages/shell/chat-persona-switcher.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Loading…"
@@ -5133,6 +5206,7 @@ msgid "Local file"
 msgstr "本機檔案"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/chat-model-picker.tsx
 msgid "Located here"
 msgstr "定位到這裡"
 
@@ -5178,6 +5252,10 @@ msgstr "主模型"
 
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Main persona"
+msgstr ""
+
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Make share card"
 msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
@@ -5389,6 +5467,13 @@ msgstr "已發給 {peer}"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Messages"
 msgstr "訊息"
+
+#. placeholder {0}: conversation.range.from
+#. placeholder {1}: conversation.range.to
+#. placeholder {2}: conversation.range.of
+#: src/pages/SharedConversation.tsx
+msgid "Messages {0}–{1} of {2}"
+msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Messaging"
@@ -5659,11 +5744,16 @@ msgstr "需要你處理"
 msgid "Needs: {names}"
 msgstr "需要：{names}"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "Never"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Never ask"
 msgstr "永不詢問"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Never expires"
 msgstr "永不過期"
 
@@ -5846,6 +5936,10 @@ msgstr ""
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "No invite codes yet"
 msgstr "暫無邀請碼"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "No links yet."
+msgstr ""
 
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
@@ -6198,6 +6292,7 @@ msgstr "開啟導覽"
 
 #: src/components/pages/PublicPageShell.tsx
 #: src/pages/Invite.tsx
+#: src/pages/SharedConversation.tsx
 #: src/pages/SharedPage.tsx
 msgid "Open Rakazo"
 msgstr "開啟 Rakazo"
@@ -6410,6 +6505,10 @@ msgstr "貼上你的 API 金鑰"
 msgid "Paste your API key, then test again."
 msgstr "請貼上你的 API 金鑰，然後重新測試。"
 
+#: src/pages/SharedConversation.tsx
+msgid "Pause"
+msgstr ""
+
 #: src/pages/RoutineList.tsx
 #: src/pages/shell/import-status.ts
 msgid "Paused"
@@ -6480,6 +6579,10 @@ msgstr "置頂"
 msgid "Plan"
 msgstr "方案"
 
+#: src/pages/SharedConversation.tsx
+msgid "Play"
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Play {name}"
 msgstr "播放 {name}"
@@ -6527,6 +6630,10 @@ msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Preset prompt"
+msgstr ""
+
+#: src/pages/SharedConversation.tsx
+msgid "Press play to watch this conversation unfold."
 msgstr ""
 
 #: src/components/BotPackageImport.tsx
@@ -6947,6 +7054,10 @@ msgstr "要移除 {secretName} 嗎？機器人將無法再使用它。"
 msgid "Remove {site}"
 msgstr "移除 {site}"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Remove background image"
+msgstr ""
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove change trigger"
 msgstr "移除變化觸發器"
@@ -7062,6 +7173,10 @@ msgstr "替換金鑰"
 msgid "Replaces the login saved for {0}"
 msgstr "取代 {0} 已儲存的登入資訊"
 
+#: src/pages/SharedConversation.tsx
+msgid "Replay progress"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Replies"
 msgstr "回覆"
@@ -7101,6 +7216,7 @@ msgid "Resend"
 msgstr "重新傳送"
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/ShareCardDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -7162,6 +7278,7 @@ msgstr "重新啟動以更新"
 
 #: src/components/admin/AdminUsers.tsx
 #: src/components/InstructionSettings.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "還原"
@@ -7203,11 +7320,6 @@ msgstr "正在還原工作空間"
 msgid "Resume import"
 msgstr ""
 
-#. js-lingui-explicit-id
-#: src/pages/shell/model-error-actions.tsx
-msgid "Retry"
-msgstr "重試"
-
 #: src/components/AccountAccess.tsx
 #: src/components/admin/AdminAppDownloadSettings.tsx
 #: src/components/admin/AdminAuditLog.tsx
@@ -7231,8 +7343,14 @@ msgstr "重試"
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/SharedConversation.tsx
 #: src/pages/shell/model-error-actions.tsx
 #: src/pages/SpaceSettingOverrides.tsx
+msgid "Retry"
+msgstr "重試"
+
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
 msgid "Retry"
 msgstr "重試"
 
@@ -7276,12 +7394,14 @@ msgid "Reviews pull requests waiting on you"
 msgstr "審查等你處理的 pull request"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Revoke"
 msgstr "撤銷授權"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AdminAccessPage.tsx
 msgid "Revoked"
 msgstr "已撤銷"
@@ -7289,6 +7409,14 @@ msgstr "已撤銷"
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Revoking…"
 msgstr "作廢中…"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Rice"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Rice paper"
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Root filesystem"
@@ -7369,6 +7497,10 @@ msgstr "與 {botName} 相同"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Same as main model"
 msgstr "與主模型相同"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Sans-serif"
+msgstr ""
 
 #: src/lib/cron.ts
 msgid "Saturday"
@@ -7680,6 +7812,10 @@ msgstr "已傳送"
 msgid "Serenity endpoint is required."
 msgstr "請填寫 Serenity 端點。"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Serif"
+msgstr ""
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Server address"
 msgstr "伺服器位址"
@@ -7762,6 +7898,19 @@ msgstr "分享"
 #: src/components/pages/SharePopover.tsx
 msgid "Share “{title}”"
 msgstr "分享「{title}」"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Share card"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Share card preview"
+msgstr ""
+
+#: src/components/ShareConversationDialog.tsx
+#: src/pages/shell/chat-header.tsx
+msgid "Share conversation"
+msgstr ""
 
 #: src/components/pages/SharePopover.tsx
 msgid "Share, anyone with the link can view"
@@ -8397,6 +8546,14 @@ msgstr "測試"
 msgid "Testing…"
 msgstr "正在測試…"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Text"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Text color"
+msgstr ""
+
 #: src/components/BotEmailAddressField.tsx
 msgid "That address isn't available"
 msgstr "此地址無法使用"
@@ -8445,6 +8602,10 @@ msgstr "環境總開關已關閉，註冊保持關閉，這裡改什麼都沒用
 msgid "The export link expired. Try again."
 msgstr "匯出連結已過期，請重試。"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "The link opens a read-only replay without signing in. Secrets and local paths are removed before sharing."
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
@@ -8459,6 +8620,10 @@ msgstr "模型供應商回傳了錯誤。"
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "模型回傳了無法使用的回覆，請再試一次。"
+
+#: src/pages/SharedConversation.tsx
+msgid "The owner may have revoked its link or it may have expired."
+msgstr ""
 
 #: src/pages/SharedPage.tsx
 msgid "The owner may have turned off its link or deleted it."
@@ -8604,6 +8769,10 @@ msgstr "此連線的請求額度過低。請選擇其他模型。"
 #: src/lib/run-error.ts
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "此對話對模型來說太長了。重試無濟於事。請開始新的聊天或縮短你的訊息。"
+
+#: src/pages/SharedConversation.tsx
+msgid "This conversation isn't available"
+msgstr ""
 
 #. placeholder {0}: pendingDelete.versionCount
 #: src/pages/Artifacts.tsx
@@ -8883,6 +9052,7 @@ msgid "translation"
 msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Translation"
 msgstr "翻譯"
 
@@ -9077,6 +9247,10 @@ msgstr "立即升級"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Upload"
 msgstr "上傳"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Upload background image"
+msgstr ""
 
 #: src/components/WebdavBackupSettings.tsx
 msgid "Uploading…"

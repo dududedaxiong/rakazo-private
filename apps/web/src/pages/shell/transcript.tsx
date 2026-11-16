@@ -106,6 +106,7 @@ export const Transcript = memo(function Transcript({
   markedUnreadMessageId,
   onQuote,
   onReact,
+  onShareCard,
   onJumpToMessage,
   onOpenPeerMessages,
   memberName,
@@ -173,6 +174,8 @@ export const Transcript = memo(function Transcript({
   markedUnreadMessageId?: string;
   onQuote: (message: ThreadMessage, quote: string) => void;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
+  /** Turns a reply into a share card; absent, no card entry shows. */
+  onShareCard?: (message: ThreadMessage) => void;
   onJumpToMessage: (messageId: string) => void;
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
   memberName?: (botId: string | undefined) => string | undefined;
@@ -760,6 +763,7 @@ export const Transcript = memo(function Transcript({
                       onReply={onReply}
                       onMarkUnread={onMarkUnread}
                       onReact={onReact}
+                      onShareCard={onShareCard}
                       isLastMessage={message.id === lastVisibleMessageId}
                     />
                   </div>

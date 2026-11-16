@@ -48,6 +48,8 @@ import { CallCard, CallReturnBar } from "../components/call/CallCard";
 import { IncomingCall } from "../components/call/IncomingCall";
 import { PageLoading } from "../components/PageLoading";
 import { PageViewHost } from "../components/pages/PageViewHost";
+import { ShareCardDialog } from "../components/ShareCardDialog";
+import { ShareConversationDialog } from "../components/ShareConversationDialog";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { authClient } from "../lib/auth";
 import { peekBootstrapSeed } from "../lib/bootstrap";
@@ -838,6 +840,27 @@ function SpaceShell() {
   const [translateDialogOpen, setTranslateDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectionBusy, setSelectionBusy] = useState(false);
+  const [shareConversationOpen, setShareConversationOpen] = useState(false);
+  const [shareCardMessage, setShareCardMessage] = useState<{
+    message: ThreadMessage;
+    question?: string;
+  } | null>(null);
+
+  /** A reply's card carries the user message it answers, when one is above it. */
+  const openShareCard = useCallback(
+    (message: ThreadMessage) => {
+      const index = transcript.messages.findIndex((item) => item.id === message.id);
+      const prior =
+        index > 0
+          ? [...transcript.messages.slice(0, index)].reverse().find((item) => item.role === "user")
+          : undefined;
+      setShareCardMessage({
+        message,
+        question: prior ? copyableMessageText(prior) : undefined,
+      });
+    },
+    [transcript.messages],
+  );
 
   const toggleSelectMessage = useCallback((messageId: string) => {
     setSelectedMessageIds((current) => {
@@ -1340,6 +1363,7 @@ function SpaceShell() {
                 botName: name,
               });
             }}
+            onShareConversation={() => setShareConversationOpen(true)}
             onSelectMessages={toggleSelection}
             onBotUpdated={(updated) =>
               setBots((current) =>
@@ -1404,6 +1428,7 @@ function SpaceShell() {
               onMarkUnread={markMessageUnread}
               onQuote={quoteMessage}
               onReact={composer.reactToMessage}
+              onShareCard={openShareCard}
               onJumpToMessage={jumpToReplyMessage}
               onOpenPeerMessages={openPeerMessages}
               memberName={resolveTranscriptMemberName}
@@ -1515,6 +1540,23 @@ function SpaceShell() {
       </main>
 
       <PageViewHost />
+      <ShareConversationDialog
+        botId={inGroup ? undefined : active?.id}
+        groupId={inGroup ? activeGroup?.id : undefined}
+        open={shareConversationOpen}
+        onOpenChange={setShareConversationOpen}
+      />
+      {shareCardMessage ? (
+        <ShareCardDialog
+          message={shareCardMessage.message}
+          question={shareCardMessage.question}
+          artifactTarget={transcriptArtifactTarget}
+          open
+          onOpenChange={(next) => {
+            if (!next) setShareCardMessage(null);
+          }}
+        />
+      ) : null}
       <ForwardTargetDialog
         bots={bots}
         open={forwardDialogOpen}

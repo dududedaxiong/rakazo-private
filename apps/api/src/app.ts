@@ -159,6 +159,7 @@ import { handleRpcError } from "./rpc-errors.js";
 import { mountScreenTarget } from "./screen-proxy.js";
 import { mountScriptAssets } from "./script-assets.js";
 import { createAuthResponseAudit } from "./security-audit.js";
+import { mountSharedConversations } from "./shared-conversations.js";
 import { mountSharedPages } from "./shared-pages.js";
 import { afterSpaceDeparture } from "./space-departure.js";
 import { createSpeechSummarizer } from "./speech-summary.js";
@@ -879,6 +880,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   mountScreenTarget(app, prisma, env.screenProxySecret);
   mountScriptAssets(app);
   mountSharedPages(app, prisma, requestClientIp);
+  mountSharedConversations(app, prisma, requestClientIp);
   const auditAuthResponse = createAuthResponseAudit();
   // Account and session tables, signup bootstrap and account deletion span tenants;
   // webhooks authenticate a bot or provider, then resolve the tenant from it.

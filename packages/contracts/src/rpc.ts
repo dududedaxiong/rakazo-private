@@ -254,6 +254,7 @@ import {
 import { SearchQueryOutputSchema } from "./search.js";
 import { SecurityEventListInputSchema, SecurityEventSchema } from "./security-events.js";
 import { SettingsScopeSchema, SpaceSettingSchema, settingsScopeInput } from "./settings-scope.js";
+import { ConversationShareSummarySchema } from "./shares.js";
 import { SpaceAvailabilitySchema } from "./space-availability.js";
 import { TranslateInputSchema, TranslateOutputSchema } from "./translation.js";
 
@@ -1622,6 +1623,30 @@ export const appContract = {
       ),
     pin: oc.input(z.strictObject({ pageId: Id, pinned: z.boolean() })).output(PageSummarySchema),
     remove: oc.input(z.strictObject({ pageId: Id })).output(z.object({ ok: z.literal(true) })),
+  },
+  /**
+   * Conversation shares: a redacted snapshot of a thread behind a random link
+   * anyone can open, signed out. The token is sealed in the secret store, never
+   * in plaintext; the row carries only its hash, so a leaked database still
+   * opens no link. Revoking breaks the link; restoring brings the same link back.
+   */
+  shares: {
+    create: oc
+      .input(
+        threadTarget.safeExtend({
+          expiresInDays: z
+            .union([z.literal(1), z.literal(7), z.literal(30), z.literal(365)])
+            .nullable()
+            .optional(),
+        }),
+      )
+      .output(ConversationShareSummarySchema),
+    /** The thread's shares, newest first, with their links. */
+    list: oc
+      .input(threadTarget)
+      .output(z.strictObject({ items: z.array(ConversationShareSummarySchema) })),
+    revoke: oc.input(z.strictObject({ shareId: Id })).output(ConversationShareSummarySchema),
+    restore: oc.input(z.strictObject({ shareId: Id })).output(ConversationShareSummarySchema),
   },
   usage: {
     list: oc.output(z.array(UsageRecordSchema)),

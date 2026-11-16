@@ -13,7 +13,16 @@ import {
   PopoverTrigger,
   useCopyText,
 } from "@rakazo/ui-web";
-import { Check, Copy, MessageSquareDot, MoreHorizontal, Reply, Send, Smile } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Image,
+  MessageSquareDot,
+  MoreHorizontal,
+  Reply,
+  Send,
+  Smile,
+} from "lucide-react";
 import { useState } from "react";
 import { MessageHoverMetadata } from "../../components/MessageHoverMetadata";
 
@@ -26,6 +35,7 @@ export function MessageHoverActions({
   onReact,
   onResend,
   showResend = false,
+  onShareCard,
 }: {
   message: ThreadMessage;
   side: "start" | "end";
@@ -37,6 +47,8 @@ export function MessageHoverActions({
   onResend?: (message: ThreadMessage) => void;
   /** True when this user message has no normal bot reply after it. */
   showResend?: boolean;
+  /** Turns this reply into a share card; absent where a card makes no sense. */
+  onShareCard?: (message: ThreadMessage) => void;
 }) {
   const { t } = useLingui();
   const [copiedNow, copy, copyFailed, resetCopy, copyFailedText] = useCopyText();
@@ -155,6 +167,17 @@ export function MessageHoverActions({
               <Copy size={14} strokeWidth={1.7} />
               <Trans>Copy</Trans>
             </DropdownMenuItem>
+            {onShareCard ? (
+              <DropdownMenuItem
+                onClick={() => {
+                  setMoreOpen(false);
+                  onShareCard(message);
+                }}
+              >
+                <Image size={14} strokeWidth={1.7} />
+                <Trans>Make share card</Trans>
+              </DropdownMenuItem>
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

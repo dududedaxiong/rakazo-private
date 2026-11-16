@@ -1355,11 +1355,34 @@ model Thread {
   tasks                       Task[]
   runs                        Run[]
   routines                    Routine[]
+  shares                      ConversationShare[]
 
   @@index([spaceId])
   @@index([spaceId, userId])
   @@index([helperBotId])
   @@map("threads")
+}
+
+/// One link-shared snapshot of a thread. The row stores the redacted
+/// snapshot itself, so the public read needs no thread access; the link
+/// token is sealed in the secret store and only its hash lives here.
+model ConversationShare {
+  id        String    @id @default(cuid())
+  threadId  String
+  thread    Thread    @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  title     String
+  snapshot  Json
+  /// sha256 of the link token; the public read looks shares up by it.
+  tokenHash String    @unique
+  /// The link token itself, sealed in the secret store so the owner can copy the link again.
+  secretId  String?   @unique
+  secret    Secret?   @relation(fields: [secretId], references: [id], onDelete: SetNull)
+  expiresAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([threadId, createdAt])
+  @@map("conversation_shares")
 }
 
 model Message {
@@ -2286,6 +2309,7 @@ model Secret {
   spaceMemoryConfig SpaceMemoryConfig?
   agentSecret       AgentSecret?
   pageShare         Page?
+  conversationShare ConversationShare?
 
   @@index([userId, spaceId])
   @@map("secrets")

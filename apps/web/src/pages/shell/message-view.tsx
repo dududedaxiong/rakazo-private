@@ -159,6 +159,7 @@ export const MessageView = memo(function MessageView({
   onMarkUnread,
   markedUnread = false,
   onReact,
+  onShareCard,
   isLastMessage = false,
 }: {
   artifactTarget: ArtifactTarget;
@@ -251,6 +252,8 @@ export const MessageView = memo(function MessageView({
   onMarkUnread: (message: ThreadMessage) => void;
   markedUnread?: boolean;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
+  /** Turns a reply into a share card; only bot replies get one. */
+  onShareCard?: (message: ThreadMessage) => void;
   /** The newest visible message; only it auto-translates when the bot has auto-translate on. */
   isLastMessage?: boolean;
 }) {
@@ -443,6 +446,7 @@ export const MessageView = memo(function MessageView({
       onReact={onReact}
       onResend={onResend ? () => onResend(message.id) : undefined}
       showResend={showResend}
+      onShareCard={message.role === "bot" ? onShareCard : undefined}
     />
   );
   if (isNarration) {

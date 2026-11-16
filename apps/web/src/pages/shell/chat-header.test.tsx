@@ -111,6 +111,7 @@ function renderHeader({
         onCall={() => undefined}
         onFind={() => undefined}
         onExportConversation={() => undefined}
+        onShareConversation={() => undefined}
         onSelectMessages={() => undefined}
       />,
     ),

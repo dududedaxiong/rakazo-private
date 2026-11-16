@@ -103,6 +103,8 @@ export * from "./screen-reconnect.js";
 export * from "./search.js";
 export * from "./secrets-guard.js";
 export * from "./self-update.js";
+export * from "./share-redaction.js";
+export * from "./share-snapshot.js";
 export * from "./signup-policy.js";
 export * from "./speech-locale.js";
 export * from "./speech-text.js";

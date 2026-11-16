@@ -1,7 +1,17 @@
 import { useLingui } from "@lingui/react/macro";
 import type { Bot, Group, ThreadSnapshot } from "@rakazo/contracts";
 import { BotAvatar, Button, GroupAvatar } from "@rakazo/ui-web";
-import { Download, Gift, ListChecks, Menu, Phone, Search, Square, Volume2 } from "lucide-react";
+import {
+  Download,
+  Gift,
+  ListChecks,
+  Menu,
+  Phone,
+  Search,
+  Share2,
+  Square,
+  Volume2,
+} from "lucide-react";
 import { useState } from "react";
 import { IconTooltip } from "../../components/IconTooltip";
 import { InviteDialog } from "../../components/InviteDialog";
@@ -27,6 +37,7 @@ export function ChatHeader({
   onBotUpdated,
   onFind,
   onExportConversation,
+  onShareConversation,
   onSelectMessages,
 }: {
   inGroup: boolean;
@@ -52,6 +63,8 @@ export function ChatHeader({
   onFind: () => void;
   /** Downloads the current conversation as a Markdown file. */
   onExportConversation: () => void;
+  /** Opens the share dialog for the current conversation. */
+  onShareConversation: () => void;
   /** Enters multi-select mode for the current conversation. */
   onSelectMessages: () => void;
 }) {
@@ -126,6 +139,20 @@ export function ChatHeader({
               className="app-no-drag"
             >
               <ListChecks strokeWidth={1.6} className="size-[17px]" />
+            </Button>
+          </IconTooltip>
+        )}
+        {(active || activeGroup) && (
+          <IconTooltip label={t`Share conversation`}>
+            <Button
+              variant="floating"
+              size="icon-lg"
+              data-testid="share-conversation-button"
+              aria-label={t`Share conversation`}
+              onClick={onShareConversation}
+              className="app-no-drag"
+            >
+              <Share2 strokeWidth={1.6} className="size-[17px]" />
             </Button>
           </IconTooltip>
         )}

@@ -603,6 +603,7 @@ msgstr ""
 msgid "✗ Does not support video generation · {0}"
 msgstr ""
 
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "1 day"
 msgstr ""
@@ -611,7 +612,12 @@ msgstr ""
 msgid "1 space"
 msgstr "1 пространство"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "1 year"
+msgstr ""
+
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
 msgstr ""
@@ -621,6 +627,7 @@ msgid "429 rate limit"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "7 days"
 msgstr ""
@@ -674,6 +681,14 @@ msgstr "Около {kb} КБ памяти больше не доходит до 
 #: src/components/InfoTooltip.tsx
 msgid "About {label}"
 msgstr "О настройке «{label}»"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Accent"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Accent color"
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Access key ID"
@@ -1385,6 +1400,18 @@ msgstr ""
 msgid "Backed up"
 msgstr ""
 
+#: src/components/ShareCardDialog.tsx
+msgid "Background"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Background color"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Background opacity"
+msgstr ""
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Backup directory"
 msgstr ""
@@ -1699,16 +1726,16 @@ msgstr "Изменить {name}"
 msgid "Change {title}"
 msgstr "Изменить: {title}"
 
-#. js-lingui-explicit-id
-#: src/pages/shell/model-error-actions.tsx
-msgid "Change model"
-msgstr ""
-
 #: src/pages/shell/composer-error.tsx
 #: src/pages/shell/message-translation.tsx
 #: src/pages/shell/model-error-actions.tsx
 msgid "Change model"
 msgstr "Сменить модель"
+
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Change model"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
@@ -2417,6 +2444,7 @@ msgstr "Скопировать ссылку-приглашение"
 #: src/components/InviteDialog.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Copy link"
 msgstr "Копировать ссылку"
 
@@ -2569,6 +2597,10 @@ msgstr "Не удалось создать пространство"
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "Could not create the bot"
 msgstr "Не удалось создать бота"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Could not create the link. Try again."
+msgstr ""
 
 #: src/pages/Onboarding.tsx
 msgid "Could not create your bot"
@@ -3195,6 +3227,10 @@ msgstr ""
 msgid "Couldn't load the overview"
 msgstr ""
 
+#: src/pages/SharedConversation.tsx
+msgid "Couldn't load this conversation. Try again."
+msgstr ""
+
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this page. Try again."
 msgstr "Не удалось загрузить страницу. Попробуйте ещё раз."
@@ -3256,6 +3292,10 @@ msgstr "Создать бота"
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
 msgstr "Создать группу"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Create link"
+msgstr ""
 
 #: src/components/CreateOrganizationDialog.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
@@ -3325,6 +3365,10 @@ msgstr "Валюта"
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Current model"
+msgstr ""
+
+#: src/pages/SharedConversation.tsx
+msgid "Current model: {model}"
 msgstr ""
 
 #: src/components/AccountAccess.tsx
@@ -3747,6 +3791,10 @@ msgstr ""
 msgid "Download PDF"
 msgstr "Скачать PDF"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Download PNG"
+msgstr ""
+
 #: src/pages/shell/media-result.tsx
 msgid "Downloading {name}"
 msgstr ""
@@ -4021,6 +4069,7 @@ msgid "Everyone in this bot's space can read the chats it gets from {linkApp}."
 msgstr "Все в пространстве этого бота могут читать чаты, которые он получает из {linkApp}."
 
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Expand"
 msgstr "Развернуть"
@@ -4039,12 +4088,18 @@ msgid "expired"
 msgstr "истёк срок"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Expired"
 msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr "Истекает"
+
+#. placeholder {0}: expiryLabel(item.expiresAt)
+#: src/components/ShareConversationDialog.tsx
+msgid "Expires {0}"
+msgstr ""
 
 #: src/components/vault/kinds.tsx
 msgid "Expires {expiry}"
@@ -4265,6 +4320,10 @@ msgstr "Завершение подключения MCP…"
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Focus message"
 msgstr "Перейти к сообщению"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Font size"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
@@ -4675,6 +4734,10 @@ msgstr "Включить ключи API"
 msgid "Include memory"
 msgstr ""
 
+#: src/components/ShareCardDialog.tsx
+msgid "Include the question"
+msgstr ""
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
 msgstr "Входящий звонок"
@@ -4682,6 +4745,10 @@ msgstr "Входящий звонок"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Inherit default"
 msgstr "Наследовать значение по умолчанию"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Ink"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Input"
@@ -5016,6 +5083,10 @@ msgstr "Ссылка скопирована"
 msgid "Link DMs"
 msgstr "Привязать ЛС"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "Link expires in"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 msgid "Link SSO"
 msgstr "Привязать SSO"
@@ -5104,6 +5175,7 @@ msgstr "Загрузка поставщиков голосовой связи…
 #: src/components/PageLoading.tsx
 #: src/components/prompt-templates/BotPersonaSection.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/components/SpaceMembersSettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
@@ -5114,6 +5186,7 @@ msgstr "Загрузка поставщиков голосовой связи…
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
+#: src/pages/SharedConversation.tsx
 #: src/pages/shell/chat-persona-switcher.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Loading…"
@@ -5132,6 +5205,7 @@ msgid "Local file"
 msgstr "Локальный файл"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/chat-model-picker.tsx
 msgid "Located here"
 msgstr ""
 
@@ -5177,6 +5251,10 @@ msgstr "Основная модель"
 
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Main persona"
+msgstr ""
+
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Make share card"
 msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
@@ -5388,6 +5466,13 @@ msgstr "Отправлено сообщение {peer}"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Messages"
 msgstr "Сообщения"
+
+#. placeholder {0}: conversation.range.from
+#. placeholder {1}: conversation.range.to
+#. placeholder {2}: conversation.range.of
+#: src/pages/SharedConversation.tsx
+msgid "Messages {0}–{1} of {2}"
+msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Messaging"
@@ -5658,11 +5743,16 @@ msgstr "Требуется ваше участие"
 msgid "Needs: {names}"
 msgstr "Нужно: {names}"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "Never"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Never ask"
 msgstr "Не спрашивать"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Never expires"
 msgstr ""
 
@@ -5844,6 +5934,10 @@ msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "No invite codes yet"
+msgstr ""
+
+#: src/components/ShareConversationDialog.tsx
+msgid "No links yet."
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -6197,6 +6291,7 @@ msgstr "Открыть навигацию"
 
 #: src/components/pages/PublicPageShell.tsx
 #: src/pages/Invite.tsx
+#: src/pages/SharedConversation.tsx
 #: src/pages/SharedPage.tsx
 msgid "Open Rakazo"
 msgstr "Открыть Rakazo"
@@ -6409,6 +6504,10 @@ msgstr "Вставьте свой ключ API"
 msgid "Paste your API key, then test again."
 msgstr "Вставьте API-ключ и повторите тест."
 
+#: src/pages/SharedConversation.tsx
+msgid "Pause"
+msgstr ""
+
 #: src/pages/RoutineList.tsx
 #: src/pages/shell/import-status.ts
 msgid "Paused"
@@ -6479,6 +6578,10 @@ msgstr "Закреплённые"
 msgid "Plan"
 msgstr "Тариф"
 
+#: src/pages/SharedConversation.tsx
+msgid "Play"
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Play {name}"
 msgstr "Воспроизвести {name}"
@@ -6526,6 +6629,10 @@ msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Preset prompt"
+msgstr ""
+
+#: src/pages/SharedConversation.tsx
+msgid "Press play to watch this conversation unfold."
 msgstr ""
 
 #: src/components/BotPackageImport.tsx
@@ -6946,6 +7053,10 @@ msgstr "Удалить {secretName}? Боты больше не смогут е�
 msgid "Remove {site}"
 msgstr "Удалить {site}"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Remove background image"
+msgstr ""
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove change trigger"
 msgstr "Удалить триггер изменений"
@@ -7061,6 +7172,10 @@ msgstr "Заменить ключ"
 msgid "Replaces the login saved for {0}"
 msgstr "Заменяет логин, сохранённый для {0}"
 
+#: src/pages/SharedConversation.tsx
+msgid "Replay progress"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Replies"
 msgstr "Ответы"
@@ -7100,6 +7215,7 @@ msgid "Resend"
 msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/ShareCardDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -7161,6 +7277,7 @@ msgstr "Перезапустить для обновления"
 
 #: src/components/admin/AdminUsers.tsx
 #: src/components/InstructionSettings.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "Восстановить"
@@ -7202,11 +7319,6 @@ msgstr "Восстановление вашего рабочего простр�
 msgid "Resume import"
 msgstr ""
 
-#. js-lingui-explicit-id
-#: src/pages/shell/model-error-actions.tsx
-msgid "Retry"
-msgstr ""
-
 #: src/components/AccountAccess.tsx
 #: src/components/admin/AdminAppDownloadSettings.tsx
 #: src/components/admin/AdminAuditLog.tsx
@@ -7230,10 +7342,16 @@ msgstr ""
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/SharedConversation.tsx
 #: src/pages/shell/model-error-actions.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "Повторить"
+
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Retry"
+msgstr ""
 
 #: src/App.tsx
 #: src/pages/PeerMessagesOverlay.tsx
@@ -7275,18 +7393,28 @@ msgid "Reviews pull requests waiting on you"
 msgstr "Проверяет запросы на слияние, которые ждут вас"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Revoke"
 msgstr "Отозвать"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AdminAccessPage.tsx
 msgid "Revoked"
 msgstr "Отозвано"
 
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Revoking…"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Rice"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Rice paper"
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
@@ -7368,6 +7496,10 @@ msgstr "Как у {botName}"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Same as main model"
 msgstr "Как у основной модели"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Sans-serif"
+msgstr ""
 
 #: src/lib/cron.ts
 msgid "Saturday"
@@ -7679,6 +7811,10 @@ msgstr "Отправлено"
 msgid "Serenity endpoint is required."
 msgstr "Требуется эндпоинт Serenity."
 
+#: src/components/ShareCardDialog.tsx
+msgid "Serif"
+msgstr ""
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Server address"
 msgstr ""
@@ -7761,6 +7897,19 @@ msgstr "Поделиться"
 #: src/components/pages/SharePopover.tsx
 msgid "Share “{title}”"
 msgstr "Поделиться «{title}»"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Share card"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Share card preview"
+msgstr ""
+
+#: src/components/ShareConversationDialog.tsx
+#: src/pages/shell/chat-header.tsx
+msgid "Share conversation"
+msgstr ""
 
 #: src/components/pages/SharePopover.tsx
 msgid "Share, anyone with the link can view"
@@ -8396,6 +8545,14 @@ msgstr "Тестирование"
 msgid "Testing…"
 msgstr "Проверка…"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Text"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Text color"
+msgstr ""
+
 #: src/components/BotEmailAddressField.tsx
 msgid "That address isn't available"
 msgstr "Этот адрес недоступен"
@@ -8444,6 +8601,10 @@ msgstr ""
 msgid "The export link expired. Try again."
 msgstr ""
 
+#: src/components/ShareConversationDialog.tsx
+msgid "The link opens a read-only replay without signing in. Secrets and local paths are removed before sharing."
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
@@ -8458,6 +8619,10 @@ msgstr "Поставщик моделей вернул ошибку."
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "Модель вернула непригодный ответ. Попробуйте ещё раз."
+
+#: src/pages/SharedConversation.tsx
+msgid "The owner may have revoked its link or it may have expired."
+msgstr ""
 
 #: src/pages/SharedPage.tsx
 msgid "The owner may have turned off its link or deleted it."
@@ -8603,6 +8768,10 @@ msgstr "Лимит запроса этого подключения слишко
 #: src/lib/run-error.ts
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "Этот разговор слишком длинный для модели. Повторная попытка не поможет. Начните новый чат или сократите сообщение."
+
+#: src/pages/SharedConversation.tsx
+msgid "This conversation isn't available"
+msgstr ""
 
 #. placeholder {0}: pendingDelete.versionCount
 #: src/pages/Artifacts.tsx
@@ -8882,6 +9051,7 @@ msgid "translation"
 msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Translation"
 msgstr ""
 
@@ -9076,6 +9246,10 @@ msgstr "Улучшить тариф"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Upload"
 msgstr "Загрузить"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Upload background image"
+msgstr ""
 
 #: src/components/WebdavBackupSettings.tsx
 msgid "Uploading…"

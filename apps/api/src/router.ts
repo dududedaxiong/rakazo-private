@@ -60,6 +60,7 @@ import { pagesRoutes } from "./routes/pages.js";
 import { paymentWalletRoutes } from "./routes/payment-wallet.js";
 import { promptTemplatesRoutes } from "./routes/prompt-templates.js";
 import { routinesRoutes } from "./routes/routines.js";
+import { sharesRoutes } from "./routes/shares.js";
 import { spacesRoutes } from "./routes/spaces.js";
 import { spendingLimitRoutes } from "./routes/spending-limit.js";
 import { threadsRoutes } from "./routes/threads.js";
@@ -200,6 +201,7 @@ export function createRouter(deps: RouterDeps) {
     ...messagingRoutes(ctx),
     ...contentRoutes(ctx),
     ...pagesRoutes(ctx),
+    ...sharesRoutes(ctx),
     ...paymentWalletRoutes(ctx),
     ...spendingLimitRoutes(ctx),
   });

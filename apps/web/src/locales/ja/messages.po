@@ -603,6 +603,7 @@ msgstr ""
 msgid "✗ Does not support video generation · {0}"
 msgstr ""
 
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "1 day"
 msgstr ""
@@ -611,7 +612,12 @@ msgstr ""
 msgid "1 space"
 msgstr "1個のスペース"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "1 year"
+msgstr ""
+
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "30 days"
 msgstr ""
@@ -621,6 +627,7 @@ msgid "429 rate limit"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "7 days"
 msgstr ""
@@ -674,6 +681,14 @@ msgstr "約{kb} KBのメモリがボットに届かなくなっています。"
 #: src/components/InfoTooltip.tsx
 msgid "About {label}"
 msgstr "{label}について"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Accent"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Accent color"
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Access key ID"
@@ -1385,6 +1400,18 @@ msgstr ""
 msgid "Backed up"
 msgstr ""
 
+#: src/components/ShareCardDialog.tsx
+msgid "Background"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Background color"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Background opacity"
+msgstr ""
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Backup directory"
 msgstr ""
@@ -1699,16 +1726,16 @@ msgstr "{name} を変更"
 msgid "Change {title}"
 msgstr "{title} を変更"
 
-#. js-lingui-explicit-id
-#: src/pages/shell/model-error-actions.tsx
-msgid "Change model"
-msgstr ""
-
 #: src/pages/shell/composer-error.tsx
 #: src/pages/shell/message-translation.tsx
 #: src/pages/shell/model-error-actions.tsx
 msgid "Change model"
 msgstr "モデルを変更"
+
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Change model"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
@@ -2417,6 +2444,7 @@ msgstr "招待リンクをコピー"
 #: src/components/InviteDialog.tsx
 #: src/components/pages/PublicPageShell.tsx
 #: src/components/pages/SharePopover.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Copy link"
 msgstr "リンクをコピー"
 
@@ -2569,6 +2597,10 @@ msgstr "スペースを作成できませんでした"
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "Could not create the bot"
 msgstr "ボットを作成できませんでした"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Could not create the link. Try again."
+msgstr ""
 
 #: src/pages/Onboarding.tsx
 msgid "Could not create your bot"
@@ -3195,6 +3227,10 @@ msgstr ""
 msgid "Couldn't load the overview"
 msgstr ""
 
+#: src/pages/SharedConversation.tsx
+msgid "Couldn't load this conversation. Try again."
+msgstr ""
+
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this page. Try again."
 msgstr "このページを読み込めませんでした。もう一度お試しください。"
@@ -3256,6 +3292,10 @@ msgstr "ボットを作成"
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
 msgstr "グループを作成"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Create link"
+msgstr ""
 
 #: src/components/CreateOrganizationDialog.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
@@ -3325,6 +3365,10 @@ msgstr "通貨"
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Current model"
+msgstr ""
+
+#: src/pages/SharedConversation.tsx
+msgid "Current model: {model}"
 msgstr ""
 
 #: src/components/AccountAccess.tsx
@@ -3747,6 +3791,10 @@ msgstr ""
 msgid "Download PDF"
 msgstr "PDF をダウンロード"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Download PNG"
+msgstr ""
+
 #: src/pages/shell/media-result.tsx
 msgid "Downloading {name}"
 msgstr ""
@@ -4021,6 +4069,7 @@ msgid "Everyone in this bot's space can read the chats it gets from {linkApp}."
 msgstr "このボットのスペースにいる全員が、{linkApp}から届いたチャットを読むことができます。"
 
 #: src/pages/shell/message-cards.tsx
+#: src/pages/shell/message-translation.tsx
 #: src/pages/shell/message-view.tsx
 msgid "Expand"
 msgstr "展開"
@@ -4039,12 +4088,18 @@ msgid "expired"
 msgstr "期限切れ"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Expired"
 msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 msgid "Expires"
 msgstr "有効期限"
+
+#. placeholder {0}: expiryLabel(item.expiresAt)
+#: src/components/ShareConversationDialog.tsx
+msgid "Expires {0}"
+msgstr ""
 
 #: src/components/vault/kinds.tsx
 msgid "Expires {expiry}"
@@ -4265,6 +4320,10 @@ msgstr "MCP接続を完了しています…"
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Focus message"
 msgstr "メッセージ欄に移動"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Font size"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
@@ -4675,6 +4734,10 @@ msgstr "APIキーを含める"
 msgid "Include memory"
 msgstr ""
 
+#: src/components/ShareCardDialog.tsx
+msgid "Include the question"
+msgstr ""
+
 #: src/components/call/VoiceChatCard.tsx
 msgid "Incoming call"
 msgstr "着信"
@@ -4682,6 +4745,10 @@ msgstr "着信"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Inherit default"
 msgstr "デフォルトを継承"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Ink"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Input"
@@ -5016,6 +5083,10 @@ msgstr "リンクをコピーしました"
 msgid "Link DMs"
 msgstr "DMを連携"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "Link expires in"
+msgstr ""
+
 #: src/components/AccountAccess.tsx
 msgid "Link SSO"
 msgstr "SSOを連携"
@@ -5104,6 +5175,7 @@ msgstr "音声プロバイダーを読み込み中…"
 #: src/components/PageLoading.tsx
 #: src/components/prompt-templates/BotPersonaSection.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/components/SpaceMembersSettings.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Artifacts.tsx
@@ -5114,6 +5186,7 @@ msgstr "音声プロバイダーを読み込み中…"
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
+#: src/pages/SharedConversation.tsx
 #: src/pages/shell/chat-persona-switcher.tsx
 #: src/pages/shell/transcript.tsx
 msgid "Loading…"
@@ -5132,6 +5205,7 @@ msgid "Local file"
 msgstr "ローカルファイル"
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/chat-model-picker.tsx
 msgid "Located here"
 msgstr ""
 
@@ -5177,6 +5251,10 @@ msgstr "メインモデル"
 
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Main persona"
+msgstr ""
+
+#: src/pages/shell/message-hover-actions.tsx
+msgid "Make share card"
 msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
@@ -5388,6 +5466,13 @@ msgstr "{peer}にメッセージを送信しました"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Messages"
 msgstr "メッセージ"
+
+#. placeholder {0}: conversation.range.from
+#. placeholder {1}: conversation.range.to
+#. placeholder {2}: conversation.range.of
+#: src/pages/SharedConversation.tsx
+msgid "Messages {0}–{1} of {2}"
+msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Messaging"
@@ -5658,11 +5743,16 @@ msgstr "対応が必要"
 msgid "Needs: {names}"
 msgstr "必要: {names}"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "Never"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 msgid "Never ask"
 msgstr "確認しない"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Never expires"
 msgstr ""
 
@@ -5844,6 +5934,10 @@ msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "No invite codes yet"
+msgstr ""
+
+#: src/components/ShareConversationDialog.tsx
+msgid "No links yet."
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -6197,6 +6291,7 @@ msgstr "ナビゲーションを開く"
 
 #: src/components/pages/PublicPageShell.tsx
 #: src/pages/Invite.tsx
+#: src/pages/SharedConversation.tsx
 #: src/pages/SharedPage.tsx
 msgid "Open Rakazo"
 msgstr "Rakazo を開く"
@@ -6409,6 +6504,10 @@ msgstr "APIキーを貼り付け"
 msgid "Paste your API key, then test again."
 msgstr "APIキーを貼り付けてから、もう一度テストしてください。"
 
+#: src/pages/SharedConversation.tsx
+msgid "Pause"
+msgstr ""
+
 #: src/pages/RoutineList.tsx
 #: src/pages/shell/import-status.ts
 msgid "Paused"
@@ -6479,6 +6578,10 @@ msgstr "ピン留め済み"
 msgid "Plan"
 msgstr "プラン"
 
+#: src/pages/SharedConversation.tsx
+msgid "Play"
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 msgid "Play {name}"
 msgstr "{name}を再生"
@@ -6526,6 +6629,10 @@ msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Preset prompt"
+msgstr ""
+
+#: src/pages/SharedConversation.tsx
+msgid "Press play to watch this conversation unfold."
 msgstr ""
 
 #: src/components/BotPackageImport.tsx
@@ -6946,6 +7053,10 @@ msgstr "{secretName}を削除しますか？ボットはこれを使用できな
 msgid "Remove {site}"
 msgstr "{site} を削除"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Remove background image"
+msgstr ""
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Remove change trigger"
 msgstr "変更トリガーを削除"
@@ -7061,6 +7172,10 @@ msgstr "キーを置き換え"
 msgid "Replaces the login saved for {0}"
 msgstr "{0}に保存されているログインを置き換えます"
 
+#: src/pages/SharedConversation.tsx
+msgid "Replay progress"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Replies"
 msgstr "返信"
@@ -7100,6 +7215,7 @@ msgid "Resend"
 msgstr ""
 
 #: src/components/ComputerMaintenanceActions.tsx
+#: src/components/ShareCardDialog.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/ExternalConversationSettings.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -7161,6 +7277,7 @@ msgstr "再起動してアップデート"
 
 #: src/components/admin/AdminUsers.tsx
 #: src/components/InstructionSettings.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/shell/archived-chats.tsx
 msgid "Restore"
 msgstr "復元"
@@ -7202,11 +7319,6 @@ msgstr "ワークスペースを復元中"
 msgid "Resume import"
 msgstr ""
 
-#. js-lingui-explicit-id
-#: src/pages/shell/model-error-actions.tsx
-msgid "Retry"
-msgstr ""
-
 #: src/components/AccountAccess.tsx
 #: src/components/admin/AdminAppDownloadSettings.tsx
 #: src/components/admin/AdminAuditLog.tsx
@@ -7230,10 +7342,16 @@ msgstr ""
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
+#: src/pages/SharedConversation.tsx
 #: src/pages/shell/model-error-actions.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Retry"
 msgstr "再試行"
+
+#. js-lingui-explicit-id
+#: src/pages/shell/model-error-actions.tsx
+msgid "Retry"
+msgstr ""
 
 #: src/App.tsx
 #: src/pages/PeerMessagesOverlay.tsx
@@ -7275,18 +7393,28 @@ msgid "Reviews pull requests waiting on you"
 msgstr "あなた待ちのプルリクエストをレビュー"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Revoke"
 msgstr "取り消す"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/AdminAccessPage.tsx
 msgid "Revoked"
 msgstr "取り消し済み"
 
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Revoking…"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Rice"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Rice paper"
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
@@ -7368,6 +7496,10 @@ msgstr "{botName}と同じ"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Same as main model"
 msgstr "メインモデルと同じ"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Sans-serif"
+msgstr ""
 
 #: src/lib/cron.ts
 msgid "Saturday"
@@ -7679,6 +7811,10 @@ msgstr "送信済み"
 msgid "Serenity endpoint is required."
 msgstr "Serenityのエンドポイントは必須です。"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Serif"
+msgstr ""
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Server address"
 msgstr ""
@@ -7761,6 +7897,19 @@ msgstr "共有"
 #: src/components/pages/SharePopover.tsx
 msgid "Share “{title}”"
 msgstr "「{title}」を共有"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Share card"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Share card preview"
+msgstr ""
+
+#: src/components/ShareConversationDialog.tsx
+#: src/pages/shell/chat-header.tsx
+msgid "Share conversation"
+msgstr ""
 
 #: src/components/pages/SharePopover.tsx
 msgid "Share, anyone with the link can view"
@@ -8396,6 +8545,14 @@ msgstr "テスト中"
 msgid "Testing…"
 msgstr "テスト中…"
 
+#: src/components/ShareCardDialog.tsx
+msgid "Text"
+msgstr ""
+
+#: src/components/ShareCardDialog.tsx
+msgid "Text color"
+msgstr ""
+
 #: src/components/BotEmailAddressField.tsx
 msgid "That address isn't available"
 msgstr "そのアドレスは使用できません"
@@ -8444,6 +8601,10 @@ msgstr ""
 msgid "The export link expired. Try again."
 msgstr ""
 
+#: src/components/ShareConversationDialog.tsx
+msgid "The link opens a read-only replay without signing in. Secrets and local paths are removed before sharing."
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model hit its output limit before finishing its reply."
@@ -8458,6 +8619,10 @@ msgstr "モデルプロバイダーがエラーを返しました。"
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "モデルが利用できない応答を返しました。もう一度お試しください。"
+
+#: src/pages/SharedConversation.tsx
+msgid "The owner may have revoked its link or it may have expired."
+msgstr ""
 
 #: src/pages/SharedPage.tsx
 msgid "The owner may have turned off its link or deleted it."
@@ -8603,6 +8768,10 @@ msgstr "この接続のリクエスト上限が小さすぎます。別のモデ
 #: src/lib/run-error.ts
 msgid "This conversation is too long for the model. Retrying won't help. Start a new chat or shorten your message."
 msgstr "この会話はモデルにとって長すぎます。再試行しても解決しません。新しいチャットを開始するか、メッセージを短くしてください。"
+
+#: src/pages/SharedConversation.tsx
+msgid "This conversation isn't available"
+msgstr ""
 
 #. placeholder {0}: pendingDelete.versionCount
 #: src/pages/Artifacts.tsx
@@ -8882,6 +9051,7 @@ msgid "translation"
 msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/message-translation.tsx
 msgid "Translation"
 msgstr ""
 
@@ -9076,6 +9246,10 @@ msgstr "今すぐアップグレード"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Upload"
 msgstr "アップロード"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Upload background image"
+msgstr ""
 
 #: src/components/WebdavBackupSettings.tsx
 msgid "Uploading…"
