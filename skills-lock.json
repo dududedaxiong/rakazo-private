@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/composio/SKILL.md",
       "computedHash": "7a41fbd11708e8e18acff2873e945c42f40c9bd290a19251ae0a24b8d9e3ec54"
+    },
+    "write-notes-like-deepseek": {
+      "source": "czm15053/write-notes-like-deepseek",
+      "sourceType": "github",
+      "skillPath": "skills/write-notes-like-deepseek/SKILL.md",
+      "computedHash": "5d7426fa909dcbf4396dd954fd031173f23c476cba77fdd38dd8819ced0f8f48"
     }
   }
 }
