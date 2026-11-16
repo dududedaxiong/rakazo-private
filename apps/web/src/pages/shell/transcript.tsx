@@ -8,7 +8,7 @@ import type {
   Run,
   ThreadMessage,
 } from "@rakazo/contracts";
-import type { ChildBotBlock, FoldedTranscript } from "@rakazo/core";
+import type { ChildBotBlock, FoldedTranscript, ShareCardTextOverride } from "@rakazo/core";
 import {
   expandPeerReplies,
   groupVoiceChats,
@@ -175,7 +175,7 @@ export const Transcript = memo(function Transcript({
   onQuote: (message: ThreadMessage, quote: string) => void;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
   /** Turns a reply into a share card; absent, no card entry shows. */
-  onShareCard?: (message: ThreadMessage) => void;
+  onShareCard?: (message: ThreadMessage, textOverride?: ShareCardTextOverride) => void;
   onJumpToMessage: (messageId: string) => void;
   onOpenPeerMessages: (peer: { peerBotId: string; peerBotName: string }) => void;
   memberName?: (botId: string | undefined) => string | undefined;

@@ -1,5 +1,6 @@
 import type { AgentSkillCatalogEntry, ModelRoleChoice } from "@rakazo/contracts";
 import { primaryBotModel } from "@rakazo/contracts";
+import type { ShareCardTextOverride } from "@rakazo/core";
 import {
   buildComposerMentionOptions,
   channelMessageSender,
@@ -198,6 +199,9 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   const [backupOpen, setBackupOpen] = useState(false);
   const [shareCardTarget, setShareCardTarget] = useState<MobileMessage | null>(null);
   const [shareCardQuestion, setShareCardQuestion] = useState("");
+  const [shareCardTextOverride, setShareCardTextOverride] = useState<ShareCardTextOverride | null>(
+    null,
+  );
   const [shareConversationOpen, setShareConversationOpen] = useState(false);
   const insets = useSafeAreaInsets();
   // An unfolded or tablet window keeps messages and the composer in a centred reading column.
@@ -825,8 +829,9 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       );
     },
     resend: resendMessage,
-    shareCard: (message) => {
+    shareCard: (message, textOverride) => {
       setShareCardTarget(message);
+      setShareCardTextOverride(textOverride ?? null);
       setShareCardQuestion(
         previousUserMessageText(history.snapRef.current?.messages ?? [], message.id) ?? "",
       );
@@ -1490,6 +1495,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             visible
             message={shareCardTarget}
             previousUserMessageText={shareCardQuestion}
+            textOverride={shareCardTextOverride ?? undefined}
             target={artifactTarget}
             onClose={() => setShareCardTarget(null)}
           />

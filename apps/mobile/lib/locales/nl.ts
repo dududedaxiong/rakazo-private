@@ -2067,6 +2067,9 @@ export const NL_MESSAGES: Record<string, string> = {
     "Wat het genereren van afbeeldingen en video's nodig heeft",
   "Could not save image": "Afbeelding kon niet worden opgeslagen",
   "Could not save media": "Media konden niet worden opgeslagen",
+  "Days": "Dagen",
+  "Custom expiry in days": "Aangepaste geldigheid in dagen",
+  "Enlarge picture": "Afbeelding vergroten",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

@@ -2019,6 +2019,9 @@ export const ES_MESSAGES: Record<string, string> = {
   "What image and video generation needs": "Lo que necesita la generación de imágenes y vídeos",
   "Could not save image": "No se pudo guardar la imagen",
   "Could not save media": "No se pudo guardar el archivo multimedia",
+  "Days": "Días",
+  "Custom expiry in days": "Caducidad personalizada en días",
+  "Enlarge picture": "Ampliar imagen",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

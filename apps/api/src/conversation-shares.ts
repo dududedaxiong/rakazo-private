@@ -81,7 +81,7 @@ async function shareSummaryFor(deps: ShareDeps, row: ShareRow): Promise<Conversa
 export async function createConversationShare(
   deps: ShareDeps,
   actor: Actor,
-  input: { botId?: string; groupId?: string; expiresInDays?: 1 | 7 | 30 | 365 | null },
+  input: { botId?: string; groupId?: string; expiresInDays?: number | null },
   signal: AbortSignal,
 ): Promise<ConversationShareSummary> {
   const target = await resolveThreadTarget(deps.prisma, actor, input);

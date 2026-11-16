@@ -2056,6 +2056,9 @@ export const PL_MESSAGES: Record<string, string> = {
   "What image and video generation needs": "Czego wymaga generowanie obrazów i wideo",
   "Could not save image": "Nie można było zapisać obrazu",
   "Could not save media": "Nie można zapisać multimediów",
+  "Days": "Dni",
+  "Custom expiry in days": "Własny okres ważności w dniach",
+  "Enlarge picture": "Powiększ obraz",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

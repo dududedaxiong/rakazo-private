@@ -3382,12 +3382,17 @@ msgid "Current persona"
 msgstr "目前人設"
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Custom"
 msgstr "自訂"
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
 msgid "Custom app download"
 msgstr "自訂 App 下載"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Custom expiry in days"
+msgstr "自訂有效期限（天）"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Custom header"
@@ -3443,6 +3448,10 @@ msgstr "日常工作"
 #: src/lib/cron.ts
 msgid "days"
 msgstr "天"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Days"
+msgstr "天數"
 
 #: src/components/call/IncomingCall.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -3925,6 +3934,10 @@ msgstr "於 {day} 結束"
 #: src/components/GitHubStarPrompt.tsx
 msgid "Enjoying Rakazo?"
 msgstr "喜歡 Rakazo 嗎？"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Enlarge picture"
+msgstr "放大圖片"
 
 #: src/lib/user-error.ts
 msgid "Enter a password"
@@ -6564,6 +6577,10 @@ msgstr "請從清單中選擇模型，或輸入此端點提供的模型 ID。"
 #: src/lib/routine-draft.ts
 msgid "Pick a tool to check"
 msgstr "選擇要檢查的工具"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Picture"
+msgstr "圖片"
 
 #: src/components/pages/PagesList.tsx
 #: src/pages/BotContextMenu.tsx

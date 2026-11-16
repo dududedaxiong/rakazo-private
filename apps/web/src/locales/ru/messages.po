@@ -3381,11 +3381,16 @@ msgid "Current persona"
 msgstr "Текущая персона"
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Custom"
 msgstr "Свой"
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
 msgid "Custom app download"
+msgstr ""
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Custom expiry in days"
 msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
@@ -3442,6 +3447,10 @@ msgstr "Повседневная работа"
 #: src/lib/cron.ts
 msgid "days"
 msgstr "дни"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Days"
+msgstr ""
 
 #: src/components/call/IncomingCall.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -3924,6 +3933,10 @@ msgstr "Закончится {day}"
 #: src/components/GitHubStarPrompt.tsx
 msgid "Enjoying Rakazo?"
 msgstr "Нравится Rakazo?"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Enlarge picture"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Enter a password"
@@ -6563,6 +6576,10 @@ msgstr "Выберите модель из списка или введите id
 #: src/lib/routine-draft.ts
 msgid "Pick a tool to check"
 msgstr "Выберите инструмент для проверки"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Picture"
+msgstr ""
 
 #: src/components/pages/PagesList.tsx
 #: src/pages/BotContextMenu.tsx

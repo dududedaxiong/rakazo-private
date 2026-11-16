@@ -8,6 +8,7 @@ import {
   SHARE_CARD_WIDTH,
   shareCardContentFromMessage,
   shareCardFilename,
+  shareCardMediaRect,
   wrapShareCardLines,
 } from "./share-card.js";
 import type { LiveThreadMessage } from "./thread-snapshot-events.js";
@@ -113,6 +114,80 @@ describe("shareCardContentFromMessage", () => {
       shareCardContentFromMessage(message({ blocks: [{ kind: "meta", text: "typing…" }] })),
     ).toBeNull();
   });
+
+  it("shows a translation instead of the original when one is shown", () => {
+    const content = shareCardContentFromMessage(
+      message({ blocks: [{ kind: "text", text: "Hello world" }] }),
+      undefined,
+      { text: "你好，世界", model: "translator-a" },
+    );
+    expect(content).toEqual({
+      kind: "text",
+      text: "你好，世界",
+      model: "translator-a",
+      date: "2026-11-16",
+    });
+  });
+
+  it("keeps the picture and the question when the text is a translation", () => {
+    const content = shareCardContentFromMessage(
+      message({
+        blocks: [
+          { kind: "text", text: "A watercolor mountain" },
+          { kind: "image", artifactId: "a_1", mimeType: "image/png", name: "mountain.png" },
+        ],
+      }),
+      "Draw a mountain",
+      { text: "一幅水彩山水画", model: "translator-a" },
+    );
+    expect(content).toEqual({
+      kind: "image",
+      question: "Draw a mountain",
+      text: "一幅水彩山水画",
+      model: "translator-a",
+      imageName: "mountain.png",
+      artifactId: "a_1",
+      prompt: "Draw a mountain",
+      date: "2026-11-16",
+    });
+  });
+
+  it("falls back to the reply's model when the override names none", () => {
+    const content = shareCardContentFromMessage(
+      message({
+        blocks: [{ kind: "text", text: "Hello\n当前模型: model-a" }],
+        modelSwitches: {
+          attempts: [
+            { model: "model-a", provider: "Relay A", outcome: "succeeded", at: "2026-11-16" },
+          ],
+          finalModel: "model-a",
+        },
+      }),
+      undefined,
+      { text: "你好" },
+    );
+    expect(content?.text).toBe("你好");
+    expect(content?.model).toBe("model-a (Relay A)");
+  });
+
+  it("drops the original's trailing model line with the original text", () => {
+    const content = shareCardContentFromMessage(
+      message({ blocks: [{ kind: "text", text: "Hello\n当前模型: model-a" }] }),
+      undefined,
+      { text: "你好" },
+    );
+    expect(content?.text).toBe("你好");
+    expect(content?.model).toBeUndefined();
+  });
+
+  it("redacts secrets in a translation like in the original", () => {
+    const content = shareCardContentFromMessage(
+      message({ blocks: [{ kind: "text", text: "Hello" }] }),
+      undefined,
+      { text: "key sk-proj-abcdefghij1234567890", model: "translator-a" },
+    );
+    expect(content?.text).toBe("key [Redacted]");
+  });
 });
 
 describe("planShareCard", () => {
@@ -177,6 +252,50 @@ describe("planShareCard positions", () => {
     expect(plan.footerY).toBeNull();
     expect(plan.mediaY).toBe(64);
     expect(plan.bodyY).toBe(64);
+  });
+});
+
+describe("shareCardMediaRect", () => {
+  it("returns null when the card has no picture area", () => {
+    const content = shareCardContentFromMessage(
+      message({ blocks: [{ kind: "text", text: "Hello" }] }),
+    )!;
+    const plan = planShareCard(content, DEFAULT_SHARE_CARD_STYLE, measure);
+    expect(shareCardMediaRect(plan, 800, 600)).toBeNull();
+    expect(shareCardMediaRect(plan, 0, 0)).toBeNull();
+  });
+
+  it("fits a wide picture across the content width", () => {
+    const content = shareCardContentFromMessage(
+      message({
+        blocks: [
+          { kind: "text", text: "A mountain" },
+          { kind: "image", artifactId: "a_1", mimeType: "image/png", name: "m.png" },
+        ],
+      }),
+    )!;
+    const plan = planShareCard(content, DEFAULT_SHARE_CARD_STYLE, measure, 16 / 9);
+    const rect = shareCardMediaRect(plan, 1600, 900)!;
+    expect(rect.y).toBe(plan.mediaY);
+    expect(rect.x).toBeCloseTo(76, 5);
+    expect(rect.width).toBeCloseTo(928, 5);
+    expect(rect.height).toBeCloseTo(plan.mediaHeight, 5);
+  });
+
+  it("centers a tall picture inside the picture area", () => {
+    const content = shareCardContentFromMessage(
+      message({
+        blocks: [
+          { kind: "text", text: "A tower" },
+          { kind: "image", artifactId: "a_1", mimeType: "image/png", name: "t.png" },
+        ],
+      }),
+    )!;
+    const plan = planShareCard(content, DEFAULT_SHARE_CARD_STYLE, measure, 16 / 9);
+    const rect = shareCardMediaRect(plan, 900, 1600)!;
+    expect(rect.height).toBeCloseTo(plan.mediaHeight, 5);
+    expect(rect.width).toBeLessThan(928);
+    expect(rect.x).toBeCloseTo(76 + (928 - rect.width) / 2, 5);
   });
 });
 

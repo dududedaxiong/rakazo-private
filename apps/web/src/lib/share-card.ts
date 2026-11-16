@@ -1,6 +1,15 @@
 import type { ShareCardContent, ShareCardPlan, ShareCardStyle } from "@rakazo/core";
 import { SHARE_CARD_PADDING, SHARE_CARD_WIDTH, shareCardFont } from "@rakazo/core";
 
+export type {
+  ShareCardContent,
+  ShareCardFont,
+  ShareCardMeasure,
+  ShareCardMediaRect,
+  ShareCardPlan,
+  ShareCardStyle,
+  ShareCardTextOverride,
+} from "@rakazo/core";
 export {
   DEFAULT_SHARE_CARD_STYLE,
   estimateShareCardTextWidth,
@@ -13,14 +22,8 @@ export {
   shareCardContentFromMessage,
   shareCardFilename,
   shareCardFont,
+  shareCardMediaRect,
   wrapShareCardLines,
-} from "@rakazo/core";
-export type {
-  ShareCardContent,
-  ShareCardFont,
-  ShareCardMeasure,
-  ShareCardPlan,
-  ShareCardStyle,
 } from "@rakazo/core";
 
 const CONTENT_WIDTH = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;

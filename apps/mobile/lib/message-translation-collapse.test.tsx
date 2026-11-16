@@ -125,6 +125,7 @@ function fakeTranslation(overrides: Partial<MessageTranslation>): MessageTransla
     },
     error: null,
     expanded: true,
+    shareOverride: null,
     translate: vi.fn(),
     collapse: vi.fn(),
     expand: vi.fn(),

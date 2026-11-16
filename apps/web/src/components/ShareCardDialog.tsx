@@ -1,10 +1,19 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { ThreadMessage } from "@rakazo/contracts";
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Switch } from "@rakazo/ui-web";
-import { Download, ImagePlus, RotateCcw, X } from "lucide-react";
+import {
+  Button,
+  cn,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Switch,
+} from "@rakazo/ui-web";
+import { Download, ImagePlus, RotateCcw, X, ZoomIn } from "lucide-react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open.js";
-import type { ShareCardStyle } from "../lib/share-card.js";
+import type { ShareCardStyle, ShareCardTextOverride } from "../lib/share-card.js";
 import {
   DEFAULT_SHARE_CARD_STYLE,
   downloadBlob,
@@ -17,6 +26,7 @@ import {
   shareCardContentFromMessage,
   shareCardFilename,
   shareCardFont,
+  shareCardMediaRect,
   shareCardToBlob,
 } from "../lib/share-card.js";
 import { useArtifactImage } from "../lib/use-artifact-image.js";
@@ -29,20 +39,23 @@ function formatDuration(seconds: number): string {
 export function ShareCardDialog({
   message,
   question,
+  textOverride,
   artifactTarget,
   open,
   onOpenChange,
 }: {
   message: ThreadMessage;
   question?: string;
+  /** The text actually on screen, e.g. a shown translation, in place of the reply. */
+  textOverride?: ShareCardTextOverride;
   artifactTarget: ArtifactTarget;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const { t } = useLingui();
   const content = useMemo(
-    () => shareCardContentFromMessage(message, question),
-    [message, question],
+    () => shareCardContentFromMessage(message, question, textOverride),
+    [message, question, textOverride],
   );
   const [style, setStyle] = useState<ShareCardStyle>(DEFAULT_SHARE_CARD_STYLE);
   const [presetId, setPresetId] = useState("rice");
@@ -53,6 +66,13 @@ export function ShareCardDialog({
   const [backgroundImage, setBackgroundImage] = useState<HTMLImageElement | null>(null);
   const [mediaImage, setMediaImage] = useState<HTMLImageElement | null>(null);
   const [durationLabel, setDurationLabel] = useState<string | undefined>(undefined);
+  const [posterUrl, setPosterUrl] = useState<string | undefined>(undefined);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [previewBox, setPreviewBox] = useState<{
+    width: number;
+    left: number;
+    top: number;
+  } | null>(null);
   const previewRef = useRef<HTMLCanvasElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const measureCanvas = useMemo(() => document.createElement("canvas"), []);
@@ -90,6 +110,7 @@ export function ShareCardDialog({
   useEffect(() => {
     setMediaImage(null);
     setDurationLabel(undefined);
+    setPosterUrl(undefined);
     if (!mediaSrc || !content) return;
     if (content.kind === "video") {
       const video = document.createElement("video");
@@ -106,9 +127,11 @@ export function ShareCardDialog({
         const frameCtx = frame.getContext("2d");
         if (!frameCtx) return;
         frameCtx.drawImage(video, 0, 0);
+        const dataUrl = frame.toDataURL("image/png");
         const poster = new Image();
         poster.onload = () => setMediaImage(poster);
-        poster.src = frame.toDataURL("image/png");
+        poster.src = dataUrl;
+        setPosterUrl(dataUrl);
       };
       video.src = mediaSrc;
       return () => {
@@ -127,12 +150,10 @@ export function ShareCardDialog({
     }
   }, [mediaSrc, content]);
 
-  // The preview and the PNG draw from the same plan.
-  useEffect(() => {
-    const canvas = previewRef.current;
-    const ctx = canvas?.getContext("2d");
+  // One plan feeds the preview, the picture's tap area, and the zoom cue.
+  const plan = useMemo(() => {
     const measureCtx = measureCanvas.getContext("2d");
-    if (!canvas || !ctx || !measureCtx || !shownContentWithDuration) return;
+    if (!measureCtx || !shownContentWithDuration) return null;
     const measure = (text: string, px: number, font: "serif" | "sans") => {
       measureCtx.font = shareCardFont(px, font);
       return measureCtx.measureText(text).width;
@@ -141,14 +162,85 @@ export function ShareCardDialog({
       mediaImage && mediaImage.naturalWidth > 0
         ? mediaImage.naturalWidth / mediaImage.naturalHeight
         : undefined;
-    const plan = planShareCard(shownContentWithDuration, style, measure, aspect);
+    return planShareCard(shownContentWithDuration, style, measure, aspect);
+  }, [shownContentWithDuration, style, mediaImage, measureCanvas]);
+
+  // The preview and the PNG draw from the same plan.
+  useEffect(() => {
+    const canvas = previewRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx || !plan || !shownContentWithDuration) return;
     canvas.width = plan.width;
     canvas.height = plan.height;
     drawShareCard(ctx, plan, shownContentWithDuration, style, {
       image: mediaImage,
       background: backgroundImage,
     });
-  }, [shownContentWithDuration, style, mediaImage, backgroundImage, measureCanvas]);
+  }, [plan, shownContentWithDuration, style, mediaImage, backgroundImage]);
+
+  const mediaRect = useMemo(
+    () =>
+      plan && mediaImage
+        ? shareCardMediaRect(plan, mediaImage.naturalWidth, mediaImage.naturalHeight)
+        : null,
+    [plan, mediaImage],
+  );
+
+  // Where the canvas sits on screen, so the zoom cue lands on the picture.
+  useEffect(() => {
+    const canvas = previewRef.current;
+    if (!canvas) return;
+    const measureBox = () =>
+      setPreviewBox({
+        width: canvas.clientWidth,
+        left: canvas.offsetLeft,
+        top: canvas.offsetTop,
+      });
+    measureBox();
+    const observer = new ResizeObserver(measureBox);
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, [content]);
+
+  // The picture itself, enlarged: the generated image, or the video's frame.
+  const zoomUrl =
+    content?.kind === "video"
+      ? posterUrl
+      : content?.kind === "image"
+        ? (mediaSrc ?? undefined)
+        : undefined;
+
+  const openZoomAt = (event: ReactMouseEvent<HTMLCanvasElement>) => {
+    const canvas = previewRef.current;
+    if (!canvas || !mediaRect || !zoomUrl) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || canvas.width === 0) return;
+    const scale = canvas.width / rect.width;
+    const x = (event.clientX - rect.left) * scale;
+    const y = (event.clientY - rect.top) * scale;
+    if (
+      x >= mediaRect.x &&
+      x <= mediaRect.x + mediaRect.width &&
+      y >= mediaRect.y &&
+      y <= mediaRect.y + mediaRect.height
+    ) {
+      setZoomOpen(true);
+    }
+  };
+
+  const zoomCueStyle =
+    mediaRect && zoomUrl && previewBox
+      ? {
+          left:
+            previewBox.left +
+            ((mediaRect.x + mediaRect.width) * previewBox.width) / SHARE_CARD_WIDTH -
+            36,
+          top:
+            previewBox.top +
+            ((mediaRect.y + mediaRect.height) * previewBox.width) / SHARE_CARD_WIDTH -
+            36,
+        }
+      : undefined;
 
   if (!content) return null;
 
@@ -193,13 +285,27 @@ export function ShareCardDialog({
             <Trans>Share card</Trans>
           </DialogTitle>
         </DialogHeader>
-        <div className="flex justify-center rounded-2xl bg-muted p-4">
+        <div className="relative flex justify-center rounded-2xl bg-muted p-4">
           <canvas
             ref={previewRef}
             width={SHARE_CARD_WIDTH}
-            className="w-full max-w-md rounded-lg"
+            className={cn("w-full max-w-md rounded-lg", mediaRect ? "cursor-pointer" : "")}
+            onClick={openZoomAt}
             aria-label={t`Share card preview`}
           />
+          {mediaRect && zoomUrl && zoomCueStyle ? (
+            <Button
+              type="button"
+              variant="secondary"
+              size="icon-sm"
+              className="absolute rounded-full bg-black/60 text-white hover:bg-black/70"
+              style={zoomCueStyle}
+              onClick={() => setZoomOpen(true)}
+              aria-label={t`Enlarge picture`}
+            >
+              <ZoomIn />
+            </Button>
+          ) : null}
         </div>
         <div className="space-y-4">
           <div className="flex flex-wrap gap-2">
@@ -371,6 +477,18 @@ export function ShareCardDialog({
           </Button>
         </div>
       </DialogContent>
+      <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="sr-only">
+              <Trans>Picture</Trans>
+            </DialogTitle>
+          </DialogHeader>
+          {zoomUrl ? (
+            <img src={zoomUrl} alt="" className="max-h-[75vh] w-full rounded-lg object-contain" />
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }

@@ -2047,6 +2047,9 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "What image and video generation needs": "圖片影片生成所需",
   "Could not save image": "無法儲存圖片",
   "Could not save media": "無法儲存媒體",
+  "Days": "天數",
+  "Custom expiry in days": "自訂有效期限（天）",
+  "Enlarge picture": "放大圖片",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "與{peer}的 {count} 則訊息" };

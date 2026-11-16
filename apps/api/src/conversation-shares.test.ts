@@ -149,6 +149,29 @@ describe("conversation shares", () => {
     expect(conversationShareCreate.mock.calls[0]![0].data.expiresAt).toBeNull();
   });
 
+  it("creates a share expiring in a custom number of days", async () => {
+    conversationShareCreate.mockResolvedValue({
+      id: "share-3",
+      title: "Helper",
+      secretId: "secret-1",
+      expiresAt: new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000),
+      revokedAt: null,
+      createdAt: now,
+    });
+    const before = Date.now();
+    await createConversationShare(
+      deps,
+      actor,
+      { botId: "bot-1", expiresInDays: 90 },
+      new AbortController().signal,
+    );
+    const after = Date.now();
+    const created = conversationShareCreate.mock.calls[0]![0].data;
+    const day = 24 * 60 * 60 * 1000;
+    expect(created.expiresAt.getTime()).toBeGreaterThanOrEqual(before + 90 * day);
+    expect(created.expiresAt.getTime()).toBeLessThanOrEqual(after + 90 * day);
+  });
+
   it("lists a thread's shares with their links", async () => {
     conversationShareFindMany.mockResolvedValue([
       {

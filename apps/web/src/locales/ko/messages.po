@@ -3381,11 +3381,16 @@ msgid "Current persona"
 msgstr "현재 페르소나"
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Custom"
 msgstr "사용자 지정"
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
 msgid "Custom app download"
+msgstr ""
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Custom expiry in days"
 msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
@@ -3442,6 +3447,10 @@ msgstr "일상 업무"
 #: src/lib/cron.ts
 msgid "days"
 msgstr "일"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Days"
+msgstr ""
 
 #: src/components/call/IncomingCall.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -3924,6 +3933,10 @@ msgstr "{day}에 종료"
 #: src/components/GitHubStarPrompt.tsx
 msgid "Enjoying Rakazo?"
 msgstr "Rakazo가 마음에 드시나요?"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Enlarge picture"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Enter a password"
@@ -6563,6 +6576,10 @@ msgstr "목록에서 모델을 선택하거나 이 엔드포인트가 제공하�
 #: src/lib/routine-draft.ts
 msgid "Pick a tool to check"
 msgstr "확인할 도구 선택"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Picture"
+msgstr ""
 
 #: src/components/pages/PagesList.tsx
 #: src/pages/BotContextMenu.tsx

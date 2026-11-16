@@ -6,7 +6,7 @@ import type {
   MessageReaction,
 } from "@rakazo/contracts";
 import { canReactToThreadMessage, MESSAGE_REACTIONS, primaryBotModel } from "@rakazo/contracts";
-import type { ChildBotBlock, PeerExchange } from "@rakazo/core";
+import type { ChildBotBlock, PeerExchange, ShareCardTextOverride } from "@rakazo/core";
 import {
   canMarkMessageUnread,
   copyableMessageText,
@@ -107,7 +107,7 @@ export type MessageRowActions = {
   /** Resends this user message's own text. Absent where unsupported. */
   resend?: (message: MobileMessage) => void;
   /** Opens the share-card sheet for this bot reply. Absent where unsupported. */
-  shareCard?: (message: MobileMessage) => void;
+  shareCard?: (message: MobileMessage, textOverride?: ShareCardTextOverride) => void;
   /** Stops the thread's runs; the stuck row's Cancel uses it. Absent where unsupported. */
   stopStuckRun?: () => void;
   /** Opens the model picker to retry this stuck message on another model. Absent where unsupported. */
@@ -281,6 +281,16 @@ export const MessageRow = memo(function MessageRow({
   const mediaDisplay = mediaDisplaySettingsFromBot(messageBot ?? null);
   const hasGeneratedImage = messageHasGeneratedImage(message);
   const hasGeneratedMedia = messageHasGeneratedMedia(message);
+  // Above the menu memo: the "Share card" entry carries the shown translation.
+  const translation = useMessageTranslation({
+    botId: messageBot?.id,
+    text: blockText(message),
+    settings: translationSettings,
+    autoTranslate: translationSettings.autoTranslate,
+    composing: liveMessageComposing(message.blocks),
+    messageId: message.id,
+    savedTranslation: message.translation ?? null,
+  });
   const {
     actionProps,
     menu,
@@ -342,7 +352,7 @@ export const MessageRow = memo(function MessageRow({
       message.role === "bot" &&
       !message.id.startsWith("progress:") &&
       (Boolean(blockText(message).trim()) || hasGeneratedMedia);
-    const shareCard = () => actions.shareCard?.(message);
+    const shareCard = () => actions.shareCard?.(message, translation.shareOverride ?? undefined);
     const regenerateMessage = actions.regenerate ? () => actions.regenerate!(message) : undefined;
     const resendMessage = actions.resend ? () => actions.resend!(message) : undefined;
     // Resend only makes sense for a sent user message with text to send again;
@@ -608,21 +618,14 @@ export const MessageRow = memo(function MessageRow({
     // The favorite entry follows the bot's toggle; the object itself is fresh
     // every render, so only the boolean it reads goes here.
     mediaDisplay.showMediaFavorite,
+    // The card carries the translation while its panel is open.
+    translation.shareOverride,
   ]);
   const layout = messageRowLayout(message.blocks, { activityBotId, inGroup, columnWidth });
   const canTranslate =
     message.role === "bot" &&
     !message.id.startsWith("progress:") &&
     Boolean(blockText(message).trim());
-  const translation = useMessageTranslation({
-    botId: messageBot?.id,
-    text: blockText(message),
-    settings: translationSettings,
-    autoTranslate: translationSettings.autoTranslate,
-    composing: liveMessageComposing(message.blocks),
-    messageId: message.id,
-    savedTranslation: message.translation ?? null,
-  });
   // A finished translation that is only folded away reopens instead of
   // spending another translation call; anything else translates as before.
   const handleTranslatePress = useCallback(() => {

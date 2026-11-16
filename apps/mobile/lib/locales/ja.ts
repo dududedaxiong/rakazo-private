@@ -2093,6 +2093,9 @@ export const JA_MESSAGES: Record<string, string> = {
   "What image and video generation needs": "画像・動画生成に必要なもの",
   "Could not save image": "画像を保存できませんでした",
   "Could not save media": "メディアを保存できませんでした",
+  "Days": "日数",
+  "Custom expiry in days": "有効期限（日数）",
+  "Enlarge picture": "画像を拡大",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "{peer}とのメッセージ{count}件" };

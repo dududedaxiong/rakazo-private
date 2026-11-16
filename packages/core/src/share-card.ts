@@ -84,6 +84,15 @@ export type ShareCardContent = {
 };
 
 /**
+ * The text a card shows instead of the reply's own words: a translation the
+ * reader is looking at. The model names who wrote the visible text.
+ */
+export type ShareCardTextOverride = {
+  text: string;
+  model?: string;
+};
+
+/**
  * A video's length as m:ss, for the play mark on a video card. The seconds
  * come from the video element, not the message.
  */
@@ -95,24 +104,29 @@ export function formatShareCardDuration(seconds: number): string {
 /**
  * The card for one reply: its text (the trailing "当前模型:" line split off
  * into `model`), its picture when it has one, its video when it has one.
- * Nothing else in the message reaches a card.
+ * Nothing else in the message reaches a card. A text override swaps the body
+ * for what the reader is looking at — a translation — while the picture,
+ * question, and date stay the reply's own.
  */
 export function shareCardContentFromMessage(
   message: LiveThreadMessage,
   question?: string,
+  textOverride?: ShareCardTextOverride,
 ): ShareCardContent | null {
-  const textBlocks = message.blocks
-    .map((block) => {
-      if (block.kind === "text" || block.kind === "progress" || block.kind === "ask")
-        return block.text;
-      return "";
-    })
-    .filter(Boolean)
-    .join("\n")
-    .trim();
-  const split = splitTrailingMark(textBlocks);
-  const text = redactShareText((split?.text ?? textBlocks).trim());
-  const model = messageModel(message) ?? split?.mark.modelId ?? undefined;
+  const rawText = textOverride
+    ? textOverride.text.trim()
+    : message.blocks
+        .map((block) => {
+          if (block.kind === "text" || block.kind === "progress" || block.kind === "ask")
+            return block.text;
+          return "";
+        })
+        .filter(Boolean)
+        .join("\n")
+        .trim();
+  const split = splitTrailingMark(rawText);
+  const text = redactShareText((split?.text ?? rawText).trim());
+  const model = textOverride?.model ?? messageModel(message) ?? split?.mark.modelId ?? undefined;
   const date = message.createdAt?.slice(0, 10);
   const image = message.blocks.find(
     (block): block is Extract<MessageBlock, { kind: "image" }> => block.kind === "image",
@@ -345,6 +359,36 @@ export function planShareCard(
     bodyY,
     footerDividerY,
     footerY,
+  };
+}
+
+/** The picture's drawn rectangle, in card coordinates. */
+export type ShareCardMediaRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
+/**
+ * Where the picture lands on the card, from the plan and the picture's own
+ * size — the same fit `drawShareCard` uses, so a tap inside this rectangle
+ * is a tap on the picture. Null when the card has no picture area.
+ */
+export function shareCardMediaRect(
+  plan: ShareCardPlan,
+  naturalWidth: number,
+  naturalHeight: number,
+): ShareCardMediaRect | null {
+  if (plan.mediaHeight <= 0 || naturalWidth <= 0 || naturalHeight <= 0) return null;
+  const scale = Math.min(CONTENT_WIDTH / naturalWidth, plan.mediaHeight / naturalHeight);
+  const width = naturalWidth * scale;
+  const height = naturalHeight * scale;
+  return {
+    x: SHARE_CARD_PADDING + (CONTENT_WIDTH - width) / 2,
+    y: plan.mediaY,
+    width,
+    height,
   };
 }
 

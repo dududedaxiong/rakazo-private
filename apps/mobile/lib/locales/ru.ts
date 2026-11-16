@@ -2104,6 +2104,9 @@ export const RU_MESSAGES: Record<string, string> = {
   "What image and video generation needs": "Что нужно для генерации изображений и видео",
   "Could not save image": "Не удалось сохранить изображение",
   "Could not save media": "Не удалось сохранить медиа",
+  "Days": "Дней",
+  "Custom expiry in days": "Свой срок в днях",
+  "Enlarge picture": "Увеличить изображение",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

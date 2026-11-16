@@ -6,6 +6,7 @@ import type {
   TranslateOutput,
 } from "@rakazo/contracts";
 import { moveBotModelToFront } from "@rakazo/contracts";
+import type { ShareCardTextOverride } from "@rakazo/core";
 import { displayName, modelOptionKey, stripLeadingOpaqueCodeLine } from "@rakazo/core";
 import {
   Button,
@@ -165,7 +166,7 @@ export function useMessageTranslation({
   onBotChanged?: () => Promise<void>;
   /** Opens the bot's settings at the model named in a switch timeline. */
   onLocateModel?: (target: ModelLocateTarget) => void;
-}): { actions: ReactNode; panel: ReactNode } {
+}): { actions: ReactNode; panel: ReactNode; shareOverride: ShareCardTextOverride | null } {
   const { t } = useLingui();
   // A kept translation opens already done, so a reloaded thread shows it
   // instead of asking for a fresh one.
@@ -188,6 +189,12 @@ export function useMessageTranslation({
   // is not content, so the displayed (and copied, shared, favorited) text drops it.
   const translatedText =
     state.status === "done" ? stripLeadingOpaqueCodeLine(state.result.translatedText) : "";
+  // A share card shows what the reader is looking at: the translation, while
+  // its panel is open. Folded away, the card goes back to the original.
+  const shareOverride: ShareCardTextOverride | null =
+    state.status === "done" && !collapsed && translatedText.trim() !== ""
+      ? { text: translatedText, model: state.result.modelId }
+      : null;
   // A translation saves under its own id, so favoriting it never toggles the original.
   const translationFavorite = useMessageFavorite({
     rpc,
@@ -390,6 +397,7 @@ export function useMessageTranslation({
     if (collapsed && state.status === "done") {
       return {
         actions,
+        shareOverride,
         panel: (
           <div
             data-testid="message-translation"
@@ -410,7 +418,7 @@ export function useMessageTranslation({
         ),
       };
     }
-    return { actions, panel: null };
+    return { actions, shareOverride, panel: null };
   }
 
   const targetLanguage = resolveTranslationTargetLanguage(
@@ -583,5 +591,5 @@ export function useMessageTranslation({
       )}
     </div>
   );
-  return { actions, panel };
+  return { actions, shareOverride, panel };
 }

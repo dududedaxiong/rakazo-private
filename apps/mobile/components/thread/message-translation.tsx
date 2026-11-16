@@ -1,3 +1,4 @@
+import type { ShareCardTextOverride } from "@rakazo/core";
 import * as Clipboard from "expo-clipboard";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ViewStyle } from "react-native";
@@ -70,6 +71,8 @@ export type MessageTranslation = {
   error: string | null;
   /** Whether the translation area is open. */
   expanded: boolean;
+  /** The text on screen when a translation is open, for a share card. */
+  shareOverride: ShareCardTextOverride | null;
   translate: (override?: TranslationLanguageSwitch) => void;
   collapse: () => void;
   /** Reopens a folded translation without re-translating it. */
@@ -256,11 +259,18 @@ export function useMessageTranslation({
         ? argsRef.current.settings.targetLanguage
         : (languageOverride.targetLanguage ?? "auto"),
   };
+  // A share card shows what the reader is looking at: the translation, while
+  // its panel is open. Folded away, the card goes back to the original.
+  const shareOverride: ShareCardTextOverride | null =
+    status === "done" && expanded && result && result.translatedText.trim() !== ""
+      ? { text: result.translatedText, model: result.modelId }
+      : null;
   return {
     status,
     result,
     error,
     expanded,
+    shareOverride,
     translate,
     collapse,
     expand,

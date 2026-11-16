@@ -1,5 +1,5 @@
 import type { MessageBlock } from "@rakazo/contracts";
-import type { ShareCardStyle } from "@rakazo/core";
+import type { ShareCardStyle, ShareCardTextOverride } from "@rakazo/core";
 import {
   DEFAULT_SHARE_CARD_STYLE,
   estimateShareCardTextWidth,
@@ -11,11 +11,22 @@ import {
   SHARE_CARD_WIDTH,
   shareCardContentFromMessage,
   shareCardFilename,
+  shareCardMediaRect,
 } from "@rakazo/core";
 import * as ImagePicker from "expo-image-picker";
 import { useVideoPlayer } from "expo-video";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Image, PanResponder, Pressable, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  PanResponder,
+  Pressable,
+  Text,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { WebViewMessageEvent } from "react-native-webview";
 import { WebView } from "react-native-webview";
 import { mobileTokens } from "../lib/appearance";
@@ -39,6 +50,7 @@ import {
 } from "../lib/share-card-webview";
 import { BottomSheetShell } from "./bottom-sheet-shell";
 import { NativeSwitch } from "./native-switch";
+import { NativeSymbol } from "./native-symbol";
 
 /**
  * Reads a local video's length through expo-video, the way the web reads it
@@ -213,16 +225,20 @@ export function ShareCardSheet({
   onClose,
   message,
   previousUserMessageText,
+  textOverride,
   target,
 }: {
   visible: boolean;
   onClose: () => void;
   message: MobileMessage;
   previousUserMessageText: string;
+  /** The text actually on screen, e.g. a shown translation, in place of the reply. */
+  textOverride?: ShareCardTextOverride;
   target: MobileArtifactTarget;
 }) {
   const { t } = useI18n();
   const tokens = mobileTokens();
+  const insets = useSafeAreaInsets();
   const [style, setStyle] = useState<ShareCardStyle>(DEFAULT_SHARE_CARD_STYLE);
   const [showQuestion, setShowQuestion] = useState(true);
   const [background, setBackground] = useState<ShareCardMediaInput | null>(null);
@@ -235,12 +251,19 @@ export function ShareCardSheet({
   const [renderError, setRenderError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [renderNonce, setRenderNonce] = useState(0);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [previewSize, setPreviewSize] = useState<{ width: number; height: number } | null>(null);
   const renderIdRef = useRef(0);
   const targetKey = "botId" in target ? `bot:${target.botId}` : `group:${target.groupId}`;
 
   const baseContent = useMemo(
-    () => shareCardContentFromMessage(message, showQuestion ? previousUserMessageText : ""),
-    [message, previousUserMessageText, showQuestion],
+    () =>
+      shareCardContentFromMessage(
+        message,
+        showQuestion ? previousUserMessageText : "",
+        textOverride,
+      ),
+    [message, previousUserMessageText, showQuestion, textOverride],
   );
   const content = useMemo(
     () => (baseContent && durationLabel ? { ...baseContent, durationLabel } : baseContent),
@@ -249,6 +272,10 @@ export function ShareCardSheet({
   const plan = useMemo(
     () => (content ? planShareCard(content, style, estimateShareCardTextWidth) : null),
     [content, style],
+  );
+  const mediaRect = useMemo(
+    () => (plan && media ? shareCardMediaRect(plan, media.width, media.height) : null),
+    [plan, media],
   );
   const renderInput = useMemo(
     () =>
@@ -277,6 +304,8 @@ export function ShareCardSheet({
     setPreviewUri(null);
     setRendering(false);
     setRenderError(false);
+    setZoomOpen(false);
+    setPreviewSize(null);
   }, [visible]);
 
   // The reply's picture, or a video's frame, through the artifact cache.
@@ -464,11 +493,67 @@ export function ShareCardSheet({
               </Pressable>
             </View>
           ) : previewUri && plan ? (
-            <Image
-              source={{ uri: previewUri }}
-              resizeMode="contain"
-              style={{ width: "100%", aspectRatio: SHARE_CARD_WIDTH / plan.height }}
-            />
+            <View
+              onLayout={(event) => {
+                const { width, height } = event.nativeEvent.layout;
+                setPreviewSize((current) =>
+                  current?.width === width && current?.height === height
+                    ? current
+                    : { width, height },
+                );
+              }}
+            >
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t("Enlarge picture")}
+                disabled={!mediaRect}
+                onPress={(event) => {
+                  if (!mediaRect || !previewSize) return;
+                  const x = event.nativeEvent.locationX * (SHARE_CARD_WIDTH / previewSize.width);
+                  const y = event.nativeEvent.locationY * (plan.height / previewSize.height);
+                  if (
+                    x >= mediaRect.x &&
+                    x <= mediaRect.x + mediaRect.width &&
+                    y >= mediaRect.y &&
+                    y <= mediaRect.y + mediaRect.height
+                  ) {
+                    setZoomOpen(true);
+                  }
+                }}
+              >
+                <Image
+                  source={{ uri: previewUri }}
+                  resizeMode="contain"
+                  style={{ width: "100%", aspectRatio: SHARE_CARD_WIDTH / plan.height }}
+                />
+              </Pressable>
+              {mediaRect && media && previewSize ? (
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("Enlarge picture")}
+                  onPress={() => setZoomOpen(true)}
+                  style={{
+                    position: "absolute",
+                    left:
+                      ((mediaRect.x + mediaRect.width) * previewSize.width) / SHARE_CARD_WIDTH - 36,
+                    top: ((mediaRect.y + mediaRect.height) * previewSize.height) / plan.height - 36,
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: "rgba(0, 0, 0, 0.6)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <NativeSymbol
+                    ios="magnifyingglass"
+                    android="search-outline"
+                    size={17}
+                    color="#fff"
+                  />
+                </Pressable>
+              ) : null}
+            </View>
           ) : (
             <View style={{ height: 200, alignItems: "center", justifyContent: "center", gap: 8 }}>
               <ActivityIndicator />
@@ -664,6 +749,47 @@ export function ShareCardSheet({
           </View>
         </>
       )}
+      <Modal
+        visible={zoomOpen}
+        animationType="fade"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setZoomOpen(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "#000",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {media ? (
+            <Image
+              source={{ uri: media.dataUrl }}
+              resizeMode="contain"
+              style={{ width: "100%", height: "100%" }}
+            />
+          ) : null}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("Close")}
+            onPress={() => setZoomOpen(false)}
+            style={{
+              position: "absolute",
+              top: insets.top + 8,
+              right: 16,
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <NativeSymbol ios="xmark" android="close" size={17} color="#fff" />
+          </Pressable>
+        </View>
+      </Modal>
     </BottomSheetShell>
   );
 }

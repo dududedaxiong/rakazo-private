@@ -9,6 +9,7 @@ import type {
   VoiceStatus,
 } from "@rakazo/contracts";
 import { DEFAULT_NEW_BOT_AVATAR_SET } from "@rakazo/contracts";
+import type { ShareCardTextOverride } from "@rakazo/core";
 import {
   activeThreadRuns,
   answerableAskMessageIds,
@@ -844,11 +845,12 @@ function SpaceShell() {
   const [shareCardMessage, setShareCardMessage] = useState<{
     message: ThreadMessage;
     question?: string;
+    textOverride?: ShareCardTextOverride;
   } | null>(null);
 
   /** A reply's card carries the user message it answers, when one is above it. */
   const openShareCard = useCallback(
-    (message: ThreadMessage) => {
+    (message: ThreadMessage, textOverride?: ShareCardTextOverride) => {
       const index = transcript.messages.findIndex((item) => item.id === message.id);
       const prior =
         index > 0
@@ -857,6 +859,7 @@ function SpaceShell() {
       setShareCardMessage({
         message,
         question: prior ? copyableMessageText(prior) : undefined,
+        ...(textOverride ? { textOverride } : {}),
       });
     },
     [transcript.messages],
@@ -1550,6 +1553,7 @@ function SpaceShell() {
         <ShareCardDialog
           message={shareCardMessage.message}
           question={shareCardMessage.question}
+          textOverride={shareCardMessage.textOverride}
           artifactTarget={transcriptArtifactTarget}
           open
           onOpenChange={(next) => {

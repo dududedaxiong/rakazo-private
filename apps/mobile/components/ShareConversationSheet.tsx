@@ -1,7 +1,11 @@
 import type { ConversationShareSummary } from "@rakazo/contracts";
-import { SHARE_DEFAULT_EXPIRY_DAYS, SHARE_EXPIRY_DAYS } from "@rakazo/contracts";
+import {
+  parseCustomShareExpiryDays,
+  SHARE_DEFAULT_EXPIRY_DAYS,
+  SHARE_EXPIRY_DAYS,
+} from "@rakazo/contracts";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, Share, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, Share, Text, TextInput, View } from "react-native";
 import { rpc } from "../lib/api";
 import { mobileTokens } from "../lib/appearance";
 import type { MobileArtifactTarget } from "../lib/artifact-open";
@@ -9,7 +13,7 @@ import { useI18n } from "../lib/i18n";
 import { conversationShareExpiryLabel, conversationShareState } from "../lib/share-conversation";
 import { BottomSheetShell } from "./bottom-sheet-shell";
 
-type ShareExpiry = 1 | 7 | 30 | 365 | null;
+type ShareExpiry = number | null;
 
 function expiryLabel(days: ShareExpiry, t: (id: string) => string): string {
   if (days === 1) return t("1 day");
@@ -44,6 +48,8 @@ export function ShareConversationSheet({
   const [createError, setCreateError] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [expiresInDays, setExpiresInDays] = useState<ShareExpiry>(SHARE_DEFAULT_EXPIRY_DAYS);
+  const [customDays, setCustomDays] = useState("");
+  const [customSelected, setCustomSelected] = useState(false);
   const [newest, setNewest] = useState<ConversationShareSummary | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const targetKey = "botId" in target ? `bot:${target.botId}` : `group:${target.groupId}`;
@@ -75,10 +81,15 @@ export function ShareConversationSheet({
 
   async function create() {
     if (creating) return;
+    const customDaysParsed = parseCustomShareExpiryDays(customDays);
+    if (customSelected && customDaysParsed === null) return;
     setCreating(true);
     setCreateError(false);
     try {
-      const share = await rpc("shares/create", { ...target, expiresInDays });
+      const share = await rpc("shares/create", {
+        ...target,
+        expiresInDays: customSelected ? customDaysParsed : expiresInDays,
+      });
       setNewest(share);
       setItems((current) => [share, ...current.filter((item) => item.id !== share.id)]);
     } catch {
@@ -148,11 +159,14 @@ export function ShareConversationSheet({
       </Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
         {[...SHARE_EXPIRY_DAYS, null].map((days) => {
-          const selected = expiresInDays === days;
+          const selected = expiresInDays === days && !customSelected;
           return (
             <Pressable
               key={days ?? "never"}
-              onPress={() => setExpiresInDays(days)}
+              onPress={() => {
+                setExpiresInDays(days);
+                setCustomSelected(false);
+              }}
               style={{
                 paddingHorizontal: 12,
                 paddingVertical: 8,
@@ -171,17 +185,58 @@ export function ShareConversationSheet({
             </Pressable>
           );
         })}
+        <Pressable
+          onPress={() => setCustomSelected(true)}
+          style={{
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 8,
+            backgroundColor: customSelected ? tokens.accent : tokens.muted,
+          }}
+        >
+          <Text
+            style={{
+              color: customSelected ? tokens.accentForeground : tokens.foreground,
+              fontSize: 15,
+            }}
+          >
+            {t("Custom")}
+          </Text>
+        </Pressable>
       </View>
+      {customSelected ? (
+        <TextInput
+          keyboardType="number-pad"
+          value={customDays}
+          onChangeText={setCustomDays}
+          placeholder={t("Days")}
+          accessibilityLabel={t("Custom expiry in days")}
+          style={{
+            marginTop: 8,
+            width: 96,
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderWidth: 1,
+            borderColor: tokens.border,
+            borderRadius: 8,
+            color: tokens.foreground,
+            fontSize: 15,
+          }}
+        />
+      ) : null}
       <Pressable
         onPress={() => void create()}
-        disabled={creating}
+        disabled={creating || (customSelected && parseCustomShareExpiryDays(customDays) === null)}
         style={{
           marginTop: 12,
           paddingVertical: 12,
           alignItems: "center",
           borderRadius: 8,
           backgroundColor: tokens.primary,
-          opacity: creating ? 0.4 : 1,
+          opacity:
+            creating || (customSelected && parseCustomShareExpiryDays(customDays) === null)
+              ? 0.4
+              : 1,
         }}
       >
         <Text style={{ color: tokens.primaryForeground, fontSize: 16 }}>{t("Create link")}</Text>

@@ -2053,6 +2053,9 @@ export const ZH_MESSAGES: Record<string, string> = {
   "What image and video generation needs": "图片视频生成所需",
   "Could not save image": "无法保存图片",
   "Could not save media": "无法保存媒体",
+  "Days": "天数",
+  "Custom expiry in days": "自定义有效期（天）",
+  "Enlarge picture": "放大图片",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

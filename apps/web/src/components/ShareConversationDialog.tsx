@@ -1,6 +1,11 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { ConversationShareSummary } from "@rakazo/contracts";
-import { SHARE_EXPIRY_DAYS } from "@rakazo/contracts";
+import {
+  parseCustomShareExpiryDays,
+  SHARE_EXPIRY_DAYS,
+  SHARE_EXPIRY_DAYS_MAX,
+  SHARE_EXPIRY_DAYS_MIN,
+} from "@rakazo/contracts";
 import {
   Button,
   Dialog,
@@ -11,8 +16,9 @@ import {
 } from "@rakazo/ui-web";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, Link2, RotateCcw } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSpaceQueries } from "../lib/query.js";
+import { shareLinkQrDataUrl } from "../lib/share-link-qr.js";
 
 function expiryLabel(expiresAt: string | null): string {
   if (!expiresAt) return "";
@@ -39,7 +45,9 @@ export function ShareConversationDialog({
   const { t } = useLingui();
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
-  const [expiresInDays, setExpiresInDays] = useState<1 | 7 | 30 | 365 | null>(30);
+  const [expiresInDays, setExpiresInDays] = useState<number | null>(30);
+  const [customDays, setCustomDays] = useState("");
+  const [customSelected, setCustomSelected] = useState(false);
   const [copied, copy] = useCopyText();
   const input = botId ? { botId } : { groupId: groupId! };
   const list = useQuery({
@@ -49,7 +57,7 @@ export function ShareConversationDialog({
   const invalidate = () =>
     void queryClient.invalidateQueries({ queryKey: queries.shares.list.key({ input }) });
   const create = useMutation({
-    mutationFn: (days: 1 | 7 | 30 | 365 | null) =>
+    mutationFn: (days: number | null) =>
       queries.shares.create.call({ ...input, expiresInDays: days }),
     onSuccess: invalidate,
   });
@@ -63,6 +71,22 @@ export function ShareConversationDialog({
   });
   const items = list.data?.items ?? [];
   const newest = create.data;
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!newest?.shareUrl) {
+      setQrDataUrl(null);
+      return;
+    }
+    let cancelled = false;
+    void shareLinkQrDataUrl(newest.shareUrl).then((dataUrl) => {
+      if (!cancelled) setQrDataUrl(dataUrl);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [newest?.shareUrl]);
+  const customDaysParsed = parseCustomShareExpiryDays(customDays);
+  const createDisabled = create.isPending || (customSelected && customDaysParsed === null);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,9 +111,12 @@ export function ShareConversationDialog({
               <Button
                 key={days}
                 type="button"
-                variant={expiresInDays === days ? "default" : "outline"}
+                variant={expiresInDays === days && !customSelected ? "default" : "outline"}
                 size="sm"
-                onClick={() => setExpiresInDays(days)}
+                onClick={() => {
+                  setExpiresInDays(days);
+                  setCustomSelected(false);
+                }}
               >
                 {days === 1
                   ? t`1 day`
@@ -102,17 +129,41 @@ export function ShareConversationDialog({
             ))}
             <Button
               type="button"
-              variant={expiresInDays === null ? "default" : "outline"}
+              variant={expiresInDays === null && !customSelected ? "default" : "outline"}
               size="sm"
-              onClick={() => setExpiresInDays(null)}
+              onClick={() => {
+                setExpiresInDays(null);
+                setCustomSelected(false);
+              }}
             >
               <Trans>Never</Trans>
             </Button>
+            <Button
+              type="button"
+              variant={customSelected ? "default" : "outline"}
+              size="sm"
+              onClick={() => setCustomSelected(true)}
+            >
+              <Trans>Custom</Trans>
+            </Button>
           </div>
+          {customSelected ? (
+            <input
+              type="number"
+              min={SHARE_EXPIRY_DAYS_MIN}
+              max={SHARE_EXPIRY_DAYS_MAX}
+              inputMode="numeric"
+              value={customDays}
+              onChange={(event) => setCustomDays(event.target.value)}
+              placeholder={t`Days`}
+              aria-label={t`Custom expiry in days`}
+              className="h-9 w-24 rounded-md border border-border bg-card px-3 text-body"
+            />
+          ) : null}
           <Button
             type="button"
-            onClick={() => create.mutate(expiresInDays)}
-            disabled={create.isPending}
+            onClick={() => create.mutate(customSelected ? customDaysParsed : expiresInDays)}
+            disabled={createDisabled}
             className="w-full"
           >
             <Link2 />
@@ -125,7 +176,7 @@ export function ShareConversationDialog({
           ) : null}
         </div>
         {newest?.shareUrl ? (
-          <div className="flex items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2">
+          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2">
             <span className="min-w-0 flex-1 truncate text-body">{newest.shareUrl}</span>
             <Button
               type="button"
@@ -138,7 +189,10 @@ export function ShareConversationDialog({
             </Button>
           </div>
         ) : null}
-        <div className="space-y-2">
+        {newest?.shareUrl && qrDataUrl ? (
+          <img src={qrDataUrl} alt="" className="h-48 w-48 rounded-lg" />
+        ) : null}
+        <div className="min-w-0 space-y-2">
           {items.map((item) => {
             const state = shareState(item);
             return (

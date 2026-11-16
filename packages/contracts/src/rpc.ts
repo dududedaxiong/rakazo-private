@@ -254,7 +254,11 @@ import {
 import { SearchQueryOutputSchema } from "./search.js";
 import { SecurityEventListInputSchema, SecurityEventSchema } from "./security-events.js";
 import { SettingsScopeSchema, SpaceSettingSchema, settingsScopeInput } from "./settings-scope.js";
-import { ConversationShareSummarySchema } from "./shares.js";
+import {
+  ConversationShareSummarySchema,
+  SHARE_EXPIRY_DAYS_MAX,
+  SHARE_EXPIRY_DAYS_MIN,
+} from "./shares.js";
 import { SpaceAvailabilitySchema } from "./space-availability.js";
 import { TranslateInputSchema, TranslateOutputSchema } from "./translation.js";
 
@@ -1635,7 +1639,10 @@ export const appContract = {
       .input(
         threadTarget.safeExtend({
           expiresInDays: z
-            .union([z.literal(1), z.literal(7), z.literal(30), z.literal(365)])
+            .number()
+            .int()
+            .min(SHARE_EXPIRY_DAYS_MIN)
+            .max(SHARE_EXPIRY_DAYS_MAX)
             .nullable()
             .optional(),
         }),

@@ -3381,12 +3381,17 @@ msgid "Current persona"
 msgstr "Aktualna persona"
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Custom"
 msgstr "Własny"
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
 msgid "Custom app download"
 msgstr "Niestandardowe pobieranie aplikacji"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Custom expiry in days"
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Custom header"
@@ -3442,6 +3447,10 @@ msgstr "Codzienna praca"
 #: src/lib/cron.ts
 msgid "days"
 msgstr "dni"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Days"
+msgstr ""
 
 #: src/components/call/IncomingCall.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -3924,6 +3933,10 @@ msgstr "Koniec {day}"
 #: src/components/GitHubStarPrompt.tsx
 msgid "Enjoying Rakazo?"
 msgstr "Podoba Ci się Rakazo?"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Enlarge picture"
+msgstr ""
 
 #: src/lib/user-error.ts
 msgid "Enter a password"
@@ -6563,6 +6576,10 @@ msgstr "Wybierz model z listy lub wpisz identyfikator modelu obsługiwanego prze
 #: src/lib/routine-draft.ts
 msgid "Pick a tool to check"
 msgstr "Wybierz narzędzie do sprawdzenia"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Picture"
+msgstr ""
 
 #: src/components/pages/PagesList.tsx
 #: src/pages/BotContextMenu.tsx

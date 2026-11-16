@@ -87,6 +87,22 @@ export type ConversationShareSummary = z.infer<typeof ConversationShareSummarySc
 /** Days a new link stays open; null never expires. The default is 30 days. */
 export const SHARE_EXPIRY_DAYS = [1, 7, 30, 365] as const;
 export const SHARE_DEFAULT_EXPIRY_DAYS = 30;
+/** A custom duration is a whole number of days, between these two. */
+export const SHARE_EXPIRY_DAYS_MIN = 1;
+export const SHARE_EXPIRY_DAYS_MAX = 365;
+
+/**
+ * A typed custom duration, or null when the input is not a whole number of
+ * days in range; the caller keeps the field and leaves creating disabled.
+ */
+export function parseCustomShareExpiryDays(value: string): number | null {
+  const trimmed = value.trim();
+  if (!/^\d+$/.test(trimmed)) return null;
+  const days = Number(trimmed);
+  if (!Number.isInteger(days) || days < SHARE_EXPIRY_DAYS_MIN || days > SHARE_EXPIRY_DAYS_MAX)
+    return null;
+  return days;
+}
 
 /** 32 random bytes as base64url. */
 const CONVERSATION_SHARE_TOKEN_LENGTH = 43;

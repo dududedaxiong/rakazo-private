@@ -3381,12 +3381,17 @@ msgid "Current persona"
 msgstr "Current persona"
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
+#: src/components/ShareConversationDialog.tsx
 msgid "Custom"
 msgstr "Custom"
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
 msgid "Custom app download"
 msgstr "Custom app download"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Custom expiry in days"
+msgstr "Custom expiry in days"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Custom header"
@@ -3442,6 +3447,10 @@ msgstr "Day-to-day work"
 #: src/lib/cron.ts
 msgid "days"
 msgstr "days"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Days"
+msgstr "Days"
 
 #: src/components/call/IncomingCall.tsx
 #: src/pages/MessagingSettingsPanel.tsx
@@ -3924,6 +3933,10 @@ msgstr "Ends {day}"
 #: src/components/GitHubStarPrompt.tsx
 msgid "Enjoying Rakazo?"
 msgstr "Enjoying Rakazo?"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Enlarge picture"
+msgstr "Enlarge picture"
 
 #: src/lib/user-error.ts
 msgid "Enter a password"
@@ -6563,6 +6576,10 @@ msgstr "Pick a model from the list or enter a model id served by this endpoint."
 #: src/lib/routine-draft.ts
 msgid "Pick a tool to check"
 msgstr "Pick a tool to check"
+
+#: src/components/ShareCardDialog.tsx
+msgid "Picture"
+msgstr "Picture"
 
 #: src/components/pages/PagesList.tsx
 #: src/pages/BotContextMenu.tsx

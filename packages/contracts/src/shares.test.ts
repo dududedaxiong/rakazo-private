@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   conversationShareTokenFromSlug,
   conversationShareUrl,
+  parseCustomShareExpiryDays,
   SharedConversationSchema,
 } from "./shares.js";
 
@@ -24,6 +25,23 @@ describe("conversationShareUrl", () => {
     expect(conversationShareTokenFromSlug("short")).toBeNull();
     expect(conversationShareTokenFromSlug("a".repeat(43))).toBe("a".repeat(43));
     expect(conversationShareTokenFromSlug(`my-chat-${"a".repeat(43)}`)).toBe("a".repeat(43));
+  });
+});
+
+describe("parseCustomShareExpiryDays", () => {
+  it("accepts whole days in range, ignoring surrounding space", () => {
+    expect(parseCustomShareExpiryDays("2")).toBe(2);
+    expect(parseCustomShareExpiryDays(" 30 ")).toBe(30);
+    expect(parseCustomShareExpiryDays("365")).toBe(365);
+  });
+
+  it("refuses empty, fractional, out-of-range, and non-numeric input", () => {
+    expect(parseCustomShareExpiryDays("")).toBeNull();
+    expect(parseCustomShareExpiryDays("0")).toBeNull();
+    expect(parseCustomShareExpiryDays("366")).toBeNull();
+    expect(parseCustomShareExpiryDays("1.5")).toBeNull();
+    expect(parseCustomShareExpiryDays("abc")).toBeNull();
+    expect(parseCustomShareExpiryDays("-3")).toBeNull();
   });
 });
 

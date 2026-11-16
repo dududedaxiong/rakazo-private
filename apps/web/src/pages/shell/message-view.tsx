@@ -9,7 +9,7 @@ import type {
   MessageReaction,
   ThreadMessage,
 } from "@rakazo/contracts";
-import type { ChildBotBlock, PeerExchange, StuckRun } from "@rakazo/core";
+import type { ChildBotBlock, PeerExchange, ShareCardTextOverride, StuckRun } from "@rakazo/core";
 import {
   copyableMessageText,
   isPeerReceiptBlocks,
@@ -253,7 +253,7 @@ export const MessageView = memo(function MessageView({
   markedUnread?: boolean;
   onReact: (message: ThreadMessage, reaction: MessageReaction) => Promise<void>;
   /** Turns a reply into a share card; only bot replies get one. */
-  onShareCard?: (message: ThreadMessage) => void;
+  onShareCard?: (message: ThreadMessage, textOverride?: ShareCardTextOverride) => void;
   /** The newest visible message; only it auto-translates when the bot has auto-translate on. */
   isLastMessage?: boolean;
 }) {
@@ -446,7 +446,11 @@ export const MessageView = memo(function MessageView({
       onReact={onReact}
       onResend={onResend ? () => onResend(message.id) : undefined}
       showResend={showResend}
-      onShareCard={message.role === "bot" ? onShareCard : undefined}
+      onShareCard={
+        message.role === "bot" && onShareCard
+          ? (msg) => onShareCard(msg, translation.shareOverride ?? undefined)
+          : undefined
+      }
     />
   );
   if (isNarration) {
