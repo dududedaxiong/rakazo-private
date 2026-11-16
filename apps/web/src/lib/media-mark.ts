@@ -25,3 +25,22 @@ export function parseMediaMark(text: string): MediaMark | null {
   if (!modelId) return null;
   return presetName ? { modelId, presetName } : { modelId };
 }
+
+/**
+ * Splits a trailing "当前模型: <model>" line off the end of a reply's text,
+ * so the bubble shows the prose and the line becomes the tappable bar below
+ * it instead of reading as prose — the web half of the app's strip. A legacy
+ * trailing "经 <model>" line is left alone, exactly as the app leaves it.
+ * Returns null when the text does not end with a mark line.
+ */
+export function splitTrailingMark(text: string): { text: string; mark: MediaMark } | null {
+  const match = /(?:^|\n)当前模型: ([^\n·]+?)(?: · ([^\n]+))?\s*$/.exec(text);
+  if (!match) return null;
+  const modelId = match[1]?.trim();
+  if (!modelId) return null;
+  const presetName = match[2]?.trim();
+  return {
+    text: text.slice(0, match.index).replace(/\s+$/, ""),
+    mark: presetName ? { modelId, presetName } : { modelId },
+  };
+}

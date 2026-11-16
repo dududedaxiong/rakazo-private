@@ -463,6 +463,7 @@ describe("message translation", () => {
     });
     expect(translate).toHaveBeenCalledExactlyOnceWith({
       botId: "bot-1",
+      messageId: "message",
       text: "Hark AI is a new AI search product.",
       sourceLanguage: "en",
       targetLanguage: "zh",
@@ -1350,13 +1351,73 @@ describe("model switch history", () => {
     });
   });
 
-  it("keeps a mark without a timeline as plain text", () => {
-    renderView("bot", [
-      { kind: "text", text: "Here is the answer." },
-      { kind: "text", text: "当前模型: model-b" },
-    ]);
+  it("locates the model from a mark without a timeline", async () => {
+    const onLocateModel = vi.fn();
+    renderView(
+      "bot",
+      [
+        { kind: "text", text: "Here is the answer." },
+        { kind: "text", text: "当前模型: model-b" },
+      ],
+      {
+        message: {
+          id: "message",
+          threadId: "thread",
+          seq: 1,
+          role: "bot",
+          botId: "bot-1",
+          createdAt: new Date().toISOString(),
+          blocks: [
+            { kind: "text", text: "Here is the answer." },
+            { kind: "text", text: "当前模型: model-b" },
+          ],
+        },
+        onLocateModel,
+      },
+    );
+    const markEntry = () => container.querySelector('[data-testid="model-switch-mark-entry"]');
     expect(historyEntry()).toBeNull();
-    expect(container.textContent).toContain("当前模型: model-b");
+    expect(markEntry()?.textContent).toContain("Current model: model-b");
+    expect(
+      container.querySelector('[data-testid="message-bot-bubble"]')?.textContent,
+    ).not.toContain("当前模型: model-b");
+    await act(async () => {
+      (markEntry() as HTMLButtonElement | null)?.click();
+    });
+    expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
+      kind: "chat",
+      botId: "bot-1",
+      model: "model-b",
+    });
+  });
+
+  it("splits a trailing mark off the reply's last text block", async () => {
+    const onLocateModel = vi.fn();
+    renderView("bot", [{ kind: "text", text: "Here is the answer.\n当前模型: model-b" }], {
+      message: {
+        id: "message",
+        threadId: "thread",
+        seq: 1,
+        role: "bot",
+        botId: "bot-1",
+        createdAt: new Date().toISOString(),
+        blocks: [{ kind: "text", text: "Here is the answer.\n当前模型: model-b" }],
+      },
+      onLocateModel,
+    });
+    const markEntry = () => container.querySelector('[data-testid="model-switch-mark-entry"]');
+    const bubble = container.querySelector('[data-testid="message-bot-bubble"]');
+    expect(bubble?.textContent).toContain("Here is the answer.");
+    expect(bubble?.textContent).not.toContain("当前模型: model-b");
+    expect(markEntry()?.textContent).toContain("Current model: model-b");
+    await act(async () => {
+      (markEntry() as HTMLButtonElement | null)?.click();
+    });
+    expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
+      kind: "chat",
+      botId: "bot-1",
+      model: "model-b",
+    });
   });
 
   it("opens the timeline from a mark in a non-narration reply", async () => {

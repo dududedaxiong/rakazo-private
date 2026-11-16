@@ -19,7 +19,7 @@ import {
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@rakazo/ui-web";
 import { UserRound } from "lucide-react";
 import type { ComponentProps } from "react";
-import { memo, useCallback, useMemo, useState } from "react";
+import { Fragment, memo, useCallback, useMemo, useState } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import { AskCard } from "../../components/AskCard";
 import { CollaborationMarker } from "../../components/ai/CollaborationMarker";
@@ -37,7 +37,7 @@ import {
 import { SkillDraftCard } from "../../components/teach/SkillDraftCard";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { favoriteSnippet, useMessageFavorite } from "../../lib/favorites";
-import { parseMediaMark } from "../../lib/media-mark";
+import { parseMediaMark, splitTrailingMark } from "../../lib/media-mark";
 import { messageProviderLabel } from "../../lib/messaging";
 import type { ModelLocateTarget } from "../../lib/model-locate";
 import type { PageBlock } from "../../lib/page-cards";
@@ -65,7 +65,7 @@ import {
 } from "./message-cards";
 import { MessageHoverActions } from "./message-hover-actions";
 import { useMessageTranslation } from "./message-translation";
-import { ModelSwitchHistoryEntry } from "./model-switch-history-dialog";
+import { ModelSwitchHistoryEntry, ModelSwitchMarkButton } from "./model-switch-history-dialog";
 import { StuckRunActions } from "./stuck-run-actions";
 import type { SpeakingProgress } from "./use-read-aloud";
 
@@ -506,6 +506,47 @@ export const MessageView = memo(function MessageView({
                         </div>
                       );
                     }
+                    // A mark line at the end of the reply's last text block:
+                    // the prose stays, and the line becomes the tappable bar
+                    // below it, like the app's strip.
+                    const trailingMark =
+                      block.kind === "text" && i === visibleNarrationBlocks.length - 1
+                        ? splitTrailingMark(block.text)
+                        : null;
+                    if (trailingMark) {
+                      return (
+                        <Fragment key={i}>
+                          {trailingMark.text ? (
+                            <div data-quote-message-id={quoteMessageId}>
+                              <CollapsibleBotText
+                                text={trailingMark.text}
+                                renderMention={renderMention}
+                                openPage={openPage}
+                              />
+                            </div>
+                          ) : null}
+                          <div className="px-1">
+                            {message.modelSwitches ? (
+                              <ModelSwitchHistoryEntry
+                                attempts={message.modelSwitches.attempts}
+                                finalModel={message.modelSwitches.finalModel}
+                                kind="chat"
+                                botId={message.botId}
+                                onLocateModel={onLocateModel}
+                              />
+                            ) : (
+                              <ModelSwitchMarkButton
+                                model={trailingMark.mark.modelId}
+                                presetName={trailingMark.mark.presetName}
+                                kind="chat"
+                                botId={message.botId}
+                                onLocateModel={onLocateModel}
+                              />
+                            )}
+                          </div>
+                        </Fragment>
+                      );
+                    }
                     return (
                       <div
                         key={i}
@@ -899,6 +940,39 @@ export const MessageView = memo(function MessageView({
                 </div>
               );
             }
+            // A mark line at the end of the reply's last text block: the
+            // prose stays in the bubble and the line becomes the tappable
+            // bar below it, like the app's strip.
+            const trailingMark = i === blocks.length - 1 ? splitTrailingMark(block.text) : null;
+            const trailingBar = trailingMark ? (
+              message.modelSwitches ? (
+                <ModelSwitchHistoryEntry
+                  key="model-switch-bar"
+                  attempts={message.modelSwitches.attempts}
+                  finalModel={message.modelSwitches.finalModel}
+                  kind="chat"
+                  botId={message.botId}
+                  onLocateModel={onLocateModel}
+                />
+              ) : (
+                <ModelSwitchMarkButton
+                  key="model-switch-bar"
+                  model={trailingMark.mark.modelId}
+                  presetName={trailingMark.mark.presetName}
+                  kind="chat"
+                  botId={message.botId}
+                  onLocateModel={onLocateModel}
+                />
+              )
+            ) : null;
+            if (trailingMark && !trailingMark.text) {
+              return (
+                <div key={i} className="flex flex-col items-start">
+                  <div className="flex justify-start px-1">{trailingBar}</div>
+                  {firstText ? translation.panel : null}
+                </div>
+              );
+            }
             return (
               <div
                 key={i}
@@ -912,7 +986,7 @@ export const MessageView = memo(function MessageView({
                   >
                     <div data-quote-message-id={quoteMessageId}>
                       <CollapsibleBotText
-                        text={block.text}
+                        text={trailingMark?.text ?? block.text}
                         renderMention={renderMention}
                         openPage={openPage}
                       />
@@ -938,6 +1012,9 @@ export const MessageView = memo(function MessageView({
                       </div>
                     ) : null}
                   </div>
+                  {trailingBar ? (
+                    <div className="flex justify-start px-1 pt-1">{trailingBar}</div>
+                  ) : null}
                   {firstText ? translation.panel : null}
                 </div>
                 {i === hoverAnchorIndex ? hoverActions : null}

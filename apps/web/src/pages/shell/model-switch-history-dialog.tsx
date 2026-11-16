@@ -228,3 +228,42 @@ export function ModelSwitchHistoryEntry({
     </>
   );
 }
+
+/**
+ * The tappable "当前模型:" line for a reply that carries only the trailing
+ * mark, no switch timeline: it locates the model in the bot's model list
+ * directly, the way the app's mark bar does, instead of opening a history
+ * that does not exist.
+ */
+export function ModelSwitchMarkButton({
+  model,
+  presetName,
+  kind,
+  botId,
+  onLocateModel,
+}: {
+  model: string;
+  presetName?: string;
+  kind: ModelLocateKind;
+  botId: string | undefined;
+  onLocateModel?: (target: ModelLocateTarget) => void;
+}) {
+  const { t } = useLingui();
+  return (
+    <button
+      type="button"
+      data-testid="model-switch-mark-entry"
+      onClick={() => botId && onLocateModel?.({ kind, botId, model })}
+      className="flex items-center gap-1 rounded-sm px-1 py-0.5 text-left text-body-sm text-muted-foreground hover:text-foreground"
+    >
+      <span>
+        {t`Current model`}:{" "}
+        <span className="font-semibold text-foreground">
+          {displayName(model, t`Model`)}
+          {presetName ? ` · ${presetName}` : ""}
+        </span>
+      </span>
+      <ChevronRight className="size-4 shrink-0" aria-hidden="true" />
+    </button>
+  );
+}
