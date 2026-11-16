@@ -1633,6 +1633,7 @@ export const appContract = {
    * anyone can open, signed out. The token is sealed in the secret store, never
    * in plaintext; the row carries only its hash, so a leaked database still
    * opens no link. Revoking breaks the link; restoring brings the same link back.
+   * Deleting removes the row and its sealed token, so the link is gone for good.
    */
   shares: {
     create: oc
@@ -1654,6 +1655,8 @@ export const appContract = {
       .output(z.strictObject({ items: z.array(ConversationShareSummarySchema) })),
     revoke: oc.input(z.strictObject({ shareId: Id })).output(ConversationShareSummarySchema),
     restore: oc.input(z.strictObject({ shareId: Id })).output(ConversationShareSummarySchema),
+    /** Removes the share and its sealed token; the link cannot come back. */
+    delete: oc.input(z.strictObject({ shareId: Id })).output(z.object({ ok: z.literal(true) })),
   },
   usage: {
     list: oc.output(z.array(UsageRecordSchema)),

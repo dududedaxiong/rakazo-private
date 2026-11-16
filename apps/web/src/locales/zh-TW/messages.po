@@ -2643,6 +2643,10 @@ msgstr "無法刪除技能"
 msgid "Could not delete space"
 msgstr "無法刪除空間"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "Could not delete the link. Try again."
+msgstr "無法刪除連結，請重試。"
+
 #: src/components/admin/AdminUsers.tsx
 msgid "Could not delete the user"
 msgstr "無法刪除該使用者"
@@ -3495,6 +3499,7 @@ msgstr "已還原預設模板"
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -3541,6 +3546,10 @@ msgstr "刪除帳號"
 #: src/pages/GroupPanel.tsx
 msgid "Delete group"
 msgstr "刪除群組"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Delete link"
+msgstr "刪除連結"
 
 #: src/pages/shell/dialogs.tsx
 msgid "Delete memories too"

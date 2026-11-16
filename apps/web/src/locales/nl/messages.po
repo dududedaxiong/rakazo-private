@@ -2642,6 +2642,10 @@ msgstr "Skill verwijderen mislukt"
 msgid "Could not delete space"
 msgstr "Space verwijderen mislukt"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "Could not delete the link. Try again."
+msgstr ""
+
 #: src/components/admin/AdminUsers.tsx
 msgid "Could not delete the user"
 msgstr ""
@@ -3494,6 +3498,7 @@ msgstr "Standaardsjablonen hersteld"
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -3540,6 +3545,10 @@ msgstr "Account verwijderen"
 #: src/pages/GroupPanel.tsx
 msgid "Delete group"
 msgstr "Groep verwijderen"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Delete link"
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "Delete memories too"

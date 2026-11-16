@@ -1,5 +1,6 @@
 import {
   createConversationShare,
+  deleteConversationShare,
   listConversationShares,
   restoreConversationShare,
   revokeConversationShare,
@@ -31,6 +32,9 @@ export function sharesRoutes(ctx: RouterContext) {
       ),
       restore: authed.shares.restore.handler(({ context, input }) =>
         restoreConversationShare(shareDeps(), context.actor, input.shareId),
+      ),
+      delete: authed.shares.delete.handler(({ context, input }) =>
+        deleteConversationShare(shareDeps(), context.actor, input.shareId),
       ),
     },
   };

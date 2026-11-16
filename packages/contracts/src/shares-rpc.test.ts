@@ -18,3 +18,13 @@ describe("shares.create expiry", () => {
     }
   });
 });
+
+describe("shares.delete", () => {
+  const remove = appContract.shares.delete["~orpc"].inputSchema!;
+
+  it("takes only a share id", () => {
+    expect(remove.safeParse({ shareId: "share-1" }).success).toBe(true);
+    expect(remove.safeParse({}).success).toBe(false);
+    expect(remove.safeParse({ shareId: "share-1", revoked: true }).success).toBe(false);
+  });
+});

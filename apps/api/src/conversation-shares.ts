@@ -202,6 +202,31 @@ export async function restoreConversationShare(
   return shareSummaryFor(deps, updated);
 }
 
+/**
+ * Removes a share for good: its row, its sealed token's row, and — best
+ * effort — the sealed token itself. The link is already dead once the row
+ * is gone, so a store failure is only logged, like page link removal.
+ */
+export async function deleteConversationShare(
+  deps: ShareDeps,
+  actor: Actor,
+  shareId: string,
+): Promise<{ ok: true }> {
+  const row = await requireShare(deps.prisma, actor, shareId);
+  const removed = await deps.prisma.$transaction(async (tx) => {
+    await tx.conversationShare.delete({ where: { id: row.id } });
+    if (!row.secretId) return null;
+    const secret = await tx.secret.findUnique({
+      where: { id: row.secretId },
+      select: { id: true, ciphertext: true },
+    });
+    await tx.secret.deleteMany({ where: { id: row.secretId } });
+    return secret;
+  });
+  if (removed) await forgetPageShareSecrets(deps.secrets, [removed]);
+  return { ok: true as const };
+}
+
 /** The redacted snapshot behind a link, or null for any token that does not open one. */
 export async function readSharedConversation(
   prisma: PrismaClient,

@@ -2642,6 +2642,10 @@ msgstr "Beceri silinemedi"
 msgid "Could not delete space"
 msgstr "Alan silinemedi"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "Could not delete the link. Try again."
+msgstr ""
+
 #: src/components/admin/AdminUsers.tsx
 msgid "Could not delete the user"
 msgstr ""
@@ -3494,6 +3498,7 @@ msgstr "Varsayılan şablonlar geri yüklendi"
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -3540,6 +3545,10 @@ msgstr "Hesabı sil"
 #: src/pages/GroupPanel.tsx
 msgid "Delete group"
 msgstr "Grubu sil"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Delete link"
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "Delete memories too"

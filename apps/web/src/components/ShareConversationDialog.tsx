@@ -19,6 +19,7 @@ import { Check, Copy, Link2, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useSpaceQueries } from "../lib/query.js";
 import { shareLinkQrDataUrl } from "../lib/share-link-qr.js";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 function expiryLabel(expiresAt: string | null): string {
   if (!expiresAt) return "";
@@ -69,6 +70,14 @@ export function ShareConversationDialog({
     mutationFn: (shareId: string) => queries.shares.restore.call({ shareId }),
     onSuccess: invalidate,
   });
+  const [deleteTarget, setDeleteTarget] = useState<ConversationShareSummary | null>(null);
+  const remove = useMutation({
+    mutationFn: (shareId: string) => queries.shares.delete.call({ shareId }),
+    onSuccess: () => {
+      invalidate();
+      setDeleteTarget(null);
+    },
+  });
   const items = list.data?.items ?? [];
   const newest = create.data;
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -88,181 +97,255 @@ export function ShareConversationDialog({
   const customDaysParsed = parseCustomShareExpiryDays(customDays);
   const createDisabled = create.isPending || (customSelected && customDaysParsed === null);
 
+  /** The list row whose QR code is open, if any; the code carries that row's link. */
+  const [rowQr, setRowQr] = useState<{ id: string; dataUrl: string | null } | null>(null);
+  function toggleRowQr(item: ConversationShareSummary) {
+    if (!item.shareUrl) return;
+    if (rowQr?.id === item.id) {
+      setRowQr(null);
+      return;
+    }
+    const { id, shareUrl } = item;
+    setRowQr({ id, dataUrl: null });
+    void shareLinkQrDataUrl(shareUrl)
+      .then((dataUrl) => {
+        setRowQr((current) => (current?.id === id ? { id, dataUrl } : current));
+      })
+      .catch(() => undefined);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            <Trans>Share conversation</Trans>
-          </DialogTitle>
-        </DialogHeader>
-        <p className="text-body text-muted-foreground">
-          <Trans>
-            The link opens a read-only replay without signing in. Secrets and local paths are
-            removed before sharing.
-          </Trans>
-        </p>
-        <div className="space-y-2">
-          <span className="text-label">
-            <Trans>Link expires in</Trans>
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {SHARE_EXPIRY_DAYS.map((days) => (
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              <Trans>Share conversation</Trans>
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-body text-muted-foreground">
+            <Trans>
+              The link opens a read-only replay without signing in. Secrets and local paths are
+              removed before sharing.
+            </Trans>
+          </p>
+          <div className="space-y-2">
+            <span className="text-label">
+              <Trans>Link expires in</Trans>
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {SHARE_EXPIRY_DAYS.map((days) => (
+                <Button
+                  key={days}
+                  type="button"
+                  variant={expiresInDays === days && !customSelected ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setExpiresInDays(days);
+                    setCustomSelected(false);
+                  }}
+                >
+                  {days === 1
+                    ? t`1 day`
+                    : days === 7
+                      ? t`7 days`
+                      : days === 30
+                        ? t`30 days`
+                        : t`1 year`}
+                </Button>
+              ))}
               <Button
-                key={days}
                 type="button"
-                variant={expiresInDays === days && !customSelected ? "default" : "outline"}
+                variant={expiresInDays === null && !customSelected ? "default" : "outline"}
                 size="sm"
                 onClick={() => {
-                  setExpiresInDays(days);
+                  setExpiresInDays(null);
                   setCustomSelected(false);
                 }}
               >
-                {days === 1
-                  ? t`1 day`
-                  : days === 7
-                    ? t`7 days`
-                    : days === 30
-                      ? t`30 days`
-                      : t`1 year`}
+                <Trans>Never</Trans>
               </Button>
-            ))}
-            <Button
-              type="button"
-              variant={expiresInDays === null && !customSelected ? "default" : "outline"}
-              size="sm"
-              onClick={() => {
-                setExpiresInDays(null);
-                setCustomSelected(false);
-              }}
-            >
-              <Trans>Never</Trans>
-            </Button>
-            <Button
-              type="button"
-              variant={customSelected ? "default" : "outline"}
-              size="sm"
-              onClick={() => setCustomSelected(true)}
-            >
-              <Trans>Custom</Trans>
-            </Button>
-          </div>
-          {customSelected ? (
-            <input
-              type="number"
-              min={SHARE_EXPIRY_DAYS_MIN}
-              max={SHARE_EXPIRY_DAYS_MAX}
-              inputMode="numeric"
-              value={customDays}
-              onChange={(event) => setCustomDays(event.target.value)}
-              placeholder={t`Days`}
-              aria-label={t`Custom expiry in days`}
-              className="h-9 w-24 rounded-md border border-border bg-card px-3 text-body"
-            />
-          ) : null}
-          <Button
-            type="button"
-            onClick={() => create.mutate(customSelected ? customDaysParsed : expiresInDays)}
-            disabled={createDisabled}
-            className="w-full"
-          >
-            <Link2 />
-            <Trans>Create link</Trans>
-          </Button>
-          {create.isError ? (
-            <p className="text-body text-destructive">
-              <Trans>Could not create the link. Try again.</Trans>
-            </p>
-          ) : null}
-        </div>
-        {newest?.shareUrl ? (
-          <div className="flex min-w-0 items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2">
-            <span className="min-w-0 flex-1 truncate text-body">{newest.shareUrl}</span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => void copy(newest.shareUrl!)}
-              aria-label={t`Copy link`}
-            >
-              {copied ? <Check /> : <Copy />}
-            </Button>
-          </div>
-        ) : null}
-        {newest?.shareUrl && qrDataUrl ? (
-          <img src={qrDataUrl} alt="" className="h-48 w-48 rounded-lg" />
-        ) : null}
-        <div className="min-w-0 space-y-2">
-          {items.map((item) => {
-            const state = shareState(item);
-            return (
-              <div
-                key={item.id}
-                className="flex items-center gap-2 rounded-xl border border-border px-3 py-2"
+              <Button
+                type="button"
+                variant={customSelected ? "default" : "outline"}
+                size="sm"
+                onClick={() => setCustomSelected(true)}
               >
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-body font-medium">{item.title}</div>
-                  <div className="text-label text-muted-foreground">
-                    {state === "revoked" ? (
-                      <Trans>Revoked</Trans>
-                    ) : state === "expired" ? (
-                      <Trans>Expired</Trans>
-                    ) : item.expiresAt ? (
-                      <Trans>Expires {expiryLabel(item.expiresAt)}</Trans>
+                <Trans>Custom</Trans>
+              </Button>
+            </div>
+            {customSelected ? (
+              <input
+                type="number"
+                min={SHARE_EXPIRY_DAYS_MIN}
+                max={SHARE_EXPIRY_DAYS_MAX}
+                inputMode="numeric"
+                value={customDays}
+                onChange={(event) => setCustomDays(event.target.value)}
+                placeholder={t`Days`}
+                aria-label={t`Custom expiry in days`}
+                className="h-9 w-24 rounded-md border border-border bg-card px-3 text-body"
+              />
+            ) : null}
+            <Button
+              type="button"
+              onClick={() => create.mutate(customSelected ? customDaysParsed : expiresInDays)}
+              disabled={createDisabled}
+              className="w-full"
+            >
+              <Link2 />
+              <Trans>Create link</Trans>
+            </Button>
+            {create.isError ? (
+              <p className="text-body text-destructive">
+                <Trans>Could not create the link. Try again.</Trans>
+              </p>
+            ) : null}
+          </div>
+          {newest?.shareUrl ? (
+            <div className="flex min-w-0 items-center gap-2 rounded-xl border border-border bg-muted px-3 py-2">
+              <span className="min-w-0 flex-1 truncate text-body">{newest.shareUrl}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => void copy(newest.shareUrl!)}
+                aria-label={t`Copy link`}
+              >
+                {copied ? <Check /> : <Copy />}
+              </Button>
+            </div>
+          ) : null}
+          {newest?.shareUrl && qrDataUrl ? (
+            <img src={qrDataUrl} alt="" className="h-48 w-48 rounded-lg" />
+          ) : null}
+          <div className="min-w-0 space-y-2">
+            {items.map((item) => {
+              const state = shareState(item);
+              const expanded = rowQr?.id === item.id;
+              return (
+                <div key={item.id} className="rounded-xl border border-border">
+                  {/* biome-ignore lint/a11y/useSemanticElements: the row holds real buttons, so it cannot itself be a <button>. */}
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => toggleRowQr(item)}
+                    onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) return;
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        toggleRowQr(item);
+                      }
+                    }}
+                    className="flex cursor-pointer items-center gap-2 px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-body font-medium">{item.title}</div>
+                      <div className="truncate text-label text-muted-foreground">
+                        {state === "revoked" ? (
+                          <Trans>Revoked</Trans>
+                        ) : state === "expired" ? (
+                          <Trans>Expired</Trans>
+                        ) : item.expiresAt ? (
+                          <Trans>Expires {expiryLabel(item.expiresAt)}</Trans>
+                        ) : (
+                          <Trans>Never expires</Trans>
+                        )}
+                        {` · ${new Date(item.createdAt).toISOString().slice(0, 10)}`}
+                      </div>
+                    </div>
+                    {item.shareUrl ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void copy(item.shareUrl!);
+                        }}
+                        aria-label={t`Copy link`}
+                      >
+                        {copied ? <Check /> : <Copy />}
+                      </Button>
+                    ) : null}
+                    {state === "revoked" || state === "expired" ? (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={restore.isPending}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            restore.mutate(item.id);
+                          }}
+                        >
+                          <RotateCcw />
+                          <Trans>Restore</Trans>
+                        </Button>
+                        {state === "revoked" ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={remove.isPending}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeleteTarget(item);
+                            }}
+                          >
+                            <Trans>Delete</Trans>
+                          </Button>
+                        ) : null}
+                      </>
                     ) : (
-                      <Trans>Never expires</Trans>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={revoke.isPending}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          revoke.mutate(item.id);
+                        }}
+                      >
+                        <Trans>Revoke</Trans>
+                      </Button>
                     )}
-                    {` · ${new Date(item.createdAt).toISOString().slice(0, 10)}`}
                   </div>
+                  {expanded && rowQr?.dataUrl ? (
+                    <div className="px-3 pb-3">
+                      <img src={rowQr.dataUrl} alt="" className="h-48 w-48 rounded-lg" />
+                    </div>
+                  ) : null}
                 </div>
-                {item.shareUrl ? (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => void copy(item.shareUrl!)}
-                    aria-label={t`Copy link`}
-                  >
-                    {copied ? <Check /> : <Copy />}
-                  </Button>
-                ) : null}
-                {state === "revoked" || state === "expired" ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={restore.isPending}
-                    onClick={() => restore.mutate(item.id)}
-                  >
-                    <RotateCcw />
-                    <Trans>Restore</Trans>
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={revoke.isPending}
-                    onClick={() => revoke.mutate(item.id)}
-                  >
-                    <Trans>Revoke</Trans>
-                  </Button>
-                )}
-              </div>
-            );
-          })}
-          {list.isPending ? (
-            <p className="text-body text-muted-foreground">
-              <Trans>Loading…</Trans>
-            </p>
-          ) : null}
-          {!list.isPending && items.length === 0 ? (
-            <p className="text-body text-muted-foreground">
-              <Trans>No links yet.</Trans>
-            </p>
-          ) : null}
-        </div>
-      </DialogContent>
-    </Dialog>
+              );
+            })}
+            {list.isPending ? (
+              <p className="text-body text-muted-foreground">
+                <Trans>Loading…</Trans>
+              </p>
+            ) : null}
+            {!list.isPending && items.length === 0 ? (
+              <p className="text-body text-muted-foreground">
+                <Trans>No links yet.</Trans>
+              </p>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+      {deleteTarget ? (
+        <ConfirmDialog
+          open
+          onCancel={() => setDeleteTarget(null)}
+          title={<Trans>Delete link</Trans>}
+          description={deleteTarget.title}
+          confirmLabel={<Trans>Delete</Trans>}
+          onConfirm={() => remove.mutate(deleteTarget.id)}
+          busy={remove.isPending}
+          error={remove.isError ? <Trans>Could not delete the link. Try again.</Trans> : undefined}
+        />
+      ) : null}
+    </>
   );
 }

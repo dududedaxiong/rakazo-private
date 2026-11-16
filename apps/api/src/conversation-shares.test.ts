@@ -4,6 +4,7 @@ import { IsolationError } from "@rakazo/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createConversationShare,
+  deleteConversationShare,
   listConversationShares,
   readSharedConversation,
   restoreConversationShare,
@@ -57,8 +58,10 @@ describe("conversation shares", () => {
   const conversationShareFindMany = vi.fn();
   const conversationShareFindUnique = vi.fn();
   const conversationShareUpdate = vi.fn();
+  const conversationShareDelete = vi.fn();
   const secretCreate = vi.fn();
   const secretFindUnique = vi.fn();
+  const secretDeleteMany = vi.fn();
   const threadFindUnique = vi.fn();
   let capturedToken = "";
   const secretsPut = vi.fn(async (plaintext: string) => {
@@ -66,11 +69,16 @@ describe("conversation shares", () => {
     return { id: "secret-1", ref: "sealed", ciphertext: "sealed" };
   });
   const secretsLoad = vi.fn(async () => capturedToken);
+  const secretsDelete = vi.fn(async () => undefined);
   const fakePrisma = {
     $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) =>
       fn({
-        secret: { create: secretCreate },
-        conversationShare: { create: conversationShareCreate },
+        secret: {
+          create: secretCreate,
+          findUnique: secretFindUnique,
+          deleteMany: secretDeleteMany,
+        },
+        conversationShare: { create: conversationShareCreate, delete: conversationShareDelete },
       }),
     ),
     conversationShare: {
@@ -84,7 +92,7 @@ describe("conversation shares", () => {
   };
   const deps = {
     prisma: fakePrisma,
-    secrets: { put: secretsPut, load: secretsLoad },
+    secrets: { put: secretsPut, load: secretsLoad, delete: secretsDelete },
     webOrigin: "https://web.example",
   } as unknown as Parameters<typeof createConversationShare>[0];
 
@@ -224,6 +232,25 @@ describe("conversation shares", () => {
     expect(restored.shareUrl).toBe(revoked.shareUrl);
   });
 
+  it("deletes a revoked share, its secret row, and its sealed token", async () => {
+    conversationShareFindUnique.mockResolvedValue({
+      id: "share-1",
+      title: "Helper",
+      threadId: "thread-1",
+      secretId: "secret-1",
+      expiresAt: null,
+      revokedAt: now,
+      createdAt: now,
+    });
+    expect(await deleteConversationShare(deps, actor, "share-1")).toEqual({ ok: true });
+    expect(conversationShareDelete).toHaveBeenCalledWith({ where: { id: "share-1" } });
+    expect(secretDeleteMany).toHaveBeenCalledWith({ where: { id: "secret-1" } });
+    expect(secretsDelete).toHaveBeenCalledWith(
+      "sealed",
+      expect.objectContaining({ recordId: "secret-1" }),
+    );
+  });
+
   it("refuses a share whose thread belongs to someone else", async () => {
     conversationShareFindUnique.mockResolvedValue({
       id: "share-9",
@@ -236,6 +263,8 @@ describe("conversation shares", () => {
     });
     threadFindUnique.mockResolvedValue({ botId: "bot-9", groupId: null });
     await expect(revokeConversationShare(deps, actor, "share-9")).rejects.toThrow();
+    await expect(deleteConversationShare(deps, actor, "share-9")).rejects.toThrow();
+    expect(conversationShareDelete).not.toHaveBeenCalled();
   });
 
   it("reads a live share by token and refuses the rest", async () => {

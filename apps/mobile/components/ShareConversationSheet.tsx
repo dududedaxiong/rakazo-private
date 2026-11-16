@@ -6,11 +6,13 @@ import {
 } from "@rakazo/contracts";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Share, Text, TextInput, View } from "react-native";
+import { SvgXml } from "react-native-svg";
 import { rpc } from "../lib/api";
 import { mobileTokens } from "../lib/appearance";
 import type { MobileArtifactTarget } from "../lib/artifact-open";
 import { useI18n } from "../lib/i18n";
 import { conversationShareExpiryLabel, conversationShareState } from "../lib/share-conversation";
+import { shareLinkQrSvg } from "../lib/share-link-qr";
 import { BottomSheetShell } from "./bottom-sheet-shell";
 
 type ShareExpiry = number | null;
@@ -26,7 +28,9 @@ function expiryLabel(days: ShareExpiry, t: (id: string) => string): string {
 /**
  * A conversation's replay links, like the web dialog: create one (30 days
  * by default), copy it or send it through the system share sheet, revoke it,
- * or restore it — restoring brings the same link back. The link opens a
+ * or restore it — restoring brings the same link back. A revoked link can
+ * also be deleted, which removes it from the list for good. Tapping a row
+ * shows that link's QR code, like the web dialog. The link opens a
  * read-only replay in the browser without signing in; the app itself never
  * renders the replay page.
  */
@@ -52,6 +56,8 @@ export function ShareConversationSheet({
   const [customSelected, setCustomSelected] = useState(false);
   const [newest, setNewest] = useState<ConversationShareSummary | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  /** The list row whose QR code is open, if any; the code carries that row's link. */
+  const [rowQr, setRowQr] = useState<{ id: string; svg: string | null } | null>(null);
   const targetKey = "botId" in target ? `bot:${target.botId}` : `group:${target.groupId}`;
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,6 +65,7 @@ export function ShareConversationSheet({
     if (!visible) return;
     let cancelled = false;
     setNewest(null);
+    setRowQr(null);
     setCreateError(false);
     setLoadError(false);
     setLoading(true);
@@ -114,6 +121,36 @@ export function ShareConversationSheet({
     } finally {
       setBusyId(null);
     }
+  }
+
+  async function remove(item: ConversationShareSummary) {
+    if (busyId) return;
+    setBusyId(item.id);
+    try {
+      await rpc("shares/delete", { shareId: item.id });
+      setItems((current) => current.filter((entry) => entry.id !== item.id));
+      if (newest?.id === item.id) setNewest(null);
+      if (rowQr?.id === item.id) setRowQr(null);
+    } catch {
+      Alert.alert(t("Could not delete the link"), t("Try again."));
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  function toggleRowQr(item: ConversationShareSummary) {
+    if (!item.shareUrl) return;
+    if (rowQr?.id === item.id) {
+      setRowQr(null);
+      return;
+    }
+    const { id, shareUrl } = item;
+    setRowQr({ id, svg: null });
+    void shareLinkQrSvg(shareUrl)
+      .then((svg) => {
+        setRowQr((current) => (current?.id === id ? { id, svg } : current));
+      })
+      .catch(() => null);
   }
 
   async function copyLink(item: ConversationShareSummary) {
@@ -285,50 +322,76 @@ export function ShareConversationSheet({
         ) : (
           items.map((item) => {
             const live = conversationShareState(item) === "live";
+            const expanded = rowQr?.id === item.id;
             return (
-              <View
-                key={item.id}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 8,
-                  paddingHorizontal: 12,
-                  paddingVertical: 10,
-                  borderWidth: 1,
-                  borderColor: tokens.border,
-                  borderRadius: 8,
-                }}
-              >
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={{ color: tokens.foreground, fontSize: 15 }} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                  <Text style={{ color: tokens.mutedForeground, fontSize: 13 }}>
-                    {stateLabel(item)}
-                    {` · ${item.createdAt.slice(0, 10)}`}
-                  </Text>
-                </View>
-                {item.shareUrl ? (
-                  <>
-                    <Pressable onPress={() => void copyLink(item)}>
-                      <Text style={{ color: tokens.foreground, fontSize: 15 }}>
-                        {copiedId === item.id ? t("Copied") : t("Copy")}
-                      </Text>
-                    </Pressable>
-                    <Pressable onPress={() => void shareLink(item)}>
-                      <Text style={{ color: tokens.foreground, fontSize: 15 }}>{t("Share")}</Text>
-                    </Pressable>
-                  </>
-                ) : null}
+              <View key={item.id}>
                 <Pressable
-                  onPress={() => void toggle(item)}
-                  disabled={busyId === item.id}
-                  style={{ opacity: busyId === item.id ? 0.4 : 1 }}
+                  onPress={() => toggleRowQr(item)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    borderWidth: 1,
+                    borderColor: tokens.border,
+                    borderRadius: 8,
+                  }}
                 >
-                  <Text style={{ color: tokens.foreground, fontSize: 15 }}>
-                    {live ? t("Revoke") : t("Restore")}
-                  </Text>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={{ color: tokens.foreground, fontSize: 15 }} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    <Text style={{ color: tokens.mutedForeground, fontSize: 13 }} numberOfLines={1}>
+                      {stateLabel(item)}
+                      {` · ${item.createdAt.slice(0, 10)}`}
+                    </Text>
+                  </View>
+                  {item.shareUrl ? (
+                    <>
+                      <Pressable onPress={() => void copyLink(item)}>
+                        <Text style={{ color: tokens.foreground, fontSize: 15 }}>
+                          {copiedId === item.id ? t("Copied") : t("Copy")}
+                        </Text>
+                      </Pressable>
+                      <Pressable onPress={() => void shareLink(item)}>
+                        <Text style={{ color: tokens.foreground, fontSize: 15 }}>{t("Share")}</Text>
+                      </Pressable>
+                    </>
+                  ) : null}
+                  <Pressable
+                    onPress={() => void toggle(item)}
+                    disabled={busyId === item.id}
+                    style={{ opacity: busyId === item.id ? 0.4 : 1 }}
+                  >
+                    <Text style={{ color: tokens.foreground, fontSize: 15 }}>
+                      {live ? t("Revoke") : t("Restore")}
+                    </Text>
+                  </Pressable>
+                  {conversationShareState(item) === "revoked" ? (
+                    <Pressable
+                      onPress={() =>
+                        Alert.alert(t("Delete {name}?", { name: item.title }), undefined, [
+                          { text: t("Cancel"), style: "cancel" },
+                          {
+                            text: t("Delete"),
+                            style: "destructive",
+                            onPress: () => void remove(item),
+                          },
+                        ])
+                      }
+                      disabled={busyId === item.id}
+                      style={{ opacity: busyId === item.id ? 0.4 : 1 }}
+                    >
+                      <Text style={{ color: tokens.destructive, fontSize: 15 }}>{t("Delete")}</Text>
+                    </Pressable>
+                  ) : null}
                 </Pressable>
+                {expanded && rowQr?.svg ? (
+                  <View style={{ marginTop: 8 }}>
+                    <SvgXml xml={rowQr.svg} width={192} height={192} />
+                  </View>
+                ) : null}
               </View>
             );
           })

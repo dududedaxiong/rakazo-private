@@ -2642,6 +2642,10 @@ msgstr "스킬을 삭제하지 못했습니다"
 msgid "Could not delete space"
 msgstr "스페이스를 삭제하지 못했습니다"
 
+#: src/components/ShareConversationDialog.tsx
+msgid "Could not delete the link. Try again."
+msgstr ""
+
 #: src/components/admin/AdminUsers.tsx
 msgid "Could not delete the user"
 msgstr ""
@@ -3494,6 +3498,7 @@ msgstr "기본 템플릿을 복원했습니다"
 #: src/components/pages/PagesList.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/components/ShareConversationDialog.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
 #: src/pages/KnowledgeSection.tsx
@@ -3540,6 +3545,10 @@ msgstr "계정 삭제"
 #: src/pages/GroupPanel.tsx
 msgid "Delete group"
 msgstr "그룹 삭제"
+
+#: src/components/ShareConversationDialog.tsx
+msgid "Delete link"
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "Delete memories too"
