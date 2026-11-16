@@ -5,6 +5,7 @@ import { ScrollView, Text, TextInput } from "react-native";
 import { BotMemberPicker } from "../components/bot-member-picker";
 import { glassHeaderOptions } from "../components/glass-title";
 import { NativeActionButton } from "../components/native-action-button";
+import { ShareConversationSheet } from "../components/ShareConversationSheet";
 import { rpc } from "../lib/api";
 import { notifyArchivedChatsChanged } from "../lib/archived-chats";
 import { confirmDeleteGroup } from "../lib/bot-lifecycle";
@@ -26,6 +27,7 @@ export default function GroupSettingsScreen() {
   const [selected, setSelected] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [shareConversationOpen, setShareConversationOpen] = useState(false);
 
   useEffect(() => {
     if (!groupId) return;
@@ -128,6 +130,13 @@ export default function GroupSettingsScreen() {
             style={{ marginTop: 16 }}
           />
         ) : null}
+        {groupId ? (
+          <NativeActionButton
+            label={t("Share conversation")}
+            onPress={() => setShareConversationOpen(true)}
+            style={{ marginTop: 16 }}
+          />
+        ) : null}
         <NativeActionButton
           label={t("Delete group")}
           onPress={remove}
@@ -135,6 +144,13 @@ export default function GroupSettingsScreen() {
           style={{ marginTop: 16 }}
         />
       </ScrollView>
+      {groupId ? (
+        <ShareConversationSheet
+          visible={shareConversationOpen}
+          target={{ groupId }}
+          onClose={() => setShareConversationOpen(false)}
+        />
+      ) : null}
     </>
   );
 }

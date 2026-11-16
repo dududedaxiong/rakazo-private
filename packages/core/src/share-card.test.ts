@@ -1,21 +1,23 @@
-import type { ThreadMessage } from "@rakazo/contracts";
 import { describe, expect, it } from "vitest";
 import type { ShareCardMeasure } from "./share-card.js";
 import {
   DEFAULT_SHARE_CARD_STYLE,
+  estimateShareCardTextWidth,
+  formatShareCardDuration,
   planShareCard,
   SHARE_CARD_WIDTH,
   shareCardContentFromMessage,
   shareCardFilename,
   wrapShareCardLines,
 } from "./share-card.js";
+import type { LiveThreadMessage } from "./thread-snapshot-events.js";
 
 /** Every character is 10px wide at 20px type, so wrapping is predictable. */
 const measure: ShareCardMeasure = (text, px) => text.length * px * 0.5;
 
 function message(
-  overrides: Partial<ThreadMessage> & { blocks: ThreadMessage["blocks"] },
-): ThreadMessage {
+  overrides: Partial<LiveThreadMessage> & { blocks: LiveThreadMessage["blocks"] },
+): LiveThreadMessage {
   return {
     id: "m_1",
     threadId: "t_1",
@@ -25,6 +27,15 @@ function message(
     ...overrides,
   };
 }
+
+describe("formatShareCardDuration", () => {
+  it("writes a length as m:ss", () => {
+    expect(formatShareCardDuration(0)).toBe("0:00");
+    expect(formatShareCardDuration(9.4)).toBe("0:09");
+    expect(formatShareCardDuration(70)).toBe("1:10");
+    expect(formatShareCardDuration(-5)).toBe("0:00");
+  });
+});
 
 describe("wrapShareCardLines", () => {
   it("wraps Chinese prose one character at a time", () => {
@@ -135,5 +146,56 @@ describe("shareCardFilename", () => {
     expect(shareCardFilename(new Date("2026-11-16T14:02:11+08:00"))).toBe(
       "share-card-20261116T0602.png",
     );
+  });
+});
+
+describe("planShareCard positions", () => {
+  it("places every section where the draw puts it", () => {
+    const content = shareCardContentFromMessage(
+      message({ blocks: [{ kind: "text", text: "Here\n当前模型: model-a" }] }),
+      "What is this?",
+    )!;
+    const plan = planShareCard(content, DEFAULT_SHARE_CARD_STYLE, measure);
+    // questionPx 17, one question line: divider 28 below the lines, media 28 below that.
+    expect(plan.questionY).toBe(64);
+    expect(plan.questionDividerY).toBeCloseTo(64 + 17 * 1.6 + 28, 5);
+    expect(plan.mediaY).toBeCloseTo(64 + 17 * 1.6 + 56, 5);
+    expect(plan.bodyY).toBe(plan.mediaY);
+    expect(plan.footerDividerY).toBeCloseTo(plan.bodyY + 20 * 1.75 + 48, 5);
+    expect(plan.footerY).toBeCloseTo(plan.footerDividerY! + 20, 5);
+    // The height keeps the web card's exact formula (see planShareCard).
+    expect(plan.height).toBe(Math.ceil(64 + 17 * 1.6 + 28 + 20 * 1.75 + 48 + 12 * 1.5 + 20 + 64));
+  });
+
+  it("omits the question and footer positions when they are absent", () => {
+    const content = shareCardContentFromMessage(
+      message({ blocks: [{ kind: "text", text: "Hello" }] }),
+    )!;
+    const plan = planShareCard(content, DEFAULT_SHARE_CARD_STYLE, measure);
+    expect(plan.questionDividerY).toBeNull();
+    expect(plan.footerDividerY).toBeNull();
+    expect(plan.footerY).toBeNull();
+    expect(plan.mediaY).toBe(64);
+    expect(plan.bodyY).toBe(64);
+  });
+});
+
+describe("estimateShareCardTextWidth", () => {
+  it("measures a CJK character as exactly one em", () => {
+    expect(estimateShareCardTextWidth("山", 20, "serif")).toBeCloseTo(20 * 1.06, 5);
+    expect(estimateShareCardTextWidth("山水", 20, "serif")).toBeCloseTo(40 * 1.06, 5);
+  });
+
+  it("never measures below zero and grows with the text", () => {
+    expect(estimateShareCardTextWidth("", 20, "sans")).toBe(0);
+    const short = estimateShareCardTextWidth("abc", 20, "sans");
+    const long = estimateShareCardTextWidth("abcdef", 20, "sans");
+    expect(short).toBeGreaterThan(0);
+    expect(long).toBeGreaterThan(short);
+  });
+
+  it("over-measures Latin prose rather than under-measuring it", () => {
+    // 0.6em per letter plus the margin stays above a plain 0.5em measure.
+    expect(estimateShareCardTextWidth("Hello", 20, "sans")).toBeGreaterThan(5 * 20 * 0.5);
   });
 });

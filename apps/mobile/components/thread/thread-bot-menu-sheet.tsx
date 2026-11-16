@@ -19,11 +19,13 @@ export function ThreadBotMenuSheet({
   botId,
   onClose,
   onPickModel,
+  onShareConversation,
 }: {
   visible: boolean;
   botId?: string;
   onClose: () => void;
   onPickModel: (role: ThreadModelPickerRole) => void;
+  onShareConversation: () => void;
 }) {
   const { t } = useI18n();
   const tokens = mobileTokens();
@@ -92,6 +94,17 @@ export function ThreadBotMenuSheet({
         if (!botId) return;
         onClose();
         router.push({ pathname: "/computer", params: { botId } });
+      },
+    },
+    {
+      key: "shareConversation",
+      label: t("Share conversation"),
+      sublabel: t("A link anyone can open to replay it"),
+      ios: "square.and.arrow.up",
+      android: "share-outline",
+      onPress: () => {
+        onClose();
+        onShareConversation();
       },
     },
     {

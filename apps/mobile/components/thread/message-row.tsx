@@ -106,6 +106,8 @@ export type MessageRowActions = {
   regenerate?: (message: MobileMessage) => void;
   /** Resends this user message's own text. Absent where unsupported. */
   resend?: (message: MobileMessage) => void;
+  /** Opens the share-card sheet for this bot reply. Absent where unsupported. */
+  shareCard?: (message: MobileMessage) => void;
   /** Stops the thread's runs; the stuck row's Cancel uses it. Absent where unsupported. */
   stopStuckRun?: () => void;
   /** Opens the model picker to retry this stuck message on another model. Absent where unsupported. */
@@ -333,6 +335,14 @@ export const MessageRow = memo(function MessageRow({
     };
     const react = (reaction: MessageReaction) => actions.react(message, reaction);
     const share = () => shareMessageText(copyableMessageText(message));
+    // A bot reply with text or generated media can become a share card;
+    // a progress row and a user message cannot.
+    const includeShareCard =
+      Boolean(actions.shareCard) &&
+      message.role === "bot" &&
+      !message.id.startsWith("progress:") &&
+      (Boolean(blockText(message).trim()) || hasGeneratedMedia);
+    const shareCard = () => actions.shareCard?.(message);
     const regenerateMessage = actions.regenerate ? () => actions.regenerate!(message) : undefined;
     const resendMessage = actions.resend ? () => actions.resend!(message) : undefined;
     // Resend only makes sense for a sent user message with text to send again;
@@ -376,6 +386,9 @@ export const MessageRow = memo(function MessageRow({
       ...(includeSelect ? [{ name: "select", text: t("Select text"), onPress: select }] : []),
       { name: "copy", text: t("Copy"), onPress: copy },
       { name: "share", text: t("Share"), onPress: share },
+      ...(includeShareCard
+        ? [{ name: "shareCard", text: t("Share card"), onPress: shareCard }]
+        : []),
       {
         name: "selectMessages",
         text: t("Select messages"),
@@ -394,6 +407,7 @@ export const MessageRow = memo(function MessageRow({
         resend: t("Resend"),
         copy: t("Copy"),
         share: t("Share"),
+        shareCard: t("Share card"),
         favorite: favoriteLabel,
         react: t("React"),
         quote: t("Quote"),
@@ -412,6 +426,7 @@ export const MessageRow = memo(function MessageRow({
         select: includeSelect,
         unread: includeUnread,
         share: includeSelect,
+        shareCard: includeShareCard,
         favorite: includeFavorite,
         selectMessages: true,
       },
@@ -487,6 +502,16 @@ export const MessageRow = memo(function MessageRow({
                   },
                 ]
               : []),
+            ...(includeShareCard
+              ? [
+                  {
+                    name: "shareCard",
+                    text: t("Share card"),
+                    icon: "image-outline" as const,
+                    onPress: shareCard,
+                  },
+                ]
+              : []),
             ...(includeSelect
               ? [
                   {
@@ -546,6 +571,7 @@ export const MessageRow = memo(function MessageRow({
         if (id === "resend") resendMessage?.();
         if (id === "copy") copy();
         if (id === "share") share();
+        if (id === "shareCard") shareCard();
         if (id === "favorite") toggleFavorite();
         if (id === "quote") quote();
         if (id === "speak") speakMessage();

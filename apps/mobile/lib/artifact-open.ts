@@ -155,6 +155,15 @@ export async function audioArtifactUri(
   return (await cacheMobileArtifact(target, artifactId, mimeType)).uri;
 }
 
+/** Local file URI of a video artifact, for a thumbnail or a player. */
+export async function videoArtifactUri(
+  target: MobileArtifactTarget,
+  artifactId: string,
+  mimeType: string,
+): Promise<string> {
+  return (await cacheMobileArtifact(target, artifactId, mimeType)).uri;
+}
+
 export async function openMobileArtifact(
   target: MobileArtifactTarget,
   artifactId: string,

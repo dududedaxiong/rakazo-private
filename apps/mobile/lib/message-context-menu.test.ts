@@ -9,6 +9,7 @@ const labels: Record<MessageMenuSymbol, string> = {
   resend: "Resend",
   copy: "Copy",
   share: "Share",
+  shareCard: "Share card",
   favorite: "Favorite",
   react: "React",
   quote: "Quote",
@@ -183,5 +184,23 @@ describe("message context menu", () => {
       include: { quote: true, react: true, speak: true, select: true, share: false },
     });
     expect(ids(menu)).not.toContain("share");
+  });
+
+  it("offers a share card right after share, only for a bot reply", () => {
+    const menu = buildMessageContextMenu({
+      labels,
+      reactions,
+      include: { quote: false, react: false, speak: false, select: false, shareCard: true },
+    });
+    expect(ids(menu)).toEqual(["reply", "copy", "share", "shareCard"]);
+    expect(
+      ids(
+        buildMessageContextMenu({
+          labels,
+          reactions,
+          include: { quote: false, react: false, speak: false, select: false },
+        }),
+      ),
+    ).not.toContain("shareCard");
   });
 });

@@ -91,6 +91,8 @@ import { FailedSendBubble } from "../failed-send-bubble";
 import { NativeSymbol } from "../native-symbol";
 import { NewestPageCards } from "../pages/page-card";
 import { RunErrorSheet } from "../run-error-sheet";
+import { ShareCardSheet } from "../ShareCardSheet";
+import { ShareConversationSheet } from "../ShareConversationSheet";
 import { SelectTextSheet } from "../select-text-sheet";
 import { ThreadComposer } from "../thread-composer";
 import { ThreadErrorNotice, ThreadFetchErrorNotice } from "../thread-error-notice";
@@ -194,6 +196,9 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   const [backgroundOpen, setBackgroundOpen] = useState(false);
   const [customSettingsOpen, setCustomSettingsOpen] = useState(false);
   const [backupOpen, setBackupOpen] = useState(false);
+  const [shareCardTarget, setShareCardTarget] = useState<MobileMessage | null>(null);
+  const [shareCardQuestion, setShareCardQuestion] = useState("");
+  const [shareConversationOpen, setShareConversationOpen] = useState(false);
   const insets = useSafeAreaInsets();
   // An unfolded or tablet window keeps messages and the composer in a centred reading column.
   const columnInsets = readableGutters(windowWidth, {
@@ -820,6 +825,12 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       );
     },
     resend: resendMessage,
+    shareCard: (message) => {
+      setShareCardTarget(message);
+      setShareCardQuestion(
+        previousUserMessageText(history.snapRef.current?.messages ?? [], message.id) ?? "",
+      );
+    },
     stopStuckRun: () => void composer.stop(),
     retryStuckRun,
     markUnread: markUnreadFrom,
@@ -1472,7 +1483,24 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
           botId={botId}
           onClose={() => setBotMenuOpen(false)}
           onPickModel={setSheetRole}
+          onShareConversation={() => setShareConversationOpen(true)}
         />
+        {shareCardTarget && artifactTarget ? (
+          <ShareCardSheet
+            visible
+            message={shareCardTarget}
+            previousUserMessageText={shareCardQuestion}
+            target={artifactTarget}
+            onClose={() => setShareCardTarget(null)}
+          />
+        ) : null}
+        {artifactTarget ? (
+          <ShareConversationSheet
+            visible={shareConversationOpen}
+            target={artifactTarget}
+            onClose={() => setShareConversationOpen(false)}
+          />
+        ) : null}
         {botId ? (
           <ThreadPersonaSheet
             visible={personaOpen}

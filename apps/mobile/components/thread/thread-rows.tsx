@@ -67,6 +67,7 @@ export function useLatestRowActions(current: MessageRowActions): MessageRowActio
         rowActionsRef.current.favoriteTranslation?.(message, translatedText),
       regenerate: (message) => rowActionsRef.current.regenerate?.(message),
       resend: (message) => rowActionsRef.current.resend?.(message),
+      shareCard: (message) => rowActionsRef.current.shareCard?.(message),
       stopStuckRun: () => rowActionsRef.current.stopStuckRun?.(),
       retryStuckRun: (message) => rowActionsRef.current.retryStuckRun?.(message),
       markUnread: (message) => rowActionsRef.current.markUnread(message),

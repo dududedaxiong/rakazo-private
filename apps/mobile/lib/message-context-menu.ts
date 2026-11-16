@@ -5,6 +5,7 @@ export const messageMenuSymbols = [
   "resend",
   "copy",
   "share",
+  "shareCard",
   "favorite",
   "react",
   "quote",
@@ -55,6 +56,8 @@ export function buildMessageContextMenu({
     select: boolean;
     unread?: boolean;
     share?: boolean;
+    /** Makes a share card from this bot reply, like the web hover menu. */
+    shareCard?: boolean;
     /** A bot reply can be favorited from the menu, like from its action row. */
     favorite?: boolean;
     /** Enters multi-select with this message picked. */
@@ -74,6 +77,7 @@ export function buildMessageContextMenu({
     ...(include.unread ? [entry("unread", labels.unread)] : []),
     entry("copy", labels.copy),
     ...(include.share !== false ? [entry("share", labels.share)] : []),
+    ...(include.shareCard ? [entry("shareCard", labels.shareCard)] : []),
     ...(include.favorite ? [entry("favorite", labels.favorite)] : []),
     ...(include.selectMessages ? [entry("selectMessages", labels.selectMessages)] : []),
     ...(include.react

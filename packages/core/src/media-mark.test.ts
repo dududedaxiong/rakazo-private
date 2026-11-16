@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { parseMediaMark, splitTrailingMark } from "./media-mark";
+import { parseMediaMark, splitTrailingMark } from "./media-mark.js";
 
 describe("parseMediaMark", () => {
   it("parses a model-only mark", () => {

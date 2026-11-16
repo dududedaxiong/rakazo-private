@@ -79,6 +79,9 @@ vi.mock("./i18n", () => ({
 }));
 vi.mock("../components/glass-title", () => ({ glassHeaderOptions: () => ({}) }));
 vi.mock("../components/bot-avatar", () => ({ BotAvatar: () => null }));
+vi.mock("../components/ShareConversationSheet", () => ({
+  ShareConversationSheet: () => null,
+}));
 vi.mock("../components/native-action-button", () => ({
   NativeActionButton: ({
     label,

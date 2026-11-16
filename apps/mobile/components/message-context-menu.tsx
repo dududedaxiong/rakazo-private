@@ -15,6 +15,7 @@ const symbols = {
   quote: "text.quote",
   speak: "speaker.wave.2",
   share: "square.and.arrow.up",
+  shareCard: "photo",
   favorite: "bookmark",
   select: "character.cursor.ibeam",
   unread: "message.badge",
