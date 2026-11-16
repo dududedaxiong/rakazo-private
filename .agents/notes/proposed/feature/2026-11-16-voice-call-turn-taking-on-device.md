@@ -14,7 +14,7 @@ Status: proposed
 
 - **VAD**：Silero VAD（ONNX，16kHz，512 采样帧）判断有没有人在说话，单线程跑在手机上。
 - **Smart-Turn**：Smart-Turn v3.2（ONNX，输入为 Whisper mel 80x800）判断这句话说完了没有。
-- 录音为 16kHz 单声道 PCM16 WAV，整段录完再送识别（DeepSeek ASR / OpenAI 兼容 `/audio/transcriptions` / 引擎自带语音模型三选一，按配置回退）；识别是整段出结果，不边说边出。
+- 识别分两路，**本机流式识别首选**：sherpa-onnx Zipformer 中英双语模型（Apache-2.0，约 198MB，首次下载、SHA256 校验），边说边出 partial 结果，静音 1 秒断句，最长 110 秒；**整段识别作回退**：DeepSeek ASR / OpenAI 兼容 `/audio/transcriptions` / 引擎自带语音模型三选一，按配置回退。模型与运行库均为 Apache-2.0，可直接用，不像 AGPL 代码只能借鉴设计。
 - 单麦克风仲裁：同一时间只有一个语音功能占麦，别的先停。**通话里这条要改**：朗读时麦克风必须保持开启（全双工），否则打断做不了；打断时 VAD 检测到用户说话就立即停 TTS、切回听。
 
 - **打断（核心）**：状态机 听 → 识别 → 生成 → 读 → 听，读和生成两个态都能被打断回听态。回声消除是前提：朗读时麦克风会收到自己的声音，靠平台回声消除（网页 getUserMedia echoCancellation、Android 用 VOICE_COMMUNICATION 音源），否则 VAD 会被自己的朗读音触发。
@@ -45,5 +45,5 @@ Status: proposed
 
 - 本机 ONNX 模型要进 App 包，体积与耗电要评估。
 - Smart-Turn 对中文的切分效果需实测，不能默认和英文一样准。
-- 整段识别意味着通话里仍有「录完再识别」的延迟，实时性不如流式。
+- 流式识别模型约 198MB，首次下载与手机 CPU 占用要评估；云端整段识别作回退时仍有「录完再识别」的延迟。
 - 回声消除不到位时，AI 会听到自己的朗读声、误以为用户在说话，导致朗读被自己的声音反复打断——这是打断功能最常见的失败形态，须真机实测。
