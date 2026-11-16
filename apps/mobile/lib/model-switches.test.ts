@@ -38,6 +38,30 @@ describe("locate model choice key", () => {
     expect(locateModelChoiceKey(choices, null)).toBeNull();
   });
 
+  it("prefers the bot's current model row for a locate without a connection", () => {
+    // The same model on two connections, the other one first in the list:
+    // a trailing mark names only the model, so the model alone would land
+    // on the wrong connection.
+    const shared = [
+      { key: "relay::model-a", modelId: "model-a", provider: "relay", providerLabel: "GB中转" },
+      { key: "openai::model-a", modelId: "model-a", provider: "openai", providerLabel: "主站" },
+    ];
+    expect(locateModelChoiceKey(shared, { model: "model-a", provider: null })).toBe(
+      "relay::model-a",
+    );
+    expect(
+      locateModelChoiceKey(shared, { model: "model-a", provider: null }, "openai::model-a"),
+    ).toBe("openai::model-a");
+    // A preferred row for another model does not win.
+    expect(
+      locateModelChoiceKey(shared, { model: "model-a", provider: null }, "relay::model-b"),
+    ).toBe("relay::model-a");
+    // A named connection still outranks the preferred row.
+    expect(
+      locateModelChoiceKey(shared, { model: "model-a", provider: "GB中转" }, "openai::model-a"),
+    ).toBe("relay::model-a");
+  });
+
   it("bridges an API id and its catalog id on a third-party connection", () => {
     const deepseekChoices = [
       {

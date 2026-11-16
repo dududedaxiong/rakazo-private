@@ -145,6 +145,12 @@ export function currentModelBar(
  * connection display name — so two rows for the same model on different
  * connections stay distinct. Falls back to the model id alone, then to
  * null when the model is not listed.
+ *
+ * A locate without a connection (a trailing mark names only the model)
+ * prefers the bot's current model row when it names that model: the reply
+ * was most likely produced by the model the bot still uses, and every
+ * connection here shares one provider id, so the model alone cannot tell
+ * two rows for it apart.
  */
 export function locateModelChoiceKey(
   choices: readonly {
@@ -154,6 +160,8 @@ export function locateModelChoiceKey(
     providerLabel?: string | null;
   }[],
   locate: { model: string; provider?: string | null } | null | undefined,
+  /** The bot's current model row for this list, when the locate names no connection. */
+  preferredKey?: string | null,
 ): string | null {
   if (!locate) return null;
   // The model comparison bridges an API id and its catalog id
@@ -166,6 +174,15 @@ export function locateModelChoiceKey(
       (choice.providerLabel === locate.provider || choice.provider === locate.provider),
   );
   if (byConnection) return byConnection.key;
+  if (!locate.provider && preferredKey) {
+    const preferred = choices.find(
+      (choice) =>
+        choice.key === preferredKey &&
+        choice.modelId != null &&
+        sameModelId(choice.modelId, locate.model),
+    );
+    if (preferred) return preferred.key;
+  }
   return (
     choices.find((choice) => choice.modelId != null && sameModelId(choice.modelId, locate.model))
       ?.key ?? null

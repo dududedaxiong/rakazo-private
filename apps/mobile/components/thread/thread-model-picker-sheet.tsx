@@ -81,10 +81,15 @@ export function ThreadModelPickerSheet({
   /**
    * The row a switch-history tap locates: matched by model id plus the
    * connection display name (providerLabel), so two rows for the same model
-   * on different connections stay distinct. Falls back to the model id
-   * alone, then to no highlight when the model is not listed.
+   * on different connections stay distinct. A locate without a connection
+   * (a trailing mark names only the model) prefers the bot's current model
+   * row when it names that model. Falls back to the model id alone, then
+   * to no highlight when the model is not listed.
    */
-  const locateKey = useMemo(() => locateModelChoiceKey(choices ?? [], locate), [choices, locate]);
+  const locateKey = useMemo(
+    () => locateModelChoiceKey(choices ?? [], locate, selectedKey || null),
+    [choices, locate, selectedKey],
+  );
   const testRun = getModelTestRunStore();
   const testSnapshot = useSyncExternalStore(testRun.subscribe, testRun.getSnapshot);
   const title =
