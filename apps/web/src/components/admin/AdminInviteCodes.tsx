@@ -154,6 +154,11 @@ export function AdminInviteCodesPanel() {
             <li key={code.id} className="flex items-center gap-3 px-4 py-3 text-body-sm">
               <code className="shrink-0 font-mono">{code.code}</code>
               <CodeStatusBadge status={code.status} />
+              {code.isReferral ? (
+                <Badge variant="outline">
+                  <Trans>Referral</Trans>
+                </Badge>
+              ) : null}
               <span className="text-muted-foreground">
                 {code.usedCount}/{code.maxUses}
               </span>
@@ -206,6 +211,19 @@ export function AdminInviteCodesPanel() {
   );
 }
 
+/** Keep in sync with INVITE_CODE_ALPHABET in packages/auth/src/invite-codes.ts. */
+const RANDOM_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const RANDOM_CODE_LENGTH = 12;
+
+/** One random code, for the dialog's "Generate random" button. */
+function randomInviteCode(): string {
+  const values = new Uint32Array(RANDOM_CODE_LENGTH);
+  globalThis.crypto.getRandomValues(values);
+  let code = "";
+  for (const value of values) code += RANDOM_CODE_ALPHABET[value % RANDOM_CODE_ALPHABET.length];
+  return code;
+}
+
 function GenerateDialog({
   onClose,
   onGenerated,
@@ -215,18 +233,33 @@ function GenerateDialog({
 }) {
   const { t } = useLingui();
   const [count, setCount] = useState("10");
+  const [customCodes, setCustomCodes] = useState("");
   const [expiry, setExpiry] = useState("30");
   const [busy, setBusy] = useState(false);
 
+  const custom = customCodes
+    .split(/[,，]/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+
+  function addRandomCode() {
+    const code = randomInviteCode();
+    setCustomCodes((current) => {
+      const trimmed = current.trim().replace(/[,，\s]+$/, "");
+      return trimmed ? `${trimmed}, ${code}` : code;
+    });
+  }
+
   async function generate() {
-    const amount = Number(count);
+    const amount = custom.length > 0 ? custom.length : Number(count);
     if (!Number.isInteger(amount) || amount < 1 || amount > 100) return;
     setBusy(true);
     try {
       await rpc.admin.inviteCodes.create({
-        count: amount,
+        count: custom.length > 0 ? 1 : amount,
         maxUses: 1,
         expiresInDays: expiry === "never" ? null : Number(expiry),
+        codes: custom.length > 0 ? custom : undefined,
       });
       toast.success(t`${amount} invite codes generated`);
       await onGenerated();
@@ -256,8 +289,25 @@ function GenerateDialog({
               min={1}
               max={100}
               value={count}
+              disabled={custom.length > 0}
               onChange={(event) => setCount(event.target.value)}
             />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="generate-custom-codes">
+              <Trans>Custom codes (optional, comma-separated)</Trans>
+            </FieldLabel>
+            <div className="flex gap-2">
+              <Input
+                id="generate-custom-codes"
+                value={customCodes}
+                placeholder="SUMMER27, THANKS27"
+                onChange={(event) => setCustomCodes(event.target.value)}
+              />
+              <Button type="button" variant="outline" onClick={addRandomCode}>
+                <Trans>Generate random</Trans>
+              </Button>
+            </div>
           </Field>
           <Field>
             <FieldLabel htmlFor="generate-expiry">

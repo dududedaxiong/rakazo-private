@@ -4,6 +4,7 @@ import {
   Button,
   Field,
   FieldLabel,
+  Input,
   SectionHeading,
   Spinner,
   Switch,
@@ -59,6 +60,10 @@ function SettingsForm({
   const [emailSignupEnabled, setEmailSignupEnabled] = useState(initial.emailSignupEnabled);
   const [allowlistEnabled, setAllowlistEnabled] = useState(initial.signupAllowlist.length > 0);
   const [allowlist, setAllowlist] = useState(initial.signupAllowlist.join("\n"));
+  const [referralCodeEnabled, setReferralCodeEnabled] = useState(initial.referralCodeEnabled);
+  const [referralCodeMaxUses, setReferralCodeMaxUses] = useState(
+    String(initial.referralCodeMaxUses),
+  );
   const [busy, setBusy] = useState(false);
 
   async function save() {
@@ -78,6 +83,8 @@ function SettingsForm({
         emailSignupEnabled,
         inviteCodeEnabled,
         signupAllowlist: domains,
+        referralCodeEnabled,
+        referralCodeMaxUses: clampMaxUses(referralCodeMaxUses, initial.referralCodeMaxUses),
       });
       await queryClient.invalidateQueries({
         queryKey: queries.admin.registrationSettings.get.key(),
@@ -165,9 +172,49 @@ function SettingsForm({
           </Field>
         ) : null}
       </section>
+      <section className="space-y-4">
+        <SectionHeading>{t`Referral codes`}</SectionHeading>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="font-medium">
+              <Trans>Referral codes</Trans>
+            </div>
+            <p className="text-body-sm text-muted-foreground">
+              <Trans>When on, new accounts get a personal code to invite others.</Trans>
+            </p>
+          </div>
+          <Switch
+            checked={referralCodeEnabled}
+            onCheckedChange={setReferralCodeEnabled}
+            aria-label={t`Referral codes`}
+          />
+        </div>
+        {referralCodeEnabled ? (
+          <Field>
+            <FieldLabel htmlFor="referral-code-max-uses">
+              <Trans>Uses per referral code</Trans>
+            </FieldLabel>
+            <Input
+              id="referral-code-max-uses"
+              type="number"
+              min={1}
+              max={100}
+              value={referralCodeMaxUses}
+              onChange={(event) => setReferralCodeMaxUses(event.target.value)}
+            />
+          </Field>
+        ) : null}
+      </section>
       <Button disabled={busy} onClick={() => void save()}>
         {busy ? <Trans>Saving…</Trans> : <Trans>Save settings</Trans>}
       </Button>
     </div>
   );
+}
+
+/** The server allows 1–100 uses; anything else falls back to the saved value. */
+function clampMaxUses(raw: string, fallback: number): number {
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isInteger(parsed)) return fallback;
+  return Math.min(100, Math.max(1, parsed));
 }

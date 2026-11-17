@@ -217,6 +217,8 @@ model InviteCode {
   maxUses     Int                    @default(1)
   usedCount   Int                    @default(0)
   revokedAt   DateTime?
+  /// A code the system issued for a new account to invite others; admin-made codes are false.
+  isReferral  Boolean                @default(false)
   redemptions InviteCodeRedemption[]
 
   @@map("invite_codes")
@@ -880,6 +882,10 @@ model DeploymentSettings {
   signupPolicyInitialized         Boolean  @default(false)
   /// Registration requires a valid invite code while true; the master switch still wins.
   inviteCodeEnabled               Boolean  @default(false)
+  /// New accounts get a personal referral code while true; the admin backend owns it.
+  referralCodeEnabled             Boolean  @default(true)
+  /// How many times a personal referral code can be used.
+  referralCodeMaxUses             Int      @default(10)
   /// Max accounts ever registered from one IP; 0 means no cap.
   ipRegistrationLimit             Int      @default(5)
   /// Max accounts registered from one IP within an hour before the IP is throttled.

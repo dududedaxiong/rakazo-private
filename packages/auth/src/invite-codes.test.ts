@@ -1,21 +1,27 @@
 import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { describe, expect, it } from "vitest";
 import {
+  CUSTOM_INVITE_CODE_MAX_LENGTH,
+  CUSTOM_INVITE_CODE_MIN_LENGTH,
   checkInviteCode,
   generateInviteCode,
   holdInviteCode,
   INVITE_CODE_LENGTH,
+  issueReferralCode,
   linkInviteCodeRedemption,
+  normalizeCustomInviteCode,
   normalizeInviteCode,
 } from "./invite-codes.js";
 
 interface CodeRow {
   id: string;
   code: string;
+  createdById: string;
   expiresAt: Date | null;
   maxUses: number;
   usedCount: number;
   revokedAt: Date | null;
+  isReferral: boolean;
 }
 
 interface RedemptionRow {
@@ -34,18 +40,35 @@ function fakePrisma(codes: CodeRow[] = []) {
     inviteCode: {
       findUnique: async ({ where }: { where: { code: string } }) =>
         store.codes.find((row) => row.code === where.code) ?? null,
+      findFirst: async ({ where }: { where: { createdById: string; isReferral: boolean } }) =>
+        store.codes.find(
+          (row) => row.createdById === where.createdById && row.isReferral === where.isReferral,
+        ) ?? null,
+      create: async ({ data }: { data: Omit<CodeRow, "id" | "usedCount" | "revokedAt"> }) => {
+        // The code column is unique; a duplicate insert fails like the real database.
+        if (store.codes.some((row) => row.code === data.code)) throw { code: "P2002" };
+        const row: CodeRow = {
+          ...data,
+          id: `code-${store.codes.length + 1}`,
+          usedCount: 0,
+          revokedAt: null,
+        };
+        store.codes.push(row);
+        return row;
+      },
       updateMany: async ({
         where,
         data,
       }: {
         where: { id: string; usedCount: number };
-        data: { usedCount: number };
+        data: { usedCount: number; revokedAt?: Date };
       }) => {
         const row = store.codes.find(
           (candidate) => candidate.id === where.id && candidate.usedCount === where.usedCount,
         );
         if (!row) return { count: 0 };
         row.usedCount = data.usedCount;
+        if (data.revokedAt) row.revokedAt = data.revokedAt;
         return { count: 1 };
       },
     },
@@ -96,10 +119,12 @@ function fakePrisma(codes: CodeRow[] = []) {
 const validCode = (): CodeRow => ({
   id: "code-1",
   code: "ABCDEFGHJKLM",
+  createdById: "admin-1",
   expiresAt: null,
   maxUses: 1,
   usedCount: 0,
   revokedAt: null,
+  isReferral: false,
 });
 
 describe("invite codes", () => {
@@ -113,6 +138,22 @@ describe("invite codes", () => {
   it("matches codes case-insensitively", () => {
     expect(normalizeInviteCode("  abcdefghjklm ")).toBe("ABCDEFGHJKLM");
     expect(normalizeInviteCode(undefined)).toBe("");
+  });
+
+  it("accepts custom codes from the invite alphabet only", () => {
+    expect(normalizeCustomInviteCode("  summer27 ")).toBe("SUMMER27");
+    expect(normalizeCustomInviteCode("TEAM")).toBe("TEAM");
+    expect(normalizeCustomInviteCode("A".repeat(CUSTOM_INVITE_CODE_MAX_LENGTH))).toHaveLength(
+      CUSTOM_INVITE_CODE_MAX_LENGTH,
+    );
+    expect(normalizeCustomInviteCode("ABC")).toBeNull();
+    expect(normalizeCustomInviteCode("A".repeat(CUSTOM_INVITE_CODE_MAX_LENGTH + 1))).toBeNull();
+    expect(normalizeCustomInviteCode("WELCOME1")).toBeNull();
+    expect(normalizeCustomInviteCode("HELLO")).toBeNull();
+    expect(normalizeCustomInviteCode("BAD-CODE")).toBeNull();
+    expect(normalizeCustomInviteCode("")).toBeNull();
+    expect(normalizeCustomInviteCode(undefined)).toBeNull();
+    expect(CUSTOM_INVITE_CODE_MIN_LENGTH).toBe(4);
   });
 
   it("rejects unknown, expired, revoked, and exhausted codes", async () => {
@@ -175,5 +216,78 @@ describe("invite codes", () => {
     // A second link is a no-op once the redemption has its account.
     await linkInviteCodeRedemption(prisma, "ada@example.com", "user-2");
     expect(store.redemptions[0]?.userId).toBe("user-1");
+  });
+
+  it("refuses a referral code while the referral switch is off", async () => {
+    const { prisma } = fakePrisma([{ ...validCode(), isReferral: true }]);
+    expect(await checkInviteCode(prisma, "abcdefghjklm", { referralCodeEnabled: false })).toBe(
+      "referral_disabled",
+    );
+    expect(
+      await holdInviteCode(
+        prisma,
+        { code: "abcdefghjklm", email: "a@example.com", ip: null },
+        { referralCodeEnabled: false },
+      ),
+    ).toBe("referral_disabled");
+    // An admin-made code is unaffected by the referral switch.
+    const admin = fakePrisma([validCode()]);
+    expect(
+      await checkInviteCode(admin.prisma, "abcdefghjklm", { referralCodeEnabled: false }),
+    ).toBe("valid");
+  });
+
+  it("revokes a referral code on its last use and keeps the redemptions", async () => {
+    const { prisma, store } = fakePrisma([{ ...validCode(), isReferral: true, maxUses: 2 }]);
+    expect(
+      await holdInviteCode(prisma, { code: "ABCDEFGHJKLM", email: "a@example.com", ip: null }),
+    ).toBe("held");
+    expect(store.codes[0]?.revokedAt).toBeNull();
+    expect(
+      await holdInviteCode(prisma, { code: "ABCDEFGHJKLM", email: "b@example.com", ip: null }),
+    ).toBe("held");
+    expect(store.codes[0]?.usedCount).toBe(2);
+    expect(store.codes[0]?.revokedAt).not.toBeNull();
+    expect(await checkInviteCode(prisma, "abcdefghjklm")).toBe("revoked");
+    expect(store.redemptions).toHaveLength(2);
+    expect(
+      await holdInviteCode(prisma, { code: "ABCDEFGHJKLM", email: "c@example.com", ip: null }),
+    ).toBe("revoked");
+  });
+
+  it("leaves an admin-made code exhausted, not revoked", async () => {
+    const { prisma, store } = fakePrisma([validCode()]);
+    expect(
+      await holdInviteCode(prisma, { code: "ABCDEFGHJKLM", email: "a@example.com", ip: null }),
+    ).toBe("held");
+    expect(store.codes[0]?.revokedAt).toBeNull();
+    expect(await checkInviteCode(prisma, "abcdefghjklm")).toBe("exhausted");
+  });
+
+  it("issues one personal code per account, at the configured uses", async () => {
+    const { prisma, store } = fakePrisma([]);
+    const settings = { referralCodeEnabled: true, referralCodeMaxUses: 25 };
+    const issued = await issueReferralCode(prisma, "user-1", settings);
+    expect(issued).not.toBeNull();
+    expect(issued?.createdById).toBe("user-1");
+    expect(issued?.maxUses).toBe(25);
+    expect(issued?.expiresAt).toBeNull();
+    expect(issued?.isReferral).toBe(true);
+    expect(issued?.code).toHaveLength(INVITE_CODE_LENGTH);
+    expect(issued?.code).toMatch(/^[A-HJ-NP-Z2-9]+$/);
+    // A second issue returns the same code instead of creating another.
+    expect(await issueReferralCode(prisma, "user-1", settings)).toEqual(issued);
+    expect(store.codes).toHaveLength(1);
+  });
+
+  it("issues nothing while the referral switch is off", async () => {
+    const { prisma, store } = fakePrisma([]);
+    expect(
+      await issueReferralCode(prisma, "user-1", {
+        referralCodeEnabled: false,
+        referralCodeMaxUses: 10,
+      }),
+    ).toBeNull();
+    expect(store.codes).toHaveLength(0);
   });
 });

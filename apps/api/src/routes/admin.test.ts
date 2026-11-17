@@ -39,6 +39,7 @@ type FakeCode = {
   maxUses: number;
   usedCount: number;
   revokedAt: Date | null;
+  isReferral: boolean;
 };
 
 function userRow(user: FakeUser) {
@@ -212,6 +213,8 @@ function adminDeps() {
             ipRegistrationLimit: 5,
             ipRegistrationHourlyThreshold: 10,
             ipCollectiveBanEnabled: false,
+            referralCodeEnabled: true,
+            referralCodeMaxUses: 10,
             ...(settings ?? create),
             ...update,
           };
@@ -235,12 +238,16 @@ function adminDeps() {
       ),
       create: vi.fn(
         async ({ data }: { data: Omit<FakeCode, "id" | "usedCount" | "revokedAt"> }) => {
+          // The code column is unique; a duplicate insert fails like the real database.
+          if (codes.some((row) => row.code === data.code)) throw { code: "P2002" };
           const row: FakeCode = {
             ...data,
             id: `code-${codes.length + 1}`,
             createdAt: new Date(),
             usedCount: 0,
             revokedAt: null,
+            // Admin-made codes are never referral codes.
+            isReferral: false,
           };
           codes.push(row);
           return row;
@@ -354,6 +361,22 @@ describe("admin registration settings", () => {
       ipRegistrationLimit: 5,
       ipRegistrationHourlyThreshold: 10,
       ipCollectiveBanEnabled: false,
+      referralCodeEnabled: true,
+      referralCodeMaxUses: 10,
+    });
+  });
+
+  it("reads and writes the referral settings", async () => {
+    const { admin } = adminDeps();
+    await expect(
+      admin.admin.registrationSettings.update({
+        referralCodeEnabled: false,
+        referralCodeMaxUses: 25,
+      }),
+    ).resolves.toMatchObject({ referralCodeEnabled: false, referralCodeMaxUses: 25 });
+    await expect(admin.admin.registrationSettings.get()).resolves.toMatchObject({
+      referralCodeEnabled: false,
+      referralCodeMaxUses: 25,
     });
   });
 
@@ -397,6 +420,7 @@ describe("admin invite codes", () => {
     expect(created).toHaveLength(2);
     expect(new Set(created.map((code) => code.code)).size).toBe(2);
     expect(created[0]!.status).toBe("active");
+    expect(created.every((code) => code.isReferral === false)).toBe(true);
     const listed = await admin.admin.inviteCodes.list({});
     expect(listed.map((code) => code.id)).toEqual(created.map((code) => code.id).reverse());
     const revoked = await admin.admin.inviteCodes.revoke({ id: created[0]!.id });
@@ -405,6 +429,53 @@ describe("admin invite codes", () => {
     await expect(admin.admin.inviteCodes.revoke({ id: created[0]!.id })).rejects.toMatchObject({
       code: "NOT_FOUND",
     });
+  });
+
+  it("creates several custom codes at once", async () => {
+    const { admin } = adminDeps();
+    const created = await admin.admin.inviteCodes.create({
+      count: 1,
+      codes: ["summer27", " THANKS27 ", "beta27"],
+    });
+    expect(created.map((code) => code.code)).toEqual(["SUMMER27", "THANKS27", "BETA27"]);
+    expect(created.every((code) => code.status === "active")).toBe(true);
+  });
+
+  it("rejects the whole batch when one custom code already exists", async () => {
+    const { admin } = adminDeps();
+    await admin.admin.inviteCodes.create({ count: 1, codes: ["SUMMER27"] });
+    await expect(
+      admin.admin.inviteCodes.create({ count: 1, codes: ["SUMMER27", "BUDDY27"] }),
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      message: expect.stringContaining("SUMMER27"),
+    });
+    const listed = await admin.admin.inviteCodes.list({});
+    expect(listed.map((code) => code.code)).toEqual(["SUMMER27"]);
+  });
+
+  it("rejects the whole batch when one custom code is invalid", async () => {
+    const { admin } = adminDeps();
+    await expect(
+      admin.admin.inviteCodes.create({ count: 1, codes: ["TEAM27", "BAD-CODE"] }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(await admin.admin.inviteCodes.list({})).toEqual([]);
+  });
+
+  it("treats a lowercase code as the same as the stored uppercase one", async () => {
+    const { admin } = adminDeps();
+    await admin.admin.inviteCodes.create({ count: 1, codes: ["SUMMER27"] });
+    await expect(
+      admin.admin.inviteCodes.create({ count: 1, codes: ["summer27"] }),
+    ).rejects.toMatchObject({ code: "CONFLICT" });
+  });
+
+  it("rejects a custom code repeated inside one batch", async () => {
+    const { admin } = adminDeps();
+    await expect(
+      admin.admin.inviteCodes.create({ count: 1, codes: ["TEAM27", "team27"] }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(await admin.admin.inviteCodes.list({})).toEqual([]);
   });
 });
 

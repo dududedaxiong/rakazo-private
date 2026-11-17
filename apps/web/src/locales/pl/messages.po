@@ -3477,6 +3477,10 @@ msgstr "Własny"
 msgid "Custom app download"
 msgstr "Niestandardowe pobieranie aplikacji"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Custom codes (optional, comma-separated)"
+msgstr ""
+
 #: src/components/ShareConversationDialog.tsx
 msgid "Custom expiry in days"
 msgstr ""
@@ -4551,6 +4555,10 @@ msgstr "Generuj"
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Generate invite codes"
 msgstr "Generuj kody zaproszenia"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate random"
+msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Generating…"
@@ -7124,6 +7132,14 @@ msgstr "Rekrutacja i HR"
 #: src/pages/McpServerForm.tsx
 msgid "Redirect URI"
 msgstr "Adres URI przekierowania"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Referral"
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Referral codes"
+msgstr ""
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
@@ -9716,6 +9732,10 @@ msgstr "Używa plików, które nie są importowane"
 msgid "Uses paths on your computer"
 msgstr "Używa ścieżek na Twoim komputerze"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Uses per referral code"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."
 msgstr "Używa własnych danych uwierzytelniających {hostCredentialSource} tego serwera, aby uzyskać dostęp do {selectedProviderName}."
@@ -9945,6 +9965,10 @@ msgstr "Gdy wyłączone, nowe konta nie mogą rejestrować się e-mailem."
 #: src/components/admin/AdminIpLimits.tsx
 msgid "When on, an IP that passes the hourly threshold has all its accounts disabled at once."
 msgstr "Gdy włączone, adres IP przekraczający limit godzinowy ma wszystkie swoje konta wyłączane jednocześnie."
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, new accounts get a personal code to invite others."
+msgstr ""
 
 #: src/components/admin/AdminRegistrationSettings.tsx
 msgid "When on, only emails from the domains below can register."

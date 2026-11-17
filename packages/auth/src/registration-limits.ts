@@ -17,6 +17,8 @@ export interface RegistrationSettings {
   ipRegistrationLimit: number;
   ipRegistrationHourlyThreshold: number;
   ipCollectiveBanEnabled: boolean;
+  referralCodeEnabled: boolean;
+  referralCodeMaxUses: number;
 }
 
 const DEFAULT_REGISTRATION_SETTINGS: RegistrationSettings = {
@@ -26,6 +28,8 @@ const DEFAULT_REGISTRATION_SETTINGS: RegistrationSettings = {
   ipRegistrationLimit: 5,
   ipRegistrationHourlyThreshold: 10,
   ipCollectiveBanEnabled: false,
+  referralCodeEnabled: true,
+  referralCodeMaxUses: 10,
 };
 
 /**
@@ -48,6 +52,8 @@ export async function readSignupSettings(
       ipRegistrationLimit: row.ipRegistrationLimit ?? 5,
       ipRegistrationHourlyThreshold: row.ipRegistrationHourlyThreshold ?? 10,
       ipCollectiveBanEnabled: row.ipCollectiveBanEnabled ?? false,
+      referralCodeEnabled: row.referralCodeEnabled ?? true,
+      referralCodeMaxUses: row.referralCodeMaxUses ?? 10,
     };
   } catch {
     return null;

@@ -50,6 +50,8 @@ describe("registration limits", () => {
       ipRegistrationLimit: 3,
       ipRegistrationHourlyThreshold: 4,
       ipCollectiveBanEnabled: true,
+      referralCodeEnabled: false,
+      referralCodeMaxUses: 25,
     });
     expect(await readSignupSettings(prisma)).toEqual({
       inviteCodeEnabled: true,
@@ -58,6 +60,21 @@ describe("registration limits", () => {
       ipRegistrationLimit: 3,
       ipRegistrationHourlyThreshold: 4,
       ipCollectiveBanEnabled: true,
+      referralCodeEnabled: false,
+      referralCodeMaxUses: 25,
+    });
+    // A row written before the referral columns existed degrades to their defaults.
+    const legacy = fakePrisma([], {
+      inviteCodeEnabled: true,
+      signupsEnabled: true,
+      signupAllowlist: "",
+      ipRegistrationLimit: 5,
+      ipRegistrationHourlyThreshold: 10,
+      ipCollectiveBanEnabled: false,
+    });
+    expect(await readSignupSettings(legacy.prisma)).toMatchObject({
+      referralCodeEnabled: true,
+      referralCodeMaxUses: 10,
     });
     const empty = fakePrisma([], null);
     expect(await readSignupSettings(empty.prisma)).toBeNull();

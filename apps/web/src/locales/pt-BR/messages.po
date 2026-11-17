@@ -3477,6 +3477,10 @@ msgstr "Personalizado"
 msgid "Custom app download"
 msgstr ""
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Custom codes (optional, comma-separated)"
+msgstr ""
+
 #: src/components/ShareConversationDialog.tsx
 msgid "Custom expiry in days"
 msgstr ""
@@ -4550,6 +4554,10 @@ msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Generate invite codes"
+msgstr ""
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate random"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
@@ -7124,6 +7132,14 @@ msgstr "Recrutamento e RH"
 #: src/pages/McpServerForm.tsx
 msgid "Redirect URI"
 msgstr "URI de redirecionamento"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Referral"
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Referral codes"
+msgstr ""
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
@@ -9716,6 +9732,10 @@ msgstr "Usa arquivos que não são importados"
 msgid "Uses paths on your computer"
 msgstr "Usa caminhos do seu computador"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Uses per referral code"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."
 msgstr "Usa as credenciais de {hostCredentialSource} próprias deste servidor para acessar {selectedProviderName}."
@@ -9944,6 +9964,10 @@ msgstr ""
 
 #: src/components/admin/AdminIpLimits.tsx
 msgid "When on, an IP that passes the hourly threshold has all its accounts disabled at once."
+msgstr ""
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, new accounts get a personal code to invite others."
 msgstr ""
 
 #: src/components/admin/AdminRegistrationSettings.tsx

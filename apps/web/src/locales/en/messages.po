@@ -3477,6 +3477,10 @@ msgstr "Custom"
 msgid "Custom app download"
 msgstr "Custom app download"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Custom codes (optional, comma-separated)"
+msgstr "Custom codes (optional, comma-separated)"
+
 #: src/components/ShareConversationDialog.tsx
 msgid "Custom expiry in days"
 msgstr "Custom expiry in days"
@@ -4551,6 +4555,10 @@ msgstr "Generate"
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Generate invite codes"
 msgstr "Generate invite codes"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate random"
+msgstr "Generate random"
 
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Generating…"
@@ -7124,6 +7132,14 @@ msgstr "Recruiting & HR"
 #: src/pages/McpServerForm.tsx
 msgid "Redirect URI"
 msgstr "Redirect URI"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Referral"
+msgstr "Referral"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Referral codes"
+msgstr "Referral codes"
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
@@ -9716,6 +9732,10 @@ msgstr "Uses files that are not imported"
 msgid "Uses paths on your computer"
 msgstr "Uses paths on your computer"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Uses per referral code"
+msgstr "Uses per referral code"
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."
 msgstr "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."
@@ -9945,6 +9965,10 @@ msgstr "When off, no new accounts can register by email."
 #: src/components/admin/AdminIpLimits.tsx
 msgid "When on, an IP that passes the hourly threshold has all its accounts disabled at once."
 msgstr "When on, an IP that passes the hourly threshold has all its accounts disabled at once."
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, new accounts get a personal code to invite others."
+msgstr "When on, new accounts get a personal code to invite others."
 
 #: src/components/admin/AdminRegistrationSettings.tsx
 msgid "When on, only emails from the domains below can register."

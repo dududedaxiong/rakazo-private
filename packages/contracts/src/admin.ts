@@ -18,6 +18,8 @@ export const RegistrationSettingsSchema = z.object({
   ipRegistrationLimit: z.number().int(),
   ipRegistrationHourlyThreshold: z.number().int(),
   ipCollectiveBanEnabled: z.boolean(),
+  referralCodeEnabled: z.boolean(),
+  referralCodeMaxUses: z.number().int(),
 });
 export type RegistrationSettings = z.infer<typeof RegistrationSettingsSchema>;
 
@@ -29,6 +31,8 @@ export const RegistrationSettingsUpdateSchema = z
     ipRegistrationLimit: z.number().int().min(0).max(10000).optional(),
     ipRegistrationHourlyThreshold: z.number().int().min(0).max(10000).optional(),
     ipCollectiveBanEnabled: z.boolean().optional(),
+    referralCodeEnabled: z.boolean().optional(),
+    referralCodeMaxUses: z.number().int().min(1).max(100).optional(),
   })
   .refine(
     (input) =>
@@ -37,7 +41,9 @@ export const RegistrationSettingsUpdateSchema = z
       input.signupAllowlist !== undefined ||
       input.ipRegistrationLimit !== undefined ||
       input.ipRegistrationHourlyThreshold !== undefined ||
-      input.ipCollectiveBanEnabled !== undefined,
+      input.ipCollectiveBanEnabled !== undefined ||
+      input.referralCodeEnabled !== undefined ||
+      input.referralCodeMaxUses !== undefined,
     { message: "Nothing to update" },
   );
 export type RegistrationSettingsUpdate = z.infer<typeof RegistrationSettingsUpdateSchema>;
@@ -71,6 +77,7 @@ export const InviteCodeSchema = z.object({
   maxUses: z.number().int(),
   usedCount: z.number().int(),
   revokedAt: z.string().nullable(),
+  isReferral: z.boolean(),
   status: InviteCodeStatusSchema,
 });
 export type InviteCode = z.infer<typeof InviteCodeSchema>;
@@ -80,6 +87,11 @@ export const InviteCodeCreateInputSchema = z.object({
   /** Days until expiry; null means the codes never expire. */
   expiresInDays: z.number().int().min(1).max(365).nullable().optional(),
   maxUses: z.number().int().min(1).max(100).default(1),
+  /**
+   * Custom codes to create, one per entry; when non-empty, count is ignored and
+   * exactly these codes are created. Blank entries are skipped.
+   */
+  codes: z.array(z.string().max(64)).max(100).optional(),
 });
 export type InviteCodeCreateInput = z.infer<typeof InviteCodeCreateInputSchema>;
 

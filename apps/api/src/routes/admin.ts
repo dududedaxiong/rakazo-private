@@ -1,5 +1,9 @@
 import { ORPCError } from "@orpc/server";
-import { DEFAULT_REGISTRATION_SETTINGS, generateInviteCode } from "@rakazo_mickvvw/auth";
+import {
+  DEFAULT_REGISTRATION_SETTINGS,
+  generateInviteCode,
+  normalizeCustomInviteCode,
+} from "@rakazo_mickvvw/auth";
 import type {
   AdminOverviewDay,
   AdminUser,
@@ -11,7 +15,7 @@ import type {
 } from "@rakazo_mickvvw/contracts";
 import { parseAllowlist, signupsOpen } from "@rakazo_mickvvw/core";
 import type { PrismaClient } from "@rakazo_mickvvw/db";
-import { listSecurityEvents, runAsSystem } from "@rakazo_mickvvw/db";
+import { isUniqueViolation, listSecurityEvents, runAsSystem } from "@rakazo_mickvvw/db";
 import { getLogger } from "@rakazo_mickvvw/logging";
 import { deleteAccountContent } from "../account-deletion.js";
 import type { AccountStatusDeps } from "../account-status.js";
@@ -93,6 +97,7 @@ function toInviteCode(row: {
   maxUses: number;
   usedCount: number;
   revokedAt: Date | null;
+  isReferral: boolean;
 }): InviteCode {
   return {
     id: row.id,
@@ -103,6 +108,7 @@ function toInviteCode(row: {
     maxUses: row.maxUses,
     usedCount: row.usedCount,
     revokedAt: row.revokedAt?.toISOString() ?? null,
+    isReferral: row.isReferral,
     status: inviteCodeStatus(row),
   };
 }
@@ -114,6 +120,8 @@ type SettingsRow = {
   ipRegistrationLimit: number;
   ipRegistrationHourlyThreshold: number;
   ipCollectiveBanEnabled: boolean;
+  referralCodeEnabled: boolean;
+  referralCodeMaxUses: number;
 } | null;
 
 function toRegistrationSettings(
@@ -127,6 +135,8 @@ function toRegistrationSettings(
     ipRegistrationLimit: DEFAULT_REGISTRATION_SETTINGS.ipRegistrationLimit,
     ipRegistrationHourlyThreshold: DEFAULT_REGISTRATION_SETTINGS.ipRegistrationHourlyThreshold,
     ipCollectiveBanEnabled: DEFAULT_REGISTRATION_SETTINGS.ipCollectiveBanEnabled,
+    referralCodeEnabled: DEFAULT_REGISTRATION_SETTINGS.referralCodeEnabled,
+    referralCodeMaxUses: DEFAULT_REGISTRATION_SETTINGS.referralCodeMaxUses,
   };
   return {
     signupsEnabled: masterSwitchEnabled && settings.signupsEnabled,
@@ -137,6 +147,8 @@ function toRegistrationSettings(
     ipRegistrationLimit: settings.ipRegistrationLimit,
     ipRegistrationHourlyThreshold: settings.ipRegistrationHourlyThreshold,
     ipCollectiveBanEnabled: settings.ipCollectiveBanEnabled,
+    referralCodeEnabled: settings.referralCodeEnabled,
+    referralCodeMaxUses: settings.referralCodeMaxUses,
   };
 }
 
@@ -265,6 +277,8 @@ export function adminRoutes(ctx: RouterContext) {
             ipRegistrationLimit?: number;
             ipRegistrationHourlyThreshold?: number;
             ipCollectiveBanEnabled?: boolean;
+            referralCodeEnabled?: boolean;
+            referralCodeMaxUses?: number;
           } = {};
           if (input.emailSignupEnabled !== undefined)
             data.signupsEnabled = input.emailSignupEnabled;
@@ -280,6 +294,10 @@ export function adminRoutes(ctx: RouterContext) {
             data.ipRegistrationHourlyThreshold = input.ipRegistrationHourlyThreshold;
           if (input.ipCollectiveBanEnabled !== undefined)
             data.ipCollectiveBanEnabled = input.ipCollectiveBanEnabled;
+          if (input.referralCodeEnabled !== undefined)
+            data.referralCodeEnabled = input.referralCodeEnabled;
+          if (input.referralCodeMaxUses !== undefined)
+            data.referralCodeMaxUses = input.referralCodeMaxUses;
           const row = await runAsSystem("update the registration settings", () =>
             prisma.deploymentSettings.upsert({
               where: { id: "default" },
@@ -345,11 +363,72 @@ export function adminRoutes(ctx: RouterContext) {
         }),
         create: authed.admin.inviteCodes.create.handler(async ({ context, input }) => {
           await requireAdminTotp(deps, context.actor.userId, context.sessionId);
-          const codes = new Set<string>();
-          while (codes.size < input.count) codes.add(generateInviteCode());
           const expiresAt = input.expiresInDays
             ? new Date(Date.now() + input.expiresInDays * 24 * 60 * 60 * 1000)
             : null;
+          const customCodes = (input.codes ?? []).filter(
+            (entry) => typeof entry === "string" && entry.trim() !== "",
+          );
+          if (customCodes.length > 0) {
+            const normalized: string[] = [];
+            for (const entry of customCodes) {
+              const code = normalizeCustomInviteCode(entry);
+              if (!code)
+                throw new ORPCError("BAD_REQUEST", {
+                  message: `Custom invite codes use 4–32 characters from A–Z and 2–9 (no 0, 1, I, L, or O): ${entry.trim().toUpperCase()}.`,
+                });
+              normalized.push(code);
+            }
+            const seen = new Set<string>();
+            for (const code of normalized) {
+              if (seen.has(code))
+                throw new ORPCError("BAD_REQUEST", {
+                  message: `The invite code ${code} appears more than once.`,
+                });
+              seen.add(code);
+            }
+            const clash = (
+              await runAsSystem("check invite codes", () =>
+                prisma.inviteCode.findMany({
+                  where: { code: { in: normalized } },
+                  select: { code: true },
+                }),
+              )
+            )[0];
+            if (clash)
+              throw new ORPCError("CONFLICT", {
+                message: `An invite code with that value already exists: ${clash.code}.`,
+              });
+            try {
+              const rows = await runAsSystem("create invite codes", () =>
+                prisma.$transaction(async (tx) => {
+                  const created = [];
+                  for (const code of normalized) {
+                    created.push(
+                      await tx.inviteCode.create({
+                        data: {
+                          code,
+                          createdById: context.actor.userId,
+                          expiresAt,
+                          maxUses: input.maxUses,
+                        },
+                      }),
+                    );
+                  }
+                  return created;
+                }),
+              );
+              return rows.map(toInviteCode);
+            } catch (error) {
+              if (isUniqueViolation(error))
+                throw new ORPCError("CONFLICT", {
+                  message: "An invite code with that value already exists.",
+                });
+              throw error;
+            }
+          }
+          const codes = new Set<string>();
+          while (codes.size < input.count) codes.add(generateInviteCode());
           const rows = await runAsSystem("create invite codes", () =>
             prisma.$transaction(async (tx) => {
               const created = [];

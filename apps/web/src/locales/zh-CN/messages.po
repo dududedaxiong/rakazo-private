@@ -3477,6 +3477,10 @@ msgstr "自定义"
 msgid "Custom app download"
 msgstr "自定义 App 下载"
 
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Custom codes (optional, comma-separated)"
+msgstr "自定义码（可选，多个用逗号分开）"
+
 #: src/components/ShareConversationDialog.tsx
 msgid "Custom expiry in days"
 msgstr "自定义有效期（天）"
@@ -4551,6 +4555,10 @@ msgstr "生成"
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Generate invite codes"
 msgstr "生成邀请码"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Generate random"
+msgstr "随机生成"
 
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Generating…"
@@ -7124,6 +7132,14 @@ msgstr "招聘与人事"
 #: src/pages/McpServerForm.tsx
 msgid "Redirect URI"
 msgstr "重定向 URI"
+
+#: src/components/admin/AdminInviteCodes.tsx
+msgid "Referral"
+msgstr "推广码"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Referral codes"
+msgstr "推广码"
 
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
@@ -9716,6 +9732,10 @@ msgstr "使用未导入的文件"
 msgid "Uses paths on your computer"
 msgstr "使用你电脑上的路径"
 
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "Uses per referral code"
+msgstr "每个推广码可用次数"
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Uses this server's own {hostCredentialSource} credentials to access {selectedProviderName}."
 msgstr "使用此服务器自己的 {hostCredentialSource} 凭据访问 {selectedProviderName}。"
@@ -9945,6 +9965,10 @@ msgstr "关闭后，不再接受邮箱注册新账号。"
 #: src/components/admin/AdminIpLimits.tsx
 msgid "When on, an IP that passes the hourly threshold has all its accounts disabled at once."
 msgstr "开启后，同一 IP 一小时内注册数超过阈值时，该 IP 下的全部账号会被批量禁用。"
+
+#: src/components/admin/AdminRegistrationSettings.tsx
+msgid "When on, new accounts get a personal code to invite others."
+msgstr "开启后，新账号会获得一个专属码，可发给朋友邀请注册。"
 
 #: src/components/admin/AdminRegistrationSettings.tsx
 msgid "When on, only emails from the domains below can register."

@@ -46,7 +46,12 @@ import type { EmailLocaleOf } from "./email.js";
 import { emailLocale, passwordResetEmail, signInCodeEmail, verificationEmail } from "./email.js";
 import type { HumanVerification } from "./human-verification.js";
 import { hasRecentIdentityConfirmation, identityConfirmation } from "./identity-confirmation.js";
-import { checkInviteCode, holdInviteCode, linkInviteCodeRedemption } from "./invite-codes.js";
+import {
+  checkInviteCode,
+  holdInviteCode,
+  issueReferralCode,
+  linkInviteCodeRedemption,
+} from "./invite-codes.js";
 import type { OidcConfig } from "./oidc.js";
 import { isCurrentOidcAccount, oidcDiscovery } from "./oidc.js";
 import { passkeyRelyingParty } from "./passkey.js";
@@ -74,7 +79,11 @@ export type { HomeDeletionReason } from "./home-deletion-email.js";
 export { homeDeletionEmail } from "./home-deletion-email.js";
 export type { HumanVerification } from "./human-verification.js";
 export { humanVerificationFromSecret } from "./human-verification.js";
-export { generateInviteCode } from "./invite-codes.js";
+export {
+  generateInviteCode,
+  issueReferralCode,
+  normalizeCustomInviteCode,
+} from "./invite-codes.js";
 export type { OidcConfig } from "./oidc.js";
 export { passkeyRelyingParty } from "./passkey.js";
 export {
@@ -230,14 +239,21 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
     enabled: boolean;
     allowlist: string[];
     inviteCodeRequired: boolean;
+    referralCodeEnabled: boolean;
   }> => {
     const envPolicy = signupPolicyFromEnv(env);
     const settings = await readSignupSettings(prisma);
-    if (!settings) return { ...envPolicy, inviteCodeRequired: false };
+    if (!settings)
+      return {
+        ...envPolicy,
+        inviteCodeRequired: false,
+        referralCodeEnabled: DEFAULT_REGISTRATION_SETTINGS.referralCodeEnabled,
+      };
     return {
       enabled: envPolicy.enabled && settings.emailSignupEnabled,
       allowlist: parseAllowlist(settings.signupAllowlist),
       inviteCodeRequired: settings.inviteCodeEnabled,
+      referralCodeEnabled: settings.referralCodeEnabled,
     };
   };
   /** Refuses a new account early, before creating it, once a single-person deployment has one. */
@@ -608,7 +624,9 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
             if (
               send &&
               policy.inviteCodeRequired &&
-              (await checkInviteCode(prisma, ctx.body?.inviteCode)) !== "valid"
+              (await checkInviteCode(prisma, ctx.body?.inviteCode, {
+                referralCodeEnabled: policy.referralCodeEnabled,
+              })) !== "valid"
             ) {
               return ctx.json({ success: true });
             }
@@ -618,11 +636,15 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
             // The send step only checks the code; the verify step holds it, so a
             // code is never spent on an email that never arrives.
             if (!send && policy.inviteCodeRequired) {
-              const held = await holdInviteCode(prisma, {
-                code: ctx.body?.inviteCode,
-                email,
-                ip,
-              });
+              const held = await holdInviteCode(
+                prisma,
+                {
+                  code: ctx.body?.inviteCode,
+                  email,
+                  ip,
+                },
+                { referralCodeEnabled: policy.referralCodeEnabled },
+              );
               if (held !== "held") {
                 throw new APIError("BAD_REQUEST", {
                   code: "INVALID_INVITE_CODE",
@@ -641,7 +663,12 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
           ctx.path === "/sign-up/email"
             ? await admission()
             : ctx.path === "/sign-in/email"
-              ? { ...signupPolicyFromEnv(env), inviteCodeRequired: false }
+              ? {
+                  ...signupPolicyFromEnv(env),
+                  inviteCodeRequired: false,
+                  // Sign-in never holds a code; the default keeps the policy shape uniform.
+                  referralCodeEnabled: DEFAULT_REGISTRATION_SETTINGS.referralCodeEnabled,
+                }
               : undefined;
         let requireEmailVerification = false;
         if (ctx.path === "/sign-up/email") {
@@ -677,11 +704,15 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
             });
           }
           if (policy.inviteCodeRequired) {
-            const held = await holdInviteCode(prisma, {
-              code: ctx.body?.inviteCode,
-              email,
-              ip,
-            });
+            const held = await holdInviteCode(
+              prisma,
+              {
+                code: ctx.body?.inviteCode,
+                email,
+                ip,
+              },
+              { referralCodeEnabled: policy.referralCodeEnabled },
+            );
             if (held !== "held") {
               throw new APIError("BAD_REQUEST", {
                 code: "INVALID_INVITE_CODE",
@@ -919,6 +950,11 @@ export function createAuth(prisma: PrismaClient, env: AuthEnv) {
                 const ip = ipFromHeaders(ctx?.headers);
                 await recordRegistration(prisma, user.id, ip);
                 await linkInviteCodeRedemption(prisma, user.email, user.id);
+                // A new account gets its one personal referral code, at the
+                // currently configured number of uses.
+                const settings =
+                  (await readSignupSettings(prisma)) ?? DEFAULT_REGISTRATION_SETTINGS;
+                await issueReferralCode(prisma, user.id, settings);
               } catch (error) {
                 env.logger?.log?.("error", "signup bookkeeping failed", error);
               }
