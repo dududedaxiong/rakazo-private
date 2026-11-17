@@ -6,9 +6,13 @@ import type {
   McpServerConnection,
   McpSourcePreset,
   PluginMarketplaceEntry,
-} from "@rakazo/contracts";
-import { mcpServerConnection, mcpServerNeedsSignIn, SUBMIT_PLUGIN_URL } from "@rakazo/contracts";
-import type { PluginCategory } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import {
+  mcpServerConnection,
+  mcpServerNeedsSignIn,
+  SUBMIT_PLUGIN_URL,
+} from "@rakazo_mickvvw/contracts";
+import type { PluginCategory } from "@rakazo_mickvvw/core";
 import {
   buildFeaturedConnectorTiles,
   CONNECTION_CATALOG_PAGE_SIZE,
@@ -22,7 +26,7 @@ import {
   matchesWordPrefixes,
   newClientId,
   OTHER_PLUGINS,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import type { NativeStackNavigationOptions } from "expo-router";
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";

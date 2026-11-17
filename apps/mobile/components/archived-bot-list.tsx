@@ -1,5 +1,5 @@
 import { MenuView } from "@expo/ui/community/menu";
-import { typeScale } from "@rakazo/ui-tokens";
+import { typeScale } from "@rakazo_mickvvw/ui-tokens";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { useI18n } from "../lib/i18n";
 import type { MobileBot, MobileGroup } from "../lib/mobile-types";

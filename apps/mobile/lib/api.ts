@@ -1,5 +1,5 @@
-import type { RpcInput, RpcOutput, RpcPath, ThreadSnapshot } from "@rakazo/contracts";
-import { CLIENT_UPDATE_REQUIRED_STATUS, parseServerHeaders } from "@rakazo/contracts";
+import type { RpcInput, RpcOutput, RpcPath, ThreadSnapshot } from "@rakazo_mickvvw/contracts";
+import { CLIENT_UPDATE_REQUIRED_STATUS, parseServerHeaders } from "@rakazo_mickvvw/contracts";
 import {
   aiConsentTargets,
   aiDataUsesForProcedure,
@@ -11,8 +11,8 @@ import {
   parseRetryAfter,
   readBoundedJsonResponse,
   withAbort,
-} from "@rakazo/core";
-import { clientCorrelationHeaders, responseCorrelation } from "@rakazo/logging/monitoring";
+} from "@rakazo_mickvvw/core";
+import { clientCorrelationHeaders, responseCorrelation } from "@rakazo_mickvvw/logging/monitoring";
 import * as SecureStore from "expo-secure-store";
 import { promptAiConsent } from "./ai-consent";
 import type { EndpointResult } from "./endpoint";

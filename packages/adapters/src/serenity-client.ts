@@ -6,8 +6,8 @@ import {
   isCloudMetadataAddress,
   isLocalhostOrLoopbackIp,
   isNonPublicAddress,
-} from "@rakazo/contracts";
-import { cancelResponseBody } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { cancelResponseBody } from "@rakazo_mickvvw/core";
 import { Agent } from "undici";
 import {
   combineSignals,

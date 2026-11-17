@@ -1,6 +1,6 @@
 import path from "node:path";
-import type { DesktopReachability, DesktopSetup } from "@rakazo/contracts";
-import { parseServerHeaders } from "@rakazo/contracts";
+import type { DesktopReachability, DesktopSetup } from "@rakazo_mickvvw/contracts";
+import { parseServerHeaders } from "@rakazo_mickvvw/contracts";
 import type { Session } from "electron";
 import { app, BrowserWindow, ipcMain, screen, shell } from "electron";
 import type { createAppOpener } from "./app-opener.js";

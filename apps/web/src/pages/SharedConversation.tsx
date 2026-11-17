@@ -1,12 +1,12 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
-import type { SharedConversation, SharedConversationEntry } from "@rakazo/contracts";
+import { ChatMarkdown } from "@rakazo_mickvvw/chat-ui/web";
+import type { SharedConversation, SharedConversationEntry } from "@rakazo_mickvvw/contracts";
 import {
   conversationShareTokenFromSlug,
   SHARED_CONVERSATION_PATH_PREFIX,
   SharedConversationSchema,
-} from "@rakazo/contracts";
-import { Button, buttonVariants } from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/contracts";
+import { Button, buttonVariants } from "@rakazo_mickvvw/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { Pause, Play } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -101,7 +101,7 @@ function SharedConversationBody() {
             <Trans>The owner may have revoked its link or it may have expired.</Trans>
           </p>
           <a href="/" className={`${buttonVariants({ variant: "outline", size: "sm" })} mt-1`}>
-            <Trans>Open Rakazo</Trans>
+            <Trans>Open Rakazo mickvvw</Trans>
           </a>
         </div>
       </main>

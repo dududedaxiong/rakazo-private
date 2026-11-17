@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { IsolationError, THREAD_LOCK_TRANSACTION_OPTIONS } from "@rakazo/db";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { IsolationError, THREAD_LOCK_TRANSACTION_OPTIONS } from "@rakazo_mickvvw/db";
 import type { ThreadTarget } from "./thread-target.js";
 
 /**

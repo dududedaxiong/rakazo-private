@@ -7,12 +7,12 @@ import type {
   ArtifactStore,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { EncryptedSecretStore, LocalAgentHomeStore } from "@rakazo/adapters";
-import type { AccountExportRecord, Actor } from "@rakazo/contracts";
-import { PAGE_SOURCE_MAX_BYTES } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { asSystem, createDb, createOrganizationForUser } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapter-kit";
+import { EncryptedSecretStore, LocalAgentHomeStore } from "@rakazo_mickvvw/adapters";
+import type { AccountExportRecord, Actor } from "@rakazo_mickvvw/contracts";
+import { PAGE_SOURCE_MAX_BYTES } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { asSystem, createDb, createOrganizationForUser } from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { encryptBackupCredentials } from "./account-credentials-crypto.js";
 import { AccountImportError, importAccount } from "./account-import.js";

@@ -1,4 +1,4 @@
-import { shareCardFilename } from "@rakazo/core";
+import { shareCardFilename } from "@rakazo_mickvvw/core";
 import { File, Paths } from "expo-file-system";
 import { getThumbnailAsync } from "expo-video-thumbnails";
 import { Image } from "react-native";

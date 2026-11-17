@@ -18,9 +18,9 @@ import type {
   ScreenRequest,
   ScreenSession,
   TerminalRequest,
-} from "@rakazo/adapter-kit";
-import { COMPUTER_CACHE_ENV } from "@rakazo/core/node/desktop-runtime";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/adapter-kit";
+import { COMPUTER_CACHE_ENV } from "@rakazo_mickvvw/core/node/desktop-runtime";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { Agent, request as httpRequest } from "undici";
 import WebSocket from "ws";
 import type { RawExecEvent } from "./exec-computer.js";

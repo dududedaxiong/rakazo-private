@@ -10,8 +10,8 @@ import {
   listPiCatalog,
   MessagingTeamChatEmulator,
   ThirdPartyConnectorEmulator,
-} from "@rakazo/adapters";
-import { createDb } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapters";
+import { createDb } from "@rakazo_mickvvw/db";
 import { createModelConnectionFixtureFetch } from "../model-connection-fixture.js";
 import { PluginMarketplaceFixture } from "../plugin-marketplace-fixture.js";
 import { disposableDatabaseEnv } from "./postgres.js";
@@ -56,7 +56,7 @@ export async function startIosScreenshotBackend(input: {
 
   execFileSync("pnpm", ["db:migrate"], { cwd: input.root, env: process.env, stdio: "inherit" });
 
-  const { createApp } = await import("@rakazo/api/app");
+  const { createApp } = await import("@rakazo_mickvvw/api/app");
   // The same offline marketplace, app catalog, and model list the web end-to-end tests use.
   const thirdParties = new ThirdPartyConnectorEmulator();
   const marketplace = new PluginMarketplaceFixture(thirdParties.fetch);

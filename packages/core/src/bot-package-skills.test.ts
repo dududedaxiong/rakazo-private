@@ -1,4 +1,4 @@
-import type { BotPackageReceipt, BotPackageSkillReceipt } from "@rakazo/contracts";
+import type { BotPackageReceipt, BotPackageSkillReceipt } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { deferred, packageReceipt } from "./bot-package.test-helpers.js";
 import type { BotPackageSkillsState } from "./bot-package-skills.js";

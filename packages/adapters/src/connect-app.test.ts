@@ -1,11 +1,11 @@
-import type { AdapterContext, ManagedConnectorProvider } from "@rakazo/adapter-kit";
-import type { ConnectionCatalogItem, MessageBlock } from "@rakazo/contracts";
-import type * as db from "@rakazo/db";
+import type { AdapterContext, ManagedConnectorProvider } from "@rakazo_mickvvw/adapter-kit";
+import type { ConnectionCatalogItem, MessageBlock } from "@rakazo_mickvvw/contracts";
+import type * as db from "@rakazo_mickvvw/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { connectApp } from "./connect-app.js";
 
 const stored = vi.hoisted(() => [] as { blocks: MessageBlock[]; clientNonce: string }[]);
-vi.mock("@rakazo/db", async (original) => ({
+vi.mock("@rakazo_mickvvw/db", async (original) => ({
   ...(await original<typeof db>()),
   createThreadMessageInTransaction: vi.fn(async (_tx, input) => {
     stored.push(input);

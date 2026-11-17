@@ -1,8 +1,8 @@
 import type { OAuthCredential } from "@earendil-works/pi-ai";
-import type { SecretStore } from "@rakazo/adapter-kit";
-import type { ThinkingLevel } from "@rakazo/contracts";
-import { ThinkingLevelSchema } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { SecretStore } from "@rakazo_mickvvw/adapter-kit";
+import type { ThinkingLevel } from "@rakazo_mickvvw/contracts";
+import { ThinkingLevelSchema } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import type { StoredModelSecret } from "./model-secret.js";
 import { parseModelSecret } from "./model-secret.js";
 import { listAvailablePiCatalog } from "./pi-catalog-availability.js";

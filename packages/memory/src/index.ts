@@ -10,10 +10,10 @@ import type {
   MemorySnapshot,
   MemoryStore,
   PortableFile,
-} from "@rakazo/adapter-kit";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
-import { Prisma, withTransactionRetry } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapter-kit";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo_mickvvw/adapter-kit";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { Prisma, withTransactionRetry } from "@rakazo_mickvvw/db";
 
 /** Memory is the Space's: every member's runs read and write the same documents. */
 export class MarkdownMemoryStore implements MemoryStore {

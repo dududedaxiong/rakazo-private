@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { Bot, PromptTemplate } from "@rakazo/contracts";
+import type { Bot, PromptTemplate } from "@rakazo_mickvvw/contracts";
 import type { ComponentProps, ReactElement, ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -30,7 +30,7 @@ vi.mock("@lingui/react/macro", () => ({
   Plural: ({ value, one, other }: { value: number; one: string; other: string }) =>
     (value === 1 ? one : other).replace("#", String(value)),
 }));
-vi.mock("@rakazo/ui-web", async () => {
+vi.mock("@rakazo_mickvvw/ui-web", async () => {
   const React = await import("react");
   const MenuContext = React.createContext<{
     open: boolean;
@@ -119,9 +119,7 @@ afterEach(async () => {
   vi.clearAllMocks();
 });
 
-async function renderSwitcher(
-  props: { onBotUpdated?: (bot: Bot) => void; bot?: Bot } = {},
-) {
+async function renderSwitcher(props: { onBotUpdated?: (bot: Bot) => void; bot?: Bot } = {}) {
   await act(async () =>
     root.render(
       <ChatPersonaSwitcher

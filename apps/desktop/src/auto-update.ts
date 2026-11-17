@@ -1,4 +1,4 @@
-import type { DesktopUpdateState } from "@rakazo/contracts";
+import type { DesktopUpdateState } from "@rakazo_mickvvw/contracts";
 import { t } from "./i18n.js";
 import { SignatureUnreachableError } from "./linux-update-signature.js";
 import { reportDesktopError } from "./monitoring.js";

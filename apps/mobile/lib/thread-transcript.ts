@@ -5,7 +5,7 @@ import {
   projectBotMentions,
   projectMessageReactions,
   shouldShowBotSenderName,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { useMemo, useState } from "react";
 import { applyLocalChoiceDismissals, hasVisibleMessagePresentation } from "./message-presentation";
 import type { MobileMessage } from "./mobile-types";

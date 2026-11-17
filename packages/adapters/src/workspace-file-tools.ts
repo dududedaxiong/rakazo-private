@@ -1,9 +1,9 @@
-import type { AdapterContext, ComputerRef, SandboxProvider } from "@rakazo/adapter-kit";
-import type { ComputerMode } from "@rakazo/contracts";
-import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
-import { redactSecrets } from "@rakazo/core";
-import { PLOT_TOOL_GUIDE, searchChartCatalog } from "@rakazo/core/plot-catalog";
-import { getLogger } from "@rakazo/logging";
+import type { AdapterContext, ComputerRef, SandboxProvider } from "@rakazo_mickvvw/adapter-kit";
+import type { ComputerMode } from "@rakazo_mickvvw/contracts";
+import { ATTACHMENT_MAX_BYTES } from "@rakazo_mickvvw/contracts";
+import { redactSecrets } from "@rakazo_mickvvw/core";
+import { PLOT_TOOL_GUIDE, searchChartCatalog } from "@rakazo_mickvvw/core/plot-catalog";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { JSDOM } from "jsdom";
 import { displayBotWorkspacePath, resolveBotWorkspacePath } from "./computer-support.js";
 import type { ExecutorDeps } from "./executor-deps.js";

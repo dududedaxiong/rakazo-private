@@ -12,10 +12,10 @@ import {
   FakeComposioClient,
   PipedreamConnector,
   ThirdPartyConnectorEmulator,
-} from "@rakazo/adapters";
-import { callRequestClientNonce } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { createThreadMessage } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapters";
+import { callRequestClientNonce } from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { createThreadMessage } from "@rakazo_mickvvw/db";
 import { sessionCookieHeader } from "../index.js";
 import { disposableDatabaseEnv } from "./postgres.js";
 import { runProcess } from "./process.js";
@@ -61,7 +61,7 @@ async function main() {
   await mkdir(REPORT_DIR, { recursive: true });
   await mkdir(DATA_DIR, { recursive: true });
 
-  execFileSync("pnpm", ["--filter", "@rakazo/db", "exec", "prisma", "migrate", "deploy"], {
+  execFileSync("pnpm", ["--filter", "@rakazo_mickvvw/db", "exec", "prisma", "migrate", "deploy"], {
     cwd: path.join(ROOT, "packages", "db"),
     env: process.env,
     stdio: "inherit",
@@ -77,7 +77,7 @@ async function main() {
     },
     { fetch: thirdParties.fetch, resolveHostname: thirdParties.resolveHostname },
   );
-  const { createApp } = await import("@rakazo/api/app");
+  const { createApp } = await import("@rakazo_mickvvw/api/app");
   const handles = await createApp({
     databaseUrl: process.env.DATABASE_URL!,
     dataDir: DATA_DIR,

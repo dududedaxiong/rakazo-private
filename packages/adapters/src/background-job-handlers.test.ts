@@ -5,11 +5,11 @@ import type {
   JobPublisher,
   MessagingSurface,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { SandboxUnresponsiveError } from "@rakazo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { currentDbContext } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/adapter-kit";
+import { SandboxUnresponsiveError } from "@rakazo_mickvvw/adapter-kit";
+import type { PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
+import { currentDbContext } from "@rakazo_mickvvw/db";
+import { createLogger, createTestSink, installLogger } from "@rakazo_mickvvw/logging";
 import { describe, expect, it, vi } from "vitest";
 import { createBackgroundJobHandlers } from "./background-job-handlers.js";
 import type * as ComputerControl from "./computer-control.js";

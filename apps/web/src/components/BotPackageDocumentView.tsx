@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotPackageDocument, BotPackageLeftOut } from "@rakazo/contracts";
-import { displayName } from "@rakazo/core";
+import type { BotPackageDocument, BotPackageLeftOut } from "@rakazo_mickvvw/contracts";
+import { displayName } from "@rakazo_mickvvw/core";
 
 const rawClass =
   "mt-2 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted p-3 font-mono text-label";

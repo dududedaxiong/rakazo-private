@@ -1,6 +1,6 @@
-import { ChatMarkdown, LinkifiedText } from "@rakazo/chat-ui/native";
-import { splitMentionText } from "@rakazo/core";
-import type { ColorTokens, ResolvedAppearance } from "@rakazo/ui-tokens";
+import { ChatMarkdown, LinkifiedText } from "@rakazo_mickvvw/chat-ui/native";
+import { splitMentionText } from "@rakazo_mickvvw/core";
+import type { ColorTokens, ResolvedAppearance } from "@rakazo_mickvvw/ui-tokens";
 import { useContext } from "react";
 import { customFontFamily, useCustomSettings } from "../lib/custom-settings";
 import {

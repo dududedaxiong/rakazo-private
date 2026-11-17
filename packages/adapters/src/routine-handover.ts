@@ -1,6 +1,6 @@
-import type { JobPublisher } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { JobPublisher } from "@rakazo_mickvvw/adapter-kit";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { clearRoutineBackoff } from "./routine-backoff.js";
 
 /**

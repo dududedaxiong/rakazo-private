@@ -1,4 +1,4 @@
-import type * as db from "@rakazo/db";
+import type * as db from "@rakazo_mickvvw/db";
 import { describe, expect, it, vi } from "vitest";
 import {
   dismissMcpServerApprovals,
@@ -7,7 +7,7 @@ import {
   revertConnectedMcpApprovals,
 } from "./mcp-approval.js";
 
-vi.mock("@rakazo/db", async (original) => ({
+vi.mock("@rakazo_mickvvw/db", async (original) => ({
   ...(await original<typeof db>()),
   appendEventInTransaction: vi.fn(async () => ({ seq: 1 })),
 }));

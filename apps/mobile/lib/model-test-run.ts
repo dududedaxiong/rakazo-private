@@ -1,6 +1,6 @@
-import type { ModelHealthReport } from "@rakazo/contracts";
-import type { ChatModelChoice } from "@rakazo/core";
-import { credentialForModel, modelOptionKey } from "@rakazo/core";
+import type { ModelHealthReport } from "@rakazo_mickvvw/contracts";
+import type { ChatModelChoice } from "@rakazo_mickvvw/core";
+import { credentialForModel, modelOptionKey } from "@rakazo_mickvvw/core";
 import * as SecureStore from "expo-secure-store";
 import { rpc } from "./api";
 import type { MobileModelCredential } from "./mobile-types";

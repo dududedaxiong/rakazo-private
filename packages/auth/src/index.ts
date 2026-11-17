@@ -1,6 +1,6 @@
 import { expo } from "@better-auth/expo";
 import { passkey } from "@better-auth/passkey";
-import type { ProductAnalytics, TransactionalEmailProvider } from "@rakazo/adapter-kit";
+import type { ProductAnalytics, TransactionalEmailProvider } from "@rakazo_mickvvw/adapter-kit";
 import {
   displayName,
   emailAllowed,
@@ -10,9 +10,13 @@ import {
   MIN_PASSWORD_LENGTH,
   parseAllowlist,
   signupPolicyFromEnv,
-} from "@rakazo/core";
-import type { PrismaClient, SecurityEventType } from "@rakazo/db";
-import { bootstrapUserSpace, personalOrganizationIds, recordSecurityEvent } from "@rakazo/db";
+} from "@rakazo_mickvvw/core";
+import type { PrismaClient, SecurityEventType } from "@rakazo_mickvvw/db";
+import {
+  bootstrapUserSpace,
+  personalOrganizationIds,
+  recordSecurityEvent,
+} from "@rakazo_mickvvw/db";
 import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";

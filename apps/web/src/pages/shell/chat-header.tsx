@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
-import type { Bot, Group, ThreadSnapshot } from "@rakazo/contracts";
-import { BotAvatar, Button, GroupAvatar } from "@rakazo/ui-web";
+import type { Bot, Group, ThreadSnapshot } from "@rakazo_mickvvw/contracts";
+import { BotAvatar, Button, GroupAvatar } from "@rakazo_mickvvw/ui-web";
 import {
   Download,
   Gift,

@@ -1,6 +1,6 @@
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { createDb, createThreadMessage, runAsSystem } from "@rakazo/db";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { createDb, createThreadMessage, runAsSystem } from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { querySpaceSearch } from "./search.js";
 

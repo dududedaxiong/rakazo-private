@@ -9,20 +9,20 @@ import type {
   BillingProvider,
   BillingSubscriptionSnapshot,
   BillingSubscriptionStatus,
-} from "@rakazo/adapter-kit";
+} from "@rakazo_mickvvw/adapter-kit";
 import {
   BillingCheckoutCompletedError,
   BillingCustomerNotFoundError,
   BillingNoMonthlyCreditsError,
-} from "@rakazo/adapter-kit";
-import type { BillingCancellationReason, ByokTier } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/adapter-kit";
+import type { BillingCancellationReason, ByokTier } from "@rakazo_mickvvw/contracts";
 import {
   BILLING_CANCELLATION_REASONS,
   BYOK_TIERS,
   ByokTierSchema,
   ModelCreditAmountSchema,
-} from "@rakazo/contracts";
-import { readBoundedJsonResponse } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { readBoundedJsonResponse } from "@rakazo_mickvvw/core";
 import { z } from "zod";
 
 export const STRIPE_API_VERSION = "2026-09-30.endive";

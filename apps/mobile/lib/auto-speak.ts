@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
 
 /**
  * What read-aloud speaks: the reply's own words only. Working narration

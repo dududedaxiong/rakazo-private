@@ -1,6 +1,14 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { AppDownloadLinks } from "@rakazo/contracts";
-import { Button, Field, FieldLabel, Input, SectionHeading, Spinner, toast } from "@rakazo/ui-web";
+import type { AppDownloadLinks } from "@rakazo_mickvvw/contracts";
+import {
+  Button,
+  Field,
+  FieldLabel,
+  Input,
+  SectionHeading,
+  Spinner,
+  toast,
+} from "@rakazo_mickvvw/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSpaceQueries } from "../../lib/query";

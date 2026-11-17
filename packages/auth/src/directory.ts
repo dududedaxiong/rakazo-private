@@ -1,6 +1,6 @@
 import type { SCIMOptions } from "@better-auth/scim";
-import { displayName, isMessagingEmail } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+import { displayName, isMessagingEmail } from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import type { BetterAuthOptions } from "better-auth";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";

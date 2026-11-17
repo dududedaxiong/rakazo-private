@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { INVITED_TRIAL_WEEKS } from "@rakazo/contracts";
+import { INVITED_TRIAL_WEEKS } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import {
   accountDeletionEmail,

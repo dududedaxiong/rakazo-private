@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
-import type { Bot, PromptTemplate } from "@rakazo/contracts";
-import { activeBotPromptPreset, mainPersonaVersion } from "@rakazo/contracts";
+import type { Bot, PromptTemplate } from "@rakazo_mickvvw/contracts";
+import { activeBotPromptPreset, mainPersonaVersion } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   toast,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { Check, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { rpc } from "../../lib/rpc";
@@ -105,8 +105,7 @@ function PersonaSwitchList({ bot, onBotUpdated }: { bot: Bot; onBotUpdated: (bot
     bot.instructions === videoPreset.prompt;
   // The bot's own persona is current when no template and no media preset
   // persona sits on top of it; whether it can be restored is mainVersion.
-  const isMainPersona =
-    bot.promptTemplateId === null && !isImagePersona && !isVideoPersona;
+  const isMainPersona = bot.promptTemplateId === null && !isImagePersona && !isVideoPersona;
 
   async function applyMain() {
     if (applyingId || isMainPersona || !mainVersion) return;
@@ -162,7 +161,11 @@ function PersonaSwitchList({ bot, onBotUpdated }: { bot: Bot; onBotUpdated: (bot
         disabled={applyingId !== null || isMainPersona || !mainVersion}
         onClick={() => void applyMain()}
       >
-        {isMainPersona ? <Check className="size-4" /> : <span className="size-4" aria-hidden="true" />}
+        {isMainPersona ? (
+          <Check className="size-4" />
+        ) : (
+          <span className="size-4" aria-hidden="true" />
+        )}
         <span className="truncate">{mainLabel}</span>
       </DropdownMenuItem>
       {imagePreset ? (

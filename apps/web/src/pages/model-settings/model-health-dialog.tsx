@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { ModelHealthReport, ModelHealthState } from "@rakazo/contracts";
+import type { ModelHealthReport, ModelHealthState } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   Dialog,
@@ -7,7 +7,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 
 const HEALTH_STATE_CLASS: Record<ModelHealthState, string> = {
   ok: "text-success",

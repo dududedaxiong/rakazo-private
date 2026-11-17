@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Button } from "@rakazo/ui-web";
+import { Button } from "@rakazo_mickvvw/ui-web";
 import { Check, Link } from "lucide-react";
 import { useState } from "react";
 import { useCopyText } from "../../lib/copy-text";
@@ -28,7 +28,7 @@ export function PublicPageShell({ title, document }: { title: string; document: 
           className="inline-flex min-w-0 items-center gap-1.5 rounded-full py-1 pr-2 text-body-sm text-foreground/70 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
         >
           <img src="/favicon-32x32.png" alt="" className="size-4 rounded-full" />
-          <Trans>Open Rakazo</Trans>
+          <Trans>Open Rakazo mickvvw</Trans>
         </a>
         <h1 className="sr-only">{title}</h1>
         <nav aria-label={t`Page actions`} className="flex shrink-0 items-center gap-1.5">

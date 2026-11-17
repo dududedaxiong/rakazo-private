@@ -1,12 +1,17 @@
 import { getHeapStatistics } from "node:v8";
-import type { BackgroundJobHandlers } from "@rakazo/adapter-kit";
+import type { BackgroundJobHandlers } from "@rakazo_mickvvw/adapter-kit";
 import {
   HISTORY_COMPACT_MAX_ATTEMPTS,
   historyCompactJob,
   messagingDeliverJob,
-} from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger, wrapJobPayload } from "@rakazo/logging";
+} from "@rakazo_mickvvw/adapter-kit";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import {
+  createLogger,
+  createTestSink,
+  installLogger,
+  wrapJobPayload,
+} from "@rakazo_mickvvw/logging";
 import type { Runner } from "graphile-worker";
 import { makeWorkerUtils } from "graphile-worker";
 import type { Pool } from "pg";

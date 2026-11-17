@@ -4,22 +4,22 @@ import type {
   SavedMessageTranslation,
   ThreadMessage,
   ThreadMessagePage,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   MessageBlock as MessageBlockSchema,
   ModelSwitchAttemptSchema,
   ModelSwitchesSchema,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   BACKGROUND_RUN_TRIGGERS,
   callIdFromClientNonce,
   isBackgroundInputBlock,
   isBackgroundRunTrigger,
   isPeerReceiptBlocks,
-} from "@rakazo/core";
-import { messageReplyPreview } from "@rakazo/core/message-quote";
-import type { Prisma, PrismaClient } from "@rakazo/db";
-import { loadMessageAuthors } from "@rakazo/db";
+} from "@rakazo_mickvvw/core";
+import { messageReplyPreview } from "@rakazo_mickvvw/core/message-quote";
+import type { Prisma, PrismaClient } from "@rakazo_mickvvw/db";
+import { loadMessageAuthors } from "@rakazo_mickvvw/db";
 
 type MessageDb = PrismaClient | Prisma.TransactionClient;
 

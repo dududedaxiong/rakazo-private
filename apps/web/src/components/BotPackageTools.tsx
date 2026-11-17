@@ -1,14 +1,14 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { AgentSkillCatalogEntry } from "@rakazo/contracts";
-import { BOT_PACKAGE_MAX_SKILLS } from "@rakazo/contracts";
+import type { AgentSkillCatalogEntry } from "@rakazo_mickvvw/contracts";
+import { BOT_PACKAGE_MAX_SKILLS } from "@rakazo_mickvvw/contracts";
 import {
   createBotPackageExport,
   createBotPackageSkills,
   displayName,
   initialBotPackageExport,
   initialBotPackageSkills,
-} from "@rakazo/core";
-import { Button, Input, Switch } from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/core";
+import { Button, Input, Switch } from "@rakazo_mickvvw/ui-web";
 import { useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { downloadBotPackage } from "../lib/bot-package-file";
 import { createSpaceRpc } from "../lib/rpc";

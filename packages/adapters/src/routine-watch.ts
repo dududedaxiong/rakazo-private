@@ -9,20 +9,20 @@ import type {
   PaymentWalletProvider,
   SandboxProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { routineJobKey, routineWakeupJob } from "@rakazo/adapter-kit";
-import type { RoutineWatch, RoutineWatchState } from "@rakazo/contracts";
-import { RoutineWatchSchema, RoutineWatchStateSchema } from "@rakazo/contracts";
-import type { ActionApprovalRule } from "@rakazo/core";
-import { connectorKindFromToolName, redactSecrets, watchToolRefusal } from "@rakazo/core";
-import type { ComputerMode, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapter-kit";
+import { routineJobKey, routineWakeupJob } from "@rakazo_mickvvw/adapter-kit";
+import type { RoutineWatch, RoutineWatchState } from "@rakazo_mickvvw/contracts";
+import { RoutineWatchSchema, RoutineWatchStateSchema } from "@rakazo_mickvvw/contracts";
+import type { ActionApprovalRule } from "@rakazo_mickvvw/core";
+import { connectorKindFromToolName, redactSecrets, watchToolRefusal } from "@rakazo_mickvvw/core";
+import type { ComputerMode, PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
 import {
   appendEventInTransaction,
   createThreadMessageInTransaction,
   listApprovalRules,
   parseComputerMode,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { loadLoginPasswordRedactions, shellCommandEnvironment } from "./bot-secrets.js";
 import { scheduleComputerSleep } from "./computer-idle.js";
 import { ComputerBusyError, provisionComputer } from "./computer-lifecycle.js";

@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
-import type { BotModelEntry } from "@rakazo/contracts";
-import { displayName, modelOptionKey } from "@rakazo/core";
+import type { BotModelEntry } from "@rakazo_mickvvw/contracts";
+import { displayName, modelOptionKey } from "@rakazo_mickvvw/core";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";

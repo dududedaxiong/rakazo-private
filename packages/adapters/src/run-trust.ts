@@ -1,13 +1,17 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import type { ActionApprovalRule } from "@rakazo/core";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
+import type { ActionApprovalRule } from "@rakazo_mickvvw/core";
 import {
   connectorKindFromToolName,
   inboundRoutinePrompts,
   SITE_SENDING_TOOLS,
   siteAlwaysAllowed,
-} from "@rakazo/core";
-import { sitesInText, urlSite } from "@rakazo/core/egress";
-import { findAutoReviewPreference, listApprovalRules, storedBatchActions } from "@rakazo/db";
+} from "@rakazo_mickvvw/core";
+import { sitesInText, urlSite } from "@rakazo_mickvvw/core/egress";
+import {
+  findAutoReviewPreference,
+  listApprovalRules,
+  storedBatchActions,
+} from "@rakazo_mickvvw/db";
 import { boundDirectApprovalDetails, catalogApprovalDetails } from "./approval-effect.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { EffectiveModelRole } from "./model-roles.js";

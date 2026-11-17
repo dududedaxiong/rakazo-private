@@ -1001,8 +1001,8 @@ msgid "Allow once"
 msgstr "Allow once"
 
 #: src/lib/dictation.ts
-msgid "Allow Rakazo to use Speech Recognition and the microphone in System Settings."
-msgstr "Allow Rakazo to use Speech Recognition and the microphone in System Settings."
+msgid "Allow Rakazo mickvvw to use Speech Recognition and the microphone in System Settings."
+msgstr "Allow Rakazo mickvvw to use Speech Recognition and the microphone in System Settings."
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
@@ -1942,8 +1942,8 @@ msgstr "Choose folder"
 
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
-msgid "Choose how to use Rakazo"
-msgstr "Choose how to use Rakazo"
+msgid "Choose how to use Rakazo mickvvw"
+msgstr "Choose how to use Rakazo mickvvw"
 
 #: src/components/BotPackageImport.tsx
 msgid "Choose package file"
@@ -2330,8 +2330,8 @@ msgstr "Connect this model's provider first."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect your own API key in Models or choose Rakazo credits in Billing."
-msgstr "Connect your own API key in Models or choose Rakazo credits in Billing."
+msgid "Connect your own API key in Models or choose Rakazo mickvvw credits in Billing."
+msgstr "Connect your own API key in Models or choose Rakazo mickvvw credits in Billing."
 
 #: src/components/bot-templates/bot-templates-dialog.tsx
 #: src/components/ComputerDeviceSettings.tsx
@@ -3396,8 +3396,8 @@ msgid "Create space"
 msgstr "Create space"
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "Create your Rakazo"
+msgid "Create your Rakazo mickvvw"
+msgstr "Create your Rakazo mickvvw"
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -4033,8 +4033,8 @@ msgid "Ends {day}"
 msgstr "Ends {day}"
 
 #: src/components/GitHubStarPrompt.tsx
-msgid "Enjoying Rakazo?"
-msgstr "Enjoying Rakazo?"
+msgid "Enjoying Rakazo mickvvw?"
+msgstr "Enjoying Rakazo mickvvw?"
 
 #: src/components/ShareCardDialog.tsx
 msgid "Enlarge picture"
@@ -4728,8 +4728,8 @@ msgid "How to check"
 msgstr "How to check"
 
 #: src/components/SignupSurvey.tsx
-msgid "How will you use Rakazo?"
-msgstr "How will you use Rakazo?"
+msgid "How will you use Rakazo mickvvw?"
+msgstr "How will you use Rakazo mickvvw?"
 
 #: src/lib/user-error.ts
 msgid "Human verification failed. Try again."
@@ -6273,8 +6273,8 @@ msgid "Not imported"
 msgstr "Not imported"
 
 #: src/pages/shell/import-status.ts
-msgid "Not in Rakazo's catalog"
-msgstr "Not in Rakazo's catalog"
+msgid "Not in Rakazo mickvvw's catalog"
+msgstr "Not in Rakazo mickvvw's catalog"
 
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Not in the plugin catalog"
@@ -6299,12 +6299,12 @@ msgstr "Not supported"
 
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/import-status.ts
-msgid "Not supported in Rakazo"
-msgstr "Not supported in Rakazo"
+msgid "Not supported in Rakazo mickvvw"
+msgstr "Not supported in Rakazo mickvvw"
 
 #: src/pages/shell/agent-import-plan.tsx
-msgid "Not used by Rakazo"
-msgstr "Not used by Rakazo"
+msgid "Not used by Rakazo mickvvw"
+msgstr "Not used by Rakazo mickvvw"
 
 #: src/components/admin/AdminTwoFactor.tsx
 msgid "Not verified"
@@ -6471,8 +6471,8 @@ msgstr "Open navigation"
 #: src/pages/Invite.tsx
 #: src/pages/SharedConversation.tsx
 #: src/pages/SharedPage.tsx
-msgid "Open Rakazo"
-msgstr "Open Rakazo"
+msgid "Open Rakazo mickvvw"
+msgstr "Open Rakazo mickvvw"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -6680,8 +6680,8 @@ msgid "Paste text"
 msgstr "Paste text"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
-msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
-msgstr "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
+msgid "Paste the OpenAI-compatible address from your server. Rakazo mickvvw adds /v1 if needed."
+msgstr "Paste the OpenAI-compatible address from your server. Rakazo mickvvw adds /v1 if needed."
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -6951,16 +6951,16 @@ msgstr "Quota exceeded"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
-msgid "Rakazo"
-msgstr "Rakazo"
+msgid "Rakazo mickvvw"
+msgstr "Rakazo mickvvw"
 
 #: src/pages/onboarding/use-onboarding-model.ts
-msgid "Rakazo credits"
-msgstr "Rakazo credits"
+msgid "Rakazo mickvvw credits"
+msgstr "Rakazo mickvvw credits"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
-msgstr "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
+msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo mickvvw."
+msgstr "rakazo-shared and IDs starting with bot- are reserved for Rakazo mickvvw."
 
 #: src/pages/model-settings/model-health-dialog.tsx
 msgid "Rate limited"
@@ -7004,8 +7004,8 @@ msgid "Recall and write"
 msgstr "Recall and write"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "Recall from this peer; save to Rakazo’s own peers."
-msgstr "Recall from this peer; save to Rakazo’s own peers."
+msgid "Recall from this peer; save to Rakazo mickvvw’s own peers."
+msgstr "Recall from this peer; save to Rakazo mickvvw’s own peers."
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Recall only"
@@ -7597,8 +7597,8 @@ msgstr "Return to call with {0}"
 
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/SlackInstallCallback.tsx
-msgid "Return to Rakazo"
-msgstr "Return to Rakazo"
+msgid "Return to Rakazo mickvvw"
+msgstr "Return to Rakazo mickvvw"
 
 #: src/pages/settings-nav.ts
 msgid "Reusable personas for your bots."
@@ -8262,8 +8262,8 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "Sign in at <0>{0}</0>, then paste the code here."
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Sign in to Rakazo"
+msgid "Sign in to Rakazo mickvvw"
+msgstr "Sign in to Rakazo mickvvw"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
@@ -9169,8 +9169,8 @@ msgid "This session"
 msgstr "This session"
 
 #: src/pages/model-settings/connection-controls.tsx
-msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
-msgstr "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
+msgid "This subscription sign-in is not available in Rakazo mickvvw yet. Use a deployment credential or choose another provider."
+msgstr "This subscription sign-in is not available in Rakazo mickvvw yet. Use a deployment credential or choose another provider."
 
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "This template is in use on this bot. Saving alone only changes the template."
@@ -9658,8 +9658,8 @@ msgid "Use Protected input for passwords."
 msgstr "Use Protected input for passwords."
 
 #: src/components/ModelCredits.tsx
-msgid "Use Rakazo credits"
-msgstr "Use Rakazo credits"
+msgid "Use Rakazo mickvvw credits"
+msgstr "Use Rakazo mickvvw credits"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
@@ -9878,8 +9878,8 @@ msgid "Weekly"
 msgstr "Weekly"
 
 #: src/components/SignupSurvey.tsx
-msgid "Welcome to Rakazo"
-msgstr "Welcome to Rakazo"
+msgid "Welcome to Rakazo mickvvw"
+msgstr "Welcome to Rakazo mickvvw"
 
 #: src/pages/shell/dialogs.tsx
 msgid "What about its memories?"
@@ -9890,8 +9890,8 @@ msgid "What can this space use?"
 msgstr "What can this space use?"
 
 #: src/components/SignupSurvey.tsx
-msgid "What do you most want Rakazo to help with?"
-msgstr "What do you most want Rakazo to help with?"
+msgid "What do you most want Rakazo mickvvw to help with?"
+msgstr "What do you most want Rakazo mickvvw to help with?"
 
 #: src/pages/shell/message-cards.tsx
 msgid "What do you want me on first?"

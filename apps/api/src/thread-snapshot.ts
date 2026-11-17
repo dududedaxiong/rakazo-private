@@ -1,12 +1,12 @@
-import type { ThreadSnapshot } from "@rakazo/contracts";
+import type { ThreadSnapshot } from "@rakazo_mickvvw/contracts";
 import {
   ACTIVE_RUN_STATUSES,
   BACKGROUND_RUN_TRIGGERS,
   projectMessages,
   runFailureError,
-} from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { spaceIsShared } from "@rakazo/db";
+} from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { spaceIsShared } from "@rakazo_mickvvw/db";
 import { resolveBusyBotName, toComputerStatus } from "./computer-status.js";
 import { THREAD_MESSAGE_PAGE_SIZE } from "./routes/shared.js";
 import { loadMessagePage } from "./thread-message-pages.js";

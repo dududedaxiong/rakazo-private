@@ -5,7 +5,7 @@ import type {
   BotPackageReceipt,
   MemoryDocument,
   Routine,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import { captureScreenshot, completeOnboarding, openBotPanelTab, rpc, signup } from "./helpers";
 
 const skillName = "package-review-recipe";

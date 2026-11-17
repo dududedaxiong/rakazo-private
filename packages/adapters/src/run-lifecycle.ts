@@ -2,8 +2,8 @@ import {
   runContinueJob,
   SandboxUnavailableError,
   SandboxUnresponsiveError,
-} from "@rakazo/adapter-kit";
-import type { RunStatus } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/adapter-kit";
+import type { RunStatus } from "@rakazo_mickvvw/contracts";
 import {
   assertTransition,
   BACKGROUND_HELPER_TRIGGER,
@@ -12,11 +12,11 @@ import {
   nextFence,
   redactSecrets,
   userRunError,
-} from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { isTooManyDatabaseConnections, spaceTakesWork } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
-import { sanitizedError } from "@rakazo/logging/monitoring";
+} from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { isTooManyDatabaseConnections, spaceTakesWork } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
+import { sanitizedError } from "@rakazo_mickvvw/logging/monitoring";
 import { returnHelperOutcome } from "./background-helpers.js";
 import { returnBotMessageOutcome } from "./bot-messages.js";
 import { sleepDeferReason } from "./computer-idle.js";

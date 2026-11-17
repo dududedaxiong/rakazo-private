@@ -1,4 +1,4 @@
-import { BOT_PACKAGE_MAX_BYTES } from "@rakazo/contracts";
+import { BOT_PACKAGE_MAX_BYTES } from "@rakazo_mickvvw/contracts";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const io = vi.hoisted(() => ({

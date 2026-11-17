@@ -1,4 +1,4 @@
-import type { ModelHealthState } from "@rakazo/contracts";
+import type { ModelHealthState } from "@rakazo_mickvvw/contracts";
 
 /** One model's latest same-day test result, keyed by "provider::modelId". */
 export type ModelTestResult = {

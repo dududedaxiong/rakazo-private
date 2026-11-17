@@ -5,14 +5,14 @@ import type {
   ModelConnectInput,
   ModelCredential,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   assertHeaderSafeApiKey,
   OPENAI_COMPATIBLE_PROVIDER_ID as CONTRACT_OPENAI_COMPAT,
   canonicalPiProviderId,
   MAX_ENABLED_MODEL_IDS,
   modelOutputLeavesInputRoom,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   cloudflareModelConfigMessage,
   cloudflareModelRouting,

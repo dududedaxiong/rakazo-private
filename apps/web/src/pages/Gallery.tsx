@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { Artifact, Bot } from "@rakazo/contracts";
+import type { Artifact, Bot } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   buttonVariants,
@@ -12,7 +12,7 @@ import {
   EmptyMedia,
   EmptyTitle,
   Spinner,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ChevronLeft, Download, Images, Play, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";

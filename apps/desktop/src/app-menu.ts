@@ -1,4 +1,4 @@
-import type { DesktopMenuCommand } from "@rakazo/contracts";
+import type { DesktopMenuCommand } from "@rakazo_mickvvw/contracts";
 import { app, dialog, Menu } from "electron";
 import { remoteServerOrigin } from "./app-window.js";
 import { updaterSupport } from "./auto-update.js";

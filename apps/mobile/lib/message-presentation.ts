@@ -1,6 +1,9 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import { isRetiredImportSetup, isToolActivityBlock } from "@rakazo/core";
-import { MAX_QUOTABLE_SOURCE_LENGTH, visibleTextFromMarkdown } from "@rakazo/core/message-quote";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
+import { isRetiredImportSetup, isToolActivityBlock } from "@rakazo_mickvvw/core";
+import {
+  MAX_QUOTABLE_SOURCE_LENGTH,
+  visibleTextFromMarkdown,
+} from "@rakazo_mickvvw/core/message-quote";
 
 export function isCenteredAgentEvent(blocks: readonly MessageBlock[]): boolean {
   return blocks.some(

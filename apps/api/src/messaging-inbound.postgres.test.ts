@@ -1,6 +1,6 @@
-import type { MessagingInboundMessage } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
-import { createDb, createThreadEvents, runAsSystem } from "@rakazo/db";
+import type { MessagingInboundMessage } from "@rakazo_mickvvw/adapter-kit";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { createDb, createThreadEvents, runAsSystem } from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createMessagingInboundHandler } from "./messaging-inbound.js";
 

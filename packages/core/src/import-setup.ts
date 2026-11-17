@@ -1,4 +1,8 @@
-import type { AgentImportSetupItem, AgentImportSetupState, MessageBlock } from "@rakazo/contracts";
+import type {
+  AgentImportSetupItem,
+  AgentImportSetupState,
+  MessageBlock,
+} from "@rakazo_mickvvw/contracts";
 
 /**
  * Needs Rakazo cannot check from its own data: what a skill declares, and a program or local

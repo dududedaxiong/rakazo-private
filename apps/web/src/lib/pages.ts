@@ -1,6 +1,11 @@
 import { useLingui } from "@lingui/react/macro";
-import type { MessageBlock } from "@rakazo/contracts";
-import { PAGE_RUNTIME_PATH, pageReply, pageReplyText, pageViewerDocument } from "@rakazo/core";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
+import {
+  PAGE_RUNTIME_PATH,
+  pageReply,
+  pageReplyText,
+  pageViewerDocument,
+} from "@rakazo_mickvvw/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createContext,

@@ -33,7 +33,7 @@ vi.mock("@lingui/react/macro", () => {
 vi.mock("../components/IconTooltip", () => ({
   IconTooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
-vi.mock("@rakazo/ui-web", () => {
+vi.mock("@rakazo_mickvvw/ui-web", () => {
   const Container = ({ children }: { children?: ReactNode }) => <div>{children}</div>;
   return {
     Button: (props: ComponentProps<"button">) => <button {...props} />,

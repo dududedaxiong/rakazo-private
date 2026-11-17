@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
 import { copyableMessageText } from "./message-text.js";
 import { isRunWorking } from "./run-state.js";
 

@@ -1,5 +1,5 @@
-import type { ConnectorTool } from "@rakazo/adapter-kit";
-import { toolEffectIdempotencyKey } from "@rakazo/core/node/approval-effect-key";
+import type { ConnectorTool } from "@rakazo_mickvvw/adapter-kit";
+import { toolEffectIdempotencyKey } from "@rakazo_mickvvw/core/node/approval-effect-key";
 import { expect, it } from "vitest";
 import { namedAgentTools } from "./pi-runtime-tools.js";
 import type { RunContext } from "./run-context.js";

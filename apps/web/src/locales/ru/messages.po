@@ -1001,8 +1001,8 @@ msgid "Allow once"
 msgstr "Разрешить один раз"
 
 #: src/lib/dictation.ts
-msgid "Allow Rakazo to use Speech Recognition and the microphone in System Settings."
-msgstr "Разрешите Rakazo использовать распознавание речи и микрофон в Системных настройках."
+msgid "Allow Rakazo mickvvw to use Speech Recognition and the microphone in System Settings."
+msgstr "Разрешите Rakazo mickvvw использовать распознавание речи и микрофон в Системных настройках."
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
@@ -1942,8 +1942,8 @@ msgstr "Выбрать папку"
 
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
-msgid "Choose how to use Rakazo"
-msgstr "Выберите, как использовать Rakazo"
+msgid "Choose how to use Rakazo mickvvw"
+msgstr "Выберите, как использовать Rakazo mickvvw"
 
 #: src/components/BotPackageImport.tsx
 msgid "Choose package file"
@@ -2330,8 +2330,8 @@ msgstr "Сначала подключите провайдера этой мод
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect your own API key in Models or choose Rakazo credits in Billing."
-msgstr "Подключите свой API-ключ в разделе «Модели» или выберите кредиты Rakazo в разделе «Оплата»."
+msgid "Connect your own API key in Models or choose Rakazo mickvvw credits in Billing."
+msgstr "Подключите свой API-ключ в разделе «Модели» или выберите кредиты Rakazo mickvvw в разделе «Оплата»."
 
 #: src/components/bot-templates/bot-templates-dialog.tsx
 #: src/components/ComputerDeviceSettings.tsx
@@ -3396,8 +3396,8 @@ msgid "Create space"
 msgstr "Создайте пространство"
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "Создайте свой Rakazo"
+msgid "Create your Rakazo mickvvw"
+msgstr "Создайте свой Rakazo mickvvw"
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -4033,8 +4033,8 @@ msgid "Ends {day}"
 msgstr "Закончится {day}"
 
 #: src/components/GitHubStarPrompt.tsx
-msgid "Enjoying Rakazo?"
-msgstr "Нравится Rakazo?"
+msgid "Enjoying Rakazo mickvvw?"
+msgstr "Нравится Rakazo mickvvw?"
 
 #: src/components/ShareCardDialog.tsx
 msgid "Enlarge picture"
@@ -4728,8 +4728,8 @@ msgid "How to check"
 msgstr "Как проверить"
 
 #: src/components/SignupSurvey.tsx
-msgid "How will you use Rakazo?"
-msgstr "Как вы будете использовать Rakazo?"
+msgid "How will you use Rakazo mickvvw?"
+msgstr "Как вы будете использовать Rakazo mickvvw?"
 
 #: src/lib/user-error.ts
 msgid "Human verification failed. Try again."
@@ -6273,8 +6273,8 @@ msgid "Not imported"
 msgstr "Не импортировано"
 
 #: src/pages/shell/import-status.ts
-msgid "Not in Rakazo's catalog"
-msgstr "Нет в каталоге Rakazo"
+msgid "Not in Rakazo mickvvw's catalog"
+msgstr "Нет в каталоге Rakazo mickvvw"
 
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Not in the plugin catalog"
@@ -6299,12 +6299,12 @@ msgstr ""
 
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/import-status.ts
-msgid "Not supported in Rakazo"
-msgstr "Не поддерживается в Rakazo"
+msgid "Not supported in Rakazo mickvvw"
+msgstr "Не поддерживается в Rakazo mickvvw"
 
 #: src/pages/shell/agent-import-plan.tsx
-msgid "Not used by Rakazo"
-msgstr "Не используется в Rakazo"
+msgid "Not used by Rakazo mickvvw"
+msgstr "Не используется в Rakazo mickvvw"
 
 #: src/components/admin/AdminTwoFactor.tsx
 msgid "Not verified"
@@ -6471,8 +6471,8 @@ msgstr "Открыть навигацию"
 #: src/pages/Invite.tsx
 #: src/pages/SharedConversation.tsx
 #: src/pages/SharedPage.tsx
-msgid "Open Rakazo"
-msgstr "Открыть Rakazo"
+msgid "Open Rakazo mickvvw"
+msgstr "Открыть Rakazo mickvvw"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -6680,8 +6680,8 @@ msgid "Paste text"
 msgstr "Вставить текст"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
-msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
-msgstr "Вставьте OpenAI-совместимый адрес со своего сервера. При необходимости Rakazo добавляет /v1."
+msgid "Paste the OpenAI-compatible address from your server. Rakazo mickvvw adds /v1 if needed."
+msgstr "Вставьте OpenAI-совместимый адрес со своего сервера. При необходимости Rakazo mickvvw добавляет /v1."
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -6951,16 +6951,16 @@ msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
-msgid "Rakazo"
-msgstr "Rakazo"
+msgid "Rakazo mickvvw"
+msgstr "Rakazo mickvvw"
 
 #: src/pages/onboarding/use-onboarding-model.ts
-msgid "Rakazo credits"
-msgstr "Кредиты Rakazo"
+msgid "Rakazo mickvvw credits"
+msgstr "Кредиты Rakazo mickvvw"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
-msgstr "rakazo-shared и ID, начинающиеся с bot-, зарезервированы для Rakazo."
+msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo mickvvw."
+msgstr "rakazo-shared и ID, начинающиеся с bot-, зарезервированы для Rakazo mickvvw."
 
 #: src/pages/model-settings/model-health-dialog.tsx
 msgid "Rate limited"
@@ -7004,8 +7004,8 @@ msgid "Recall and write"
 msgstr "Вспоминать и записывать"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "Recall from this peer; save to Rakazo’s own peers."
-msgstr "Чтение из этого пира; сохранение в собственные пиры Rakazo."
+msgid "Recall from this peer; save to Rakazo mickvvw’s own peers."
+msgstr "Чтение из этого пира; сохранение в собственные пиры Rakazo mickvvw."
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Recall only"
@@ -7597,8 +7597,8 @@ msgstr "Вернуться к звонку с {0}"
 
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/SlackInstallCallback.tsx
-msgid "Return to Rakazo"
-msgstr "Вернуться в Rakazo"
+msgid "Return to Rakazo mickvvw"
+msgstr "Вернуться в Rakazo mickvvw"
 
 #: src/pages/settings-nav.ts
 msgid "Reusable personas for your bots."
@@ -8262,8 +8262,8 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "Войдите на <0>{0}</0>, затем вставьте код сюда."
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Войти в Rakazo"
+msgid "Sign in to Rakazo mickvvw"
+msgstr "Войти в Rakazo mickvvw"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
@@ -9169,8 +9169,8 @@ msgid "This session"
 msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
-msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
-msgstr "Вход по этой подписке пока недоступен в Rakazo. Используйте учетные данные развертывания или выберите другого поставщика."
+msgid "This subscription sign-in is not available in Rakazo mickvvw yet. Use a deployment credential or choose another provider."
+msgstr "Вход по этой подписке пока недоступен в Rakazo mickvvw. Используйте учетные данные развертывания или выберите другого поставщика."
 
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "This template is in use on this bot. Saving alone only changes the template."
@@ -9658,8 +9658,8 @@ msgid "Use Protected input for passwords."
 msgstr "Для паролей используйте «Защищённый ввод»."
 
 #: src/components/ModelCredits.tsx
-msgid "Use Rakazo credits"
-msgstr "Использовать кредиты Rakazo"
+msgid "Use Rakazo mickvvw credits"
+msgstr "Использовать кредиты Rakazo mickvvw"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
@@ -9878,8 +9878,8 @@ msgid "Weekly"
 msgstr "Еженедельно"
 
 #: src/components/SignupSurvey.tsx
-msgid "Welcome to Rakazo"
-msgstr "Добро пожаловать в Rakazo"
+msgid "Welcome to Rakazo mickvvw"
+msgstr "Добро пожаловать в Rakazo mickvvw"
 
 #: src/pages/shell/dialogs.tsx
 msgid "What about its memories?"
@@ -9890,8 +9890,8 @@ msgid "What can this space use?"
 msgstr "Что может использовать это пространство?"
 
 #: src/components/SignupSurvey.tsx
-msgid "What do you most want Rakazo to help with?"
-msgstr "С чем Rakazo должен помочь вам в первую очередь?"
+msgid "What do you most want Rakazo mickvvw to help with?"
+msgstr "С чем Rakazo mickvvw должен помочь вам в первую очередь?"
 
 #: src/pages/shell/message-cards.tsx
 msgid "What do you want me on first?"

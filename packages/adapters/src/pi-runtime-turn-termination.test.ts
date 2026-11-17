@@ -1,6 +1,10 @@
 import type { AssistantMessage, Model } from "@earendil-works/pi-ai";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
-import type { AgentRunRequest, AgentRuntimeEvent, AgentSteeringMessage } from "@rakazo/adapter-kit";
+import type {
+  AgentRunRequest,
+  AgentRuntimeEvent,
+  AgentSteeringMessage,
+} from "@rakazo_mickvvw/adapter-kit";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const providerState = vi.hoisted(() => ({

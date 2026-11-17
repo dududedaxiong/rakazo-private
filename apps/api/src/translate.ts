@@ -1,18 +1,18 @@
 import { randomUUID } from "node:crypto";
-import type { AgentRunRequest, AgentRuntime, AgentRuntimeEvent } from "@rakazo/adapter-kit";
-import { sanitizeProviderError } from "@rakazo/adapters";
-import type { Actor, BotModelEntry, ModelSwitchAttempt } from "@rakazo/contracts";
+import type { AgentRunRequest, AgentRuntime, AgentRuntimeEvent } from "@rakazo_mickvvw/adapter-kit";
+import { sanitizeProviderError } from "@rakazo_mickvvw/adapters";
+import type { Actor, BotModelEntry, ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
 import {
   parseBotModelList,
   resolveTargetLanguage,
   TRANSLATION_SOURCE_LANGUAGE_CODES,
   TRANSLATION_SOURCE_LANGUAGE_LABELS,
   TRANSLATION_TARGET_LANGUAGE_LABELS,
-} from "@rakazo/contracts";
-import { createModelSwitchAttempt, recordModelSwitchAttempt } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { recordUsage } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/contracts";
+import { createModelSwitchAttempt, recordModelSwitchAttempt } from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { recordUsage } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 
 const TRANSLATE_TIMEOUT_MS = 30_000;
 const TRANSLATE_ATTEMPTS = 2;

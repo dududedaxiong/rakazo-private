@@ -34,8 +34,8 @@ vi.mock("./message-cards", () => ({
 }));
 
 const toastMock = vi.hoisted(() => vi.fn());
-vi.mock("@rakazo/ui-web", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@rakazo/ui-web")>();
+vi.mock("@rakazo_mickvvw/ui-web", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@rakazo_mickvvw/ui-web")>();
   return { ...actual, toast: toastMock };
 });
 

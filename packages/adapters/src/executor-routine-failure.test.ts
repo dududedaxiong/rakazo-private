@@ -1,14 +1,14 @@
-import type { NotificationMessage } from "@rakazo/adapter-kit";
+import type { NotificationMessage } from "@rakazo_mickvvw/adapter-kit";
 import {
   ModelAccountError,
   SandboxAllowanceUsedError,
   SandboxProviderAccountError,
   SandboxRateLimitError,
   TransientModelError,
-} from "@rakazo/adapter-kit";
-import type * as DbModule from "@rakazo/db";
-import { countUnreadInboxChats } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/adapter-kit";
+import type * as DbModule from "@rakazo_mickvvw/db";
+import { countUnreadInboxChats } from "@rakazo_mickvvw/db";
+import { createLogger, createTestSink, installLogger } from "@rakazo_mickvvw/logging";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as ComputerLifecycleModule from "./computer-lifecycle.js";
 import { createRunExecutor } from "./executor.js";
@@ -20,7 +20,7 @@ vi.mock("./computer-lifecycle.js", async (importOriginal) => ({
   provisionComputer: async () => ({ id: "computer-1", kind: "desktop" }),
 }));
 
-vi.mock("@rakazo/db", async (importOriginal) => ({
+vi.mock("@rakazo_mickvvw/db", async (importOriginal) => ({
   ...(await importOriginal<typeof DbModule>()),
   countUnreadInboxChats: vi.fn(),
 }));

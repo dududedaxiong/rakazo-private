@@ -1,5 +1,5 @@
-import type { BotPackageExport, BotPackageExportInput } from "@rakazo/contracts";
-import { BOT_PACKAGE_MAX_BYTES, botPackageUtf8Bytes } from "@rakazo/contracts";
+import type { BotPackageExport, BotPackageExportInput } from "@rakazo_mickvvw/contracts";
+import { BOT_PACKAGE_MAX_BYTES, botPackageUtf8Bytes } from "@rakazo_mickvvw/contracts";
 
 export type BotPackageExportState = {
   phase: "idle" | "exporting" | "review" | "delivering" | "completed" | "error";

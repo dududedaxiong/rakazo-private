@@ -1,6 +1,6 @@
-import type { TransactionalEmailProvider } from "@rakazo/adapter-kit";
-import { EncryptedSecretStore } from "@rakazo/adapters";
-import type { PrismaClient } from "@rakazo/db";
+import type { TransactionalEmailProvider } from "@rakazo_mickvvw/adapter-kit";
+import { EncryptedSecretStore } from "@rakazo_mickvvw/adapters";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { describe, expect, it } from "vitest";
 import {
   clearEmailSettings,

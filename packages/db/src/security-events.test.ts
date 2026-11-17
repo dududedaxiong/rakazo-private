@@ -1,5 +1,10 @@
-import { SECURITY_EVENT_TYPES } from "@rakazo/contracts";
-import { createLogger, createTestSink, installLogger, runWithLogContext } from "@rakazo/logging";
+import { SECURITY_EVENT_TYPES } from "@rakazo_mickvvw/contracts";
+import {
+  createLogger,
+  createTestSink,
+  installLogger,
+  runWithLogContext,
+} from "@rakazo_mickvvw/logging";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createSecurityEventPruner,

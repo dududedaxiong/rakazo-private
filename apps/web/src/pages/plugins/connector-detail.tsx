@@ -1,8 +1,8 @@
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import type { ConnectionCatalogItem } from "@rakazo/contracts";
-import { CONNECTION_LABEL_MAX_LENGTH } from "@rakazo/contracts";
-import { catalogItemAccounts, catalogItemKey, humanizeToolName } from "@rakazo/core";
-import { Badge, Button, Disclosure, Input } from "@rakazo/ui-web";
+import type { ConnectionCatalogItem } from "@rakazo_mickvvw/contracts";
+import { CONNECTION_LABEL_MAX_LENGTH } from "@rakazo_mickvvw/contracts";
+import { catalogItemAccounts, catalogItemKey, humanizeToolName } from "@rakazo_mickvvw/core";
+import { Badge, Button, Disclosure, Input } from "@rakazo_mickvvw/ui-web";
 import { ChevronLeft, Plus } from "lucide-react";
 import type { PluginConnections } from "./use-plugin-connections";
 

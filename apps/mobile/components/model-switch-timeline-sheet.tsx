@@ -1,4 +1,4 @@
-import type { ModelSwitchAttempt } from "@rakazo/contracts";
+import type { ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
 import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { useI18n } from "../lib/i18n";

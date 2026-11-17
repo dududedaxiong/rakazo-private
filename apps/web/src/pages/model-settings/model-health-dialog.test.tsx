@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { ModelHealthReport } from "@rakazo/contracts";
+import type { ModelHealthReport } from "@rakazo_mickvvw/contracts";
 import type { ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";

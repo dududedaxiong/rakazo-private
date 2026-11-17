@@ -2,23 +2,23 @@ import { createHash, randomUUID } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { BUILTIN_AGENT_SKILLS, canonicalBotPackageJson } from "@rakazo/adapters";
+import { BUILTIN_AGENT_SKILLS, canonicalBotPackageJson } from "@rakazo_mickvvw/adapters";
 import type {
   Actor,
   BotPackageExport,
   BotPackagePreview,
   BotPackageReceipt,
   BotPackageRecentReceipt,
-} from "@rakazo/contracts";
-import { BOT_PACKAGE_FORMAT } from "@rakazo/contracts";
-import { buildSkillMd, parseSkillMd } from "@rakazo/core";
-import type { Prisma, PrismaClient } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import { BOT_PACKAGE_FORMAT } from "@rakazo_mickvvw/contracts";
+import { buildSkillMd, parseSkillMd } from "@rakazo_mickvvw/core";
+import type { Prisma, PrismaClient } from "@rakazo_mickvvw/db";
 import {
   claimSpaceDeletionForMember,
   createDb,
   createSpaceForMember,
   releaseSpaceDeletionClaim,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { listAgentSkillRecords } from "../../../packages/adapters/src/skill-tools.js";
 import { sessionCookieHeader } from "../../../packages/testkit/src/index.js";

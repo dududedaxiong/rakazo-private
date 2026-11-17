@@ -1,5 +1,5 @@
-import type { BotPackageExport } from "@rakazo/contracts";
-import { BOT_PACKAGE_MAX_BYTES } from "@rakazo/contracts";
+import type { BotPackageExport } from "@rakazo_mickvvw/contracts";
+import { BOT_PACKAGE_MAX_BYTES } from "@rakazo_mickvvw/contracts";
 import { beforeEach, expect, it, vi } from "vitest";
 import { downloadBotPackage, readBotPackageFile } from "./bot-package-file";
 

@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, MessageFavorite } from "@rakazo/contracts";
+import type { Bot, MessageFavorite } from "@rakazo_mickvvw/contracts";
 import {
   buttonVariants,
   Empty,
@@ -7,7 +7,7 @@ import {
   EmptyMedia,
   EmptyTitle,
   Spinner,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";

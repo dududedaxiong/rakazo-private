@@ -1,5 +1,8 @@
-import type { IntegrationCatalogResult, IntegrationCatalogSurface } from "@rakazo/contracts";
-import { cancelResponseBody } from "@rakazo/core";
+import type {
+  IntegrationCatalogResult,
+  IntegrationCatalogSurface,
+} from "@rakazo_mickvvw/contracts";
+import { cancelResponseBody } from "@rakazo_mickvvw/core";
 
 const RESPONSE_LIMIT = 1_000_000;
 const SEARCH_LIMIT = 8;

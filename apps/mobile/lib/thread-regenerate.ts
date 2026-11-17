@@ -1,4 +1,4 @@
-import { resolveComposerSendPlan, selectableMessageText } from "@rakazo/core";
+import { resolveComposerSendPlan, selectableMessageText } from "@rakazo_mickvvw/core";
 import type { MobileMessage } from "./mobile-types";
 import type { SendPayload } from "./thread-feedback";
 

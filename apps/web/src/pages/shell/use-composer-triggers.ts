@@ -1,17 +1,17 @@
-import type { AgentSkillCatalogEntry } from "@rakazo/contracts";
+import type { AgentSkillCatalogEntry } from "@rakazo_mickvvw/contracts";
 import type {
   ComposerMention,
   ComposerMentionBinding,
   ComposerMentionRange,
   SlashActionId,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import {
   bindComposerMention,
   clampMentionHighlightIndex,
   composerMentionQuery,
   mentionChipKey,
   SLASH_ACTIONS,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import type { RefObject } from "react";
 import { useEffect, useId, useMemo, useState } from "react";
 

@@ -1,5 +1,5 @@
-import { FEEDBACK_DESCRIPTION_MAX_LENGTH, FEEDBACK_KINDS } from "@rakazo/contracts";
-import { redactSecrets } from "@rakazo/core";
+import { FEEDBACK_DESCRIPTION_MAX_LENGTH, FEEDBACK_KINDS } from "@rakazo_mickvvw/contracts";
+import { redactSecrets } from "@rakazo_mickvvw/core";
 import { z } from "zod";
 import type { RunContext } from "./run-context.js";
 import type { ToolCall, ToolHandlers } from "./run-tool-gate.js";

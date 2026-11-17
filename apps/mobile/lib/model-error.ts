@@ -1,9 +1,9 @@
-import type { ModelErrorUserFacingKey, RunErrorTranslator } from "@rakazo/core";
-import { normalizeRunError } from "@rakazo/core";
+import type { ModelErrorUserFacingKey, RunErrorTranslator } from "@rakazo_mickvvw/core";
+import { normalizeRunError } from "@rakazo_mickvvw/core";
 
 /** The failure classes the fifth batch speaks in plain language, as the shared classifier names them. */
 export type ModelErrorKey = ModelErrorUserFacingKey;
-export { describeModelError } from "@rakazo/core";
+export { describeModelError } from "@rakazo_mickvvw/core";
 
 /** The plain-language reason for a failure, through the shared classifier. */
 export function modelErrorSummary(

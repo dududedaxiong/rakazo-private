@@ -1,4 +1,4 @@
-import type { ThreadMessage } from "@rakazo/contracts";
+import type { ThreadMessage } from "@rakazo_mickvvw/contracts";
 
 /**
  * The conversation as Markdown, in time order: one section per message, with

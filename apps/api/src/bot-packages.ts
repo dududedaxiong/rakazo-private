@@ -5,7 +5,7 @@ import {
   BUILTIN_AGENT_SKILLS,
   parseBotPackageSource,
   prepareBotPackageDocument,
-} from "@rakazo/adapters";
+} from "@rakazo_mickvvw/adapters";
 import type {
   Actor,
   BotPackageActivateSkillInput,
@@ -15,14 +15,14 @@ import type {
   BotPackagePreviewInput,
   BotPackageReceipt,
   BotPackageRecentReceipt,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   BOT_PACKAGE_FORMAT,
   BotPackageDocumentSchema,
   BotPackageLeftOutSchema,
-} from "@rakazo/contracts";
-import { isOneShotRoutineCron } from "@rakazo/core";
-import type { Prisma } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import { isOneShotRoutineCron } from "@rakazo_mickvvw/core";
+import type { Prisma } from "@rakazo_mickvvw/db";
 import {
   ComputerLimitError,
   createRepos,
@@ -31,8 +31,8 @@ import {
   SpaceDeletionInProgressError,
   Prisma as Sql,
   withTransactionRetry,
-} from "@rakazo/db";
-import { redactSecretText } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { redactSecretText } from "@rakazo_mickvvw/logging";
 import { resolveSkillContent } from "./agent-skills.js";
 import { assertNameFreeWhereAvailable, userAddedAvailability } from "./availability.js";
 import type { RouterDeps } from "./router.js";

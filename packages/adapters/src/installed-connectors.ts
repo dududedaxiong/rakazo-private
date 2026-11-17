@@ -6,11 +6,11 @@ import type {
   ConnectorProvider,
   ConnectorTool,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import type { McpSourcePreset } from "@rakazo/contracts";
-import { cancelResponseBody } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { availableInSpace, itemSecretIn } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapter-kit";
+import type { McpSourcePreset } from "@rakazo_mickvvw/contracts";
+import { cancelResponseBody } from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { availableInSpace, itemSecretIn } from "@rakazo_mickvvw/db";
 import { parse as parseYaml } from "yaml";
 import { z } from "zod";
 import {

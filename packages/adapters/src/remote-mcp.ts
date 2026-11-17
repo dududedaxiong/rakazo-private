@@ -8,7 +8,7 @@ import {
 } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import type { RequestOptions } from "@modelcontextprotocol/sdk/shared/protocol.js";
 import type { Tool } from "@modelcontextprotocol/sdk/types.js";
-import type { ConnectorTool } from "@rakazo/adapter-kit";
+import type { ConnectorTool } from "@rakazo_mickvvw/adapter-kit";
 import {
   ipVersion,
   isCloudMetadataAddress,
@@ -20,8 +20,8 @@ import {
   isNonPublicAddress,
   MCP_APP_READ_TIMEOUT_MS,
   normalizeHost,
-} from "@rakazo/contracts";
-import { cancelResponseBody } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { cancelResponseBody } from "@rakazo_mickvvw/core";
 import type { Dispatcher } from "undici";
 import { Agent, EnvHttpProxyAgent, Pool } from "undici";
 import { composioToolBatch } from "./composio-batch.js";

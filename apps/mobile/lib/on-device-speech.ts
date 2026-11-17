@@ -10,7 +10,7 @@
  * nothing is bundled with the app.
  */
 
-import { toUtterances } from "@rakazo/core";
+import { toUtterances } from "@rakazo_mickvvw/core";
 import type { DictationGiveUp } from "./dictation";
 import { ENDPOINT_SILENCE_MS } from "./dictation";
 import { t } from "./i18n";

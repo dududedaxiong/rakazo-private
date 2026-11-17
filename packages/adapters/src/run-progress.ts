@@ -1,5 +1,5 @@
-import { messagingProgressJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
+import { messagingProgressJob } from "@rakazo_mickvvw/adapter-kit";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
 import {
   appendTextSegment,
   appendToolCallSegment,
@@ -10,9 +10,9 @@ import {
   noteLastToolStep,
   redactSecrets,
   redactSecretsAfter,
-} from "@rakazo/core";
-import type { Run } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/core";
+import type { Run } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS } from "./model-vision.js";
 import type { ReplyState, RunContext } from "./run-context.js";

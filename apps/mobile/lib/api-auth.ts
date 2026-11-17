@@ -1,11 +1,11 @@
-import type { AccountSecurity, AuthCapabilities } from "@rakazo/contracts";
+import type { AccountSecurity, AuthCapabilities } from "@rakazo_mickvvw/contracts";
 import {
   accountSecuritySchema,
   authCapabilitiesSchema,
   legacyAccountSecurity,
   legacyAuthCapabilitiesSchema,
-} from "@rakazo/contracts";
-import { displayName, signupRequiresEmailVerification } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { displayName, signupRequiresEmailVerification } from "@rakazo_mickvvw/core";
 import type { PendingSignOut } from "./api";
 import {
   authHeaders,

@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotPackageReceipt, BotPackageSkillReceipt } from "@rakazo/contracts";
-import { displayName } from "@rakazo/core";
-import { Button, Input } from "@rakazo/ui-web";
+import type { BotPackageReceipt, BotPackageSkillReceipt } from "@rakazo_mickvvw/contracts";
+import { displayName } from "@rakazo_mickvvw/core";
+import { Button, Input } from "@rakazo_mickvvw/ui-web";
 import { useId, useState } from "react";
 
 function SkillRow({

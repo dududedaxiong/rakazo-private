@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { ComputerStatus } from "@rakazo/contracts";
+import type { ComputerStatus } from "@rakazo_mickvvw/contracts";
 import type { ReactNode } from "react";
 import { act, createElement, useEffect, useState } from "react";
 import type { Root } from "react-dom/client";

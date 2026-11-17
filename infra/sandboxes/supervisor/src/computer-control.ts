@@ -1,4 +1,4 @@
-import { readBoundedJsonResponse } from "@rakazo/core";
+import { readBoundedJsonResponse } from "@rakazo_mickvvw/core";
 import type Docker from "dockerode";
 import type { z } from "zod";
 import {

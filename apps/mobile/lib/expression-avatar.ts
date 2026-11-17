@@ -1,4 +1,4 @@
-import type { LogoAvatarActivity } from "@rakazo/core";
+import type { LogoAvatarActivity } from "@rakazo_mickvvw/core";
 import { useSyncExternalStore } from "react";
 import type { ImageSourcePropType } from "react-native";
 

@@ -1,5 +1,5 @@
 {
-  "name": "@rakazo/updater",
+  "name": "@rakazo_mickvvw/updater",
   "version": "0.1.0",
   "private": true,
   "license": "Apache-2.0",
@@ -12,9 +12,9 @@
   },
   "dependencies": {
     "@hono/node-server": "2.1.6",
-    "@rakazo/contracts": "workspace:*",
-    "@rakazo/core": "workspace:*",
-    "@rakazo/logging": "workspace:*",
+    "@rakazo_mickvvw/contracts": "workspace:*",
+    "@rakazo_mickvvw/core": "workspace:*",
+    "@rakazo_mickvvw/logging": "workspace:*",
     "hono": "4.13.16",
     "tsx": "4.23.15"
   },

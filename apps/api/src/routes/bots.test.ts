@@ -1,10 +1,10 @@
-import type * as Adapters from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type * as Db from "@rakazo/db";
+import type * as Adapters from "@rakazo_mickvvw/adapters";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type * as Db from "@rakazo_mickvvw/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { botsRoutes } from "./bots.js";
 
-vi.mock("@rakazo/db", async (original) => {
+vi.mock("@rakazo_mickvvw/db", async (original) => {
   const actual = await original<typeof Db>();
   return {
     ...actual,
@@ -12,7 +12,7 @@ vi.mock("@rakazo/db", async (original) => {
   };
 });
 
-vi.mock("@rakazo/adapters", async (original) => {
+vi.mock("@rakazo_mickvvw/adapters", async (original) => {
   const actual = await original<typeof Adapters>();
   return {
     ...actual,
@@ -31,8 +31,8 @@ vi.mock("@rakazo/adapters", async (original) => {
   };
 });
 
-const mockedDb = vi.mocked(await import("@rakazo/db"));
-const mockedAdapters = vi.mocked(await import("@rakazo/adapters"));
+const mockedDb = vi.mocked(await import("@rakazo_mickvvw/db"));
+const mockedAdapters = vi.mocked(await import("@rakazo_mickvvw/adapters"));
 
 const actor = { userId: "user-1", spaceId: "space-1" } as Actor;
 

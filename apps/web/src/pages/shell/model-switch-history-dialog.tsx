@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { ModelSwitchAttempt } from "@rakazo/contracts";
-import { displayName } from "@rakazo/core";
-import { Dialog, DialogContent, DialogTitle } from "@rakazo/ui-web";
+import type { ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
+import { displayName } from "@rakazo_mickvvw/core";
+import { Dialog, DialogContent, DialogTitle } from "@rakazo_mickvvw/ui-web";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import type { ModelLocateKind, ModelLocateTarget } from "../../lib/model-locate";

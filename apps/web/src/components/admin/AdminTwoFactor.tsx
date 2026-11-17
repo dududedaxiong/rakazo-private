@@ -8,7 +8,7 @@ import {
   Spinner,
   toast,
   useCopyText,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useSpaceQueries } from "../../lib/query";

@@ -4,7 +4,7 @@ import type {
   ModelCredential,
   ModelHeaderRow,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   DEFAULT_MODEL_CONTEXT_WINDOW,
   DEFAULT_MODEL_MAX_TOKENS,
@@ -12,15 +12,15 @@ import {
   modelRoutingForm,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   openAiCompatibleProbeSuccessMessage,
-} from "@rakazo/contracts";
-import type { ConnectionFormFields } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import type { ConnectionFormFields } from "@rakazo_mickvvw/core";
 import {
   clampCatalogThinkingLevel,
   compatibleThinkingLevels,
   createModelProbe,
   initialModelProbeState,
   savedCompatibleModelIds,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { useMemo, useRef, useState } from "react";
 import type { ModelCatalogEntry } from "../../lib/model-auth";
 import type { ModelPreflightFailure } from "../../lib/model-connection-preflight";

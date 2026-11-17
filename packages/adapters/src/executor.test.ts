@@ -1,11 +1,15 @@
 import { normalizeContext } from "@earendil-works/pi-ai";
-import { WorkspaceTooLargeError } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { FLEET_TOOL_NAMES } from "@rakazo/contracts";
-import { BACKGROUND_HELPER_TRIGGER, isOwnerStartedRun, ONCE_ROUTINE_CRON } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { RunHistoryWriteError } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+import { WorkspaceTooLargeError } from "@rakazo_mickvvw/adapter-kit";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
+import { FLEET_TOOL_NAMES } from "@rakazo_mickvvw/contracts";
+import {
+  BACKGROUND_HELPER_TRIGGER,
+  isOwnerStartedRun,
+  ONCE_ROUTINE_CRON,
+} from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { RunHistoryWriteError } from "@rakazo_mickvvw/db";
+import { createLogger, createTestSink, installLogger } from "@rakazo_mickvvw/logging";
 import { describe, expect, it, vi } from "vitest";
 import { builtinAgentTools } from "./builtin-tools.js";
 import {

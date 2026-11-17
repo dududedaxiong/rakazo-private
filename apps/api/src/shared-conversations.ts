@@ -1,5 +1,5 @@
-import { SHARED_CONVERSATION_PATH_PREFIX } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import { SHARED_CONVERSATION_PATH_PREFIX } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import type { Context, Hono } from "hono";
 import { readSharedConversation } from "./conversation-shares.js";
 import { throttleKey, windowCounter } from "./window-counter.js";

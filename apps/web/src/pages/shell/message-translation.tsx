@@ -4,10 +4,10 @@ import type {
   ModelSwitchAttempt,
   SavedMessageTranslation,
   TranslateOutput,
-} from "@rakazo/contracts";
-import { moveBotModelToFront } from "@rakazo/contracts";
-import type { ShareCardTextOverride } from "@rakazo/core";
-import { displayName, modelOptionKey, stripLeadingOpaqueCodeLine } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { moveBotModelToFront } from "@rakazo_mickvvw/contracts";
+import type { ShareCardTextOverride } from "@rakazo_mickvvw/core";
+import { displayName, modelOptionKey, stripLeadingOpaqueCodeLine } from "@rakazo_mickvvw/core";
 import {
   Button,
   CopyTextFallback,
@@ -20,7 +20,7 @@ import {
   DropdownMenuTrigger,
   toast,
   useCopyText,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

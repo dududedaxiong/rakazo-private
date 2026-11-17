@@ -1,6 +1,10 @@
-import type { KeyHealthStatus, ModelKeyHealth, ModelKeyHealthResult } from "@rakazo/contracts";
-import { canonicalPiProviderId } from "@rakazo/contracts";
-import type { RunErrorTranslator } from "@rakazo/core";
+import type {
+  KeyHealthStatus,
+  ModelKeyHealth,
+  ModelKeyHealthResult,
+} from "@rakazo_mickvvw/contracts";
+import { canonicalPiProviderId } from "@rakazo_mickvvw/contracts";
+import type { RunErrorTranslator } from "@rakazo_mickvvw/core";
 import { rpc } from "./api";
 import type { MobileModelCredential } from "./mobile-types";
 

@@ -1,10 +1,10 @@
-import type { MessageFavorite } from "@rakazo/contracts";
+import type { MessageFavorite } from "@rakazo_mickvvw/contracts";
 import {
   favoriteMessageId as contractFavoriteMessageId,
   favoriteSnippet,
   isTranslationFavorite,
   translationFavoriteId,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import { useSyncExternalStore } from "react";
 import { rpc } from "./api";
 import { onConversationCleared } from "./conversation-cleared";

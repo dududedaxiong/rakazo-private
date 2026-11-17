@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import type { ThreadMessage } from "@rakazo/contracts";
-import { foldPeerReplies } from "@rakazo/core";
+import type { ThreadMessage } from "@rakazo_mickvvw/contracts";
+import { foldPeerReplies } from "@rakazo_mickvvw/core";
 import type { ComponentProps, ReactNode, RefObject } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";

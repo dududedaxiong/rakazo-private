@@ -6,8 +6,8 @@ import type {
   ConnectorEvent,
   ConnectorTool,
   ManagedConnectorProvider,
-} from "@rakazo/adapter-kit";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/adapter-kit";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { catalogToolPrefix } from "./approval-effect.js";
 import { resolveAccountToolCall, scopeConnectorTools } from "./connector-accounts.js";
 import { collectPages, filterCatalog } from "./connector-catalog.js";

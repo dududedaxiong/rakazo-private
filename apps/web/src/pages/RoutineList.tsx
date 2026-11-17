@@ -1,9 +1,9 @@
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { Routine } from "@rakazo/contracts";
-import type { CronLabels } from "@rakazo/core";
-import { ENGLISH_CRON_LABELS, formatCron } from "@rakazo/core";
-import { Button } from "@rakazo/ui-web";
+import type { Routine } from "@rakazo_mickvvw/contracts";
+import type { CronLabels } from "@rakazo_mickvvw/core";
+import { ENGLISH_CRON_LABELS, formatCron } from "@rakazo_mickvvw/core";
+import { Button } from "@rakazo_mickvvw/ui-web";
 import { Clock, Pause, Plus } from "lucide-react";
 import { cronLabels } from "../lib/cron";
 

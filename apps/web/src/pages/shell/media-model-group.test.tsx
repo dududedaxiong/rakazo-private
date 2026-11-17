@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { ChatModelChoice } from "@rakazo/core";
+import type { ChatModelChoice } from "@rakazo_mickvvw/core";
 import type { ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";

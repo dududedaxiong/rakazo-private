@@ -1,5 +1,5 @@
-import type { ProductEvent } from "@rakazo/contracts";
-import { reduceThreadSnapshot, withLiveStreamingProgress } from "@rakazo/core";
+import type { ProductEvent } from "@rakazo_mickvvw/contracts";
+import { reduceThreadSnapshot, withLiveStreamingProgress } from "@rakazo_mickvvw/core";
 import { describe, expect, it } from "vitest";
 import type { MobileSnapshot } from "./mobile-types";
 

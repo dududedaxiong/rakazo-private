@@ -1,7 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { MessagingChannelMembership, MessagingInstallationsStatus } from "@rakazo/contracts";
-import { isRetryableError, messagingConnectOptions } from "@rakazo/core";
-import { fetchFresh, writeSaved } from "@rakazo/core/query";
+import type {
+  MessagingChannelMembership,
+  MessagingInstallationsStatus,
+} from "@rakazo_mickvvw/contracts";
+import { isRetryableError, messagingConnectOptions } from "@rakazo_mickvvw/core";
+import { fetchFresh, writeSaved } from "@rakazo_mickvvw/core/query";
 import {
   Button,
   DropdownMenu,
@@ -11,7 +14,7 @@ import {
   NativeSelect,
   NativeSelectOption,
   SectionHeading,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDownIcon, PlusIcon } from "lucide-react";
 import type { ReactNode } from "react";

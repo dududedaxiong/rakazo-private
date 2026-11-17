@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Button, buttonVariants, Spinner } from "@rakazo/ui-web";
+import { Button, buttonVariants, Spinner } from "@rakazo_mickvvw/ui-web";
 import { useEffect, useRef, useState } from "react";
 import type { SandboxAvailabilityPhase } from "../lib/computer-sandbox";
 import {

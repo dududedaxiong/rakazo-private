@@ -1,4 +1,4 @@
-import { getLogger } from "@rakazo/logging";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { ComputerEgressMode } from "./computer-spec.js";
 import { COMPUTER_IMAGE } from "./computer-spec.js";
 import { computerDns, computerEgressSetting, docker, screenNetworkMode } from "./context.js";

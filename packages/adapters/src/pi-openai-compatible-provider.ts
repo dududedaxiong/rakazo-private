@@ -6,8 +6,8 @@ import { anthropicMessagesApi } from "@earendil-works/pi-ai/api/anthropic-messag
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
 import { openAIResponsesApi } from "@earendil-works/pi-ai/api/openai-responses.lazy";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
-import type { GeneratedMedia } from "@rakazo/adapter-kit";
-import { MediaGenerationError } from "@rakazo/adapter-kit";
+import type { GeneratedMedia } from "@rakazo_mickvvw/adapter-kit";
+import { MediaGenerationError } from "@rakazo_mickvvw/adapter-kit";
 import type {
   ModelApiProtocol,
   ModelAuthMode,
@@ -15,7 +15,7 @@ import type {
   ModelHealthResult,
   ModelHealthState,
   ModelHealthSummary,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   ATTACHMENT_MAX_BYTES,
   DEFAULT_MODEL_CONTEXT_WINDOW,
@@ -28,7 +28,7 @@ import {
   MODEL_KEY_REJECTED_ERROR,
   parseModelHeaders,
   withPromptPreset,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import { Agent } from "undici";
 import { declaredVisionModelIds, inputModalities } from "./model-modalities.js";
 import type { ResolveHostname } from "./network-address.js";

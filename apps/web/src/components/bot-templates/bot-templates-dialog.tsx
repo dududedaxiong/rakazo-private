@@ -1,8 +1,8 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
-import type { Bot, BotTemplateListing, ConnectionCatalogItem } from "@rakazo/contracts";
-import { isBotTemplateChanged } from "@rakazo/contracts";
-import { botTemplateApps, formatCron } from "@rakazo/core";
+import { ChatMarkdown } from "@rakazo_mickvvw/chat-ui/web";
+import type { Bot, BotTemplateListing, ConnectionCatalogItem } from "@rakazo_mickvvw/contracts";
+import { isBotTemplateChanged } from "@rakazo_mickvvw/contracts";
+import { botTemplateApps, formatCron } from "@rakazo_mickvvw/core";
 import {
   Button,
   Dialog,
@@ -12,7 +12,7 @@ import {
   DialogTitle,
   SectionHeading,
   Spinner,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import {

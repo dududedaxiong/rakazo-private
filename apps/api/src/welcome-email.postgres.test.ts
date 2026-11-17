@@ -1,8 +1,8 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { EmailEmulator, FakeSandboxProvider } from "@rakazo/adapters";
-import { runAsSystem } from "@rakazo/db";
+import { EmailEmulator, FakeSandboxProvider } from "@rakazo_mickvvw/adapters";
+import { runAsSystem } from "@rakazo_mickvvw/db";
 import { expect, it, vi } from "vitest";
 import { createApp } from "./app.js";
 

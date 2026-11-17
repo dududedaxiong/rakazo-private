@@ -1,6 +1,6 @@
-import type { Routine, RpcInput } from "@rakazo/contracts";
-import type { RoutineDraft } from "@rakazo/core";
-import { cronFromPreset, draftFromRoutine, isOneShotRoutineCrons } from "@rakazo/core";
+import type { Routine, RpcInput } from "@rakazo_mickvvw/contracts";
+import type { RoutineDraft } from "@rakazo_mickvvw/core";
+import { cronFromPreset, draftFromRoutine, isOneShotRoutineCrons } from "@rakazo_mickvvw/core";
 import { routineTriggerNames } from "./routine";
 
 /** A one-shot is set up from chat with its run time; its schedule can't change here. */

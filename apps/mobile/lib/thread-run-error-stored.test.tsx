@@ -6,7 +6,7 @@
 // store is a module singleton, and a seeded run must not leak into the live
 // probe tests there.
 
-import { modelFallbackFailure } from "@rakazo/core";
+import { modelFallbackFailure } from "@rakazo_mickvvw/core";
 import type { ReactNode } from "react";
 import { act, createElement } from "react";
 import type { Root } from "react-dom/client";

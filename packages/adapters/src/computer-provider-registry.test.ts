@@ -1,4 +1,4 @@
-import { ComputerProviderDescriptorSchema } from "@rakazo/contracts";
+import { ComputerProviderDescriptorSchema } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import {
   computerProviderDescriptor,

@@ -1,4 +1,4 @@
-import type { ModelCatalogEntry } from "@rakazo/contracts";
+import type { ModelCatalogEntry } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import { providerDisplayName, providerRowHint } from "./localized-provider-hint";
 

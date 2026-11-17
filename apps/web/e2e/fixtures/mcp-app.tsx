@@ -1,5 +1,5 @@
 import { I18nProvider } from "@lingui/react";
-import type { ThreadMessage } from "@rakazo/contracts";
+import type { ThreadMessage } from "@rakazo_mickvvw/contracts";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";

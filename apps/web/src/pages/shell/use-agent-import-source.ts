@@ -3,9 +3,9 @@ import type {
   AgentImportFile,
   AgentImportMemoryDestination,
   AgentImportPlan,
-} from "@rakazo/contracts";
-import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo/contracts";
-import type { AgentImportReader } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo_mickvvw/contracts";
+import type { AgentImportReader } from "@rakazo_mickvvw/core";
 import {
   AGENT_IMPORT_ARCHIVE_LIMITS,
   AGENT_IMPORT_NOT_FOUND,
@@ -17,7 +17,7 @@ import {
   hasAgentImportSecrets,
   newClientId,
   openAgentImportArchive,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { useEffect, useRef, useState } from "react";
 import { readAgentDocument } from "../../lib/agent-document";
 import { agentImportErrorText } from "../../lib/agent-import-errors";

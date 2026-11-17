@@ -1,15 +1,15 @@
-import type { McpTransport, MessageBlock } from "@rakazo/contracts";
-import { McpRemoteEndpointSchema, McpTransportSchema } from "@rakazo/contracts";
-import { deriveMcpSlug } from "@rakazo/core";
-import type { McpServer } from "@rakazo/db";
-import { isUniqueViolation } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { McpTransport, MessageBlock } from "@rakazo_mickvvw/contracts";
+import { McpRemoteEndpointSchema, McpTransportSchema } from "@rakazo_mickvvw/contracts";
+import { deriveMcpSlug } from "@rakazo_mickvvw/core";
+import type { McpServer } from "@rakazo_mickvvw/db";
+import { isUniqueViolation } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { toStringRecord } from "./memory-provider-factory.js";
 import { assertNoMcpEndpointCredential, assertSafeRemoteUrl } from "./remote-mcp.js";
 import { persistMessageInTransaction, runLeaseFor } from "./run-messages.js";
 
-export { deriveMcpSlug } from "@rakazo/core";
+export { deriveMcpSlug } from "@rakazo_mickvvw/core";
 
 const MAX_HEADERS = 32;
 

@@ -1,7 +1,10 @@
-import type { ComputerMode, ComputerStatus as ContractComputerStatus } from "@rakazo/contracts";
-import { isLocalhostOrLoopbackIp, isPrivateNetworkHost } from "@rakazo/contracts";
-import type { ScreenPageState } from "@rakazo/core";
-import { isRetryableError, SCREEN_PAGE_STATES } from "@rakazo/core";
+import type {
+  ComputerMode,
+  ComputerStatus as ContractComputerStatus,
+} from "@rakazo_mickvvw/contracts";
+import { isLocalhostOrLoopbackIp, isPrivateNetworkHost } from "@rakazo_mickvvw/contracts";
+import type { ScreenPageState } from "@rakazo_mickvvw/core";
+import { isRetryableError, SCREEN_PAGE_STATES } from "@rakazo_mickvvw/core";
 import { t } from "./i18n";
 
 export const COMPUTER_HEARTBEAT_MS = 60_000;

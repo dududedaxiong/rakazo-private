@@ -1,10 +1,10 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { ArtifactStore, JobPublisher } from "@rakazo/adapter-kit";
-import { BillingEmulator } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
+import type { ArtifactStore, JobPublisher } from "@rakazo_mickvvw/adapter-kit";
+import { BillingEmulator } from "@rakazo_mickvvw/adapters";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
 import {
   asSystem,
   createDb,
@@ -12,7 +12,7 @@ import {
   runAsSystem,
   SPACE_DELETION_CLAIM_TIMEOUT_MS,
   SpaceDeletionInProgressError,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { deleteAccountContent } from "./account-deletion.js";
 import { createBillingService } from "./billing.js";

@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@rakazo/db";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 
 /**
  * The only header Better Auth reads a client IP from. The API sets it from the socket peer and its

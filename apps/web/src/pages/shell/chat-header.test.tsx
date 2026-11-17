@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import type { BillingStatus, Bot, Group } from "@rakazo/contracts";
-import { BOT_COLORS } from "@rakazo/contracts";
-import type * as UiWeb from "@rakazo/ui-web";
+import type { BillingStatus, Bot, Group } from "@rakazo_mickvvw/contracts";
+import { BOT_COLORS } from "@rakazo_mickvvw/contracts";
+import type * as UiWeb from "@rakazo_mickvvw/ui-web";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";
@@ -21,7 +21,7 @@ vi.mock("@lingui/react/macro", () => ({
   Plural: ({ value, one, other }: { value: number; one: string; other: string }) =>
     (value === 1 ? one : other).replace("#", String(value)),
 }));
-vi.mock("@rakazo/ui-web", async (importOriginal) => {
+vi.mock("@rakazo_mickvvw/ui-web", async (importOriginal) => {
   const { useCopyText } = await importOriginal<typeof UiWeb>();
   const Plain = ({ children }: { children?: ReactNode }) => <>{children}</>;
   return {

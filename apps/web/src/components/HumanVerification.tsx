@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Button, Spinner } from "@rakazo/ui-web";
+import { Button, Spinner } from "@rakazo_mickvvw/ui-web";
 import { useEffect, useRef, useState } from "react";
 
 // The verification provider's challenge script. The URL lives only here and in the

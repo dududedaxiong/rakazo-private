@@ -1,5 +1,5 @@
-import type { BotSecretMetadata, ContactFields } from "@rakazo/contracts";
-import { cardExpiry, commandVariableName, vaultKind } from "@rakazo/contracts";
+import type { BotSecretMetadata, ContactFields } from "@rakazo_mickvvw/contracts";
+import { cardExpiry, commandVariableName, vaultKind } from "@rakazo_mickvvw/contracts";
 import * as Clipboard from "expo-clipboard";
 import { Modal, Platform, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";

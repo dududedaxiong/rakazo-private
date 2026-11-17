@@ -1,5 +1,5 @@
-import { isModelRequiredSendError } from "@rakazo/core";
-import { typeScale } from "@rakazo/ui-tokens";
+import { isModelRequiredSendError } from "@rakazo_mickvvw/core";
+import { typeScale } from "@rakazo_mickvvw/ui-tokens";
 import { ActionSheetIOS, Alert, Image, Platform, Pressable, Text, View } from "react-native";
 import { customErrorTextStyle, customFontFamily, useCustomSettings } from "../lib/custom-settings";
 import { useI18n } from "../lib/i18n";

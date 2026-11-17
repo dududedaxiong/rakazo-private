@@ -4,9 +4,9 @@ import type {
   SpendingPayment,
   SpendingPeriod,
   SpendingStatus,
-} from "@rakazo/contracts";
-import { SPENDING_CURRENCIES } from "@rakazo/contracts";
-import { formatMinorAmount, parseLimitInput } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { SPENDING_CURRENCIES } from "@rakazo_mickvvw/contracts";
+import { formatMinorAmount, parseLimitInput } from "@rakazo_mickvvw/core";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { Alert, Platform, ScrollView, StyleSheet, View } from "react-native";

@@ -9,15 +9,15 @@ import type {
   ArtifactStore,
   NotificationMessage,
   NotificationProvider,
-} from "@rakazo/adapter-kit";
-import type { ContentKeyRing } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapter-kit";
+import type { ContentKeyRing } from "@rakazo_mickvvw/db";
 import {
   artifactKeyId,
   ContentDecryptionError,
   isSealedArtifact,
   openArtifact,
   sealArtifact,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 
 const O_NOFOLLOW = constants.O_NOFOLLOW ?? 0;
 const CREATE_FLAGS = constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | O_NOFOLLOW;

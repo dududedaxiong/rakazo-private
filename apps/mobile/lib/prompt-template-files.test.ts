@@ -87,7 +87,7 @@ vi.mock("expo-sharing", () => ({
   }),
 }));
 
-import type { PromptTemplate } from "@rakazo/contracts";
+import type { PromptTemplate } from "@rakazo_mickvvw/contracts";
 import {
   exportPromptTemplates,
   PromptTemplateFileError,

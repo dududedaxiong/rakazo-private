@@ -1,4 +1,4 @@
-import { toolRequiresApproval } from "@rakazo/core";
+import { toolRequiresApproval } from "@rakazo_mickvvw/core";
 import { describe, expect, it } from "vitest";
 import { builtinAgentTools } from "./builtin-tools.js";
 import { validCloudAgentArgs } from "./cloud-agent-tools.js";

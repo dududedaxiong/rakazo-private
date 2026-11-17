@@ -4,8 +4,8 @@ import type {
   BotMcpServer,
   CapabilityInstall,
   McpServer,
-} from "@rakazo/contracts";
-import { MCP_OAUTH_CLIENT_REQUIRED } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
+import { MCP_OAUTH_CLIENT_REQUIRED } from "@rakazo_mickvvw/contracts";
 import {
   activeBotId,
   captureScreenshot,

@@ -11,11 +11,16 @@ import {
   previewPluginInstall,
   sanitizeIntegrationError,
   verifyMcpInstall,
-} from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import { comparePlugins, containsSecret, matchesPluginQuery } from "@rakazo/core";
-import type { Prisma } from "@rakazo/db";
-import { AVAILABILITY_SELECT, availableInSpace, itemSecretIn, spaceAvailability } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapters";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import { comparePlugins, containsSecret, matchesPluginQuery } from "@rakazo_mickvvw/core";
+import type { Prisma } from "@rakazo_mickvvw/db";
+import {
+  AVAILABILITY_SELECT,
+  availableInSpace,
+  itemSecretIn,
+  spaceAvailability,
+} from "@rakazo_mickvvw/db";
 import { requireAdmin } from "../admins.js";
 import { searchIntegrationCatalog } from "../integration-catalog.js";
 import { assertMcpRemoteEndpoint, mayUsePrivateEndpoint } from "../mcp-servers.js";

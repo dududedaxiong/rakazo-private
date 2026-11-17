@@ -6,12 +6,12 @@ import type {
   ModelOAuthSignInMode,
   ModelRoutingField,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   assertHeaderSafeApiKey,
   canonicalPiProviderId,
   MODEL_KEY_REJECTED_ERROR,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import { cloudflareRoutingFields } from "./cloudflare-ai-gateway.js";
 import type { StoredModelSecret } from "./model-secret.js";
 import { COMPATIBLE_ENDPOINT_PRESETS } from "./openai-compatible-url.js";

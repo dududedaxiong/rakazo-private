@@ -1,13 +1,13 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { EncryptedSecretStore, InMemoryRealtimeFanout } from "@rakazo/adapters";
-import type { AgentImportPlan, Bot, MemoryDocument } from "@rakazo/contracts";
-import { resolveEncryptionKey } from "@rakazo/core";
-import type { Prisma, PrismaClient } from "@rakazo/db";
-import { createDb } from "@rakazo/db";
+import { EncryptedSecretStore, InMemoryRealtimeFanout } from "@rakazo_mickvvw/adapters";
+import type { AgentImportPlan, Bot, MemoryDocument } from "@rakazo_mickvvw/contracts";
+import { resolveEncryptionKey } from "@rakazo_mickvvw/core";
+import type { Prisma, PrismaClient } from "@rakazo_mickvvw/db";
+import { createDb } from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-// The app's own logger module (the API resolves `@rakazo/logging` to this file).
+// The app's own logger module (the API resolves `@rakazo_mickvvw/logging` to this file).
 import { createLogger, createTestSink, installLogger } from "../../logging/src/index.js";
 import { sessionCookieHeader } from "./index.js";
 import { asSystem } from "./system-db.js";
@@ -115,7 +115,7 @@ describeIntegration("agent import", () => {
   const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-agent-import-"));
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@rakazo_mickvvw/api/app");
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,

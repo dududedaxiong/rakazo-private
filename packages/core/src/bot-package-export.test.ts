@@ -1,5 +1,5 @@
-import type { BotPackageExport } from "@rakazo/contracts";
-import { BOT_PACKAGE_MAX_BYTES } from "@rakazo/contracts";
+import type { BotPackageExport } from "@rakazo_mickvvw/contracts";
+import { BOT_PACKAGE_MAX_BYTES } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { deferred, packageDocument, packageExport } from "./bot-package.test-helpers.js";
 import type { BotPackageExportState } from "./bot-package-export.js";

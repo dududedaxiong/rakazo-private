@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
-import type { AdapterContext } from "@rakazo/adapter-kit";
-import { MediaGenerationError } from "@rakazo/adapter-kit";
+import type { AdapterContext } from "@rakazo_mickvvw/adapter-kit";
+import { MediaGenerationError } from "@rakazo_mickvvw/adapter-kit";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resolveBotMediaGenerationProvider } from "./bot-media-generation.js";
 import type { ExecutorDeps } from "./executor-deps.js";

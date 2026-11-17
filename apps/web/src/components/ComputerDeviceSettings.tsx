@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { RakazoDesktop, UserDeviceSummary } from "@rakazo/contracts";
-import { Button, Label, Switch } from "@rakazo/ui-web";
+import type { RakazoDesktop, UserDeviceSummary } from "@rakazo_mickvvw/contracts";
+import { Button, Label, Switch } from "@rakazo_mickvvw/ui-web";
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useId, useState } from "react";
 import { desktopBridge } from "../lib/desktop";

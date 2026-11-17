@@ -1,7 +1,7 @@
 import { i18n } from "@lingui/core";
 import { Trans, useLingui } from "@lingui/react/macro";
-import { describeModelError, normalizeRunError } from "@rakazo/core";
-import { toast } from "@rakazo/ui-web";
+import { describeModelError, normalizeRunError } from "@rakazo_mickvvw/core";
+import { toast } from "@rakazo_mickvvw/ui-web";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import type { KeyHealthStatus } from "../../lib/key-health";

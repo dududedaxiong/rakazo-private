@@ -1,12 +1,16 @@
-import { markdownCodeBlocks } from "@rakazo/chat-ui/native";
+import { markdownCodeBlocks } from "@rakazo_mickvvw/chat-ui/native";
 import type {
   BotAvatarSet,
   BotModelEntry,
   LoginFieldInput,
   MessageReaction,
-} from "@rakazo/contracts";
-import { canReactToThreadMessage, MESSAGE_REACTIONS, primaryBotModel } from "@rakazo/contracts";
-import type { ChildBotBlock, PeerExchange, ShareCardTextOverride } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import {
+  canReactToThreadMessage,
+  MESSAGE_REACTIONS,
+  primaryBotModel,
+} from "@rakazo_mickvvw/contracts";
+import type { ChildBotBlock, PeerExchange, ShareCardTextOverride } from "@rakazo_mickvvw/core";
 import {
   canMarkMessageUnread,
   copyableMessageText,
@@ -14,7 +18,7 @@ import {
   liveMessageComposing,
   modelOptionKey,
   selectableMessageText,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import * as Clipboard from "expo-clipboard";
 import type { ComponentProps, ReactNode } from "react";
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";

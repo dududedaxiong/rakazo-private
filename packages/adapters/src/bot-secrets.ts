@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import type { SecretStore } from "@rakazo/adapter-kit";
+import type { SecretStore } from "@rakazo_mickvvw/adapter-kit";
 import type {
   BotSecretDestination,
   CardSecretValue,
@@ -8,7 +8,7 @@ import type {
   PurchaseCardField,
   SettingsScope,
   VaultPreview,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   BotSecretAuth,
   BotSecretName,
@@ -36,8 +36,8 @@ import {
   OneTimeCodeTarget,
   SecretHttpRequest,
   sameLoginFieldLabel,
-} from "@rakazo/contracts";
-import type { Prisma, PrismaClient } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import type { Prisma, PrismaClient } from "@rakazo_mickvvw/db";
 import {
   lockSpaceSettings,
   runCodeKind,
@@ -45,8 +45,8 @@ import {
   runLoginKind,
   settingsTarget,
   withTransactionRetry,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { z } from "zod";
 import { combineSignals, redactConnectorPayload } from "./connector-safety.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";

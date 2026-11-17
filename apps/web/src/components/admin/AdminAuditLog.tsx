@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { SecurityEventType } from "@rakazo/contracts";
+import type { SecurityEventType } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   Select,
@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
   Spinner,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSpaceQueries } from "../../lib/query";

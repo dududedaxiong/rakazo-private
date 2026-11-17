@@ -6,13 +6,13 @@
  * A model that cannot think offers nothing, so the button stays hidden.
  */
 
-import type { ThinkingLevel } from "@rakazo/contracts";
-import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo/contracts";
+import type { ThinkingLevel } from "@rakazo_mickvvw/contracts";
+import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo_mickvvw/contracts";
 import {
   clampCatalogThinkingLevel,
   compatibleThinkingLevels,
   credentialForModel,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { useEffect, useState } from "react";
 import { rpc } from "./api";
 import type { MobileBot, MobileModel, MobileModelCredential } from "./mobile-types";

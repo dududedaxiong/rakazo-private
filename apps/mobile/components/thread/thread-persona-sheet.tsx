@@ -1,4 +1,4 @@
-import type { PromptTemplate } from "@rakazo/contracts";
+import type { PromptTemplate } from "@rakazo_mickvvw/contracts";
 import { useState } from "react";
 import { Alert, Pressable, Text, View } from "react-native";
 import { rpc } from "../../lib/api";

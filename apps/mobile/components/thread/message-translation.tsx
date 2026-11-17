@@ -1,4 +1,4 @@
-import type { ShareCardTextOverride } from "@rakazo/core";
+import type { ShareCardTextOverride } from "@rakazo_mickvvw/core";
 import * as Clipboard from "expo-clipboard";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ViewStyle } from "react-native";

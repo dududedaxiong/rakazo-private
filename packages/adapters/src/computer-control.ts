@@ -1,8 +1,8 @@
-import type { AdapterContext, JobPublisher, SandboxProvider } from "@rakazo/adapter-kit";
-import { computerControlExpireJob, runContinueJob } from "@rakazo/adapter-kit";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { hasActiveComputerControl, recordComputerRunEnd } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { AdapterContext, JobPublisher, SandboxProvider } from "@rakazo_mickvvw/adapter-kit";
+import { computerControlExpireJob, runContinueJob } from "@rakazo_mickvvw/adapter-kit";
+import type { PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
+import { hasActiveComputerControl, recordComputerRunEnd } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { toComputerRef } from "./computer-support.js";
 import { isSandboxGoneError } from "./sandbox-errors.js";
 
@@ -12,7 +12,7 @@ export {
   hasActiveComputerControl,
   holdsUserControl,
   userControlHeldBy,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 
 export const DEFAULT_TAKEOVER_LEASE_MS = 15 * 60 * 1000;
 

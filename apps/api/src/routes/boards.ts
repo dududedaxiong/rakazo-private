@@ -1,8 +1,8 @@
 import { ORPCError } from "@orpc/server";
-import { commentTicket, createTicket, updateTicket } from "@rakazo/adapters";
-import { parseTicketRef } from "@rakazo/contracts";
-import { escapeSearchWildcards } from "@rakazo/core";
-import type { Board as BoardRow, Prisma, PrismaClient } from "@rakazo/db";
+import { commentTicket, createTicket, updateTicket } from "@rakazo_mickvvw/adapters";
+import { parseTicketRef } from "@rakazo_mickvvw/contracts";
+import { escapeSearchWildcards } from "@rakazo_mickvvw/core";
+import type { Board as BoardRow, Prisma, PrismaClient } from "@rakazo_mickvvw/db";
 import {
   ensureBoard,
   findTicket,
@@ -12,7 +12,7 @@ import {
   toBoardDto,
   toTicketCommentDto,
   toTicketDto,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import type { RouterContext } from "./context.js";
 import { HEARTBEAT, withHeartbeats } from "./shared.js";
 

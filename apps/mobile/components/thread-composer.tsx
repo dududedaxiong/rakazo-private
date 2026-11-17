@@ -1,6 +1,6 @@
 import type { MenuAction } from "@expo/ui/community/menu";
 import { MenuView } from "@expo/ui/community/menu";
-import type { AgentSkillCatalogEntry, ThinkingLevel } from "@rakazo/contracts";
+import type { AgentSkillCatalogEntry, ThinkingLevel } from "@rakazo_mickvvw/contracts";
 import type {
   buildComposerMentionOptions,
   ComposerMention,
@@ -8,7 +8,7 @@ import type {
   ComposerMentionQuery,
   ComposerMentionRange,
   SlashActionId,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import {
   bindComposerMention,
   composerMentionQuery,
@@ -22,8 +22,8 @@ import {
   SLASH_ACTIONS,
   serializeComposerPrompt,
   truncateSlashDescription,
-} from "@rakazo/core";
-import { MAX_FONT_SCALE } from "@rakazo/ui-tokens";
+} from "@rakazo_mickvvw/core";
+import { MAX_FONT_SCALE } from "@rakazo_mickvvw/ui-tokens";
 import type { Ref } from "react";
 import { useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import type { GestureResponderEvent, ViewStyle } from "react-native";

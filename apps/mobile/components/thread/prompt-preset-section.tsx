@@ -1,5 +1,5 @@
-import type { BotPromptPreset } from "@rakazo/contracts";
-import { BOT_PROMPT_PRESET_MAX } from "@rakazo/contracts";
+import type { BotPromptPreset } from "@rakazo_mickvvw/contracts";
+import { BOT_PROMPT_PRESET_MAX } from "@rakazo_mickvvw/contracts";
 import { useState } from "react";
 import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { useI18n } from "../../lib/i18n";

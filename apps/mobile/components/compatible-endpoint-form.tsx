@@ -3,13 +3,13 @@ import type {
   ModelAuthMode,
   ModelHeaderRow,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   MAX_MODEL_CONTEXT_WINDOW,
   MAX_MODEL_MAX_TOKENS,
   OPENAI_COMPATIBLE_BASE_URL_HINT,
-} from "@rakazo/contracts";
-import { compatibleThinkingLevels, toggleEnabledModelId } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { compatibleThinkingLevels, toggleEnabledModelId } from "@rakazo_mickvvw/core";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useI18n } from "../lib/i18n";

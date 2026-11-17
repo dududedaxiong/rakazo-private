@@ -1,11 +1,11 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { ConversationShareSummary } from "@rakazo/contracts";
+import type { ConversationShareSummary } from "@rakazo_mickvvw/contracts";
 import {
   parseCustomShareExpiryDays,
   SHARE_EXPIRY_DAYS,
   SHARE_EXPIRY_DAYS_MAX,
   SHARE_EXPIRY_DAYS_MIN,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   Button,
   Dialog,
@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
   useCopyText,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, Link2, RotateCcw } from "lucide-react";
 import { useEffect, useState } from "react";

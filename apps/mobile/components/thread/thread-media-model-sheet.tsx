@@ -1,5 +1,5 @@
-import type { BotModelEntry, BotPromptPreset } from "@rakazo/contracts";
-import { BOT_MODEL_LIST_MAX } from "@rakazo/contracts";
+import type { BotModelEntry, BotPromptPreset } from "@rakazo_mickvvw/contracts";
+import { BOT_MODEL_LIST_MAX } from "@rakazo_mickvvw/contracts";
 import { useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { mobileTokens } from "../../lib/appearance";

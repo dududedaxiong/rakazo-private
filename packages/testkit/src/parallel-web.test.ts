@@ -1,5 +1,5 @@
-import type { AgentRunRequest, AgentRuntime } from "@rakazo/adapter-kit";
-import { createRunExecutor, createWebProvider, PiAgentRuntime } from "@rakazo/adapters";
+import type { AgentRunRequest, AgentRuntime } from "@rakazo_mickvvw/adapter-kit";
+import { createRunExecutor, createWebProvider, PiAgentRuntime } from "@rakazo_mickvvw/adapters";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type * as ComputerLifecycle from "../../adapters/src/computer-lifecycle.js";
 import { parallelMcpFixture } from "../../adapters/src/parallel-web.test-support.js";

@@ -2,8 +2,8 @@ import { getArtifactById } from "./artifacts";
 
 vi.mock("./ai-consent", () => ({ promptAiConsent: vi.fn() }));
 
-import type { RpcInput } from "@rakazo/contracts";
-import { isServerUnreachable } from "@rakazo/core";
+import type { RpcInput } from "@rakazo_mickvvw/contracts";
+import { isServerUnreachable } from "@rakazo_mickvvw/core";
 import * as SecureStore from "expo-secure-store";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { promptAiConsent } from "./ai-consent";

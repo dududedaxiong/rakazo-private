@@ -1,5 +1,5 @@
 import type { Context, Message } from "@earendil-works/pi-ai";
-import type { AgentRunRequest, AgentSteeringMessage } from "@rakazo/adapter-kit";
+import type { AgentRunRequest, AgentSteeringMessage } from "@rakazo_mickvvw/adapter-kit";
 import { neutralizeSpeakerLabels } from "./history-speakers.js";
 
 export function toPiImages(images: AgentRunRequest["currentTurnImages"]) {

@@ -1,9 +1,9 @@
-import type { ConversationShareSummary } from "@rakazo/contracts";
+import type { ConversationShareSummary } from "@rakazo_mickvvw/contracts";
 import {
   parseCustomShareExpiryDays,
   SHARE_DEFAULT_EXPIRY_DAYS,
   SHARE_EXPIRY_DAYS,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, Share, Text, TextInput, View } from "react-native";
 import { SvgXml } from "react-native-svg";

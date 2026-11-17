@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { i18n } from "@lingui/core";
-import type { ProductEvent, RoutineHistory, RoutineRun, ThreadSnapshot } from "@rakazo/contracts";
-import { runThreadSubscription } from "@rakazo/core";
+import type {
+  ProductEvent,
+  RoutineHistory,
+  RoutineRun,
+  ThreadSnapshot,
+} from "@rakazo_mickvvw/contracts";
+import { runThreadSubscription } from "@rakazo_mickvvw/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
@@ -17,8 +22,8 @@ vi.mock("../lib/rpc", () => ({
   createSpaceRpc: () => ({ routines, threads }),
   selectedSpaceId: () => null,
 }));
-vi.mock("@rakazo/core", async (original) => ({
-  ...(await original<typeof import("@rakazo/core")>()),
+vi.mock("@rakazo_mickvvw/core", async (original) => ({
+  ...(await original<typeof import("@rakazo_mickvvw/core")>()),
   runThreadSubscription: vi.fn(async () => {}),
 }));
 vi.mock("@lingui/core/macro", () => ({
@@ -31,7 +36,7 @@ vi.mock("@lingui/react/macro", () => ({
   }),
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@rakazo_mickvvw/ui-web", () => ({
   Button: ({
     size: _size,
     variant: _variant,

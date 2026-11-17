@@ -12,7 +12,7 @@ description: Fill untranslated strings in the web translation catalogs (`apps/we
 If an open pull request from `i18n/catalog-sync` exists (`gh pr list --head i18n/catalog-sync --state open`), check out that branch; otherwise branch `i18n/translate-<date>` from `origin/main`. Either way, bring in the newest strings before translating:
 
 1. Merge `origin/main`. If a `messages.po` conflicts, keep the branch's copy (`git checkout --ours -- <file>`) so its translations survive, and finish the merge.
-2. Run `pnpm --filter @rakazo/web intl:extract`. It adds main's new strings and drops removed ones, keeping every existing translation.
+2. Run `pnpm --filter @rakazo_mickvvw/web intl:extract`. It adds main's new strings and drops removed ones, keeping every existing translation.
 3. Fill in anything main translated that the branch had not, for each locale: `git show origin/main:apps/web/src/locales/<locale>/messages.po > /tmp/main-<locale>.po`, then `node .agents/skills/translate/catalog-gaps.ts apply <locale> /tmp/main-<locale>.po`.
 4. Commit the result.
 
@@ -31,7 +31,7 @@ Write translations as JSON objects `{ "<key>": "<translation>" }`, about 120 per
 ## 3. Verify
 
 - `node .agents/skills/translate/catalog-gaps.ts check` exits 0.
-- `pnpm --filter @rakazo/web exec lingui compile --strict` passes.
+- `pnpm --filter @rakazo_mickvvw/web exec lingui compile --strict` passes.
 - `pnpm exec vitest run apps/web/src/lib/i18n apps/web/src/lib/agent-import-locales apps/web/src/lib/bot-templates-locales` passes.
 - Only translations changed: `git diff -U0 -- apps/web/src/locales | grep -E '^[-+][^-+]' | grep -vE '^[-+]msgstr '` prints nothing.
 

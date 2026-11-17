@@ -1,5 +1,9 @@
-import { ModelAccountError, ModelOutputError, TransientModelError } from "@rakazo/adapter-kit";
-import type { PrismaClient } from "@rakazo/db";
+import {
+  ModelAccountError,
+  ModelOutputError,
+  TransientModelError,
+} from "@rakazo_mickvvw/adapter-kit";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { describe, expect, it, vi } from "vitest";
 import {
   backOffRoutineAfterAccountError,

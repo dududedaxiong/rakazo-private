@@ -1,11 +1,11 @@
 import { ORPCError } from "@orpc/server";
-import type { Actor } from "@rakazo/contracts";
-import type * as Db from "@rakazo/db";
-import { IsolationError, PromptTemplateNameConflictError } from "@rakazo/db";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type * as Db from "@rakazo_mickvvw/db";
+import { IsolationError, PromptTemplateNameConflictError } from "@rakazo_mickvvw/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { promptTemplatesRoutes } from "./prompt-templates.js";
 
-vi.mock("@rakazo/db", async (original) => {
+vi.mock("@rakazo_mickvvw/db", async (original) => {
   const actual = await original<typeof Db>();
   return {
     ...actual,
@@ -19,10 +19,10 @@ vi.mock("@rakazo/db", async (original) => {
   };
 });
 
-const mockedDb = vi.mocked(await import("@rakazo/db"));
+const mockedDb = vi.mocked(await import("@rakazo_mickvvw/db"));
 
-vi.mock("@rakazo/adapters", async (original) => {
-  const actual = await original<typeof import("@rakazo/adapters")>();
+vi.mock("@rakazo_mickvvw/adapters", async (original) => {
+  const actual = await original<typeof import("@rakazo_mickvvw/adapters")>();
   return { ...actual, createSafeRemoteFetch: vi.fn() };
 });
 
@@ -264,7 +264,7 @@ describe("prompt template routes", () => {
 
   it("fetching a subscription parses the file for preview", async () => {
     const { routes } = setup();
-    const { createSafeRemoteFetch } = vi.mocked(await import("@rakazo/adapters"));
+    const { createSafeRemoteFetch } = vi.mocked(await import("@rakazo_mickvvw/adapters"));
     const safeFetch = vi.fn(async () => new Response("Translate everything.", { status: 200 }));
     (safeFetch as unknown as { close: unknown }).close = vi.fn();
     vi.mocked(createSafeRemoteFetch).mockReturnValueOnce(safeFetch as never);
@@ -283,7 +283,7 @@ describe("prompt template routes", () => {
 
   it("fetching a subscription reports a bad file instead of throwing", async () => {
     const { routes } = setup();
-    const { createSafeRemoteFetch } = vi.mocked(await import("@rakazo/adapters"));
+    const { createSafeRemoteFetch } = vi.mocked(await import("@rakazo_mickvvw/adapters"));
     const safeFetch = vi.fn(async () => new Response("{nope", { status: 200 }));
     (safeFetch as unknown as { close: unknown }).close = vi.fn();
     vi.mocked(createSafeRemoteFetch).mockReturnValueOnce(safeFetch as never);

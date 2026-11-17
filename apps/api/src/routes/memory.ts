@@ -1,14 +1,14 @@
 import { ORPCError } from "@orpc/server";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo_mickvvw/adapter-kit";
 import {
   buildAgentMemoryPrompt,
   isScratchpadStatus,
   listScratchpadItems,
   mapScratchpadItem,
   readAgentMemory,
-} from "@rakazo/adapters";
-import { isDeletableMemoryDocument } from "@rakazo/contracts";
-import { findSpaceMemoryConfig, IsolationError } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapters";
+import { isDeletableMemoryDocument } from "@rakazo_mickvvw/contracts";
+import { findSpaceMemoryConfig, IsolationError } from "@rakazo_mickvvw/db";
 import {
   disconnectMemoryProvider,
   persistMemoryProviderConfig,

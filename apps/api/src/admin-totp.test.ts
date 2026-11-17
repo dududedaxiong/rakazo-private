@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
-import { EncryptedSecretStore } from "@rakazo/adapters";
-import type { PrismaClient } from "@rakazo/db";
-import { installSecurityEventStore } from "@rakazo/db";
+import { EncryptedSecretStore } from "@rakazo_mickvvw/adapters";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { installSecurityEventStore } from "@rakazo_mickvvw/db";
 import * as OTPAuth from "otpauth";
 import { afterEach, describe, expect, it } from "vitest";
 import {

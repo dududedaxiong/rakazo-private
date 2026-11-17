@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { PromptTemplate } from "@rakazo/contracts";
+import type { PromptTemplate } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { downloadPromptTemplate, downloadPromptTemplates } from "./prompt-template-files";
 

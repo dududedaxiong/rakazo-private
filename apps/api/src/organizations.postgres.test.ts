@@ -8,10 +8,14 @@ import type {
   ComputerRef,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { BillingEmulator, ObjectAgentHomeStore, PrismaAgentHomeRecords } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient, SpaceKeyRecord, SpaceKeyStore } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapter-kit";
+import {
+  BillingEmulator,
+  ObjectAgentHomeStore,
+  PrismaAgentHomeRecords,
+} from "@rakazo_mickvvw/adapters";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient, SpaceKeyRecord, SpaceKeyStore } from "@rakazo_mickvvw/db";
 import {
   asSystem,
   billingAccountForOrganization,
@@ -28,7 +32,7 @@ import {
   requireMembership,
   runAsSystem,
   setOrganizationDeletionLease,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryObjectStorage } from "../../../packages/adapters/src/object-storage.test-support.js";
 import {

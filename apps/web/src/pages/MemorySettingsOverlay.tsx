@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { SpaceMemoryConfig } from "@rakazo/contracts";
+import type { SpaceMemoryConfig } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   Dialog,
@@ -13,7 +13,7 @@ import {
   SectionHeading,
   Spinner,
   Toggle,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { XIcon } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { SETTINGS_CONTENT_WIDTH } from "../components/SettingsRows";

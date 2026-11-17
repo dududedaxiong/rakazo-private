@@ -1,5 +1,5 @@
-import type { PromptTemplate } from "@rakazo/contracts";
-import { promptTemplateFileName } from "@rakazo/contracts";
+import type { PromptTemplate } from "@rakazo_mickvvw/contracts";
+import { promptTemplateFileName } from "@rakazo_mickvvw/contracts";
 
 /** Downloads one template as a .txt file named after the template. */
 export function downloadPromptTemplate(template: PromptTemplate): void {

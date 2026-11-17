@@ -10,7 +10,7 @@ import type {
   SandboxProvider,
   SecretStore,
   TransactionalEmailProvider,
-} from "@rakazo/adapter-kit";
+} from "@rakazo_mickvvw/adapter-kit";
 import type {
   CloudAgentConnection,
   CodexLiveCatalog,
@@ -30,10 +30,10 @@ import type {
   RemoteConnectorDependencies,
   TicketChangeNotifier,
   verifyModelServesAgents,
-} from "@rakazo/adapters";
-import type { Auth } from "@rakazo/auth";
-import type { NavLink } from "@rakazo/contracts";
-import type { BoardEvents, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapters";
+import type { Auth } from "@rakazo_mickvvw/auth";
+import type { NavLink } from "@rakazo_mickvvw/contracts";
+import type { BoardEvents, PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
 import type { AccountStatusDeps } from "./account-status.js";
 import type { BillingService } from "./billing.js";
 import { accountRoutes } from "./routes/account.js";

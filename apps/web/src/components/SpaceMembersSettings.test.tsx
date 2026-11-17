@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { SpaceMembers } from "@rakazo/contracts";
+import type { SpaceMembers } from "@rakazo_mickvvw/contracts";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -23,7 +23,7 @@ vi.mock("@lingui/react/macro", () => ({
   }),
   Trans: ({ children }: { children: ReactNode }) => children,
 }));
-vi.mock("@rakazo/ui-web", () => {
+vi.mock("@rakazo_mickvvw/ui-web", () => {
   const Plain = ({ children }: { children?: ReactNode }) => <>{children}</>;
   const PlainButton = ({
     variant: _variant,

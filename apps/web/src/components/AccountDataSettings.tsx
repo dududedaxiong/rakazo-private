@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { isIdentityConfirmationRequired } from "@rakazo/contracts";
-import { Button, Input, Label, Spinner } from "@rakazo/ui-web";
+import { isIdentityConfirmationRequired } from "@rakazo_mickvvw/contracts";
+import { Button, Input, Label, Spinner } from "@rakazo_mickvvw/ui-web";
 import { useRef, useState } from "react";
 import {
   BACKUP_PASSWORD_HEADER,

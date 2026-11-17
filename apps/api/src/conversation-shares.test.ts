@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import type { Actor, SharedConversation } from "@rakazo/contracts";
-import { IsolationError } from "@rakazo/db";
+import type { Actor, SharedConversation } from "@rakazo_mickvvw/contracts";
+import { IsolationError } from "@rakazo_mickvvw/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createConversationShare,

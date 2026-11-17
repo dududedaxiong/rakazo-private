@@ -1,5 +1,5 @@
-import type { AgentToolExecutionObserver } from "@rakazo/adapter-kit";
-import { BACKGROUND_HELPER_TRIGGER, toolResultTaintsRun } from "@rakazo/core";
+import type { AgentToolExecutionObserver } from "@rakazo_mickvvw/adapter-kit";
+import { BACKGROUND_HELPER_TRIGGER, toolResultTaintsRun } from "@rakazo_mickvvw/core";
 import { isTerminatingReplyResult } from "./approval-effect.js";
 import { IMAGE_RETURNING_COMPUTER_TOOLS, MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import type { RunContext } from "./run-context.js";

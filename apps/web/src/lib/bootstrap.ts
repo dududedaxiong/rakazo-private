@@ -1,6 +1,6 @@
-import type { AppBootstrap } from "@rakazo/contracts";
-import { ATTACHMENT_MAX_BYTES, attachmentMaxBytes } from "@rakazo/contracts";
-import { displayIdentityResult } from "@rakazo/core";
+import type { AppBootstrap } from "@rakazo_mickvvw/contracts";
+import { ATTACHMENT_MAX_BYTES, attachmentMaxBytes } from "@rakazo_mickvvw/contracts";
+import { displayIdentityResult } from "@rakazo_mickvvw/core";
 import { initialBootstrapTarget } from "./bootstrap-target";
 import { identityLabels } from "./identity-display";
 import { markOnce } from "./performance";

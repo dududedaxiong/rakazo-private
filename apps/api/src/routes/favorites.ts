@@ -1,4 +1,4 @@
-import { addFavorite, listFavorites, removeFavorite, syncFavorites } from "@rakazo/db";
+import { addFavorite, listFavorites, removeFavorite, syncFavorites } from "@rakazo_mickvvw/db";
 import type { RouterContext } from "./context.js";
 
 /**

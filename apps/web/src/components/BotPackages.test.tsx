@@ -1,5 +1,9 @@
 // @vitest-environment jsdom
-import type { BotPackageDocument, BotPackagePreview, BotPackageReceipt } from "@rakazo/contracts";
+import type {
+  BotPackageDocument,
+  BotPackagePreview,
+  BotPackageReceipt,
+} from "@rakazo_mickvvw/contracts";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";
@@ -41,7 +45,7 @@ vi.mock("@lingui/react/macro", () => ({
   }),
   Trans: ({ children }: { children?: ReactNode }) => children,
 }));
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@rakazo_mickvvw/ui-web", () => ({
   Button: ({ variant: _variant, ...props }: ComponentProps<"button"> & { variant?: string }) => (
     <button {...props} />
   ),

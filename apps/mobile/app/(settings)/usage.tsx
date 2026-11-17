@@ -1,4 +1,4 @@
-import type { UsageRecord, UsageSummary } from "@rakazo/contracts";
+import type { UsageRecord, UsageSummary } from "@rakazo_mickvvw/contracts";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";

@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import type { Readable } from "node:stream";
 import type * as LarkSdk from "@larksuiteoapi/node-sdk";
-import { ATTACHMENT_MAX_BYTES, ATTACHMENT_MAX_COUNT } from "@rakazo/contracts";
+import { ATTACHMENT_MAX_BYTES, ATTACHMENT_MAX_COUNT } from "@rakazo_mickvvw/contracts";
 import type {
   Adapter,
   AdapterPostableMessage,

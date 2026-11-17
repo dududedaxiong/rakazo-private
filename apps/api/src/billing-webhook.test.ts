@@ -1,5 +1,5 @@
-import type { BillingProvider } from "@rakazo/adapter-kit";
-import type { Actor } from "@rakazo/contracts";
+import type { BillingProvider } from "@rakazo_mickvvw/adapter-kit";
+import type { Actor } from "@rakazo_mickvvw/contracts";
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 import type { BillingService } from "./billing.js";

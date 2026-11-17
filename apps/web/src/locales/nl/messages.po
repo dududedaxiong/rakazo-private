@@ -1001,8 +1001,8 @@ msgid "Allow once"
 msgstr "Een keer toestaan"
 
 #: src/lib/dictation.ts
-msgid "Allow Rakazo to use Speech Recognition and the microphone in System Settings."
-msgstr "Sta Rakazo toe om Spraakherkenning en de microfoon te gebruiken in Systeeminstellingen."
+msgid "Allow Rakazo mickvvw to use Speech Recognition and the microphone in System Settings."
+msgstr "Sta Rakazo mickvvw toe om Spraakherkenning en de microfoon te gebruiken in Systeeminstellingen."
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Allow writing"
@@ -1942,8 +1942,8 @@ msgstr "Map kiezen"
 
 #: src/components/ModelCredits.tsx
 #: src/components/SubscriptionGate.tsx
-msgid "Choose how to use Rakazo"
-msgstr "Kies hoe je Rakazo gebruikt"
+msgid "Choose how to use Rakazo mickvvw"
+msgstr "Kies hoe je Rakazo mickvvw gebruikt"
 
 #: src/components/BotPackageImport.tsx
 msgid "Choose package file"
@@ -2330,8 +2330,8 @@ msgstr "Verbind eerst de aanbieder van dit model."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
-msgid "Connect your own API key in Models or choose Rakazo credits in Billing."
-msgstr "Verbind je eigen API-sleutel bij Modellen of kies Rakazo-tegoed bij Facturatie."
+msgid "Connect your own API key in Models or choose Rakazo mickvvw credits in Billing."
+msgstr "Verbind je eigen API-sleutel bij Modellen of kies Rakazo mickvvw-tegoed bij Facturatie."
 
 #: src/components/bot-templates/bot-templates-dialog.tsx
 #: src/components/ComputerDeviceSettings.tsx
@@ -3396,8 +3396,8 @@ msgid "Create space"
 msgstr "Space aanmaken"
 
 #: src/pages/Auth.tsx
-msgid "Create your Rakazo"
-msgstr "Maak je Rakazo"
+msgid "Create your Rakazo mickvvw"
+msgstr "Maak je Rakazo mickvvw"
 
 #: src/components/AskCard.tsx
 msgid "Created"
@@ -4033,8 +4033,8 @@ msgid "Ends {day}"
 msgstr "Eindigt op {day}"
 
 #: src/components/GitHubStarPrompt.tsx
-msgid "Enjoying Rakazo?"
-msgstr "Bevalt Rakazo?"
+msgid "Enjoying Rakazo mickvvw?"
+msgstr "Bevalt Rakazo mickvvw?"
 
 #: src/components/ShareCardDialog.tsx
 msgid "Enlarge picture"
@@ -4728,8 +4728,8 @@ msgid "How to check"
 msgstr "Hoe te controleren"
 
 #: src/components/SignupSurvey.tsx
-msgid "How will you use Rakazo?"
-msgstr "Hoe ga je Rakazo gebruiken?"
+msgid "How will you use Rakazo mickvvw?"
+msgstr "Hoe ga je Rakazo mickvvw gebruiken?"
 
 #: src/lib/user-error.ts
 msgid "Human verification failed. Try again."
@@ -6273,8 +6273,8 @@ msgid "Not imported"
 msgstr "Niet geïmporteerd"
 
 #: src/pages/shell/import-status.ts
-msgid "Not in Rakazo's catalog"
-msgstr "Niet in de catalogus van Rakazo"
+msgid "Not in Rakazo mickvvw's catalog"
+msgstr "Niet in de catalogus van Rakazo mickvvw"
 
 #: src/pages/plugins/plugin-browse.tsx
 msgid "Not in the plugin catalog"
@@ -6299,12 +6299,12 @@ msgstr ""
 
 #: src/pages/shell/agent-import-plan.tsx
 #: src/pages/shell/import-status.ts
-msgid "Not supported in Rakazo"
-msgstr "Niet ondersteund in Rakazo"
+msgid "Not supported in Rakazo mickvvw"
+msgstr "Niet ondersteund in Rakazo mickvvw"
 
 #: src/pages/shell/agent-import-plan.tsx
-msgid "Not used by Rakazo"
-msgstr "Niet gebruikt door Rakazo"
+msgid "Not used by Rakazo mickvvw"
+msgstr "Niet gebruikt door Rakazo mickvvw"
 
 #: src/components/admin/AdminTwoFactor.tsx
 msgid "Not verified"
@@ -6471,8 +6471,8 @@ msgstr "Navigatie openen"
 #: src/pages/Invite.tsx
 #: src/pages/SharedConversation.tsx
 #: src/pages/SharedPage.tsx
-msgid "Open Rakazo"
-msgstr "Rakazo openen"
+msgid "Open Rakazo mickvvw"
+msgstr "Rakazo mickvvw openen"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -6680,8 +6680,8 @@ msgid "Paste text"
 msgstr "Tekst plakken"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
-msgid "Paste the OpenAI-compatible address from your server. Rakazo adds /v1 if needed."
-msgstr "Plak het OpenAI-compatibele adres van je server. Rakazo voegt zo nodig /v1 toe."
+msgid "Paste the OpenAI-compatible address from your server. Rakazo mickvvw adds /v1 if needed."
+msgstr "Plak het OpenAI-compatibele adres van je server. Rakazo mickvvw voegt zo nodig /v1 toe."
 
 #: src/pages/shell/agent-import.tsx
 msgid "Paste the reply"
@@ -6951,16 +6951,16 @@ msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
-msgid "Rakazo"
-msgstr "Rakazo"
+msgid "Rakazo mickvvw"
+msgstr "Rakazo mickvvw"
 
 #: src/pages/onboarding/use-onboarding-model.ts
-msgid "Rakazo credits"
-msgstr "Rakazo-tegoed"
+msgid "Rakazo mickvvw credits"
+msgstr "Rakazo mickvvw-tegoed"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo."
-msgstr "rakazo-shared en ID's die beginnen met bot- zijn gereserveerd voor Rakazo."
+msgid "rakazo-shared and IDs starting with bot- are reserved for Rakazo mickvvw."
+msgstr "rakazo-shared en ID's die beginnen met bot- zijn gereserveerd voor Rakazo mickvvw."
 
 #: src/pages/model-settings/model-health-dialog.tsx
 msgid "Rate limited"
@@ -7004,8 +7004,8 @@ msgid "Recall and write"
 msgstr "Ophalen en schrijven"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
-msgid "Recall from this peer; save to Rakazo’s own peers."
-msgstr "Ophalen uit deze peer; opslaan in Rakazo’s eigen peers."
+msgid "Recall from this peer; save to Rakazo mickvvw’s own peers."
+msgstr "Ophalen uit deze peer; opslaan in Rakazo mickvvw’s eigen peers."
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Recall only"
@@ -7597,8 +7597,8 @@ msgstr "Terug naar het gesprek met {0}"
 
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/SlackInstallCallback.tsx
-msgid "Return to Rakazo"
-msgstr "Terug naar Rakazo"
+msgid "Return to Rakazo mickvvw"
+msgstr "Terug naar Rakazo mickvvw"
 
 #: src/pages/settings-nav.ts
 msgid "Reusable personas for your bots."
@@ -8262,8 +8262,8 @@ msgid "Sign in at <0>{0}</0>, then paste the code here."
 msgstr "Meld je aan op <0>{0}</0> en plak de code hier."
 
 #: src/pages/Auth.tsx
-msgid "Sign in to Rakazo"
-msgstr "Aanmelden bij Rakazo"
+msgid "Sign in to Rakazo mickvvw"
+msgstr "Aanmelden bij Rakazo mickvvw"
 
 #: src/lib/user-error.ts
 msgid "Sign in to your existing account to link SSO"
@@ -9169,8 +9169,8 @@ msgid "This session"
 msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
-msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
-msgstr "Deze abonnementsaanmelding is nog niet beschikbaar in Rakazo. Gebruik een implementatiegegeven of kies een andere aanbieder."
+msgid "This subscription sign-in is not available in Rakazo mickvvw yet. Use a deployment credential or choose another provider."
+msgstr "Deze abonnementsaanmelding is nog niet beschikbaar in Rakazo mickvvw. Gebruik een implementatiegegeven of kies een andere aanbieder."
 
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "This template is in use on this bot. Saving alone only changes the template."
@@ -9658,8 +9658,8 @@ msgid "Use Protected input for passwords."
 msgstr "Gebruik Beveiligde invoer voor wachtwoorden."
 
 #: src/components/ModelCredits.tsx
-msgid "Use Rakazo credits"
-msgstr "Rakazo-tegoed gebruiken"
+msgid "Use Rakazo mickvvw credits"
+msgstr "Rakazo mickvvw-tegoed gebruiken"
 
 #: src/pages/memory-providers/HonchoSettingsForm.tsx
 msgid "Use up to 512 letters, digits, _ or -."
@@ -9878,8 +9878,8 @@ msgid "Weekly"
 msgstr "Wekelijks"
 
 #: src/components/SignupSurvey.tsx
-msgid "Welcome to Rakazo"
-msgstr "Welkom bij Rakazo"
+msgid "Welcome to Rakazo mickvvw"
+msgstr "Welkom bij Rakazo mickvvw"
 
 #: src/pages/shell/dialogs.tsx
 msgid "What about its memories?"
@@ -9890,8 +9890,8 @@ msgid "What can this space use?"
 msgstr "Wat kan deze space gebruiken?"
 
 #: src/components/SignupSurvey.tsx
-msgid "What do you most want Rakazo to help with?"
-msgstr "Waarmee wil je het liefst hulp van Rakazo?"
+msgid "What do you most want Rakazo mickvvw to help with?"
+msgstr "Waarmee wil je het liefst hulp van Rakazo mickvvw?"
 
 #: src/pages/shell/message-cards.tsx
 msgid "What do you want me on first?"

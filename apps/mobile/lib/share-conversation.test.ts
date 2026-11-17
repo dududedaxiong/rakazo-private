@@ -1,4 +1,4 @@
-import type { ConversationShareSummary } from "@rakazo/contracts";
+import type { ConversationShareSummary } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import { conversationShareExpiryLabel, conversationShareState } from "./share-conversation";
 

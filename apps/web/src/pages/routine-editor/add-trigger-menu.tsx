@@ -1,7 +1,7 @@
 import { t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { CronFreq, CronPreset } from "@rakazo/core";
-import { cronFromPreset, defaultCronPreset } from "@rakazo/core";
+import type { CronFreq, CronPreset } from "@rakazo_mickvvw/core";
+import { cronFromPreset, defaultCronPreset } from "@rakazo_mickvvw/core";
 import {
   Button,
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { Clock, Eye, GitBranch, Globe, Mail, MessageSquare, Plus } from "lucide-react";
 import type { RoutineDraftState } from "../../lib/routine-draft";
 import { emptyWatchDraft } from "../../lib/routine-draft";

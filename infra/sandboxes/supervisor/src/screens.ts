@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { getLogger } from "@rakazo/logging";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type Docker from "dockerode";
 import { screenPorts } from "./computer-spec.js";
 import { teamScreenLimit } from "./context.js";

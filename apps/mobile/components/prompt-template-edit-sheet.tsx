@@ -1,5 +1,8 @@
-import type { PromptTemplate } from "@rakazo/contracts";
-import { BOT_INSTRUCTIONS_MAX_LENGTH, PROMPT_TEMPLATE_NAME_MAX_LENGTH } from "@rakazo/contracts";
+import type { PromptTemplate } from "@rakazo_mickvvw/contracts";
+import {
+  BOT_INSTRUCTIONS_MAX_LENGTH,
+  PROMPT_TEMPLATE_NAME_MAX_LENGTH,
+} from "@rakazo_mickvvw/contracts";
 import { useEffect, useState } from "react";
 import { Text, TextInput, View } from "react-native";
 import { rpc } from "../lib/api";

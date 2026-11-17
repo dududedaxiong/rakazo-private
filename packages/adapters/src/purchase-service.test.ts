@@ -1,5 +1,8 @@
-import type { AdapterContext } from "@rakazo/adapter-kit";
-import { PaymentWalletDisconnected, PaymentWalletRequestRejected } from "@rakazo/adapter-kit";
+import type { AdapterContext } from "@rakazo_mickvvw/adapter-kit";
+import {
+  PaymentWalletDisconnected,
+  PaymentWalletRequestRejected,
+} from "@rakazo_mickvvw/adapter-kit";
 import { Challenge, Credential } from "mppx";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {

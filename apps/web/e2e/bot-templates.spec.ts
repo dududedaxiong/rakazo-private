@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { Routine } from "@rakazo/contracts";
+import type { Routine } from "@rakazo_mickvvw/contracts";
 import { captureScreenshot, completeOnboarding, rpc, signup } from "./helpers";
 
 test("a bot template previews what it adds, then creates a bot with a paused routine", async ({

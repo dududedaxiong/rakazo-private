@@ -1,13 +1,13 @@
-import type { AdapterContext } from "@rakazo/adapter-kit";
+import type { AdapterContext } from "@rakazo_mickvvw/adapter-kit";
 import {
   destroyBot,
   forgetPageShareSecrets,
   removeAgentHome,
   removeDeletedBotsFromLegacyTeamHome,
   toComputerRef,
-} from "@rakazo/adapters";
-import { anySignal, requestDeadline, withAbort } from "@rakazo/core";
-import type { Prisma, ThreadEvents } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapters";
+import { anySignal, requestDeadline, withAbort } from "@rakazo_mickvvw/core";
+import type { Prisma, ThreadEvents } from "@rakazo_mickvvw/db";
 import {
   claimOrganizationForDeletion,
   claimSpacesLeavingWithAccount,
@@ -25,8 +25,8 @@ import {
   runAsSystem,
   SPACE_DELETION_CLAIM_TIMEOUT_MS,
   setOrganizationDeletionLease,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { BillingService } from "./billing.js";
 import type { SpaceDeletionDeps } from "./space-deletion.js";
 import { afterSpaceDeparture } from "./space-departure.js";

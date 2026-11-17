@@ -1,4 +1,4 @@
-import { MessageBlock as MessageBlockSchema } from "@rakazo/contracts";
+import { MessageBlock as MessageBlockSchema } from "@rakazo_mickvvw/contracts";
 import type { Prisma, PrismaClient } from "./client.js";
 import { clearRunTurnCheckpoints } from "./run-turn-checkpoint.js";
 

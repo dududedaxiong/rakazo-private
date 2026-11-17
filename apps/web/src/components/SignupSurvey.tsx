@@ -1,10 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { SignupSurvey as SignupSurveyAnswers } from "@rakazo/contracts";
+import type { SignupSurvey as SignupSurveyAnswers } from "@rakazo_mickvvw/contracts";
 import {
   SIGNUP_SURVEY_TEAM_SIZES,
   signupSurveyAsksTeamSize,
   signupSurveyTeamSizeLabel,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   Button,
   Input,
@@ -12,7 +12,7 @@ import {
   Textarea,
   ToggleGroup,
   ToggleGroupItem,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useId, useState } from "react";
 import { rpc } from "../lib/rpc";
 
@@ -53,10 +53,10 @@ export function SignupSurvey({ onDone }: { onDone: () => void }) {
       }}
     >
       <h1 className="text-display font-medium text-foreground">
-        <Trans>Welcome to Rakazo</Trans>
+        <Trans>Welcome to Rakazo mickvvw</Trans>
       </h1>
       <p id={`${fieldId}-use`} className="mt-8 text-body font-medium text-foreground">
-        <Trans>How will you use Rakazo?</Trans>
+        <Trans>How will you use Rakazo mickvvw?</Trans>
       </p>
       <ToggleGroup
         aria-labelledby={`${fieldId}-use`}
@@ -112,7 +112,7 @@ export function SignupSurvey({ onDone }: { onDone: () => void }) {
         htmlFor={`${fieldId}-reason`}
         className="mt-6 block text-body font-medium text-foreground"
       >
-        <Trans>What do you most want Rakazo to help with?</Trans>
+        <Trans>What do you most want Rakazo mickvvw to help with?</Trans>
       </label>
       <Textarea
         id={`${fieldId}-reason`}

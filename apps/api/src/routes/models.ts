@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/server";
-import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
+import { SecretStoreUnavailableError } from "@rakazo_mickvvw/adapter-kit";
 import {
   checkModelCredentialKeyHealth,
   compatibleEndpointPreset,
@@ -20,16 +20,16 @@ import {
   storedOpenAiCompatibleProbeHeaders,
   storedOpenAiCompatibleProbeKey,
   UNAVAILABLE_MODEL_FOR_AUTH_MESSAGE,
-} from "@rakazo/adapters";
-import type { Actor, ModelKeyHealthResult, ThinkingLevel } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/adapters";
+import type { Actor, ModelKeyHealthResult, ThinkingLevel } from "@rakazo_mickvvw/contracts";
 import {
   backupChoiceKey,
   canonicalPiProviderId,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   usableModelId,
-} from "@rakazo/contracts";
-import { clampCatalogThinkingLevel } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import { clampCatalogThinkingLevel } from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import {
   appliedModelRole,
   comparePreferenceOrder,
@@ -46,7 +46,7 @@ import {
   updateModelRole,
   withTransactionRetry,
   writeModelRole,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import { mayUsePrivateEndpoint } from "../mcp-servers.js";
 import { firstModelConnectAnalytics } from "../model-connect-analytics.js";
 import {

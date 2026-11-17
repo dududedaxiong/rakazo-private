@@ -1,5 +1,5 @@
-import type { SpaceBot } from "@rakazo/contracts";
-import { typeScale } from "@rakazo/ui-tokens";
+import type { SpaceBot } from "@rakazo_mickvvw/contracts";
+import { typeScale } from "@rakazo_mickvvw/ui-tokens";
 import { Pressable, View } from "react-native";
 import { customTitleTextStyle, scaledLineHeight, useCustomSettings } from "../lib/custom-settings";
 import type { MobileBot } from "../lib/mobile-types";

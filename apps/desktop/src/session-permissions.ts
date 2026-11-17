@@ -1,5 +1,5 @@
-import { COMPUTER_SCREEN_PATH } from "@rakazo/contracts/content-security-policy";
-import { secureHttpOrigin as httpOrigin } from "@rakazo/contracts/network-host";
+import { COMPUTER_SCREEN_PATH } from "@rakazo_mickvvw/contracts/content-security-policy";
+import { secureHttpOrigin as httpOrigin } from "@rakazo_mickvvw/contracts/network-host";
 import type { Session, WebContents } from "electron";
 
 type AppPermissionTarget = {

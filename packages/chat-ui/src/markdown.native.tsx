@@ -1,5 +1,5 @@
-import type { ColorTokens, ResolvedAppearance } from "@rakazo/ui-tokens";
-import { darkTokens } from "@rakazo/ui-tokens";
+import type { ColorTokens, ResolvedAppearance } from "@rakazo_mickvvw/ui-tokens";
+import { darkTokens } from "@rakazo_mickvvw/ui-tokens";
 import Markdown, {
   createMarkdownIt,
   MarkdownStream,

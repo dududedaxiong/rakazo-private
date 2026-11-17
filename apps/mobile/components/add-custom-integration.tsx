@@ -1,5 +1,5 @@
 import { MenuView } from "@expo/ui/community/menu";
-import type { McpSourcePreset } from "@rakazo/contracts";
+import type { McpSourcePreset } from "@rakazo_mickvvw/contracts";
 import { Text, TextInput, View } from "react-native";
 import { useI18n } from "../lib/i18n";
 import { native, useResolvedAppearance, useThemedStyles } from "../lib/native";

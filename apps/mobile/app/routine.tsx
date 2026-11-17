@@ -1,6 +1,6 @@
-import type { Routine } from "@rakazo/contracts";
-import type { RoutineDraft } from "@rakazo/core";
-import { defaultCronPreset, draftFromRoutine, emptyRoutineDraft } from "@rakazo/core";
+import type { Routine } from "@rakazo_mickvvw/contracts";
+import type { RoutineDraft } from "@rakazo_mickvvw/core";
+import { defaultCronPreset, draftFromRoutine, emptyRoutineDraft } from "@rakazo_mickvvw/core";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, BackHandler, ScrollView, Text, View } from "react-native";

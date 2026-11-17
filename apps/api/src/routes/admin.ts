@@ -1,5 +1,5 @@
 import { ORPCError } from "@orpc/server";
-import { DEFAULT_REGISTRATION_SETTINGS, generateInviteCode } from "@rakazo/auth";
+import { DEFAULT_REGISTRATION_SETTINGS, generateInviteCode } from "@rakazo_mickvvw/auth";
 import type {
   AdminOverviewDay,
   AdminUser,
@@ -8,11 +8,11 @@ import type {
   InviteCodeStatus,
   IpRegistrationStat,
   RegistrationSettings,
-} from "@rakazo/contracts";
-import { parseAllowlist, signupsOpen } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { listSecurityEvents, runAsSystem } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/contracts";
+import { parseAllowlist, signupsOpen } from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { listSecurityEvents, runAsSystem } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { deleteAccountContent } from "../account-deletion.js";
 import type { AccountStatusDeps } from "../account-status.js";
 import { endDeactivatedAccess, setAccountActive } from "../account-status.js";

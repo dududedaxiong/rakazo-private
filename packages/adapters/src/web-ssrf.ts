@@ -5,8 +5,8 @@ import {
   isInternalHostname,
   isNonPublicAddress,
   normalizeHost,
-} from "@rakazo/contracts";
-import { readBoundedResponseBytes } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { readBoundedResponseBytes } from "@rakazo_mickvvw/core";
 import type { Dispatcher } from "undici";
 import { EnvHttpProxyAgent, Pool } from "undici";
 import type { ResolvedAddress, ResolveHostname } from "./network-address.js";

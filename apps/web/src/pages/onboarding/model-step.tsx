@@ -1,5 +1,5 @@
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import type { ThinkingLevel } from "@rakazo/contracts";
+import type { ThinkingLevel } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   Input,
@@ -13,7 +13,7 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { Check, Copy } from "lucide-react";
 import { FoundModelPicker } from "../../components/FoundModelPicker";
 import {

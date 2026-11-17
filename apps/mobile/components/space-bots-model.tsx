@@ -1,4 +1,4 @@
-import { botsWithOwnModel } from "@rakazo/core";
+import { botsWithOwnModel } from "@rakazo_mickvvw/core";
 import { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
 import { captureApiRequestContext, rpc } from "../lib/api";

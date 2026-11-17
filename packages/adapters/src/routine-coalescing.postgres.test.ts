@@ -1,14 +1,14 @@
 import { randomUUID } from "node:crypto";
-import type { BackgroundJob } from "@rakazo/adapter-kit";
-import { ONCE_ROUTINE_CRON } from "@rakazo/core";
-import type { Prisma, PrismaClient } from "@rakazo/db";
+import type { BackgroundJob } from "@rakazo_mickvvw/adapter-kit";
+import { ONCE_ROUTINE_CRON } from "@rakazo_mickvvw/core";
+import type { Prisma, PrismaClient } from "@rakazo_mickvvw/db";
 import {
   appendEvent,
   asSystem,
   createDb,
   provisionMessagingIdentity,
   runAsSystem,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createRunExecutor } from "./executor.js";
 import { findPendingRoutineTick, routineTimerNonce } from "./routine-coalescing.js";

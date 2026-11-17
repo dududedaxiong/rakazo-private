@@ -4,15 +4,15 @@ import type {
   TranslateInput,
   TranslateOutput,
   TranslationSourceLanguage,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   primaryBotModel,
   TRANSLATION_SOURCE_LANGUAGE_CODES,
   TRANSLATION_SOURCE_LANGUAGE_LABELS,
   TRANSLATION_TARGET_LANGUAGE_CODES,
   TRANSLATION_TARGET_LANGUAGE_LABELS,
-} from "@rakazo/contracts";
-import { modelOptionKey } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { modelOptionKey } from "@rakazo_mickvvw/core";
 import type { createSpaceRpc } from "./rpc";
 
 /**

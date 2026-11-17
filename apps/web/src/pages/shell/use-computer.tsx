@@ -6,15 +6,15 @@ import type {
   Me,
   Run,
   ThreadSnapshot,
-} from "@rakazo/contracts";
-import { isComputerAllowanceUsed } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
+import { isComputerAllowanceUsed } from "@rakazo_mickvvw/contracts";
 import {
   createScreenReconnects,
   isRetryableError,
   screenProbeUrl,
   waitForScreenPage,
-} from "@rakazo/core";
-import { Button, Spinner } from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/core";
+import { Button, Spinner } from "@rakazo_mickvvw/ui-web";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ComputerMaintenanceActions } from "../../components/ComputerMaintenanceActions";

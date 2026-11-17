@@ -1,5 +1,5 @@
-import type { AccountExportCredentials } from "@rakazo/contracts";
-import { AccountExportEncryptedCredentialsSchema } from "@rakazo/contracts";
+import type { AccountExportCredentials } from "@rakazo_mickvvw/contracts";
+import { AccountExportEncryptedCredentialsSchema } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import {
   decryptBackupCredentials,

@@ -1,10 +1,10 @@
 import type { MenuAction } from "@expo/ui/community/menu";
-import type { ModelCatalogEntry, ModelCredential } from "@rakazo/contracts";
+import type { ModelCatalogEntry, ModelCredential } from "@rakazo_mickvvw/contracts";
 import {
   canonicalPiProviderId,
   connectionDisplayName,
   MAX_MODEL_CONNECTION_LABEL,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import { Alert, Platform } from "react-native";
 import { useI18n } from "../lib/i18n";
 import type { KeyHealth } from "../lib/key-health";

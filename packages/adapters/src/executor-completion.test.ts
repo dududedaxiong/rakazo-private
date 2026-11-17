@@ -1,5 +1,5 @@
-import { ModelOutputError } from "@rakazo/adapter-kit";
-import { MISSING_TOOL_FINAL_RESPONSE_ERROR } from "@rakazo/core";
+import { ModelOutputError } from "@rakazo_mickvvw/adapter-kit";
+import { MISSING_TOOL_FINAL_RESPONSE_ERROR } from "@rakazo_mickvvw/core";
 import { describe, expect, it } from "vitest";
 import { runIdentityInstruction } from "./run-instructions.js";
 import { mayOpenModelStream } from "./run-lifecycle.js";

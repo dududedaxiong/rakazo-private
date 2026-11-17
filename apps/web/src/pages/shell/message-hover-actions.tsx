@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { MessageReaction, ThreadMessage } from "@rakazo/contracts";
-import { canReactToThreadMessage, MESSAGE_REACTIONS } from "@rakazo/contracts";
-import { canMarkMessageUnread, copyableMessageText } from "@rakazo/core";
+import type { MessageReaction, ThreadMessage } from "@rakazo_mickvvw/contracts";
+import { canReactToThreadMessage, MESSAGE_REACTIONS } from "@rakazo_mickvvw/contracts";
+import { canMarkMessageUnread, copyableMessageText } from "@rakazo_mickvvw/core";
 import {
   CopyTextFallback,
   DropdownMenu,
@@ -12,7 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
   useCopyText,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import {
   Check,
   Copy,

@@ -6,14 +6,14 @@ import { chmod, mkdir, mkdtemp, open, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { createInterface } from "node:readline";
-import type { AdapterContext, SecretStore } from "@rakazo/adapter-kit";
-import { normalizeWorkspacePath, resolveBotWorkspacePath } from "@rakazo/adapters";
+import type { AdapterContext, SecretStore } from "@rakazo_mickvvw/adapter-kit";
+import { normalizeWorkspacePath, resolveBotWorkspacePath } from "@rakazo_mickvvw/adapters";
 import type {
   AccountExportManifest,
   AccountExportRecord,
   AccountImportResult,
   Actor,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   ACCOUNT_EXPORT_CREDENTIALS_MAX_BYTES,
   ACCOUNT_EXPORT_CREDENTIALS_PATH,
@@ -29,8 +29,8 @@ import {
   AccountExportRecordSchema,
   attachmentSizeLabel,
   resolveBotAvatarSet,
-} from "@rakazo/contracts";
-import { organicAvatarFamily, STOPPED_HELPER_RESULT } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { organicAvatarFamily, STOPPED_HELPER_RESULT } from "@rakazo_mickvvw/core";
 import {
   createRepos,
   createSpaceForMember,
@@ -41,10 +41,10 @@ import {
   runAsSystem,
   runAsTenant,
   SpaceLimitError,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
-import { pageViewerCode } from "@rakazo/page-kit/compile";
-import { checkPageSource } from "@rakazo/page-kit/validate";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
+import { pageViewerCode } from "@rakazo_mickvvw/page-kit/compile";
+import { checkPageSource } from "@rakazo_mickvvw/page-kit/validate";
 import type { Hono } from "hono";
 import { zeroBuffer } from "./account-credentials-crypto.js";
 import type { CredentialMappings } from "./account-credentials-restore.js";

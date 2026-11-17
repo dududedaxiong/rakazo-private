@@ -1,7 +1,7 @@
 import { createRouterClient } from "@orpc/server";
-import type { SecretStore } from "@rakazo/adapter-kit";
-import { BUILTIN_AGENT_SKILLS, previewPluginInstall } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
+import type { SecretStore } from "@rakazo_mickvvw/adapter-kit";
+import { BUILTIN_AGENT_SKILLS, previewPluginInstall } from "@rakazo_mickvvw/adapters";
+import type { Actor } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { installPlugin, setPluginParts } from "./plugin-installs.js";
 import type { RouterDeps } from "./router.js";

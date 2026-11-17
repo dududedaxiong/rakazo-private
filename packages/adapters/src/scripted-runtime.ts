@@ -3,7 +3,7 @@ import type {
   AgentRunRequest,
   AgentRuntime,
   AgentRuntimeEvent,
-} from "@rakazo/adapter-kit";
+} from "@rakazo_mickvvw/adapter-kit";
 import {
   APPROVED_ACTION_NOT_RUN_ERROR,
   abortableDelay,
@@ -14,7 +14,7 @@ import {
   MODEL_REQUEST_LIMIT_ERROR,
   modelFallbackFailure,
   STEERING_CONTINUATION_PROMPT,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 
 import { BACKGROUND_HELPER_TASK_CUE } from "./background-helpers.js";
 

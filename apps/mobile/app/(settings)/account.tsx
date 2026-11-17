@@ -1,6 +1,6 @@
 import { MenuView } from "@expo/ui/community/menu";
-import type { AccountSecurity, UsageSummary } from "@rakazo/contracts";
-import { APP_LOCALE_LABELS, accountDisplay, displayName } from "@rakazo/core";
+import type { AccountSecurity, UsageSummary } from "@rakazo_mickvvw/contracts";
+import { APP_LOCALE_LABELS, accountDisplay, displayName } from "@rakazo_mickvvw/core";
 import * as Notifications from "expo-notifications";
 import type { Href } from "expo-router";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
@@ -58,11 +58,6 @@ import {
   subscribeHaptics,
 } from "../../lib/haptics";
 import { dateLocaleForUi, useI18n } from "../../lib/i18n";
-import {
-  clearMediaTemp,
-  formatBytes,
-  mediaTempUsage,
-} from "../../lib/media-folders";
 import type { LiveNotificationSettings } from "../../lib/live-notifications";
 import {
   canPostPromotedNotifications,
@@ -73,6 +68,7 @@ import {
   openPromotedNotificationSettings,
   setLiveNotificationSettings,
 } from "../../lib/live-notifications";
+import { clearMediaTemp, formatBytes, mediaTempUsage } from "../../lib/media-folders";
 import type { MobileMe } from "../../lib/mobile-types";
 import { native, useResolvedAppearance, useThemedStyles } from "../../lib/native";
 import { activeOrganization, useOrganizations } from "../../lib/organizations";

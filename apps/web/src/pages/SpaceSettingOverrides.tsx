@@ -1,7 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
-import type { SpaceSetting } from "@rakazo/contracts";
-import { writeSaved } from "@rakazo/core/query";
-import { Button } from "@rakazo/ui-web";
+import type { SpaceSetting } from "@rakazo_mickvvw/contracts";
+import { writeSaved } from "@rakazo_mickvvw/core/query";
+import { Button } from "@rakazo_mickvvw/ui-web";
 import type { QueryKey } from "@tanstack/react-query";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ReactNode } from "react";

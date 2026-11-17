@@ -1,11 +1,11 @@
-import type { IncomingBotCall } from "@rakazo/contracts";
-import { IncomingBotCallSchema } from "@rakazo/contracts";
+import type { IncomingBotCall } from "@rakazo_mickvvw/contracts";
+import { IncomingBotCallSchema } from "@rakazo_mickvvw/contracts";
 import {
   cancelResponseBody,
   displayIdentityEvent,
   isServerUnreachable,
   isUnreachableStatus,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import type { ApiRequestContext } from "./api";
 import {
   captureApiRequestContext,

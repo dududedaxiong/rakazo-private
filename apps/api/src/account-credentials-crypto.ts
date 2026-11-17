@@ -4,12 +4,12 @@ import {
   randomBytes,
   scrypt as scryptCallback,
 } from "node:crypto";
-import type { AccountExportCredentials } from "@rakazo/contracts";
+import type { AccountExportCredentials } from "@rakazo_mickvvw/contracts";
 import {
   ACCOUNT_EXPORT_BACKUP_KDF,
   AccountExportCredentialsSchema,
   AccountExportEncryptedCredentialsSchema,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 
 const ALGORITHM = "aes-256-gcm";
 

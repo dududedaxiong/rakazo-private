@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Button, Field, FieldLabel, Input } from "@rakazo/ui-web";
+import { Button, Field, FieldLabel, Input } from "@rakazo_mickvvw/ui-web";
 import { Plus } from "lucide-react";
 import { useEffect, useId, useState } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";

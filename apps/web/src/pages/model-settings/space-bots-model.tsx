@@ -1,7 +1,7 @@
 import { useLingui } from "@lingui/react/macro";
-import type { Bot } from "@rakazo/contracts";
-import { botsWithOwnModel } from "@rakazo/core";
-import { Button, Popover, PopoverContent, PopoverTrigger, toast } from "@rakazo/ui-web";
+import type { Bot } from "@rakazo_mickvvw/contracts";
+import { botsWithOwnModel } from "@rakazo_mickvvw/core";
+import { Button, Popover, PopoverContent, PopoverTrigger, toast } from "@rakazo_mickvvw/ui-web";
 import { Bot as BotIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSpaceRpc } from "../../lib/space-rpc";

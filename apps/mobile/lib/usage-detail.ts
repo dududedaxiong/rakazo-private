@@ -1,4 +1,4 @@
-import type { UsageRecord, UsageSummary } from "@rakazo/contracts";
+import type { UsageRecord, UsageSummary } from "@rakazo_mickvvw/contracts";
 
 /** A call that never ran or was refused: it counts as 0 and never joins the totals. */
 export function isFailedUsageRecord(record: UsageRecord): boolean {

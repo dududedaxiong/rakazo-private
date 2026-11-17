@@ -1,12 +1,12 @@
-import type { AgentImportSetupItem, AgentImportSetupState } from "@rakazo/contracts";
+import type { AgentImportSetupItem, AgentImportSetupState } from "@rakazo_mickvvw/contracts";
 import {
   importSetupStateInput,
   isImportSetupComplete,
   isImportSetupDone,
   isImportSetupVerifiable,
   isRetiredImportSetup,
-} from "@rakazo/core";
-import { typeScale } from "@rakazo/ui-tokens";
+} from "@rakazo_mickvvw/core";
+import { typeScale } from "@rakazo_mickvvw/ui-tokens";
 import type { Href } from "expo-router";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";

@@ -1,4 +1,4 @@
-import { webDarkTokens } from "@rakazo/ui-tokens";
+import { webDarkTokens } from "@rakazo_mickvvw/ui-tokens";
 import type { Rolldown } from "vite";
 import { describe, expect, it } from "vitest";
 import { injectShell, shellFiles, webManifest } from "./plugin.js";

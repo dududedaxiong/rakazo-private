@@ -2,9 +2,13 @@ import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import type { HostScreen } from "@rakazo/adapters/host-screen";
-import { startUserDeviceClient } from "@rakazo/adapters/user-device-client";
-import type { DesktopReachability, DesktopSetup, RakazoDesktopDevice } from "@rakazo/contracts";
+import type { HostScreen } from "@rakazo_mickvvw/adapters/host-screen";
+import { startUserDeviceClient } from "@rakazo_mickvvw/adapters/user-device-client";
+import type {
+  DesktopReachability,
+  DesktopSetup,
+  RakazoDesktopDevice,
+} from "@rakazo_mickvvw/contracts";
 import type { BrowserWindow, Session } from "electron";
 import {
   app,

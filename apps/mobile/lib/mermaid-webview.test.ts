@@ -1,5 +1,5 @@
-import { chatMermaidConfig } from "@rakazo/chat-ui/mermaid";
-import { darkTokens } from "@rakazo/ui-tokens";
+import { chatMermaidConfig } from "@rakazo_mickvvw/chat-ui/mermaid";
+import { darkTokens } from "@rakazo_mickvvw/ui-tokens";
 import { describe, expect, it, vi } from "vitest";
 import {
   diagramBootScript,

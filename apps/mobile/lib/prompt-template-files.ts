@@ -1,5 +1,5 @@
-import type { PromptTemplate } from "@rakazo/contracts";
-import { promptTemplateFileName } from "@rakazo/contracts";
+import type { PromptTemplate } from "@rakazo_mickvvw/contracts";
+import { promptTemplateFileName } from "@rakazo_mickvvw/contracts";
 import * as DocumentPicker from "expo-document-picker";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";

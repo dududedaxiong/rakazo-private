@@ -4,10 +4,10 @@ import type {
   McpServer,
   McpServerConnection,
   PluginMarketplaceEntry,
-} from "@rakazo/contracts";
-import { mcpServerConnection } from "@rakazo/contracts";
-import { catalogItemKey } from "@rakazo/core";
-import { Button, SectionHeading } from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/contracts";
+import { mcpServerConnection } from "@rakazo_mickvvw/contracts";
+import { catalogItemKey } from "@rakazo_mickvvw/core";
+import { Button, SectionHeading } from "@rakazo_mickvvw/ui-web";
 import { Check, ChevronLeft, CircleAlert, TriangleAlert } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
 import { ROW_BUTTON, ROW_HOVER, ROW_SHELL } from "../../components/integrations/plugin-marketplace";

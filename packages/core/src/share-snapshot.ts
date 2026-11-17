@@ -1,10 +1,14 @@
-import type { SharedConversation, SharedConversationEntry, ThreadMessage } from "@rakazo/contracts";
+import type {
+  SharedConversation,
+  SharedConversationEntry,
+  ThreadMessage,
+} from "@rakazo_mickvvw/contracts";
 import {
   SHARE_ENTRY_MAX,
   SHARE_SNAPSHOT_SCHEMA,
   SHARE_SNAPSHOT_VERSION,
   SHARE_TEXT_MAX,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import { isPeerReceiptBlocks } from "./message-visibility.js";
 import { cutShareText, redactShareText } from "./share-redaction.js";
 

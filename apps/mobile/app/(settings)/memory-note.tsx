@@ -1,5 +1,5 @@
-import type { MemoryDocument } from "@rakazo/contracts";
-import { isDeletableMemoryDocument } from "@rakazo/contracts";
+import type { MemoryDocument } from "@rakazo_mickvvw/contracts";
+import { isDeletableMemoryDocument } from "@rakazo_mickvvw/contracts";
 import type { NativeStackNavigationOptions } from "expo-router";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { usePreventRemove } from "expo-router/react-navigation";

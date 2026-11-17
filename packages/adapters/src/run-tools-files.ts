@@ -1,12 +1,12 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
+import { ATTACHMENT_MAX_BYTES } from "@rakazo_mickvvw/contracts";
 import {
   inferAttachmentMimeType,
   isBackgroundRunTrigger,
   messageBlockForArtifact,
-} from "@rakazo/core";
-import type { Artifact, Prisma } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/core";
+import type { Artifact, Prisma } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { resolveBotWorkspacePath } from "./computer-support.js";
 import { desktopGuardApplies, desktopProtectionGuardMessage } from "./desktop-command-guard.js";
 import { protectedActivateScriptWriteRefusal } from "./desktop-guard-words.js";

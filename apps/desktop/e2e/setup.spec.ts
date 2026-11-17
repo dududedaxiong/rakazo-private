@@ -7,7 +7,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import type { ElectronApplication, Page } from "@playwright/test";
 import { _electron as electron, expect, test } from "@playwright/test";
-import type { RakazoDesktop } from "@rakazo/contracts";
+import type { RakazoDesktop } from "@rakazo_mickvvw/contracts";
 import { shownWindow } from "./shown-window.js";
 
 const APP_MARKER = "Existing Rakazo instance ready";

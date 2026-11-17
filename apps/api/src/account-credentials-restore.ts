@@ -1,10 +1,14 @@
 import { randomBytes } from "node:crypto";
-import type { SecretStore } from "@rakazo/adapter-kit";
-import type { AccountExportCredentials, AccountImportResult, Actor } from "@rakazo/contracts";
-import { storedPiProviderIds } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { Prisma, recordSecurityEvent, withTransactionRetry } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { SecretStore } from "@rakazo_mickvvw/adapter-kit";
+import type {
+  AccountExportCredentials,
+  AccountImportResult,
+  Actor,
+} from "@rakazo_mickvvw/contracts";
+import { storedPiProviderIds } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { Prisma, recordSecurityEvent, withTransactionRetry } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { BackupCredentialsError, decryptBackupCredentials } from "./account-credentials-crypto.js";
 import { nextConnectionLabel } from "./model-credentials.js";
 

@@ -1,5 +1,5 @@
-import type { ProductEvent } from "@rakazo/contracts";
-import type { LogoAvatarActivity } from "@rakazo/core";
+import type { ProductEvent } from "@rakazo_mickvvw/contracts";
+import type { LogoAvatarActivity } from "@rakazo_mickvvw/core";
 import {
   BOT_COLOR_LIST,
   createLogoAvatarActivityStore,
@@ -8,8 +8,8 @@ import {
   logoAvatarTraits,
   reduceLogoAvatarSignals,
   seededLogoAvatarColor,
-} from "@rakazo/core";
-import { BotAvatar, BotAvatarActivityProvider, Button, LogoAvatar } from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/core";
+import { BotAvatar, BotAvatarActivityProvider, Button, LogoAvatar } from "@rakazo_mickvvw/ui-web";
 import { Fragment, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "../../src/styles.css";

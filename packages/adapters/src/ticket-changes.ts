@@ -1,5 +1,5 @@
-import type { JobPublisher } from "@rakazo/adapter-kit";
-import type { BoardEvents, PrismaClient } from "@rakazo/db";
+import type { JobPublisher } from "@rakazo_mickvvw/adapter-kit";
+import type { BoardEvents, PrismaClient } from "@rakazo_mickvvw/db";
 import { wakeTicketAssignee } from "./ticket-wake.js";
 
 export type TicketChange = {

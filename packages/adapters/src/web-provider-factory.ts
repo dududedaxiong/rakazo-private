@@ -1,4 +1,4 @@
-import type { WebProvider } from "@rakazo/adapter-kit";
+import type { WebProvider } from "@rakazo_mickvvw/adapter-kit";
 import { BraveWebProvider } from "./brave-web.js";
 import { FakeWebProvider } from "./fake-web.js";
 import { FallbackWebProvider } from "./fallback-web.js";

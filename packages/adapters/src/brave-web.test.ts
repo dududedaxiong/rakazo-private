@@ -1,4 +1,4 @@
-import type { AdapterContext } from "@rakazo/adapter-kit";
+import type { AdapterContext } from "@rakazo_mickvvw/adapter-kit";
 import { describe, expect, it } from "vitest";
 import { BraveWebProvider } from "./brave-web.js";
 

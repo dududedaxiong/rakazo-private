@@ -1,4 +1,4 @@
-import type { AppLocaleSchema } from "@rakazo/contracts";
+import type { AppLocaleSchema } from "@rakazo_mickvvw/contracts";
 import { createContext, useContext } from "react";
 import { de } from "./locales/de.js";
 import type { LabelKey, Messages } from "./locales/en.js";

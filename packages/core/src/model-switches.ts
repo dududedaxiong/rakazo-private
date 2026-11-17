@@ -1,4 +1,4 @@
-import type { ModelSwitchAttempt, ModelSwitches } from "@rakazo/contracts";
+import type { ModelSwitchAttempt, ModelSwitches } from "@rakazo_mickvvw/contracts";
 import { normalizeRunError } from "./run-error.js";
 
 /** Longest failure detail stored per attempt; the contract schema enforces the same bound. */

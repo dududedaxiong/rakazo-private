@@ -1,4 +1,4 @@
-import type { ModelHealthReport, ModelHealthState } from "@rakazo/contracts";
+import type { ModelHealthReport, ModelHealthState } from "@rakazo_mickvvw/contracts";
 import { Modal, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useI18n } from "../lib/i18n";
 import { useMobileTokens } from "../lib/native";

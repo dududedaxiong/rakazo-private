@@ -1,6 +1,6 @@
 import { I18nProvider } from "@lingui/react";
-import type { Bot, Me, ModelCatalogEntry } from "@rakazo/contracts";
-import { defaultCronPreset } from "@rakazo/core";
+import type { Bot, Me, ModelCatalogEntry } from "@rakazo_mickvvw/contracts";
+import { defaultCronPreset } from "@rakazo_mickvvw/core";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";

@@ -7,11 +7,11 @@ import {
   SandboxUnavailableError,
   SandboxUnresponsiveError,
   VoiceAccountError,
-} from "@rakazo/adapter-kit";
-import { MODEL_IMAGE_INPUT_ERROR } from "@rakazo/core";
-import { IsolationError, SpaceDeletionInProgressError } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
-import { requestLogging } from "@rakazo/logging/hono";
+} from "@rakazo_mickvvw/adapter-kit";
+import { MODEL_IMAGE_INPUT_ERROR } from "@rakazo_mickvvw/core";
+import { IsolationError, SpaceDeletionInProgressError } from "@rakazo_mickvvw/db";
+import { createLogger, createTestSink, installLogger } from "@rakazo_mickvvw/logging";
+import { requestLogging } from "@rakazo_mickvvw/logging/hono";
 import { Hono } from "hono";
 import { afterEach, describe, expect, it } from "vitest";
 import { handleRpcError, logUnexpectedRpcError } from "./rpc-errors.js";

@@ -1,5 +1,5 @@
-import type { ModelRoleChoice } from "@rakazo/contracts";
-import { modelRoleChoiceKey } from "@rakazo/contracts";
+import type { ModelRoleChoice } from "@rakazo_mickvvw/contracts";
+import { modelRoleChoiceKey } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import { dropRemovedRoleRows } from "./model-role-removal";
 

@@ -1,5 +1,5 @@
-import type { SpaceBot } from "@rakazo/contracts";
-import { displayName as safeDisplayName } from "@rakazo/core";
+import type { SpaceBot } from "@rakazo_mickvvw/contracts";
+import { displayName as safeDisplayName } from "@rakazo_mickvvw/core";
 import { useRouter } from "expo-router";
 import { useSyncExternalStore } from "react";
 import { Pressable, View } from "react-native";

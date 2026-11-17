@@ -1,4 +1,4 @@
-import { BOT_AVATAR_VALUE_MAX_LENGTH, isBotAvatarValue } from "@rakazo/contracts";
+import { BOT_AVATAR_VALUE_MAX_LENGTH, isBotAvatarValue } from "@rakazo_mickvvw/contracts";
 import { File } from "expo-file-system";
 import type * as ImageManipulatorModule from "expo-image-manipulator";
 import * as ImagePicker from "expo-image-picker";

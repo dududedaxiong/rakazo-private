@@ -1,4 +1,4 @@
-import type { AccountExportRecord } from "@rakazo/contracts";
+import type { AccountExportRecord } from "@rakazo_mickvvw/contracts";
 import {
   ACCOUNT_EXPORT_MAX_HOME_FILE_BYTES,
   ACCOUNT_EXPORT_PROMPT_TEMPLATES_PATH,
@@ -6,9 +6,9 @@ import {
   AccountExportPromptTemplatesSchema,
   AccountExportRecordSchema,
   accountExportPaths,
-} from "@rakazo/contracts";
-import type { AccountExportSource } from "@rakazo/db";
-import { currentDbContext } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import type { AccountExportSource } from "@rakazo_mickvvw/db";
+import { currentDbContext } from "@rakazo_mickvvw/db";
 import { Unzip, UnzipInflate } from "fflate";
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";

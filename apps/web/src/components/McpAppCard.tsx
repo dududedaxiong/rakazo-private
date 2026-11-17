@@ -1,9 +1,9 @@
 import { useLingui } from "@lingui/react/macro";
-import { useExternalLinkOpener } from "@rakazo/chat-ui/web";
-import type { MessageBlock } from "@rakazo/contracts";
-import { MCP_APP_VIEWER_PATH } from "@rakazo/contracts/content-security-policy";
-import { createMcpAppHost, mcpAppCsp, mcpAppDocument } from "@rakazo/core";
-import { cn } from "@rakazo/ui-web";
+import { useExternalLinkOpener } from "@rakazo_mickvvw/chat-ui/web";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
+import { MCP_APP_VIEWER_PATH } from "@rakazo_mickvvw/contracts/content-security-policy";
+import { createMcpAppHost, mcpAppCsp, mcpAppDocument } from "@rakazo_mickvvw/core";
+import { cn } from "@rakazo_mickvvw/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";

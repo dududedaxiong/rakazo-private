@@ -1,10 +1,14 @@
-import type { CodexLiveCatalog } from "@rakazo/adapters";
-import { mcpStdioRefusal, providerCatalogCache, validateBotModelChange } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import { canonicalPiProviderId, ModelConnectInputSchema } from "@rakazo/contracts";
-import type { createRepos } from "@rakazo/db";
-import { findModelCredential, Prisma, withTransactionRetry } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { CodexLiveCatalog } from "@rakazo_mickvvw/adapters";
+import {
+  mcpStdioRefusal,
+  providerCatalogCache,
+  validateBotModelChange,
+} from "@rakazo_mickvvw/adapters";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import { canonicalPiProviderId, ModelConnectInputSchema } from "@rakazo_mickvvw/contracts";
+import type { createRepos } from "@rakazo_mickvvw/db";
+import { findModelCredential, Prisma, withTransactionRetry } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { isAdmin } from "./admins.js";
 import type { AgentImportServices } from "./agent-import.js";
 import type { createMcpServers } from "./mcp-servers.js";

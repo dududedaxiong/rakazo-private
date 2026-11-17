@@ -1,6 +1,6 @@
 import { ORPCError } from "@orpc/server";
-import { createSafeRemoteFetch } from "@rakazo/adapters";
-import type { PromptTemplate } from "@rakazo/contracts";
+import { createSafeRemoteFetch } from "@rakazo_mickvvw/adapters";
+import type { PromptTemplate } from "@rakazo_mickvvw/contracts";
 import {
   APPLY_IMAGE_PRESET_REASON,
   APPLY_TEMPLATE_REASON,
@@ -9,8 +9,8 @@ import {
   PromptTemplateImportError,
   parseBotPromptPresets,
   parsePromptTemplateImport,
-} from "@rakazo/contracts";
-import { cancelResponseBody } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { cancelResponseBody } from "@rakazo_mickvvw/core";
 import {
   commitBotUpdate,
   createPromptTemplate,
@@ -22,7 +22,7 @@ import {
   restoreDefaultPromptTemplates,
   updatePromptTemplate,
   upsertPromptTemplate,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import type { RouterContext } from "./context.js";
 
 /** A subscription file holds at most 100 templates of 20000 characters each. */

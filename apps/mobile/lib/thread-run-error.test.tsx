@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import type { ModelHealthReport } from "@rakazo/contracts";
-import { modelFallbackFailure } from "@rakazo/core";
+import type { ModelHealthReport } from "@rakazo_mickvvw/contracts";
+import { modelFallbackFailure } from "@rakazo_mickvvw/core";
 import type { ReactNode } from "react";
 import { act, createElement } from "react";
 import type { Root } from "react-dom/client";

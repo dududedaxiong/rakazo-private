@@ -1,5 +1,5 @@
-import type { ComposerMentionBinding } from "@rakazo/core";
-import { createKeyedListeners, validateComposerMentionBindings } from "@rakazo/core";
+import type { ComposerMentionBinding } from "@rakazo_mickvvw/core";
+import { createKeyedListeners, validateComposerMentionBindings } from "@rakazo_mickvvw/core";
 
 export const COMPOSER_DRAFT_STORAGE_PREFIX = "rakazo.composerDraft.";
 const COMPOSER_BINDINGS_STORAGE_PREFIX = "rakazo.composerBindings.";

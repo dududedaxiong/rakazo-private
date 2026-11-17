@@ -6,7 +6,7 @@ import {
   reduceThreadSnapshot,
   rememberTerminalRun,
   retryDelayMs,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import type { RefObject } from "react";
 import { useEffect, useRef } from "react";
 import { rpc } from "./api";

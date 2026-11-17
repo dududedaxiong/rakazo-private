@@ -1,4 +1,4 @@
-import { shareCardFilename } from "@rakazo/core";
+import { shareCardFilename } from "@rakazo_mickvvw/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({

@@ -1,5 +1,5 @@
 // @vitest-environment node
-import type { ThreadMessage } from "@rakazo/contracts";
+import type { ThreadMessage } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import { conversationToMarkdown } from "./export-conversation";
 

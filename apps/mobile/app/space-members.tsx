@@ -1,6 +1,6 @@
 import { MenuView } from "@expo/ui/community/menu";
-import type { SpaceMember, SpaceMembers } from "@rakazo/contracts";
-import { accountDisplay } from "@rakazo/core";
+import type { SpaceMember, SpaceMembers } from "@rakazo_mickvvw/contracts";
+import { accountDisplay } from "@rakazo_mickvvw/core";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {

@@ -1,13 +1,13 @@
 import { randomUUID } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import type { JobPublisher, ProductAnalytics, SandboxProvider } from "@rakazo/adapter-kit";
-import { runContinueJob } from "@rakazo/adapter-kit";
-import type { Actor, GroupMember, MessageBlock, ReplyPreview } from "@rakazo/contracts";
+import type { JobPublisher, ProductAnalytics, SandboxProvider } from "@rakazo_mickvvw/adapter-kit";
+import { runContinueJob } from "@rakazo_mickvvw/adapter-kit";
+import type { Actor, GroupMember, MessageBlock, ReplyPreview } from "@rakazo_mickvvw/contracts";
 import {
   GROUP_MEMBER_MIN,
   MessageBlock as MessageBlockSchema,
   resolveBotAvatarSet,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   ACTIVE_RUN_STATUSES,
   callIdFromClientNonce,
@@ -19,9 +19,9 @@ import {
   QUEUE_HOLDING_RUN_STATUSES,
   resolveGroupTargetBotIds,
   runReadsThreadHistory,
-} from "@rakazo/core";
-import { deriveMessageQuote, messageReplyPreview } from "@rakazo/core/message-quote";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@rakazo_mickvvw/core";
+import { deriveMessageQuote, messageReplyPreview } from "@rakazo_mickvvw/core/message-quote";
+import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
 import {
   answerWaitingRunWithTextInTransaction,
   appendEventInTransaction,
@@ -40,8 +40,8 @@ import {
   THREAD_LOCK_TRANSACTION_OPTIONS,
   touchGroupUpdatedAt,
   withTransactionRetry,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import {
   buildSendPrompt,
   buildUserMessageBlocks,

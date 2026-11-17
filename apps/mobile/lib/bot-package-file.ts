@@ -1,4 +1,4 @@
-import { BOT_PACKAGE_MAX_BYTES } from "@rakazo/contracts";
+import { BOT_PACKAGE_MAX_BYTES } from "@rakazo_mickvvw/contracts";
 import * as DocumentPicker from "expo-document-picker";
 import { Directory, File, FileMode, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";

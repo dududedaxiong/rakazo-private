@@ -1,7 +1,7 @@
 import { existsSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { runJobKey } from "@rakazo/adapter-kit";
+import { runJobKey } from "@rakazo_mickvvw/adapter-kit";
 import {
   ComposioConnector,
   createJobReconciler,
@@ -16,24 +16,24 @@ import {
   returnHelperOutcome,
   startBackgroundHelper,
   toComputerRef,
-} from "@rakazo/adapters";
-import type { createApp } from "@rakazo/api/app";
-import type { MessageBlock } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/adapters";
+import type { createApp } from "@rakazo_mickvvw/api/app";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
 import {
   ACTIVE_RUN_STATUSES,
   ONCE_ROUTINE_CRON,
   resolveScreenProxySecret,
   settleRunSubagents,
   stuckWorkStatusMessages,
-} from "@rakazo/core";
-import { openScreenCapability } from "@rakazo/core/node/screen-capability";
+} from "@rakazo_mickvvw/core";
+import { openScreenCapability } from "@rakazo_mickvvw/core/node/screen-capability";
 import {
   appendEvent,
   createThreadEvents,
   createThreadMessage,
   RunHistoryWriteError,
   runAsSystem,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { BotIntroHarness } from "./discard-bot-intro.js";
 import { discardBotIntroFromCreate } from "./discard-bot-intro.js";
@@ -136,7 +136,7 @@ describeJourneys("required product journeys", () => {
   }
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@rakazo_mickvvw/api/app");
     const handles = await createApp({
       modelConnectionFetch: createModelConnectionFixtureFetch(listPiCatalog()),
       databaseUrl: process.env.DATABASE_URL!,

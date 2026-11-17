@@ -1,4 +1,4 @@
-import { createAuth } from "@rakazo/auth";
+import { createAuth } from "@rakazo_mickvvw/auth";
 import { describe, expect, it } from "vitest";
 import { isTrustedOrigin, MOBILE_AUTH_ORIGINS, trustedRequestOrigins } from "./app.js";
 

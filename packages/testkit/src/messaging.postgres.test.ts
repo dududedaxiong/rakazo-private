@@ -7,8 +7,8 @@ import {
   createEmulatedSendbluePlatform,
   ScriptedAgentRuntime,
   SendBlueEmulator,
-} from "@rakazo/adapters";
-import { formatMessagingLinkCode, issueMessagingLinkCode } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapters";
+import { formatMessagingLinkCode, issueMessagingLinkCode } from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { asSystem } from "./system-db.js";
 
@@ -90,7 +90,7 @@ describeMessaging("messaging surface journeys", () => {
   };
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@rakazo_mickvvw/api/app");
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,

@@ -1,13 +1,13 @@
 import type { ClientCapabilities, Tool } from "@modelcontextprotocol/sdk/types.js";
-import type { ConnectorApp } from "@rakazo/adapter-kit";
+import type { ConnectorApp } from "@rakazo_mickvvw/adapter-kit";
 import {
   MCP_APP_ARGUMENTS_MAX_BYTES,
   MCP_APP_EXTENSION,
   MCP_APP_HTML_MAX_BYTES,
   MCP_APP_MIME_TYPE,
   MCP_APP_RESULT_MAX_BYTES,
-} from "@rakazo/contracts";
-import { mcpAppCsp, redactSecrets } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { mcpAppCsp, redactSecrets } from "@rakazo_mickvvw/core";
 
 /** Told to every MCP server at initialize: this client shows apps (MCP Apps, SEP-1865). */
 export const MCP_APP_CLIENT_CAPABILITIES: ClientCapabilities = {

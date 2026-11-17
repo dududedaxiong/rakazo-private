@@ -5,8 +5,8 @@ import type {
   AdapterContext,
   MessagingInboundEvent,
   MessagingInboundMessage,
-} from "@rakazo/adapter-kit";
-import { ATTACHMENT_MAX_BYTES, ATTACHMENT_MAX_COUNT } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/adapter-kit";
+import { ATTACHMENT_MAX_BYTES, ATTACHMENT_MAX_COUNT } from "@rakazo_mickvvw/contracts";
 import { Message } from "chat";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatSdkMessagingSurface } from "./chat-sdk-surface.js";

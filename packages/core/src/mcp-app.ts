@@ -1,11 +1,11 @@
-import type { McpAppCsp } from "@rakazo/contracts";
+import type { McpAppCsp } from "@rakazo_mickvvw/contracts";
 import {
   ipVersion,
   isCloudMetadataHost,
   isInternalHostname,
   MCP_APP_DOMAINS_MAX,
   MCP_APP_PROTOCOL_VERSION,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 
 /**
  * MCP Apps (SEP-1865) on the host side: the content policy an app runs under, the document the

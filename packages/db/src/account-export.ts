@@ -1,10 +1,10 @@
-import type { SecretStore } from "@rakazo/adapter-kit";
+import type { SecretStore } from "@rakazo_mickvvw/adapter-kit";
 import type {
   AccountExportCredentials,
   AccountExportManifest,
   AccountExportRecord,
-} from "@rakazo/contracts";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/contracts";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { Prisma, PrismaClient } from "./client.js";
 import { runAsTenant } from "./row-security.js";
 

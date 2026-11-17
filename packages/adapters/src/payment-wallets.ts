@@ -3,11 +3,14 @@ import type {
   PaymentWalletCredential,
   PaymentWalletProvider,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { PaymentWalletDisconnected, SecretStoreUnavailableError } from "@rakazo/adapter-kit";
-import type { PaymentWalletStatus } from "@rakazo/contracts";
-import type { PaymentWallet, Prisma, PrismaClient } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/adapter-kit";
+import {
+  PaymentWalletDisconnected,
+  SecretStoreUnavailableError,
+} from "@rakazo_mickvvw/adapter-kit";
+import type { PaymentWalletStatus } from "@rakazo_mickvvw/contracts";
+import type { PaymentWallet, Prisma, PrismaClient } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { advisoryLock } from "./advisory-lock.js";
 import { withRefreshLock } from "./refresh-lock.js";
 import { deleteSecretBestEffort, holdSecretNotifications } from "./secret-store-factory.js";

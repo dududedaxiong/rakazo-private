@@ -1,4 +1,4 @@
-import { sameModelId } from "@rakazo/core";
+import { sameModelId } from "@rakazo_mickvvw/core";
 
 /** Which model list a timeline model name points at. */
 export type ModelLocateKind = "chat" | "translation" | "image" | "video";

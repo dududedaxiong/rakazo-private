@@ -1,4 +1,4 @@
-import type { ProductEvent } from "@rakazo/contracts";
+import type { ProductEvent } from "@rakazo_mickvvw/contracts";
 import { abortableDelay } from "./async.js";
 import { isRetryableError, retryDelayMs } from "./retry-policy.js";
 

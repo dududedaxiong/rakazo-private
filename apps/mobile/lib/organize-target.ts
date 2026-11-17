@@ -1,4 +1,4 @@
-import type { SpaceBot, SpaceGroup } from "@rakazo/contracts";
+import type { SpaceBot, SpaceGroup } from "@rakazo_mickvvw/contracts";
 import { captureApiRequestContext, rpc } from "./api";
 import type { MobileBot, MobileBotSection, MobileGroup, MobileSpace } from "./mobile-types";
 

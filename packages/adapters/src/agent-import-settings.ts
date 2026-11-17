@@ -3,8 +3,11 @@ import type {
   AgentImportStatus,
   AgentImportWarning,
   McpServerConfigInput,
-} from "@rakazo/contracts";
-import { isValidTimeZone, McpServerConfigInput as McpServerConfigSchema } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
+import {
+  isValidTimeZone,
+  McpServerConfigInput as McpServerConfigSchema,
+} from "@rakazo_mickvvw/contracts";
 import {
   AGENT_IMPORT_PROVIDER_KEYS,
   mcpServerImportable,
@@ -12,7 +15,7 @@ import {
   normalizeImportProvider,
   parseDotEnv,
   readAgentImportConfig,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { isCatalogProviderBaseUrl, listPiCatalog } from "./pi-models.js";
 
 /**

@@ -122,7 +122,7 @@ vi.mock("./translation", () => ({
   translationSettingsFromBot: () => ({}),
 }));
 
-vi.mock("@rakazo/chat-ui/native", () => ({
+vi.mock("@rakazo_mickvvw/chat-ui/native", () => ({
   markdownCodeBlocks: () => [],
 }));
 

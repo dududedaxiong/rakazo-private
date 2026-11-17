@@ -1,5 +1,5 @@
-import type { Connection, ConnectionCatalogItem, Me } from "@rakazo/contracts";
-import { ConnectionCatalogItemSchema, ConnectionSchema } from "@rakazo/contracts";
+import type { Connection, ConnectionCatalogItem, Me } from "@rakazo_mickvvw/contracts";
+import { ConnectionCatalogItemSchema, ConnectionSchema } from "@rakazo_mickvvw/contracts";
 import { Directory, File, Paths } from "expo-file-system";
 import { currentApiBase, rpc, selectedSpaceId } from "./api";
 import { t } from "./i18n";

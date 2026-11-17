@@ -9,9 +9,9 @@ import type {
   Space,
   SpaceNavigation,
   ThreadSnapshot,
-} from "@rakazo/contracts";
-import type { LiveThreadMessage, LiveThreadRun, ThreadHistory } from "@rakazo/core";
-import { channelMessageLine, prependThreadHistoryPage } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import type { LiveThreadMessage, LiveThreadRun, ThreadHistory } from "@rakazo_mickvvw/core";
+import { channelMessageLine, prependThreadHistoryPage } from "@rakazo_mickvvw/core";
 
 export type MobileBot = Pick<
   Bot,

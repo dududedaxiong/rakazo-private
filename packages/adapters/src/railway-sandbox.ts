@@ -12,9 +12,9 @@ import type {
   SandboxProvider,
   ScreenRequest,
   TerminalRequest,
-} from "@rakazo/adapter-kit";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
-import { COMPUTER_CACHE_ENV } from "@rakazo/core/node/desktop-runtime";
+} from "@rakazo_mickvvw/adapter-kit";
+import { boundedSandboxCommandTimeoutMs } from "@rakazo_mickvvw/core";
+import { COMPUTER_CACHE_ENV } from "@rakazo_mickvvw/core/node/desktop-runtime";
 import type * as Railway from "railway";
 import type { ConnectOptions, Sandbox, SandboxStatus } from "railway";
 import WebSocket from "ws";

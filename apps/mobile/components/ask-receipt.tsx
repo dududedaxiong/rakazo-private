@@ -1,6 +1,6 @@
-import type { AskReceipt } from "@rakazo/contracts";
-import { receiptItems } from "@rakazo/core";
-import { fontWeight, typeScale } from "@rakazo/ui-tokens";
+import type { AskReceipt } from "@rakazo_mickvvw/contracts";
+import { receiptItems } from "@rakazo_mickvvw/core";
+import { fontWeight, typeScale } from "@rakazo_mickvvw/ui-tokens";
 import { StyleSheet, Text, View } from "react-native";
 import { useI18n } from "../lib/i18n";
 import { useMobileTokens } from "../lib/native";

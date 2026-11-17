@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { ThreadMessage } from "@rakazo/contracts";
+import type { ThreadMessage } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   cn,
@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
   Switch,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { Download, ImagePlus, RotateCcw, X, ZoomIn } from "lucide-react";
 import type { MouseEvent as ReactMouseEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";

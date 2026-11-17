@@ -1,5 +1,5 @@
-import type { AdapterContext, JobPublisher } from "@rakazo/adapter-kit";
-import type { Actor, Group, MessageBlock } from "@rakazo/contracts";
+import type { AdapterContext, JobPublisher } from "@rakazo_mickvvw/adapter-kit";
+import type { Actor, Group, MessageBlock } from "@rakazo_mickvvw/contracts";
 import {
   BOT_INSTRUCTIONS_MAX_LENGTH,
   BotSectionName,
@@ -13,9 +13,13 @@ import {
   ThinkingLevelSchema,
   TimeZoneSchema,
   UpdateGroupInput,
-} from "@rakazo/contracts";
-import { CARD_TITLE_ESCAPED_CHARACTERS, ONCE_ROUTINE_CRON, redactSecrets } from "@rakazo/core";
-import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import {
+  CARD_TITLE_ESCAPED_CHARACTERS,
+  ONCE_ROUTINE_CRON,
+  redactSecrets,
+} from "@rakazo_mickvvw/core";
+import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
 import {
   commitBotUpdate,
   createGroupRepos,
@@ -24,8 +28,8 @@ import {
   IsolationError,
   isRecordNotFound,
   SpaceDeletionInProgressError,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { FleetCardSummary } from "./approval-ask.js";
 import { approvalDetailLength, MAX_APPROVAL_SUMMARY_LENGTH } from "./approval-ask.js";
 import { attachedImageArtifactIds, resolveUpdateBotAvatar } from "./bot-avatar.js";

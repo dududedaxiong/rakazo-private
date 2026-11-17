@@ -1,5 +1,5 @@
-import type { MessageBlock, ModelSwitchAttempt, ModelSwitches } from "@rakazo/contracts";
-import { sameModelId } from "@rakazo/core";
+import type { MessageBlock, ModelSwitchAttempt, ModelSwitches } from "@rakazo_mickvvw/contracts";
+import { sameModelId } from "@rakazo_mickvvw/core";
 
 /** A timeline a sheet can render, whether it came from a message or a translation. */
 export type ModelSwitchTimeline = {

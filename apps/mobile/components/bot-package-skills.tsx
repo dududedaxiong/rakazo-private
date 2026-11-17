@@ -1,5 +1,5 @@
-import type { BotPackageReceipt, BotPackageSkillReceipt } from "@rakazo/contracts";
-import { displayName } from "@rakazo/core";
+import type { BotPackageReceipt, BotPackageSkillReceipt } from "@rakazo_mickvvw/contracts";
+import { displayName } from "@rakazo_mickvvw/core";
 import { useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { useI18n } from "../lib/i18n";

@@ -5,8 +5,8 @@ import type {
   VoiceCatalogEntry,
   VoiceInfo,
   VoiceStatus,
-} from "@rakazo/contracts";
-import { primaryBotModel } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
+import { primaryBotModel } from "@rakazo_mickvvw/contracts";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";

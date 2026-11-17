@@ -1,5 +1,5 @@
-import type { ShareCardContent, ShareCardPlan, ShareCardStyle } from "@rakazo/core";
-import { SHARE_CARD_PADDING, SHARE_CARD_WIDTH, shareCardFont } from "@rakazo/core";
+import type { ShareCardContent, ShareCardPlan, ShareCardStyle } from "@rakazo_mickvvw/core";
+import { SHARE_CARD_PADDING, SHARE_CARD_WIDTH, shareCardFont } from "@rakazo_mickvvw/core";
 
 /** Long enough for a local canvas draw plus image decode on a slow phone. */
 export const SHARE_CARD_RENDER_TIMEOUT_MS = 15_000;

@@ -1,5 +1,9 @@
-import type { SpaceBot, SpaceGroup } from "@rakazo/contracts";
-import { botAvatarActivity, groupBotsForSidebar, logoAvatarNeedsAttention } from "@rakazo/core";
+import type { SpaceBot, SpaceGroup } from "@rakazo_mickvvw/contracts";
+import {
+  botAvatarActivity,
+  groupBotsForSidebar,
+  logoAvatarNeedsAttention,
+} from "@rakazo_mickvvw/core";
 import { rpc, selectedSpaceId } from "./api";
 import { adoptDeletedSpaceFallback, selectSpace } from "./api-server";
 import { t } from "./i18n";

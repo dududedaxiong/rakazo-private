@@ -1,5 +1,5 @@
 import { randomInt } from "node:crypto";
-import type { PrismaClient } from "@rakazo/db";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 
 /** Invite codes use an unambiguous alphabet: no 0/O, 1/I, or L to misread. */
 const INVITE_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";

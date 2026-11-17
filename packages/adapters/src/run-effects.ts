@@ -2,9 +2,9 @@ import {
   isToolEffectIdempotencyKey,
   legacyScopedToolEffectIdempotencyKey,
   stableJsonValue,
-} from "@rakazo/core/node/approval-effect-key";
-import type { Prisma } from "@rakazo/db";
-import { assertRunCanWriteHistory, RUN_TURN_CHECKPOINT_KIND } from "@rakazo/db";
+} from "@rakazo_mickvvw/core/node/approval-effect-key";
+import type { Prisma } from "@rakazo_mickvvw/db";
+import { assertRunCanWriteHistory, RUN_TURN_CHECKPOINT_KIND } from "@rakazo_mickvvw/db";
 import {
   boundDirectApprovalDetails,
   catalogApprovalConnectorId,

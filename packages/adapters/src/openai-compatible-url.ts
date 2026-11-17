@@ -1,4 +1,4 @@
-import type { CompatibleEndpointPreset } from "@rakazo/contracts";
+import type { CompatibleEndpointPreset } from "@rakazo_mickvvw/contracts";
 import {
   ipVersion,
   isCloudMetadataHost,
@@ -9,7 +9,7 @@ import {
   normalizeHost,
   normalizeOpenAiCompatibleBaseUrl,
   OPENAI_COMPATIBLE_PROVIDER_ID,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 
 export { normalizeOpenAiCompatibleBaseUrl, OPENAI_COMPATIBLE_PROVIDER_ID };
 

@@ -1,8 +1,8 @@
 import { setTimeout as sleep } from "node:timers/promises";
-import type { JobPublisher, JobWorkerHost } from "@rakazo/adapter-kit";
-import { unwrapEnvFromKeyManager } from "@rakazo/adapters";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
-import { stopOnShutdownSignals } from "@rakazo/core/node/shutdown-signals";
+import type { JobPublisher, JobWorkerHost } from "@rakazo_mickvvw/adapter-kit";
+import { unwrapEnvFromKeyManager } from "@rakazo_mickvvw/adapters";
+import { loadRootEnv } from "@rakazo_mickvvw/core/node/load-root-env";
+import { stopOnShutdownSignals } from "@rakazo_mickvvw/core/node/shutdown-signals";
 import { startWorkerHealth, watchEventLoopStalls } from "./health.js";
 import { createWorkerSecretStore } from "./secret-store.js";
 
@@ -58,8 +58,8 @@ import {
   userDeviceForwardSecret,
   withRunWorker,
   withSecretPersistence,
-} from "@rakazo/adapters";
-import { resolveSupervisorToken } from "@rakazo/core";
+} from "@rakazo_mickvvw/adapters";
+import { resolveSupervisorToken } from "@rakazo_mickvvw/core";
 import {
   createBoardEvents,
   createDb,
@@ -74,10 +74,10 @@ import {
   rowSecurityWarning,
   runAsSystem,
   verifyContentKeys,
-} from "@rakazo/db";
-import { SERVICE_NAMES } from "@rakazo/logging";
-import { createRootLogger } from "@rakazo/logging/axiom";
-import { MarkdownMemoryStore } from "@rakazo/memory";
+} from "@rakazo_mickvvw/db";
+import { SERVICE_NAMES } from "@rakazo_mickvvw/logging";
+import { createRootLogger } from "@rakazo_mickvvw/logging/axiom";
+import { MarkdownMemoryStore } from "@rakazo_mickvvw/memory";
 
 const logger = await createRootLogger(SERVICE_NAMES.worker);
 

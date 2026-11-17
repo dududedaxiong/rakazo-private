@@ -30,7 +30,7 @@ import type {
   StreamedPortableFile,
   TerminalRequest,
   WorkspaceExportLimits,
-} from "@rakazo/adapter-kit";
+} from "@rakazo_mickvvw/adapter-kit";
 import {
   SandboxDamagedError,
   SandboxRateLimitError,
@@ -38,10 +38,10 @@ import {
   SandboxUnavailableError,
   SandboxUnresponsiveError,
   WorkspaceTooLargeError,
-} from "@rakazo/adapter-kit";
-import type { ComputerSize } from "@rakazo/contracts";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/adapter-kit";
+import type { ComputerSize } from "@rakazo_mickvvw/contracts";
+import { boundedSandboxCommandTimeoutMs } from "@rakazo_mickvvw/core";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import {
   BoatApiError,
   BoatRequestGate,

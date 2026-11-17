@@ -1,4 +1,4 @@
-import type { RakazoDesktopSpeechEvent } from "@rakazo/contracts";
+import type { RakazoDesktopSpeechEvent } from "@rakazo_mickvvw/contracts";
 import { desktopBridge } from "./desktop.js";
 
 let sessions = 0;

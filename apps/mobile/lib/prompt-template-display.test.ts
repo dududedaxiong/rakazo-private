@@ -1,4 +1,4 @@
-import type { PromptTemplate } from "@rakazo/contracts";
+import type { PromptTemplate } from "@rakazo_mickvvw/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("expo-localization", () => ({

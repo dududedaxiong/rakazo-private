@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import type { SecretStore } from "@rakazo/adapter-kit";
-import type { AgentImportSettings, ImportedMcpServer } from "@rakazo/adapters";
+import type { SecretStore } from "@rakazo_mickvvw/adapter-kit";
+import type { AgentImportSettings, ImportedMcpServer } from "@rakazo_mickvvw/adapters";
 import {
   BUILTIN_AGENT_SKILLS,
   isCatalogModelChoice,
   readAgentImportSettings,
-} from "@rakazo/adapters";
+} from "@rakazo_mickvvw/adapters";
 import type {
   Actor,
   AgentImportCreateInput,
@@ -22,29 +22,29 @@ import type {
   CreateRoutineInput as CreateRoutineInputType,
   McpServerConfigInput,
   MessageBlock,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   BOT_INSTRUCTIONS_MAX_LENGTH,
   CreateRoutineInput,
   isValidTimeZone,
   MEMORY_INDEX_PATH,
-} from "@rakazo/contracts";
-import type { SkillFiles } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import type { SkillFiles } from "@rakazo_mickvvw/core";
 import {
   combineImportedInstructions,
   parseAgentImport,
   readAgentImportFolder,
   renameRoutineSkillMentions,
   resolveAgentImportNames,
-} from "@rakazo/core";
-import type { McpServer as McpServerRow, Prisma, PrismaClient, Routine } from "@rakazo/db";
+} from "@rakazo_mickvvw/core";
+import type { McpServer as McpServerRow, Prisma, PrismaClient, Routine } from "@rakazo_mickvvw/db";
 import {
   appendEventInTransaction,
   availableInSpace,
   createThreadMessageInTransaction,
   isUniqueViolation,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 
 type Reader = Pick<Prisma.TransactionClient, "memoryDocument" | "agentSkill" | "mcpServer">;
 type Stored = Awaited<ReturnType<SecretStore["put"]>> | null;

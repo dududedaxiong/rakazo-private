@@ -1,7 +1,12 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotSecretMetadata, VaultRevealed } from "@rakazo/contracts";
-import { BotSecretName, cardExpiry, commandVariableName, vaultKind } from "@rakazo/contracts";
-import { Button } from "@rakazo/ui-web";
+import type { BotSecretMetadata, VaultRevealed } from "@rakazo_mickvvw/contracts";
+import {
+  BotSecretName,
+  cardExpiry,
+  commandVariableName,
+  vaultKind,
+} from "@rakazo_mickvvw/contracts";
+import { Button } from "@rakazo_mickvvw/ui-web";
 import { Check, Copy, Eye, EyeOff } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";

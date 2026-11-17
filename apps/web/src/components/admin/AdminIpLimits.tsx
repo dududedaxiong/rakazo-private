@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { RegistrationSettings } from "@rakazo/contracts";
+import type { RegistrationSettings } from "@rakazo_mickvvw/contracts";
 import {
   Badge,
   Button,
@@ -10,7 +10,7 @@ import {
   Spinner,
   Switch,
   toast,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSpaceQueries } from "../../lib/query";

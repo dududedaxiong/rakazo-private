@@ -1,5 +1,5 @@
-import { displayName } from "@rakazo/core";
-import { getLogger } from "@rakazo/logging";
+import { displayName } from "@rakazo_mickvvw/core";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { writeBotInstructions } from "./bot-instructions.js";
 import type { Bot, Prisma, PrismaClient } from "./client.js";
 import { appendEventInTransaction, THREAD_LOCK_TRANSACTION_OPTIONS } from "./events.js";

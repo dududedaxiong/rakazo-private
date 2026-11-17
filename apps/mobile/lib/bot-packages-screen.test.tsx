@@ -1,5 +1,9 @@
 // @vitest-environment jsdom
-import type { BotPackageDocument, BotPackagePreview, BotPackageReceipt } from "@rakazo/contracts";
+import type {
+  BotPackageDocument,
+  BotPackagePreview,
+  BotPackageReceipt,
+} from "@rakazo_mickvvw/contracts";
 import type { EffectCallback, ReactNode } from "react";
 import { act, createElement, useEffect } from "react";
 import type { Root } from "react-dom/client";

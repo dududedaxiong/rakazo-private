@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { buttonVariants } from "@rakazo/ui-web";
+import { buttonVariants } from "@rakazo_mickvvw/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, Menu, X } from "lucide-react";
 import { useState } from "react";

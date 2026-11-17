@@ -1,10 +1,17 @@
 import { i18n } from "@lingui/core";
 import { t as translate } from "@lingui/core/macro";
 import { useLingui } from "@lingui/react/macro";
-import { ChatMarkdown } from "@rakazo/chat-ui/web";
-import { artifactPreviewKind, isAttachmentAudioMimeType } from "@rakazo/contracts";
-import { fileSizeParts } from "@rakazo/core";
-import { Button, Dialog, DialogClose, DialogContent, DialogTitle, Spinner } from "@rakazo/ui-web";
+import { ChatMarkdown } from "@rakazo_mickvvw/chat-ui/web";
+import { artifactPreviewKind, isAttachmentAudioMimeType } from "@rakazo_mickvvw/contracts";
+import { fileSizeParts } from "@rakazo_mickvvw/core";
+import {
+  Button,
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+  Spinner,
+} from "@rakazo_mickvvw/ui-web";
 import { Code2, Download, FileText, Play, X } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
 import { useEffect, useRef, useState } from "react";

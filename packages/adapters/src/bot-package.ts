@@ -2,7 +2,7 @@ import type {
   BotPackageDocument,
   BotPackageLeftOut,
   BotPackagePreviewInput,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   BOT_PACKAGE_FORMAT,
   BOT_PACKAGE_MAX_BYTES,
@@ -17,15 +17,15 @@ import {
   BotPackageSkillSchema,
   botPackageUtf8Bytes,
   TimeZoneSchema,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   buildSkillMd,
   hasMixedOneShotSchedule,
   isOneShotRoutineCrons,
   nextCronDateAcrossStrict,
   parseSkillMd,
-} from "@rakazo/core";
-import { redactSecretText } from "@rakazo/logging";
+} from "@rakazo_mickvvw/core";
+import { redactSecretText } from "@rakazo_mickvvw/logging";
 
 export class BotPackageError extends Error {}
 

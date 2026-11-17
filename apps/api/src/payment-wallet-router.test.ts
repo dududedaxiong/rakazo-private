@@ -1,8 +1,8 @@
 import { RPCHandler } from "@orpc/server/fetch";
-import type { PaymentWalletProvider } from "@rakazo/adapter-kit";
-import { createPaymentWalletProvider } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { PaymentWalletProvider } from "@rakazo_mickvvw/adapter-kit";
+import { createPaymentWalletProvider } from "@rakazo_mickvvw/adapters";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";

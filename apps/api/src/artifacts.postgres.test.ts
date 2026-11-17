@@ -1,8 +1,8 @@
-import type { ArtifactStore } from "@rakazo/adapter-kit";
-import type { Actor } from "@rakazo/contracts";
-import { MCP_APP_MIME_TYPE } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { asSystem, createDb, IsolationError, runAsTenant } from "@rakazo/db";
+import type { ArtifactStore } from "@rakazo_mickvvw/adapter-kit";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import { MCP_APP_MIME_TYPE } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { asSystem, createDb, IsolationError, runAsTenant } from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createOwnedArtifact, listSpaceArtifacts } from "./artifacts.js";
 

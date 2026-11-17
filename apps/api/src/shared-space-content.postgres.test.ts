@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { asSystem, createDb, createGroupRepos, createRepos, runAsTenant } from "@rakazo/db";
-import { MarkdownMemoryStore } from "@rakazo/memory";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { asSystem, createDb, createGroupRepos, createRepos, runAsTenant } from "@rakazo_mickvvw/db";
+import { MarkdownMemoryStore } from "@rakazo_mickvvw/memory";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { RouterDeps } from "./router.js";
 import { createRouter } from "./router.js";

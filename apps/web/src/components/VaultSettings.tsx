@@ -1,7 +1,12 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotSecretMetadata, SettingsScope, VaultKind, VaultRevealed } from "@rakazo/contracts";
-import { isIdentityConfirmationRequired, VAULT_KINDS, vaultKind } from "@rakazo/contracts";
-import { fetchFresh, writeSaved } from "@rakazo/core/query";
+import type {
+  BotSecretMetadata,
+  SettingsScope,
+  VaultKind,
+  VaultRevealed,
+} from "@rakazo_mickvvw/contracts";
+import { isIdentityConfirmationRequired, VAULT_KINDS, vaultKind } from "@rakazo_mickvvw/contracts";
+import { fetchFresh, writeSaved } from "@rakazo_mickvvw/core/query";
 import {
   Button,
   DropdownMenu,
@@ -10,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   ListSearchInput,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronRight, Plus } from "lucide-react";
 import { Fragment, useEffect, useRef, useState } from "react";

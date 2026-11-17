@@ -1,6 +1,6 @@
 import { useLingui } from "@lingui/react/macro";
-import { isModelRequiredSendError } from "@rakazo/core";
-import { Button } from "@rakazo/ui-web";
+import { isModelRequiredSendError } from "@rakazo_mickvvw/core";
+import { Button } from "@rakazo_mickvvw/ui-web";
 import { FileIcon, X } from "lucide-react";
 import type { RefObject } from "react";
 import { useEffect, useId, useRef } from "react";

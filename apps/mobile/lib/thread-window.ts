@@ -1,11 +1,11 @@
-import type { ThreadScrollState } from "@rakazo/core";
+import type { ThreadScrollState } from "@rakazo_mickvvw/core";
 import {
   foldPeerReplies,
   jumpTargetId,
   leaveThreadWindow,
   openThreadWindow,
   peerExchangeLines,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { rpc } from "./api";
 import { isIntegrationsScopeCurrent } from "./integrations-cache";

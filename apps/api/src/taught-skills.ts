@@ -1,13 +1,17 @@
 import { randomUUID } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import type { AgentHomeStore, JobPublisher, SandboxProvider } from "@rakazo/adapter-kit";
+import type { AgentHomeStore, JobPublisher, SandboxProvider } from "@rakazo_mickvvw/adapter-kit";
 import {
   createAdapterContext,
   runContinueJob,
   skillTeachingExpireJob,
   skillTeachingExpireJobKey,
-} from "@rakazo/adapter-kit";
-import type { ComputerExecutionLease, TaughtSkillRow, TeachComputerInput } from "@rakazo/adapters";
+} from "@rakazo_mickvvw/adapter-kit";
+import type {
+  ComputerExecutionLease,
+  TaughtSkillRow,
+  TeachComputerInput,
+} from "@rakazo_mickvvw/adapters";
 import {
   acquireComputerExecutionLease,
   anotherPersonHoldsControl,
@@ -31,24 +35,24 @@ import {
   screenLeaseIdForRun,
   teachingControlLeaseExpiresAt,
   userControlHeldBy,
-} from "@rakazo/adapters";
-import type { Actor, MessageBlock, TaughtSkill } from "@rakazo/contracts";
-import type { SkillPlaybook, TeachRecordingEvent } from "@rakazo/core";
+} from "@rakazo_mickvvw/adapters";
+import type { Actor, MessageBlock, TaughtSkill } from "@rakazo_mickvvw/contracts";
+import type { SkillPlaybook, TeachRecordingEvent } from "@rakazo_mickvvw/core";
 import {
   ACTIVE_RUN_STATUSES,
   buildPlaybookFromRecording,
   COMPUTER_USING_RUNS,
   formatSkillRunPrompt,
   teachRecordingTtlMs,
-} from "@rakazo/core";
-import type { createRepos, PrismaClient, ThreadEvents } from "@rakazo/db";
+} from "@rakazo_mickvvw/core";
+import type { createRepos, PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
 import {
   clearEndedRunState,
   expireComputerExecutionLeases,
   IsolationError,
   isUniqueViolation,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 
 export interface TaughtSkillsDeps {
   prisma: PrismaClient;

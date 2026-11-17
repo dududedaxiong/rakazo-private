@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
 import { splitTrailingMark } from "./media-mark.js";
 import { redactShareText } from "./share-redaction.js";
 import type { LiveThreadMessage } from "./thread-snapshot-events.js";

@@ -4,20 +4,20 @@ import type {
   TeamChatInboundMessage,
   TeamChatSendRequest,
   TeamChatSendResult,
-} from "@rakazo/adapter-kit";
-import { runContinueJob } from "@rakazo/adapter-kit";
-import type { MessageBlock } from "@rakazo/contracts";
-import { ATTACHMENT_MAX_COUNT } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/adapter-kit";
+import { runContinueJob } from "@rakazo_mickvvw/adapter-kit";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
+import { ATTACHMENT_MAX_COUNT } from "@rakazo_mickvvw/contracts";
 import {
   botMessageMaxHops,
   messageBlockForArtifact,
   promptTextForAttachments,
   teamChatPrompt,
   teamChatResponseText,
-} from "@rakazo/core";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { clearEndedRunState, teamChatRunClientNonce } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/core";
+import type { PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
+import { clearEndedRunState, teamChatRunClientNonce } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { InboundAttachmentStore } from "./inbound-attachments.js";
 import { storeInboundAttachments } from "./inbound-attachments.js";
 import type { MessagingReceipts } from "./messaging-receipts.js";

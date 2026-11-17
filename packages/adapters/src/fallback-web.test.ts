@@ -1,4 +1,4 @@
-import type { AdapterContext, WebProvider } from "@rakazo/adapter-kit";
+import type { AdapterContext, WebProvider } from "@rakazo_mickvvw/adapter-kit";
 import { describe, expect, it } from "vitest";
 import { FakeWebProvider } from "./fake-web.js";
 import { FallbackWebProvider } from "./fallback-web.js";

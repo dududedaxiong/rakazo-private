@@ -1,6 +1,6 @@
-import type { BotModelEntry } from "@rakazo/contracts";
-import { moveBotModelToFront } from "@rakazo/contracts";
-import type { ChatModelChoice } from "@rakazo/core";
+import type { BotModelEntry } from "@rakazo_mickvvw/contracts";
+import { moveBotModelToFront } from "@rakazo_mickvvw/contracts";
+import type { ChatModelChoice } from "@rakazo_mickvvw/core";
 import { useNavigation } from "expo-router";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Modal, Platform, Text, useWindowDimensions, View } from "react-native";

@@ -1,4 +1,4 @@
-import type { ConversationShareSummary } from "@rakazo/contracts";
+import type { ConversationShareSummary } from "@rakazo_mickvvw/contracts";
 
 export type ConversationShareState = "revoked" | "expired" | "live";
 

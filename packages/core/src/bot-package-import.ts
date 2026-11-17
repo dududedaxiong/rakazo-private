@@ -4,8 +4,8 @@ import type {
   BotPackagePreviewInput,
   BotPackageReceipt,
   BotPackageRecentReceipt,
-} from "@rakazo/contracts";
-import { BOT_PACKAGE_MAX_BYTES, botPackageUtf8Bytes } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
+import { BOT_PACKAGE_MAX_BYTES, botPackageUtf8Bytes } from "@rakazo_mickvvw/contracts";
 
 export type BotPackageImportState = {
   source: string;

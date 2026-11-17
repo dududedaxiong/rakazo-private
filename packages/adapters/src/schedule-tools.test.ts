@@ -1,6 +1,6 @@
-import { routineWakeupJob } from "@rakazo/adapter-kit";
-import { ONCE_ROUTINE_CRON } from "@rakazo/core";
-import { Prisma } from "@rakazo/db";
+import { routineWakeupJob } from "@rakazo_mickvvw/adapter-kit";
+import { ONCE_ROUTINE_CRON } from "@rakazo_mickvvw/core";
+import { Prisma } from "@rakazo_mickvvw/db";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   cancelScheduleFromTool,

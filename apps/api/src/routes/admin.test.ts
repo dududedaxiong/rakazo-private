@@ -1,12 +1,12 @@
 import { createRouterClient } from "@orpc/server";
-import type * as Db from "@rakazo/db";
-import type { PrismaClient } from "@rakazo/db";
+import type * as Db from "@rakazo_mickvvw/db";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { describe, expect, it, vi } from "vitest";
 import type { AccountStatusDeps } from "../account-status.js";
 import type { RouterDeps } from "../router.js";
 import { createRouter } from "../router.js";
 
-vi.mock("@rakazo/db", async (original) => ({
+vi.mock("@rakazo_mickvvw/db", async (original) => ({
   ...(await original<typeof Db>()),
   cancelDeactivatedAccountRuns: vi.fn(async () => 0),
   leaveInvitedSpaces: vi.fn(async () => []),

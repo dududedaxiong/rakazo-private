@@ -1,5 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
-import type { ThinkingLevel } from "@rakazo/contracts";
+import type { ThinkingLevel } from "@rakazo_mickvvw/contracts";
 import {
   compatibleEndpointPresets,
   MAX_MODEL_CONTEXT_WINDOW,
@@ -12,14 +12,14 @@ import {
   parseModelContextWindow,
   parseModelMaxImagesPerPrompt,
   parseModelMaxTokens,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   clampCatalogThinkingLevel,
   compatibleThinkingLevels,
   connectionFormFields,
   pickCatalogModelId,
   popularModelProvidersFirst,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { useMemo, useState } from "react";
 import { useCopyText } from "../../lib/copy-text";
 import { providerDisplayName } from "../../lib/localized-provider-hint";
@@ -159,7 +159,7 @@ export function useOnboardingModel({
       return providerDisplayName(id, byId.get(id)?.providerName ?? id, auth);
     };
     const main = [
-      ...(billingEnabled ? [{ value: CREDITS_OPTION, label: t`Rakazo credits` }] : []),
+      ...(billingEnabled ? [{ value: CREDITS_OPTION, label: t`Rakazo mickvvw credits` }] : []),
       ...MAIN_PROVIDER_OPTIONS.filter((option) => byId.has(option.provider)).flatMap((option) => {
         const item = {
           value: providerOptionValue(option.provider, option.auth),

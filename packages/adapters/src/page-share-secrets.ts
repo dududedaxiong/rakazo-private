@@ -1,6 +1,6 @@
-import type { SecretStore } from "@rakazo/adapter-kit";
-import type { PageShareSecret } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { SecretStore } from "@rakazo_mickvvw/adapter-kit";
+import type { PageShareSecret } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 
 /**
  * Deleting a page link's secret row does not reach a remote secret provider, so once that delete

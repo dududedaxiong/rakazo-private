@@ -1,5 +1,5 @@
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import type { AccountItem, Bot, BotSection } from "@rakazo/contracts";
+import type { AccountItem, Bot, BotSection } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   Checkbox,
@@ -12,7 +12,7 @@ import {
   Input,
   RadioGroup,
   RadioGroupItem,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { Lock } from "lucide-react";
 import { useId, useState } from "react";
 import { ConfirmDialog } from "../../components/ConfirmDialog";
@@ -359,13 +359,7 @@ export function DeleteMessagesDialog({
   return (
     <ConfirmDialog
       onCancel={onCancel}
-      title={
-        <Plural
-          value={count}
-          one="Delete # message?"
-          other="Delete # messages?"
-        />
-      }
+      title={<Plural value={count} one="Delete # message?" other="Delete # messages?" />}
       description={<Trans>This can't be undone.</Trans>}
       error={error}
       busy={deleting}

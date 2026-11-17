@@ -28,8 +28,8 @@ import type {
   ScreenRequest,
   ScreenSession,
   WorkspaceDirectoryRequest,
-} from "@rakazo/adapter-kit";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
+} from "@rakazo_mickvvw/adapter-kit";
+import { boundedSandboxCommandTimeoutMs } from "@rakazo_mickvvw/core";
 import {
   applyPlaceholderAction,
   boundedComputerActions,

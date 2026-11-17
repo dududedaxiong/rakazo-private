@@ -1,5 +1,10 @@
 import { useLingui } from "@lingui/react/macro";
-import type { Me, ModelHealthReport, SettingsScope, ThinkingLevel } from "@rakazo/contracts";
+import type {
+  Me,
+  ModelHealthReport,
+  SettingsScope,
+  ThinkingLevel,
+} from "@rakazo_mickvvw/contracts";
 import {
   compatibleEndpointPresets,
   connectionDisplayName,
@@ -8,7 +13,7 @@ import {
   matchCompatibleEndpointPreset,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   savedCompatibleEndpointMatches,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   clampCatalogThinkingLevel,
   compatibleConnectionReady,
@@ -19,8 +24,8 @@ import {
   modelConnectRequest,
   popularModelProvidersFirst,
   savedCompatibleModelIds,
-} from "@rakazo/core";
-import { fetchFresh } from "@rakazo/core/query";
+} from "@rakazo_mickvvw/core";
+import { fetchFresh } from "@rakazo_mickvvw/core/query";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useCopyText } from "../../lib/copy-text";

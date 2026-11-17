@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import type { SandboxProvider } from "@rakazo/adapter-kit";
-import { computerControlExpireJobKey } from "@rakazo/adapter-kit";
-import type { ComputerExecutionLease } from "@rakazo/adapters";
+import type { SandboxProvider } from "@rakazo_mickvvw/adapter-kit";
+import { computerControlExpireJobKey } from "@rakazo_mickvvw/adapter-kit";
+import type { ComputerExecutionLease } from "@rakazo_mickvvw/adapters";
 import {
   applyTeachingDesktopInput,
   COMPUTER_SCREEN_UNAVAILABLE,
@@ -32,24 +32,24 @@ import {
   takeoverLeaseMs,
   toComputerRef,
   touchRunningComputer,
-} from "@rakazo/adapters";
+} from "@rakazo_mickvvw/adapters";
 import {
   attachmentMaxBytes,
   attachmentSizeLabel,
   ComputerCommandSchema,
   foldComputerCommands,
-} from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, COMPUTER_USING_RUNS, scrollDirection } from "@rakazo/core";
-import { addScreenProxyCapability } from "@rakazo/core/node/screen-capability";
-import type { ComputerRunEnd } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import { ACTIVE_RUN_STATUSES, COMPUTER_USING_RUNS, scrollDirection } from "@rakazo_mickvvw/core";
+import { addScreenProxyCapability } from "@rakazo_mickvvw/core/node/screen-capability";
+import type { ComputerRunEnd } from "@rakazo_mickvvw/db";
 import {
   expireComputerExecutionLeases,
   IsolationError,
   isRecordNotFound,
   parseComputerMode,
   recordComputerRunEnd,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import {
   acquireBootLease,
   assertNotAnotherPersonsControl,

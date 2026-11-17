@@ -1,5 +1,5 @@
-import type { BotAvatarSet } from "@rakazo/contracts";
-import { splitPeerLabel } from "@rakazo/core";
+import type { BotAvatarSet } from "@rakazo_mickvvw/contracts";
+import { splitPeerLabel } from "@rakazo_mickvvw/core";
 import type { PressableProps } from "react-native";
 import { Pressable, StyleSheet, Text } from "react-native";
 import { mobileTokens } from "../lib/appearance";

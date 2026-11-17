@@ -8,7 +8,7 @@
  * so the composer and the voice chat screen can use it on their own.
  */
 
-import { abortableDelay, readJsonObjectWithin } from "@rakazo/core";
+import { abortableDelay, readJsonObjectWithin } from "@rakazo_mickvvw/core";
 import type { AudioRecorder } from "expo-audio";
 import { File } from "expo-file-system";
 import { captureApiRequestContext, rpc } from "./api";

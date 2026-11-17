@@ -5,7 +5,7 @@ import type {
   WebProvider,
   WebSearchHit,
   WebSearchRequest,
-} from "@rakazo/adapter-kit";
+} from "@rakazo_mickvvw/adapter-kit";
 import { z } from "zod";
 import { combineSignals } from "./connector-safety.js";
 import { clampMaxChars, clampMaxResults, clampOffset, pageWindow } from "./web-limits.js";

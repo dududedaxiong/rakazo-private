@@ -4,7 +4,7 @@ import type {
   ModelHeaderRow,
   ModelHealthReport,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   compatibleEndpointPresets,
   connectionDisplayName,
@@ -18,7 +18,7 @@ import {
   modelRoutingForm,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   savedCompatibleEndpointMatches,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   clampCatalogThinkingLevel,
   compatibleConnectionReady,
@@ -31,7 +31,7 @@ import {
   initialModelProbeState,
   modelConnectRequest,
   savedCompatibleModelIds,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {

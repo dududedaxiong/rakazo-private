@@ -1,10 +1,10 @@
-import type { MessageFavorite } from "@rakazo/contracts";
+import type { MessageFavorite } from "@rakazo_mickvvw/contracts";
 import {
   favoriteMessageId,
   favoriteSnippet,
   isTranslationFavorite,
   translationFavoriteId,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import type { createSpaceRpc } from "./rpc";
 

@@ -1,6 +1,6 @@
 import { Trans } from "@lingui/react/macro";
-import type { Bot } from "@rakazo/contracts";
-import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo/ui-web";
+import type { Bot } from "@rakazo_mickvvw/contracts";
+import { Button, Dialog, DialogClose, DialogContent, DialogTitle } from "@rakazo_mickvvw/ui-web";
 import { Check, X } from "lucide-react";
 
 export type BatchTranslateResult = {

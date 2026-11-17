@@ -1,6 +1,9 @@
 import { Trans } from "@lingui/react/macro";
-import type { Bot, PromptTemplate } from "@rakazo/contracts";
-import { BOT_INSTRUCTIONS_MAX_LENGTH, PROMPT_TEMPLATE_NAME_MAX_LENGTH } from "@rakazo/contracts";
+import type { Bot, PromptTemplate } from "@rakazo_mickvvw/contracts";
+import {
+  BOT_INSTRUCTIONS_MAX_LENGTH,
+  PROMPT_TEMPLATE_NAME_MAX_LENGTH,
+} from "@rakazo_mickvvw/contracts";
 import {
   Button,
   Checkbox,
@@ -10,7 +13,7 @@ import {
   DialogTitle,
   Input,
   Textarea,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useEffect, useState } from "react";
 import { rpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";

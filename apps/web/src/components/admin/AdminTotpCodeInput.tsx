@@ -1,5 +1,5 @@
 import { useLingui } from "@lingui/react/macro";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@rakazo/ui-web";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@rakazo_mickvvw/ui-web";
 
 /** Six-digit authenticator code input; submits itself once all six digits are in. */
 export function TotpCodeInput({

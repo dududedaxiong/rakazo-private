@@ -8,9 +8,9 @@ import type {
   VoiceSynthesizeRequest,
   VoiceTranscribeRequest,
   VoiceVerifyResult,
-} from "@rakazo/adapter-kit";
-import { VoiceAccountError } from "@rakazo/adapter-kit";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/adapter-kit";
+import { VoiceAccountError } from "@rakazo_mickvvw/adapter-kit";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import {
   isSpeechModelId,
   readVoiceAudio,

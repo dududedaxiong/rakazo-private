@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { i18n } from "@lingui/core";
-import type { ThreadMessage } from "@rakazo/contracts";
+import type { ThreadMessage } from "@rakazo_mickvvw/contracts";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import type { Root } from "react-dom/client";

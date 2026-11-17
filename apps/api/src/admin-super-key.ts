@@ -1,6 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import { recordSecurityEvent, runAsSystem } from "@rakazo/db";
+import { recordSecurityEvent, runAsSystem } from "@rakazo_mickvvw/db";
 import { checkAdminAttemptLimit } from "./admin-security.js";
 import type { RouterDeps } from "./router.js";
 

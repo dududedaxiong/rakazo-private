@@ -1,26 +1,26 @@
-import type { JobPublisher } from "@rakazo/adapter-kit";
+import type { JobPublisher } from "@rakazo_mickvvw/adapter-kit";
 import {
   routineJobKey,
   routineRetryJob,
   routineWakeupJob,
   runContinueJob,
   TransientModelError,
-} from "@rakazo/adapter-kit";
-import { ROUTINE_WATCH_DEFAULT_MINUTES } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/adapter-kit";
+import { ROUTINE_WATCH_DEFAULT_MINUTES } from "@rakazo_mickvvw/contracts";
 import {
   displayName,
   expandSkillReferencesInPrompt,
   isOneShotRoutineCrons,
   nextRoutineRunDateAcross,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import {
   accountDeactivated,
   isUniqueViolation,
   SpaceDeletionInProgressError,
   spaceTakesWork,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
-import { sanitizedError } from "@rakazo/logging/monitoring";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
+import { sanitizedError } from "@rakazo_mickvvw/logging/monitoring";
 import { protectedComputerLifecycleRefusal } from "./desktop-command-guard.js";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { routineRunModelPin } from "./model-selection.js";

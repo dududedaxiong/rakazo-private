@@ -1,5 +1,5 @@
-import type { RunActivityRow } from "@rakazo/contracts";
-import { isRetryableError } from "@rakazo/core";
+import type { RunActivityRow } from "@rakazo_mickvvw/contracts";
+import { isRetryableError } from "@rakazo_mickvvw/core";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchSpaceActivity } from "./activity";

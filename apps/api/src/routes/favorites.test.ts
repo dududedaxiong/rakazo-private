@@ -1,10 +1,10 @@
-import type { Actor } from "@rakazo/contracts";
-import type * as Db from "@rakazo/db";
-import { IsolationError } from "@rakazo/db";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type * as Db from "@rakazo_mickvvw/db";
+import { IsolationError } from "@rakazo_mickvvw/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { favoritesRoutes } from "./favorites.js";
 
-vi.mock("@rakazo/db", async (original) => {
+vi.mock("@rakazo_mickvvw/db", async (original) => {
   const actual = await original<typeof Db>();
   return {
     ...actual,
@@ -15,7 +15,7 @@ vi.mock("@rakazo/db", async (original) => {
   };
 });
 
-const mockedDb = vi.mocked(await import("@rakazo/db"));
+const mockedDb = vi.mocked(await import("@rakazo_mickvvw/db"));
 
 const actor = { userId: "user-1", spaceId: "space-1" } as Actor;
 

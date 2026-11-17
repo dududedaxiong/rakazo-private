@@ -22,7 +22,7 @@ import {
   savedCatalogSelections,
   scriptedCatalogEntry,
   validateConnectedModelChoice,
-} from "@rakazo/adapters";
+} from "@rakazo_mickvvw/adapters";
 import type {
   Actor,
   ModelCatalogEntry,
@@ -30,14 +30,19 @@ import type {
   ModelRoleChoice,
   ModelRoleSettings,
   ModelRoleView,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   appContract,
   canonicalPiProviderId,
   modelSupportsRole,
   OPENAI_COMPATIBLE_PROVIDER_ID,
-} from "@rakazo/contracts";
-import { createGroupRepos, createRepos, recordSecurityEvent, runAsTenant } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import {
+  createGroupRepos,
+  createRepos,
+  recordSecurityEvent,
+  runAsTenant,
+} from "@rakazo_mickvvw/db";
 import { createAgentImportServices } from "../agent-import-services.js";
 import { createAgentSkillsService } from "../agent-skills.js";
 import { createBotRemoval } from "../bot-removal.js";
@@ -187,7 +192,7 @@ export function createRouterContext(deps: RouterDeps) {
               auth.secretIdByModel[entry.provider]?.[entry.id] ||
               auth.secretIdByProvider[entry.provider]
                 ? entry.billing
-                : "Uses Rakazo credits",
+                : "Uses Rakazo mickvvw credits",
           }
         : entry,
     );

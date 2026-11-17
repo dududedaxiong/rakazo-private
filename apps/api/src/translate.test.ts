@@ -1,6 +1,6 @@
-import type { AgentRunRequest, AgentRuntime } from "@rakazo/adapter-kit";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+import type { AgentRunRequest, AgentRuntime } from "@rakazo_mickvvw/adapter-kit";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { describe, expect, it, vi } from "vitest";
 import type { Translator } from "./translate.js";
 import { createTranslator, TranslationModelNotConfiguredError } from "./translate.js";

@@ -1,4 +1,4 @@
-import type { AdapterContext } from "@rakazo/adapter-kit";
+import type { AdapterContext } from "@rakazo_mickvvw/adapter-kit";
 import { describe, expect, it } from "vitest";
 import { TavilyWebProvider } from "./tavily-web.js";
 

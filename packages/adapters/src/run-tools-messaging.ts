@@ -1,11 +1,11 @@
 import { posix } from "node:path";
-import { ATTACHMENT_MAX_COUNT } from "@rakazo/contracts";
+import { ATTACHMENT_MAX_COUNT } from "@rakazo_mickvvw/contracts";
 import {
   BOT_MESSAGE_MAX_LENGTH,
   isBackgroundRunTrigger,
   redactSecrets,
   resolveBotAddress,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import {
   connectAgent,
   messageConnectedAgent,

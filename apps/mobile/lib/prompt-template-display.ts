@@ -1,4 +1,4 @@
-import type { PromptTemplate } from "@rakazo/contracts";
+import type { PromptTemplate } from "@rakazo_mickvvw/contracts";
 import { t } from "./i18n";
 
 /**

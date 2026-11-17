@@ -1,7 +1,12 @@
-import { useNativeLinkConfirm } from "@rakazo/chat-ui/native";
-import type { MessageBlock } from "@rakazo/contracts";
-import { MCP_APP_MIME_TYPE } from "@rakazo/contracts";
-import { createMcpAppHost, mcpAppCsp, mcpAppDocument, mcpAppShellDocument } from "@rakazo/core";
+import { useNativeLinkConfirm } from "@rakazo_mickvvw/chat-ui/native";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
+import { MCP_APP_MIME_TYPE } from "@rakazo_mickvvw/contracts";
+import {
+  createMcpAppHost,
+  mcpAppCsp,
+  mcpAppDocument,
+  mcpAppShellDocument,
+} from "@rakazo_mickvvw/core";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { currentApiBase } from "../../lib/api";

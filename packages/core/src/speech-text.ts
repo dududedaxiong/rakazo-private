@@ -1,4 +1,4 @@
-import type { MessageBlock } from "@rakazo/contracts";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
 
 /** A fenced block becomes a mention of itself, with its language if known. */
 function describeCodeBlock(fence: string): string {
@@ -127,7 +127,7 @@ const STREAMING_ABBREVIATIONS = new Set([
   "approx",
 ]);
 
-const CLOSING_MARKS = /["'”’）」』\]\)]/;
+const CLOSING_MARKS = /["'”’）」』\])]/;
 
 /**
  * Where one sentence ends in still-arriving text: past its terminal marks

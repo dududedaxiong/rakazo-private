@@ -1,4 +1,4 @@
-import type { ModelSwitchAttempt } from "@rakazo/contracts";
+import type { ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import {
   currentModelBar,

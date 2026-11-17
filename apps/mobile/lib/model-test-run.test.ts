@@ -1,4 +1,4 @@
-import type { ModelHealthReport, ModelHealthState } from "@rakazo/contracts";
+import type { ModelHealthReport, ModelHealthState } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it, vi } from "vitest";
 import type { ModelTestItem } from "./model-test-run";
 import { createModelTestRunStore } from "./model-test-run";

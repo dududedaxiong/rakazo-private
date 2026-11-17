@@ -1,14 +1,14 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { ConnectionCatalogItem, PluginMarketplaceEntry } from "@rakazo/contracts";
-import { CATALOG_SEARCH_QUERY_MAX_LENGTH, SUBMIT_PLUGIN_URL } from "@rakazo/contracts";
+import type { ConnectionCatalogItem, PluginMarketplaceEntry } from "@rakazo_mickvvw/contracts";
+import { CATALOG_SEARCH_QUERY_MAX_LENGTH, SUBMIT_PLUGIN_URL } from "@rakazo_mickvvw/contracts";
 import {
   CONNECTION_CATALOG_PAGE_SIZE,
   catalogItemKey,
   isRecommendedPlugin,
   managedAppFor,
   OTHER_PLUGINS,
-} from "@rakazo/core";
-import { Button, SectionHeading, Spinner } from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/core";
+import { Button, SectionHeading, Spinner } from "@rakazo_mickvvw/ui-web";
 import { ArrowUpRight, Search } from "lucide-react";
 import type { PluginSelection } from "../../components/integrations/plugin-marketplace";
 import {

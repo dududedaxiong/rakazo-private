@@ -1,4 +1,4 @@
-import type { SpaceBot, SpaceGroup } from "@rakazo/contracts";
+import type { SpaceBot, SpaceGroup } from "@rakazo_mickvvw/contracts";
 import { useSyncExternalStore } from "react";
 import { currentApiBase } from "./api";
 import type { InboxSpace } from "./inbox-spaces";

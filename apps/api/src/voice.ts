@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import type { AdapterContext, SecretStore } from "@rakazo/adapter-kit";
-import { VoiceAccountError } from "@rakazo/adapter-kit";
+import type { AdapterContext, SecretStore } from "@rakazo_mickvvw/adapter-kit";
+import { VoiceAccountError } from "@rakazo_mickvvw/adapter-kit";
 import {
   createVoiceProvider,
   isSpeechModelId,
@@ -15,17 +15,17 @@ import {
   serializeOpenAiCompatibleVoiceSecret,
   VOICE_CATALOG,
   voiceCatalogEntry,
-} from "@rakazo/adapters";
+} from "@rakazo_mickvvw/adapters";
 import type {
   Actor,
   SettingsScope,
   VoiceAccountErrorCode,
   VoiceCredential,
   VoiceStatus,
-} from "@rakazo/contracts";
-import { matchVoicePresetEntry, SettingsScopeSchema } from "@rakazo/contracts";
-import { speakable, toUtterances } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import { matchVoicePresetEntry, SettingsScopeSchema } from "@rakazo_mickvvw/contracts";
+import { speakable, toUtterances } from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import {
   deleteUnreferencedCredentialSecret,
   findDefaultVoiceCredential,
@@ -42,9 +42,9 @@ import {
   selectVoicePreference,
   voicePreferenceTarget,
   withTransactionRetry,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
-import { markExpectedFailure } from "@rakazo/logging/hono";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
+import { markExpectedFailure } from "@rakazo_mickvvw/logging/hono";
 import type { Context, Hono } from "hono";
 import { readBoundedBody } from "./http-body.js";
 import type { SpeechSummarizer } from "./speech-summary.js";

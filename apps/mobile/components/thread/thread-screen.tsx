@@ -1,6 +1,6 @@
-import type { AgentSkillCatalogEntry, ModelRoleChoice } from "@rakazo/contracts";
-import { primaryBotModel } from "@rakazo/contracts";
-import type { ShareCardTextOverride } from "@rakazo/core";
+import type { AgentSkillCatalogEntry, ModelRoleChoice } from "@rakazo_mickvvw/contracts";
+import { primaryBotModel } from "@rakazo_mickvvw/contracts";
+import type { ShareCardTextOverride } from "@rakazo_mickvvw/core";
 import {
   buildComposerMentionOptions,
   channelMessageSender,
@@ -17,7 +17,7 @@ import {
   displayName as safeDisplayName,
   selectableMessageText,
   workingRoutineName,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { useFocusEffect, useIsFocused, useLocalSearchParams, useRouter } from "expo-router";
 import { useHeaderHeight } from "expo-router/react-navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";

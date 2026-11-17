@@ -1,7 +1,7 @@
-import type { LoginFieldInput } from "@rakazo/contracts";
-import { normalizeOneTimeCode, vaultKind } from "@rakazo/contracts";
-import { isSecretAskBlock } from "@rakazo/core";
-import { fontWeight, typeScale } from "@rakazo/ui-tokens";
+import type { LoginFieldInput } from "@rakazo_mickvvw/contracts";
+import { normalizeOneTimeCode, vaultKind } from "@rakazo_mickvvw/contracts";
+import { isSecretAskBlock } from "@rakazo_mickvvw/core";
+import { fontWeight, typeScale } from "@rakazo_mickvvw/ui-tokens";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
 import { plainAskTitle } from "../../lib/ask-title";

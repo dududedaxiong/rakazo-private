@@ -1,5 +1,5 @@
-import type { ModelCredential, ModelRoleChoice } from "@rakazo/contracts";
-import { modelRoleChoiceKey } from "@rakazo/contracts";
+import type { ModelCredential, ModelRoleChoice } from "@rakazo_mickvvw/contracts";
+import { modelRoleChoiceKey } from "@rakazo_mickvvw/contracts";
 
 /**
  * Role rows left after dropping a model removed from its connection. A row

@@ -1,5 +1,5 @@
-import type { AgentRuntimeEvent } from "@rakazo/adapter-kit";
-import { buildBotMessageWakePrompt, STEERING_CONTINUATION_PROMPT } from "@rakazo/core";
+import type { AgentRuntimeEvent } from "@rakazo_mickvvw/adapter-kit";
+import { buildBotMessageWakePrompt, STEERING_CONTINUATION_PROMPT } from "@rakazo_mickvvw/core";
 import { describe, expect, it, vi } from "vitest";
 import { helperPrompt, resultPrompt } from "./background-helpers.js";
 import { inferScript, ScriptedAgentRuntime } from "./scripted-runtime.js";

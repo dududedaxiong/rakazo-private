@@ -1,14 +1,14 @@
-import { EmailEmulator } from "@rakazo/adapters";
+import { EmailEmulator } from "@rakazo_mickvvw/adapters";
 import {
   INTEGRATION_CLAIMS_PATH,
   PLUGIN_SUBMISSIONS_PATH,
   PluginSubmissionSchema,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const preview = vi.hoisted(() => vi.fn());
-vi.mock("@rakazo/adapters", async (original) => ({
-  ...(await original<typeof import("@rakazo/adapters")>()),
+vi.mock("@rakazo_mickvvw/adapters", async (original) => ({
+  ...(await original<typeof import("@rakazo_mickvvw/adapters")>()),
   previewPluginInstall: preview,
 }));
 

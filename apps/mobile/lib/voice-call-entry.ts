@@ -1,4 +1,4 @@
-import { displayName } from "@rakazo/core";
+import { displayName } from "@rakazo_mickvvw/core";
 import type { VoiceSourceId } from "./voice-direction";
 import { serverProviderOf } from "./voice-direction";
 export type VoiceCallStatus = { ready: boolean; transcribe: boolean };

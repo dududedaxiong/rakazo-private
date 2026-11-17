@@ -6,7 +6,7 @@ import type {
   ComputerMode,
   ReplyMode,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   activeBotPromptPreset,
   BOT_AVATAR_SHAPE_COUNT,
@@ -17,15 +17,15 @@ import {
   BOT_NAME_MAX_LENGTH,
   moveBotModelToFront,
   resolveBotAvatarSet,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   credentialForModel,
   MODEL_SEARCH_THRESHOLD,
   modelOptionKey,
   parseModelOptionKey,
   resolveSelectableModelId,
-} from "@rakazo/core";
-import { typeScale } from "@rakazo/ui-tokens";
+} from "@rakazo_mickvvw/core";
+import { typeScale } from "@rakazo_mickvvw/ui-tokens";
 import * as ImagePicker from "expo-image-picker";
 import { Stack, useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import type { Voice } from "expo-speech";

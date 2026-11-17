@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, PromptTemplate } from "@rakazo/contracts";
-import { Badge, Button, toast } from "@rakazo/ui-web";
+import type { Bot, PromptTemplate } from "@rakazo_mickvvw/contracts";
+import { Badge, Button, toast } from "@rakazo_mickvvw/ui-web";
 import { useEffect, useState } from "react";
 import { downloadPromptTemplate, downloadPromptTemplates } from "../../lib/prompt-template-files";
 import { rpc } from "../../lib/rpc";

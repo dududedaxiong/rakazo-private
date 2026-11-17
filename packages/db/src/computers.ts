@@ -1,12 +1,12 @@
 import { createHash, randomUUID } from "node:crypto";
-import type { ComputerMode } from "@rakazo/contracts";
-import { isTerminal } from "@rakazo/core";
+import type { ComputerMode } from "@rakazo_mickvvw/contracts";
+import { isTerminal } from "@rakazo_mickvvw/core";
 import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 import { runAsSystem, runAsSystemInTransaction } from "./row-security.js";
 import { withTransactionRetry } from "./transaction-retry.js";
 
-export type { ComputerMode } from "@rakazo/contracts";
+export type { ComputerMode } from "@rakazo_mickvvw/contracts";
 
 /**
  * Whether this person may act on a computer's user control. Members of a Space share its

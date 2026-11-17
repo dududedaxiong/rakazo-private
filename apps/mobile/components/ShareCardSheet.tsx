@@ -1,5 +1,5 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import type { ShareCardStyle, ShareCardTextOverride } from "@rakazo/core";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
+import type { ShareCardStyle, ShareCardTextOverride } from "@rakazo_mickvvw/core";
 import {
   DEFAULT_SHARE_CARD_STYLE,
   estimateShareCardTextWidth,
@@ -12,7 +12,7 @@ import {
   shareCardContentFromMessage,
   shareCardFilename,
   shareCardMediaRect,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import * as ImagePicker from "expo-image-picker";
 import { useVideoPlayer } from "expo-video";
 import { useEffect, useMemo, useRef, useState } from "react";

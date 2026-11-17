@@ -1,5 +1,5 @@
-import { ACTIVE_RUN_STATUSES } from "@rakazo/core";
-import { getLogger } from "@rakazo/logging";
+import { ACTIVE_RUN_STATUSES } from "@rakazo_mickvvw/core";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { cancelRunsInTransaction } from "./cancel-runs.js";
 import type { Prisma, PrismaClient } from "./client.js";
 import { expireComputerExecutionLeases } from "./computers.js";

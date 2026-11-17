@@ -1,4 +1,7 @@
-import { BillingCheckoutCompletedError, BillingCustomerNotFoundError } from "@rakazo/adapter-kit";
+import {
+  BillingCheckoutCompletedError,
+  BillingCustomerNotFoundError,
+} from "@rakazo_mickvvw/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import {
   encodeStripeForm,

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { Bot, PromptTemplate } from "@rakazo/contracts";
+import type { Bot, PromptTemplate } from "@rakazo_mickvvw/contracts";
 import type { ComponentProps, ReactNode } from "react";
 import { act } from "react";
 import { createRoot } from "react-dom/client";
@@ -29,7 +29,7 @@ vi.mock("@lingui/react/macro", () => ({
   Plural: ({ value, one, other }: { value: number; one: string; other: string }) =>
     (value === 1 ? one : other).replace("#", String(value)),
 }));
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@rakazo_mickvvw/ui-web", () => ({
   toast,
   Badge: ({ children, ...props }: ComponentProps<"span">) => <span {...props}>{children}</span>,
   Button: ({

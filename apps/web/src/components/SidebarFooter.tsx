@@ -1,6 +1,12 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { AppDownloadLinks, NavLink } from "@rakazo/contracts";
-import { AppMarkStack, Button, Popover, PopoverContent, PopoverTrigger } from "@rakazo/ui-web";
+import type { AppDownloadLinks, NavLink } from "@rakazo_mickvvw/contracts";
+import {
+  AppMarkStack,
+  Button,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@rakazo_mickvvw/ui-web";
 import {
   Check,
   Download,

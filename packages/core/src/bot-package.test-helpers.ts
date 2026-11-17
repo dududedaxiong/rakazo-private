@@ -4,7 +4,7 @@ import type {
   BotPackagePreview,
   BotPackageReceipt,
   BotPackageRecentReceipt,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 
 export function deferred<T>() {
   let resolve!: (value: T) => void;

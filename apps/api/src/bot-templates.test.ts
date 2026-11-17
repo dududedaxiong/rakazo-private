@@ -1,6 +1,6 @@
-import type { ConnectionCatalogItem } from "@rakazo/contracts";
-import { AgentImportCreateInput } from "@rakazo/contracts";
-import { findBotTemplate } from "@rakazo/core";
+import type { ConnectionCatalogItem } from "@rakazo_mickvvw/contracts";
+import { AgentImportCreateInput } from "@rakazo_mickvvw/contracts";
+import { findBotTemplate } from "@rakazo_mickvvw/core";
 import { describe, expect, it } from "vitest";
 import { templateAppCards } from "./bot-templates.js";
 import { managedAppCatalog } from "./onboarding.js";

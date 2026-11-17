@@ -7,7 +7,7 @@ import {
   resolveCredentialIdForProvider,
 } from "./key-health";
 
-vi.mock("@rakazo/ui-web", () => ({ toast: vi.fn() }));
+vi.mock("@rakazo_mickvvw/ui-web", () => ({ toast: vi.fn() }));
 
 const results = (ids: string[]) =>
   ids.map((credentialId) => ({

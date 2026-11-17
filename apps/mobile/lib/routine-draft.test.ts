@@ -1,5 +1,5 @@
-import type { Routine } from "@rakazo/contracts";
-import { defaultCronPreset, draftFromRoutine, emptyRoutineDraft } from "@rakazo/core";
+import type { Routine } from "@rakazo_mickvvw/contracts";
+import { defaultCronPreset, draftFromRoutine, emptyRoutineDraft } from "@rakazo_mickvvw/core";
 import { describe, expect, it, vi } from "vitest";
 import { routineDraftChanged, routineSaveRequest } from "./routine-draft";
 

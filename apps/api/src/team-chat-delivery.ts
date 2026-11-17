@@ -1,5 +1,5 @@
-import type { MessageBlock } from "@rakazo/contracts";
-import { teamChatResponseText } from "@rakazo/core";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
+import { teamChatResponseText } from "@rakazo_mickvvw/core";
 import type { TargetBot, TeamChatBridgeDeps } from "./team-chat-bridge.js";
 
 const DELIVERY_RESERVATION_MS = 2 * 60_000;

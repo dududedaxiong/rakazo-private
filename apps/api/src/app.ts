@@ -13,7 +13,7 @@ import type {
   RealtimeFanout,
   SandboxProvider,
   TransactionalEmailProvider,
-} from "@rakazo/adapter-kit";
+} from "@rakazo_mickvvw/adapter-kit";
 import type {
   ComposioProvider,
   ConnectorRegistry,
@@ -23,7 +23,7 @@ import type {
   RemoteConnectorDependencies,
   RunRuntimeEnv,
   UserDeviceGateway,
-} from "@rakazo/adapters";
+} from "@rakazo_mickvvw/adapters";
 import {
   ChatSdkMessagingSurface,
   CodexCatalogCache,
@@ -71,8 +71,8 @@ import {
   userDeviceInternalAddress,
   verifyModelServesAgents,
   withSecretPersistence,
-} from "@rakazo/adapters";
-import type { DirectoryAccountChange } from "@rakazo/auth";
+} from "@rakazo_mickvvw/adapters";
+import type { DirectoryAccountChange } from "@rakazo_mickvvw/auth";
 import {
   buildTrustedOrigins,
   CLIENT_IP_HEADER,
@@ -80,15 +80,15 @@ import {
   createDirectory,
   humanVerificationFromSecret,
   isBlockedAuthPath,
-} from "@rakazo/auth";
-import type { Actor, AuthCapabilities } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/auth";
+import type { Actor, AuthCapabilities } from "@rakazo_mickvvw/contracts";
 import {
   isLocalhostOrLoopbackIp,
   PLUGIN_SUBMISSIONS_PATH,
   SERVER_BUILD_HEADER,
-} from "@rakazo/contracts";
-import { encryptionKeyWarning, signupPolicyFromEnv, signupsOpen } from "@rakazo/core";
-import type { Pool, PrismaClient } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import { encryptionKeyWarning, signupPolicyFromEnv, signupsOpen } from "@rakazo_mickvvw/core";
+import type { Pool, PrismaClient } from "@rakazo_mickvvw/db";
 import {
   configureProviderTransactionPool,
   createBoardEvents,
@@ -105,17 +105,17 @@ import {
   rowSecurityWarning,
   runAsSystem,
   verifyContentKeys,
-} from "@rakazo/db";
-import type { Logger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import type { Logger } from "@rakazo_mickvvw/logging";
 import {
   createServiceLogger,
   enrichLogContext,
   getLogger,
   installLogger,
   SERVICE_NAMES,
-} from "@rakazo/logging";
-import { requestLogging } from "@rakazo/logging/hono";
-import { MarkdownMemoryStore } from "@rakazo/memory";
+} from "@rakazo_mickvvw/logging";
+import { requestLogging } from "@rakazo_mickvvw/logging/hono";
+import { MarkdownMemoryStore } from "@rakazo_mickvvw/memory";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { deleteAccountContent, finishStalledOrganizationDeletions } from "./account-deletion.js";

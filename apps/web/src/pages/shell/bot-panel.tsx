@@ -9,7 +9,7 @@ import type {
   ModelCatalogEntry,
   ReplyMode,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   activeBotPromptPreset,
   BOT_MODEL_LIST_MAX,
@@ -18,8 +18,8 @@ import {
   moveBotModelToFront,
   primaryBotModel,
   resolveBotAvatarSet,
-} from "@rakazo/contracts";
-import type { ChatModelChoice } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import type { ChatModelChoice } from "@rakazo_mickvvw/core";
 import {
   chatModelChoices,
   connectedModelChoices,
@@ -27,8 +27,8 @@ import {
   modelOptionKey,
   parseModelOptionKey,
   resolveSelectableModelId,
-} from "@rakazo/core";
-import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger } from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/core";
+import { Button, Input, Tabs, TabsContent, TabsList, TabsTrigger } from "@rakazo_mickvvw/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { Mail } from "lucide-react";
 import type { ReactNode } from "react";

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { Bot, ThreadMessage, ThreadSnapshot } from "@rakazo/contracts";
+import type { Bot, ThreadMessage, ThreadSnapshot } from "@rakazo_mickvvw/contracts";
 import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
@@ -50,7 +50,7 @@ const speakerMock = vi.hoisted(() => {
 const speak = speakerMock.speak;
 
 vi.mock("../../lib/tts", () => ({ speaker: speakerMock }));
-vi.mock("@rakazo/ui-web", () => ({ toast: { error: vi.fn() } }));
+vi.mock("@rakazo_mickvvw/ui-web", () => ({ toast: { error: vi.fn() } }));
 
 const speaking: Bot = { id: "bot-b", autoSpeak: true } as unknown as Bot;
 

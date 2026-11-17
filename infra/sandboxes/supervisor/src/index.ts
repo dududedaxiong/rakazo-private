@@ -1,8 +1,8 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { serve } from "@hono/node-server";
-import { SERVICE_NAMES } from "@rakazo/logging";
-import { createRootLogger } from "@rakazo/logging/axiom";
+import { SERVICE_NAMES } from "@rakazo_mickvvw/logging";
+import { createRootLogger } from "@rakazo_mickvvw/logging/axiom";
 import { computerResourceLimits } from "./computer-spec.js";
 import { computerEgressSetting, ensureComputerImage, screenNetworkMode } from "./context.js";
 import { computerEgressMode, ensureRestrictedEgressEnforced } from "./egress.js";

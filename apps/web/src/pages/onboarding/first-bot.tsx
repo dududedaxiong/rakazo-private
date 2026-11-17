@@ -1,5 +1,5 @@
 import { Trans } from "@lingui/react/macro";
-import { Button } from "@rakazo/ui-web";
+import { Button } from "@rakazo_mickvvw/ui-web";
 import { rpc } from "../../lib/rpc";
 
 const FIRST_BOT_NAME = "Chief";

@@ -1,13 +1,13 @@
-import type { MessagingInboundMessage } from "@rakazo/adapter-kit";
-import type * as Adapters from "@rakazo/adapters";
-import { SpaceDeletionInProgressError } from "@rakazo/db";
+import type { MessagingInboundMessage } from "@rakazo_mickvvw/adapter-kit";
+import type * as Adapters from "@rakazo_mickvvw/adapters";
+import { SpaceDeletionInProgressError } from "@rakazo_mickvvw/db";
 import { describe, expect, it, vi } from "vitest";
 import type * as Inbound from "./messaging-inbound.js";
 import type { MessagingInboundDeps } from "./messaging-inbound.js";
 import type { TeamChatBridge } from "./team-chat-bridge.js";
 import { createTeamChatInboundHandler } from "./team-chat-inbound.js";
 
-vi.mock("@rakazo/adapters", async (importOriginal) => ({
+vi.mock("@rakazo_mickvvw/adapters", async (importOriginal) => ({
   ...(await importOriginal<typeof Adapters>()),
   toTeamChatInbound: () => ({ kind: "mention", eventId: "100.1" }),
 }));

@@ -1,4 +1,4 @@
-import { attachmentExtensionForMimeType } from "@rakazo/core";
+import { attachmentExtensionForMimeType } from "@rakazo_mickvvw/core";
 
 // Constructors, not literals: an unknown property escape must fail here, not while parsing.
 const emojiSequences = (() => {

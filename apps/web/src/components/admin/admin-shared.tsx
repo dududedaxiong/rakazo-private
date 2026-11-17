@@ -1,5 +1,5 @@
 import { Trans } from "@lingui/react/macro";
-import type { SecurityEventType } from "@rakazo/contracts";
+import type { SecurityEventType } from "@rakazo_mickvvw/contracts";
 
 export function formatDateTime(iso: string | null, locale: string): string {
   if (!iso) return "—";

@@ -1,4 +1,4 @@
-import type { PageDetail } from "@rakazo/contracts";
+import type { PageDetail } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("./api-server", () => ({}));

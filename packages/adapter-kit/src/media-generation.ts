@@ -1,4 +1,4 @@
-import type { ModelSwitches } from "@rakazo/contracts";
+import type { ModelSwitches } from "@rakazo_mickvvw/contracts";
 import type { AdapterContext } from "./types.js";
 
 export type MediaGenerationInput = { prompt: string };

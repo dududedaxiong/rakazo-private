@@ -7,10 +7,10 @@ import {
   E2BSandboxProvider,
   NovitaSandboxProvider,
   PiAgentRuntime,
-} from "@rakazo/adapters";
-import type { RunStatus } from "@rakazo/contracts";
-import { isTerminal } from "@rakazo/core";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
+} from "@rakazo_mickvvw/adapters";
+import type { RunStatus } from "@rakazo_mickvvw/contracts";
+import { isTerminal } from "@rakazo_mickvvw/core";
+import { loadRootEnv } from "@rakazo_mickvvw/core/node/load-root-env";
 import { afterAll, describe, expect, it } from "vitest";
 import { sessionCookieHeader } from "./index.js";
 
@@ -319,7 +319,7 @@ describePiApp("live OpenRouter product journey", () => {
   });
 
   it("completes a bot turn through the API with the live model", async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@rakazo_mickvvw/api/app");
     dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-pi-"));
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,

@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import type { AdapterContext } from "@rakazo/adapter-kit";
-import type { ExecutorDeps } from "@rakazo/adapters";
+import type { AdapterContext } from "@rakazo_mickvvw/adapter-kit";
+import type { ExecutorDeps } from "@rakazo_mickvvw/adapters";
 import {
   generateMediaFromTool,
   MEDIA_JOB_KIND,
@@ -9,9 +9,9 @@ import {
   resolveBotMediaGenerationProvider,
   savedJob,
   scheduleMediaPoll,
-} from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { Prisma, PrismaClient } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapters";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type { Prisma, PrismaClient } from "@rakazo_mickvvw/db";
 import type { RouterContext } from "./context.js";
 
 /** What generateMediaFromTool stored on the job row when it submitted. */

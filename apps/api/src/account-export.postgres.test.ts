@@ -2,15 +2,15 @@ import { randomBytes } from "node:crypto";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import type { JobPublisher, SandboxProvider } from "@rakazo/adapter-kit";
-import { EncryptedSecretStore, LocalAgentHomeStore } from "@rakazo/adapters";
-import type { AccountExportRecord, Actor } from "@rakazo/contracts";
+import type { JobPublisher, SandboxProvider } from "@rakazo_mickvvw/adapter-kit";
+import { EncryptedSecretStore, LocalAgentHomeStore } from "@rakazo_mickvvw/adapters";
+import type { AccountExportRecord, Actor } from "@rakazo_mickvvw/contracts";
 import {
   AccountExportManifestSchema,
   AccountExportRecordSchema,
   accountExportPaths,
-} from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import {
   createDb,
   createThreadMessage,
@@ -18,7 +18,7 @@ import {
   masterKeysFromEnv,
   readAccountExport,
   runAsSystem,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import { unzipSync } from "fflate";
 import { Hono } from "hono";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";

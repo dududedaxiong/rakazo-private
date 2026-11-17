@@ -1,4 +1,4 @@
-import { fetchFresh, writeSaved } from "@rakazo/core/query";
+import { fetchFresh, writeSaved } from "@rakazo_mickvvw/core/query";
 import { useQuery } from "@tanstack/react-query";
 import { rpc } from "./api";
 import { accountRpcQuery, queryClient } from "./query";

@@ -129,8 +129,8 @@ describe.skipIf(!databaseAvailable)("memory eval through the product", () => {
       const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-memory-eval-"));
       let evidence: Evidence | undefined;
       try {
-        const { createApp } = await import("@rakazo/api/app");
-        const { PiAgentRuntime } = await import("@rakazo/adapters");
+        const { createApp } = await import("@rakazo_mickvvw/api/app");
+        const { PiAgentRuntime } = await import("@rakazo_mickvvw/adapters");
         const result = await runTrial(
           {
             ...scenario,

@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
 import { i18n } from "@lingui/core";
-import type { AgentSkillCatalogEntry, ThreadMessage } from "@rakazo/contracts";
-import type { ComposerMention } from "@rakazo/core";
-import { MODEL_REQUIRED_SEND_ERROR, resolveComposerSendPlan } from "@rakazo/core";
+import type { AgentSkillCatalogEntry, ThreadMessage } from "@rakazo_mickvvw/contracts";
+import type { ComposerMention } from "@rakazo_mickvvw/core";
+import { MODEL_REQUIRED_SEND_ERROR, resolveComposerSendPlan } from "@rakazo_mickvvw/core";
 import type { ComponentProps, ReactNode } from "react";
 import { act, createRef } from "react";
 import type { Root } from "react-dom/client";

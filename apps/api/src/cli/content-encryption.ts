@@ -9,10 +9,10 @@ import {
   unwrapEnvFromKeyManager,
   upgradeLegacySecrets,
   withSecretPersistence,
-} from "@rakazo/adapters";
-import { resolveContentEncryption, resolveEncryptionKey } from "@rakazo/core";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
-import type { ContentMigrationMode } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapters";
+import { resolveContentEncryption, resolveEncryptionKey } from "@rakazo_mickvvw/core";
+import { loadRootEnv } from "@rakazo_mickvvw/core/node/load-root-env";
+import type { ContentMigrationMode } from "@rakazo_mickvvw/db";
 import {
   contentEncryptionStatus,
   createDb,
@@ -21,7 +21,7 @@ import {
   rewrapSpaceKeys,
   rotateSpaceDataKeys,
   runAsSystem,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import { moveMcpArgsIntoSecrets } from "../mcp-args-migration.js";
 import { createSecretMigrationRepository } from "../secret-migration.js";
 

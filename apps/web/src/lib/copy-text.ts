@@ -1,1 +1,1 @@
-export { useCopyText, writeClipboard } from "@rakazo/ui-web";
+export { useCopyText, writeClipboard } from "@rakazo_mickvvw/ui-web";

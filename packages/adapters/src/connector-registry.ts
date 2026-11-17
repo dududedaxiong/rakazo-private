@@ -5,8 +5,8 @@ import type {
   ConnectorProvider,
   ConnectorTool,
   ManagedConnectorProvider,
-} from "@rakazo/adapter-kit";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/adapter-kit";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { ComposioProvider } from "./composio-connector.js";
 import { sanitizeIntegrationError } from "./composio-connector.js";
 

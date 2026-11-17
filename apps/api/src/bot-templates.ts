@@ -7,12 +7,12 @@ import type {
   ConnectionCatalogItem,
   CreateRoutineInput as CreateRoutineInputType,
   MessageBlock,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   BOT_TEMPLATE_CHANGED,
   BOT_TEMPLATE_IMPORT_KEY_PREFIX,
   CreateRoutineInput,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   appConnectCard,
   BOT_TEMPLATES,
@@ -21,8 +21,8 @@ import {
   findBotTemplate,
   renameRoutineSkillMentions,
   renameSkillMd,
-} from "@rakazo/core";
-import { availableInSpace, Prisma } from "@rakazo/db";
+} from "@rakazo_mickvvw/core";
+import { availableInSpace, Prisma } from "@rakazo_mickvvw/db";
 import type { AgentImportServices, Built } from "./agent-import.js";
 import { requestDigest, savedTimeZone, writeImportedBot } from "./agent-import.js";
 

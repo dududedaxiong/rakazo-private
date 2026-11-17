@@ -1,6 +1,6 @@
 import type { JsonObject, JsonValue } from "@earendil-works/pi-ai";
 import { validateToolArguments } from "@earendil-works/pi-ai/utils/validation";
-import type { ConnectorTool } from "@rakazo/adapter-kit";
+import type { ConnectorTool } from "@rakazo_mickvvw/adapter-kit";
 import { describe, expect, it, vi } from "vitest";
 import { importGraphqlSchema, prepareGraphqlInstall } from "./graphql-connectors.js";
 import { InstalledConnectorProvider } from "./installed-connectors.js";

@@ -1,5 +1,9 @@
-import type { ShareCardContent, ShareCardPlan, ShareCardStyle } from "@rakazo/core";
-import { DEFAULT_SHARE_CARD_STYLE, estimateShareCardTextWidth, planShareCard } from "@rakazo/core";
+import type { ShareCardContent, ShareCardPlan, ShareCardStyle } from "@rakazo_mickvvw/core";
+import {
+  DEFAULT_SHARE_CARD_STYLE,
+  estimateShareCardTextWidth,
+  planShareCard,
+} from "@rakazo_mickvvw/core";
 import { describe, expect, it } from "vitest";
 import {
   buildShareCardRenderInput,

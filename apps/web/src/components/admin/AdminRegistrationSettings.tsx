@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { RegistrationSettings } from "@rakazo/contracts";
+import type { RegistrationSettings } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   Field,
@@ -9,7 +9,7 @@ import {
   Switch,
   Textarea,
   toast,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSpaceQueries } from "../../lib/query";

@@ -6,15 +6,22 @@ import type {
   AgentImportStatus,
   AgentImportWarning,
   ComputerMode,
-} from "@rakazo/contracts";
-import { BOT_DESCRIPTION_MAX_LENGTH, BOT_NAME_MAX_LENGTH } from "@rakazo/contracts";
-import { looksLikeCredential } from "@rakazo/core";
-import { Button, Checkbox, Input, Label, NativeSelect, NativeSelectOption } from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/contracts";
+import { BOT_DESCRIPTION_MAX_LENGTH, BOT_NAME_MAX_LENGTH } from "@rakazo_mickvvw/contracts";
+import { looksLikeCredential } from "@rakazo_mickvvw/core";
+import {
+  Button,
+  Checkbox,
+  Input,
+  Label,
+  NativeSelect,
+  NativeSelectOption,
+} from "@rakazo_mickvvw/ui-web";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@rakazo/ui-web/components/ui/collapsible";
+} from "@rakazo_mickvvw/ui-web/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { ComputerModePicker } from "./bot-settings-sections";
@@ -127,10 +134,10 @@ export function AgentImportPlanReview({
   };
   const skipReason = (reason: AgentImportSkipReason) =>
     ({
-      runtime: t`Not used by Rakazo`,
+      runtime: t`Not used by Rakazo mickvvw`,
       invalid_skill: t`Not a valid skill`,
       builtin: t`Built-in`,
-      unsupported: t`Not supported in Rakazo`,
+      unsupported: t`Not supported in Rakazo mickvvw`,
       connected: t`Already connected`,
       invalid_file: t`Could not read these files`,
       default: defaultNote,

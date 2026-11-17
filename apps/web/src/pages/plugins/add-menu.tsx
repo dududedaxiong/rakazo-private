@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { McpSourcePreset } from "@rakazo/contracts";
+import type { McpSourcePreset } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   DropdownMenu,
@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { Plus } from "lucide-react";
 import type { SourceKind } from "./source-form";
 

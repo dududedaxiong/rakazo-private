@@ -1,5 +1,5 @@
-import type { PromptTemplate } from "@rakazo/contracts";
-import { BUILTIN_PROMPT_TEMPLATES } from "@rakazo/contracts";
+import type { PromptTemplate } from "@rakazo_mickvvw/contracts";
+import { BUILTIN_PROMPT_TEMPLATES } from "@rakazo_mickvvw/contracts";
 import type { PrismaClient, PromptTemplate as PromptTemplateRow } from "./client.js";
 import { IsolationError } from "./scope.js";
 

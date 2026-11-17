@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { getLogger } from "@rakazo/logging";
+import { getLogger } from "@rakazo_mickvvw/logging";
 
 /** Bounds a base snapshot build: a fresh machine, the desktop install, and the save. */
 export const BASE_SNAPSHOT_BUILD_TIMEOUT_MS = 30 * 60_000;

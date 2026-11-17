@@ -20,11 +20,11 @@ import type {
   CommandRequest,
   JobPublisher,
   SandboxProvider,
-} from "@rakazo/adapter-kit";
-import { SandboxDamagedError } from "@rakazo/adapter-kit";
-import { browserProfilePathForScreen } from "@rakazo/core/node/desktop-runtime";
-import type { createRepos, PrismaClient } from "@rakazo/db";
-import { createLogger, createTestSink, installLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/adapter-kit";
+import { SandboxDamagedError } from "@rakazo_mickvvw/adapter-kit";
+import { browserProfilePathForScreen } from "@rakazo_mickvvw/core/node/desktop-runtime";
+import type { createRepos, PrismaClient } from "@rakazo_mickvvw/db";
+import { createLogger, createTestSink, installLogger } from "@rakazo_mickvvw/logging";
 import { describe, expect, it, vi } from "vitest";
 import {
   archiveBot,
@@ -138,9 +138,11 @@ describe("spawned bot creation", () => {
       name: "Painter",
       threadId: "thread-2",
     });
-    const createReposSpy = vi.spyOn(await import("@rakazo/db"), "createRepos").mockReturnValue({
-      createBot,
-    } as unknown as ReturnType<typeof createRepos>);
+    const createReposSpy = vi
+      .spyOn(await import("@rakazo_mickvvw/db"), "createRepos")
+      .mockReturnValue({
+        createBot,
+      } as unknown as ReturnType<typeof createRepos>);
 
     const result = await spawnBot(
       {

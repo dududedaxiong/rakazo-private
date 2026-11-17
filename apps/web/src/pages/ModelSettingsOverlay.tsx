@@ -1,12 +1,12 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { SettingsScope } from "@rakazo/contracts";
+import type { SettingsScope } from "@rakazo_mickvvw/contracts";
 import {
   connectionDisplayName,
   modelRoleChoiceKey,
   OPENAI_COMPATIBLE_PROVIDER_ID,
   savedCompatibleEndpointMatches,
-} from "@rakazo/contracts";
-import { popularModelProvidersFirst } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { popularModelProvidersFirst } from "@rakazo_mickvvw/core";
 import {
   Button,
   Dialog,
@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   ModelThinkingOptions,
   Spinner,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";

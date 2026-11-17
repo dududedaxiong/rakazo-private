@@ -1,4 +1,4 @@
-import type { UsageRecord, UsageSummary } from "@rakazo/contracts";
+import type { UsageRecord, UsageSummary } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import {
   compactTokenCount,

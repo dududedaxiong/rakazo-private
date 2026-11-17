@@ -1,5 +1,5 @@
-import type { LoginFieldInput, MessageReaction } from "@rakazo/contracts";
-import type { SlashActionId } from "@rakazo/core";
+import type { LoginFieldInput, MessageReaction } from "@rakazo_mickvvw/contracts";
+import type { SlashActionId } from "@rakazo_mickvvw/core";
 import {
   activeThreadRuns,
   applyThreadSendReceipt,
@@ -8,7 +8,7 @@ import {
   newClientId,
   pageReply,
   resolveComposerSendPlan,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { useNavigation, useRouter } from "expo-router";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";

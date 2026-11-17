@@ -8,9 +8,9 @@ import type {
   ComputerRef,
   PortableFile,
   ProcessEvent,
-} from "@rakazo/adapter-kit";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
-import { COMPUTER_CACHE_ENV } from "@rakazo/core/node/desktop-runtime";
+} from "@rakazo_mickvvw/adapter-kit";
+import { boundedSandboxCommandTimeoutMs } from "@rakazo_mickvvw/core";
+import { COMPUTER_CACHE_ENV } from "@rakazo_mickvvw/core/node/desktop-runtime";
 import {
   normalizeWorkspacePath,
   shellQuote,

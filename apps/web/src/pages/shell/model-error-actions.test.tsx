@@ -22,7 +22,7 @@ vi.mock("@lingui/react/macro", () => {
   };
 });
 
-vi.mock("@rakazo/ui-web", () => ({ toast }));
+vi.mock("@rakazo_mickvvw/ui-web", () => ({ toast }));
 
 let container: HTMLDivElement;
 let root: Root;

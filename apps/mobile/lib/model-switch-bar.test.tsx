@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import type { ModelSwitchAttempt } from "@rakazo/contracts";
+import type { ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
 import type { ReactNode } from "react";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";

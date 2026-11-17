@@ -1,7 +1,7 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotModelEntry, BotPromptPreset, ModelSwitches } from "@rakazo/contracts";
-import { moveBotModelToFront } from "@rakazo/contracts";
-import { displayName, modelOptionKey } from "@rakazo/core";
+import type { BotModelEntry, BotPromptPreset, ModelSwitches } from "@rakazo_mickvvw/contracts";
+import { moveBotModelToFront } from "@rakazo_mickvvw/contracts";
+import { displayName, modelOptionKey } from "@rakazo_mickvvw/core";
 import {
   Button,
   DropdownMenu,
@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
   Input,
   toast,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { Check, RotateCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";

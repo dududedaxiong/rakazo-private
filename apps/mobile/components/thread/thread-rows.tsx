@@ -1,4 +1,4 @@
-import type { ThreadItem } from "@rakazo/core";
+import type { ThreadItem } from "@rakazo_mickvvw/core";
 import {
   activeThreadRuns,
   answerableAskMessageIds,
@@ -11,7 +11,7 @@ import {
   timeSeparatorIds,
   unreadDividerMessageId,
   voiceChatHoldsMessage,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { ListRenderItemInfo } from "react-native";
 import { StyleSheet, View } from "react-native";

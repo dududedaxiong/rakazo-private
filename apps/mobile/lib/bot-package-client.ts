@@ -1,4 +1,4 @@
-import type { RpcInput, RpcOutput, RpcPath } from "@rakazo/contracts";
+import type { RpcInput, RpcOutput, RpcPath } from "@rakazo_mickvvw/contracts";
 import { captureApiRequestContext, rpc } from "./api";
 import type { MobileScope } from "./mobile-scope";
 import { isMobileScopeCurrent } from "./mobile-scope";

@@ -1,10 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { SandboxProvider } from "@rakazo/adapter-kit";
-import type { ComputerCommand } from "@rakazo/contracts";
-import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@rakazo/contracts";
-import { redactSecrets, sandboxCommandTimeoutMs } from "@rakazo/core";
-import { RunHistoryWriteError, releasePayment } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { SandboxProvider } from "@rakazo_mickvvw/adapter-kit";
+import type { ComputerCommand } from "@rakazo_mickvvw/contracts";
+import { COMPUTER_COMMAND_OUTPUT_MAX_CHARS } from "@rakazo_mickvvw/contracts";
+import { redactSecrets, sandboxCommandTimeoutMs } from "@rakazo_mickvvw/core";
+import { RunHistoryWriteError, releasePayment } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { redactShellStreams } from "./agent-environment.js";
 import {
   resolveCodeFill,

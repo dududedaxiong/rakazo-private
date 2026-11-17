@@ -1,9 +1,9 @@
-import type * as Db from "@rakazo/db";
-import { installSecurityEventStore } from "@rakazo/db";
+import type * as Db from "@rakazo_mickvvw/db";
+import { installSecurityEventStore } from "@rakazo_mickvvw/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { banRegistrationIpAccounts } from "./registration-limits.js";
 
-vi.mock("@rakazo/db", async (original) => ({
+vi.mock("@rakazo_mickvvw/db", async (original) => ({
   ...(await original<typeof Db>()),
   cancelDeactivatedAccountRuns: vi.fn(async () => 0),
   leaveInvitedSpaces: vi.fn(async () => []),

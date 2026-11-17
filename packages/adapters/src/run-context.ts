@@ -7,13 +7,18 @@ import type {
   SandboxProvider,
   SemanticMemoryProvider,
   WebProvider,
-} from "@rakazo/adapter-kit";
-import type { ComputerMode, MessageBlock, ModelSwitchAttempt, ReplyMode } from "@rakazo/contracts";
-import { createStreamingRedactor } from "@rakazo/core";
-import { toolEffectIdempotencyKey } from "@rakazo/core/node/approval-effect-key";
-import type { Bot, Computer, effectiveMemoryScope, Run, Task, Thread } from "@rakazo/db";
-import { dropRunTurnCheckpoint, saveRunTurnCheckpoint } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/adapter-kit";
+import type {
+  ComputerMode,
+  MessageBlock,
+  ModelSwitchAttempt,
+  ReplyMode,
+} from "@rakazo_mickvvw/contracts";
+import { createStreamingRedactor } from "@rakazo_mickvvw/core";
+import { toolEffectIdempotencyKey } from "@rakazo_mickvvw/core/node/approval-effect-key";
+import type { Bot, Computer, effectiveMemoryScope, Run, Task, Thread } from "@rakazo_mickvvw/db";
+import { dropRunTurnCheckpoint, saveRunTurnCheckpoint } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type {
   ApprovalPausedToolResult,
   ApprovedEffectReplayQueue,

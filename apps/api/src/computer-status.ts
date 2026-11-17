@@ -4,10 +4,10 @@ import {
   DISK_WARNING_PERCENT,
   diskUsedPercent,
   holdsUserControl,
-} from "@rakazo/adapters";
-import type { ComputerStatus } from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, computerScreenSize } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapters";
+import type { ComputerStatus } from "@rakazo_mickvvw/contracts";
+import { ACTIVE_RUN_STATUSES, computerScreenSize } from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 
 /** Mirrors computer.takeover: an execution lease blocks user control unless a takeover is pending. */
 export function executionBlocksUserTakeover(input: {

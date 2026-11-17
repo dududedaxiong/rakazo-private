@@ -5,10 +5,10 @@ import type {
   ManagedConnectorProvider,
   MessagingSurface,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { phoneCallSettings, resolveEncryptionKey, uploadSizeFromEnv } from "@rakazo/core";
-import type { PrismaClient, ThreadEvents } from "@rakazo/db";
-import { createSecurityEventPruner, securityEventRetentionDays } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapter-kit";
+import { phoneCallSettings, resolveEncryptionKey, uploadSizeFromEnv } from "@rakazo_mickvvw/core";
+import type { PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
+import { createSecurityEventPruner, securityEventRetentionDays } from "@rakazo_mickvvw/db";
 import { auditLogConfig, createAuditLogReconciler } from "./audit-forwarding.js";
 import { createBackgroundJobHandlers } from "./background-job-handlers.js";
 import { reconcileCloudAgents } from "./cloud-agent-service.js";

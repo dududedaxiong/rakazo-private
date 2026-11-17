@@ -1,22 +1,22 @@
 import { ORPCError } from "@orpc/server";
-import { BUILTIN_AGENT_SKILLS } from "@rakazo/adapters";
-import type { Actor, AgentSkill, AgentSkillSource } from "@rakazo/contracts";
-import type { SkillSource } from "@rakazo/core";
+import { BUILTIN_AGENT_SKILLS } from "@rakazo_mickvvw/adapters";
+import type { Actor, AgentSkill, AgentSkillSource } from "@rakazo_mickvvw/contracts";
+import type { SkillSource } from "@rakazo_mickvvw/core";
 import {
   buildSkillMd,
   findSkillByName,
   isSkillReadOnly,
   mergeBuiltinSkills,
   parseSkillMd,
-} from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
+} from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import {
   AVAILABILITY_SELECT,
   availableInSpace,
   IsolationError,
   isUniqueViolation,
   spaceAvailability,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import { assertNameFreeWhereAvailable, userAddedAvailability } from "./availability.js";
 
 type AgentSkillRow = {

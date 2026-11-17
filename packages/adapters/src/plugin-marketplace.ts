@@ -1,5 +1,5 @@
-import type { PluginMarketplaceCatalog, PluginMarketplaceEntry } from "@rakazo/contracts";
-import { comparePlugins, matchesPluginQuery, pluginCategory } from "@rakazo/core";
+import type { PluginMarketplaceCatalog, PluginMarketplaceEntry } from "@rakazo_mickvvw/contracts";
+import { comparePlugins, matchesPluginQuery, pluginCategory } from "@rakazo_mickvvw/core";
 import { z } from "zod";
 import type { PluginCompleteness, PluginTextReader } from "./plugin-connectors.js";
 import { classifyPluginFiles, parsePluginSource } from "./plugin-connectors.js";

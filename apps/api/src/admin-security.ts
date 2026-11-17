@@ -1,7 +1,7 @@
 import { ORPCError } from "@orpc/server";
-import type { SecurityEventType } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { recordSecurityEvent, runAsSystem } from "@rakazo/db";
+import type { SecurityEventType } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { recordSecurityEvent, runAsSystem } from "@rakazo_mickvvw/db";
 
 /** Failed attempts allowed in one window before the same check starts refusing. */
 const ADMIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;

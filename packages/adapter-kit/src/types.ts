@@ -8,7 +8,7 @@ import type {
   ModelSwitchAttempt,
   PurchaseCardField,
   SandboxKind,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 
 export interface AdapterContext {
   operationId: string;
@@ -612,7 +612,7 @@ export interface AgentRunRequest {
   fallbackModels?: Array<Pick<AgentRunModel, "provider" | "id" | "connectionId">>;
   /**
    * Collects one entry per model tried, in order, for the switch timeline
-   * (see `buildModelSwitches` in `@rakazo/core`): the runtime appends each
+   * (see `buildModelSwitches` in `@rakazo_mickvvw/core`): the runtime appends each
    * failure, skip and success here; the caller persists it with the reply
    * only when a switch really happened. Absent in runtimes that do not
    * report switches (subagents, scripted runs).

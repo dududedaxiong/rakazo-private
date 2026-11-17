@@ -1,8 +1,8 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { BOT_NAME_MAX_LENGTH, BOT_PACKAGE_MAX_BYTES } from "@rakazo/contracts";
-import type { BotPackageImportState } from "@rakazo/core";
-import { createBotPackageImport, displayName, newClientId } from "@rakazo/core";
-import { Button, Input, Switch, Textarea } from "@rakazo/ui-web";
+import { BOT_NAME_MAX_LENGTH, BOT_PACKAGE_MAX_BYTES } from "@rakazo_mickvvw/contracts";
+import type { BotPackageImportState } from "@rakazo_mickvvw/core";
+import { createBotPackageImport, displayName, newClientId } from "@rakazo_mickvvw/core";
+import { Button, Input, Switch, Textarea } from "@rakazo_mickvvw/ui-web";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { readBotPackageFile } from "../lib/bot-package-file";
 import { createSpaceRpc } from "../lib/rpc";

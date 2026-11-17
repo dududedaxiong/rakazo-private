@@ -1,4 +1,4 @@
-import { PAGE_RUNTIME_PATH } from "@rakazo/core";
+import { PAGE_RUNTIME_PATH } from "@rakazo_mickvvw/core";
 
 type Runtime = { text: string; etag: string | null };
 

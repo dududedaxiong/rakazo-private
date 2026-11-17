@@ -1,14 +1,14 @@
 import { createHash, createHmac } from "node:crypto";
-import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
+import { SecretStoreUnavailableError } from "@rakazo_mickvvw/adapter-kit";
 import {
   ComposedSecretStore,
   EncryptedSecretStore,
   GithubWebhookEmulator,
   InfisicalSecretStore,
-} from "@rakazo/adapters";
-import { SpaceDeletionInProgressError } from "@rakazo/db";
-import { createLogger, createTestSink } from "@rakazo/logging";
-import { requestLogging } from "@rakazo/logging/hono";
+} from "@rakazo_mickvvw/adapters";
+import { SpaceDeletionInProgressError } from "@rakazo_mickvvw/db";
+import { createLogger, createTestSink } from "@rakazo_mickvvw/logging";
+import { requestLogging } from "@rakazo_mickvvw/logging/hono";
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 import { infisicalFake } from "../../../packages/adapters/src/secret-store-fake.js";

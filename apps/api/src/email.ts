@@ -1,15 +1,15 @@
 import { ORPCError } from "@orpc/server";
-import type { SecretStore, TransactionalEmailProvider } from "@rakazo/adapter-kit";
-import { configuredEmailProvider as providerFor } from "@rakazo/adapters";
+import type { SecretStore, TransactionalEmailProvider } from "@rakazo_mickvvw/adapter-kit";
+import { configuredEmailProvider as providerFor } from "@rakazo_mickvvw/adapters";
 import type {
   EmailProvider,
   EmailSettings,
   EmailSettingsSource,
   EmailSettingsUpdate,
-} from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { runAsSystem } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { runAsSystem } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { AppEnv } from "./env.js";
 
 export function configuredEmailProvider(

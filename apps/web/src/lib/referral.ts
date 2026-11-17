@@ -1,4 +1,4 @@
-import type { BillingStatus } from "@rakazo/contracts";
+import type { BillingStatus } from "@rakazo_mickvvw/contracts";
 import type { RpcClient } from "./rpc";
 
 const STORAGE_KEY = "rakazo:referral";

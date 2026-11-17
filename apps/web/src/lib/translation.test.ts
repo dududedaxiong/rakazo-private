@@ -1,4 +1,4 @@
-import type { Bot } from "@rakazo/contracts";
+import type { Bot } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import {
   botTranslationSettings,

@@ -14,7 +14,7 @@ import {
   newClientId,
   recognitionLocaleTag,
   reduceThreadSnapshot,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { rpc } from "./api";
 import { subscribeThread } from "./api-live";
 import { readAloudText } from "./auto-speak";

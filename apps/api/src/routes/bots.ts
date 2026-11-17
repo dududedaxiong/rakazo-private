@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { ORPCError } from "@orpc/server";
-import { runContinueJob, SecretStoreUnavailableError } from "@rakazo/adapter-kit";
+import { runContinueJob, SecretStoreUnavailableError } from "@rakazo_mickvvw/adapter-kit";
 import {
   archiveBot,
   checkpointAndStopComputer,
@@ -24,7 +24,7 @@ import {
   storeBotSecret,
   toComputerRef,
   validateBotModelChange,
-} from "@rakazo/adapters";
+} from "@rakazo_mickvvw/adapters";
 import type {
   Actor,
   Bot,
@@ -33,7 +33,7 @@ import type {
   BotSecretMetadata,
   SettingsScope,
   VaultPutInput,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   BotSecretAuth,
   parseBotModelList,
@@ -41,8 +41,8 @@ import {
   primaryBotModel,
   resolveBotAvatarSet,
   resolveTargetLanguage,
-} from "@rakazo/contracts";
-import { ACTIVE_RUN_STATUSES, COMPUTER_USING_RUNS, displayName } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { ACTIVE_RUN_STATUSES, COMPUTER_USING_RUNS, displayName } from "@rakazo_mickvvw/core";
 import {
   BotSectionNameConflictError,
   botProfileLabelsChanged,
@@ -59,8 +59,8 @@ import {
   SpaceDeletionInProgressError,
   settingsTarget,
   THREAD_LOCK_TRANSACTION_OPTIONS,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { AgentImportServices } from "../agent-import.js";
 import { agentImportSetupState, createImportedBot, previewAgentImport } from "../agent-import.js";
 import { deleteAgentSecret, listAgentSecrets, putAgentSecret } from "../agent-secrets.js";

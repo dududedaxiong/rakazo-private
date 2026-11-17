@@ -1,12 +1,12 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { ComposioConnector, FakeComposioClient } from "@rakazo/adapters";
-import type { Bot, BotTemplateListing, MessageBlock } from "@rakazo/contracts";
-import { BOT_TEMPLATE_CHANGED } from "@rakazo/contracts";
-import { buildSkillMd, findBotTemplate } from "@rakazo/core";
-import type { PrismaClient } from "@rakazo/db";
-import { createDb } from "@rakazo/db";
+import { ComposioConnector, FakeComposioClient } from "@rakazo_mickvvw/adapters";
+import type { Bot, BotTemplateListing, MessageBlock } from "@rakazo_mickvvw/contracts";
+import { BOT_TEMPLATE_CHANGED } from "@rakazo_mickvvw/contracts";
+import { buildSkillMd, findBotTemplate } from "@rakazo_mickvvw/core";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { createDb } from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { sessionCookieHeader } from "./index.js";
 import { asSystem } from "./system-db.js";
@@ -29,7 +29,7 @@ describeIntegration("bot templates", () => {
   const dataDir = mkdtempSync(path.join(tmpdir(), "rakazo-bot-templates-"));
 
   beforeAll(async () => {
-    const { createApp } = await import("@rakazo/api/app");
+    const { createApp } = await import("@rakazo_mickvvw/api/app");
     const handles = await createApp({
       databaseUrl: process.env.DATABASE_URL!,
       dataDir,

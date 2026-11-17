@@ -1,6 +1,6 @@
-import type { ToolBatch } from "@rakazo/adapter-kit";
-import type { AskReceipt, MessageBlock } from "@rakazo/contracts";
-import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo/contracts";
+import type { ToolBatch } from "@rakazo_mickvvw/adapter-kit";
+import type { AskReceipt, MessageBlock } from "@rakazo_mickvvw/contracts";
+import { BOT_INSTRUCTIONS_MAX_LENGTH } from "@rakazo_mickvvw/contracts";
 import {
   batchActions,
   CARD_TITLE_ESCAPED_CHARACTERS,
@@ -10,8 +10,8 @@ import {
   SITE_SENDING_TOOLS,
   sanitizeMessagingLabel,
   toolRequiresExplicitApproval,
-} from "@rakazo/core";
-import { urlSite } from "@rakazo/core/egress";
+} from "@rakazo_mickvvw/core";
+import { urlSite } from "@rakazo_mickvvw/core/egress";
 import { USER_COMPUTER_SCREEN_TOOLS, userComputerAppName } from "./user-computer-tools.js";
 
 export const MAX_APPROVAL_SUMMARY_LENGTH = 500;

@@ -1,5 +1,5 @@
-import type { LogoAvatarActivity } from "@rakazo/core";
-import { logoAvatarStatusActivity } from "@rakazo/core";
+import type { LogoAvatarActivity } from "@rakazo_mickvvw/core";
+import { logoAvatarStatusActivity } from "@rakazo_mickvvw/core";
 import type { ReactNode } from "react";
 import { createContext, startTransition, useContext, useEffect, useRef, useState } from "react";
 

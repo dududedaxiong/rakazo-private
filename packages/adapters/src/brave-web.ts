@@ -5,7 +5,7 @@ import type {
   WebProvider,
   WebSearchHit,
   WebSearchRequest,
-} from "@rakazo/adapter-kit";
+} from "@rakazo_mickvvw/adapter-kit";
 import { z } from "zod";
 import { combineSignals } from "./connector-safety.js";
 import { extractReadableText } from "./keyless-http-web.js";

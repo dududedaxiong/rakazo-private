@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { AppDownloadLinks } from "@rakazo/contracts";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, Spinner } from "@rakazo/ui-web";
+import type { AppDownloadLinks } from "@rakazo_mickvvw/contracts";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, Spinner } from "@rakazo_mickvvw/ui-web";
 import { Smartphone } from "lucide-react";
 
 /**

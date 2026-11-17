@@ -1,8 +1,17 @@
 import { readFile } from "node:fs/promises";
-import type { BotSecretDestination, MessageBlock } from "@rakazo/contracts";
-import { encodeCardSecret, encodeContactSecret, encodeLoginSecret } from "@rakazo/contracts";
-import { allocateTicketNumber, createDb, createThreadMessage, ensureBoard } from "@rakazo/db";
-import { pageViewerCode } from "@rakazo/page-kit/compile";
+import type { BotSecretDestination, MessageBlock } from "@rakazo_mickvvw/contracts";
+import {
+  encodeCardSecret,
+  encodeContactSecret,
+  encodeLoginSecret,
+} from "@rakazo_mickvvw/contracts";
+import {
+  allocateTicketNumber,
+  createDb,
+  createThreadMessage,
+  ensureBoard,
+} from "@rakazo_mickvvw/db";
+import { pageViewerCode } from "@rakazo_mickvvw/page-kit/compile";
 import { PNG } from "pngjs";
 import { sessionCookieHeader } from "../index.js";
 

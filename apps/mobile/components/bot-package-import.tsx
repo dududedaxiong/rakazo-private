@@ -1,6 +1,6 @@
-import { BOT_NAME_MAX_LENGTH, BOT_PACKAGE_MAX_BYTES } from "@rakazo/contracts";
-import type { BotPackageImportState } from "@rakazo/core";
-import { createBotPackageImport, displayName as safeDisplayName } from "@rakazo/core";
+import { BOT_NAME_MAX_LENGTH, BOT_PACKAGE_MAX_BYTES } from "@rakazo_mickvvw/contracts";
+import type { BotPackageImportState } from "@rakazo_mickvvw/core";
+import { createBotPackageImport, displayName as safeDisplayName } from "@rakazo_mickvvw/core";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";

@@ -3,7 +3,7 @@
 // (the existing chat-persona-switcher.test.tsx mocks the menu), open it, and
 // prove the app-wide error boundary never fires. A render throw anywhere in
 // the switcher or the real menu must surface here, not on the user's screen.
-import type { Bot, PromptTemplate } from "@rakazo/contracts";
+import type { Bot, PromptTemplate } from "@rakazo_mickvvw/contracts";
 import type { ReactNode } from "react";
 import { act, Component } from "react";
 import { createRoot } from "react-dom/client";

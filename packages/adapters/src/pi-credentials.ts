@@ -5,9 +5,9 @@ import type {
   CredentialStore,
   OAuthCredential,
 } from "@earendil-works/pi-ai";
-import type { AgentModelOAuthCredential, AgentRunRequest } from "@rakazo/adapter-kit";
-import { canonicalPiProviderId } from "@rakazo/contracts";
-import { withAbort } from "@rakazo/core";
+import type { AgentModelOAuthCredential, AgentRunRequest } from "@rakazo_mickvvw/adapter-kit";
+import { canonicalPiProviderId } from "@rakazo_mickvvw/contracts";
+import { withAbort } from "@rakazo_mickvvw/core";
 import type { RetireModelCredential } from "./pi-oauth.js";
 import {
   isRetiredModelCredentialError,

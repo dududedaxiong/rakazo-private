@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { EmailProvider, EmailSettings } from "@rakazo/contracts";
+import type { EmailProvider, EmailSettings } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   Field,
@@ -10,7 +10,7 @@ import {
   SectionHeading,
   Spinner,
   toast,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { useSpaceQueries } from "../../lib/query";

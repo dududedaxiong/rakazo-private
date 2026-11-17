@@ -1,4 +1,4 @@
-import type { LogoAvatarActivity } from "@rakazo/core";
+import type { LogoAvatarActivity } from "@rakazo_mickvvw/core";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Image } from "react-native";
 import {

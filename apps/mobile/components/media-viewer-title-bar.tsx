@@ -1,6 +1,6 @@
-import type { BotModelEntry, BotPromptPreset } from "@rakazo/contracts";
-import { primaryBotModel } from "@rakazo/contracts";
-import { modelOptionKey } from "@rakazo/core";
+import type { BotModelEntry, BotPromptPreset } from "@rakazo_mickvvw/contracts";
+import { primaryBotModel } from "@rakazo_mickvvw/contracts";
+import { modelOptionKey } from "@rakazo_mickvvw/core";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,

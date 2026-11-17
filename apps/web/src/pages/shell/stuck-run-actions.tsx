@@ -1,8 +1,8 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotModelEntry } from "@rakazo/contracts";
-import type { StuckRun } from "@rakazo/core";
-import { modelOptionKey } from "@rakazo/core";
-import { Button } from "@rakazo/ui-web";
+import type { BotModelEntry } from "@rakazo_mickvvw/contracts";
+import type { StuckRun } from "@rakazo_mickvvw/core";
+import { modelOptionKey } from "@rakazo_mickvvw/core";
+import { Button } from "@rakazo_mickvvw/ui-web";
 import { useState } from "react";
 import { ModelSwitchMenu } from "./model-switch-menu";
 

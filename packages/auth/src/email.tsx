@@ -1,7 +1,12 @@
 /** @jsxRuntime automatic */
-import type { TransactionalEmail } from "@rakazo/adapter-kit";
-import { displayName, matchUiLocale, textDirectionForLocale, translate } from "@rakazo/core";
-import { webLightTokens as lightTokens, webDarkTokens } from "@rakazo/ui-tokens";
+import type { TransactionalEmail } from "@rakazo_mickvvw/adapter-kit";
+import {
+  displayName,
+  matchUiLocale,
+  textDirectionForLocale,
+  translate,
+} from "@rakazo_mickvvw/core";
+import { webLightTokens as lightTokens, webDarkTokens } from "@rakazo_mickvvw/ui-tokens";
 import type { ReactNode } from "react";
 import {
   Body,

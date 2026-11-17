@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { APP_LOCALE_LABELS } from "@rakazo/core";
+import { APP_LOCALE_LABELS } from "@rakazo_mickvvw/core";
 import { setItemAsync } from "expo-secure-store";
 import type { ReactNode } from "react";
 import { act } from "react";

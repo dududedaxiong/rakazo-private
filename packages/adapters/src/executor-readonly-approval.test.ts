@@ -4,14 +4,17 @@ import type {
   BrowserProvider,
   ConnectorCall,
   ConnectorTool,
-} from "@rakazo/adapter-kit";
-import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo/adapter-kit";
-import type { ModelRoleSettings, SpendingLimit } from "@rakazo/contracts";
-import type { ActionApprovalRule } from "@rakazo/core";
-import { inboundRoutineBlock } from "@rakazo/core";
-import { approvalEffectKey, toolEffectIdempotencyKey } from "@rakazo/core/node/approval-effect-key";
-import type { PrismaClient } from "@rakazo/db";
-import { createPendingSteeringRun, sendUserMessage } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapter-kit";
+import { MEMORY_REVISION_CONFLICT_ERROR } from "@rakazo_mickvvw/adapter-kit";
+import type { ModelRoleSettings, SpendingLimit } from "@rakazo_mickvvw/contracts";
+import type { ActionApprovalRule } from "@rakazo_mickvvw/core";
+import { inboundRoutineBlock } from "@rakazo_mickvvw/core";
+import {
+  approvalEffectKey,
+  toolEffectIdempotencyKey,
+} from "@rakazo_mickvvw/core/node/approval-effect-key";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { createPendingSteeringRun, sendUserMessage } from "@rakazo_mickvvw/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DENIED_ACTION_ERROR, isApprovalPausedResult } from "./approval-effect.js";
 import { MAX_SHARED_MEMORY_CHARS } from "./builtin-tools.js";

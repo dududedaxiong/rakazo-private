@@ -1,17 +1,21 @@
 import { createHash, randomBytes } from "node:crypto";
-import type { SecretStore } from "@rakazo/adapter-kit";
-import { forgetPageShareSecrets } from "@rakazo/adapters";
-import type { Actor, ConversationShareSummary, SharedConversation } from "@rakazo/contracts";
+import type { SecretStore } from "@rakazo_mickvvw/adapter-kit";
+import { forgetPageShareSecrets } from "@rakazo_mickvvw/adapters";
+import type {
+  Actor,
+  ConversationShareSummary,
+  SharedConversation,
+} from "@rakazo_mickvvw/contracts";
 import {
   conversationShareTokenFromSlug,
   conversationShareUrl,
   SHARE_DEFAULT_EXPIRY_DAYS,
   SharedConversationSchema,
-} from "@rakazo/contracts";
-import { buildSharedConversation } from "@rakazo/core";
-import type { Prisma, PrismaClient } from "@rakazo/db";
-import { IsolationError, runAsSystem } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/contracts";
+import { buildSharedConversation } from "@rakazo_mickvvw/core";
+import type { Prisma, PrismaClient } from "@rakazo_mickvvw/db";
+import { IsolationError, runAsSystem } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { loadAllMessages } from "./thread-message-pages.js";
 import { resolveThreadTarget } from "./thread-target.js";
 

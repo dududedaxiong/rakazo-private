@@ -1,5 +1,5 @@
-import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo/contracts";
-import type { ChatModelChoice } from "@rakazo/core";
+import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo_mickvvw/contracts";
+import type { ChatModelChoice } from "@rakazo_mickvvw/core";
 
 import { rpc } from "./api";
 import type { MobileModelCredential } from "./mobile-types";

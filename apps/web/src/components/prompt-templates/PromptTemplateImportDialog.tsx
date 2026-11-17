@@ -1,6 +1,6 @@
 import { Plural, Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, PromptTemplate, PromptTemplateImportItem } from "@rakazo/contracts";
-import { PromptTemplateImportError, parsePromptTemplateImport } from "@rakazo/contracts";
+import type { Bot, PromptTemplate, PromptTemplateImportItem } from "@rakazo_mickvvw/contracts";
+import { PromptTemplateImportError, parsePromptTemplateImport } from "@rakazo_mickvvw/contracts";
 import {
   Button,
   Dialog,
@@ -13,7 +13,7 @@ import {
   TabsList,
   TabsTrigger,
   Textarea,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { rpc } from "../../lib/rpc";

@@ -1,7 +1,7 @@
 import { mkdtemp, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { Actor } from "@rakazo/contracts";
+import type { Actor } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it, vi } from "vitest";
 import { encryptBackupCredentials } from "./account-credentials-crypto.js";
 import type { AccountImportDeps, ArchiveEntry, ArchiveSink } from "./account-import.js";

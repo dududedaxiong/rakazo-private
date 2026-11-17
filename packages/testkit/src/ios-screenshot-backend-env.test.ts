@@ -1,6 +1,6 @@
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { databaseUrls } from "@rakazo/db";
+import { databaseUrls } from "@rakazo_mickvvw/db";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const developerUrl = "postgres://owner:fixture@127.0.0.1:5433/developer_fixture";
@@ -17,8 +17,8 @@ vi.mock("node:child_process", async (importOriginal) => ({
   },
 }));
 
-vi.mock("@rakazo/db", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@rakazo/db")>()),
+vi.mock("@rakazo_mickvvw/db", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@rakazo_mickvvw/db")>()),
   createDb: () => ({
     pool: { query: async () => ({ rows: [] }), end: async () => {} },
     prisma: { $disconnect: async () => {} },

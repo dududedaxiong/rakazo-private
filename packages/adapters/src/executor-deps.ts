@@ -16,8 +16,8 @@ import type {
   SecretStore,
   TransactionalEmailProvider,
   WebProvider,
-} from "@rakazo/adapter-kit";
-import type { PrismaClient, RunLease, ThreadEvents } from "@rakazo/db";
+} from "@rakazo_mickvvw/adapter-kit";
+import type { PrismaClient, RunLease, ThreadEvents } from "@rakazo_mickvvw/db";
 import type { CloudAgentConnection } from "./cloud-agent-factory.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import type { CodexLiveCatalog } from "./pi-codex-catalog.js";

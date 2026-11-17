@@ -3,7 +3,7 @@ import type {
   ModelSwitchAttempt,
   TranslationSourceLanguage,
   TranslationTargetLanguage,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   primaryBotModel,
   resolveTargetLanguage as resolveContractTargetLanguage,
@@ -11,7 +11,7 @@ import {
   TRANSLATION_SOURCE_LANGUAGE_LABELS,
   TRANSLATION_TARGET_LANGUAGE_CODES,
   TRANSLATION_TARGET_LANGUAGE_LABELS,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import { rpc } from "./api";
 import { deviceLanguage } from "./i18n";
 

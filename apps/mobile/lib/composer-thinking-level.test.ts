@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { ThinkingLevel } from "@rakazo/contracts";
+import type { ThinkingLevel } from "@rakazo_mickvvw/contracts";
 import { act, createElement } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";

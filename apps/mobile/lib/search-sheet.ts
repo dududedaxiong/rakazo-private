@@ -1,5 +1,5 @@
-import type { SearchHit, SpaceBot, SpaceGroup } from "@rakazo/contracts";
-import { dedupeSearchHits, searchHitListKey } from "@rakazo/core";
+import type { SearchHit, SpaceBot, SpaceGroup } from "@rakazo_mickvvw/contracts";
+import { dedupeSearchHits, searchHitListKey } from "@rakazo_mickvvw/core";
 import { t } from "./i18n";
 import { filterBots } from "./inbox";
 import type { InboxSpace } from "./inbox-spaces";

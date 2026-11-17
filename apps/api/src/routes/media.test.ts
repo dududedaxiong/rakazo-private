@@ -1,9 +1,9 @@
-import type * as Adapters from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
+import type * as Adapters from "@rakazo_mickvvw/adapters";
+import type { Actor } from "@rakazo_mickvvw/contracts";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mediaRoutes } from "./media.js";
 
-vi.mock("@rakazo/adapters", async (original) => {
+vi.mock("@rakazo_mickvvw/adapters", async (original) => {
   const actual = await original<typeof Adapters>();
   return {
     ...actual,
@@ -18,7 +18,7 @@ vi.mock("@rakazo/adapters", async (original) => {
   };
 });
 
-const mockedAdapters = vi.mocked(await import("@rakazo/adapters"));
+const mockedAdapters = vi.mocked(await import("@rakazo_mickvvw/adapters"));
 
 const actor = { userId: "user-1", spaceId: "space-1" } as Actor;
 

@@ -1,4 +1,4 @@
-import type { AccountExportCredentials, Actor } from "@rakazo/contracts";
+import type { AccountExportCredentials, Actor } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import { encryptBackupCredentials } from "./account-credentials-crypto.js";
 import type { CredentialMappings } from "./account-credentials-restore.js";

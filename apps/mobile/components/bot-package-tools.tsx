@@ -1,11 +1,11 @@
-import type { AgentSkillCatalogEntry } from "@rakazo/contracts";
-import { BOT_PACKAGE_MAX_SKILLS } from "@rakazo/contracts";
+import type { AgentSkillCatalogEntry } from "@rakazo_mickvvw/contracts";
+import { BOT_PACKAGE_MAX_SKILLS } from "@rakazo_mickvvw/contracts";
 import {
   createBotPackageExport,
   createBotPackageSkills,
   initialBotPackageExport,
   initialBotPackageSkills,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { useFocusEffect } from "expo-router";
 import {
   useCallback,

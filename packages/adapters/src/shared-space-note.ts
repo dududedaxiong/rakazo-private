@@ -1,4 +1,4 @@
-import type { PrismaClient } from "@rakazo/db";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { personSpeakerName } from "./history-speakers.js";
 
 /**

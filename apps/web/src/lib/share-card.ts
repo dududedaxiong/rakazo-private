@@ -1,5 +1,5 @@
-import type { ShareCardContent, ShareCardPlan, ShareCardStyle } from "@rakazo/core";
-import { SHARE_CARD_PADDING, SHARE_CARD_WIDTH, shareCardFont } from "@rakazo/core";
+import type { ShareCardContent, ShareCardPlan, ShareCardStyle } from "@rakazo_mickvvw/core";
+import { SHARE_CARD_PADDING, SHARE_CARD_WIDTH, shareCardFont } from "@rakazo_mickvvw/core";
 
 export type {
   ShareCardContent,
@@ -9,7 +9,7 @@ export type {
   ShareCardPlan,
   ShareCardStyle,
   ShareCardTextOverride,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 export {
   DEFAULT_SHARE_CARD_STYLE,
   estimateShareCardTextWidth,
@@ -24,7 +24,7 @@ export {
   shareCardFont,
   shareCardMediaRect,
   wrapShareCardLines,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 
 const CONTENT_WIDTH = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
 

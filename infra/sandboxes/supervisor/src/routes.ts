@@ -1,9 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import { boundedSandboxCommandTimeoutMs } from "@rakazo/core";
-import { getLogger } from "@rakazo/logging";
-import { requestLogging } from "@rakazo/logging/hono";
+import { boundedSandboxCommandTimeoutMs } from "@rakazo_mickvvw/core";
+import { getLogger } from "@rakazo_mickvvw/logging";
+import { requestLogging } from "@rakazo_mickvvw/logging/hono";
 import type Docker from "dockerode";
 import type { Context } from "hono";
 import { Hono } from "hono";

@@ -9,10 +9,10 @@ import type {
   AgentToolExecutionResult,
   ConnectorTool,
   ModelCallObserver,
-} from "@rakazo/adapter-kit";
-import { DEFAULT_CONTEXT_STRATEGY } from "@rakazo/adapter-kit";
-import { FLEET_TOOL_NAMES } from "@rakazo/contracts";
-import { batchActions, humanizeToolName, redactSecrets } from "@rakazo/core";
+} from "@rakazo_mickvvw/adapter-kit";
+import { DEFAULT_CONTEXT_STRATEGY } from "@rakazo_mickvvw/adapter-kit";
+import { FLEET_TOOL_NAMES } from "@rakazo_mickvvw/contracts";
+import { batchActions, humanizeToolName, redactSecrets } from "@rakazo_mickvvw/core";
 import { MAX_APPROVAL_DETAIL_LENGTH } from "./approval-ask.js";
 import {
   isInternalTermination,

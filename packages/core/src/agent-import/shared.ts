@@ -5,7 +5,7 @@ import type {
   AgentImportNeed,
   AgentImportPlan,
   AgentImportSkill,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import { parse as parseYaml } from "yaml";
 import { parseSkillMd } from "../agent-skill.js";
 

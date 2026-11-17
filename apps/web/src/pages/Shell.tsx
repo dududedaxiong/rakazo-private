@@ -7,9 +7,9 @@ import type {
   SpaceMemoryConfig,
   ThreadMessage,
   VoiceStatus,
-} from "@rakazo/contracts";
-import { DEFAULT_NEW_BOT_AVATAR_SET } from "@rakazo/contracts";
-import type { ShareCardTextOverride } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { DEFAULT_NEW_BOT_AVATAR_SET } from "@rakazo_mickvvw/contracts";
+import type { ShareCardTextOverride } from "@rakazo_mickvvw/core";
 import {
   activeThreadRuns,
   answerableAskMessageIds,
@@ -27,11 +27,11 @@ import {
   otherAuthor,
   speechFromBlocks,
   workingRoutineName,
-} from "@rakazo/core";
-import { writeSaved } from "@rakazo/core/query";
-import type { GroupAvatarMember } from "@rakazo/ui-web";
-import { Button, toast } from "@rakazo/ui-web";
-import { useIsMobile } from "@rakazo/ui-web/hooks/use-mobile";
+} from "@rakazo_mickvvw/core";
+import { writeSaved } from "@rakazo_mickvvw/core/query";
+import type { GroupAvatarMember } from "@rakazo_mickvvw/ui-web";
+import { Button, toast } from "@rakazo_mickvvw/ui-web";
+import { useIsMobile } from "@rakazo_mickvvw/ui-web/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import {

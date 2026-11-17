@@ -1,12 +1,12 @@
-import type { MediaGenerationProvider } from "@rakazo/adapter-kit";
-import type { BotModelEntry, BotPromptPreset } from "@rakazo/contracts";
+import type { MediaGenerationProvider } from "@rakazo_mickvvw/adapter-kit";
+import type { BotModelEntry, BotPromptPreset } from "@rakazo_mickvvw/contracts";
 import {
   activeBotPromptPreset,
   parseBotModelList,
   parseBotPromptPresets,
   withPromptPreset,
-} from "@rakazo/contracts";
-import type { Bot } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import type { Bot } from "@rakazo_mickvvw/db";
 import type { ExecutorDeps } from "./executor-deps.js";
 import type { BotMediaCallEntry, BotMediaKindCalls } from "./media-generation-provider.js";
 import { BotMediaGenerationProvider } from "./media-generation-provider.js";

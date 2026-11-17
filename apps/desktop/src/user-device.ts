@@ -3,18 +3,18 @@ import { createHash } from "node:crypto";
 import { mkdir, rm } from "node:fs/promises";
 import { hostname } from "node:os";
 import path from "node:path";
-import type { UserDeviceClientOptions } from "@rakazo/adapters/user-device-client";
+import type { UserDeviceClientOptions } from "@rakazo_mickvvw/adapters/user-device-client";
 import type {
   RakazoDesktopDevice,
   UserDevicePairRequest,
   UserDevicePairResponse,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   USER_DEVICE_PAIR_PATH,
   USER_DEVICE_PATH,
   USER_DEVICE_SESSION_PATH,
-} from "@rakazo/contracts";
-import { secureHttpOrigin } from "@rakazo/contracts/network-host";
+} from "@rakazo_mickvvw/contracts";
+import { secureHttpOrigin } from "@rakazo_mickvvw/contracts/network-host";
 import { readPrivateFile, writePrivateFile } from "./setup-store.js";
 
 export interface DeviceTokenCipher {

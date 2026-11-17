@@ -1,5 +1,5 @@
-import { FLEET_WRITE_TOOL_NAMES } from "@rakazo/contracts";
-import { runReadsThreadHistory, toolRequiresExplicitApproval } from "@rakazo/core";
+import { FLEET_WRITE_TOOL_NAMES } from "@rakazo_mickvvw/contracts";
+import { runReadsThreadHistory, toolRequiresExplicitApproval } from "@rakazo_mickvvw/core";
 import { MODEL_CANNOT_SEE_MESSAGE } from "./model-vision.js";
 import { replyGuidanceForOfferedTools } from "./run-replies.js";
 import type { UserComputerState } from "./run-tools-user-computer.js";

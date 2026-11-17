@@ -1,4 +1,4 @@
-import type { Actor, MessageFavorite } from "@rakazo/contracts";
+import type { Actor, MessageFavorite } from "@rakazo_mickvvw/contracts";
 import type { MessageFavorite as MessageFavoriteRow, PrismaClient } from "./client.js";
 
 export function mapMessageFavorite(row: MessageFavoriteRow): MessageFavorite {

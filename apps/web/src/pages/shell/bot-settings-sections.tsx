@@ -1,14 +1,19 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { BotPromptPreset, ComputerMode, ReplyMode, ThinkingLevel } from "@rakazo/contracts";
+import type {
+  BotPromptPreset,
+  ComputerMode,
+  ReplyMode,
+  ThinkingLevel,
+} from "@rakazo_mickvvw/contracts";
 import {
   BOT_COMPUTER_MODES,
   BOT_DESCRIPTION_MAX_LENGTH,
   BOT_MODEL_LIST_MAX,
   BOT_PROMPT_PRESET_MAX,
   BUILTIN_TOOL_NAMES,
-} from "@rakazo/contracts";
-import type { ChatModelChoice } from "@rakazo/core";
-import { displayName } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import type { ChatModelChoice } from "@rakazo_mickvvw/core";
+import { displayName } from "@rakazo_mickvvw/core";
 import {
   Button,
   Input,
@@ -18,7 +23,7 @@ import {
   Switch,
   Textarea,
   Toggle,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { ChevronDown, ChevronUp, Download, Pencil, Settings, X } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
 import { useState } from "react";

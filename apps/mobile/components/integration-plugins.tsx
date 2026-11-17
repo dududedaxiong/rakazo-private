@@ -1,5 +1,5 @@
-import type { ConnectionCatalogItem, PluginMarketplaceEntry } from "@rakazo/contracts";
-import { OTHER_PLUGINS } from "@rakazo/core";
+import type { ConnectionCatalogItem, PluginMarketplaceEntry } from "@rakazo_mickvvw/contracts";
+import { OTHER_PLUGINS } from "@rakazo_mickvvw/core";
 import type { ReactNode } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { useI18n } from "../lib/i18n";

@@ -1,6 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { Bot, McpServer, McpTransport } from "@rakazo/contracts";
-import { deriveMcpSlug } from "@rakazo/core";
+import type { Bot, McpServer, McpTransport } from "@rakazo_mickvvw/contracts";
+import { deriveMcpSlug } from "@rakazo_mickvvw/core";
 import {
   Button,
   Checkbox,
@@ -16,8 +16,8 @@ import {
   TabsTrigger,
   Textarea,
   Toggle,
-} from "@rakazo/ui-web";
-import { Disclosure } from "@rakazo/ui-web/components/ui/disclosure";
+} from "@rakazo_mickvvw/ui-web";
+import { Disclosure } from "@rakazo_mickvvw/ui-web/components/ui/disclosure";
 import { ChevronLeft, X } from "lucide-react";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import type { AgentAccess } from "../components/integrations/agent-access";

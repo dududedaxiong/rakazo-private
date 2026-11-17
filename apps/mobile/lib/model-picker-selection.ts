@@ -1,4 +1,4 @@
-import type { ChatModelChoice } from "@rakazo/core";
+import type { ChatModelChoice } from "@rakazo_mickvvw/core";
 import type { Href } from "expo-router";
 import type { MobileModelCredential } from "./mobile-types";
 

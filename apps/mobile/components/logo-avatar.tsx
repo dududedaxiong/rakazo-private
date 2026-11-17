@@ -1,4 +1,4 @@
-import type { AvatarMotionMode, AvatarPoke, LogoAvatarActivity } from "@rakazo/core";
+import type { AvatarMotionMode, AvatarPoke, LogoAvatarActivity } from "@rakazo_mickvvw/core";
 import {
   avatarPokeFrame,
   LOGO_AVATAR_BODY_Y,
@@ -12,7 +12,7 @@ import {
   logoAvatarFrame,
   logoAvatarPaint,
   logoAvatarTraits,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import type { ReactNode } from "react";
 import { useEffect, useId, useMemo } from "react";
 import { Pressable } from "react-native";

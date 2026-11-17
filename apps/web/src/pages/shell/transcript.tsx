@@ -7,8 +7,8 @@ import type {
   MessageReaction,
   Run,
   ThreadMessage,
-} from "@rakazo/contracts";
-import type { ChildBotBlock, FoldedTranscript, ShareCardTextOverride } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import type { ChildBotBlock, FoldedTranscript, ShareCardTextOverride } from "@rakazo_mickvvw/core";
 import {
   expandPeerReplies,
   groupVoiceChats,
@@ -22,9 +22,9 @@ import {
   timeSeparatorIds,
   unreadDividerMessageId,
   voiceChatHoldsMessage,
-} from "@rakazo/core";
-import type { GroupAvatarMember } from "@rakazo/ui-web";
-import { Button, cn, Spinner } from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/core";
+import type { GroupAvatarMember } from "@rakazo_mickvvw/ui-web";
+import { Button, cn, Spinner } from "@rakazo_mickvvw/ui-web";
 import { ArrowDown } from "lucide-react";
 import type { CSSProperties, RefObject } from "react";
 import {

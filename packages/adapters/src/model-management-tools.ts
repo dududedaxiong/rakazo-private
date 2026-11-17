@@ -11,8 +11,8 @@
 // alone never proves a model works. The menu sender calls Telegram directly
 // with the bot's own token; it only ever messages the chat the bot is already
 // linked to.
-import type { ModelHealthReport } from "@rakazo/contracts";
-import { getLogger } from "@rakazo/logging";
+import type { ModelHealthReport } from "@rakazo_mickvvw/contracts";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { ExecutorDeps } from "./executor-deps.js";
 import { modelCredentialDto } from "./model-connect.js";
 import { parseModelSecret } from "./model-secret.js";

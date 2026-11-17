@@ -1,5 +1,5 @@
-import type { ModelHealthReport } from "@rakazo/contracts";
-import { modelFallbackFailure } from "@rakazo/core";
+import type { ModelHealthReport } from "@rakazo_mickvvw/contracts";
+import { modelFallbackFailure } from "@rakazo_mickvvw/core";
 import { describe, expect, it, vi } from "vitest";
 import type { AvailableModelProbeDeps } from "./available-model-probe";
 import {

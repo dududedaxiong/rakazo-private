@@ -1,4 +1,4 @@
-import type { BotPackageActivateSkillInput, BotPackageReceipt } from "@rakazo/contracts";
+import type { BotPackageActivateSkillInput, BotPackageReceipt } from "@rakazo_mickvvw/contracts";
 
 export type BotPackageSkillsState = {
   phase: "loading" | "ready" | "saving" | "unknown";

@@ -1,6 +1,6 @@
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
-import type { RakazoDesktopSpeechEvent } from "@rakazo/contracts";
-import { secureHttpOrigin } from "@rakazo/contracts/network-host";
+import type { RakazoDesktopSpeechEvent } from "@rakazo_mickvvw/contracts";
+import { secureHttpOrigin } from "@rakazo_mickvvw/contracts/network-host";
 import type { IpcMainInvokeEvent, WebContents } from "electron";
 import type { AppTarget } from "./app-frame.js";
 import { fromAppFrame } from "./app-frame.js";

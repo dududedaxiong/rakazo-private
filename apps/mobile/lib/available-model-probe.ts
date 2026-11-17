@@ -1,5 +1,5 @@
-import type { ModelHealthReport, ModelHealthSummary } from "@rakazo/contracts";
-import { parseModelFallbackFailure } from "@rakazo/core";
+import type { ModelHealthReport, ModelHealthSummary } from "@rakazo_mickvvw/contracts";
+import { parseModelFallbackFailure } from "@rakazo_mickvvw/core";
 import type { MobileModel, MobileModelCredential } from "./mobile-types";
 import type { ModelTestResult } from "./model-test-result";
 

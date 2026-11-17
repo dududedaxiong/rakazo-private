@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { Button, SectionHeading, Spinner } from "@rakazo/ui-web";
+import { Button, SectionHeading, Spinner } from "@rakazo_mickvvw/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { useSpaceQueries } from "../../lib/query";
 import { errorText } from "../../lib/user-error";

@@ -4,8 +4,8 @@ import type {
   ModelCredential,
   ModelKeyHealth,
   ModelKeyHealthResult,
-} from "@rakazo/contracts";
-import { toast } from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/contracts";
+import { toast } from "@rakazo_mickvvw/ui-web";
 import type { createSpaceRpc } from "./rpc";
 
 /**

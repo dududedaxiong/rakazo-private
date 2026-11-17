@@ -6,15 +6,15 @@ import {
   SandboxUnavailableError,
   SandboxUnresponsiveError,
   VoiceAccountError,
-} from "@rakazo/adapter-kit";
+} from "@rakazo_mickvvw/adapter-kit";
 import {
   IsolationError,
   ProviderTransactionBusyError,
   SpaceDeletionInProgressError,
   SpaceOwnerRequiredError,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
-import { markExpectedFailure } from "@rakazo/logging/hono";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
+import { markExpectedFailure } from "@rakazo_mickvvw/logging/hono";
 import { voiceAccountErrorStatus } from "./voice.js";
 
 /**

@@ -6,8 +6,8 @@ import type {
   WebProvider,
   WebSearchHit,
   WebSearchRequest,
-} from "@rakazo/adapter-kit";
-import { resolveEncryptionKey } from "@rakazo/core";
+} from "@rakazo_mickvvw/adapter-kit";
+import { resolveEncryptionKey } from "@rakazo_mickvvw/core";
 import { z } from "zod";
 import { combineSignals } from "./connector-safety.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";

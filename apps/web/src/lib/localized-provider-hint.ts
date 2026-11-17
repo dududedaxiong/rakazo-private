@@ -1,6 +1,6 @@
 import { t } from "@lingui/core/macro";
-import type { ModelCatalogEntry } from "@rakazo/contracts";
-import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo/contracts";
+import type { ModelCatalogEntry } from "@rakazo_mickvvw/contracts";
+import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo_mickvvw/contracts";
 
 /** Localize known provider auth hint fallbacks; pass through catalog `authHint` as-is. */
 export function localizedProviderHint(entry: ModelCatalogEntry): string {

@@ -1,4 +1,4 @@
-import type { RunErrorTranslator } from "@rakazo/core";
+import type { RunErrorTranslator } from "@rakazo_mickvvw/core";
 import { Alert } from "react-native";
 import type { KeyHealthStatus } from "./key-health";
 import { keyCheckResultText } from "./key-health";

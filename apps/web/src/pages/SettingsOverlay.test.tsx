@@ -14,7 +14,7 @@ vi.mock("@lingui/react/macro", () => ({
   }),
 }));
 
-vi.mock("@rakazo/ui-web", () => ({
+vi.mock("@rakazo_mickvvw/ui-web", () => ({
   Button: ({ children, ...props }: React.ComponentProps<"button">) => (
     <button type="button" {...props}>
       {children}

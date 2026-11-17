@@ -1,8 +1,8 @@
-import type { JobPublisher, SandboxProvider } from "@rakazo/adapter-kit";
-import { runContinueJob } from "@rakazo/adapter-kit";
-import { expireComputerControl, stopCancelledGroupRuns } from "@rakazo/adapters";
-import type { PrismaClient, SpaceDeparture, ThreadEvents } from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+import type { JobPublisher, SandboxProvider } from "@rakazo_mickvvw/adapter-kit";
+import { runContinueJob } from "@rakazo_mickvvw/adapter-kit";
+import { expireComputerControl, stopCancelledGroupRuns } from "@rakazo_mickvvw/adapters";
+import type { PrismaClient, SpaceDeparture, ThreadEvents } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 
 /**
  * After someone leaves a Space, is removed, or deletes their account: tell clients their runs

@@ -7,7 +7,7 @@ import type {
   ModelHeaderRow,
   SettingsScope,
   ThinkingLevel,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   DEFAULT_MODEL_CONTEXT_WINDOW,
   effectiveAuthMode,
@@ -19,7 +19,7 @@ import {
   parseModelMaxImagesPerPrompt,
   parseModelMaxTokens,
   savedCompatibleEndpointMatches,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   clampCatalogThinkingLevel,
   compatibleThinkingLevels,

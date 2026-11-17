@@ -8,7 +8,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import type { ReactNode } from "react";
 
 /**

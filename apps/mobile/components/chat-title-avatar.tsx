@@ -1,5 +1,5 @@
-import type { SpaceBot } from "@rakazo/contracts";
-import type { LogoAvatarActivity } from "@rakazo/core";
+import type { SpaceBot } from "@rakazo_mickvvw/contracts";
+import type { LogoAvatarActivity } from "@rakazo_mickvvw/core";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { StyleSheet, View } from "react-native";
 import { mobileTokens } from "../lib/appearance";

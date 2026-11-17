@@ -1,5 +1,5 @@
-import type { PromptTemplateImportItem } from "@rakazo/contracts";
-import { BOT_INSTRUCTIONS_MAX_LENGTH, parsePromptTemplateImport } from "@rakazo/contracts";
+import type { PromptTemplateImportItem } from "@rakazo_mickvvw/contracts";
+import { BOT_INSTRUCTIONS_MAX_LENGTH, parsePromptTemplateImport } from "@rakazo_mickvvw/contracts";
 import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { rpc } from "../lib/api";

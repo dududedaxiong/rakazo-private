@@ -1,4 +1,4 @@
-import type { AccountSecurity } from "@rakazo/contracts";
+import type { AccountSecurity } from "@rakazo_mickvvw/contracts";
 import { useState } from "react";
 import {
   Modal,

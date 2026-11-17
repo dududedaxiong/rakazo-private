@@ -1,7 +1,7 @@
-import { plainTextLinkParts } from "@rakazo/chat-ui/native";
-import type { BotAvatarSet } from "@rakazo/contracts";
-import type { MentionTextPart } from "@rakazo/core";
-import { displayName, splitMentionText } from "@rakazo/core";
+import { plainTextLinkParts } from "@rakazo_mickvvw/chat-ui/native";
+import type { BotAvatarSet } from "@rakazo_mickvvw/contracts";
+import type { MentionTextPart } from "@rakazo_mickvvw/core";
+import { displayName, splitMentionText } from "@rakazo_mickvvw/core";
 import type { ReactNode } from "react";
 import { createContext } from "react";
 

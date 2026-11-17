@@ -1,6 +1,6 @@
-import { AutomatedSenderPoliciesSchema } from "@rakazo/contracts";
-import { teamChatAmbientPrompt } from "@rakazo/core";
-import type { Prisma } from "@rakazo/db";
+import { AutomatedSenderPoliciesSchema } from "@rakazo_mickvvw/contracts";
+import { teamChatAmbientPrompt } from "@rakazo_mickvvw/core";
+import type { Prisma } from "@rakazo_mickvvw/db";
 import type { TargetBot, TeamChatBridgeDeps } from "./team-chat-bridge.js";
 
 const DEFAULT_AMBIENT_DEBOUNCE_MS = 15_000;

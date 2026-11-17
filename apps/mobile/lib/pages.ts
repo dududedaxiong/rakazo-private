@@ -1,5 +1,5 @@
-import type { PageDetail, PageVisibility } from "@rakazo/contracts";
-import { isServerUnreachable, pageViewerDocument } from "@rakazo/core";
+import type { PageDetail, PageVisibility } from "@rakazo_mickvvw/contracts";
+import { isServerUnreachable, pageViewerDocument } from "@rakazo_mickvvw/core";
 import { rpc } from "./api";
 import { getActiveUiLocale } from "./i18n";
 import { loadPageRuntime } from "./page-runtime";

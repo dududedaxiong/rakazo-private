@@ -1,5 +1,5 @@
-import type { ThreadMessage } from "@rakazo/contracts";
-import { SharedConversationSchema } from "@rakazo/contracts";
+import type { ThreadMessage } from "@rakazo_mickvvw/contracts";
+import { SharedConversationSchema } from "@rakazo_mickvvw/contracts";
 import { describe, expect, it } from "vitest";
 import { buildSharedConversation } from "./share-snapshot.js";
 

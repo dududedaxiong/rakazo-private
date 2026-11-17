@@ -5,19 +5,19 @@ import type {
   MediaGenerationInput,
   MediaGenerationProvider,
   MediaVideoJob,
-} from "@rakazo/adapter-kit";
+} from "@rakazo_mickvvw/adapter-kit";
 import {
   allMediaModelsFailedError,
   MediaGenerationError,
   mediaGenerationFailureReason,
-} from "@rakazo/adapter-kit";
-import type { ModelSwitchAttempt } from "@rakazo/contracts";
-import { ATTACHMENT_MAX_BYTES } from "@rakazo/contracts";
+} from "@rakazo_mickvvw/adapter-kit";
+import type { ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
+import { ATTACHMENT_MAX_BYTES } from "@rakazo_mickvvw/contracts";
 import {
   buildModelSwitches,
   createModelSwitchAttempt,
   recordModelSwitchAttempt,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { z } from "zod";
 import { FAKE_VIDEO_BASE64 } from "./fake-media-assets.js";
 import { sanitizeProviderError } from "./pi-runtime-errors.js";

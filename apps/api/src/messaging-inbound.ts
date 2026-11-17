@@ -1,9 +1,13 @@
-import type { JobPublisher, MessagingInboundMessage, SandboxProvider } from "@rakazo/adapter-kit";
-import { messagingDeliverJob, runContinueJob } from "@rakazo/adapter-kit";
-import { insertOutboundRows } from "@rakazo/adapters";
-import type { MessageBlock } from "@rakazo/contracts";
-import { ATTACHMENT_MAX_COUNT, isAttachmentAudioMimeType } from "@rakazo/contracts";
-import type { MessagingCommand } from "@rakazo/core";
+import type {
+  JobPublisher,
+  MessagingInboundMessage,
+  SandboxProvider,
+} from "@rakazo_mickvvw/adapter-kit";
+import { messagingDeliverJob, runContinueJob } from "@rakazo_mickvvw/adapter-kit";
+import { insertOutboundRows } from "@rakazo_mickvvw/adapters";
+import type { MessageBlock } from "@rakazo_mickvvw/contracts";
+import { ATTACHMENT_MAX_COUNT, isAttachmentAudioMimeType } from "@rakazo_mickvvw/contracts";
+import type { MessagingCommand } from "@rakazo_mickvvw/core";
 import {
   displayName,
   messageBlockForArtifact,
@@ -11,7 +15,7 @@ import {
   parseMessagingCommand,
   promptTextForAttachments,
   sanitizeMessagingLabel,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import type {
   MessagingIdentityRequest,
   Prisma,
@@ -19,7 +23,7 @@ import type {
   ProvisionedMessagingIdentity,
   SignupPolicyEnv,
   ThreadEvents,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import {
   accountDeactivated,
   createThreadMessage,
@@ -28,8 +32,8 @@ import {
   redeemMessagingLinkCode,
   SpaceDeletionInProgressError,
   THREAD_LOCK_TRANSACTION_OPTIONS,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import type { InboundAttachmentStore } from "./inbound-attachments.js";
 import { storeInboundAttachments } from "./inbound-attachments.js";
 import type { MessagingReceipts } from "./messaging-receipts.js";

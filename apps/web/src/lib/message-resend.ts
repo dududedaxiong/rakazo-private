@@ -1,5 +1,5 @@
-import type { ThreadMessage } from "@rakazo/contracts";
-import { copyableMessageText } from "@rakazo/core";
+import type { ThreadMessage } from "@rakazo_mickvvw/contracts";
+import { copyableMessageText } from "@rakazo_mickvvw/core";
 import { isToolOnlyNarration } from "./tool-activity-view";
 
 /**

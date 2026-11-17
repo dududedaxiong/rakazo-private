@@ -9,9 +9,9 @@ import type {
   AutoReviewRequest,
   AutoReviewResult,
   CacheCapabilities,
-} from "@rakazo/adapter-kit";
-import type { AutoReviewJudgeDecision } from "@rakazo/core";
-import { escapePromptData, redactSecrets } from "@rakazo/core";
+} from "@rakazo_mickvvw/adapter-kit";
+import type { AutoReviewJudgeDecision } from "@rakazo_mickvvw/core";
+import { escapePromptData, redactSecrets } from "@rakazo_mickvvw/core";
 import { z } from "zod";
 import { formatCurrentTimeInstruction } from "./current-time.js";
 import { resolveDeploymentModel } from "./deployment-model.js";

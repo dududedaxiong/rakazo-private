@@ -3,8 +3,8 @@ import {
   BOT_PACKAGE_FORMAT,
   BOT_PACKAGE_MAX_BYTES,
   BotPackageDocumentSchema,
-} from "@rakazo/contracts";
-import { buildSkillMd } from "@rakazo/core";
+} from "@rakazo_mickvvw/contracts";
+import { buildSkillMd } from "@rakazo_mickvvw/core";
 import { describe, expect, it, vi } from "vitest";
 import {
   canonicalBotPackageJson,

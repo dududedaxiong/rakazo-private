@@ -3,7 +3,7 @@ import {
   toolRequiresExplicitApproval,
   toolResultTaintsRun,
   unattendedTriggerToolRequiresApproval,
-} from "@rakazo/core";
+} from "@rakazo_mickvvw/core";
 import { describe, expect, it, vi } from "vitest";
 import { botEmailInstruction } from "./run-instructions.js";
 import { selectBuiltinToolsForRun } from "./run-tool-selection.js";

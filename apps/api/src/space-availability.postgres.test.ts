@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { skillCreateFromTool } from "@rakazo/adapters";
-import type { Actor } from "@rakazo/contracts";
-import type { PrismaClient } from "@rakazo/db";
-import { createDb, itemSecretIn, runAsSystem, runAsTenant } from "@rakazo/db";
+import { skillCreateFromTool } from "@rakazo_mickvvw/adapters";
+import type { Actor } from "@rakazo_mickvvw/contracts";
+import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { createDb, itemSecretIn, runAsSystem, runAsTenant } from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createAgentSkillsService } from "./agent-skills.js";
 import {

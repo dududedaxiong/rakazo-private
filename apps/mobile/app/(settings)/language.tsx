@@ -1,4 +1,4 @@
-import { APP_LOCALE_LABELS, reportUiLocale } from "@rakazo/core";
+import { APP_LOCALE_LABELS, reportUiLocale } from "@rakazo_mickvvw/core";
 import { useState } from "react";
 import { ScrollView, StyleSheet, Text } from "react-native";
 import { Checkmark } from "../../components/row-accessories";

@@ -3,14 +3,14 @@ import type {
   AgentHomeStore,
   ArtifactStore,
   SecretStore,
-} from "@rakazo/adapter-kit";
-import { resolveBotWorkspacePath } from "@rakazo/adapters";
-import type { Auth } from "@rakazo/auth";
+} from "@rakazo_mickvvw/adapter-kit";
+import { resolveBotWorkspacePath } from "@rakazo_mickvvw/adapters";
+import type { Auth } from "@rakazo_mickvvw/auth";
 import type {
   AccountExportExecutables,
   AccountExportManifest,
   AccountExportRecord,
-} from "@rakazo/contracts";
+} from "@rakazo_mickvvw/contracts";
 import {
   ACCOUNT_EXPORT_BACKUP_PASSWORD_MIN_LENGTH,
   ACCOUNT_EXPORT_CREDENTIALS_PATH,
@@ -20,8 +20,8 @@ import {
   ACCOUNT_EXPORT_PROMPT_TEMPLATES_PATH,
   ACCOUNT_EXPORT_VERSION,
   accountExportPaths,
-} from "@rakazo/contracts";
-import type { AccountExportSource, PrismaClient } from "@rakazo/db";
+} from "@rakazo_mickvvw/contracts";
+import type { AccountExportSource, PrismaClient } from "@rakazo_mickvvw/db";
 import {
   accountDeactivated,
   parseComputerMode,
@@ -30,8 +30,8 @@ import {
   recordSecurityEvent,
   runAsTenant,
   runGeneratorAsTenant,
-} from "@rakazo/db";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { Zip, ZipDeflate } from "fflate";
 import type { Hono } from "hono";
 import { encryptBackupCredentials, zeroBuffer } from "./account-credentials-crypto.js";

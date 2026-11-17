@@ -1,5 +1,5 @@
-import type { BotPackageDocument, BotPackageLeftOut } from "@rakazo/contracts";
-import { displayName } from "@rakazo/core";
+import type { BotPackageDocument, BotPackageLeftOut } from "@rakazo_mickvvw/contracts";
+import { displayName } from "@rakazo_mickvvw/core";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";

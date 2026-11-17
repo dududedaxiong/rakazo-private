@@ -50,7 +50,7 @@ vi.mock("expo-localization", () => ({ getLocales: () => [{ languageTag: "en-US" 
 vi.mock("expo-modules-core", () => ({ requireNativeModule: vi.fn() }));
 vi.mock("expo-secure-store", () => ({}));
 vi.mock("./voice", () => ({ stopVoicePlayback: vi.fn() }));
-vi.mock("@rakazo/chat-ui/native", () => ({ markdownCodeBlocks: mocks.markdownCodeBlocks }));
+vi.mock("@rakazo_mickvvw/chat-ui/native", () => ({ markdownCodeBlocks: mocks.markdownCodeBlocks }));
 vi.mock("./live-notifications", () => ({ resumeLiveNotifications: vi.fn() }));
 vi.mock("./network-cache", () => ({ clearNetworkCache: vi.fn() }));
 vi.mock("./native", () => ({

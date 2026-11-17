@@ -1,4 +1,4 @@
-import { recordSecurityEvent } from "@rakazo/db";
+import { recordSecurityEvent } from "@rakazo_mickvvw/db";
 import type { AccountStatusDeps } from "./account-status.js";
 import { setAccountActive } from "./account-status.js";
 

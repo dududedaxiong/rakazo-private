@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { AdminUser, AdminUserStatus } from "@rakazo/contracts";
+import type { AdminUser, AdminUserStatus } from "@rakazo_mickvvw/contracts";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +18,7 @@ import {
   Input,
   Spinner,
   toast,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useDeferredValue, useState } from "react";
 import { useSpaceQueries } from "../../lib/query";

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { i18n } from "@lingui/core";
-import type { Bot, ChatAlert } from "@rakazo/contracts";
+import type { Bot, ChatAlert } from "@rakazo_mickvvw/contracts";
 import { act } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";

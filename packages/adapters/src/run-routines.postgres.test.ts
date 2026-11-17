@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import type { BackgroundJob } from "@rakazo/adapter-kit";
-import type { Prisma, PrismaClient } from "@rakazo/db";
+import type { BackgroundJob } from "@rakazo_mickvvw/adapter-kit";
+import type { Prisma, PrismaClient } from "@rakazo_mickvvw/db";
 import {
   appendEvent,
   asSystem,
@@ -10,7 +10,7 @@ import {
   runAsSystem,
   SpaceDeletionInProgressError,
   sendUserMessage,
-} from "@rakazo/db";
+} from "@rakazo_mickvvw/db";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createRunExecutor } from "./executor.js";
 import { createJobReconciler } from "./job-reconciler.js";

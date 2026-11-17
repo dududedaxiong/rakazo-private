@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { validateToolArguments } from "@earendil-works/pi-ai/utils/validation";
-import { approvalEffectKey } from "@rakazo/core/node/approval-effect-key";
+import { approvalEffectKey } from "@rakazo_mickvvw/core/node/approval-effect-key";
 import { describe, expect, it, vi } from "vitest";
 import {
   approvedCatalogReplay,

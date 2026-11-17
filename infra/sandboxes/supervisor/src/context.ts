@@ -2,8 +2,8 @@ import { existsSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { resolveSupervisorToken, uploadSizeFromEnv } from "@rakazo/core";
-import { loadRootEnv } from "@rakazo/core/node/load-root-env";
+import { resolveSupervisorToken, uploadSizeFromEnv } from "@rakazo_mickvvw/core";
+import { loadRootEnv } from "@rakazo_mickvvw/core/node/load-root-env";
 import Docker from "dockerode";
 import { computerImageEnsurer } from "./computer-image.js";
 import {

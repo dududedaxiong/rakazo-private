@@ -9,14 +9,14 @@ import type {
 } from "@earendil-works/pi-ai";
 import { getSupportedThinkingLevels } from "@earendil-works/pi-ai";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
-import type { AgentRunRequest, ConnectorTool } from "@rakazo/adapter-kit";
+import type { AgentRunRequest, ConnectorTool } from "@rakazo_mickvvw/adapter-kit";
 import {
   isModelCredentialRejected,
   isRetryableProviderUnavailable,
   isTransientModelError,
-} from "@rakazo/adapter-kit";
-import type { ModelSwitchAttempt } from "@rakazo/contracts";
-import type { ModelBackupOutcome } from "@rakazo/core";
+} from "@rakazo_mickvvw/adapter-kit";
+import type { ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
+import type { ModelBackupOutcome } from "@rakazo_mickvvw/core";
 import {
   abortableDelay,
   createModelSwitchAttempt,
@@ -25,8 +25,8 @@ import {
   MODEL_OUTPUT_LIMIT_ERROR,
   MODEL_REQUEST_LIMIT_ERROR,
   recordModelSwitchAttempt,
-} from "@rakazo/core";
-import { getLogger } from "@rakazo/logging";
+} from "@rakazo_mickvvw/core";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { ModelImageLimitError, pruneForRebuild } from "./context-pruning.js";
 import { groqRequestContextWindow } from "./groq-request-budget.js";
 import { estimateModelContextTokens } from "./model-context.js";

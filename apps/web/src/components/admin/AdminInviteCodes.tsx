@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { InviteCodeStatus } from "@rakazo/contracts";
+import type { InviteCodeStatus } from "@rakazo_mickvvw/contracts";
 import {
   Badge,
   Button,
@@ -17,7 +17,7 @@ import {
   SelectValue,
   Spinner,
   toast,
-} from "@rakazo/ui-web";
+} from "@rakazo_mickvvw/ui-web";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSpaceQueries } from "../../lib/query";
