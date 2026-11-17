@@ -22,6 +22,7 @@ import { SpaceRpcProvider } from "../lib/space-rpc";
 import {
   ComputerSettingsPanel,
   GeneralSettingsPanels,
+  ReferralCodeSettingsPanel,
   UpdatesSettingsPanel,
   UsageSettingsPanel,
 } from "./AccountSettingsOverlay";
@@ -455,13 +456,16 @@ export function SettingsOverlay({
                     <PaymentWalletSettingsPanel provider={paymentWalletProvider} />
                   ) : null}
                   {section === "usage" ? (
-                    <UsageSettingsPanel
-                      usage={usage}
-                      usageDays={usageDays}
-                      onUsageDaysChange={onUsageDaysChange}
-                      onUsageReset={onUsageReset}
-                      panelRef={usageRef}
-                    />
+                    <>
+                      <UsageSettingsPanel
+                        usage={usage}
+                        usageDays={usageDays}
+                        onUsageDaysChange={onUsageDaysChange}
+                        onUsageReset={onUsageReset}
+                        panelRef={usageRef}
+                      />
+                      <ReferralCodeSettingsPanel />
+                    </>
                   ) : null}
                   {section === "computer" && showComputer ? (
                     <ComputerSettingsPanel

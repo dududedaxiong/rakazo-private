@@ -98,6 +98,7 @@ export {
   CLIENT_IP_HEADER,
   DEFAULT_REGISTRATION_SETTINGS,
   RegistrationIpLimitError,
+  readSignupSettings,
 } from "./registration-limits.js";
 export { welcomeEmail } from "./welcome-email.js";
 

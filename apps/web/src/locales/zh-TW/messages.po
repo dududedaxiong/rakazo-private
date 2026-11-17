@@ -471,6 +471,10 @@ msgstr "{toolCount, plural, one {# 個工具} other {# 個工具}}"
 msgid "{usable} of {total} models work"
 msgstr "{total} 個裡 {usable} 個能用"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{used} of {max} uses"
+msgstr "已用 {used}/{max} 次"
+
 #: src/components/ModelCredits.tsx
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 msgstr "{vcpus} vCPU、{memoryGb} GB、每月 {hours} 小時電腦時數"
@@ -2448,6 +2452,7 @@ msgstr "對話"
 #: src/components/pages/SharePopover.tsx
 #: src/components/vault/BotEmailAddresses.tsx
 #: src/components/vault/VaultItemDetail.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2474,6 +2479,7 @@ msgid "Copy all"
 msgstr ""
 
 #: src/components/markdown-copy.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "Copy code"
 msgstr "複製程式碼"
 
@@ -2829,6 +2835,10 @@ msgstr "人機驗證載入失敗"
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not load integrations"
 msgstr "無法載入整合"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Could not load invite code"
+msgstr "無法載入邀請碼"
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/plugins/use-plugin-connections.ts
@@ -5810,6 +5820,10 @@ msgstr "已靜音"
 msgid "My computers"
 msgstr "我的電腦"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "My invite code"
+msgstr "我的邀請碼"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "My subscription"
@@ -7142,6 +7156,10 @@ msgstr ""
 msgid "Referral codes"
 msgstr ""
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Referral codes are not available."
+msgstr "邀請碼暫未開放。"
+
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
@@ -7575,6 +7593,7 @@ msgstr ""
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Invite.tsx
@@ -9044,8 +9063,8 @@ msgid "This cannot be undone."
 msgstr "此操作無法復原。"
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "This clears all usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
-msgstr "將清空目前空間的全部用量——執行次數、Token、費用，以及各模型和各 Bot 的用量記錄。此操作無法復原。"
+msgid "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -9683,6 +9702,7 @@ msgid "Use up to 512 letters, digits, _ or -."
 msgstr "最多可使用 512 個英文字母、數字、_ 或 -。"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "Used up"
 msgstr "已用完"
 

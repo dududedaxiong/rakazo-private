@@ -1,5 +1,10 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { AccountSecurity, BotAvatarSet, UsageSummary } from "@rakazo_mickvvw/contracts";
+import type {
+  AccountSecurity,
+  BotAvatarSet,
+  MyReferralCode,
+  UsageSummary,
+} from "@rakazo_mickvvw/contracts";
 import {
   APP_LOCALE_LABELS,
   accountDisplay,
@@ -29,8 +34,9 @@ import {
   TableHeader,
   TableRow,
 } from "@rakazo_mickvvw/ui-web/components/ui/table";
+import { Check, Copy } from "lucide-react";
 import type { RefObject } from "react";
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { AccountAccess, LinkSsoRow } from "../components/AccountAccess";
 import { AccountDataSettings } from "../components/AccountDataSettings";
 import { AdminAppDownloadSettings } from "../components/admin/AdminAppDownloadSettings";
@@ -50,6 +56,7 @@ import { authClient } from "../lib/auth";
 import type { BotsSidebarDensity } from "../lib/bots-sidebar-density-pref";
 import { botsSidebarDensityPreference } from "../lib/bots-sidebar-density-pref";
 import { composerEnterToSendPreference } from "../lib/composer-enter-to-send-pref";
+import { useCopyText } from "../lib/copy-text";
 import { getActiveUiLocale, setUiLocale } from "../lib/i18n";
 import { localTimezone, sameTimeZone, timezoneOptions } from "../lib/local-timezone";
 import { usePasskeysSupported } from "../lib/passkeys";
@@ -588,7 +595,7 @@ export function UsageSettingsPanel({
           title={<Trans>Reset usage?</Trans>}
           description={
             <Trans>
-              This clears all usage in this space — runs, tokens, cost, and per-model and per-bot
+              This clears your usage in this space — runs, tokens, cost, and per-model and per-bot
               records. This cannot be undone.
             </Trans>
           }
@@ -736,6 +743,84 @@ export function UsageSettingsPanel({
           </Table>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+/** The caller's own personal referral code; null while the referral switch is off. */
+export function ReferralCodeSettingsPanel() {
+  const { t } = useLingui();
+  const [copied, copy] = useCopyText();
+  const [code, setCode] = useState<MyReferralCode | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadCount, setReloadCount] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadError(null);
+    rpc.referral.code().then(
+      (next) => {
+        if (cancelled) return;
+        setCode(next);
+        setLoaded(true);
+      },
+      (err) => {
+        if (cancelled) return;
+        setLoadError(errorText(err, t`Could not load invite code`));
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+    // The reload counter is the only intended trigger; `t` is the locale-bound translator.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reloadCount]);
+
+  const used = code?.usedCount ?? 0;
+  const max = code?.maxUses ?? 0;
+  const exhausted = code?.status === "exhausted" || code?.status === "revoked";
+  return (
+    <div
+      data-testid="referral-code-settings"
+      className="mt-4 rounded-xl border border-border px-4 py-4"
+    >
+      <SectionHeading variant="heading">
+        <Trans>My invite code</Trans>
+      </SectionHeading>
+      {loadError ? (
+        <div className="mt-3">
+          <p className="text-body-sm text-destructive">{loadError}</p>
+          <Button variant="outline" className="mt-2" onClick={() => setReloadCount((n) => n + 1)}>
+            <Trans>Retry</Trans>
+          </Button>
+        </div>
+      ) : !loaded ? null : !code ? (
+        <p className="mt-3 text-body-sm text-muted-foreground">
+          <Trans>Referral codes are not available.</Trans>
+        </p>
+      ) : (
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <code className="font-mono text-heading3 tracking-widest text-foreground">
+            {code.code}
+          </code>
+          <Button variant="outline" onClick={() => void copy(code.code)}>
+            {copied ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+            {copied ? <Trans>Copied</Trans> : <Trans>Copy code</Trans>}
+          </Button>
+          {exhausted ? (
+            <span className="text-body-sm font-medium text-destructive">
+              <Trans>Used up</Trans>
+            </span>
+          ) : (
+            <span className="text-body-sm tabular-nums text-muted-foreground">
+              <Trans>
+                {used} of {max} uses
+              </Trans>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

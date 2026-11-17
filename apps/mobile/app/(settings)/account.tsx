@@ -578,6 +578,13 @@ export default function Account() {
           />
           {focus !== "usage" ? usageBlock : null}
           <SettingsRow
+            accessible
+            accessibilityRole="button"
+            chevron="right"
+            onPress={() => router.push("/referral")}
+            title={t("My invite code")}
+          />
+          <SettingsRow
             accessibilityRole="button"
             accessibilityLabel={t("Temporary files")}
             detail={`${t("{count} files", { count: tempUsage.files })} · ${formatBytes(tempUsage.bytes)}`}

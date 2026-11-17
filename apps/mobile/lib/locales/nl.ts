@@ -1718,6 +1718,16 @@ export const NL_MESSAGES: Record<string, string> = {
   "Calls are counted from the usage the provider actually returned, input and output separately. Failed calls count as 0 and are not included in the totals.":
     "Er wordt afgerekend op basis van het gebruik dat de provider daadwerkelijk rapporteerde, invoer en uitvoer apart. Mislukte oproepen tellen als 0 en worden niet meegeteld in de totalen.",
   "Could not load usage": "Gebruik kon niet worden geladen",
+  "Reset usage": "Gebruik resetten",
+  "Reset usage?": "Gebruik resetten?",
+  "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone.":
+    "Hiermee wis je je gebruik in deze ruimte: aanroepen, tokens, kosten en records per model en per bot. Dit kan niet ongedaan worden gemaakt.",
+  "Could not reset usage": "Gebruik kon niet worden gereset",
+  "My invite code": "Mijn uitnodigingscode",
+  "Used up": "Opgebruikt",
+  "Could not load invite code": "Uitnodigingscode kon niet worden geladen",
+  "Referral codes are not available.": "Verwijzingscodes zijn niet beschikbaar.",
+  "{used} of {max} uses": "{used} van {max} keer gebruikt",
   "Today {runs} · {tokens} tokens": "Vandaag {runs} · {tokens} tokens",
   "Total {runs} runs · {tokens} tokens": "Totaal {runs} uitvoeringen · {tokens} tokens",
   "Change profile photo": "Profielfoto wijzigen",
@@ -1799,6 +1809,10 @@ export const NL_MESSAGES: Record<string, string> = {
   "Could not download the voice models.": "De spraakmodellen konden niet worden gedownload.",
   "Could not delete the voice models.": "De spraakmodellen konden niet worden verwijderd.",
   "Voice models are not downloaded yet.": "De spraakmodellen zijn nog niet gedownload.",
+  "Groq only transcribes speech. Reading aloud still uses the on-device voice.":
+    "Groq transcribeert alleen spraak. Voorlezen gebruikt nog steeds de stem op het apparaat.",
+  "Not supported in Chinese yet. Reading aloud still uses the on-device voice.":
+    "Nog niet ondersteund in het Chinees. Voorlezen gebruikt nog steeds de stem op het apparaat.",
   "{usable} of {total} models work": "{usable} van de {total} modellen werken",
   "Switch persona": "Persona wisselen",
   "Could not apply that template": "Die sjabloon kon niet worden toegepast",

@@ -71,6 +71,8 @@ vi.mock("@rakazo_mickvvw/ui-web", async (importOriginal) => ({
   OptionSelect: ({ "data-testid": testId }: { "data-testid"?: string }) => (
     <div data-testid={testId} />
   ),
+  SectionHeading: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
+  useCopyText: () => [false, copyText],
   cn: (...values: unknown[]) => values.filter(Boolean).join(" "),
 }));
 
@@ -117,7 +119,11 @@ vi.mock("../lib/ui-appearance", () => ({
 }));
 
 const usageReset = vi.hoisted(() => vi.fn());
-vi.mock("../lib/rpc", () => ({ rpc: { usage: { reset: usageReset } } }));
+const referralCode = vi.hoisted(() => vi.fn());
+const copyText = vi.hoisted(() => vi.fn(async () => true));
+vi.mock("../lib/rpc", () => ({
+  rpc: { usage: { reset: usageReset }, referral: { code: referralCode } },
+}));
 vi.mock("../components/ConfirmDialog", () => ({
   ConfirmDialog: ({
     title,
@@ -157,7 +163,11 @@ import {
 } from "../lib/composer-enter-to-send-pref";
 import { remoteImagesPreference } from "../lib/remote-images-preference";
 import { TOOL_ACTIVITY_STORAGE_KEY } from "../lib/tool-activity-preference";
-import { GeneralSettingsPanels, UsageSettingsPanel } from "./AccountSettingsOverlay";
+import {
+  GeneralSettingsPanels,
+  ReferralCodeSettingsPanel,
+  UsageSettingsPanel,
+} from "./AccountSettingsOverlay";
 
 afterEach(() => {
   localStorage.clear();
@@ -699,5 +709,110 @@ it("closes the name editor before refresh finishes and ignores a refresh failure
     expect(editor.card.querySelector('[role="alert"]')).toBeNull();
   } finally {
     await editor.cleanup();
+  }
+});
+
+it("shows the invite code with its uses and copies it", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  referralCode.mockResolvedValue({
+    code: "ABCDEFGHJKMN",
+    usedCount: 3,
+    maxUses: 10,
+    status: "active",
+  });
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => root.render(<ReferralCodeSettingsPanel />));
+    await act(async () => {});
+    expect(container.querySelector("h2")?.textContent).toBe("My invite code");
+    expect(container.querySelector("code")?.textContent).toBe("ABCDEFGHJKMN");
+    expect(container.textContent).toContain("3 of 10 uses");
+    const copyButton = [...container.querySelectorAll("button")].find(
+      (button) => button.textContent === "Copy code",
+    )!;
+    await act(async () => copyButton.click());
+    expect(copyText).toHaveBeenCalledWith("ABCDEFGHJKMN");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  }
+});
+
+it("shows the invite code as unavailable when the switch is off", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  referralCode.mockResolvedValue(null);
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => root.render(<ReferralCodeSettingsPanel />));
+    await act(async () => {});
+    expect(container.querySelector("code")).toBeNull();
+    expect(container.textContent).toContain("Referral codes are not available.");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  }
+});
+
+it("shows an exhausted invite code as used up", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  referralCode.mockResolvedValue({
+    code: "USEDUPCDE234",
+    usedCount: 10,
+    maxUses: 10,
+    status: "exhausted",
+  });
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => root.render(<ReferralCodeSettingsPanel />));
+    await act(async () => {});
+    expect(container.querySelector("code")?.textContent).toBe("USEDUPCDE234");
+    expect(container.textContent).toContain("Used up");
+    expect(container.textContent).not.toContain("of 10 uses");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
+  }
+});
+
+it("retries loading the invite code after a failure", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  referralCode.mockRejectedValueOnce(new Error(""));
+  referralCode.mockResolvedValue({
+    code: "ABCDEFGHJKMN",
+    usedCount: 0,
+    maxUses: 10,
+    status: "active",
+  });
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () => root.render(<ReferralCodeSettingsPanel />));
+    await act(async () => {});
+    expect(container.textContent).toContain("Could not load invite code");
+    const retry = [...container.querySelectorAll("button")].find(
+      (button) => button.textContent === "Retry",
+    )!;
+    await act(async () => retry.click());
+    await act(async () => {});
+    expect(referralCode).toHaveBeenCalledTimes(2);
+    expect(container.querySelector("code")?.textContent).toBe("ABCDEFGHJKMN");
+  } finally {
+    await act(async () => root.unmount());
+    container.remove();
+    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   }
 });

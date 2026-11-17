@@ -1757,6 +1757,16 @@ export const RU_MESSAGES: Record<string, string> = {
   "Calls are counted from the usage the provider actually returned, input and output separately. Failed calls count as 0 and are not included in the totals.":
     "Учитывается фактическое использование, возвращённое провайдером, ввод и вывод — отдельно. Неудачные вызовы считаются за 0 и не включаются в итоги.",
   "Could not load usage": "Не удалось загрузить использование",
+  "Reset usage": "Сбросить статистику",
+  "Reset usage?": "Сбросить статистику?",
+  "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone.":
+    "Это удалит ваше использование в этом пространстве: вызовы, токены, стоимость и записи по моделям и ботам. Это действие нельзя отменить.",
+  "Could not reset usage": "Не удалось сбросить статистику",
+  "My invite code": "Мой код приглашения",
+  "Used up": "Использован",
+  "Could not load invite code": "Не удалось загрузить код приглашения",
+  "Referral codes are not available.": "Реферальные коды недоступны.",
+  "{used} of {max} uses": "Использовано {used} из {max}",
   "Today {runs} · {tokens} tokens": "Сегодня {runs} · {tokens} tokens",
   "Total {runs} runs · {tokens} tokens": "Всего {runs} запусков · {tokens} tokens",
   "Change profile photo": "Сменить фото профиля",
@@ -1839,6 +1849,10 @@ export const RU_MESSAGES: Record<string, string> = {
   "Could not download the voice models.": "Не удалось скачать голосовые модели.",
   "Could not delete the voice models.": "Не удалось удалить голосовые модели.",
   "Voice models are not downloaded yet.": "Голосовые модели ещё не скачаны.",
+  "Groq only transcribes speech. Reading aloud still uses the on-device voice.":
+    "Groq только расшифровывает речь. Озвучивание по-прежнему использует голос на устройстве.",
+  "Not supported in Chinese yet. Reading aloud still uses the on-device voice.":
+    "Пока не поддерживается на китайском. Озвучивание по-прежнему использует голос на устройстве.",
   "{usable} of {total} models work": "{usable} из {total} моделей работают",
   "Switch persona": "Сменить персону",
   "Could not apply that template": "Не удалось применить этот шаблон",

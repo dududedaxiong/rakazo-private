@@ -1732,6 +1732,16 @@ export const DE_MESSAGES: Record<string, string> = {
   "Calls are counted from the usage the provider actually returned, input and output separately. Failed calls count as 0 and are not included in the totals.":
     "Abgerechnet wird die vom Anbieter tatsächlich gemeldete Nutzung, Eingabe und Ausgabe getrennt. Fehlgeschlagene Aufrufe zählen als 0 und fließen nicht in die Summen ein.",
   "Could not load usage": "Nutzung konnte nicht geladen werden",
+  "Reset usage": "Nutzung zurücksetzen",
+  "Reset usage?": "Nutzung zurücksetzen?",
+  "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone.":
+    "Damit wird deine Nutzung in diesem Bereich gelöscht – Aufrufe, Tokens, Kosten sowie Datensätze pro Modell und pro Bot. Dies kann nicht rückgängig gemacht werden.",
+  "Could not reset usage": "Nutzung konnte nicht zurückgesetzt werden",
+  "My invite code": "Mein Einladungscode",
+  "Used up": "Aufgebraucht",
+  "Could not load invite code": "Einladungscode konnte nicht geladen werden",
+  "Referral codes are not available.": "Empfehlungscodes sind nicht verfügbar.",
+  "{used} of {max} uses": "{used} von {max} Verwendungen",
   "Today {runs} · {tokens} tokens": "Heute {runs} · {tokens} tokens",
   "Total {runs} runs · {tokens} tokens": "Insgesamt {runs} Ausführungen · {tokens} tokens",
   "Change profile photo": "Profilbild ändern",
@@ -1814,6 +1824,10 @@ export const DE_MESSAGES: Record<string, string> = {
   "Could not download the voice models.": "Die Sprachmodelle konnten nicht heruntergeladen werden.",
   "Could not delete the voice models.": "Die Sprachmodelle konnten nicht gelöscht werden.",
   "Voice models are not downloaded yet.": "Die Sprachmodelle sind noch nicht heruntergeladen.",
+  "Groq only transcribes speech. Reading aloud still uses the on-device voice.":
+    "Groq transkribiert nur Sprache. Zum Vorlesen wird weiterhin die Stimme auf dem Gerät verwendet.",
+  "Not supported in Chinese yet. Reading aloud still uses the on-device voice.":
+    "Auf Chinesisch noch nicht unterstützt. Zum Vorlesen wird weiterhin die Stimme auf dem Gerät verwendet.",
   "{usable} of {total} models work": "{usable} von {total} Modellen funktionieren",
   "Switch persona": "Persona wechseln",
   "Could not apply that template": "Wechsel fehlgeschlagen",

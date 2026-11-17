@@ -1717,6 +1717,16 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Calls are counted from the usage the provider actually returned, input and output separately. Failed calls count as 0 and are not included in the totals.":
     "按接口实际返回的用量入账，输入、输出分开记。失败的调用记为 0，不计入总数。",
   "Could not load usage": "无法加载用量",
+  "Reset usage": "重置用量",
+  "Reset usage?": "重置用量？",
+  "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone.":
+    "这会清除你在这个空间的用量——调用次数、Token、费用，以及各模型和各 Bot 的用量记录。此操作不可恢复。",
+  "Could not reset usage": "无法重置用量",
+  "My invite code": "我的邀请码",
+  "Used up": "已用完",
+  "Could not load invite code": "无法加载邀请码",
+  "Referral codes are not available.": "邀请码暂未开放。",
+  "{used} of {max} uses": "已用 {used}/{max} 次",
   "Today {runs} · {tokens} tokens": "今日 {runs} 次 · {tokens} tokens",
   "Total {runs} runs · {tokens} tokens": "累计 {runs} 次运行 · {tokens} tokens",
   "Change profile photo": "更换头像",

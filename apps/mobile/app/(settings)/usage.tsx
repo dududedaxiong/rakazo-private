@@ -1,8 +1,17 @@
 import type { UsageRecord, UsageSummary } from "@rakazo_mickvvw/contracts";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { NativeActionButton } from "../../components/native-action-button";
 import { NativeSegmentedControl } from "../../components/native-segmented-control";
 import { rpc } from "../../lib/api";
 import { mobileTokens } from "../../lib/appearance";
@@ -34,6 +43,7 @@ export default function UsageDetail() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [expandedModel, setExpandedModel] = useState<string | null>(null);
+  const [resetting, setResetting] = useState(false);
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -53,6 +63,31 @@ export default function UsageDetail() {
       void load();
     }, [load]),
   );
+
+  const resetUsage = useCallback(async () => {
+    setResetting(true);
+    try {
+      await rpc("usage/reset");
+      await load();
+    } catch (err) {
+      Alert.alert(t("Could not reset usage"), errorText(err, t("Please try again.")));
+    } finally {
+      setResetting(false);
+    }
+  }, [load, t]);
+
+  const confirmReset = useCallback(() => {
+    Alert.alert(
+      t("Reset usage?"),
+      t(
+        "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone.",
+      ),
+      [
+        { text: t("Cancel"), style: "cancel" },
+        { text: t("Reset"), style: "destructive", onPress: () => void resetUsage() },
+      ],
+    );
+  }, [resetUsage, t]);
 
   const count = useMemo(() => new Intl.NumberFormat(dateLocaleForUi(locale)), [locale]);
   const tokens = (value: number | null | undefined) => (value == null ? "—" : count.format(value));
@@ -323,6 +358,17 @@ export default function UsageDetail() {
                   "Calls are counted from the usage the provider actually returned, input and output separately. Failed calls count as 0 and are not included in the totals.",
                 )}
               </Text>
+            </View>
+
+            <View style={styles.resetWrap}>
+              <NativeActionButton
+                busy={resetting}
+                disabled={resetting}
+                fill
+                label={t("Reset usage")}
+                onPress={confirmReset}
+                prominence="destructive"
+              />
             </View>
           </>
         )}
@@ -611,6 +657,9 @@ function createUsageStyles() {
       borderRadius: 16,
       marginTop: 16,
       padding: 12,
+    },
+    resetWrap: {
+      marginTop: 16,
     },
     ruleText: {
       color: tokens.mutedForeground,

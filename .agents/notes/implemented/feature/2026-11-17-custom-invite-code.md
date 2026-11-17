@@ -45,9 +45,7 @@ Status: implemented
 
 ### Deferred（本批不做，后续再做）
 
-- 用户侧查「我的邀请码」的接口与网页/App 展示（可看可复制）。
-- 老用户（功能上线前已注册的）首次查看时补建专属码（lazy 创建），复用 `issueReferralCode` 的去重逻辑。
-- 上面两项做成后，「我的邀请码」页用完后只提示已用完（显示已用次数），不加补发或重新生成功能。
+- 网页端「我的邀请码」展示也在后续分支 `feature/app-usage-reset` 实现（与 App 侧同一批）：账号设置用量分区下方加 `ReferralCodeSettingsPanel`（调同一个 `referral.code` 接口；码、可复制、已用/总次数，用完只提示已用完，不补发、不重新生成；接口返回空时显示暂未开放）。
 
 ## Alternatives considered
 

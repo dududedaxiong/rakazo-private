@@ -22,6 +22,7 @@ import {
   InviteCodeSchema,
   IpRegistrationStatListInputSchema,
   IpRegistrationStatSchema,
+  MyReferralCodeSchema,
   RegistrationSettingsSchema,
   RegistrationSettingsUpdateSchema,
 } from "./admin.js";
@@ -1703,6 +1704,10 @@ export const appContract = {
     summary: oc.input(UsageSummaryInputSchema.optional()).output(UsageSummarySchema),
     /** Deletes the caller's usage records in this space; the summary then reads zero. */
     reset: oc.output(z.object({ deleted: z.number().int() })),
+  },
+  /** The caller's own personal referral code; created on first read while the switch is on. */
+  referral: {
+    code: oc.output(MyReferralCodeSchema.nullable()),
   },
   /** Admin-set custom app download addresses; any signed-in user may read them. */
   appDownloads: {

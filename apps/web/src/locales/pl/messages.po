@@ -470,6 +470,10 @@ msgstr "{toolCount, plural, one {# narzędzie} few {# narzędzia} many {# narzę
 msgid "{usable} of {total} models work"
 msgstr "Działa {usable} z {total} modeli"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{used} of {max} uses"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 msgstr "{vcpus} vCPU, {memoryGb} GB, {hours} godz. pracy komputera miesięcznie"
@@ -2447,6 +2451,7 @@ msgstr "Rozmowy"
 #: src/components/pages/SharePopover.tsx
 #: src/components/vault/BotEmailAddresses.tsx
 #: src/components/vault/VaultItemDetail.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2473,6 +2478,7 @@ msgid "Copy all"
 msgstr ""
 
 #: src/components/markdown-copy.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "Copy code"
 msgstr "Kopiuj kod"
 
@@ -2828,6 +2834,10 @@ msgstr "Nie udało się wczytać weryfikacji człowieczeństwa"
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not load integrations"
 msgstr "Nie udało się wczytać integracji"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Could not load invite code"
+msgstr ""
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/plugins/use-plugin-connections.ts
@@ -5809,6 +5819,10 @@ msgstr "Wyciszono"
 msgid "My computers"
 msgstr "Moje komputery"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "My invite code"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "My subscription"
@@ -7141,6 +7155,10 @@ msgstr ""
 msgid "Referral codes"
 msgstr ""
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Referral codes are not available."
+msgstr ""
+
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
@@ -7574,6 +7592,7 @@ msgstr "Wznów import"
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Invite.tsx
@@ -9043,8 +9062,8 @@ msgid "This cannot be undone."
 msgstr "Tej operacji nie można cofnąć."
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "This clears all usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
-msgstr "To czyści całe użycie w tej przestrzeni — uruchomienia, tokeny, koszty oraz rekordy modeli i botów. Tej operacji nie można cofnąć."
+msgid "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
+msgstr ""
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -9682,6 +9701,7 @@ msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Użyj maksymalnie 512 liter, cyfr, _ lub -."
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "Used up"
 msgstr "Wykorzystano"
 

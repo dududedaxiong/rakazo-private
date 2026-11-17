@@ -470,6 +470,10 @@ msgstr "{toolCount, plural, one {# tool} other {# tools}}"
 msgid "{usable} of {total} models work"
 msgstr "{usable} of {total} models work"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{used} of {max} uses"
+msgstr "{used} of {max} uses"
+
 #: src/components/ModelCredits.tsx
 msgid "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
 msgstr "{vcpus} vCPU, {memoryGb} GB, {hours} computer hours a month"
@@ -2447,6 +2451,7 @@ msgstr "Conversations"
 #: src/components/pages/SharePopover.tsx
 #: src/components/vault/BotEmailAddresses.tsx
 #: src/components/vault/VaultItemDetail.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/shell/agent-import.tsx
@@ -2473,6 +2478,7 @@ msgid "Copy all"
 msgstr "Copy all"
 
 #: src/components/markdown-copy.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "Copy code"
 msgstr "Copy code"
 
@@ -2828,6 +2834,10 @@ msgstr "Could not load human verification"
 #: src/pages/PluginsOverlay.tsx
 msgid "Could not load integrations"
 msgstr "Could not load integrations"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Could not load invite code"
+msgstr "Could not load invite code"
 
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/plugins/use-plugin-connections.ts
@@ -5809,6 +5819,10 @@ msgstr "Muted"
 msgid "My computers"
 msgstr "My computers"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "My invite code"
+msgstr "My invite code"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "My subscription"
@@ -7141,6 +7155,10 @@ msgstr "Referral"
 msgid "Referral codes"
 msgstr "Referral codes"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Referral codes are not available."
+msgstr "Referral codes are not available."
+
 #: src/App.tsx
 #: src/components/ErrorBoundary.tsx
 #: src/components/ModelCredits.tsx
@@ -7574,6 +7592,7 @@ msgstr "Resume import"
 #: src/components/integrations/skills-dialog.tsx
 #: src/components/PasskeySettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Invite.tsx
@@ -9043,8 +9062,8 @@ msgid "This cannot be undone."
 msgstr "This cannot be undone."
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "This clears all usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
-msgstr "This clears all usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
+msgid "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
+msgstr "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone."
 
 #: src/pages/HostComputerPrompt.tsx
 msgid "this computer"
@@ -9682,6 +9701,7 @@ msgid "Use up to 512 letters, digits, _ or -."
 msgstr "Use up to 512 letters, digits, _ or -."
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/pages/AccountSettingsOverlay.tsx
 msgid "Used up"
 msgstr "Used up"
 

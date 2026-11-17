@@ -82,6 +82,15 @@ export const InviteCodeSchema = z.object({
 });
 export type InviteCode = z.infer<typeof InviteCodeSchema>;
 
+/** The caller's own personal referral code, as shown on their invite-code page. */
+export const MyReferralCodeSchema = z.object({
+  code: z.string(),
+  usedCount: z.number().int(),
+  maxUses: z.number().int(),
+  status: InviteCodeStatusSchema,
+});
+export type MyReferralCode = z.infer<typeof MyReferralCodeSchema>;
+
 export const InviteCodeCreateInputSchema = z.object({
   count: z.number().int().min(1).max(100),
   /** Days until expiry; null means the codes never expire. */

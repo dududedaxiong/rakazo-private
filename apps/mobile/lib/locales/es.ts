@@ -1671,6 +1671,16 @@ export const ES_MESSAGES: Record<string, string> = {
   "Calls are counted from the usage the provider actually returned, input and output separately. Failed calls count as 0 and are not included in the totals.":
     "Se contabiliza el uso que el proveedor realmente devolvió, con entrada y salida por separado. Las llamadas fallidas cuentan como 0 y no se incluyen en los totales.",
   "Could not load usage": "No se pudo cargar el uso",
+  "Reset usage": "Restablecer uso",
+  "Reset usage?": "¿Restablecer uso?",
+  "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone.":
+    "Esto borra tu uso en este espacio: llamadas, tokens, coste y registros por modelo y por bot. No se puede deshacer.",
+  "Could not reset usage": "No se pudo restablecer el uso",
+  "My invite code": "Mi código de invitación",
+  "Used up": "Agotado",
+  "Could not load invite code": "No se pudo cargar el código de invitación",
+  "Referral codes are not available.": "Los códigos de recomendación no están disponibles.",
+  "{used} of {max} uses": "{used} de {max} usos",
   "Today {runs} · {tokens} tokens": "Hoy {runs} · {tokens} tokens",
   "Total {runs} runs · {tokens} tokens": "Total {runs} ejecuciones · {tokens} tokens",
   "Change profile photo": "Cambiar foto de perfil",
@@ -1752,6 +1762,10 @@ export const ES_MESSAGES: Record<string, string> = {
   "Could not download the voice models.": "No se pudieron descargar los modelos de voz.",
   "Could not delete the voice models.": "No se pudieron eliminar los modelos de voz.",
   "Voice models are not downloaded yet.": "Los modelos de voz aún no se han descargado.",
+  "Groq only transcribes speech. Reading aloud still uses the on-device voice.":
+    "Groq solo transcribe voz. La lectura en voz alta sigue usando la voz del dispositivo.",
+  "Not supported in Chinese yet. Reading aloud still uses the on-device voice.":
+    "Aún no compatible con chino. La lectura en voz alta sigue usando la voz del dispositivo.",
   "Switch persona": "Cambiar persona",
   "Could not apply that template": "No se pudo aplicar esa plantilla",
   "No templates yet": "Todavía no hay plantillas",

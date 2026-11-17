@@ -1,7 +1,12 @@
 import { ORPCError } from "@orpc/server";
 import type { UsageOperationKind } from "@rakazo_mickvvw/adapter-kit";
 import { resolveBotWorkspacePath } from "@rakazo_mickvvw/adapters";
-import type { ExportManifest } from "@rakazo_mickvvw/contracts";
+import {
+  DEFAULT_REGISTRATION_SETTINGS,
+  issueReferralCode,
+  readSignupSettings,
+} from "@rakazo_mickvvw/auth";
+import type { ExportManifest, InviteCodeStatus } from "@rakazo_mickvvw/contracts";
 import { attachmentMaxBytes, resolveBotAvatarSet } from "@rakazo_mickvvw/contracts";
 import { AttachmentValidationError } from "@rakazo_mickvvw/core";
 import {
@@ -295,6 +300,24 @@ export function contentRoutes(ctx: RouterContext) {
           where: { spaceId: context.actor.spaceId, userId: context.actor.userId },
         });
         return { deleted: result.count };
+      }),
+    },
+    referral: {
+      code: authed.referral.code.handler(async ({ context }) => {
+        // Only the caller's own code: the lookup filters by their user id, and the
+        // procedure takes no user id at all, so no other account's code is reachable.
+        const settings = (await readSignupSettings(deps.prisma)) ?? DEFAULT_REGISTRATION_SETTINGS;
+        const row = await issueReferralCode(deps.prisma, context.actor.userId, settings);
+        if (!row) return null;
+        const status: InviteCodeStatus =
+          row.revokedAt !== null
+            ? "revoked"
+            : row.expiresAt !== null && row.expiresAt <= new Date()
+              ? "expired"
+              : row.usedCount >= row.maxUses
+                ? "exhausted"
+                : "active";
+        return { code: row.code, usedCount: row.usedCount, maxUses: row.maxUses, status };
       }),
     },
     appDownloads: {

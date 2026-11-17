@@ -1749,6 +1749,16 @@ export const JA_MESSAGES: Record<string, string> = {
   "Calls are counted from the usage the provider actually returned, input and output separately. Failed calls count as 0 and are not included in the totals.":
     "プロバイダーが実際に返した使用量で集計し、入力と出力は分けて記録します。失敗した呼び出しは 0 として集計し、合計には含めません。",
   "Could not load usage": "使用量を読み込めませんでした",
+  "Reset usage": "使用量をリセット",
+  "Reset usage?": "使用量をリセットしますか？",
+  "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone.":
+    "このスペースでのあなたの使用量（呼び出し回数、トークン、費用、モデル別・Bot別の記録）が削除されます。元に戻せません。",
+  "Could not reset usage": "使用量をリセットできませんでした",
+  "My invite code": "私の招待コード",
+  "Used up": "使い切りました",
+  "Could not load invite code": "招待コードを読み込めませんでした",
+  "Referral codes are not available.": "紹介コードは利用できません。",
+  "{used} of {max} uses": "{max} 回中 {used} 回使用済み",
   "Today {runs} · {tokens} tokens": "今日 {runs}件 · {tokens} tokens",
   "Total {runs} runs · {tokens} tokens": "合計 {runs}回 · {tokens} tokens",
   "Change profile photo": "プロフィール写真を変更",
@@ -1831,6 +1841,10 @@ export const JA_MESSAGES: Record<string, string> = {
   "Could not download the voice models.": "音声モデルをダウンロードできませんでした。",
   "Could not delete the voice models.": "音声モデルを削除できませんでした。",
   "Voice models are not downloaded yet.": "音声モデルはまだダウンロードされていません。",
+  "Groq only transcribes speech. Reading aloud still uses the on-device voice.":
+    "Groq は音声の文字起こしのみ行います。読み上げには引き続きデバイス内音声が使われます。",
+  "Not supported in Chinese yet. Reading aloud still uses the on-device voice.":
+    "中国語にはまだ対応していません。読み上げには引き続きデバイス内音声が使われます。",
   "{usable} of {total} models work": "{total} 個中 {usable} 個のモデルが動作します",
   "Switch persona": "人格を切り替える",
   "Could not apply that template": "そのテンプレートを適用できませんでした",

@@ -1709,6 +1709,16 @@ export const PL_MESSAGES: Record<string, string> = {
   "Calls are counted from the usage the provider actually returned, input and output separately. Failed calls count as 0 and are not included in the totals.":
     "Rozliczane jest zużycie rzeczywiście zwrócone przez dostawcę, z osobnym zapisem wejścia i wyjścia. Nieudane wywołania liczą się jako 0 i nie wchodzą do sum.",
   "Could not load usage": "Nie można wczytać użycia",
+  "Reset usage": "Resetuj użycie",
+  "Reset usage?": "Resetować użycie?",
+  "This clears your usage in this space — runs, tokens, cost, and per-model and per-bot records. This cannot be undone.":
+    "Spowoduje to wyczyszczenie Twojego użycia w tym obszarze – wywołań, tokenów, kosztów oraz rekordów dla modeli i botów. Tej operacji nie można cofnąć.",
+  "Could not reset usage": "Nie można zresetować użycia",
+  "My invite code": "Mój kod zaproszenia",
+  "Used up": "Wykorzystany",
+  "Could not load invite code": "Nie można wczytać kodu zaproszenia",
+  "Referral codes are not available.": "Kody poleceń są niedostępne.",
+  "{used} of {max} uses": "Wykorzystano {used} z {max}",
   "Today {runs} · {tokens} tokens": "Dziś {runs} · {tokens} tokens",
   "Total {runs} runs · {tokens} tokens": "Łącznie {runs} uruchomień · {tokens} tokens",
   "Change profile photo": "Zmień zdjęcie profilowe",
@@ -1790,6 +1800,10 @@ export const PL_MESSAGES: Record<string, string> = {
   "Could not download the voice models.": "Nie można było pobrać modeli głosowych.",
   "Could not delete the voice models.": "Nie można było usunąć modeli głosowych.",
   "Voice models are not downloaded yet.": "Modele głosowe nie zostały jeszcze pobrane.",
+  "Groq only transcribes speech. Reading aloud still uses the on-device voice.":
+    "Groq tylko transkrybuje mowę. Odczytywanie na głos nadal korzysta z głosu na urządzeniu.",
+  "Not supported in Chinese yet. Reading aloud still uses the on-device voice.":
+    "Jeszcze nieobsługiwane w języku chińskim. Odczytywanie na głos nadal korzysta z głosu na urządzeniu.",
   "{usable} of {total} models work": "{usable} z {total} modeli działa",
   "Switch persona": "Zmień personę",
   "Could not apply that template": "Nie można zastosować tego szablonu",
