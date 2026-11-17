@@ -137,7 +137,7 @@ import {
   withClientIp,
 } from "./client-ip.js";
 import { cspReportRoutes } from "./csp-report.js";
-import { configuredEmailProvider } from "./email.js";
+import { configuredEmailProvider, createResolvingEmailProvider } from "./email.js";
 import { mountEmailInboundRoute } from "./email-inbound.js";
 import type { AppEnv } from "./env.js";
 import { loadEnv } from "./env.js";
@@ -400,9 +400,11 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   const { messaging, installations: messagingInstallations } = messagingOverride
     ? { messaging: messagingOverride, installations: undefined }
     : installedMessaging(prisma, secrets, env, legacyMessaging, jobs);
-  const configuredEmail = emailOverride ?? configuredEmailProvider(env);
+  // The emulator only stands in when the environment configures no provider; the
+  // resolving provider reads the page config on every send, so a saved change
+  // applies without a restart.
   const localEmailEmulator =
-    !configuredEmail && env.emailEmulator
+    !configuredEmailProvider(env) && env.emailEmulator
       ? new EmailEmulator((message) => {
           getLogger().info("email emulator captured message", {
             "email.subject": message.subject,
@@ -412,7 +414,8 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
   if (localEmailEmulator && !isLocalhostOrLoopbackIp(env.apiHost)) {
     throw new Error("EMAIL_EMULATOR requires API_HOST to be a loopback host");
   }
-  const email: TransactionalEmailProvider | undefined = configuredEmail ?? localEmailEmulator;
+  const email: TransactionalEmailProvider | undefined =
+    emailOverride ?? createResolvingEmailProvider({ prisma, secrets, env }, localEmailEmulator);
   const onEmailError = (error: unknown) =>
     getLogger().error("transactional email delivery failed", error);
   const stripeBilling = stripeBillingConfigFromEnv(env);
@@ -770,6 +773,12 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
       ticketBoardEnabled,
       navLinks: env.navLinks,
       adminEmails: env.adminEmails,
+      adminSuperKey: env.adminSuperKey,
+      emailProvider: env.emailProvider,
+      emailApiKey: env.emailApiKey,
+      emailFrom: env.emailFrom,
+      emailReplyTo: env.emailReplyTo,
+      smtpUrl: env.smtpUrl,
       signupsEnabled: env.signupsEnabled,
       directoryProvisioning: Boolean(directory),
       maxUploadSizeBytes: env.maxUploadSizeBytes,

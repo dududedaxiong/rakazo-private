@@ -7,10 +7,16 @@ import { eventIterator, oc } from "@orpc/contract";
 import * as z from "zod";
 import {
   AdminOverviewSchema,
+  AdminSuperKeyStatusSchema,
+  AdminTwoFactorConfirmSchema,
+  AdminTwoFactorEnrollSchema,
+  AdminTwoFactorStatusSchema,
   AdminUserListInputSchema,
   AdminUserSchema,
   AppDownloadLinksSchema,
   AppDownloadLinksUpdateSchema,
+  EmailSettingsSchema,
+  EmailSettingsUpdateSchema,
   InviteCodeCreateInputSchema,
   InviteCodeListInputSchema,
   InviteCodeSchema,
@@ -566,6 +572,40 @@ export const appContract = {
     },
     ipStats: {
       list: oc.input(IpRegistrationStatListInputSchema).output(z.array(IpRegistrationStatSchema)),
+    },
+    twoFactor: {
+      status: oc.output(AdminTwoFactorStatusSchema),
+      enrollStart: oc.output(AdminTwoFactorEnrollSchema),
+      enrollConfirm: oc
+        .input(z.object({ code: z.string().min(6).max(16) }))
+        .output(AdminTwoFactorConfirmSchema),
+      verify: oc
+        .input(z.object({ code: z.string().min(6).max(16) }))
+        .output(z.object({ verified: z.literal(true) })),
+      disable: oc
+        .input(z.object({ code: z.string().min(6).max(16) }))
+        .output(z.object({ enabled: z.literal(false) })),
+      reset: oc.output(z.object({ enabled: z.literal(false) })),
+    },
+    superKey: {
+      status: oc.output(AdminSuperKeyStatusSchema),
+      verify: oc
+        .input(z.object({ key: z.string().min(1).max(512) }))
+        .output(z.object({ granted: z.literal(true), expiresAt: z.string() })),
+      change: oc
+        .input(
+          z.object({
+            currentKey: z.string().min(1).max(512),
+            newKey: z.string().min(8).max(512),
+          }),
+        )
+        .output(z.object({ changed: z.literal(true) })),
+    },
+    emailSettings: {
+      get: oc.output(EmailSettingsSchema),
+      update: oc.input(EmailSettingsUpdateSchema).output(EmailSettingsSchema),
+      clear: oc.output(EmailSettingsSchema),
+      test: oc.output(z.object({ ok: z.literal(true) })),
     },
   },
   /** The organization's audit log, newest first. Organization owners and admins only. */

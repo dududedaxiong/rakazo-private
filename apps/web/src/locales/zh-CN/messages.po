@@ -703,6 +703,7 @@ msgid "Access token (optional)"
 msgstr "访问令牌（可选）"
 
 #: src/components/AccountMenu.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Account"
 msgstr "账户"
@@ -1129,6 +1130,7 @@ msgstr "@{ownerDomain} 的任何人"
 msgid "Anyone with the link"
 msgstr "任何拥有链接的人"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/kinds.tsx
@@ -1295,6 +1297,10 @@ msgstr "认证"
 #: src/lib/model-connection-preflight.ts
 msgid "Authentication failed."
 msgstr "身份验证失败。"
+
+#: src/components/admin/AdminTotpCodeInput.tsx
+msgid "Authenticator code"
+msgstr "验证器验证码"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -1639,6 +1645,7 @@ msgstr "无法连接服务器。"
 msgid "Can't read images"
 msgstr "无法读取图像"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/AskCard.tsx
 #: src/components/ConfirmDialog.tsx
@@ -1684,6 +1691,10 @@ msgstr "取消待处理的邀请"
 #: src/pages/shell/chat-context.tsx
 msgid "Cancel reply"
 msgstr "取消回复"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Cancel setup"
+msgstr "取消设置"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Canceled"
@@ -1753,6 +1764,10 @@ msgstr "换供应商"
 #: src/pages/Auth.tsx
 msgid "Change server"
 msgstr "更换服务器"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Change super key"
+msgstr "修改超级密钥"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -1973,6 +1988,10 @@ msgstr "清除筛选 {label}"
 msgid "Clear filters"
 msgstr "清除筛选"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Clear page settings"
+msgstr "清除页面配置"
+
 #: src/components/BotPackageTools.tsx
 msgid "Clear selection"
 msgstr "清除选择"
@@ -2029,6 +2048,7 @@ msgstr "关闭记忆设置"
 msgid "Close model settings"
 msgstr "关闭模型设置"
 
+#: src/pages/AdminPage.tsx
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Close navigation"
 msgstr "关闭导航"
@@ -2077,6 +2097,11 @@ msgstr "代码"
 msgctxt "email sign-in"
 msgid "Code"
 msgstr "验证码"
+
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Code is incorrect"
+msgstr "验证码不正确"
 
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
@@ -2205,9 +2230,17 @@ msgstr "此服务器未开启电脑。"
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "要连接应用，请先在服务器上配置插件目录。"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Configured — leave empty to keep it"
+msgstr "已配置，留空不改"
+
 #: src/components/AccountDataSettings.tsx
 msgid "Confirm backup password"
 msgstr "确认备份密码"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Confirm clear"
+msgstr "确认清除"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -2225,6 +2258,10 @@ msgstr "确认密码"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Confirm removal"
 msgstr "确认移除"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Confirm reset"
+msgstr "确认重置"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Confirm the URL is reachable from this browser session, then test again."
@@ -2402,6 +2439,7 @@ msgstr "通过 {0} 继续"
 msgid "Conversations"
 msgstr "对话"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/BotEmailAddressField.tsx
 #: src/components/InviteDialog.tsx
 #: src/components/markdown-copy.tsx
@@ -2417,6 +2455,7 @@ msgstr "对话"
 msgid "Copied"
 msgstr "已复制"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -2428,6 +2467,10 @@ msgstr "复制"
 #: src/components/vault/BotEmailAddresses.tsx
 msgid "Copy {address}"
 msgstr "复制 {address}"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Copy all"
+msgstr "全部复制"
 
 #: src/components/markdown-copy.tsx
 msgid "Copy code"
@@ -2500,6 +2543,10 @@ msgstr "无法更改"
 msgid "Could not change password"
 msgstr "无法修改密码"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Could not change the super key"
+msgstr "无法修改超级密钥"
+
 #: src/components/integrations/space-availability.tsx
 msgid "Could not change where this is available"
 msgstr "无法更改可用的工作区"
@@ -2519,6 +2566,10 @@ msgstr "无法查看教学状态。请刷新画面后继续。"
 #: src/pages/shell/dialogs.tsx
 msgid "Could not clear conversation"
 msgstr "无法清空对话"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Could not clear email settings"
+msgstr "无法清除邮箱设置"
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Could not complete action"
@@ -2962,6 +3013,10 @@ msgstr "无法重新发送"
 msgid "Could not reset password"
 msgstr "无法重置密码"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Could not reset two-factor authentication"
+msgstr "无法重置两步验证"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not reset usage"
 msgstr "无法重置用量"
@@ -3002,6 +3057,10 @@ msgstr "无法保存自动审核"
 #: src/components/ComputerProviderSettings.tsx
 msgid "Could not save computer settings"
 msgstr "无法保存电脑设置"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Could not save email settings"
+msgstr "无法保存邮箱设置"
 
 #: src/pages/GroupPanel.tsx
 msgid "Could not save group"
@@ -3078,6 +3137,10 @@ msgstr "无法发送重置邮件"
 msgid "Could not send that"
 msgstr "无法发送"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Could not send the test email"
+msgstr "无法发送测试邮件"
+
 #: src/pages/shell/media-result.tsx
 msgid "Could not share {name}"
 msgstr "无法分享 {name}"
@@ -3093,6 +3156,10 @@ msgstr "无法登录"
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not start OAuth"
 msgstr "无法开始 OAuth"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Could not start setup"
+msgstr "无法开始设置"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Could not start teaching"
@@ -3183,6 +3250,10 @@ msgstr "无法更新该用户"
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "无法确认电脑是否就绪（{failureMessage}）。请修复连接后再检查一次。"
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Couldn't check the super key"
+msgstr "无法检查超级密钥"
+
 #: src/components/pages/SharePopover.tsx
 msgid "Couldn't copy. Select the link and copy it."
 msgstr "无法复制。请选中链接后复制。"
@@ -3190,6 +3261,10 @@ msgstr "无法复制。请选中链接后复制。"
 #: src/components/admin/AdminAppDownloadSettings.tsx
 msgid "Couldn't load app download links"
 msgstr "无法加载 App 下载地址"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Couldn't load email settings"
+msgstr "无法加载邮箱设置"
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Couldn't load grants"
@@ -3238,6 +3313,11 @@ msgstr "对话加载失败，请重试。"
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this page. Try again."
 msgstr "无法加载此页面。请重试。"
+
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Couldn't load two-factor status"
+msgstr "无法加载两步验证状态"
 
 #: src/components/admin/AdminUsers.tsx
 msgid "Couldn't load users"
@@ -3383,6 +3463,10 @@ msgstr "当前密码"
 #: src/components/prompt-templates/BotPersonaSection.tsx
 msgid "Current persona"
 msgstr "当前人设"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Current super key"
+msgstr "当前超级密钥"
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
 #: src/components/ShareConversationDialog.tsx
@@ -3906,6 +3990,15 @@ msgstr "把验证码发到我的邮箱"
 msgid "Email registration"
 msgstr "邮箱注册"
 
+#: src/components/admin/AdminEmailSettings.tsx
+#: src/pages/AdminPage.tsx
+msgid "Email settings"
+msgstr "邮箱设置"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Email settings saved"
+msgstr "邮箱设置已保存"
+
 #: src/lib/user-error.ts
 msgid "Email verification required"
 msgstr "需要验证邮箱"
@@ -3947,9 +4040,17 @@ msgstr "喜欢 Rakazo 吗？"
 msgid "Enlarge picture"
 msgstr "放大图片"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Enter a code from your authenticator to turn it off."
+msgstr "输入验证器的验证码以关闭两步验证。"
+
 #: src/lib/user-error.ts
 msgid "Enter a password"
 msgstr "请输入密码"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Enter a port between 1 and 65535"
+msgstr "输入 1 到 65535 之间的端口"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Enter a preset name"
@@ -3958,6 +4059,14 @@ msgstr "请输入预设名称"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Enter a prompt"
 msgstr "请输入提示词"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Enter a sender address"
+msgstr "输入发件地址"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Enter a server address"
+msgstr "输入服务器地址"
 
 #: src/lib/user-error.ts
 msgid "Enter a valid email"
@@ -3986,6 +4095,10 @@ msgstr "请输入 1 到 1000 之间的整数作为图像限制。"
 msgid "Enter an API key before testing."
 msgstr "测试前请输入 API 密钥。"
 
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Enter the 6-digit code from your authenticator app."
+msgstr "输入验证器 App 中的 6 位验证码。"
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Enter the backup password to restore"
 msgstr "输入备份密码以恢复"
@@ -4002,6 +4115,7 @@ msgstr "请输入 WebDAV 密码。"
 msgid "Environment ID"
 msgstr "环境 ID"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/McpServerForm.tsx
 msgid "Environment variables"
 msgstr "环境变量"
@@ -4621,6 +4735,10 @@ msgstr "你会如何使用 Rakazo？"
 msgid "Human verification failed. Try again."
 msgstr "人机验证失败，请重试。"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "I saved them"
+msgstr "我已保存"
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "我做完了"
@@ -5182,10 +5300,14 @@ msgstr "正在加载语音提供方…"
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
 #: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminOverview.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/AppDownloadDialog.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
@@ -5251,6 +5373,10 @@ msgstr "你的 Bot 可以使用的登录信息和密钥。"
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Looks like it contains a key"
 msgstr "似乎包含密钥"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Lost both authenticator and recovery codes"
+msgstr "验证器与恢复码都丢了"
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -5864,6 +5990,10 @@ msgstr "新建技能"
 msgid "New space"
 msgstr "新建工作区"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "New super key"
+msgstr "新超级密钥"
+
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "New template"
@@ -5904,6 +6034,10 @@ msgstr "下一组设置项"
 #: src/components/admin/AdminOverview.tsx
 msgid "No admin activity yet"
 msgstr "暂无管理操作"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "No API key needed — just the server address and port. Leave the account and password empty when the server has no authentication."
+msgstr "不用 API key，只填服务器地址和端口，账号密码没开认证可留空"
 
 #: src/components/AppDownloadDialog.tsx
 msgid "No app downloads are set up yet."
@@ -6061,6 +6195,10 @@ msgstr "暂无技能"
 msgid "No submissions"
 msgstr "暂无提交"
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "No super key is configured, so this page cannot be opened. Ask whoever deploys the server to configure one."
+msgstr "未配置超级密钥，无法进入，请联系部署方在服务端配置"
+
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "No templates yet"
 msgstr "还没有模板"
@@ -6085,6 +6223,7 @@ msgstr "无触发器"
 msgid "No users match"
 msgstr "没有匹配的用户"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -6115,6 +6254,10 @@ msgstr "未检测"
 #: src/components/McpServerHealthLine.tsx
 msgid "Not checked yet"
 msgstr "尚未检查"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Not configured"
+msgstr "未配置"
 
 #: src/pages/plugins/parts.tsx
 msgid "Not connected"
@@ -6163,6 +6306,10 @@ msgstr "Rakazo 不支持"
 msgid "Not used by Rakazo"
 msgstr "Rakazo 不使用"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Not verified"
+msgstr "未验证"
+
 #: src/components/McpServerHealthLine.tsx
 #: src/pages/plugins/parts.tsx
 msgid "Not working"
@@ -6200,9 +6347,17 @@ msgstr "OAuth 客户端密钥（可选）"
 msgid "OAuth connection failed"
 msgstr "OAuth 连接失败"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Off"
+msgstr "关闭"
+
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Offline"
 msgstr "离线"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "On"
+msgstr "开启"
 
 #: src/pages/routine-editor/add-trigger-menu.tsx
 msgid "On a schedule"
@@ -6307,6 +6462,7 @@ msgstr "在完整窗口中打开"
 msgid "Open link"
 msgstr "打开链接"
 
+#: src/pages/AdminPage.tsx
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
 msgstr "打开导航"
@@ -6349,6 +6505,10 @@ msgstr "可选"
 #: src/pages/McpServerForm.tsx
 msgid "Optional header value"
 msgstr "可选请求头值"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Or enter this secret by hand"
+msgstr "或手动输入此密钥"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -6430,6 +6590,14 @@ msgstr "页面链接"
 msgid "Page not found"
 msgstr "找不到页面"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Page settings"
+msgstr "页面配置"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Page settings cleared"
+msgstr "页面配置已清除"
+
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/PageView.tsx
 msgid "Page title"
@@ -6457,6 +6625,7 @@ msgstr "通行密钥"
 msgid "Passkeys"
 msgstr "通行密钥"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -6633,6 +6802,10 @@ msgstr "插件提交"
 msgid "Plugins"
 msgstr "插件"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Port"
+msgstr "端口"
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "在聊天中发布“无变化”"
@@ -6745,6 +6918,7 @@ msgstr "受保护输入"
 msgid "Protocol"
 msgstr "协议"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -6762,6 +6936,10 @@ msgstr "拉取请求"
 #: src/components/WebdavBackupSettings.tsx
 msgid "Put the account and password in their own fields, not in the address."
 msgstr "账号和密码请填在各自的输入框里，不要写在地址里。"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "QR code for your authenticator app"
+msgstr "验证器 App 扫码"
 
 #: src/pages/ActivityList.tsx
 msgid "Queued"
@@ -6905,6 +7083,18 @@ msgstr "正在恢复团队电脑"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Recovering…"
 msgstr "正在恢复…"
+
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Recovery code"
+msgstr "恢复码"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Recovery codes"
+msgstr "恢复码"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Recovery codes left"
+msgstr "剩余恢复码"
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovery failed"
@@ -7219,6 +7409,10 @@ msgstr "回复"
 msgid "Reply cancelled"
 msgstr "已取消回复"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Reply-to address"
+msgstr "回复地址"
+
 #. placeholder {0}: replyNameRef.current
 #: src/pages/shell/composer.tsx
 msgid "Replying to {0}"
@@ -7348,10 +7542,14 @@ msgstr "继续导入"
 #: src/components/AccountAccess.tsx
 #: src/components/admin/AdminAppDownloadSettings.tsx
 #: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminOverview.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
 #: src/components/BotPackageTools.tsx
@@ -7570,6 +7768,7 @@ msgid "Save limits"
 msgstr "保存规则"
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
 msgid "Save settings"
 msgstr "保存设置"
@@ -7577,6 +7776,10 @@ msgstr "保存设置"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
 msgstr "保存工作区并安装最新软件。"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Save these somewhere safe. Each code works once, and they are only shown this one time."
+msgstr "请妥善保存。每个恢复码只能使用一次，且仅显示这一次。"
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Save to Vault"
@@ -7599,6 +7802,10 @@ msgstr "已保存"
 msgid "Saved as template"
 msgstr "已保存为模板"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Saved settings are removed and the environment values apply again."
+msgstr "已保存的设置将被清除，恢复使用环境变量。"
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
 msgstr "已保存，但列表刷新失败"
@@ -7620,8 +7827,10 @@ msgid "Saving..."
 msgstr "正在保存…"
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -7786,6 +7995,10 @@ msgstr "已选技能：{0}"
 msgid "Self-hosted"
 msgstr "自托管"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Self-hosted email (no API key)"
+msgstr "自建邮箱·免密钥"
+
 #: src/pages/shell/composer-parts.tsx
 msgid "Send"
 msgstr "发送"
@@ -7797,6 +8010,10 @@ msgstr "请在 10 分钟内从 {linkApp} 发送 <0>{linkCode}</0>。"
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Send <0>{linkCode}</0> to <1>{linkAddress}</1> from {linkApp} within 10 minutes."
 msgstr "请在 10 分钟内从 {linkApp} 将 <0>{linkCode}</0> 发送到 <1>{linkAddress}</1>。"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Send a test email"
+msgstr "发送测试邮件"
 
 #: src/components/AskCard.tsx
 msgid "Send answer"
@@ -7822,6 +8039,11 @@ msgstr "发送重置链接"
 msgid "Send with Enter"
 msgstr "按 Enter 发送"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Sender address"
+msgstr "发件地址"
+
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -7841,6 +8063,7 @@ msgstr "请填写 Serenity 端点。"
 msgid "Serif"
 msgstr "宋体"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/WebdavBackupSettings.tsx
 msgid "Server address"
 msgstr "服务器地址"
@@ -7868,6 +8091,10 @@ msgstr "设为主模型"
 #: src/components/BotPackageImport.tsx
 msgid "Set up connections"
 msgstr "设置连接"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Set up two-factor authentication"
+msgstr "设置两步验证"
 
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
@@ -8280,6 +8507,7 @@ msgstr "延迟 {count} 分钟开始"
 msgid "Starting"
 msgstr "正在开始"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/lib/roster-status.ts
 #: src/pages/model-settings/connection-controls.tsx
@@ -8291,6 +8519,7 @@ msgstr "正在开始…"
 msgid "State or region"
 msgstr "州/省/地区"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
@@ -8392,6 +8621,22 @@ msgstr "订阅地址"
 #: src/lib/cron.ts
 msgid "Sunday"
 msgstr "周日"
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Super key"
+msgstr "超级密钥"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Super key changed"
+msgstr "超级密钥已修改"
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Super key is incorrect"
+msgstr "超级密钥不正确"
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Super key required"
+msgstr "需要超级密钥"
 
 #: src/pages/shell/media-result.tsx
 msgid "Supplementary prompt"
@@ -8540,6 +8785,10 @@ msgstr "测试 API 密钥"
 msgid "Test connection"
 msgstr "测试连接"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Test email sent"
+msgstr "测试邮件已发送"
+
 #: src/pages/model-settings/model-health-dialog.tsx
 msgid "Test results · {label}"
 msgstr "测试结果 · {label}"
@@ -8645,6 +8894,10 @@ msgstr "模型提供商返回了错误。"
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "模型返回了无法使用的回复。请重试。"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "The new super key must be at least 8 characters"
+msgstr "新超级密钥至少 8 位"
 
 #: src/pages/SharedConversation.tsx
 msgid "The owner may have revoked its link or it may have expired."
@@ -8857,6 +9110,10 @@ msgstr "无法加载此页面"
 msgid "This page isn't available"
 msgstr "此页面不可用"
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "This page stays open for 15 minutes after verification."
+msgstr "验证通过后，本页 15 分钟内有效。"
+
 #: src/components/AccountDataSettings.tsx
 #: src/components/WebdavBackupSettings.tsx
 msgid "This password appeared in a data breach. Choose another."
@@ -8906,6 +9163,10 @@ msgstr "此服务器已连接。请先断开再重新授权。"
 #: src/lib/run-error.ts
 msgid "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
 msgstr "此服务器的工具结果超出模型容量。请关闭该服务器的“保留完整工具结果”，或选择其他模型。"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "This session"
+msgstr "本次会话"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
@@ -9139,6 +9400,7 @@ msgstr "请重试测试。"
 msgid "Tuesday"
 msgstr "周二"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Turn off"
 msgstr "关闭"
@@ -9146,6 +9408,24 @@ msgstr "关闭"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Turn on"
 msgstr "开启"
+
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+#: src/pages/AdminPage.tsx
+msgid "Two-factor authentication"
+msgstr "两步验证"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Two-factor authentication is removed and you set it up again."
+msgstr "两步验证将被移除，需重新设置。"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Two-factor authentication reset — set it up again"
+msgstr "两步验证已重置，请重新设置"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Two-factor authentication turned off"
+msgstr "两步验证已关闭"
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -9328,6 +9608,10 @@ msgstr "不要和账号密码相同。"
 msgid "Use a found model"
 msgstr "使用找到的模型"
 
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Use a recovery code"
+msgstr "使用恢复码"
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Use an https address."
 msgstr "请用 https 地址。"
@@ -9336,6 +9620,10 @@ msgstr "请用 https 地址。"
 #: src/components/WebdavBackupSettings.tsx
 msgid "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
 msgstr "备份密码至少 {BACKUP_PASSWORD_MIN_LENGTH} 个字符"
+
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Use authenticator code"
+msgstr "使用验证器验证码"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
@@ -9469,10 +9757,21 @@ msgstr "变量"
 msgid "Vault"
 msgstr "保管库"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Verified"
+msgstr "已验证"
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Verify"
+msgstr "验证"
+
 #: src/pages/plugins/source-form.tsx
 msgid "Verify and add"
 msgstr "校验并添加"
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
 #: src/pages/plugins/source-form.tsx
 msgid "Verifying…"
 msgstr "正在校验…"

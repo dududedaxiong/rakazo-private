@@ -703,6 +703,7 @@ msgid "Access token (optional)"
 msgstr "Access token (optional)"
 
 #: src/components/AccountMenu.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Account"
 msgstr "Account"
@@ -1129,6 +1130,7 @@ msgstr "Anyone at @{ownerDomain}"
 msgid "Anyone with the link"
 msgstr "Anyone with the link"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/kinds.tsx
@@ -1295,6 +1297,10 @@ msgstr "Authentication"
 #: src/lib/model-connection-preflight.ts
 msgid "Authentication failed."
 msgstr "Authentication failed."
+
+#: src/components/admin/AdminTotpCodeInput.tsx
+msgid "Authenticator code"
+msgstr "Authenticator code"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -1639,6 +1645,7 @@ msgstr "Can't reach the server."
 msgid "Can't read images"
 msgstr "Can't read images"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/AskCard.tsx
 #: src/components/ConfirmDialog.tsx
@@ -1684,6 +1691,10 @@ msgstr "Cancel open invites"
 #: src/pages/shell/chat-context.tsx
 msgid "Cancel reply"
 msgstr "Cancel reply"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Cancel setup"
+msgstr "Cancel setup"
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Canceled"
@@ -1753,6 +1764,10 @@ msgstr "Change provider"
 #: src/pages/Auth.tsx
 msgid "Change server"
 msgstr "Change server"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Change super key"
+msgstr "Change super key"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -1973,6 +1988,10 @@ msgstr "Clear filter {label}"
 msgid "Clear filters"
 msgstr "Clear filters"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Clear page settings"
+msgstr "Clear page settings"
+
 #: src/components/BotPackageTools.tsx
 msgid "Clear selection"
 msgstr "Clear selection"
@@ -2029,6 +2048,7 @@ msgstr "Close memory settings"
 msgid "Close model settings"
 msgstr "Close model settings"
 
+#: src/pages/AdminPage.tsx
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Close navigation"
 msgstr "Close navigation"
@@ -2077,6 +2097,11 @@ msgstr "Code"
 msgctxt "email sign-in"
 msgid "Code"
 msgstr "Code"
+
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Code is incorrect"
+msgstr "Code is incorrect"
 
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
@@ -2205,9 +2230,17 @@ msgstr "Computers are off on this server."
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "Configure a plugin catalog on the server to connect apps."
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Configured — leave empty to keep it"
+msgstr "Configured — leave empty to keep it"
+
 #: src/components/AccountDataSettings.tsx
 msgid "Confirm backup password"
 msgstr "Confirm backup password"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Confirm clear"
+msgstr "Confirm clear"
 
 #: src/pages/KnowledgeSection.tsx
 msgid "Confirm delete"
@@ -2225,6 +2258,10 @@ msgstr "Confirm password"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Confirm removal"
 msgstr "Confirm removal"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Confirm reset"
+msgstr "Confirm reset"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Confirm the URL is reachable from this browser session, then test again."
@@ -2402,6 +2439,7 @@ msgstr "Continue with {0}"
 msgid "Conversations"
 msgstr "Conversations"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/BotEmailAddressField.tsx
 #: src/components/InviteDialog.tsx
 #: src/components/markdown-copy.tsx
@@ -2417,6 +2455,7 @@ msgstr "Conversations"
 msgid "Copied"
 msgstr "Copied"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -2428,6 +2467,10 @@ msgstr "Copy"
 #: src/components/vault/BotEmailAddresses.tsx
 msgid "Copy {address}"
 msgstr "Copy {address}"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Copy all"
+msgstr "Copy all"
 
 #: src/components/markdown-copy.tsx
 msgid "Copy code"
@@ -2500,6 +2543,10 @@ msgstr "Could not change"
 msgid "Could not change password"
 msgstr "Could not change password"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Could not change the super key"
+msgstr "Could not change the super key"
+
 #: src/components/integrations/space-availability.tsx
 msgid "Could not change where this is available"
 msgstr "Could not change where this is available"
@@ -2519,6 +2566,10 @@ msgstr "Could not check teaching status. Refresh the view to continue."
 #: src/pages/shell/dialogs.tsx
 msgid "Could not clear conversation"
 msgstr "Could not clear conversation"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Could not clear email settings"
+msgstr "Could not clear email settings"
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Could not complete action"
@@ -2962,6 +3013,10 @@ msgstr "Could not resend"
 msgid "Could not reset password"
 msgstr "Could not reset password"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Could not reset two-factor authentication"
+msgstr "Could not reset two-factor authentication"
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not reset usage"
 msgstr "Could not reset usage"
@@ -3002,6 +3057,10 @@ msgstr "Could not save Auto Review"
 #: src/components/ComputerProviderSettings.tsx
 msgid "Could not save computer settings"
 msgstr "Could not save computer settings"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Could not save email settings"
+msgstr "Could not save email settings"
 
 #: src/pages/GroupPanel.tsx
 msgid "Could not save group"
@@ -3078,6 +3137,10 @@ msgstr "Could not send reset email"
 msgid "Could not send that"
 msgstr "Could not send that"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Could not send the test email"
+msgstr "Could not send the test email"
+
 #: src/pages/shell/media-result.tsx
 msgid "Could not share {name}"
 msgstr "Could not share {name}"
@@ -3093,6 +3156,10 @@ msgstr "Could not sign in"
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not start OAuth"
 msgstr "Could not start OAuth"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Could not start setup"
+msgstr "Could not start setup"
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Could not start teaching"
@@ -3183,6 +3250,10 @@ msgstr "Could not update the user"
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Couldn't check the super key"
+msgstr "Couldn't check the super key"
+
 #: src/components/pages/SharePopover.tsx
 msgid "Couldn't copy. Select the link and copy it."
 msgstr "Couldn't copy. Select the link and copy it."
@@ -3190,6 +3261,10 @@ msgstr "Couldn't copy. Select the link and copy it."
 #: src/components/admin/AdminAppDownloadSettings.tsx
 msgid "Couldn't load app download links"
 msgstr "Couldn't load app download links"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Couldn't load email settings"
+msgstr "Couldn't load email settings"
 
 #: src/pages/AdminAccessPage.tsx
 msgid "Couldn't load grants"
@@ -3238,6 +3313,11 @@ msgstr "Couldn't load this conversation. Try again."
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this page. Try again."
 msgstr "Couldn't load this page. Try again."
+
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Couldn't load two-factor status"
+msgstr "Couldn't load two-factor status"
 
 #: src/components/admin/AdminUsers.tsx
 msgid "Couldn't load users"
@@ -3383,6 +3463,10 @@ msgstr "Current password"
 #: src/components/prompt-templates/BotPersonaSection.tsx
 msgid "Current persona"
 msgstr "Current persona"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Current super key"
+msgstr "Current super key"
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
 #: src/components/ShareConversationDialog.tsx
@@ -3906,6 +3990,15 @@ msgstr "Email me a code"
 msgid "Email registration"
 msgstr "Email registration"
 
+#: src/components/admin/AdminEmailSettings.tsx
+#: src/pages/AdminPage.tsx
+msgid "Email settings"
+msgstr "Email settings"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Email settings saved"
+msgstr "Email settings saved"
+
 #: src/lib/user-error.ts
 msgid "Email verification required"
 msgstr "Email verification required"
@@ -3947,9 +4040,17 @@ msgstr "Enjoying Rakazo?"
 msgid "Enlarge picture"
 msgstr "Enlarge picture"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Enter a code from your authenticator to turn it off."
+msgstr "Enter a code from your authenticator to turn it off."
+
 #: src/lib/user-error.ts
 msgid "Enter a password"
 msgstr "Enter a password"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Enter a port between 1 and 65535"
+msgstr "Enter a port between 1 and 65535"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Enter a preset name"
@@ -3958,6 +4059,14 @@ msgstr "Enter a preset name"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Enter a prompt"
 msgstr "Enter a prompt"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Enter a sender address"
+msgstr "Enter a sender address"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Enter a server address"
+msgstr "Enter a server address"
 
 #: src/lib/user-error.ts
 msgid "Enter a valid email"
@@ -3986,6 +4095,10 @@ msgstr "Enter a whole number from 1 to 1000 for the image limit."
 msgid "Enter an API key before testing."
 msgstr "Enter an API key before testing."
 
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Enter the 6-digit code from your authenticator app."
+msgstr "Enter the 6-digit code from your authenticator app."
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Enter the backup password to restore"
 msgstr "Enter the backup password to restore"
@@ -4002,6 +4115,7 @@ msgstr "Enter the WebDAV password."
 msgid "Environment ID"
 msgstr "Environment ID"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/McpServerForm.tsx
 msgid "Environment variables"
 msgstr "Environment variables"
@@ -4621,6 +4735,10 @@ msgstr "How will you use Rakazo?"
 msgid "Human verification failed. Try again."
 msgstr "Human verification failed. Try again."
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "I saved them"
+msgstr "I saved them"
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "I’m done"
@@ -5182,10 +5300,14 @@ msgstr "Loading voice providers…"
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
 #: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminOverview.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/AppDownloadDialog.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
@@ -5251,6 +5373,10 @@ msgstr "Logins and keys your bots can use."
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Looks like it contains a key"
 msgstr "Looks like it contains a key"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Lost both authenticator and recovery codes"
+msgstr "Lost both authenticator and recovery codes"
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -5864,6 +5990,10 @@ msgstr "New skill"
 msgid "New space"
 msgstr "New space"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "New super key"
+msgstr "New super key"
+
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "New template"
@@ -5904,6 +6034,10 @@ msgstr "Next settings sections"
 #: src/components/admin/AdminOverview.tsx
 msgid "No admin activity yet"
 msgstr "No admin activity yet"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "No API key needed — just the server address and port. Leave the account and password empty when the server has no authentication."
+msgstr "No API key needed — just the server address and port. Leave the account and password empty when the server has no authentication."
 
 #: src/components/AppDownloadDialog.tsx
 msgid "No app downloads are set up yet."
@@ -6061,6 +6195,10 @@ msgstr "No skills yet"
 msgid "No submissions"
 msgstr "No submissions"
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "No super key is configured, so this page cannot be opened. Ask whoever deploys the server to configure one."
+msgstr "No super key is configured, so this page cannot be opened. Ask whoever deploys the server to configure one."
+
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "No templates yet"
 msgstr "No templates yet"
@@ -6085,6 +6223,7 @@ msgstr "No trigger"
 msgid "No users match"
 msgstr "No users match"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -6115,6 +6254,10 @@ msgstr "Not checked"
 #: src/components/McpServerHealthLine.tsx
 msgid "Not checked yet"
 msgstr "Not checked yet"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Not configured"
+msgstr "Not configured"
 
 #: src/pages/plugins/parts.tsx
 msgid "Not connected"
@@ -6163,6 +6306,10 @@ msgstr "Not supported in Rakazo"
 msgid "Not used by Rakazo"
 msgstr "Not used by Rakazo"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Not verified"
+msgstr "Not verified"
+
 #: src/components/McpServerHealthLine.tsx
 #: src/pages/plugins/parts.tsx
 msgid "Not working"
@@ -6200,9 +6347,17 @@ msgstr "OAuth client secret (optional)"
 msgid "OAuth connection failed"
 msgstr "OAuth connection failed"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Off"
+msgstr "Off"
+
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Offline"
 msgstr "Offline"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "On"
+msgstr "On"
 
 #: src/pages/routine-editor/add-trigger-menu.tsx
 msgid "On a schedule"
@@ -6307,6 +6462,7 @@ msgstr "Open in full window"
 msgid "Open link"
 msgstr "Open link"
 
+#: src/pages/AdminPage.tsx
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
 msgstr "Open navigation"
@@ -6349,6 +6505,10 @@ msgstr "Optional"
 #: src/pages/McpServerForm.tsx
 msgid "Optional header value"
 msgstr "Optional header value"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Or enter this secret by hand"
+msgstr "Or enter this secret by hand"
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -6430,6 +6590,14 @@ msgstr "Page link"
 msgid "Page not found"
 msgstr "Page not found"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Page settings"
+msgstr "Page settings"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Page settings cleared"
+msgstr "Page settings cleared"
+
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/PageView.tsx
 msgid "Page title"
@@ -6457,6 +6625,7 @@ msgstr "Passkey"
 msgid "Passkeys"
 msgstr "Passkeys"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -6633,6 +6802,10 @@ msgstr "Plugin submissions"
 msgid "Plugins"
 msgstr "Plugins"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Port"
+msgstr "Port"
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "Post \"No changes\" in chat"
@@ -6745,6 +6918,7 @@ msgstr "Protected input"
 msgid "Protocol"
 msgstr "Protocol"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -6762,6 +6936,10 @@ msgstr "Pull request"
 #: src/components/WebdavBackupSettings.tsx
 msgid "Put the account and password in their own fields, not in the address."
 msgstr "Put the account and password in their own fields, not in the address."
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "QR code for your authenticator app"
+msgstr "QR code for your authenticator app"
 
 #: src/pages/ActivityList.tsx
 msgid "Queued"
@@ -6905,6 +7083,18 @@ msgstr "Recovering Team Computer"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Recovering…"
 msgstr "Recovering…"
+
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Recovery code"
+msgstr "Recovery code"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Recovery codes"
+msgstr "Recovery codes"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Recovery codes left"
+msgstr "Recovery codes left"
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovery failed"
@@ -7219,6 +7409,10 @@ msgstr "Reply"
 msgid "Reply cancelled"
 msgstr "Reply cancelled"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Reply-to address"
+msgstr "Reply-to address"
+
 #. placeholder {0}: replyNameRef.current
 #: src/pages/shell/composer.tsx
 msgid "Replying to {0}"
@@ -7348,10 +7542,14 @@ msgstr "Resume import"
 #: src/components/AccountAccess.tsx
 #: src/components/admin/AdminAppDownloadSettings.tsx
 #: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminOverview.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
 #: src/components/BotPackageTools.tsx
@@ -7570,6 +7768,7 @@ msgid "Save limits"
 msgstr "Save limits"
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
 msgid "Save settings"
 msgstr "Save settings"
@@ -7577,6 +7776,10 @@ msgstr "Save settings"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
 msgstr "Save the workspace and install current software."
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Save these somewhere safe. Each code works once, and they are only shown this one time."
+msgstr "Save these somewhere safe. Each code works once, and they are only shown this one time."
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Save to Vault"
@@ -7599,6 +7802,10 @@ msgstr "Saved"
 msgid "Saved as template"
 msgstr "Saved as template"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Saved settings are removed and the environment values apply again."
+msgstr "Saved settings are removed and the environment values apply again."
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
 msgstr "Saved, but list refresh failed"
@@ -7620,8 +7827,10 @@ msgid "Saving..."
 msgstr "Saving..."
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -7786,6 +7995,10 @@ msgstr "Selected skills: {0}"
 msgid "Self-hosted"
 msgstr "Self-hosted"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Self-hosted email (no API key)"
+msgstr "Self-hosted email (no API key)"
+
 #: src/pages/shell/composer-parts.tsx
 msgid "Send"
 msgstr "Send"
@@ -7797,6 +8010,10 @@ msgstr "Send <0>{linkCode}</0> from {linkApp} within 10 minutes."
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Send <0>{linkCode}</0> to <1>{linkAddress}</1> from {linkApp} within 10 minutes."
 msgstr "Send <0>{linkCode}</0> to <1>{linkAddress}</1> from {linkApp} within 10 minutes."
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Send a test email"
+msgstr "Send a test email"
 
 #: src/components/AskCard.tsx
 msgid "Send answer"
@@ -7822,6 +8039,11 @@ msgstr "Send reset link"
 msgid "Send with Enter"
 msgstr "Send with Enter"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Sender address"
+msgstr "Sender address"
+
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -7841,6 +8063,7 @@ msgstr "Serenity endpoint is required."
 msgid "Serif"
 msgstr "Serif"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/WebdavBackupSettings.tsx
 msgid "Server address"
 msgstr "Server address"
@@ -7868,6 +8091,10 @@ msgstr "Set as primary"
 #: src/components/BotPackageImport.tsx
 msgid "Set up connections"
 msgstr "Set up connections"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Set up two-factor authentication"
+msgstr "Set up two-factor authentication"
 
 #: src/components/call/CallCard.tsx
 #: src/components/SidebarFooter.tsx
@@ -8280,6 +8507,7 @@ msgstr "Started {count}m late"
 msgid "Starting"
 msgstr "Starting"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/lib/roster-status.ts
 #: src/pages/model-settings/connection-controls.tsx
@@ -8291,6 +8519,7 @@ msgstr "Starting…"
 msgid "State or region"
 msgstr "State or region"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
@@ -8392,6 +8621,22 @@ msgstr "Subscription URL"
 #: src/lib/cron.ts
 msgid "Sunday"
 msgstr "Sunday"
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Super key"
+msgstr "Super key"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Super key changed"
+msgstr "Super key changed"
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Super key is incorrect"
+msgstr "Super key is incorrect"
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Super key required"
+msgstr "Super key required"
 
 #: src/pages/shell/media-result.tsx
 msgid "Supplementary prompt"
@@ -8540,6 +8785,10 @@ msgstr "Test API key"
 msgid "Test connection"
 msgstr "Test connection"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Test email sent"
+msgstr "Test email sent"
+
 #: src/pages/model-settings/model-health-dialog.tsx
 msgid "Test results · {label}"
 msgstr "Test results · {label}"
@@ -8645,6 +8894,10 @@ msgstr "The model provider returned an error."
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "The model returned an unusable response. Try again."
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "The new super key must be at least 8 characters"
+msgstr "The new super key must be at least 8 characters"
 
 #: src/pages/SharedConversation.tsx
 msgid "The owner may have revoked its link or it may have expired."
@@ -8857,6 +9110,10 @@ msgstr "This page couldn't load"
 msgid "This page isn't available"
 msgstr "This page isn't available"
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "This page stays open for 15 minutes after verification."
+msgstr "This page stays open for 15 minutes after verification."
+
 #: src/components/AccountDataSettings.tsx
 #: src/components/WebdavBackupSettings.tsx
 msgid "This password appeared in a data breach. Choose another."
@@ -8906,6 +9163,10 @@ msgstr "This server is already connected. Disconnect it first to authorize again
 #: src/lib/run-error.ts
 msgid "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
 msgstr "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "This session"
+msgstr "This session"
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
@@ -9139,6 +9400,7 @@ msgstr "Try the test again."
 msgid "Tuesday"
 msgstr "Tuesday"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Turn off"
 msgstr "Turn off"
@@ -9146,6 +9408,24 @@ msgstr "Turn off"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Turn on"
 msgstr "Turn on"
+
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+#: src/pages/AdminPage.tsx
+msgid "Two-factor authentication"
+msgstr "Two-factor authentication"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Two-factor authentication is removed and you set it up again."
+msgstr "Two-factor authentication is removed and you set it up again."
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Two-factor authentication reset — set it up again"
+msgstr "Two-factor authentication reset — set it up again"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Two-factor authentication turned off"
+msgstr "Two-factor authentication turned off"
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -9328,6 +9608,10 @@ msgstr "Use a different password from your account password."
 msgid "Use a found model"
 msgstr "Use a found model"
 
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Use a recovery code"
+msgstr "Use a recovery code"
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Use an https address."
 msgstr "Use an https address."
@@ -9336,6 +9620,10 @@ msgstr "Use an https address."
 #: src/components/WebdavBackupSettings.tsx
 msgid "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
 msgstr "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
+
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Use authenticator code"
+msgstr "Use authenticator code"
 
 #: src/lib/model-connection-preflight.ts
 msgid "Use Connect to verify the key."
@@ -9469,10 +9757,21 @@ msgstr "Variables"
 msgid "Vault"
 msgstr "Vault"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Verified"
+msgstr "Verified"
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Verify"
+msgstr "Verify"
+
 #: src/pages/plugins/source-form.tsx
 msgid "Verify and add"
 msgstr "Verify and add"
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
 #: src/pages/plugins/source-form.tsx
 msgid "Verifying…"
 msgstr "Verifying…"

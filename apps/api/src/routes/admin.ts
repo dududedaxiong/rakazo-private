@@ -16,7 +16,28 @@ import { getLogger } from "@rakazo/logging";
 import { deleteAccountContent } from "../account-deletion.js";
 import type { AccountStatusDeps } from "../account-status.js";
 import { endDeactivatedAccess, setAccountActive } from "../account-status.js";
+import {
+  changeSuperKey,
+  requireSuperKeyGrant,
+  superKeyGrantStatus,
+  verifySuperKey,
+} from "../admin-super-key.js";
+import {
+  confirmTotpEnrollment,
+  disableTotp,
+  requireAdminTotp,
+  resetTotp,
+  startTotpEnrollment,
+  totpStatus,
+  verifyTotpForSession,
+} from "../admin-totp.js";
 import { requireAdmin } from "../admins.js";
+import {
+  clearEmailSettings,
+  readEmailSettings,
+  testEmailSettings,
+  updateEmailSettings,
+} from "../email.js";
 import type { RouterContext } from "./context.js";
 
 type UserRow = {
@@ -156,8 +177,13 @@ export function adminRoutes(ctx: RouterContext) {
     }
   };
 
-  const setActive = async (actorId: string, id: string, active: boolean) => {
-    await requireAdmin(deps, actorId);
+  const setActive = async (
+    actorId: string,
+    sessionId: string | undefined,
+    id: string,
+    active: boolean,
+  ) => {
+    await requireAdminTotp(deps, actorId, sessionId);
     forbidSelf(actorId, id);
     await loadUser(id);
     const result = await setAccountActive(accountStatus(), id, active, directoryProvisioning);
@@ -172,7 +198,7 @@ export function adminRoutes(ctx: RouterContext) {
     admin: {
       overview: {
         get: authed.admin.overview.get.handler(async ({ context }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           return runAsSystem("read the admin overview", async () => {
             const now = new Date();
             const dayStart = new Date(now);
@@ -224,14 +250,14 @@ export function adminRoutes(ctx: RouterContext) {
       },
       registrationSettings: {
         get: authed.admin.registrationSettings.get.handler(async ({ context }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           const row = await runAsSystem("read the registration settings", () =>
             prisma.deploymentSettings.findUnique({ where: { id: "default" } }),
           );
           return toRegistrationSettings(row, masterSwitchEnabled);
         }),
         update: authed.admin.registrationSettings.update.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           const data: {
             signupsEnabled?: boolean;
             inviteCodeEnabled?: boolean;
@@ -266,7 +292,7 @@ export function adminRoutes(ctx: RouterContext) {
       },
       appDownloadSettings: {
         update: authed.admin.appDownloadSettings.update.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           const data: { androidAppDownloadUrl?: string | null; iosAppDownloadUrl?: string | null } =
             {};
           if (input.androidUrl !== undefined) data.androidAppDownloadUrl = input.androidUrl;
@@ -286,7 +312,7 @@ export function adminRoutes(ctx: RouterContext) {
       },
       inviteCodes: {
         list: authed.admin.inviteCodes.list.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           const after = input.cursor
             ? await prisma.inviteCode.findUnique({
                 where: { id: input.cursor },
@@ -318,7 +344,7 @@ export function adminRoutes(ctx: RouterContext) {
             .slice(0, input.limit);
         }),
         create: authed.admin.inviteCodes.create.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           const codes = new Set<string>();
           while (codes.size < input.count) codes.add(generateInviteCode());
           const expiresAt = input.expiresInDays
@@ -345,7 +371,7 @@ export function adminRoutes(ctx: RouterContext) {
           return rows.map(toInviteCode);
         }),
         revoke: authed.admin.inviteCodes.revoke.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           const row = await runAsSystem("revoke an invite code", () =>
             prisma.inviteCode.updateMany({
               where: { id: input.id, revokedAt: null },
@@ -360,7 +386,7 @@ export function adminRoutes(ctx: RouterContext) {
       },
       users: {
         list: authed.admin.users.list.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           const after = input.cursor
             ? await prisma.user.findUnique({
                 where: { id: input.cursor },
@@ -402,17 +428,21 @@ export function adminRoutes(ctx: RouterContext) {
           return rows.map(toAdminUser);
         }),
         get: authed.admin.users.get.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           return toAdminUser(await runAsSystem("read an account", () => loadUser(input.id)));
         }),
         disable: authed.admin.users.disable.handler(async ({ context, input }) =>
-          runAsSystem("disable an account", () => setActive(context.actor.userId, input.id, false)),
+          runAsSystem("disable an account", () =>
+            setActive(context.actor.userId, context.sessionId, input.id, false),
+          ),
         ),
         restore: authed.admin.users.restore.handler(async ({ context, input }) =>
-          runAsSystem("restore an account", () => setActive(context.actor.userId, input.id, true)),
+          runAsSystem("restore an account", () =>
+            setActive(context.actor.userId, context.sessionId, input.id, true),
+          ),
         ),
         blacklist: authed.admin.users.blacklist.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           forbidSelf(context.actor.userId, input.id);
           return runAsSystem("blacklist an account", async () => {
             await loadUser(input.id);
@@ -425,7 +455,7 @@ export function adminRoutes(ctx: RouterContext) {
           });
         }),
         unblacklist: authed.admin.users.unblacklist.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           return runAsSystem("unblacklist an account", async () => {
             await loadUser(input.id);
             await prisma.user.updateMany({
@@ -436,7 +466,7 @@ export function adminRoutes(ctx: RouterContext) {
           });
         }),
         softDelete: authed.admin.users.softDelete.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           forbidSelf(context.actor.userId, input.id);
           return runAsSystem("soft-delete an account", async () => {
             await loadUser(input.id);
@@ -449,7 +479,7 @@ export function adminRoutes(ctx: RouterContext) {
           });
         }),
         restoreDeleted: authed.admin.users.restoreDeleted.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           return runAsSystem("restore a soft-deleted account", async () => {
             await loadUser(input.id);
             await prisma.user.updateMany({
@@ -460,7 +490,7 @@ export function adminRoutes(ctx: RouterContext) {
           });
         }),
         hardDelete: authed.admin.users.hardDelete.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           forbidSelf(context.actor.userId, input.id);
           return runAsSystem("hard-delete an account", async () => {
             await loadUser(input.id);
@@ -487,7 +517,7 @@ export function adminRoutes(ctx: RouterContext) {
       },
       ipStats: {
         list: authed.admin.ipStats.list.handler(async ({ context, input }) => {
-          await requireAdmin(deps, context.actor.userId);
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
           const settings = await runAsSystem("read the registration settings", () =>
             prisma.deploymentSettings.findUnique({ where: { id: "default" } }),
           );
@@ -535,6 +565,109 @@ export function adminRoutes(ctx: RouterContext) {
           stats.sort((a, b) => b.totalCount - a.totalCount || a.ip.localeCompare(b.ip));
           const start = input.cursor ? stats.findIndex((stat) => stat.ip === input.cursor) + 1 : 0;
           return stats.slice(start, start + input.limit);
+        }),
+      },
+      twoFactor: {
+        status: authed.admin.twoFactor.status.handler(async ({ context }) => {
+          await requireAdmin(deps, context.actor.userId);
+          return totpStatus(deps, {
+            userId: context.actor.userId,
+            sessionId: context.sessionId,
+          });
+        }),
+        enrollStart: authed.admin.twoFactor.enrollStart.handler(async ({ context }) => {
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
+          return startTotpEnrollment(deps, context.actor);
+        }),
+        enrollConfirm: authed.admin.twoFactor.enrollConfirm.handler(async ({ context, input }) => {
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
+          return confirmTotpEnrollment(deps, context.actor, input.code);
+        }),
+        verify: authed.admin.twoFactor.verify.handler(async ({ context, input }) => {
+          await requireAdmin(deps, context.actor.userId);
+          return verifyTotpForSession(deps, {
+            userId: context.actor.userId,
+            spaceId: context.actor.spaceId,
+            sessionId: context.sessionId ?? "",
+            code: input.code,
+          });
+        }),
+        disable: authed.admin.twoFactor.disable.handler(async ({ context, input }) => {
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
+          await disableTotp(deps, context.actor, input.code);
+          return { enabled: false as const };
+        }),
+        reset: authed.admin.twoFactor.reset.handler(async ({ context }) => {
+          await requireAdmin(deps, context.actor.userId);
+          await requireSuperKeyGrant(deps, {
+            userId: context.actor.userId,
+            sessionId: context.sessionId ?? "",
+          });
+          await resetTotp(deps, context.actor);
+          return { enabled: false as const };
+        }),
+      },
+      superKey: {
+        status: authed.admin.superKey.status.handler(async ({ context }) => {
+          await requireAdmin(deps, context.actor.userId);
+          return superKeyGrantStatus(deps, {
+            userId: context.actor.userId,
+            sessionId: context.sessionId ?? "",
+          });
+        }),
+        verify: authed.admin.superKey.verify.handler(async ({ context, input }) => {
+          await requireAdmin(deps, context.actor.userId);
+          const { expiresAt } = await verifySuperKey(deps, {
+            userId: context.actor.userId,
+            sessionId: context.sessionId ?? "",
+            key: input.key,
+          });
+          return { granted: true as const, expiresAt };
+        }),
+        change: authed.admin.superKey.change.handler(async ({ context, input }) => {
+          await requireAdmin(deps, context.actor.userId);
+          await changeSuperKey(deps, {
+            userId: context.actor.userId,
+            spaceId: context.actor.spaceId,
+            sessionId: context.sessionId ?? "",
+            currentKey: input.currentKey,
+            newKey: input.newKey,
+          });
+          return { changed: true as const };
+        }),
+      },
+      emailSettings: {
+        get: authed.admin.emailSettings.get.handler(async ({ context }) => {
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
+          await requireSuperKeyGrant(deps, {
+            userId: context.actor.userId,
+            sessionId: context.sessionId ?? "",
+          });
+          return readEmailSettings(deps);
+        }),
+        update: authed.admin.emailSettings.update.handler(async ({ context, input }) => {
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
+          await requireSuperKeyGrant(deps, {
+            userId: context.actor.userId,
+            sessionId: context.sessionId ?? "",
+          });
+          return updateEmailSettings(deps, context.actor, input);
+        }),
+        clear: authed.admin.emailSettings.clear.handler(async ({ context }) => {
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
+          await requireSuperKeyGrant(deps, {
+            userId: context.actor.userId,
+            sessionId: context.sessionId ?? "",
+          });
+          return clearEmailSettings(deps);
+        }),
+        test: authed.admin.emailSettings.test.handler(async ({ context }) => {
+          await requireAdminTotp(deps, context.actor.userId, context.sessionId);
+          await requireSuperKeyGrant(deps, {
+            userId: context.actor.userId,
+            sessionId: context.sessionId ?? "",
+          });
+          return testEmailSettings(deps, context.actor);
         }),
       },
     },

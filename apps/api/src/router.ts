@@ -142,6 +142,14 @@ export interface RouterDeps {
     ticketBoardEnabled?: boolean;
     navLinks?: NavLink[];
     adminEmails?: string[];
+    /** The super key for the gated admin settings pages; unset closes the gate. */
+    adminSuperKey?: string;
+    /** Outbound email fallbacks; the admin settings page overrides them per field. */
+    emailProvider?: string;
+    emailApiKey?: string;
+    emailFrom?: string;
+    emailReplyTo?: string;
+    smtpUrl?: string;
     /** Environment master switch for registration; the admin switch lives in settings. */
     signupsEnabled?: string;
     /** Whether the directory owns provisioned accounts; the admin cannot change those. */

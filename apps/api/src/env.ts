@@ -77,6 +77,9 @@ export interface AppEnv {
   /** Verified accounts that review plugin submissions, add stdio MCP servers, and grant access
    * (RAKAZO_ADMIN_EMAILS), lowercased. */
   adminEmails: string[];
+  /** Super key for the gated admin settings pages (ADMIN_SUPER_KEY). The database
+   * override, when an admin sets one, wins; without either, the gate stays shut. */
+  adminSuperKey: string | undefined;
   phoneCallsEnabled: boolean;
   phoneCallRingSeconds: number;
   phoneCallCooldownMinutes: number;
@@ -272,6 +275,7 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): AppEnv {
     computerSettingsEnabled: source.COMPUTER_SETTINGS_ENABLED === "true",
     navLinks: parseNavLinks(source.RAKAZO_NAV_LINKS),
     adminEmails: list(source.RAKAZO_ADMIN_EMAILS).map((email) => email.toLowerCase()),
+    adminSuperKey: adminSuperKeyFromEnv(source.ADMIN_SUPER_KEY),
     ...phoneCallSettings(source),
     maxUploadSizeBytes: uploadSizeFromEnv(source),
     maxAttachmentsPerMessage: attachmentCountFromEnv(source),
@@ -408,6 +412,13 @@ function voiceSummaryMinCharsFromEnv(value: string | undefined): number | undefi
     throw new Error("VOICE_SUMMARY_MIN_CHARS must be a positive whole number of characters");
   }
   return Number(raw);
+}
+
+function adminSuperKeyFromEnv(value: string | undefined): string | undefined {
+  const key = optional(value);
+  if (!key) return undefined;
+  if (key.length < 8) throw new Error("ADMIN_SUPER_KEY must be at least 8 characters");
+  return key;
 }
 
 function inboundEmailFromEnv(source: NodeJS.ProcessEnv): AppEnv["inboundEmail"] {

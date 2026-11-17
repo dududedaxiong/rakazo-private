@@ -703,6 +703,7 @@ msgid "Access token (optional)"
 msgstr "액세스 토큰(선택 사항)"
 
 #: src/components/AccountMenu.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Account"
 msgstr "계정"
@@ -1129,6 +1130,7 @@ msgstr "@{ownerDomain}의 모든 사람"
 msgid "Anyone with the link"
 msgstr "링크가 있는 모든 사용자"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/ComputerProviderSettings.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/kinds.tsx
@@ -1295,6 +1297,10 @@ msgstr "인증"
 #: src/lib/model-connection-preflight.ts
 msgid "Authentication failed."
 msgstr "인증에 실패했습니다."
+
+#: src/components/admin/AdminTotpCodeInput.tsx
+msgid "Authenticator code"
+msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -1639,6 +1645,7 @@ msgstr "서버에 연결할 수 없습니다."
 msgid "Can't read images"
 msgstr "이미지를 읽을 수 없음"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/AskCard.tsx
 #: src/components/ConfirmDialog.tsx
@@ -1684,6 +1691,10 @@ msgstr "대기 중인 초대 취소"
 #: src/pages/shell/chat-context.tsx
 msgid "Cancel reply"
 msgstr "답장 취소"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Cancel setup"
+msgstr ""
 
 #: src/pages/BillingSettingsPanel.tsx
 msgid "Canceled"
@@ -1753,6 +1764,10 @@ msgstr ""
 #: src/pages/Auth.tsx
 msgid "Change server"
 msgstr "서버 변경"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Change super key"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -1973,6 +1988,10 @@ msgstr "{label} 필터 지우기"
 msgid "Clear filters"
 msgstr "필터 지우기"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Clear page settings"
+msgstr ""
+
 #: src/components/BotPackageTools.tsx
 msgid "Clear selection"
 msgstr ""
@@ -2029,6 +2048,7 @@ msgstr "기억 설정 닫기"
 msgid "Close model settings"
 msgstr "AI 모델 설정 닫기"
 
+#: src/pages/AdminPage.tsx
 #: src/pages/shell/shell-sidebar.tsx
 msgid "Close navigation"
 msgstr "메뉴 닫기"
@@ -2077,6 +2097,11 @@ msgstr "코드"
 msgctxt "email sign-in"
 msgid "Code"
 msgstr "인증 코드"
+
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Code is incorrect"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
@@ -2205,8 +2230,16 @@ msgstr "이 서버에서는 컴퓨터가 꺼져 있습니다."
 msgid "Configure a plugin catalog on the server to connect apps."
 msgstr "앱을 연결하려면 서버에 플러그인 카탈로그를 구성하세요."
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Configured — leave empty to keep it"
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 msgid "Confirm backup password"
+msgstr ""
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Confirm clear"
 msgstr ""
 
 #: src/pages/KnowledgeSection.tsx
@@ -2225,6 +2258,10 @@ msgstr "비밀번호 확인"
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "Confirm removal"
 msgstr "삭제 확인"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Confirm reset"
+msgstr ""
 
 #: src/lib/model-connection-preflight.ts
 msgid "Confirm the URL is reachable from this browser session, then test again."
@@ -2402,6 +2439,7 @@ msgstr "{0}(으)로 계속"
 msgid "Conversations"
 msgstr "대화"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/BotEmailAddressField.tsx
 #: src/components/InviteDialog.tsx
 #: src/components/markdown-copy.tsx
@@ -2417,6 +2455,7 @@ msgstr "대화"
 msgid "Copied"
 msgstr "복사됨"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -2428,6 +2467,10 @@ msgstr "복사"
 #: src/components/vault/BotEmailAddresses.tsx
 msgid "Copy {address}"
 msgstr "{address} 복사"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Copy all"
+msgstr ""
 
 #: src/components/markdown-copy.tsx
 msgid "Copy code"
@@ -2500,6 +2543,10 @@ msgstr "변경하지 못했습니다"
 msgid "Could not change password"
 msgstr "비밀번호를 변경할 수 없습니다"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Could not change the super key"
+msgstr ""
+
 #: src/components/integrations/space-availability.tsx
 msgid "Could not change where this is available"
 msgstr "사용 가능한 곳을 변경하지 못했습니다"
@@ -2519,6 +2566,10 @@ msgstr "가르치기 상태를 확인하지 못했습니다. 화면을 새로고
 #: src/pages/shell/dialogs.tsx
 msgid "Could not clear conversation"
 msgstr "대화 내용을 비우지 못했습니다."
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Could not clear email settings"
+msgstr ""
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Could not complete action"
@@ -2962,6 +3013,10 @@ msgstr ""
 msgid "Could not reset password"
 msgstr "비밀번호를 재설정할 수 없습니다"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Could not reset two-factor authentication"
+msgstr ""
+
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not reset usage"
 msgstr ""
@@ -3002,6 +3057,10 @@ msgstr "자동 검토를 저장할 수 없습니다"
 #: src/components/ComputerProviderSettings.tsx
 msgid "Could not save computer settings"
 msgstr "컴퓨터 설정을 저장하지 못했습니다"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Could not save email settings"
+msgstr ""
 
 #: src/pages/GroupPanel.tsx
 msgid "Could not save group"
@@ -3078,6 +3137,10 @@ msgstr "재설정 이메일을 보낼 수 없습니다"
 msgid "Could not send that"
 msgstr "메시지를 보내지 못했습니다."
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Could not send the test email"
+msgstr ""
+
 #: src/pages/shell/media-result.tsx
 msgid "Could not share {name}"
 msgstr ""
@@ -3093,6 +3156,10 @@ msgstr "로그인하지 못했습니다"
 #: src/pages/McpServersOverlay.tsx
 msgid "Could not start OAuth"
 msgstr "OAuth 인증을 시작하지 못했습니다."
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Could not start setup"
+msgstr ""
 
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Could not start teaching"
@@ -3183,12 +3250,20 @@ msgstr ""
 msgid "Could not verify computer setup ({failureMessage}). Fix the connection, then check again."
 msgstr "컴퓨터 설정을 확인할 수 없습니다 ({failureMessage}). 연결을 고친 후 다시 확인하세요."
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Couldn't check the super key"
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "Couldn't copy. Select the link and copy it."
 msgstr "복사하지 못했습니다. 링크를 선택해 복사하세요."
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
 msgid "Couldn't load app download links"
+msgstr ""
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Couldn't load email settings"
 msgstr ""
 
 #: src/pages/AdminAccessPage.tsx
@@ -3238,6 +3313,11 @@ msgstr ""
 #: src/pages/SharedPage.tsx
 msgid "Couldn't load this page. Try again."
 msgstr "이 페이지를 불러올 수 없습니다. 다시 시도하세요."
+
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Couldn't load two-factor status"
+msgstr ""
 
 #: src/components/admin/AdminUsers.tsx
 msgid "Couldn't load users"
@@ -3383,6 +3463,10 @@ msgstr "현재 비밀번호"
 #: src/components/prompt-templates/BotPersonaSection.tsx
 msgid "Current persona"
 msgstr "현재 페르소나"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Current super key"
+msgstr ""
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
 #: src/components/ShareConversationDialog.tsx
@@ -3906,6 +3990,15 @@ msgstr "이메일로 코드 받기"
 msgid "Email registration"
 msgstr ""
 
+#: src/components/admin/AdminEmailSettings.tsx
+#: src/pages/AdminPage.tsx
+msgid "Email settings"
+msgstr ""
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Email settings saved"
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Email verification required"
 msgstr "이메일 인증이 필요합니다"
@@ -3947,9 +4040,17 @@ msgstr "Rakazo가 마음에 드시나요?"
 msgid "Enlarge picture"
 msgstr ""
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Enter a code from your authenticator to turn it off."
+msgstr ""
+
 #: src/lib/user-error.ts
 msgid "Enter a password"
 msgstr "비밀번호를 입력하세요"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Enter a port between 1 and 65535"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Enter a preset name"
@@ -3957,6 +4058,14 @@ msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Enter a prompt"
+msgstr ""
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Enter a sender address"
+msgstr ""
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Enter a server address"
 msgstr ""
 
 #: src/lib/user-error.ts
@@ -3986,6 +4095,10 @@ msgstr "이미지 한도는 1에서 1000 사이의 정수로 입력하세요."
 msgid "Enter an API key before testing."
 msgstr "테스트하기 전에 API 키를 입력하세요."
 
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Enter the 6-digit code from your authenticator app."
+msgstr ""
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Enter the backup password to restore"
 msgstr ""
@@ -4002,6 +4115,7 @@ msgstr ""
 msgid "Environment ID"
 msgstr "환경 ID"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/McpServerForm.tsx
 msgid "Environment variables"
 msgstr "환경 변수"
@@ -4621,6 +4735,10 @@ msgstr "Rakazo를 어떻게 사용하실 건가요?"
 msgid "Human verification failed. Try again."
 msgstr ""
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "I saved them"
+msgstr ""
+
 #: src/pages/shell/computer-release-actions.tsx
 msgid "I’m done"
 msgstr "조작 끝내기"
@@ -5182,10 +5300,14 @@ msgstr "음성 서비스를 불러오는 중…"
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
 #: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminOverview.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/AppDownloadDialog.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
@@ -5251,6 +5373,10 @@ msgstr "봇이 사용할 수 있는 로그인 정보와 키."
 #: src/pages/shell/agent-import-plan.tsx
 msgid "Looks like it contains a key"
 msgstr "키가 포함된 것 같습니다"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Lost both authenticator and recovery codes"
+msgstr ""
 
 #: src/lib/ticket-priority.ts
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -5864,6 +5990,10 @@ msgstr "새 스킬"
 msgid "New space"
 msgstr "새 스페이스"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "New super key"
+msgstr ""
+
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
 msgid "New template"
@@ -5903,6 +6033,10 @@ msgstr "다음 설정 섹션"
 
 #: src/components/admin/AdminOverview.tsx
 msgid "No admin activity yet"
+msgstr ""
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "No API key needed — just the server address and port. Leave the account and password empty when the server has no authentication."
 msgstr ""
 
 #: src/components/AppDownloadDialog.tsx
@@ -6061,6 +6195,10 @@ msgstr "아직 스킬이 없습니다"
 msgid "No submissions"
 msgstr "제출 없음"
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "No super key is configured, so this page cannot be opened. Ask whoever deploys the server to configure one."
+msgstr ""
+
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "No templates yet"
 msgstr "아직 템플릿이 없습니다"
@@ -6085,6 +6223,7 @@ msgstr "트리거 없음"
 msgid "No users match"
 msgstr ""
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
@@ -6115,6 +6254,10 @@ msgstr ""
 #: src/components/McpServerHealthLine.tsx
 msgid "Not checked yet"
 msgstr "아직 확인되지 않음"
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Not configured"
+msgstr ""
 
 #: src/pages/plugins/parts.tsx
 msgid "Not connected"
@@ -6163,6 +6306,10 @@ msgstr "Rakazo에서 지원하지 않음"
 msgid "Not used by Rakazo"
 msgstr "Rakazo에서 사용하지 않음"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Not verified"
+msgstr ""
+
 #: src/components/McpServerHealthLine.tsx
 #: src/pages/plugins/parts.tsx
 msgid "Not working"
@@ -6200,9 +6347,17 @@ msgstr "OAuth 클라이언트 시크릿(선택 사항)"
 msgid "OAuth connection failed"
 msgstr "OAuth 연결 실패"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Off"
+msgstr ""
+
 #: src/components/ComputerDeviceSettings.tsx
 msgid "Offline"
 msgstr "오프라인"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "On"
+msgstr ""
 
 #: src/pages/routine-editor/add-trigger-menu.tsx
 msgid "On a schedule"
@@ -6307,6 +6462,7 @@ msgstr "전체 창으로 열기"
 msgid "Open link"
 msgstr "링크 열기"
 
+#: src/pages/AdminPage.tsx
 #: src/pages/shell/chat-header.tsx
 msgid "Open navigation"
 msgstr "메뉴 열기"
@@ -6349,6 +6505,10 @@ msgstr "선택 사항"
 #: src/pages/McpServerForm.tsx
 msgid "Optional header value"
 msgstr "선택 사항인 헤더 값"
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Or enter this secret by hand"
+msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -6430,6 +6590,14 @@ msgstr "페이지 링크"
 msgid "Page not found"
 msgstr "페이지를 찾을 수 없습니다"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Page settings"
+msgstr ""
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Page settings cleared"
+msgstr ""
+
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/PageView.tsx
 msgid "Page title"
@@ -6457,6 +6625,7 @@ msgstr "패스키"
 msgid "Passkeys"
 msgstr "패스키"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/ConfirmIdentityDialog.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx
@@ -6633,6 +6802,10 @@ msgstr "플러그인 제출"
 msgid "Plugins"
 msgstr "플러그인"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Port"
+msgstr ""
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "채팅에 “변경 없음” 게시"
@@ -6745,6 +6918,7 @@ msgstr "보호된 입력"
 msgid "Protocol"
 msgstr "프로토콜"
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
@@ -6761,6 +6935,10 @@ msgstr "풀 리퀘스트"
 
 #: src/components/WebdavBackupSettings.tsx
 msgid "Put the account and password in their own fields, not in the address."
+msgstr ""
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "QR code for your authenticator app"
 msgstr ""
 
 #: src/pages/ActivityList.tsx
@@ -6905,6 +7083,18 @@ msgstr "팀 컴퓨터 복구 중"
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Recovering…"
 msgstr "복구 중…"
+
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Recovery code"
+msgstr ""
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Recovery codes"
+msgstr ""
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Recovery codes left"
+msgstr ""
 
 #: src/components/ComputerUpdateProgress.tsx
 msgid "Recovery failed"
@@ -7219,6 +7409,10 @@ msgstr "답장"
 msgid "Reply cancelled"
 msgstr "답장이 취소되었습니다"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Reply-to address"
+msgstr ""
+
 #. placeholder {0}: replyNameRef.current
 #: src/pages/shell/composer.tsx
 msgid "Replying to {0}"
@@ -7348,10 +7542,14 @@ msgstr ""
 #: src/components/AccountAccess.tsx
 #: src/components/admin/AdminAppDownloadSettings.tsx
 #: src/components/admin/AdminAuditLog.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminOverview.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/bot-templates/bot-templates-dialog.tsx
 #: src/components/BotPackageTools.tsx
@@ -7570,6 +7768,7 @@ msgid "Save limits"
 msgstr ""
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
 msgid "Save settings"
 msgstr ""
@@ -7577,6 +7776,10 @@ msgstr ""
 #: src/components/ComputerMaintenanceActions.tsx
 msgid "Save the workspace and install current software."
 msgstr "작업 공간을 저장하고 최신 소프트웨어를 설치합니다."
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Save these somewhere safe. Each code works once, and they are only shown this one time."
+msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
 msgid "Save to Vault"
@@ -7599,6 +7802,10 @@ msgstr "저장됨"
 msgid "Saved as template"
 msgstr "템플릿으로 저장했습니다"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Saved settings are removed and the environment values apply again."
+msgstr ""
+
 #: src/pages/ScratchpadSection.tsx
 msgid "Saved, but list refresh failed"
 msgstr "저장했지만 목록을 새로고침하지 못했습니다."
@@ -7620,8 +7827,10 @@ msgid "Saving..."
 msgstr "저장 중..."
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/admin/AdminIpLimits.tsx
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/teach/SkillDraftCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -7786,6 +7995,10 @@ msgstr ""
 msgid "Self-hosted"
 msgstr "자체 호스팅"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Self-hosted email (no API key)"
+msgstr ""
+
 #: src/pages/shell/composer-parts.tsx
 msgid "Send"
 msgstr "보내기"
@@ -7797,6 +8010,10 @@ msgstr "10분 안에 {linkApp}에서 <0>{linkCode}</0>을(를) 보내세요."
 #: src/pages/MessagingSettingsPanel.tsx
 msgid "Send <0>{linkCode}</0> to <1>{linkAddress}</1> from {linkApp} within 10 minutes."
 msgstr "10분 안에 {linkApp}에서 <1>{linkAddress}</1>(으)로 <0>{linkCode}</0>을(를) 보내세요."
+
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Send a test email"
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Send answer"
@@ -7822,6 +8039,11 @@ msgstr "재설정 링크 보내기"
 msgid "Send with Enter"
 msgstr "Enter 키로 전송"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Sender address"
+msgstr ""
+
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/AskCard.tsx
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -7841,6 +8063,7 @@ msgstr "Serenity 엔드포인트가 필요합니다."
 msgid "Serif"
 msgstr ""
 
+#: src/components/admin/AdminEmailSettings.tsx
 #: src/components/WebdavBackupSettings.tsx
 msgid "Server address"
 msgstr ""
@@ -7867,6 +8090,10 @@ msgstr ""
 
 #: src/components/BotPackageImport.tsx
 msgid "Set up connections"
+msgstr ""
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Set up two-factor authentication"
 msgstr ""
 
 #: src/components/call/CallCard.tsx
@@ -8280,6 +8507,7 @@ msgstr "{count}분 늦게 시작됨"
 msgid "Starting"
 msgstr "시작 중"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/lib/roster-status.ts
 #: src/pages/model-settings/connection-controls.tsx
@@ -8291,6 +8519,7 @@ msgstr "시작하는 중…"
 msgid "State or region"
 msgstr "시/도"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/pages/ActivityList.tsx
 #: src/pages/Board.tsx
@@ -8392,6 +8621,22 @@ msgstr "구독 URL"
 #: src/lib/cron.ts
 msgid "Sunday"
 msgstr "일요일"
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Super key"
+msgstr ""
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Super key changed"
+msgstr ""
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Super key is incorrect"
+msgstr ""
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "Super key required"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Supplementary prompt"
@@ -8540,6 +8785,10 @@ msgstr "API 키 테스트"
 msgid "Test connection"
 msgstr "연결 테스트"
 
+#: src/components/admin/AdminEmailSettings.tsx
+msgid "Test email sent"
+msgstr ""
+
 #: src/pages/model-settings/model-health-dialog.tsx
 msgid "Test results · {label}"
 msgstr ""
@@ -8645,6 +8894,10 @@ msgstr "모델 제공업체에서 오류를 반환했습니다."
 #: src/lib/run-error.ts
 msgid "The model returned an unusable response. Try again."
 msgstr "모델이 사용할 수 없는 응답을 반환했습니다. 다시 시도하세요."
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "The new super key must be at least 8 characters"
+msgstr ""
 
 #: src/pages/SharedConversation.tsx
 msgid "The owner may have revoked its link or it may have expired."
@@ -8857,6 +9110,10 @@ msgstr "이 페이지를 불러오지 못했습니다"
 msgid "This page isn't available"
 msgstr "이 페이지를 사용할 수 없습니다"
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+msgid "This page stays open for 15 minutes after verification."
+msgstr ""
+
 #: src/components/AccountDataSettings.tsx
 #: src/components/WebdavBackupSettings.tsx
 msgid "This password appeared in a data breach. Choose another."
@@ -8906,6 +9163,10 @@ msgstr "이 서버는 이미 연결되어 있습니다. 다시 인증하려면 �
 #: src/lib/run-error.ts
 msgid "This server's tool result does not fit the model. Turn off Keep tool results whole for that server, or choose another model."
 msgstr "이 서버의 도구 결과가 모델에 맞지 않습니다. 해당 서버의 도구 결과 전체 유지를 끄거나 다른 모델을 선택하세요."
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "This session"
+msgstr ""
 
 #: src/pages/model-settings/connection-controls.tsx
 msgid "This subscription sign-in is not available in Rakazo yet. Use a deployment credential or choose another provider."
@@ -9139,6 +9400,7 @@ msgstr "테스트를 다시 시도하세요."
 msgid "Tuesday"
 msgstr "화요일"
 
+#: src/components/admin/AdminTwoFactor.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Turn off"
 msgstr "끄기"
@@ -9146,6 +9408,24 @@ msgstr "끄기"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Turn on"
 msgstr "켜기"
+
+#: src/components/admin/AdminTwoFactor.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+#: src/pages/AdminPage.tsx
+msgid "Two-factor authentication"
+msgstr ""
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Two-factor authentication is removed and you set it up again."
+msgstr ""
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Two-factor authentication reset — set it up again"
+msgstr ""
+
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Two-factor authentication turned off"
+msgstr ""
 
 #: src/components/vault/VaultItemDetail.tsx
 #: src/components/vault/VaultItemEditor.tsx
@@ -9328,6 +9608,10 @@ msgstr ""
 msgid "Use a found model"
 msgstr "찾은 모델 중에서 선택"
 
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Use a recovery code"
+msgstr ""
+
 #: src/components/WebdavBackupSettings.tsx
 msgid "Use an https address."
 msgstr ""
@@ -9335,6 +9619,10 @@ msgstr ""
 #: src/components/AccountDataSettings.tsx
 #: src/components/WebdavBackupSettings.tsx
 msgid "Use at least {BACKUP_PASSWORD_MIN_LENGTH} characters for the backup password"
+msgstr ""
+
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Use authenticator code"
 msgstr ""
 
 #: src/lib/model-connection-preflight.ts
@@ -9469,10 +9757,21 @@ msgstr "변수"
 msgid "Vault"
 msgstr "보관함"
 
+#: src/components/admin/AdminTwoFactor.tsx
+msgid "Verified"
+msgstr ""
+
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
+msgid "Verify"
+msgstr ""
+
 #: src/pages/plugins/source-form.tsx
 msgid "Verify and add"
 msgstr "확인 후 추가"
 
+#: src/components/admin/AdminSuperKeyGate.tsx
+#: src/components/admin/AdminTwoFactorGate.tsx
 #: src/pages/plugins/source-form.tsx
 msgid "Verifying…"
 msgstr "확인 중…"

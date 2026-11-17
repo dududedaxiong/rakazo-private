@@ -265,6 +265,8 @@ model Session {
   userId               String
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   activeOrganizationId String?
+  /// When an admin with TOTP enabled last proved a code (or recovery code) for this session.
+  totpVerifiedAt       DateTime?
 
   @@unique([token])
   @@index([userId])
@@ -896,6 +898,22 @@ model DeploymentSettings {
   androidAppDownloadUrl           String?
   /// Admin-set download address for the custom iOS app; null means unset.
   iosAppDownloadUrl               String?
+  /// Admin-set outbound email provider (resend, smtp, selfhost, none); null falls back to EMAIL_PROVIDER.
+  emailProvider                   String?
+  /// Admin-set sender address; null falls back to EMAIL_FROM.
+  emailFrom                       String?
+  /// Admin-set reply-to address; null falls back to EMAIL_REPLY_TO.
+  emailReplyTo                    String?
+  /// Encrypted Resend API key (SecretStore ciphertext); null falls back to EMAIL_API_KEY.
+  emailApiKeyCipher               String?
+  /// Admin-set SMTP host; null falls back to SMTP_URL.
+  emailSmtpHost                   String?
+  /// Admin-set SMTP port; null falls back to SMTP_URL.
+  emailSmtpPort                   Int?
+  /// Admin-set SMTP username; null means the server needs no authentication.
+  emailSmtpUser                   String?
+  /// Encrypted SMTP password (SecretStore ciphertext).
+  emailSmtpPasswordCipher         String?
   createdAt                       DateTime @default(now())
   updatedAt                       DateTime @updatedAt
 
@@ -959,6 +977,35 @@ model AuditEventForwarding {
   updatedAt     DateTime  @updatedAt
 
   @@map("audit_event_forwarding")
+}
+
+/// A super-key grant: an admin proved the super key for this session. Grants are
+/// short-lived and cover both gated settings pages; they die with the session.
+/// Only ever read or written as system. Never stores the key itself.
+model AdminSuperKeyGrant {
+  id        String   @id @default(cuid())
+  userId    String
+  sessionId String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([sessionId])
+  @@index([userId, createdAt])
+  @@map("admin_super_key_grants")
+}
+
+/// One single-use TOTP recovery code, stored only as a keyed hash. A code is spent
+/// by stamping usedAt; spent codes stay so the audit trail can tell which code was used.
+/// Only ever read or written as system.
+model AdminTotpRecoveryCode {
+  id        String    @id @default(cuid())
+  userId    String
+  codeHash  String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@map("admin_totp_recovery_codes")
 }
 
 model UserModelCredential {

@@ -102,6 +102,12 @@ const AdminIpLimitsPanel = lazyComponent(() =>
 const AdminAuditLogPanel = lazyComponent(() =>
   import("./components/admin/AdminAuditLog").then((module) => module.AdminAuditLogPanel),
 );
+const AdminEmailSettingsPanel = lazyComponent(() =>
+  import("./components/admin/AdminEmailSettings").then((module) => module.AdminEmailSettingsPanel),
+);
+const AdminTwoFactorPanel = lazyComponent(() =>
+  import("./components/admin/AdminTwoFactor").then((module) => module.AdminTwoFactorPanel),
+);
 const NavLinkPage = lazyComponent(() =>
   import("./pages/NavLinkPage").then((module) => module.NavLinkPage),
 );
@@ -315,6 +321,8 @@ function SessionApp() {
                 <Route path="invite-codes" element={<AdminInviteCodesPanel />} />
                 <Route path="ip" element={<AdminIpLimitsPanel />} />
                 <Route path="audit" element={<AdminAuditLogPanel />} />
+                <Route path="email" element={<AdminEmailSettingsPanel />} />
+                <Route path="two-factor" element={<AdminTwoFactorPanel />} />
               </Route>
               <Route
                 element={

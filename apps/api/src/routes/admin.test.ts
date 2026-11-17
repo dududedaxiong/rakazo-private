@@ -267,7 +267,13 @@ function adminDeps() {
     signupRecord: {
       findMany: vi.fn(async () => records),
     },
-    session: { deleteMany: sessionDeleteMany },
+    session: {
+      deleteMany: sessionDeleteMany,
+      findUnique: vi.fn(async () => null),
+    },
+    secret: { findFirst: vi.fn(async () => null) },
+    adminTotpRecoveryCode: { count: vi.fn(async () => 0) },
+    adminSuperKeyGrant: { findUnique: vi.fn(async () => null) },
     securityEvent: {
       findMany: vi.fn(
         async ({ where = {}, take }: { where?: Record<string, unknown>; take?: number }) =>
@@ -501,5 +507,31 @@ describe("admin IP stats", () => {
         status: "normal",
       },
     ]);
+  });
+});
+
+describe("admin two-factor and super-key gates", () => {
+  it("reports two-factor as disabled and the super key as unconfigured", async () => {
+    const { admin } = adminDeps();
+    await expect(admin.admin.twoFactor.status()).resolves.toEqual({
+      enabled: false,
+      verified: false,
+      recoveryCodesRemaining: 0,
+    });
+    await expect(admin.admin.superKey.status()).resolves.toEqual({
+      granted: false,
+      expiresAt: null,
+      configured: false,
+    });
+  });
+
+  it("refuses the gated settings pages without a super-key grant", async () => {
+    const { admin } = adminDeps();
+    await expect(admin.admin.emailSettings.get()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    await expect(admin.admin.twoFactor.verify({ code: "123456" })).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 });

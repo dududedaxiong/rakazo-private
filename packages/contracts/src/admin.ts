@@ -153,3 +153,85 @@ export const AdminOverviewSchema = z.object({
   recentEvents: z.array(SecurityEventSchema),
 });
 export type AdminOverview = z.infer<typeof AdminOverviewSchema>;
+
+/** Outbound email provider the admin picks in the email settings page. */
+export const EmailProviderSchema = z.enum(["resend", "smtp", "selfhost", "none"]);
+export type EmailProvider = z.infer<typeof EmailProviderSchema>;
+
+/** Where the effective email configuration comes from. */
+export const EmailSettingsSourceSchema = z.enum(["database", "environment", "none"]);
+export type EmailSettingsSource = z.infer<typeof EmailSettingsSourceSchema>;
+
+/** Email settings as the admin page shows them. Secrets are never returned. */
+export const EmailSettingsSchema = z.object({
+  provider: EmailProviderSchema,
+  from: z.string(),
+  replyTo: z.string().nullable(),
+  apiKeyConfigured: z.boolean(),
+  smtpHost: z.string().nullable(),
+  smtpPort: z.number().int().nullable(),
+  smtpUser: z.string().nullable(),
+  smtpPasswordConfigured: z.boolean(),
+  source: EmailSettingsSourceSchema,
+});
+export type EmailSettings = z.infer<typeof EmailSettingsSchema>;
+
+export const EmailSettingsUpdateSchema = z
+  .object({
+    provider: EmailProviderSchema.optional(),
+    from: z.email().max(320).optional(),
+    replyTo: z.email().max(320).nullable().optional(),
+    /** Empty string keeps the saved key; null clears it. */
+    apiKey: z.string().max(512).nullable().optional(),
+    smtpHost: z.string().max(253).nullable().optional(),
+    smtpPort: z.number().int().min(1).max(65535).nullable().optional(),
+    smtpUser: z.string().max(320).nullable().optional(),
+    /** Empty string keeps the saved password; null clears it. */
+    smtpPassword: z.string().max(512).nullable().optional(),
+  })
+  .refine(
+    (input) =>
+      input.provider !== undefined ||
+      input.from !== undefined ||
+      input.replyTo !== undefined ||
+      input.apiKey !== undefined ||
+      input.smtpHost !== undefined ||
+      input.smtpPort !== undefined ||
+      input.smtpUser !== undefined ||
+      input.smtpPassword !== undefined,
+    { message: "Nothing to update" },
+  );
+export type EmailSettingsUpdate = z.infer<typeof EmailSettingsUpdateSchema>;
+
+/** Admin TOTP state for the current session. */
+export const AdminTwoFactorStatusSchema = z.object({
+  enabled: z.boolean(),
+  /** This session already proved a code (or recovery code). */
+  verified: z.boolean(),
+  recoveryCodesRemaining: z.number().int().min(0),
+});
+export type AdminTwoFactorStatus = z.infer<typeof AdminTwoFactorStatusSchema>;
+
+/** Enrollment material: the otpauth URI for the QR code, plus the secret for manual entry. */
+export const AdminTwoFactorEnrollSchema = z.object({
+  otpauthUri: z.string(),
+  secret: z.string(),
+});
+export type AdminTwoFactorEnroll = z.infer<typeof AdminTwoFactorEnrollSchema>;
+
+/** Recovery codes are shown once, at enrollment. */
+export const AdminTwoFactorConfirmSchema = z.object({
+  recoveryCodes: z.array(z.string()),
+});
+export type AdminTwoFactorConfirm = z.infer<typeof AdminTwoFactorConfirmSchema>;
+
+/** Super-key gate state for the current session. */
+export const AdminSuperKeyStatusSchema = z.object({
+  /** A grant is live for this session. */
+  granted: z.boolean(),
+  /** When the live grant expires; null when none. */
+  expiresAt: z.string().nullable(),
+  /** Any key exists at all (database or environment); without one the gate cannot open. */
+  configured: z.boolean(),
+});
+export type AdminSuperKeyStatus = z.infer<typeof AdminSuperKeyStatusSchema>;
