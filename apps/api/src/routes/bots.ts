@@ -631,6 +631,21 @@ export function botsRoutes(ctx: RouterContext) {
             ...(imagePresetUpdate.active !== undefined
               ? { activeImagePromptPreset: imagePresetUpdate.active }
               : {}),
+            // An empty trigger list means the defaults, so it stores as null.
+            ...(input.videoTriggerWords !== undefined
+              ? {
+                  videoTriggerWords: input.videoTriggerWords?.trim()
+                    ? input.videoTriggerWords.trim()
+                    : null,
+                }
+              : {}),
+            ...(input.imageTriggerWords !== undefined
+              ? {
+                  imageTriggerWords: input.imageTriggerWords?.trim()
+                    ? input.imageTriggerWords.trim()
+                    : null,
+                }
+              : {}),
             ...(input.translationSourceLanguage !== undefined
               ? { translationSourceLanguage: input.translationSourceLanguage }
               : {}),

@@ -111,6 +111,7 @@ import {
   personSpeaker,
 } from "./history-speakers.js";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
+import { matchBotMediaTrigger } from "./media-intent.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
 import { resolveMemberMainModel, selectConfiguredModel } from "./model-roles.js";
 import {
@@ -171,6 +172,7 @@ import { createReplyState, discardStalledTurnText } from "./run-progress.js";
 import {
   DELEGATED_EMPTY_NOTICE,
   GROUP_UNADDRESSED_REPLY_GUIDANCE,
+  messageBlocksText,
   runAllowsSilentEmpty,
   runReplyGuidance,
   runReplyMode,
@@ -187,7 +189,7 @@ import {
   offersAgentConnectionTools,
   selectBuiltinToolsForRun,
 } from "./run-tool-selection.js";
-import { applyTool } from "./run-tools.js";
+import { applyTool, isToolError } from "./run-tools.js";
 import { historyMyChatsAllowed } from "./run-tools-memory.js";
 import type { UserComputerState } from "./run-tools-user-computer.js";
 import { USER_COMPUTER_SHELL_TOOL, userComputerOwner } from "./run-tools-user-computer.js";
@@ -1751,6 +1753,36 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
 
         try {
           if (checkpointLoadError) throw checkpointLoadError;
+          // A media trigger word routes straight to the media tool through the
+          // same dispatch the model uses, so approval, fallbacks, async video
+          // polling and the current-model mark all behave as before. The chat
+          // model never sees this turn: a weak model cannot wander off into
+          // DIY scripts instead of the configured media model.
+          const mediaTrigger =
+            (run.trigger === "user" || run.trigger === "follow_up") &&
+            sourceMessage?.role === "user"
+              ? matchBotMediaTrigger(messageBlocksText(sourceMessage.blocks as MessageBlock[]), bot)
+              : null;
+          if (mediaTrigger) {
+            const mediaResult = await applyTool(
+              ctx,
+              mediaTrigger.tool,
+              { prompt: mediaTrigger.prompt },
+              `media-trigger:${runId}`,
+            );
+            // Approval paused the run; the approval continuation resumes it,
+            // and the same trigger routes it again with the approved effect.
+            if (ctx.state.approval.pausePending) return;
+            if (isToolError(mediaResult)) {
+              const reason = (mediaResult as { error?: unknown }).error;
+              throw new Error(typeof reason === "string" && reason ? reason : "媒体生成失败");
+            }
+            // The published media is this turn's reply; no fallback bubble.
+            ctx.state.reply.publishedMidTurnUserMessage = true;
+            if (await interruptedByShutdown()) return;
+            await completeRun(ctx);
+            return;
+          }
           const runtimeEvents = deps.runtime.run(
             {
               botId: bot.id,

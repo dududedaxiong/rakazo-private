@@ -97,6 +97,8 @@ function advancedValues(bot: Bot) {
     bot.activeImagePromptPreset ?? "",
     JSON.stringify(bot.videoPromptPresets ?? []),
     JSON.stringify(bot.imagePromptPresets ?? []),
+    bot.videoTriggerWords ?? "",
+    bot.imageTriggerWords ?? "",
   ] as const;
 }
 
@@ -181,6 +183,8 @@ export function BotSettings({
     imagePromptPresets?: BotPromptPreset[] | null;
     activeVideoPromptPreset?: string | null;
     activeImagePromptPreset?: string | null;
+    videoTriggerWords?: string | null;
+    imageTriggerWords?: string | null;
     disabledBuiltinTools?: string[];
   }) => Promise<void>;
   onExport: () => Promise<void>;
@@ -266,6 +270,8 @@ export function BotSettings({
   const [imagePresets, setImagePresets] = useState<BotPromptPreset[]>(
     () => bot.imagePromptPresets ?? [],
   );
+  const [videoTriggerWords, setVideoTriggerWords] = useState(() => bot.videoTriggerWords ?? "");
+  const [imageTriggerWords, setImageTriggerWords] = useState(() => bot.imageTriggerWords ?? "");
   const [videoTest, setVideoTest] = useState<MediaModelTestState>({ status: "idle" });
   const [imageTest, setImageTest] = useState<MediaModelTestState>({ status: "idle" });
   const [disabledBuiltinTools, setDisabledBuiltinTools] = useState<string[]>(
@@ -318,6 +324,8 @@ export function BotSettings({
     activeImagePreset ?? "",
     JSON.stringify(videoPresets),
     JSON.stringify(imagePresets),
+    videoTriggerWords,
+    imageTriggerWords,
   ]);
   const dirty =
     name.trim() !== savedNameRef.current.trim() ||
@@ -390,6 +398,8 @@ export function BotSettings({
       setVideoPresets(JSON.parse(next[15] as string) as BotPromptPreset[]);
     if (JSON.stringify(imagePresets) === saved[16])
       setImagePresets(JSON.parse(next[16] as string) as BotPromptPreset[]);
+    if (videoTriggerWords === saved[17]) setVideoTriggerWords(next[17] as string);
+    if (imageTriggerWords === saved[18]) setImageTriggerWords(next[18] as string);
     setSavedAdvanced(JSON.stringify(next));
   }, [bot]);
 
@@ -747,6 +757,8 @@ export function BotSettings({
         imagePromptPresets: imagePresets,
         activeVideoPromptPreset: activeVideoPreset,
         activeImagePromptPreset: activeImagePreset,
+        videoTriggerWords: videoTriggerWords.trim() || null,
+        imageTriggerWords: imageTriggerWords.trim() || null,
         ...(modelMetaReady &&
         (thinkingOptions.length > 0 ||
           (selected?.provider ?? null) !== bot.modelProvider ||
@@ -816,6 +828,8 @@ export function BotSettings({
           activeImagePreset ?? "",
           JSON.stringify(videoPresets),
           JSON.stringify(imagePresets),
+          videoTriggerWords,
+          imageTriggerWords,
         ]),
       );
     } catch (err) {
@@ -1051,6 +1065,10 @@ export function BotSettings({
               onImagePresetsChange={setImagePresets}
               activeImagePreset={activeImagePreset}
               onImagePresetChange={setActiveImagePreset}
+              videoTriggerWords={videoTriggerWords}
+              onVideoTriggerWordsChange={setVideoTriggerWords}
+              imageTriggerWords={imageTriggerWords}
+              onImageTriggerWordsChange={setImageTriggerWords}
             />
             <TranslationGroup
               ids={ids}

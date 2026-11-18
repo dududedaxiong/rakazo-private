@@ -133,6 +133,8 @@ function mapBot(
     activeVideoPromptPreset?: string | null;
     imagePromptPresets?: unknown;
     activeImagePromptPreset?: string | null;
+    videoTriggerWords?: string | null;
+    imageTriggerWords?: string | null;
     imageSaveDirectory?: string | null;
     videoSaveDirectory?: string | null;
     showMediaFavorite?: boolean;
@@ -199,6 +201,8 @@ function mapBot(
     activeVideoPromptPreset: bot.activeVideoPromptPreset ?? null,
     imagePromptPresets: parseBotPromptPresets(bot.imagePromptPresets),
     activeImagePromptPreset: bot.activeImagePromptPreset ?? null,
+    videoTriggerWords: bot.videoTriggerWords ?? null,
+    imageTriggerWords: bot.imageTriggerWords ?? null,
     imageSaveDirectory: bot.imageSaveDirectory ?? null,
     videoSaveDirectory: bot.videoSaveDirectory ?? null,
     showMediaFavorite: bot.showMediaFavorite ?? true,

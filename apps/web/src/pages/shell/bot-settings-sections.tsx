@@ -11,6 +11,8 @@ import {
   BOT_MODEL_LIST_MAX,
   BOT_PROMPT_PRESET_MAX,
   BUILTIN_TOOL_NAMES,
+  DEFAULT_IMAGE_TRIGGER_WORDS,
+  DEFAULT_VIDEO_TRIGGER_WORDS,
 } from "@rakazo_mickvvw/contracts";
 import type { ChatModelChoice } from "@rakazo_mickvvw/core";
 import { displayName } from "@rakazo_mickvvw/core";
@@ -528,6 +530,10 @@ export function MediaModelGroup({
   onImagePresetsChange,
   activeImagePreset,
   onImagePresetChange,
+  videoTriggerWords,
+  onVideoTriggerWordsChange,
+  imageTriggerWords,
+  onImageTriggerWordsChange,
 }: {
   ids: string;
   /** The model-option key a timeline name pointed at; that row is tagged. */
@@ -562,6 +568,12 @@ export function MediaModelGroup({
   onImagePresetsChange: (presets: BotPromptPreset[]) => void;
   activeImagePreset: string | null;
   onImagePresetChange: (name: string | null) => void;
+  /** Stored "|" trigger words; empty means the defaults. */
+  videoTriggerWords: string;
+  onVideoTriggerWordsChange: (value: string) => void;
+  /** Stored "|" trigger words; empty means the defaults. */
+  imageTriggerWords: string;
+  onImageTriggerWordsChange: (value: string) => void;
 }) {
   const { t } = useLingui();
   return (
@@ -587,6 +599,10 @@ export function MediaModelGroup({
         onPresetsChange={onVideoPresetsChange}
         activePreset={activeVideoPreset}
         onPresetChange={onVideoPresetChange}
+        triggerWordsLabel={t`Video trigger words`}
+        triggerWords={videoTriggerWords}
+        onTriggerWordsChange={onVideoTriggerWordsChange}
+        triggerWordsPlaceholder={DEFAULT_VIDEO_TRIGGER_WORDS}
       />
       <MediaRoleSection
         ids={ids}
@@ -609,6 +625,10 @@ export function MediaModelGroup({
         onPresetsChange={onImagePresetsChange}
         activePreset={activeImagePreset}
         onPresetChange={onImagePresetChange}
+        triggerWordsLabel={t`Image trigger words`}
+        triggerWords={imageTriggerWords}
+        onTriggerWordsChange={onImageTriggerWordsChange}
+        triggerWordsPlaceholder={DEFAULT_IMAGE_TRIGGER_WORDS}
       />
     </BotPanelGroup>
   );
@@ -635,6 +655,10 @@ function MediaRoleSection({
   onPresetsChange,
   activePreset,
   onPresetChange,
+  triggerWordsLabel,
+  triggerWords,
+  onTriggerWordsChange,
+  triggerWordsPlaceholder,
 }: {
   ids: string;
   kind: "video" | "image";
@@ -658,6 +682,11 @@ function MediaRoleSection({
   onPresetsChange: (presets: BotPromptPreset[]) => void;
   activePreset: string | null;
   onPresetChange: (name: string | null) => void;
+  triggerWordsLabel: string;
+  /** Stored "|" trigger words; empty means the defaults. */
+  triggerWords: string;
+  onTriggerWordsChange: (value: string) => void;
+  triggerWordsPlaceholder: string;
 }) {
   const { t } = useLingui();
   const usedKeys = new Set([value, ...fallbacks.map((fallback) => fallback.key)]);
@@ -725,6 +754,19 @@ function MediaRoleSection({
         onPresetsChange={onPresetsChange}
         onActiveChange={onPresetChange}
       />
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <label htmlFor={`${ids}-${kind}-trigger-words`} className={rowLabelClass}>
+          {triggerWordsLabel}
+        </label>
+        <Input
+          id={`${ids}-${kind}-trigger-words`}
+          value={triggerWords}
+          placeholder={triggerWordsPlaceholder}
+          onChange={(event) => onTriggerWordsChange(event.target.value)}
+          className="min-w-0 flex-1"
+          aria-label={triggerWordsLabel}
+        />
+      </div>
     </>
   );
 }

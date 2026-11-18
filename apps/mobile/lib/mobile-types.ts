@@ -41,6 +41,8 @@ export type MobileBot = Pick<
   | "activeVideoPromptPreset"
   | "imagePromptPresets"
   | "activeImagePromptPreset"
+  | "videoTriggerWords"
+  | "imageTriggerWords"
   | "imageSaveDirectory"
   | "videoSaveDirectory"
   | "showMediaFavorite"

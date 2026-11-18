@@ -212,6 +212,10 @@ export const MessageView = memo(function MessageView({
         activeImagePromptPreset?: string | null;
         videoPromptPresets?: readonly BotPromptPreset[] | null;
         activeVideoPromptPreset?: string | null;
+        showMediaFavorite?: boolean;
+        showMediaShare?: boolean;
+        showMediaPreview?: boolean;
+        showMediaDownload?: boolean;
       }
     | undefined;
   /** Every connected model, so a translation bubble can switch past the bot's configured ones. */
@@ -838,6 +842,10 @@ export const MessageView = memo(function MessageView({
                     presets={bot?.imagePromptPresets}
                     activePreset={bot?.activeImagePromptPreset}
                     favorite={favorite}
+                    showFavorite={bot?.showMediaFavorite ?? true}
+                    showShare={bot?.showMediaShare ?? true}
+                    showPreview={bot?.showMediaPreview ?? true}
+                    showDownload={bot?.showMediaDownload ?? true}
                     modelSwitches={message.modelSwitches}
                     onLocateModel={onLocateModel}
                     onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}
@@ -880,6 +888,10 @@ export const MessageView = memo(function MessageView({
                     presets={bot?.videoPromptPresets}
                     activePreset={bot?.activeVideoPromptPreset}
                     favorite={favorite}
+                    showFavorite={bot?.showMediaFavorite ?? true}
+                    showShare={bot?.showMediaShare ?? true}
+                    showPreview={bot?.showMediaPreview ?? true}
+                    showDownload={bot?.showMediaDownload ?? true}
                     modelSwitches={message.modelSwitches}
                     onLocateModel={onLocateModel}
                     onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}

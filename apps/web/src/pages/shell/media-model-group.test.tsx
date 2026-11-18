@@ -55,6 +55,8 @@ const onRemoveVideoFallback = vi.fn();
 const onTestVideoModel = vi.fn();
 const onApplyVideoTestedModel = vi.fn();
 const onVideoPresetsChange = vi.fn();
+const onVideoTriggerWordsChange = vi.fn();
+const onImageTriggerWordsChange = vi.fn();
 const onImageModelChange = vi.fn();
 const onAddImageFallback = vi.fn();
 const onMoveImageFallback = vi.fn();
@@ -77,6 +79,8 @@ async function renderGroup(
     imagePresets?: { name: string; prompt: string }[];
     activeVideoPreset?: string | null;
     activeImagePreset?: string | null;
+    videoTriggerWords?: string;
+    imageTriggerWords?: string;
   } = {},
 ) {
   await act(async () =>
@@ -111,6 +115,10 @@ async function renderGroup(
         onImagePresetsChange={onImagePresetsChange}
         activeImagePreset={overrides.activeImagePreset ?? null}
         onImagePresetChange={onImagePresetChange}
+        videoTriggerWords={overrides.videoTriggerWords ?? ""}
+        onVideoTriggerWordsChange={onVideoTriggerWordsChange}
+        imageTriggerWords={overrides.imageTriggerWords ?? ""}
+        onImageTriggerWordsChange={onImageTriggerWordsChange}
       />,
     ),
   );

@@ -15,6 +15,8 @@ import {
   BOT_INSTRUCTIONS_MAX_LENGTH,
   BOT_MODEL_LIST_MAX,
   BOT_NAME_MAX_LENGTH,
+  DEFAULT_IMAGE_TRIGGER_WORDS,
+  DEFAULT_VIDEO_TRIGGER_WORDS,
   moveBotModelToFront,
   resolveBotAvatarSet,
 } from "@rakazo_mickvvw/contracts";
@@ -432,6 +434,8 @@ export default function BotSettingsScreen() {
   const [activeVideoPreset, setActiveVideoPreset] = useState<string | null>(null);
   const [imagePresets, setImagePresets] = useState<BotPromptPreset[]>([]);
   const [activeImagePreset, setActiveImagePreset] = useState<string | null>(null);
+  const [videoTriggerWords, setVideoTriggerWords] = useState("");
+  const [imageTriggerWords, setImageTriggerWords] = useState("");
   const [videoTest, setVideoTest] = useState<MediaModelTestState>({ status: "idle" });
   const [imageTest, setImageTest] = useState<MediaModelTestState>({ status: "idle" });
   const [translationSource, setTranslationSource] = useState<TranslationSourceLanguage>("auto");
@@ -578,6 +582,8 @@ export default function BotSettingsScreen() {
         setActiveVideoPreset(next.activeVideoPromptPreset ?? null);
         setImagePresets(next.imagePromptPresets ?? []);
         setActiveImagePreset(next.activeImagePromptPreset ?? null);
+        setVideoTriggerWords(next.videoTriggerWords ?? "");
+        setImageTriggerWords(next.imageTriggerWords ?? "");
         setTranslationSource(next.translationSourceLanguage ?? "auto");
         setTranslationTarget(
           next.translationTargetLanguage &&
@@ -986,6 +992,8 @@ export default function BotSettingsScreen() {
         activeVideoPromptPreset?: string | null;
         imagePromptPresets?: BotPromptPreset[] | null;
         activeImagePromptPreset?: string | null;
+        videoTriggerWords?: string | null;
+        imageTriggerWords?: string | null;
         translationSourceLanguage?: TranslationSourceLanguage;
         translationTargetLanguage?: TranslationTargetLanguage | null;
         autoTranslate?: boolean;
@@ -1034,6 +1042,12 @@ export default function BotSettingsScreen() {
       }
       if ((activeImagePreset ?? null) !== (bot.activeImagePromptPreset ?? null)) {
         input.activeImagePromptPreset = activeImagePreset;
+      }
+      if ((videoTriggerWords.trim() || null) !== (bot.videoTriggerWords ?? null)) {
+        input.videoTriggerWords = videoTriggerWords.trim() || null;
+      }
+      if ((imageTriggerWords.trim() || null) !== (bot.imageTriggerWords ?? null)) {
+        input.imageTriggerWords = imageTriggerWords.trim() || null;
       }
       if ((translationSource || "auto") !== (bot.translationSourceLanguage ?? "auto")) {
         input.translationSourceLanguage = translationSource || "auto";
@@ -1094,6 +1108,8 @@ export default function BotSettingsScreen() {
       (activeVideoPreset ?? null) !== (bot.activeVideoPromptPreset ?? null) ||
       !samePresetList(imagePresets, bot.imagePromptPresets) ||
       (activeImagePreset ?? null) !== (bot.activeImagePromptPreset ?? null) ||
+      (videoTriggerWords.trim() || null) !== (bot.videoTriggerWords ?? null) ||
+      (imageTriggerWords.trim() || null) !== (bot.imageTriggerWords ?? null) ||
       (translationSource || "auto") !== (bot.translationSourceLanguage ?? "auto") ||
       (translationTarget || "auto") !== (bot.translationTargetLanguage ?? "auto") ||
       autoTranslate !== (bot.autoTranslate ?? false) ||
@@ -1282,6 +1298,28 @@ export default function BotSettingsScreen() {
                 onChange={setVideoPresets}
                 onActiveChange={setActiveVideoPreset}
               />
+              <View style={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8 }}>
+                <Text style={{ color: native.secondaryLabel, fontSize: 13 }}>
+                  {t("Video trigger words")}
+                </Text>
+                <TextInput
+                  value={videoTriggerWords}
+                  onChangeText={setVideoTriggerWords}
+                  placeholder={DEFAULT_VIDEO_TRIGGER_WORDS}
+                  placeholderTextColor={tokens.mutedForeground}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: tokens.border,
+                    borderRadius: 8,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    color: tokens.foreground,
+                    fontSize: 16,
+                  }}
+                />
+              </View>
               <OrderedModelList
                 kind="image"
                 label={t("Image generation model")}
@@ -1305,6 +1343,28 @@ export default function BotSettingsScreen() {
                 onChange={setImagePresets}
                 onActiveChange={setActiveImagePreset}
               />
+              <View style={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8 }}>
+                <Text style={{ color: native.secondaryLabel, fontSize: 13 }}>
+                  {t("Image trigger words")}
+                </Text>
+                <TextInput
+                  value={imageTriggerWords}
+                  onChangeText={setImageTriggerWords}
+                  placeholder={DEFAULT_IMAGE_TRIGGER_WORDS}
+                  placeholderTextColor={tokens.mutedForeground}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: tokens.border,
+                    borderRadius: 8,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    color: tokens.foreground,
+                    fontSize: 16,
+                  }}
+                />
+              </View>
               <OrderedModelList
                 kind="translation"
                 label={t("Translation model")}

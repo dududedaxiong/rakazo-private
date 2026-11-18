@@ -2047,6 +2047,8 @@ const threadBot: MobileBot = {
   activeVideoPromptPreset: null,
   imagePromptPresets: null,
   activeImagePromptPreset: null,
+  videoTriggerWords: null,
+  imageTriggerWords: null,
   imageSaveDirectory: null,
   videoSaveDirectory: null,
   showMediaFavorite: true,

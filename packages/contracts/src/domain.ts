@@ -103,6 +103,14 @@ export type BotPromptPreset = z.infer<typeof BotPromptPresetSchema>;
 export const BOT_MODEL_LIST_MAX = 8;
 /** At most this many prompt presets per media kind. */
 export const BOT_PROMPT_PRESET_MAX = 20;
+/** Default video trigger words; stored joined with "|". */
+export const DEFAULT_VIDEO_TRIGGERS: readonly string[] = ["生成视频", "生成一段视频"];
+/** Default image trigger words; stored joined with "|". */
+export const DEFAULT_IMAGE_TRIGGERS: readonly string[] = ["生成图片", "画一张", "画一幅"];
+/** The default trigger words in storage form, for settings screens to show. */
+export const DEFAULT_VIDEO_TRIGGER_WORDS = DEFAULT_VIDEO_TRIGGERS.join("|");
+/** The default trigger words in storage form, for settings screens to show. */
+export const DEFAULT_IMAGE_TRIGGER_WORDS = DEFAULT_IMAGE_TRIGGERS.join("|");
 
 /**
  * Reads a stored ordered model list: a JSON array of `{provider, model}`
@@ -228,6 +236,10 @@ export const BotSchema = z.object({
   imagePromptPresets: z.array(BotPromptPresetSchema).nullable(),
   /** The name of the active image prompt preset; null means no preset. */
   activeImagePromptPreset: z.string().nullable(),
+  /** Pipe-separated video trigger words; null means the defaults. */
+  videoTriggerWords: z.string().nullable(),
+  /** Pipe-separated image trigger words; null means the defaults. */
+  imageTriggerWords: z.string().nullable(),
   /** Directory or album name for saving generated images; null means the default location. */
   imageSaveDirectory: z.string().nullable(),
   /** Directory or album name for saving generated videos; null means the default location. */
@@ -678,6 +690,10 @@ export const UpdateBotInput = z
       .optional(),
     /** The name of the active image prompt preset; null means no preset. */
     activeImagePromptPreset: z.string().trim().min(1).max(80).nullable().optional(),
+    /** Pipe-separated video trigger words; empty means the defaults. */
+    videoTriggerWords: z.string().trim().max(500).nullable().optional(),
+    /** Pipe-separated image trigger words; empty means the defaults. */
+    imageTriggerWords: z.string().trim().max(500).nullable().optional(),
     /** Directory or album name for saving generated images; null means the default location. */
     imageSaveDirectory: z.string().trim().min(1).max(80).nullable().optional(),
     /** Directory or album name for saving generated videos; null means the default location. */

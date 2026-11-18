@@ -1182,6 +1182,10 @@ model Bot {
   imagePromptPresets        Json?
   /** Name of the active image prompt preset; null means no preset. */
   activeImagePromptPreset   String?
+  /** Pipe-separated trigger words that route a message straight to video generation; null means the defaults. */
+  videoTriggerWords         String?
+  /** Pipe-separated trigger words that route a message straight to image generation; null means the defaults. */
+  imageTriggerWords         String?
   /** Directory or album name for saving generated images; null means the default location. */
   imageSaveDirectory        String?
   /** Directory or album name for saving generated videos; null means the default location. */

@@ -106,6 +106,10 @@ export function MediaResult({
   presets,
   activePreset,
   favorite,
+  showFavorite = true,
+  showShare = true,
+  showPreview = true,
+  showDownload = true,
   modelSwitches,
   onLocateModel,
   onRegenerate,
@@ -131,6 +135,14 @@ export function MediaResult({
   activePreset: string | null | undefined;
   /** The message-level favorite; favoriting a result favorites its message. */
   favorite: { favorited: boolean; busy: boolean; toggle: () => Promise<boolean> };
+  /** The bot's media action toggles; absent means shown. */
+  showFavorite?: boolean;
+  /** The bot's media action toggles; absent means shown. */
+  showShare?: boolean;
+  /** The bot's media action toggles; absent means shown. */
+  showPreview?: boolean;
+  /** The bot's media action toggles; absent means shown. */
+  showDownload?: boolean;
   /** The switch timeline for this message; only present when a switch happened. */
   modelSwitches?: ModelSwitches | null;
   /** Opens the bot's settings at the model named in a switch timeline. */
@@ -407,7 +419,7 @@ export function MediaResult({
           artifactId={artifactId}
           name={name}
           previewOpen={previewOpen}
-          onPreviewOpenChange={setPreviewOpen}
+          onPreviewOpenChange={showPreview ? setPreviewOpen : () => {}}
           previewHeaderActions={previewRegenerateAction}
           previewTitleBar={previewTitleBar}
         />
@@ -419,50 +431,58 @@ export function MediaResult({
           mimeType={mimeType}
           size={size ?? 0}
           previewOpen={previewOpen}
-          onPreviewOpenChange={setPreviewOpen}
+          onPreviewOpenChange={showPreview ? setPreviewOpen : () => {}}
           previewHeaderActions={previewRegenerateAction}
           previewTitleBar={previewTitleBar}
         />
       )}
       {markLine}
       <div className="flex flex-wrap items-center gap-1">
-        <Button
-          variant="text"
-          size="xs"
-          aria-label={t`Preview ${name}`}
-          onClick={() => setPreviewOpen(true)}
-          className="font-normal"
-        >
-          <Trans>Preview</Trans>
-        </Button>
-        <Button
-          variant="text"
-          size="xs"
-          aria-label={t`Download ${name}`}
-          onClick={() => void download()}
-          className="font-normal"
-        >
-          <Trans>Download</Trans>
-        </Button>
-        <Button
-          variant="text"
-          size="xs"
-          onClick={() => void share()}
-          disabled={sharing}
-          className="font-normal"
-        >
-          {sharing ? <Trans>Sharing…</Trans> : <Trans>Share</Trans>}
-        </Button>
-        <Button
-          variant="text"
-          size="xs"
-          aria-label={favorite.favorited ? t`Remove from favorites` : t`Add to favorites`}
-          disabled={favorite.busy}
-          onClick={() => void toggleFavorite()}
-          className="font-normal"
-        >
-          {favorite.favorited ? <Trans>Favorited</Trans> : <Trans>Favorite</Trans>}
-        </Button>
+        {showPreview ? (
+          <Button
+            variant="text"
+            size="xs"
+            aria-label={t`Preview ${name}`}
+            onClick={() => setPreviewOpen(true)}
+            className="font-normal"
+          >
+            <Trans>Preview</Trans>
+          </Button>
+        ) : null}
+        {showDownload ? (
+          <Button
+            variant="text"
+            size="xs"
+            aria-label={t`Download ${name}`}
+            onClick={() => void download()}
+            className="font-normal"
+          >
+            <Trans>Download</Trans>
+          </Button>
+        ) : null}
+        {showShare ? (
+          <Button
+            variant="text"
+            size="xs"
+            onClick={() => void share()}
+            disabled={sharing}
+            className="font-normal"
+          >
+            {sharing ? <Trans>Sharing…</Trans> : <Trans>Share</Trans>}
+          </Button>
+        ) : null}
+        {showFavorite ? (
+          <Button
+            variant="text"
+            size="xs"
+            aria-label={favorite.favorited ? t`Remove from favorites` : t`Add to favorites`}
+            disabled={favorite.busy}
+            onClick={() => void toggleFavorite()}
+            className="font-normal"
+          >
+            {favorite.favorited ? <Trans>Favorited</Trans> : <Trans>Favorite</Trans>}
+          </Button>
+        ) : null}
         {onRegenerate ? (
           <Button
             variant="text"
