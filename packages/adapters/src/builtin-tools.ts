@@ -259,7 +259,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "generate_video",
     description:
-      "Submit a short video from a prompt (may incur charges). It is attached to the chat when ready, without polling; pass jobId only to check progress. Do not resubmit failed or uncertain jobs automatically.",
+      "Generate a short video from a prompt and attach it to chat when ready. Pass only the prompt. Uses the deployment media model and may incur charges. Do not resubmit failed or uncertain jobs automatically.",
     inputSchema: {
       type: "object",
       properties: {

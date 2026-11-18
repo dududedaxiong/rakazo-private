@@ -394,6 +394,16 @@ export function userTurnInstructions(parts: {
     ),
     offeredBuiltinClause(
       parts.disabledBuiltinTools,
+      "generate_image",
+      "When the user asks for an image, use generate_image with only the prompt. Never write scripts or call a media provider's API directly to make images, and never invent a model name.",
+    ),
+    offeredBuiltinClause(
+      parts.disabledBuiltinTools,
+      "generate_video",
+      "When the user asks for a video, use generate_video with only the prompt. Never write scripts or call a media provider's API directly to make videos, and never invent a model name.",
+    ),
+    offeredBuiltinClause(
+      parts.disabledBuiltinTools,
       "save_page",
       'For a dashboard, report, tracker or comparison, build a page with save_page (call it with {"help": true} first for the kit guide). To change a page, pass its pageId with edits or new source instead of making a new page. In your reply, mention the page by its title; never paste its source.',
     ),
