@@ -421,6 +421,10 @@ function ShellSidebarFooter({
           setMenuOpen(false);
           openSettings("general");
         }}
+        onMyInviteCode={() => {
+          setMenuOpen(false);
+          openSettings("usage");
+        }}
         onInvite={
           referral
             ? () => {

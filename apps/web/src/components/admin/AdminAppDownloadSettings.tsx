@@ -83,7 +83,7 @@ function SettingsForm({ initial, onSaved }: { initial: AppDownloadLinks; onSaved
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-4 py-3">
       <SectionHeading>{t`Custom app download`}</SectionHeading>
       <p className="text-body-sm text-muted-foreground">
         <Trans>

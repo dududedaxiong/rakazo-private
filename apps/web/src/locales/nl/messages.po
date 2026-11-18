@@ -96,6 +96,11 @@ msgstr "{0} {unitLabel}"
 msgid "{0} accounts affected"
 msgstr ""
 
+#. placeholder {0}: number(row.modelCalls)
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{0} calls"
+msgstr ""
+
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"
@@ -136,6 +141,11 @@ msgstr "{0} KB"
 msgid "{0} MB"
 msgstr "{0} MB"
 
+#. placeholder {0}: number(runs)
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{0} requests"
+msgstr ""
+
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} rollup hours"
@@ -150,6 +160,11 @@ msgstr "{0} TB"
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "{0}, paused until you turn it on"
 msgstr "{0}, gepauzeerd tot je hem aanzet"
+
+#. placeholder {0}: Math.round(share * 100)
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{0}% of total"
+msgstr ""
 
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
@@ -1606,6 +1621,10 @@ msgstr "Ingebouwd"
 #: src/components/AskCard.tsx
 msgid "Button “{button}” · read from the page, not checked"
 msgstr "Knop ‘{button}’ · van de pagina gelezen, niet gecontroleerd"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "By model"
+msgstr ""
 
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
@@ -3524,10 +3543,6 @@ msgid "Daily check-ins on unfinished work"
 msgstr "Dagelijks navragen over onafgemaakt werk"
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Daily cost, last year"
-msgstr ""
-
-#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/use-palette-actions.ts
 msgid "Dark"
 msgstr "Donker"
@@ -4908,9 +4923,13 @@ msgstr "Standaard overnemen"
 msgid "Ink"
 msgstr ""
 
+#. placeholder {0}: number(inputTokens)
+#. placeholder {0}: number(row.inputTokens)
+#. placeholder {1}: number(outputTokens)
+#. placeholder {1}: number(row.outputTokens)
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Input"
-msgstr "Invoer"
+msgid "Input {0} · Output {1}"
+msgstr ""
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
@@ -5688,7 +5707,6 @@ msgstr "Gemist gesprek"
 msgid "Mode"
 msgstr "Modus"
 
-#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/routine-editor/model-settings.tsx
@@ -5819,6 +5837,7 @@ msgstr "Gedempt"
 msgid "My computers"
 msgstr "Mijn computers"
 
+#: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "My invite code"
 msgstr ""
@@ -6241,6 +6260,10 @@ msgstr ""
 msgid "No trigger"
 msgstr "Geen trigger"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "No usage yet"
+msgstr ""
+
 #: src/components/admin/AdminUsers.tsx
 msgid "No users match"
 msgstr ""
@@ -6559,10 +6582,6 @@ msgstr "Oorspronkelijk bericht niet beschikbaar"
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "Ander model…"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Output"
-msgstr "Uitvoer"
 
 #: src/pages/AdminPage.tsx
 msgid "Overview"
@@ -7735,10 +7754,6 @@ msgstr "{workingRoutine} wordt uitgevoerd…"
 #: src/pages/RoutineEditor.tsx
 msgid "Running…"
 msgstr "Bezig met draaien…"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Runs"
-msgstr "Uitvoeringen"
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Runs when this bot receives a verified message from this provider."
@@ -9262,6 +9277,7 @@ msgstr "Te doen"
 msgid "To:"
 msgstr "Aan:"
 
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/chat-context.tsx
 msgid "Today"
@@ -9272,9 +9288,17 @@ msgstr "Vandaag"
 msgid "Today: {0}"
 msgstr ""
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Today's usage"
+msgstr ""
+
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Toggle sidebar"
 msgstr "Zijbalk tonen/verbergen"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "tokens"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Tokens"
@@ -9313,6 +9337,10 @@ msgstr "Onderwerpradar"
 #: src/components/AskCard.tsx
 msgid "Total"
 msgstr "Totaal"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Total usage"
+msgstr ""
 
 #: src/components/admin/AdminOverview.tsx
 msgid "Total users"

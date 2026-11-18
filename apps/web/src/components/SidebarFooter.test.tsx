@@ -36,6 +36,7 @@ async function render(
   logos?: Array<{ name: string; logo?: string }>,
   onFavorites = vi.fn(),
   appDownloads?: { androidUrl: string | null; iosUrl: string | null } | null,
+  onMyInviteCode = vi.fn(),
 ) {
   const email = "account@rakazo.test";
   await act(async () =>
@@ -60,6 +61,7 @@ async function render(
           onArtifacts={() => {}}
           onFavorites={onFavorites}
           onSettings={() => {}}
+          onMyInviteCode={onMyInviteCode}
           onLogOut={() => {}}
           signingOut={false}
           logOutError={null}
@@ -150,6 +152,7 @@ it("opens integrations and keeps the existing account actions and links", async 
     "Favorites",
     "Board",
     "Get the mobile app",
+    "My invite code",
     "Log out",
   ]);
   expect(host.querySelector('[data-testid="user-menu-trigger"]')?.getAttribute("aria-label")).toBe(
@@ -161,6 +164,28 @@ it("omits Board when unavailable", async () => {
   expect(document.querySelector('[data-slot="popover-content"]')?.textContent).not.toContain(
     "Board",
   );
+});
+
+it("opens my invite code below Get the mobile app", async () => {
+  const onMyInviteCode = vi.fn();
+  await render(
+    "Demo User",
+    undefined,
+    vi.fn(),
+    vi.fn(),
+    undefined,
+    vi.fn(),
+    undefined,
+    onMyInviteCode,
+  );
+  const menu = document.querySelector('[data-slot="popover-content"]')!;
+  const labels = [...menu.querySelectorAll("button, a")].map((row) => row.textContent);
+  expect(labels.indexOf("My invite code")).toBe(labels.indexOf("Get the mobile app") + 1);
+  const inviteCode = [...document.querySelectorAll("button")].find(
+    (button) => button.textContent === "My invite code",
+  )!;
+  await act(async () => inviteCode.click());
+  expect(onMyInviteCode).toHaveBeenCalledOnce();
 });
 
 it("opens favorites from the account menu", async () => {

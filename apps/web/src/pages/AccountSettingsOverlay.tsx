@@ -35,7 +35,7 @@ import {
   TableRow,
 } from "@rakazo_mickvvw/ui-web/components/ui/table";
 import { Check, Copy } from "lucide-react";
-import type { RefObject } from "react";
+import type { ReactNode, RefObject } from "react";
 import { useEffect, useId, useRef, useState } from "react";
 import { AccountAccess, LinkSsoRow } from "../components/AccountAccess";
 import { AccountDataSettings } from "../components/AccountDataSettings";
@@ -505,6 +505,57 @@ export function GeneralSettingsPanels({
   );
 }
 
+function localDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Same compact form as the App usage page: 89,400 renders as 8.9万. */
+function compactTokenCount(value: number): string {
+  if (value >= 10_000) {
+    const wan = value / 10_000;
+    return `${wan >= 100 ? Math.round(wan) : wan.toFixed(1).replace(/\.0$/, "")}万`;
+  }
+  return new Intl.NumberFormat("en-US").format(value);
+}
+
+function UsageSummaryCard({
+  title,
+  tokens,
+  runs,
+  inputTokens,
+  outputTokens,
+  number,
+  testId,
+}: {
+  title: ReactNode;
+  tokens: number | null | undefined;
+  runs: number;
+  inputTokens: number | null | undefined;
+  outputTokens: number | null | undefined;
+  number: (value: number | null | undefined) => string;
+  testId: string;
+}) {
+  const { t } = useLingui();
+  return (
+    <div data-testid={testId} className="rounded-2xl border border-border px-4 py-3.5">
+      <div className="text-body-sm text-muted-foreground">{title}</div>
+      <div className="mt-1 text-heading2 font-extrabold tabular-nums text-foreground">
+        {number(tokens)}{" "}
+        <span className="text-body-sm font-semibold text-muted-foreground">
+          <Trans>tokens</Trans>
+        </span>
+      </div>
+      <div className="mt-1 text-body-sm text-muted-foreground">
+        <span className="block">{t`${number(runs)} requests`}</span>
+        <span className="block">{t`Input ${number(inputTokens)} · Output ${number(outputTokens)}`}</span>
+      </div>
+    </div>
+  );
+}
+
 export function UsageSettingsPanel({
   usage,
   usageDays,
@@ -548,8 +599,30 @@ export function UsageSettingsPanel({
   const models = usage?.models ?? [];
   const bots = usage?.bots ?? [];
   const daily = usage?.daily ?? [];
-  const maxDayCost = daily.reduce((max, day) => Math.max(max, day.costUsd ?? 0), 0);
   const rangeValue = usageDays === undefined ? "all" : String(usageDays);
+  const dailyByDate = new Map(daily.map((day) => [day.date, day]));
+  const todayKey = localDateKey(new Date());
+  const todayDay = dailyByDate.get(todayKey);
+  const todayTokens =
+    todayDay == null
+      ? null
+      : (todayDay.totalTokens ?? (todayDay.inputTokens ?? 0) + (todayDay.outputTokens ?? 0));
+  const trend = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - index));
+    const key = localDateKey(date);
+    const day = dailyByDate.get(key);
+    const tokens =
+      day == null ? 0 : (day.totalTokens ?? (day.inputTokens ?? 0) + (day.outputTokens ?? 0));
+    return {
+      key,
+      label: index === 6 ? t`Today` : `${date.getMonth() + 1}/${date.getDate()}`,
+      tokens,
+      isToday: index === 6,
+    };
+  });
+  const trendMax = Math.max(1, ...trend.map((day) => day.tokens));
+  const summaryTotalTokens = usage?.totalTokens ?? 0;
   return (
     <div ref={panelRef} tabIndex={-1} data-testid="usage-settings" className="outline-none">
       {onUsageDaysChange ? (
@@ -606,104 +679,136 @@ export function UsageSettingsPanel({
         />
       ) : null}
       {usage ? (
-        <dl className="grid grid-cols-3 gap-3">
-          {[
-            { label: t`Runs`, value: number(usage.runs) },
-            { label: t`Tokens`, value: number(usage.totalTokens) },
-            { label: t`Cost`, value: cost(usage.costUsd) },
-          ].map((stat) => (
-            <div key={stat.label} className="rounded-xl border border-border px-4 py-3">
-              <dt className="text-body-sm text-muted-foreground">{stat.label}</dt>
-              <dd className="mt-1 text-heading3 font-medium tabular-nums text-foreground">
-                {stat.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      ) : null}
-      {daily.length > 0 ? (
-        <div className="mt-4 rounded-xl border border-border px-4 py-3">
-          <div className="text-body-sm text-muted-foreground">
-            <Trans>Daily cost, last year</Trans>
+        <>
+          <div className="grid grid-cols-2 gap-2.5">
+            <UsageSummaryCard
+              title={<Trans>Today's usage</Trans>}
+              tokens={todayTokens}
+              runs={todayDay?.modelCalls ?? 0}
+              inputTokens={todayDay?.inputTokens}
+              outputTokens={todayDay?.outputTokens}
+              number={number}
+              testId="usage-summary-today"
+            />
+            <UsageSummaryCard
+              title={<Trans>Total usage</Trans>}
+              tokens={usage.totalTokens}
+              runs={usage.runs}
+              inputTokens={usage.inputTokens}
+              outputTokens={usage.outputTokens}
+              number={number}
+              testId="usage-summary-total"
+            />
           </div>
-          <div className="mt-2 flex flex-wrap gap-1" data-testid="usage-heatmap">
-            {daily.map((day) => {
-              const intensity = maxDayCost > 0 ? (day.costUsd ?? 0) / maxDayCost : 0;
-              const level =
-                intensity <= 0
-                  ? 0
-                  : intensity < 0.25
-                    ? 1
-                    : intensity < 0.5
-                      ? 2
-                      : intensity < 0.75
-                        ? 3
-                        : 4;
+          <div className="mt-5 flex items-baseline justify-between">
+            <h3 className="text-body font-semibold text-foreground">
+              <Trans>Last 7 days</Trans>
+            </h3>
+            <span className="text-label text-muted-foreground">
+              <Trans>tokens</Trans>
+            </span>
+          </div>
+          <div
+            className="mt-2 rounded-2xl border border-border px-4 py-3"
+            data-testid="usage-trend"
+          >
+            {trend.some((day) => day.tokens > 0) ? (
+              <div className="flex h-28 items-end gap-2">
+                {trend.map((day) => (
+                  <div
+                    key={day.key}
+                    className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5"
+                  >
+                    <span className="text-[10px] leading-3 tabular-nums text-muted-foreground">
+                      {compactTokenCount(day.tokens)}
+                    </span>
+                    <div className="flex min-h-0 w-full flex-1 items-end justify-center">
+                      <div
+                        className={
+                          day.isToday
+                            ? "w-full max-w-[30px] rounded-md bg-primary"
+                            : "w-full max-w-[30px] rounded-md bg-muted-foreground"
+                        }
+                        style={{
+                          height: `${Math.max(day.tokens > 0 ? 6 : 2, (day.tokens / trendMax) * 100)}%`,
+                        }}
+                      />
+                    </div>
+                    <span
+                      className={
+                        day.isToday
+                          ? "text-[11px] leading-4 font-bold text-primary"
+                          : "text-[11px] leading-4 text-muted-foreground"
+                      }
+                    >
+                      {day.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-3 text-center text-body-sm text-muted-foreground">
+                <Trans>No usage yet</Trans>
+              </p>
+            )}
+          </div>
+          <div className="mt-5 flex items-baseline justify-between">
+            <h3 className="text-body font-semibold text-foreground">
+              <Trans>By model</Trans>
+            </h3>
+          </div>
+        </>
+      ) : null}
+      {usage ? (
+        models.length > 0 ? (
+          <div className="mt-2 space-y-2.5" data-testid="usage-models">
+            {models.map((row) => {
+              const total = row.totalTokens ?? (row.inputTokens ?? 0) + (row.outputTokens ?? 0);
+              const share = summaryTotalTokens > 0 ? total / summaryTotalTokens : null;
               return (
                 <div
-                  key={day.date}
-                  title={`${day.date}: ${cost(day.costUsd)} · ${number(day.totalTokens)} tokens`}
-                  className={
-                    level === 0
-                      ? "h-3 w-3 rounded-sm bg-muted"
-                      : level === 1
-                        ? "h-3 w-3 rounded-sm bg-emerald-200"
-                        : level === 2
-                          ? "h-3 w-3 rounded-sm bg-emerald-400"
-                          : level === 3
-                            ? "h-3 w-3 rounded-sm bg-emerald-600"
-                            : "h-3 w-3 rounded-sm bg-emerald-800"
-                  }
-                />
+                  key={`${row.provider}:${row.model}`}
+                  className="rounded-2xl border border-border px-4 py-3.5"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="truncate font-semibold text-foreground">{row.model}</div>
+                      <div className="text-label text-muted-foreground">{row.provider}</div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-heading3 font-bold tabular-nums text-foreground">
+                        {number(total)}
+                      </div>
+                      <div className="text-label text-muted-foreground">
+                        <Trans>tokens</Trans> · {t`${number(row.modelCalls)} calls`}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{ width: `${share === null ? 0 : Math.round(share * 100)}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-2 text-body-sm">
+                    <span className="text-muted-foreground">
+                      {t`Input ${number(row.inputTokens)} · Output ${number(row.outputTokens)}`}
+                    </span>
+                    {share === null ? null : (
+                      <span className="shrink-0 font-semibold text-foreground">
+                        {t`${Math.round(share * 100)}% of total`}
+                      </span>
+                    )}
+                  </div>
+                </div>
               );
             })}
           </div>
-        </div>
-      ) : null}
-      {models.length > 0 ? (
-        <div className="mt-4 rounded-xl border border-border px-2">
-          <Table className="text-body">
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="text-muted-foreground">
-                  <Trans>Model</Trans>
-                </TableHead>
-                <TableHead className="text-right text-muted-foreground">
-                  <Trans>Calls</Trans>
-                </TableHead>
-                <TableHead className="text-right text-muted-foreground">
-                  <Trans>Input</Trans>
-                </TableHead>
-                <TableHead className="text-right text-muted-foreground">
-                  <Trans>Output</Trans>
-                </TableHead>
-                <TableHead className="text-right text-muted-foreground">
-                  <Trans>Cost</Trans>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {models.map((row) => (
-                <TableRow key={`${row.provider}:${row.model}`} className="hover:bg-transparent">
-                  <TableCell>
-                    <div className="text-foreground">{row.model}</div>
-                    <div className="text-label text-muted-foreground">{row.provider}</div>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {number(row.modelCalls)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {number(row.inputTokens)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {number(row.outputTokens)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">{cost(row.costUsd)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        ) : (
+          <p className="mt-2 py-3 text-center text-body-sm text-muted-foreground">
+            <Trans>No usage yet</Trans>
+          </p>
+        )
       ) : null}
       {bots.length > 0 ? (
         <div className="mt-4 rounded-xl border border-border px-2">

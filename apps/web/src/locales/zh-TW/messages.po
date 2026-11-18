@@ -97,6 +97,11 @@ msgstr "{0} {unitLabel}"
 msgid "{0} accounts affected"
 msgstr "{0} 個帳號受影響"
 
+#. placeholder {0}: number(row.modelCalls)
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{0} calls"
+msgstr "{0} 次"
+
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"
@@ -137,6 +142,11 @@ msgstr "{0} KB"
 msgid "{0} MB"
 msgstr "{0} MB"
 
+#. placeholder {0}: number(runs)
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{0} requests"
+msgstr "{0} 次請求"
+
 #. placeholder {0}: sender.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} rollup hours"
@@ -151,6 +161,11 @@ msgstr "{0} TB"
 #: src/components/bot-templates/bot-templates-dialog.tsx
 msgid "{0}, paused until you turn it on"
 msgstr "{0}，開啟前保持暫停"
+
+#. placeholder {0}: Math.round(share * 100)
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{0}% of total"
+msgstr "佔合計 {0}%"
 
 #: src/lib/billing.ts
 msgid "{amount} / {period}"
@@ -1607,6 +1622,10 @@ msgstr "內建"
 #: src/components/AskCard.tsx
 msgid "Button “{button}” · read from the page, not checked"
 msgstr "按鈕「{button}」· 讀取自頁面，未核實"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "By model"
+msgstr "按模型統計"
 
 #: src/pages/shell/chat-header.tsx
 msgid "Call"
@@ -3525,10 +3544,6 @@ msgid "Daily check-ins on unfinished work"
 msgstr "每天追蹤未完成的工作"
 
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Daily cost, last year"
-msgstr ""
-
-#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/shell/use-palette-actions.ts
 msgid "Dark"
 msgstr "深色"
@@ -4909,9 +4924,13 @@ msgstr "沿用預設"
 msgid "Ink"
 msgstr ""
 
+#. placeholder {0}: number(inputTokens)
+#. placeholder {0}: number(row.inputTokens)
+#. placeholder {1}: number(outputTokens)
+#. placeholder {1}: number(row.outputTokens)
 #: src/pages/AccountSettingsOverlay.tsx
-msgid "Input"
-msgstr "輸入"
+msgid "Input {0} · Output {1}"
+msgstr "輸入 {0} · 輸出 {1}"
 
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Inputs"
@@ -5689,7 +5708,6 @@ msgstr "未接來電"
 msgid "Mode"
 msgstr "模式"
 
-#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/routine-editor/model-settings.tsx
@@ -5820,6 +5838,7 @@ msgstr "已靜音"
 msgid "My computers"
 msgstr "我的電腦"
 
+#: src/components/SidebarFooter.tsx
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "My invite code"
 msgstr "我的邀請碼"
@@ -6242,6 +6261,10 @@ msgstr ""
 msgid "No trigger"
 msgstr "無觸發器"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "No usage yet"
+msgstr "暫無用量"
+
 #: src/components/admin/AdminUsers.tsx
 msgid "No users match"
 msgstr "沒有相符的使用者"
@@ -6560,10 +6583,6 @@ msgstr "原訊息不可用"
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "其他模型…"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Output"
-msgstr "輸出"
 
 #: src/pages/AdminPage.tsx
 msgid "Overview"
@@ -7736,10 +7755,6 @@ msgstr "正在執行 {workingRoutine}…"
 #: src/pages/RoutineEditor.tsx
 msgid "Running…"
 msgstr "正在執行…"
-
-#: src/pages/AccountSettingsOverlay.tsx
-msgid "Runs"
-msgstr "執行"
 
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Runs when this bot receives a verified message from this provider."
@@ -9263,6 +9278,7 @@ msgstr "待辦"
 msgid "To:"
 msgstr "收件人："
 
+#: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/shell/chat-context.tsx
 msgid "Today"
@@ -9273,9 +9289,17 @@ msgstr "今天"
 msgid "Today: {0}"
 msgstr "今日：{0}"
 
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Today's usage"
+msgstr "今日用量"
+
 #: src/pages/shell/keyboard-shortcuts-dialog.tsx
 msgid "Toggle sidebar"
 msgstr "顯示或隱藏側邊欄"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "tokens"
+msgstr "tokens"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Tokens"
@@ -9314,6 +9338,10 @@ msgstr "主題追蹤"
 #: src/components/AskCard.tsx
 msgid "Total"
 msgstr "合計"
+
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "Total usage"
+msgstr "總用量"
 
 #: src/components/admin/AdminOverview.tsx
 msgid "Total users"

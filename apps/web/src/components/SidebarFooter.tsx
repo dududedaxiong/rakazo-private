@@ -20,6 +20,7 @@ import {
   Smartphone,
   SquareKanban,
   Star,
+  Ticket,
   UserPlus,
   UserRound,
 } from "lucide-react";
@@ -48,6 +49,7 @@ type Props = {
   onGallery?: () => void;
   onSettings: () => void;
   onInvite?: () => void;
+  onMyInviteCode?: () => void;
   onLogOut: () => void;
   signingOut: boolean;
   logOutError: string | null;
@@ -82,6 +84,7 @@ export function SidebarFooter({
   onGallery,
   onSettings,
   onInvite,
+  onMyInviteCode,
   onLogOut,
   signingOut,
   logOutError,
@@ -265,6 +268,16 @@ export function SidebarFooter({
               <Smartphone className="text-muted-foreground" strokeWidth={1.75} />
               <Trans>Get the mobile app</Trans>
             </Button>
+            {onMyInviteCode ? (
+              <Button
+                variant="ghost"
+                className="h-9 w-full justify-start gap-2.5 font-normal"
+                onClick={onMyInviteCode}
+              >
+                <Ticket className="text-muted-foreground" strokeWidth={1.75} />
+                <Trans>My invite code</Trans>
+              </Button>
+            ) : null}
             {onInvite ? (
               <Button
                 variant="ghost"

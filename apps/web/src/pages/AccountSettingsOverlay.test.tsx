@@ -328,8 +328,26 @@ it("updates the Enter preference from Settings and reflects external changes", a
   }
 });
 
-it("shows usage totals and a per-model breakdown", async () => {
+it("shows today and total cards, a 7-day chart, and per-model cards", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const dayKey = (offset: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() - offset);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+  const daily = [6, 5, 4, 3, 2, 1, 0].map((offset) => ({
+    date: dayKey(offset),
+    modelCalls: 1,
+    inputTokens: 100 * (7 - offset) - 10,
+    outputTokens: 10,
+    totalTokens: 100 * (7 - offset),
+    costUsd: 0,
+    unknownTokensCalls: 0,
+    unknownCostCalls: 0,
+  }));
   const container = document.createElement("div");
   const root = createRoot(container);
   try {
@@ -367,23 +385,40 @@ it("shows usage totals and a per-model breakdown", async () => {
                 unknownCostCalls: 0,
               },
             ],
+            daily,
           }}
         />,
       ),
     );
-    expect([...container.querySelectorAll("dd")].map((node) => node.textContent)).toEqual([
-      "2",
-      "1,234",
-      "$0.50",
-    ]);
-    expect(
-      [...container.querySelectorAll("tbody tr")].map((row) =>
-        [...row.querySelectorAll("td")].map((cell) => cell.textContent),
-      ),
-    ).toEqual([
-      ["model-aopenai", "2", "1,000", "30", "$0.50"],
-      ["model-blocal", "1", "200", "4", "—"],
-    ]);
+    const today = container.querySelector('[data-testid="usage-summary-today"]')!;
+    expect(today.textContent).toContain("Today's usage");
+    expect(today.textContent).toContain("700");
+    expect(today.textContent).toContain("Input");
+    const total = container.querySelector('[data-testid="usage-summary-total"]')!;
+    expect(total.textContent).toContain("Total usage");
+    expect(total.textContent).toContain("1,234");
+    const trend = container.querySelector('[data-testid="usage-trend"]')!;
+    expect(trend.textContent).toContain("Today");
+    for (const value of ["100", "200", "300", "400", "500", "600", "700"]) {
+      expect(trend.textContent).toContain(value);
+    }
+    expect(trend.querySelectorAll(":scope > div > div")).toHaveLength(7);
+    const heights = [...trend.querySelectorAll("div")]
+      .map((node) => node.style.height)
+      .filter(Boolean)
+      .map((height) => Number.parseFloat(height));
+    expect(heights).toHaveLength(7);
+    expect(Math.max(...heights)).toBe(100);
+    expect(heights.every((height) => height <= 100)).toBe(true);
+    const models = container.querySelector('[data-testid="usage-models"]')!;
+    expect(models.textContent).toContain("model-a");
+    expect(models.textContent).toContain("1,030");
+    expect(models.textContent).toContain("model-b");
+    expect(models.textContent).toContain("204");
+    const shares = [...models.querySelectorAll(".h-full.rounded-full.bg-primary")].map(
+      (node) => (node as HTMLElement).style.width,
+    );
+    expect(shares).toEqual(["83%", "17%"]);
   } finally {
     await act(async () => root.unmount());
     vi.unstubAllGlobals();

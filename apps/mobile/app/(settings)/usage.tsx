@@ -194,15 +194,17 @@ export default function UsageDetail() {
                   {trend.map((day) => (
                     <View key={day.date} style={styles.barColumn}>
                       <Text style={styles.barValue}>{compactTokenCount(day.tokens)}</Text>
-                      <View
-                        style={[
-                          styles.bar,
-                          {
-                            height: `${Math.max(day.tokens > 0 ? 6 : 2, (day.tokens / trendMax) * 100)}%`,
-                          },
-                          day.isToday && styles.barToday,
-                        ]}
-                      />
+                      <View style={styles.barTrack}>
+                        <View
+                          style={[
+                            styles.bar,
+                            {
+                              height: `${Math.max(day.tokens > 0 ? 6 : 2, (day.tokens / trendMax) * 100)}%`,
+                            },
+                            day.isToday && styles.barToday,
+                          ]}
+                        />
+                      </View>
                       <Text style={[styles.barLabel, day.isToday && styles.barLabelToday]}>
                         {day.label}
                       </Text>
@@ -486,6 +488,12 @@ function createUsageStyles() {
     barValue: {
       color: tokens.mutedForeground,
       fontSize: 10,
+    },
+    barTrack: {
+      flex: 1,
+      width: "100%",
+      alignItems: "center",
+      justifyContent: "flex-end",
     },
     bar: {
       width: "100%",
