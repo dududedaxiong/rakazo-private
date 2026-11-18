@@ -1,5 +1,7 @@
+import { i18n } from "@lingui/core";
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { ModelHealthReport, ModelHealthState } from "@rakazo_mickvvw/contracts";
+import { normalizeRunError } from "@rakazo_mickvvw/core";
 import {
   Button,
   Dialog,
@@ -8,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@rakazo_mickvvw/ui-web";
+import { translateRunError } from "../../lib/run-error";
 
 const HEALTH_STATE_CLASS: Record<ModelHealthState, string> = {
   ok: "text-success",
@@ -45,9 +48,12 @@ function HealthStateBadge({ state }: { state: ModelHealthState }) {
 
 /**
  * One connection's health result: how many models answered, then every model
- * with its state and, for failures, the upstream's own reason. "Keep only
- * usable models" is off when there is nothing to drop, nothing usable, or
- * the run stopped at the cap and untested models would be lost with it.
+ * with its state and, for failures, the failure in plain language. The
+ * report's own reason stays upstream text, so the dialog runs it through the
+ * same run-error wording as chat, image, video and translation instead of
+ * showing it raw. "Keep only usable models" is off when there is nothing to
+ * drop, nothing usable, or the run stopped at the cap and untested models
+ * would be lost with it.
  */
 export function ModelHealthDialog({
   result,
@@ -117,7 +123,10 @@ export function ModelHealthDialog({
                   </div>
                   {row.state !== "ok" ? (
                     <p className="mt-0.5 break-words text-body-sm leading-[1.5] text-muted-foreground">
-                      {row.detail}
+                      {
+                        normalizeRunError(row.detail, translateRunError, i18n.locale || "en")
+                          .summary
+                      }
                     </p>
                   ) : null}
                 </li>

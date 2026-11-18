@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { i18n } from "@lingui/core";
 import type { ModelHealthReport } from "@rakazo_mickvvw/contracts";
 import type { ReactNode } from "react";
 import { act } from "react";
@@ -24,8 +25,18 @@ const report: ModelHealthReport = {
   ok: ["model-a"],
   results: [
     { model: "model-a", state: "ok", detail: "2", seconds: 1.2 },
-    { model: "model-b", state: "limited", detail: "Rate limit exceeded", seconds: 0.5 },
-    { model: "model-c", state: "auth", detail: "No permission for this model", seconds: 0.5 },
+    {
+      model: "model-b",
+      state: "limited",
+      detail: "429 Rate limit exceeded. Please try again later.",
+      seconds: 0.5,
+    },
+    {
+      model: "model-c",
+      state: "auth",
+      detail: "Incorrect API key provided: sk-ant-api03-xxxx",
+      seconds: 0.5,
+    },
   ],
   summary: {
     ok: 1,
@@ -41,6 +52,7 @@ const report: ModelHealthReport = {
 };
 
 beforeEach(() => {
+  i18n.activate("en");
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   vi.stubGlobal(
     "ResizeObserver",
@@ -93,8 +105,46 @@ it("shows the summary and one row per model, with the failure reason", () => {
   // The ok reply is proof, not a failure reason: the usable row shows only name and badge.
   expect(rows[0]?.textContent).toBe("model-aUsable");
   expect(rows[1]?.textContent).toContain("model-b");
-  expect(rows[1]?.textContent).toContain("Rate limit exceeded");
-  expect(rows[2]?.textContent).toContain("No permission for this model");
+  // A failure row shows the shared plain-language summary, never the upstream's raw error.
+  expect(rows[1]?.textContent).toContain(
+    "Your model provider is rate limiting requests. Try again shortly.",
+  );
+  expect(rows[1]?.textContent).not.toContain("429 Rate limit exceeded");
+  expect(rows[2]?.textContent).toContain("model-c");
+  expect(rows[2]?.textContent).toContain(
+    "Your model provider rejected the API key. Check your connection settings.",
+  );
+  expect(rows[2]?.textContent).not.toContain("sk-ant-api03-xxxx");
+});
+
+it("turns a raw provider error envelope into plain language", () => {
+  renderDialog({
+    total: 1,
+    ok: [],
+    results: [
+      {
+        model: "model-q",
+        state: "servererr",
+        detail: '{"error":{"message":"insufficient_quota: You exceeded your current quota"}}',
+        seconds: 0.5,
+      },
+    ],
+    summary: {
+      ok: 0,
+      empty: 0,
+      limited: 0,
+      auth: 0,
+      notfound: 0,
+      badreq: 0,
+      servererr: 1,
+      timeout: 0,
+      neterr: 0,
+    },
+  });
+  const dialog = document.querySelector('[data-testid="model-health-dialog"]');
+  expect(dialog?.textContent).toContain("Your model provider reached its credit limit.");
+  expect(dialog?.textContent).not.toContain("insufficient_quota");
+  expect(dialog?.textContent).not.toContain('{"error"');
 });
 
 it("keeps only the usable models when asked", () => {
