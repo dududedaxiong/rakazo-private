@@ -151,6 +151,23 @@ describe("lingui catalogs", () => {
     }
   });
 
+  it("translates media trigger word labels into Chinese", () => {
+    const catalog = readFileSync(
+      fileURLToPath(new URL("../locales/zh-CN/messages.po", import.meta.url)),
+      "utf8",
+    );
+    for (const [message, translation] of [
+      ["Video trigger words", "视频触发词"],
+      ["Image trigger words", "图片触发词"],
+    ]) {
+      const entry = catalog
+        .split("\n\n")
+        .find((block) => block.includes(`msgid ${JSON.stringify(message)}\n`));
+      expect(entry, message).toMatch(/msgstr ".+"/);
+      expect(entry, message).toContain(`msgstr "${translation}"`);
+    }
+  });
+
   it("names a fixed minute every few hours in every locale", () => {
     for (const locale of UI_LOCALES) {
       const catalog = readFileSync(

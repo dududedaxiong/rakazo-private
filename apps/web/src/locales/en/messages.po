@@ -4823,6 +4823,10 @@ msgstr "Image model"
 msgid "Image prompt preset"
 msgstr "Image prompt preset"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image trigger words"
+msgstr "Image trigger words"
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Image upload area"
 msgstr "Image upload area"
@@ -9873,6 +9877,10 @@ msgstr "Video model"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video prompt preset"
 msgstr "Video prompt preset"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video trigger words"
+msgstr "Video trigger words"
 
 #: src/pages/plugins/plugin-browse.tsx
 msgid "View all"

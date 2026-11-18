@@ -4824,6 +4824,10 @@ msgstr ""
 msgid "Image prompt preset"
 msgstr "圖片提示詞預設"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image trigger words"
+msgstr ""
+
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Image upload area"
 msgstr "圖片上傳區域"
@@ -9874,6 +9878,10 @@ msgstr ""
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video prompt preset"
 msgstr "影片提示詞預設"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video trigger words"
+msgstr ""
 
 #: src/pages/plugins/plugin-browse.tsx
 msgid "View all"
