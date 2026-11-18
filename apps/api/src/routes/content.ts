@@ -179,6 +179,15 @@ export function contentRoutes(ctx: RouterContext) {
         // The counted aggregates exclude transcription calls, which have no
         // tokens by design; they feed only the unknown-usage counts.
         const countedWhere = { ...where, operationKind: { not: "transcription" } };
+        // The total-only count is an intersection the per-column aggregates
+        // cannot express: calls that report a total but neither input nor
+        // output tokens. It explains the total exceeding input + output.
+        const totalOnlyWhere = {
+          ...countedWhere,
+          totalTokens: { not: null },
+          inputTokens: null,
+          outputTokens: null,
+        };
         const [
           result,
           countedResult,
@@ -188,6 +197,8 @@ export function contentRoutes(ctx: RouterContext) {
           countedBotGroups,
           runGroups,
           dayRows,
+          totalOnlyCalls,
+          totalOnlyModelGroups,
         ] = await Promise.all([
           deps.prisma.usageRecord.aggregate({ where, _sum: sums, _count: counts }),
           deps.prisma.usageRecord.aggregate({ where: countedWhere, _sum: sums, _count: counts }),
@@ -233,6 +244,12 @@ export function contentRoutes(ctx: RouterContext) {
             },
             orderBy: { createdAt: "asc" },
           }),
+          deps.prisma.usageRecord.count({ where: totalOnlyWhere }),
+          deps.prisma.usageRecord.groupBy({
+            by: ["provider", "model"],
+            where: totalOnlyWhere,
+            _count: { _all: true },
+          }),
         ]);
         const runs = new Set(runGroups.map((row) => row.parentRunId ?? row.runId).filter(Boolean))
           .size;
@@ -247,6 +264,12 @@ export function contentRoutes(ctx: RouterContext) {
         );
         const countedBotByKey = new Map(
           countedBotGroups.map((group) => [group.botId ?? "", group]),
+        );
+        const totalOnlyModelByKey = new Map(
+          totalOnlyModelGroups.map((group) => [
+            JSON.stringify([group.provider, group.model]),
+            group._count._all,
+          ]),
         );
         const botIds = botGroups.map((group) => group.botId).filter(Boolean) as string[];
         const bots = botIds.length
@@ -267,7 +290,7 @@ export function contentRoutes(ctx: RouterContext) {
           .sort(([a], [b]) => (a < b ? -1 : 1))
           .map(([date, rows]) => ({ date, ...usageTotalsFromRows(rows) }));
         return {
-          ...usageTotals(result, countedResult),
+          ...usageTotals(result, countedResult, totalOnlyCalls),
           runs,
           models: modelGroups
             .map((group) => ({
@@ -277,6 +300,7 @@ export function contentRoutes(ctx: RouterContext) {
                 group,
                 countedModelByKey.get(JSON.stringify([group.provider, group.model])) ??
                   emptyCounted,
+                totalOnlyModelByKey.get(JSON.stringify([group.provider, group.model])) ?? 0,
               ),
             }))
             .sort(

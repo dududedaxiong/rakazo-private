@@ -27,7 +27,23 @@ describe("usageTotals", () => {
       modelCalls: 3,
       unknownTokensCalls: 1,
       unknownCostCalls: 1,
+      totalOnlyCalls: 0,
     });
+  });
+
+  it("takes the total-only count from the caller, which aggregates cannot express", () => {
+    const totals = usageTotals(
+      aggregate(
+        { inputTokens: 110, outputTokens: 30, totalTokens: 140, costUsd: 0.001 },
+        { _all: 3, inputTokens: 3, outputTokens: 3, totalTokens: 2, costUsd: 2 },
+      ),
+      aggregate(
+        { inputTokens: 110, outputTokens: 30, totalTokens: 140, costUsd: 0.001 },
+        { _all: 3, inputTokens: 3, outputTokens: 3, totalTokens: 2, costUsd: 2 },
+      ),
+      2,
+    );
+    expect(totals.totalOnlyCalls).toBe(2);
   });
 
   it("reads a figure as unknown only when no counted call reports it", () => {
@@ -63,6 +79,7 @@ describe("usageTotals", () => {
       modelCalls: 3,
       unknownTokensCalls: 0,
       unknownCostCalls: 1,
+      totalOnlyCalls: 0,
     });
   });
 
@@ -79,6 +96,7 @@ describe("usageTotals", () => {
       modelCalls: 0,
       unknownTokensCalls: 0,
       unknownCostCalls: 0,
+      totalOnlyCalls: 0,
     });
   });
 });
@@ -116,6 +134,41 @@ describe("usageTotalsFromRows", () => {
       modelCalls: 3,
       unknownTokensCalls: 1,
       unknownCostCalls: 1,
+      totalOnlyCalls: 0,
+    });
+  });
+
+  it("counts calls that report only a total, excluding transcription calls", () => {
+    const totals = usageTotalsFromRows([
+      {
+        inputTokens: null,
+        outputTokens: null,
+        totalTokens: 500,
+        costUsd: null,
+        operationKind: "answer",
+      },
+      {
+        inputTokens: 60,
+        outputTokens: 30,
+        totalTokens: 130,
+        costUsd: 0.00012,
+        operationKind: "answer",
+      },
+      {
+        inputTokens: null,
+        outputTokens: null,
+        totalTokens: 500,
+        costUsd: null,
+        operationKind: "transcription",
+      },
+    ]);
+    expect(totals).toMatchObject({
+      inputTokens: 60,
+      outputTokens: 30,
+      totalTokens: 1130,
+      modelCalls: 3,
+      unknownTokensCalls: 0,
+      totalOnlyCalls: 1,
     });
   });
 });

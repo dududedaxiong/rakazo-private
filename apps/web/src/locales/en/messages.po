@@ -101,6 +101,12 @@ msgstr "{0} accounts affected"
 msgid "{0} calls"
 msgstr "{0} calls"
 
+#. placeholder {0}: number(row.totalOnlyCalls)
+#. placeholder {0}: number(totalOnlyCalls)
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{0} calls reported only a total, without an input/output split"
+msgstr "{0} calls reported only a total, without an input/output split"
+
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"

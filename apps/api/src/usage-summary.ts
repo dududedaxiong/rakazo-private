@@ -31,6 +31,7 @@ export interface UsageTotals {
   modelCalls: number;
   unknownTokensCalls: number;
   unknownCostCalls: number;
+  totalOnlyCalls: number;
 }
 
 export interface UsageRowLike {
@@ -46,9 +47,15 @@ type TotalField = "inputTokens" | "outputTokens" | "totalTokens" | "costUsd";
 /**
  * Combine one group's aggregate with the same aggregate restricted to
  * token-counted calls (everything except transcription). Totals come from all
- * calls; the unknown counts come from the restricted one.
+ * calls; the unknown counts come from the restricted one. The total-only
+ * count is an intersection the per-column aggregates cannot express, so the
+ * caller computes it with a separate query and passes it in.
  */
-export function usageTotals(group: UsageSumCount, counted: UsageSumCount): UsageTotals {
+export function usageTotals(
+  group: UsageSumCount,
+  counted: UsageSumCount,
+  totalOnlyCalls = 0,
+): UsageTotals {
   const total = (field: TotalField) => (group._count[field] > 0 ? (group._sum[field] ?? 0) : null);
   return {
     inputTokens: total("inputTokens"),
@@ -58,6 +65,7 @@ export function usageTotals(group: UsageSumCount, counted: UsageSumCount): Usage
     modelCalls: group._count._all,
     unknownTokensCalls: counted._count._all - counted._count.totalTokens,
     unknownCostCalls: counted._count._all - counted._count.costUsd,
+    totalOnlyCalls,
   };
 }
 
@@ -78,12 +86,15 @@ export function usageTotalsFromRows(rows: readonly UsageRowLike[]): UsageTotals 
   let countedAll = 0;
   let countedTokens = 0;
   let countedCost = 0;
+  let totalOnly = 0;
   for (const row of rows) {
     const counted = row.operationKind !== "transcription";
     if (counted) {
       countedAll += 1;
       if (row.totalTokens !== null) countedTokens += 1;
       if (row.costUsd !== null) countedCost += 1;
+      if (row.totalTokens !== null && row.inputTokens === null && row.outputTokens === null)
+        totalOnly += 1;
     }
     for (const field of ["inputTokens", "outputTokens", "totalTokens", "costUsd"] as const) {
       const value = row[field];
@@ -102,5 +113,6 @@ export function usageTotalsFromRows(rows: readonly UsageRowLike[]): UsageTotals 
     modelCalls: rows.length,
     unknownTokensCalls: countedAll - countedTokens,
     unknownCostCalls: countedAll - countedCost,
+    totalOnlyCalls: totalOnly,
   };
 }

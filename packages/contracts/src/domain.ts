@@ -1385,6 +1385,9 @@ export type UsageRecord = z.infer<typeof UsageRecordSchema>;
  * token-counted calls missing that figure (transcription calls are not token
  * calls, so they are never counted here); those calls stay visible in the
  * detail list instead of silently dragging the total to null.
+ * totalOnlyCalls counts the opposite gap: token-counted calls that report a
+ * total but neither input nor output tokens, which is what makes the total
+ * exceed input + output on the usage page.
  */
 const UsageTotalsSchema = z.object({
   inputTokens: z.number().nullable(),
@@ -1394,6 +1397,7 @@ const UsageTotalsSchema = z.object({
   modelCalls: z.number().optional(),
   unknownTokensCalls: z.number().optional(),
   unknownCostCalls: z.number().optional(),
+  totalOnlyCalls: z.number().optional(),
 });
 export const UsageSummarySchema = UsageTotalsSchema.extend({
   runs: z.number(),

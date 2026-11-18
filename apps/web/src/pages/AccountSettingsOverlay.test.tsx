@@ -347,6 +347,7 @@ it("shows today and total cards, a 7-day chart, and per-model cards", async () =
     costUsd: 0,
     unknownTokensCalls: 0,
     unknownCostCalls: 0,
+    totalOnlyCalls: 0,
   }));
   const container = document.createElement("div");
   const root = createRoot(container);
@@ -372,6 +373,7 @@ it("shows today and total cards, a 7-day chart, and per-model cards", async () =
                 costUsd: 0.5,
                 unknownTokensCalls: 0,
                 unknownCostCalls: 0,
+                totalOnlyCalls: 0,
               },
               {
                 provider: "local",
@@ -383,6 +385,7 @@ it("shows today and total cards, a 7-day chart, and per-model cards", async () =
                 costUsd: null,
                 unknownTokensCalls: 0,
                 unknownCostCalls: 0,
+                totalOnlyCalls: 0,
               },
             ],
             daily,
@@ -397,6 +400,7 @@ it("shows today and total cards, a 7-day chart, and per-model cards", async () =
     const total = container.querySelector('[data-testid="usage-summary-total"]')!;
     expect(total.textContent).toContain("Total usage");
     expect(total.textContent).toContain("1,234");
+    expect(total.textContent).not.toContain("reported only a total");
     const trend = container.querySelector('[data-testid="usage-trend"]')!;
     expect(trend.textContent).toContain("Today");
     for (const value of ["100", "200", "300", "400", "500", "600", "700"]) {
@@ -419,6 +423,86 @@ it("shows today and total cards, a 7-day chart, and per-model cards", async () =
       (node) => (node as HTMLElement).style.width,
     );
     expect(shares).toEqual(["83%", "17%"]);
+  } finally {
+    await act(async () => root.unmount());
+    vi.unstubAllGlobals();
+  }
+});
+
+it("shows the total-only note only where the numbers do not add up", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  const dayKey = (offset: number) => {
+    const date = new Date();
+    date.setDate(date.getDate() - offset);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
+  const daily = [6, 5, 4, 3, 2, 1, 0].map((offset) => ({
+    date: dayKey(offset),
+    modelCalls: 1,
+    inputTokens: 100 * (7 - offset) - 10,
+    outputTokens: 10,
+    totalTokens: 100 * (7 - offset),
+    costUsd: 0,
+    unknownTokensCalls: 0,
+    unknownCostCalls: 0,
+    totalOnlyCalls: offset === 0 ? 1 : 0,
+  }));
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  try {
+    await act(async () =>
+      root.render(
+        <UsageSettingsPanel
+          usage={{
+            runs: 2,
+            inputTokens: 1200,
+            outputTokens: 34,
+            totalTokens: 1234,
+            costUsd: 0.5,
+            modelCalls: 3,
+            totalOnlyCalls: 2,
+            models: [
+              {
+                provider: "openai",
+                model: "model-a",
+                modelCalls: 2,
+                inputTokens: 1000,
+                outputTokens: 30,
+                totalTokens: 1030,
+                costUsd: 0.5,
+                unknownTokensCalls: 0,
+                unknownCostCalls: 0,
+                totalOnlyCalls: 1,
+              },
+              {
+                provider: "local",
+                model: "model-b",
+                modelCalls: 1,
+                inputTokens: 200,
+                outputTokens: 4,
+                totalTokens: 204,
+                costUsd: null,
+                unknownTokensCalls: 0,
+                unknownCostCalls: 0,
+                totalOnlyCalls: 0,
+              },
+            ],
+            daily,
+          }}
+        />,
+      ),
+    );
+    const today = container.querySelector('[data-testid="usage-summary-today"]')!;
+    // The file's Lingui mock drops template values, so assert the static copy.
+    expect(today.textContent).toContain("calls reported only a total");
+    const total = container.querySelector('[data-testid="usage-summary-total"]')!;
+    expect(total.textContent).toContain("calls reported only a total");
+    const models = container.querySelector('[data-testid="usage-models"]')!;
+    expect(models.textContent).toContain("calls reported only a total");
+    expect(models.textContent?.match(/reported only a total/g)).toHaveLength(1);
   } finally {
     await act(async () => root.unmount());
     vi.unstubAllGlobals();

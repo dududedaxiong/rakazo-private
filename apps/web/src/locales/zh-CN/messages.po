@@ -101,6 +101,12 @@ msgstr "{0} 个账号受影响"
 msgid "{0} calls"
 msgstr "{0} 次"
 
+#. placeholder {0}: number(row.totalOnlyCalls)
+#. placeholder {0}: number(totalOnlyCalls)
+#: src/pages/AccountSettingsOverlay.tsx
+msgid "{0} calls reported only a total, without an input/output split"
+msgstr "其中 {0} 次调用只报了总数，未分输入/输出"
+
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"

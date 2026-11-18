@@ -527,6 +527,7 @@ function UsageSummaryCard({
   runs,
   inputTokens,
   outputTokens,
+  totalOnlyCalls,
   number,
   testId,
 }: {
@@ -535,6 +536,7 @@ function UsageSummaryCard({
   runs: number;
   inputTokens: number | null | undefined;
   outputTokens: number | null | undefined;
+  totalOnlyCalls?: number | null | undefined;
   number: (value: number | null | undefined) => string;
   testId: string;
 }) {
@@ -551,6 +553,11 @@ function UsageSummaryCard({
       <div className="mt-1 text-body-sm text-muted-foreground">
         <span className="block">{t`${number(runs)} requests`}</span>
         <span className="block">{t`Input ${number(inputTokens)} · Output ${number(outputTokens)}`}</span>
+        {totalOnlyCalls != null && totalOnlyCalls > 0 ? (
+          <span className="block">
+            {t`${number(totalOnlyCalls)} calls reported only a total, without an input/output split`}
+          </span>
+        ) : null}
       </div>
     </div>
   );
@@ -687,6 +694,7 @@ export function UsageSettingsPanel({
               runs={todayDay?.modelCalls ?? 0}
               inputTokens={todayDay?.inputTokens}
               outputTokens={todayDay?.outputTokens}
+              totalOnlyCalls={todayDay?.totalOnlyCalls}
               number={number}
               testId="usage-summary-today"
             />
@@ -696,6 +704,7 @@ export function UsageSettingsPanel({
               runs={usage.runs}
               inputTokens={usage.inputTokens}
               outputTokens={usage.outputTokens}
+              totalOnlyCalls={usage.totalOnlyCalls}
               number={number}
               testId="usage-summary-total"
             />
@@ -800,6 +809,11 @@ export function UsageSettingsPanel({
                       </span>
                     )}
                   </div>
+                  {row.totalOnlyCalls > 0 ? (
+                    <div className="mt-1 text-body-sm text-muted-foreground">
+                      {t`${number(row.totalOnlyCalls)} calls reported only a total, without an input/output split`}
+                    </div>
+                  ) : null}
                 </div>
               );
             })}

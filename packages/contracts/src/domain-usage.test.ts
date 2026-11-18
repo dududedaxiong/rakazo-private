@@ -21,6 +21,7 @@ describe("UsageSummarySchema", () => {
           modelCalls: 3,
           unknownTokensCalls: 0,
           unknownCostCalls: 0,
+          totalOnlyCalls: 0,
         },
       ],
       bots: [
@@ -34,6 +35,7 @@ describe("UsageSummarySchema", () => {
           modelCalls: 3,
           unknownTokensCalls: 0,
           unknownCostCalls: 0,
+          totalOnlyCalls: 0,
         },
       ],
       daily: [
@@ -46,6 +48,7 @@ describe("UsageSummarySchema", () => {
           modelCalls: 3,
           unknownTokensCalls: 0,
           unknownCostCalls: 0,
+          totalOnlyCalls: 0,
         },
       ],
     });
