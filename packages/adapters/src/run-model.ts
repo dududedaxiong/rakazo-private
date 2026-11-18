@@ -109,7 +109,10 @@ export async function fleetPrepareDeps(
  * only when the provider that won the resolution above is that vendor. A provider named
  * by deployment settings or a bot override gets no key rather than another vendor's.
  */
-function deploymentKeyFor(deps: ExecutorDeps, provider: string): string | undefined {
+function deploymentKeyFor(
+  deps: Pick<ExecutorDeps, "deploymentModelKey">,
+  provider: string,
+): string | undefined {
   if (!deps.deploymentModelKey) return undefined;
   return provider === resolveDeploymentModel().provider ? deps.deploymentModelKey : undefined;
 }
@@ -184,7 +187,7 @@ export async function resolveModelKey(...args: Parameters<typeof resolveModelKey
 }
 
 async function resolveModelKeyMaterial(
-  deps: ExecutorDeps,
+  deps: ConnectedModelKeyDeps,
   userId: string,
   spaceId: string,
   credential: {
@@ -427,11 +430,29 @@ export function resolvedModelRunFields(
 }
 
 /**
+ * The dependencies resolving a connected model key actually reads: the
+ * database and secret store, plus the optional deployment-model and catalog
+ * inputs. Background work that re-resolves a bot's media provider passes
+ * just these instead of a full ExecutorDeps.
+ */
+export type ConnectedModelKeyDeps = Pick<
+  ExecutorDeps,
+  | "prisma"
+  | "secretStore"
+  | "codexCatalog"
+  | "mcpAllowPrivateEndpoint"
+  | "deploymentModelKey"
+  | "billingEnabled"
+  | "deploymentModelConfigured"
+> &
+  Partial<Pick<ExecutorDeps, "runtime">>;
+
+/**
  * A role row's model on its own connection, or on the deployment's for its funded provider.
  * The connection is returned with the key so a run can record which one served it.
  */
 export async function resolveConnectedModelKey(
-  deps: ExecutorDeps,
+  deps: ConnectedModelKeyDeps,
   scope: { userId: string; spaceId: string },
   provider: string,
   modelId: string,

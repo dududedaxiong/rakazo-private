@@ -304,6 +304,21 @@ export type BotMediaCallEntry = {
   /** The prompt preset applied by this call; absent when no preset was active. */
   presetName?: string;
   call: (prompt: string, signal: AbortSignal) => Promise<GeneratedMedia>;
+  /**
+   * Async video submission for this call, when the connection's protocol has
+   * one; absent for image calls and for protocols without an async video
+   * endpoint. The sync `call` is tried first; only a model that refuses a
+   * synchronous call falls through to these.
+   */
+  submitVideo?: (prompt: string, signal: AbortSignal) => Promise<string>;
+  pollVideo?: (
+    taskId: string,
+    signal: AbortSignal,
+  ) => Promise<
+    | { status: "queued" | "running" }
+    | { status: "completed"; output: GeneratedMedia }
+    | { status: "failed" }
+  >;
 };
 
 /** One bot-configured model that could not even be reached, with why. */
@@ -429,20 +444,161 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
     if (this.fallback) return this.fallback.generateImage(input, context);
     throw new MediaGenerationError("unsupported");
   }
+  /**
+   * Video tries each configured model in order: the synchronous chat call
+   * first, and only a model that refuses a synchronous call falls through to
+   * its async submission, which returns a queued job for the background poll.
+   * A model that answered inline closes the chain with a finished video.
+   */
   async generateVideo(
     input: MediaGenerationInput,
     context: AdapterContext,
   ): Promise<MediaVideoJob> {
-    if (this.video.calls.length > 0) {
-      const output = await this.tryCalls(this.video, input, context.signal);
-      return { id: CHAT_MEDIA_VIDEO_JOB_ID, status: "completed", output };
-    }
+    if (this.video.calls.length > 0) return this.tryVideoCalls(input, context.signal);
     if (this.fallback) return this.fallback.generateVideo(input, context);
     throw new MediaGenerationError("unsupported");
   }
+  private async tryVideoCalls(
+    input: MediaGenerationInput,
+    signal: AbortSignal,
+  ): Promise<MediaVideoJob> {
+    const kind = this.video;
+    const failures: BotMediaFailure[] = [...kind.failures];
+    // The timeline, in try order: models that never resolved were skipped,
+    // each call that failed is a failed attempt, and the model that answered
+    // closes it. Only a real switch is kept on the finished media.
+    const attempts: ModelSwitchAttempt[] = kind.failures.map((failure) =>
+      createModelSwitchAttempt({
+        model: failure.modelId,
+        provider: failure.providerLabel,
+        outcome: "skipped",
+        error: failure.reason,
+      }),
+    );
+    const recordFailure = (entry: BotMediaCallEntry, error: unknown, nextModelId?: string) => {
+      const raw = error instanceof Error ? error.message : String(error);
+      // A coded provider error names its class directly; an uncoded one is
+      // classified from its message instead.
+      const errorCode =
+        error instanceof MediaGenerationError && error.code !== "provider_failure"
+          ? error.code
+          : undefined;
+      const attempt = createModelSwitchAttempt({
+        model: entry.modelId,
+        provider: entry.providerLabel,
+        outcome: "failed",
+        error: sanitizeProviderError(entry.provider ?? "", raw),
+        ...(errorCode ? { errorCode } : {}),
+      });
+      recordModelSwitchAttempt(attempts, attempt);
+      const failure: BotMediaFailure = {
+        modelId: entry.modelId,
+        reason: mediaGenerationFailureReason(error),
+        ...(entry.providerLabel ? { providerLabel: entry.providerLabel } : {}),
+        ...(attempt.errorCode ? { errorCode: attempt.errorCode } : {}),
+        ...(attempt.errorMessage ? { errorMessage: attempt.errorMessage } : {}),
+      };
+      failures.push(failure);
+      try {
+        this.onModelFailed?.({ ...failure, nextModelId });
+      } catch {
+        // A failing notifier must never break the fallback chain.
+      }
+    };
+    for (let index = 0; index < kind.calls.length; index++) {
+      const entry = kind.calls[index]!;
+      const nextModelId = kind.calls[index + 1]?.modelId;
+      try {
+        const output = await entry.call(input.prompt, signal);
+        recordModelSwitchAttempt(
+          attempts,
+          createModelSwitchAttempt({
+            model: entry.modelId,
+            provider: entry.providerLabel,
+            outcome: "succeeded",
+          }),
+        );
+        const modelSwitches = buildModelSwitches(attempts);
+        return {
+          id: CHAT_MEDIA_VIDEO_JOB_ID,
+          status: "completed",
+          output: {
+            ...output,
+            modelId: entry.modelId,
+            ...(entry.presetName ? { presetName: entry.presetName } : {}),
+            ...(modelSwitches ? { modelSwitches } : {}),
+          },
+        };
+      } catch (error) {
+        signal.throwIfAborted();
+        if (
+          error instanceof MediaGenerationError &&
+          error.code === "async_required" &&
+          entry.submitVideo
+        ) {
+          try {
+            const taskId = await entry.submitVideo(input.prompt, signal);
+            return {
+              id: encodeAsyncVideoJobId(entry.modelId, taskId),
+              status: "queued",
+            };
+          } catch (submitError) {
+            signal.throwIfAborted();
+            recordFailure(entry, submitError, nextModelId);
+            continue;
+          }
+        }
+        recordFailure(entry, error, nextModelId);
+      }
+    }
+    throw allMediaModelsFailedError(failures);
+  }
   async pollVideo(id: string, context: AdapterContext): Promise<MediaVideoJob> {
     if (id === CHAT_MEDIA_VIDEO_JOB_ID) return { id, status: "failed" };
-    if (this.fallback) return this.fallback.pollVideo(id, context);
-    throw new MediaGenerationError("unsupported");
+    const decoded = decodeAsyncVideoJobId(id);
+    if (!decoded) {
+      if (this.fallback) return this.fallback.pollVideo(id, context);
+      throw new MediaGenerationError("invalid_input");
+    }
+    const entry = this.video.calls.find((call) => call.modelId === decoded.model);
+    if (!entry?.pollVideo) return { id, status: "failed" };
+    const polled = await entry.pollVideo(decoded.task, context.signal);
+    if (polled.status === "completed") {
+      return {
+        id,
+        status: "completed",
+        output: {
+          ...polled.output,
+          modelId: entry.modelId,
+          ...(entry.presetName ? { presetName: entry.presetName } : {}),
+        },
+      };
+    }
+    return { id, status: polled.status };
+  }
+}
+
+/**
+ * A queued async video job: which configured model submitted it, and the
+ * upstream task id to poll. The id is opaque to callers and only ever
+ * decoded by this provider, so an unknown shape falls through to the
+ * fallback provider instead of failing the poll.
+ */
+const asyncVideoJobIdSchema = z.object({
+  v: z.literal(1),
+  model: z.string().min(1),
+  task: z.string().min(1),
+});
+
+export function encodeAsyncVideoJobId(model: string, task: string): string {
+  return JSON.stringify({ v: 1, model, task });
+}
+
+export function decodeAsyncVideoJobId(id: string): { model: string; task: string } | null {
+  try {
+    const parsed = asyncVideoJobIdSchema.safeParse(JSON.parse(id));
+    return parsed.success ? { model: parsed.data.model, task: parsed.data.task } : null;
+  } catch {
+    return null;
   }
 }

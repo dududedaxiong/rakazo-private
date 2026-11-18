@@ -7,10 +7,15 @@ import {
   withPromptPreset,
 } from "@rakazo_mickvvw/contracts";
 import type { Bot } from "@rakazo_mickvvw/db";
-import type { ExecutorDeps } from "./executor-deps.js";
 import type { BotMediaCallEntry, BotMediaKindCalls } from "./media-generation-provider.js";
 import { BotMediaGenerationProvider } from "./media-generation-provider.js";
-import { generateMediaWithChatModel } from "./pi-openai-compatible-provider.js";
+import {
+  downloadAsyncVideoUrl,
+  generateMediaWithChatModel,
+  pollAsyncVideo,
+  submitAsyncVideo,
+} from "./pi-openai-compatible-provider.js";
+import type { ConnectedModelKeyDeps } from "./run-model.js";
 import { resolveConnectedModelKey } from "./run-model.js";
 
 type BotMediaFields = Pick<
@@ -30,7 +35,7 @@ type BotMediaFields = Pick<
  * own — the bot's media setting is a preference, not a requirement.
  */
 async function resolveBotMediaKind(
-  deps: ExecutorDeps,
+  deps: ConnectedModelKeyDeps,
   scope: { userId: string; spaceId: string },
   entries: readonly BotModelEntry[] | null,
   kind: "image" | "video",
@@ -55,6 +60,18 @@ async function resolveBotMediaKind(
         });
         continue;
       }
+      const connection = {
+        baseUrl,
+        apiKey: resolved.apiKey,
+        headers: resolved.headers,
+        apiProtocol: resolved.apiProtocol,
+        authMode: resolved.authMode,
+        model: entry.model,
+      };
+      // The async video endpoint only exists on the chat-completions protocol;
+      // other protocols keep the synchronous call alone.
+      const asyncVideo =
+        kind === "video" && (!resolved.apiProtocol || resolved.apiProtocol === "chat-completions");
       calls.push({
         modelId: entry.model,
         provider: entry.provider,
@@ -63,12 +80,7 @@ async function resolveBotMediaKind(
         call: (prompt, signal) =>
           generateMediaWithChatModel(
             {
-              baseUrl,
-              apiKey: resolved.apiKey,
-              headers: resolved.headers,
-              apiProtocol: resolved.apiProtocol,
-              authMode: resolved.authMode,
-              model: entry.model,
+              ...connection,
               kind,
               prompt: withPromptPreset(preset?.prompt ?? null, prompt),
             },
@@ -76,6 +88,36 @@ async function resolveBotMediaKind(
             signal,
             { allowPrivate: resolved.allowPrivateEndpoint ?? false },
           ),
+        ...(asyncVideo
+          ? {
+              submitVideo: async (prompt, signal) => {
+                const { taskId } = await submitAsyncVideo(
+                  {
+                    ...connection,
+                    prompt: withPromptPreset(preset?.prompt ?? null, prompt),
+                  },
+                  undefined,
+                  signal,
+                  { allowPrivate: resolved.allowPrivateEndpoint ?? false },
+                );
+                return taskId;
+              },
+              pollVideo: async (taskId, signal) => {
+                const polled = await pollAsyncVideo({ ...connection, taskId }, undefined, signal, {
+                  allowPrivate: resolved.allowPrivateEndpoint ?? false,
+                });
+                if (polled.status === "completed" && polled.url) {
+                  return {
+                    status: "completed" as const,
+                    output: await downloadAsyncVideoUrl(polled.url, signal),
+                  };
+                }
+                if (polled.status === "failed") return { status: "failed" as const };
+                if (polled.status === "queued") return { status: "queued" as const };
+                return { status: "running" as const };
+              },
+            }
+          : {}),
       });
     } catch {
       failures.push({ modelId: entry.model, reason: "not connected" });
@@ -91,7 +133,7 @@ async function resolveBotMediaKind(
  * behave exactly as before.
  */
 export async function resolveBotMediaGenerationProvider(
-  deps: ExecutorDeps,
+  deps: ConnectedModelKeyDeps,
   scope: { userId: string; spaceId: string },
   bot: BotMediaFields,
   fallback?: MediaGenerationProvider,

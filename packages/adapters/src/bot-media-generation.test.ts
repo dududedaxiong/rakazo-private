@@ -8,6 +8,7 @@ import type { BotMediaKindCalls } from "./media-generation-provider.js";
 import {
   BotMediaGenerationProvider,
   CHAT_MEDIA_VIDEO_JOB_ID,
+  encodeAsyncVideoJobId,
   FakeMediaGenerationProvider,
 } from "./media-generation-provider.js";
 import { generateMediaWithChatModel } from "./pi-openai-compatible-provider.js";
@@ -111,6 +112,73 @@ async function withChatServer(
   }
 }
 
+/** A local media endpoint routing chat, submit and poll by path, in order. */
+async function withAsyncVideoServer(
+  run: (baseUrl: string, seen: Array<{ path: string; body: unknown }>) => Promise<void>,
+) {
+  const seen: Array<{ path: string; body: unknown }> = [];
+  let polls = 0;
+  const server = createServer((request, response) => {
+    let body = "";
+    request.on("data", (chunk: Buffer) => {
+      body += chunk.toString();
+    });
+    request.on("end", () => {
+      const url = new URL(request.url ?? "/", "http://127.0.0.1");
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(body) as unknown;
+      } catch {
+        parsed = undefined;
+      }
+      seen.push({ path: url.pathname, body: parsed });
+      response.setHeader("content-type", "application/json");
+      if (url.pathname === "/v1/chat/completions") {
+        response.statusCode = 400;
+        response.end(JSON.stringify({ error: { message: "当前模型不支持SYNC调用方式" } }));
+        return;
+      }
+      if (url.pathname === "/v1/videos/generations") {
+        response.end(JSON.stringify({ id: "task-1", task_status: "PROCESSING" }));
+        return;
+      }
+      if (url.pathname === "/v1/async-result/task-1") {
+        polls += 1;
+        if (polls === 1) {
+          response.end(JSON.stringify({ id: "task-1", task_status: "PROCESSING" }));
+        } else {
+          response.end(
+            JSON.stringify({
+              id: "task-1",
+              task_status: "SUCCESS",
+              video_result: [
+                {
+                  url: "https://cdn.example.test/a.mp4",
+                  cover_image_url: "https://cdn.example.test/a.png",
+                },
+              ],
+            }),
+          );
+        }
+        return;
+      }
+      response.statusCode = 404;
+      response.end(JSON.stringify({ error: { message: "not found" } }));
+    });
+  });
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  try {
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("Missing test server address");
+    await run(`http://127.0.0.1:${address.port}/v1`, seen);
+  } finally {
+    server.closeAllConnections();
+    await new Promise<void>((resolve, reject) =>
+      server.close((error) => (error ? reject(error) : resolve())),
+    );
+  }
+}
+
 beforeEach(() => {
   mockedResolveKey.mockReset();
   mockedFetchSafeBytes.mockReset();
@@ -180,6 +248,42 @@ describe("bot media routing", () => {
         mimeType: "image/png",
       });
       expect(seen).toHaveLength(1);
+    });
+  });
+
+  it("submits async video when the model refuses a synchronous call, then polls it to completion", async () => {
+    await withAsyncVideoServer(async (baseUrl, seen) => {
+      mockedResolveKey.mockResolvedValue(resolveKeyValue(baseUrl));
+      mockedFetchSafeBytes.mockResolvedValue({
+        url: "https://cdn.example.test/a.mp4",
+        body: Buffer.from("AAAA", "base64"),
+        contentType: "video/mp4",
+      });
+      const fallback = new FakeMediaGenerationProvider();
+      const provider = await resolveBotMediaGenerationProvider(deps, scope, videoBot, fallback);
+      const queued = await provider?.generateVideo({ prompt: "猫走路" }, context);
+      expect(queued?.status).toBe("queued");
+      const jobId = (queued as { id: string }).id;
+      expect(jobId).not.toBe(CHAT_MEDIA_VIDEO_JOB_ID);
+      const running = await provider?.pollVideo(jobId, context);
+      expect(running).toEqual({ id: jobId, status: "running" });
+      const done = await provider?.pollVideo(jobId, context);
+      expect(done).toEqual({
+        id: jobId,
+        status: "completed",
+        output: {
+          bytes: Buffer.from("AAAA", "base64"),
+          mimeType: "video/mp4",
+          modelId: "video-model",
+        },
+      });
+      expect(seen.map((entry) => entry.path)).toEqual([
+        "/v1/chat/completions",
+        "/v1/videos/generations",
+        "/v1/async-result/task-1",
+        "/v1/async-result/task-1",
+      ]);
+      expect(seen[1]?.body).toEqual({ model: "video-model", prompt: "猫走路" });
     });
   });
 
@@ -483,6 +587,59 @@ describe("BotMediaGenerationProvider", () => {
     });
     const polled = await provider.pollVideo("fake-video", context);
     expect(polled.status).toBe("completed");
+  });
+
+  it("falls through to the next model when async submission fails", async () => {
+    const syncRefused = vi.fn(async () => {
+      throw new MediaGenerationError("async_required");
+    });
+    const submitFailed = vi.fn(async () => {
+      throw new MediaGenerationError("provider_failure", "boom");
+    });
+    const inlineVideo = vi.fn(async () => ({
+      bytes: Buffer.from("AAAA", "base64"),
+      mimeType: "video/mp4" as const,
+    }));
+    const provider = new BotMediaGenerationProvider(
+      noCalls,
+      {
+        calls: [
+          {
+            modelId: "async-model",
+            call: syncRefused,
+            submitVideo: submitFailed,
+            pollVideo: vi.fn(),
+          },
+          { modelId: "inline-model", call: inlineVideo },
+        ],
+        failures: [],
+      },
+      undefined,
+    );
+    const video = await provider.generateVideo({ prompt: "x" }, context);
+    expect(video.status).toBe("completed");
+    expect(video).toMatchObject({ output: { modelId: "inline-model" } });
+    expect(submitFailed).toHaveBeenCalledTimes(1);
+  });
+
+  it("fails a poll for a model the bot no longer configures", async () => {
+    const provider = new BotMediaGenerationProvider(
+      noCalls,
+      {
+        calls: [
+          {
+            modelId: "video-model",
+            call: vi.fn(),
+            submitVideo: vi.fn(),
+            pollVideo: vi.fn(),
+          },
+        ],
+        failures: [],
+      },
+      undefined,
+    );
+    const unknown = encodeAsyncVideoJobId("gone-model", "task-1");
+    expect(await provider.pollVideo(unknown, context)).toEqual({ id: unknown, status: "failed" });
   });
 });
 

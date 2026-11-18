@@ -1319,6 +1319,9 @@ export async function probeMediaModel(
       opts,
     );
     if (status < 200 || status >= 300) {
+      if (input.kind === "video" && isSyncCallRejected(status, bodyText)) {
+        return probeAsyncVideo(input, fetchImpl, signal, opts, seconds);
+      }
       const classified = classifyHealthResponse(status, bodyText, parsed);
       return { supported: false, seconds: seconds(), detail: classified.detail };
     }
@@ -1358,6 +1361,255 @@ export async function probeMediaModel(
  * not a result. Remote URLs are downloaded through the SSRF-safe fetch and
  * capped at the attachment limit.
  */
+export interface AsyncVideoConnection {
+  baseUrl: string;
+  apiKey?: string;
+  headers?: Record<string, string>;
+  apiProtocol?: ModelApiProtocol;
+  authMode?: ModelAuthMode;
+  model: string;
+}
+
+export type AsyncVideoPollStatus = "queued" | "running" | "completed" | "failed";
+
+/**
+ * Whether a failed synchronous media call was refused because the model needs
+ * an async submission: the upstream error says the model does not support a
+ * synchronous call. Only video models go async; an image model keeps the error.
+ */
+function isSyncCallRejected(status: number, bodyText: string): boolean {
+  if (status < 400 || status >= 500) return false;
+  return /sync/i.test(healthErrorMessage(bodyText));
+}
+
+async function requestAsyncVideo(
+  input: AsyncVideoConnection,
+  path: string,
+  method: "GET" | "POST",
+  body: Record<string, unknown> | undefined,
+  fetchImpl: typeof fetch | undefined,
+  signal: AbortSignal | undefined,
+  opts: OpenAiCompatibleUrlPolicy | undefined,
+): Promise<{ status: number; parsed: unknown; bodyText: string }> {
+  const baseUrl = assertAllowedOpenAiCompatibleUrl(input.baseUrl, opts);
+  assertHttpsForKeyedOpenAiCompatibleUrl(
+    baseUrl,
+    input.apiKey,
+    Object.keys(input.headers ?? {}).length > 0,
+  );
+  const safeFetch = createOpenAiCompatibleFetch(fetchImpl, undefined, {
+    ...opts,
+    headers: input.headers,
+  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), modelHealthTimeoutMs());
+  const merged = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+  try {
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "User-Agent": MODEL_HEALTH_BROWSER_USER_AGENT,
+    };
+    const mode = effectiveAuthMode(input.authMode, input.apiProtocol);
+    const key = input.apiKey?.trim();
+    if (key && mode !== "none") {
+      if (mode === "bearer" || mode === "both") headers.Authorization = `Bearer ${key}`;
+      if (mode === "x-api-key" || mode === "both") headers["x-api-key"] = key;
+    }
+    const url = new URL(path, `${baseUrl.href}/`).href;
+    const response = await safeFetch(url, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+      redirect: "error",
+      signal: merged,
+    });
+    const bodyText = await readBoundedHealthText(response);
+    let parsed: unknown = null;
+    try {
+      parsed = JSON.parse(bodyText) as unknown;
+    } catch {
+      parsed = null;
+    }
+    return { status: response.status, parsed, bodyText };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function asyncVideoError(status: number): MediaGenerationError {
+  if (status === 401 || status === 403) return new MediaGenerationError("authentication");
+  if (status === 429) return new MediaGenerationError("rate_limit");
+  return new MediaGenerationError("provider_failure");
+}
+
+/**
+ * Submits a video generation task to an OpenAI-compatible connection's async
+ * video endpoint and returns the task id. The video itself arrives later, via
+ * pollAsyncVideo; a submit that succeeds has already started (and, on a
+ * per-generation provider, billed) a video.
+ */
+export async function submitAsyncVideo(
+  input: AsyncVideoConnection & { prompt: string },
+  fetchImpl?: typeof fetch,
+  signal?: AbortSignal,
+  opts?: OpenAiCompatibleUrlPolicy,
+): Promise<{ taskId: string }> {
+  const { status, parsed } = await requestAsyncVideo(
+    input,
+    "videos/generations",
+    "POST",
+    { model: input.model, prompt: input.prompt },
+    fetchImpl,
+    signal,
+    opts,
+  );
+  if (status < 200 || status >= 300) throw asyncVideoError(status);
+  const record =
+    parsed !== null && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  const taskId = typeof record.id === "string" ? record.id : "";
+  if (!taskId) throw new MediaGenerationError("provider_failure");
+  return { taskId };
+}
+
+/**
+ * Checks one submitted async video task. A task still working reports running;
+ * a finished one reports completed with the video URL to download; a failed
+ * one reports failed. An unexpected result shape is a provider failure, not a
+ * status to keep polling.
+ */
+export async function pollAsyncVideo(
+  input: AsyncVideoConnection & { taskId: string },
+  fetchImpl?: typeof fetch,
+  signal?: AbortSignal,
+  opts?: OpenAiCompatibleUrlPolicy,
+): Promise<{ status: AsyncVideoPollStatus; url?: string }> {
+  const { status, parsed } = await requestAsyncVideo(
+    input,
+    `async-result/${encodeURIComponent(input.taskId)}`,
+    "GET",
+    undefined,
+    fetchImpl,
+    signal,
+    opts,
+  );
+  if (status < 200 || status >= 300) throw asyncVideoError(status);
+  const record =
+    parsed !== null && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {};
+  const taskStatus = typeof record.task_status === "string" ? record.task_status.toUpperCase() : "";
+  if (taskStatus === "SUCCESS") {
+    const results = Array.isArray(record.video_result) ? record.video_result : [];
+    const first =
+      results.length > 0 && typeof results[0] === "object" && results[0] !== null
+        ? (results[0] as Record<string, unknown>)
+        : {};
+    const url = typeof first.url === "string" ? first.url : "";
+    if (!url) throw new MediaGenerationError("provider_failure");
+    return { status: "completed", url };
+  }
+  if (taskStatus === "FAIL" || taskStatus === "FAILED") return { status: "failed" };
+  if (taskStatus) return { status: "running" };
+  throw new MediaGenerationError("provider_failure");
+}
+
+/** Downloads a finished async video by URL, through the SSRF-safe fetch. */
+export async function downloadAsyncVideoUrl(
+  url: string,
+  signal?: AbortSignal,
+): Promise<GeneratedMedia> {
+  return materializeMediaReference({ kind: "url", url }, "video", "video/mp4", signal);
+}
+
+/**
+ * Probes a video model through its async endpoint: submits the probe video,
+ * then checks briefly. A task the endpoint accepts proves the model supports
+ * async video even when it is still generating when the probe window ends;
+ * the submission itself starts (and bills, where billed per generation) a
+ * real short video, like the image probe's real generation.
+ */
+async function probeAsyncVideo(
+  input: {
+    baseUrl: string;
+    apiKey?: string;
+    headers?: Record<string, string>;
+    apiProtocol?: ModelApiProtocol;
+    authMode?: ModelAuthMode;
+    model: string;
+    kind: MediaModelProbeKind;
+    presetPrompt?: string;
+  },
+  fetchImpl: typeof fetch | undefined,
+  signal: AbortSignal | undefined,
+  opts: OpenAiCompatibleUrlPolicy | undefined,
+  seconds: () => number,
+): Promise<MediaModelProbeResult> {
+  const prompt = withPromptPreset(input.presetPrompt, MEDIA_MODEL_PROBE_PROMPTS.video);
+  let taskId: string;
+  try {
+    ({ taskId } = await submitAsyncVideo({ ...input, prompt }, fetchImpl, signal, opts));
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    if (error instanceof MediaGenerationError) {
+      return { supported: false, seconds: seconds(), detail: asyncVideoProbeDetail(error) };
+    }
+    throw error;
+  }
+  const deadline = AbortSignal.timeout(modelHealthTimeoutMs());
+  const stop = signal ? AbortSignal.any([signal, deadline]) : deadline;
+  for (;;) {
+    if (stop.aborted) {
+      return { supported: true, seconds: seconds(), detail: "任务已提交，正在生成" };
+    }
+    try {
+      const polled = await pollAsyncVideo({ ...input, taskId }, fetchImpl, stop, opts);
+      if (polled.status === "completed") {
+        return { supported: true, seconds: seconds(), detail: "返回了视频" };
+      }
+      if (polled.status === "failed") {
+        return { supported: false, seconds: seconds(), detail: "视频生成失败" };
+      }
+    } catch (error) {
+      if (stop.aborted) {
+        return { supported: true, seconds: seconds(), detail: "任务已提交，正在生成" };
+      }
+      if (error instanceof MediaGenerationError) {
+        return { supported: false, seconds: seconds(), detail: asyncVideoProbeDetail(error) };
+      }
+      throw error;
+    }
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(resolve, 5_000);
+      stop.addEventListener(
+        "abort",
+        () => {
+          clearTimeout(timer);
+          resolve();
+        },
+        { once: true },
+      );
+    });
+  }
+}
+
+function asyncVideoProbeDetail(error: MediaGenerationError): string {
+  switch (error.code) {
+    case "authentication":
+      return "认证失败";
+    case "rate_limit":
+      return "限流";
+    case "timeout":
+      return "请求超时";
+    default:
+      return "上游服务错误";
+  }
+}
+
+/**
+ * Asks a chat model to generate one image or video and returns the bytes it
+ * produced. The reply must carry the media; a text-only reply is a failure,
+ * not a result. Remote URLs are downloaded through the SSRF-safe fetch and
+ * capped at the attachment limit.
+ */
 export async function generateMediaWithChatModel(
   input: ChatMediaModelInput,
   fetchImpl?: typeof fetch,
@@ -1366,9 +1618,11 @@ export async function generateMediaWithChatModel(
 ): Promise<GeneratedMedia> {
   const mimeType = input.kind === "image" ? "image/png" : "video/mp4";
   try {
-    const { status, parsed } = await requestChatMedia(input, fetchImpl, signal, opts);
+    const { status, parsed, bodyText } = await requestChatMedia(input, fetchImpl, signal, opts);
     if (status === 401 || status === 403) throw new MediaGenerationError("authentication");
     if (status === 429) throw new MediaGenerationError("rate_limit");
+    if (input.kind === "video" && isSyncCallRejected(status, bodyText))
+      throw new MediaGenerationError("async_required");
     if (status < 200 || status >= 300) throw new MediaGenerationError("provider_failure");
     const reference = parsed === null ? null : extractMediaFromReply(parsed, input.kind);
     if (!reference) throw new MediaGenerationError("provider_failure");

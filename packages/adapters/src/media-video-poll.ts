@@ -1,14 +1,18 @@
 import type {
   AdapterContext,
+  AgentRuntime,
   ArtifactStore,
   JobPublisher,
   MediaGenerationProvider,
+  SecretStore,
 } from "@rakazo_mickvvw/adapter-kit";
 import { mediaPollJob, runContinueJob } from "@rakazo_mickvvw/adapter-kit";
 import type { ModelSwitches } from "@rakazo_mickvvw/contracts";
 import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
 import { getLogger } from "@rakazo_mickvvw/logging";
+import { resolveBotMediaGenerationProvider } from "./bot-media-generation.js";
 import { generateMediaFromTool, MEDIA_JOB_KIND } from "./media-generation-tools.js";
+import type { CodexLiveCatalog } from "./pi-codex-catalog.js";
 import { persistMessageInTransaction } from "./run-messages.js";
 import { attachWorkspaceFileToThread } from "./thread-artifacts.js";
 
@@ -31,6 +35,18 @@ export interface MediaVideoDeps {
   artifacts?: ArtifactStore;
   maxUploadSizeBytes?: number;
   mediaGeneration?: MediaGenerationProvider;
+  /**
+   * Resolving a bot's own media provider for a poll, the same way a run
+   * resolves it; absent, only the global provider can poll. The background
+   * job handler passes its secret store and deployment-model inputs.
+   */
+  secretStore?: SecretStore;
+  codexCatalog?: CodexLiveCatalog;
+  mcpAllowPrivateEndpoint?: boolean;
+  runtime?: AgentRuntime;
+  billingEnabled?: boolean;
+  deploymentModelKey?: string;
+  deploymentModelConfigured?: boolean;
 }
 
 type MediaRun = { id: string; threadId: string; botId: string; userId: string; spaceId: string };
@@ -193,13 +209,52 @@ async function recipientRemains(
 }
 
 /**
+ * The provider that submitted a video job: the run's bot media provider,
+ * resolved the same way the run resolved it, with the global provider as the
+ * fallback. A job whose bot is gone or whose models no longer resolve polls
+ * under the global provider only, so it fails instead of hanging.
+ */
+async function resolveMediaProviderForJob(
+  deps: MediaVideoDeps,
+  run: { botId: string; userId: string; spaceId: string },
+): Promise<MediaGenerationProvider | undefined> {
+  if (!deps.secretStore) return deps.mediaGeneration;
+  const bot = await deps.prisma.bot.findFirst({
+    where: { id: run.botId, spaceId: run.spaceId },
+    select: {
+      videoModels: true,
+      imageModels: true,
+      videoPromptPresets: true,
+      activeVideoPromptPreset: true,
+      imagePromptPresets: true,
+      activeImagePromptPreset: true,
+    },
+  });
+  if (!bot) return deps.mediaGeneration;
+  return resolveBotMediaGenerationProvider(
+    {
+      prisma: deps.prisma,
+      secretStore: deps.secretStore,
+      codexCatalog: deps.codexCatalog,
+      mcpAllowPrivateEndpoint: deps.mcpAllowPrivateEndpoint,
+      ...(deps.runtime ? { runtime: deps.runtime } : {}),
+      billingEnabled: deps.billingEnabled,
+      deploymentModelKey: deps.deploymentModelKey,
+      deploymentModelConfigured: deps.deploymentModelConfigured,
+    },
+    { userId: run.userId, spaceId: run.spaceId },
+    bot,
+    deps.mediaGeneration,
+  );
+}
+
+/**
  * Check one submitted video for the chat that asked for it. A finished video is posted and a
  * failed or expired one is marked failed; either way the bot gets one turn to follow up.
  */
 export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: string }) {
-  const provider = deps.mediaGeneration;
   const artifacts = deps.artifacts;
-  if (!provider?.capabilities.video || !artifacts) return;
+  if (!artifacts) return;
   const job = await deps.prisma.externalEffect.findFirst({
     where: { id: payload.jobId, ...VIDEO_JOB, status: { in: PENDING_STATUSES } },
     select: {
@@ -220,6 +275,12 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
   });
   if (!job) return;
   const { thread, ...run } = job.run;
+  // The video was submitted through the bot's own media provider, so the poll
+  // resolves that same provider; the global provider is only the fallback for
+  // a bot with no media models. Without a secret store (unit callers) there
+  // is nothing to resolve with, and only the global provider can poll.
+  const provider = await resolveMediaProviderForJob(deps, run);
+  if (!provider?.capabilities.video) return;
   const saved = (job.request as { threadGeneration?: unknown }).threadGeneration;
   const threadGeneration = typeof saved === "number" ? saved : undefined;
   const expired = Date.now() - job.createdAt.getTime() >= MEDIA_POLL_DEADLINE_MS;
@@ -359,7 +420,9 @@ async function queueWake(
 export async function reconcileMediaVideos(
   deps: Pick<MediaVideoDeps, "prisma" | "jobs" | "mediaGeneration">,
 ) {
-  if (!deps.mediaGeneration?.capabilities.video) return;
+  // No gate on the global provider's video capability: a stuck job is
+  // re-enqueued regardless, and the poll resolves the provider per job, so a
+  // bot-submitted video recovers even when no global provider is configured.
   const now = Date.now();
   const pageSize = 100;
   let after: string | undefined;

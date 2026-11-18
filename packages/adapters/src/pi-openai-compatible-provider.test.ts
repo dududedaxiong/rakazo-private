@@ -24,6 +24,7 @@ import {
   generateMediaWithChatModel,
   OPENAI_COMPATIBLE_CATALOG_MODEL_ID,
   openAiCompatibleCatalogProvider,
+  pollAsyncVideo,
   prepareOpenAiCompatibleConnect,
   probeMediaModel,
   probeModelHealth,
@@ -31,6 +32,7 @@ import {
   probeOpenAiCompatibleModels,
   registerOpenAiCompatibleCatalog,
   registerOpenAiCompatibleRuntime,
+  submitAsyncVideo,
   verifyOpenAiCompatibleApiKey,
 } from "./pi-openai-compatible-provider.js";
 
@@ -2096,5 +2098,183 @@ describe("media model reply", () => {
       OWNER,
     );
     expect(denied.supported).toBe(false);
+  });
+});
+
+describe("async video generation", () => {
+  const baseUrl = "http://127.0.0.1:8000/v1";
+  const connection = { baseUrl, apiKey: "test-key", model: "video-model" };
+  const mediaError = async (promise: Promise<unknown>) => {
+    const error = await promise.catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(MediaGenerationError);
+    return error as MediaGenerationError;
+  };
+  /** A fake fetch answering each async video endpoint from a scripted queue. */
+  const routingFetch = (routes: Record<string, Array<{ status: number; body: unknown }>>) => {
+    const seen: Array<{ url: string; body: unknown }> = [];
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const key = Object.keys(routes).find((prefix) => url.startsWith(prefix));
+      seen.push({ url, body: init?.body ? JSON.parse(String(init.body)) : undefined });
+      const queue = key ? routes[key] : undefined;
+      const next = queue?.shift();
+      if (!next)
+        return new Response(JSON.stringify({ error: { message: "not found" } }), { status: 404 });
+      return new Response(JSON.stringify(next.body), { status: next.status });
+    }) as typeof fetch;
+    return { fetchImpl, seen };
+  };
+
+  it("submits a video task and returns its id", async () => {
+    const { fetchImpl, seen } = routingFetch({
+      [`${baseUrl}/videos/generations`]: [
+        { status: 200, body: { id: "task-1", task_status: "PROCESSING" } },
+      ],
+    });
+    const submitted = await submitAsyncVideo(
+      { ...connection, prompt: "生成一段猫走路的短视频" },
+      fetchImpl,
+      undefined,
+      OWNER,
+    );
+    expect(submitted).toEqual({ taskId: "task-1" });
+    expect(seen).toHaveLength(1);
+    expect(seen[0]?.url).toBe(`${baseUrl}/videos/generations`);
+    expect(seen[0]?.body).toEqual({ model: "video-model", prompt: "生成一段猫走路的短视频" });
+  });
+
+  it("polls a task through processing to its video URL", async () => {
+    const { fetchImpl, seen } = routingFetch({
+      [`${baseUrl}/async-result/task-1`]: [
+        { status: 200, body: { id: "task-1", task_status: "PROCESSING" } },
+        {
+          status: 200,
+          body: {
+            id: "task-1",
+            task_status: "SUCCESS",
+            video_result: [
+              {
+                url: "https://cdn.example.test/a.mp4",
+                cover_image_url: "https://cdn.example.test/a.png",
+              },
+            ],
+          },
+        },
+      ],
+    });
+    const running = await pollAsyncVideo(
+      { ...connection, taskId: "task-1" },
+      fetchImpl,
+      undefined,
+      OWNER,
+    );
+    expect(running).toEqual({ status: "running" });
+    const done = await pollAsyncVideo(
+      { ...connection, taskId: "task-1" },
+      fetchImpl,
+      undefined,
+      OWNER,
+    );
+    expect(done).toEqual({ status: "completed", url: "https://cdn.example.test/a.mp4" });
+    expect(seen).toHaveLength(2);
+    expect(seen[0]?.url).toBe(`${baseUrl}/async-result/task-1`);
+  });
+
+  it("reports a failed task and an unexpected shape", async () => {
+    const { fetchImpl } = routingFetch({
+      [`${baseUrl}/async-result/task-1`]: [
+        { status: 200, body: { id: "task-1", task_status: "FAIL" } },
+        { status: 200, body: { id: "task-1" } },
+      ],
+    });
+    const failed = await pollAsyncVideo(
+      { ...connection, taskId: "task-1" },
+      fetchImpl,
+      undefined,
+      OWNER,
+    );
+    expect(failed).toEqual({ status: "failed" });
+    const shapeless = await mediaError(
+      pollAsyncVideo({ ...connection, taskId: "task-1" }, fetchImpl, undefined, OWNER),
+    );
+    expect(shapeless.code).toBe("provider_failure");
+  });
+
+  it("maps a sync refusal to async_required for video only", async () => {
+    const syncRefused = { error: { message: "当前模型不支持SYNC调用方式" } };
+    const videoError = await mediaError(
+      generateMediaWithChatModel(
+        { baseUrl, model: "video-model", kind: "video", prompt: "生成一段视频" },
+        (async () => new Response(JSON.stringify(syncRefused), { status: 400 })) as typeof fetch,
+        undefined,
+        OWNER,
+      ),
+    );
+    expect(videoError.code).toBe("async_required");
+    const imageError = await mediaError(
+      generateMediaWithChatModel(
+        { baseUrl, model: "image-model", kind: "image", prompt: "画一只猫" },
+        (async () => new Response(JSON.stringify(syncRefused), { status: 400 })) as typeof fetch,
+        undefined,
+        OWNER,
+      ),
+    );
+    expect(imageError.code).toBe("provider_failure");
+  });
+
+  it("probes video through the async endpoint when sync is refused", async () => {
+    const { fetchImpl, seen } = routingFetch({
+      [`${baseUrl}/chat/completions`]: [
+        { status: 400, body: { error: { message: "当前模型不支持SYNC调用方式" } } },
+      ],
+      [`${baseUrl}/videos/generations`]: [
+        { status: 200, body: { id: "task-9", task_status: "PROCESSING" } },
+      ],
+      [`${baseUrl}/async-result/task-9`]: [
+        {
+          status: 200,
+          body: {
+            id: "task-9",
+            task_status: "SUCCESS",
+            video_result: [{ url: "https://cdn.example.test/a.mp4" }],
+          },
+        },
+      ],
+    });
+    const probed = await probeMediaModel(
+      { baseUrl, model: "video-model", kind: "video" },
+      fetchImpl,
+      undefined,
+      OWNER,
+    );
+    expect(probed.supported).toBe(true);
+    expect(probed.detail).toBe("返回了视频");
+    expect(seen.map((entry) => entry.url)).toEqual([
+      `${baseUrl}/chat/completions`,
+      `${baseUrl}/videos/generations`,
+      `${baseUrl}/async-result/task-9`,
+    ]);
+  });
+
+  it("probes video as supported while the submitted task is still generating", async () => {
+    const { fetchImpl } = routingFetch({
+      [`${baseUrl}/chat/completions`]: [
+        { status: 400, body: { error: { message: "当前模型不支持SYNC调用方式" } } },
+      ],
+      [`${baseUrl}/videos/generations`]: [
+        { status: 200, body: { id: "task-9", task_status: "PROCESSING" } },
+      ],
+      [`${baseUrl}/async-result/task-9`]: [
+        { status: 200, body: { id: "task-9", task_status: "PROCESSING" } },
+      ],
+    });
+    const probed = await probeMediaModel(
+      { baseUrl, model: "video-model", kind: "video" },
+      fetchImpl,
+      AbortSignal.timeout(300),
+      OWNER,
+    );
+    expect(probed.supported).toBe(true);
+    expect(probed.detail).toBe("任务已提交，正在生成");
   });
 });

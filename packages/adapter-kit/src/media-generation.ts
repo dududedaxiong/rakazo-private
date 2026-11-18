@@ -30,7 +30,9 @@ export type MediaGenerationErrorCode =
   | "rate_limit"
   | "provider_failure"
   | "output_limit"
-  | "timeout";
+  | "timeout"
+  /** The model refuses a synchronous call and needs an async submission. */
+  | "async_required";
 export class MediaGenerationError extends Error {
   constructor(
     public readonly code: MediaGenerationErrorCode,
@@ -62,6 +64,8 @@ export function mediaGenerationFailureReason(error: unknown): string {
       return "unsupported";
     case "timeout":
       return "timed out";
+    case "async_required":
+      return "needs async submission";
     default:
       return "provider error";
   }
