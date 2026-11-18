@@ -14,7 +14,7 @@ import {
 } from "@rakazo_mickvvw/ui-web";
 import { Code2, Download, FileText, Play, X } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ArtifactTarget } from "../lib/artifact-open";
 import { downloadArtifact, downloadArtifactBytes, fetchArtifactBytes } from "../lib/artifact-open";
 import { errorText } from "../lib/user-error";
@@ -36,6 +36,8 @@ type ArtifactFileCardProps = {
   previewHeaderActions?: ReactNode;
   /** Rendered under the preview filename for image/video artifacts. */
   previewTitleBar?: ReactNode;
+  /** Render a video artifact as an inline player instead of a file card. */
+  inlineVideo?: boolean;
 };
 
 function isTextPreview(mimeType: string) {
@@ -102,42 +104,52 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
     );
   }
 
+  const inlineVideo = props.inlineVideo === true && props.mimeType.startsWith("video/");
   return (
     <>
       <div>
-        <BuiCard className="flex min-w-[280px] overflow-hidden text-left text-foreground">
-          <button
-            ref={previewButton}
-            type="button"
-            aria-label={t`Preview ${props.name}`}
-            onClick={() => setPreviewOpen(true)}
-            className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-accent"
-          >
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-muted text-foreground">
-              {props.mimeType === "text/html" ? (
-                <Code2 size={21} strokeWidth={1.8} />
-              ) : (
-                <FileText size={21} strokeWidth={1.8} />
-              )}
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-body font-medium">{props.name}</span>
-              <span className="mt-0.5 block text-body-sm text-muted-foreground">
-                {formatSize(props.size)}
-              </span>
-            </span>
-          </button>
-          <IconTooltip label={t`Download ${props.name}`}>
+        {inlineVideo ? (
+          <InlineVideoCard
+            target={props.target}
+            artifactId={props.artifactId}
+            name={props.name}
+            mimeType={props.mimeType}
+          />
+        ) : (
+          <BuiCard className="flex min-w-[280px] overflow-hidden text-left text-foreground">
             <button
+              ref={previewButton}
               type="button"
-              aria-label={t`Download ${props.name}`}
-              onClick={() => void startDownload()}
-              className="grid w-14 shrink-0 place-items-center border-l border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label={t`Preview ${props.name}`}
+              onClick={() => setPreviewOpen(true)}
+              className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3 text-left hover:bg-accent"
             >
-              <Download size={19} strokeWidth={1.8} />
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-muted text-foreground">
+                {props.mimeType === "text/html" ? (
+                  <Code2 size={21} strokeWidth={1.8} />
+                ) : (
+                  <FileText size={21} strokeWidth={1.8} />
+                )}
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-body font-medium">{props.name}</span>
+                <span className="mt-0.5 block text-body-sm text-muted-foreground">
+                  {formatSize(props.size)}
+                </span>
+              </span>
             </button>
-          </IconTooltip>
-        </BuiCard>
+            <IconTooltip label={t`Download ${props.name}`}>
+              <button
+                type="button"
+                aria-label={t`Download ${props.name}`}
+                onClick={() => void startDownload()}
+                className="grid w-14 shrink-0 place-items-center border-l border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+              >
+                <Download size={19} strokeWidth={1.8} />
+              </button>
+            </IconTooltip>
+          </BuiCard>
+        )}
         {downloadError ? <DownloadError message={downloadError} /> : null}
       </div>
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
@@ -151,6 +163,118 @@ export function ArtifactFileCard(props: ArtifactFileCardProps) {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+/**
+ * A generated video, played in place: the first frame is the thumbnail, one
+ * click plays it with sound, and the native controls take over while it
+ * plays. Bytes load only once the card scrolls near the viewport, like the
+ * inline image.
+ */
+function InlineVideoCard({
+  target,
+  artifactId,
+  name,
+  mimeType,
+}: {
+  target: ArtifactTarget;
+  artifactId: string;
+  name: string;
+  mimeType: string;
+}) {
+  const { t } = useLingui();
+  const [visible, setVisible] = useState(false);
+  const [src, setSrc] = useState<string | null>(null);
+  const [duration, setDuration] = useState<number | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const container = useRef<HTMLDivElement>(null);
+  const video = useRef<HTMLVideoElement>(null);
+  const targetBotId = "botId" in target ? target.botId : undefined;
+  const targetGroupId = "groupId" in target ? target.groupId : undefined;
+
+  useEffect(() => {
+    const element = container.current;
+    if (!element || typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "320px" },
+    );
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+    let cancelled = false;
+    let url: string | undefined;
+    const artifactTarget: ArtifactTarget =
+      targetBotId !== undefined ? { botId: targetBotId } : { groupId: targetGroupId! };
+    void fetchArtifactBytes(artifactTarget, artifactId)
+      .then((bytes) => {
+        if (cancelled) return;
+        url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: mimeType }));
+        setSrc(url);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [visible, artifactId, mimeType, targetBotId, targetGroupId]);
+
+  const play = useCallback(() => {
+    void video.current?.play().catch(() => {});
+  }, []);
+
+  return (
+    <div ref={container} className="w-full max-w-[320px]">
+      {src ? (
+        <div className="relative overflow-hidden rounded-2xl bg-black">
+          {/* biome-ignore lint/a11y/useMediaCaption: Generated video has no caption track supplied by the author. */}
+          <video
+            ref={video}
+            src={src}
+            controls
+            playsInline
+            preload="metadata"
+            aria-label={name}
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onEnded={() => setPlaying(false)}
+            onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
+            className="block w-full"
+          />
+          {playing ? null : (
+            <button
+              type="button"
+              aria-label={t`Play ${name}`}
+              onClick={play}
+              className="absolute inset-0 grid place-items-center bg-black/30"
+            >
+              <span className="grid size-12 place-items-center rounded-full bg-black/60 text-white">
+                <Play />
+              </span>
+              {duration !== null ? (
+                <span className="absolute top-2 right-2 rounded bg-black/60 px-1.5 py-0.5 text-body-sm text-white">
+                  {formatDuration(duration)}
+                </span>
+              ) : null}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-2xl bg-muted px-4 py-3 text-body text-muted-foreground">{name}</div>
+      )}
+    </div>
   );
 }
 
@@ -374,14 +498,22 @@ function AudioArtifactPreview({
 
 export function VideoPreview({ bytes, name }: { bytes: Uint8Array; name: string }) {
   const [src, setSrc] = useState<string>();
+  const video = useRef<HTMLVideoElement>(null);
   useEffect(() => {
     const url = URL.createObjectURL(new Blob([new Uint8Array(bytes)], { type: "video/mp4" }));
     setSrc(url);
     return () => URL.revokeObjectURL(url);
   }, [bytes]);
+  // The preview opens on a click, so play with sound once the source is
+  // ready; a rejected play just leaves the paused video with its controls.
+  useEffect(() => {
+    if (!src) return;
+    void video.current?.play().catch(() => {});
+  }, [src]);
   return (
     // biome-ignore lint/a11y/useMediaCaption: Attachment playback has no caption track supplied by the author.
     <video
+      ref={video}
       src={src}
       controls
       playsInline
@@ -398,6 +530,12 @@ function DownloadError({ message }: { message: string }) {
       {message}
     </div>
   );
+}
+
+function formatDuration(seconds: number): string {
+  if (!Number.isFinite(seconds)) return "";
+  const total = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
 function formatSize(bytes: number): string {

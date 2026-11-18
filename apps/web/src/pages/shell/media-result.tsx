@@ -430,6 +430,7 @@ export function MediaResult({
           name={name}
           mimeType={mimeType}
           size={size ?? 0}
+          inlineVideo
           previewOpen={previewOpen}
           onPreviewOpenChange={showPreview ? setPreviewOpen : () => {}}
           previewHeaderActions={previewRegenerateAction}

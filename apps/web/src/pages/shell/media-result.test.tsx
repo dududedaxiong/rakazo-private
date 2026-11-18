@@ -420,3 +420,63 @@ describe("MediaResult preview title bar", () => {
     expect(media.regenerate).toHaveBeenCalledTimes(2);
   });
 });
+
+describe("MediaResult video", () => {
+  it("renders a generated video inline with click-to-play", async () => {
+    vi.stubGlobal(
+      "URL",
+      class extends URL {
+        static override createObjectURL = vi.fn(() => "blob:video-inline");
+        static override revokeObjectURL = vi.fn();
+      },
+    );
+    const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockResolvedValue(undefined);
+    try {
+      const media = {
+        getSupplementaryPrompt: vi.fn(async () => ({ supplementaryPrompt: "" })),
+        setSupplementaryPrompt: vi.fn(async () => ({ ok: true as const })),
+        regenerate: vi.fn(async () => ({ ok: true as const, status: "completed" as const })),
+      };
+      act(() =>
+        root.render(
+          <MediaResult
+            kind="video"
+            target={{ botId: "bot-1" }}
+            artifactId="art-1"
+            name="clip.mp4"
+            mimeType="video/mp4"
+            size={1400000}
+            mark={{ modelId: "model-a", presetName: "水彩" }}
+            botId="bot-1"
+            rpc={{ media } as never}
+            modelSwitches={null}
+            models={[
+              { provider: "p1", model: "model-a" },
+              { provider: "p2", model: "model-b" },
+            ]}
+            presets={[
+              { name: "水彩", prompt: "watercolor" },
+              { name: "油画", prompt: "oil painting" },
+            ]}
+            activePreset="水彩"
+            favorite={{ favorited: false, busy: false, toggle: vi.fn(async () => true) }}
+          />,
+        ),
+      );
+      await vi.waitFor(() => expect(container.querySelector("video")).not.toBeNull());
+      const video = container.querySelector("video")!;
+      expect(video.getAttribute("src")).toBe("blob:video-inline");
+      expect(video.hasAttribute("controls")).toBe(true);
+      expect(video.getAttribute("preload")).toBe("metadata");
+      // The file card would show the name and size as text; the inline
+      // player only carries the name in aria-labels.
+      expect(container.textContent).not.toContain("clip.mp4");
+      await act(async () =>
+        container.querySelector<HTMLButtonElement>('button[aria-label="Play clip.mp4"]')?.click(),
+      );
+      expect(play).toHaveBeenCalledTimes(1);
+    } finally {
+      play.mockRestore();
+    }
+  });
+});

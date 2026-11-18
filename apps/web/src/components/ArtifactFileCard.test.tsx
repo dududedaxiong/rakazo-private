@@ -245,6 +245,51 @@ it("previews plain text in the app instead of only offering a download", async (
   );
 });
 
+it("renders a generated video inline and plays it in place on click", async () => {
+  await act(async () =>
+    root?.render(
+      <ArtifactFileCard
+        target={{ botId: "bot-1" }}
+        artifactId="video-1"
+        name="clip.mp4"
+        mimeType="video/mp4"
+        size={1400000}
+        inlineVideo
+      />,
+    ),
+  );
+  await vi.waitFor(() => expect(container.querySelector("video")).not.toBeNull());
+  const video = container.querySelector("video")!;
+  expect(video.getAttribute("src")).toBe("blob:audio-preview");
+  expect(video.hasAttribute("controls")).toBe(true);
+  expect(video.getAttribute("preload")).toBe("metadata");
+  expect(video.getAttribute("aria-label")).toBe("clip.mp4");
+  expect(container.querySelector('button[aria-label="Preview clip.mp4"]')).toBeNull();
+  expect(mocks.fetch).toHaveBeenCalledWith({ botId: "bot-1" }, "video-1");
+  await act(async () =>
+    container.querySelector<HTMLButtonElement>('button[aria-label="Play clip.mp4"]')?.click(),
+  );
+  expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1);
+});
+
+it("autoplays the video when its preview opens", async () => {
+  await act(async () =>
+    root?.render(
+      <ArtifactFileCard
+        target={{ botId: "bot-1" }}
+        artifactId="video-1"
+        name="clip.mp4"
+        mimeType="video/mp4"
+        size={3}
+        previewOpen
+      />,
+    ),
+  );
+  await vi.waitFor(() => expect(document.body.querySelector("video")).not.toBeNull());
+  // The dialog's VideoPreview plays on its own once the bytes arrive.
+  await vi.waitFor(() => expect(HTMLMediaElement.prototype.play).toHaveBeenCalledTimes(1));
+});
+
 it("renders preview header actions before Download and the title bar for video", async () => {
   await act(async () =>
     root?.render(
