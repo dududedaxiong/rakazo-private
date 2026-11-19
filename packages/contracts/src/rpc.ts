@@ -362,6 +362,10 @@ export const OrganizationListSchema = z.object({
 });
 export type OrganizationList = z.infer<typeof OrganizationListSchema>;
 
+/** Sort orders for a space-wide artifact list; the list cursor carries the same value. */
+export const ArtifactListSortSchema = z.enum(["date-desc", "date-asc", "size-desc", "size-asc"]);
+export type ArtifactListSort = z.infer<typeof ArtifactListSortSchema>;
+
 export const appContract = {
   analytics: { screen: oc.input(AnalyticsScreenInput).output(z.object({ ok: z.literal(true) })) },
   aiConsent: {
@@ -1608,6 +1612,8 @@ export const appContract = {
           botId: Id.optional(),
           /** Only files bots attached, leaving out uploads. */
           madeByBots: z.boolean().optional(),
+          /** Date or size, newest/largest first or the reverse. Defaults to newest first. */
+          sort: ArtifactListSortSchema.optional(),
           cursor: z.string().optional(),
           limit: z.number().int().min(1).max(60).optional(),
         }),
@@ -1636,6 +1642,15 @@ export const appContract = {
     get: oc.input(threadTarget.and(z.object({ artifactId: Id }))).output(ArtifactWithContentSchema),
     getById: oc.input(z.object({ artifactId: Id })).output(ArtifactWithContentSchema),
     remove: oc.input(z.object({ artifactId: Id })).output(z.object({ ok: z.literal(true) })),
+    /** Renames the family's latest version; the original extension is kept. */
+    rename: oc
+      .input(
+        z.object({
+          artifactId: Id,
+          name: z.string().min(1).max(ARTIFACT_NAME_MAX_LENGTH),
+        }),
+      )
+      .output(z.object({ ok: z.literal(true), name: z.string() })),
   },
   /** Pages bots built for the caller in this Space. */
   pages: {

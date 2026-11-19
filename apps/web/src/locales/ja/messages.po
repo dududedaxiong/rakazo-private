@@ -37,6 +37,16 @@ msgstr "{0, plural, one {#か月分の無料期間を獲得} other {#か月分�
 msgid "{0, plural, one {# free month} other {# free months}}"
 msgstr "{0, plural, other {#か月分の無料期間}}"
 
+#. placeholder {0}: selectedIds.size
+#: src/pages/Gallery.tsx
+msgid "{0, plural, one {# item selected} other {# items selected}}"
+msgstr ""
+
+#. placeholder {0}: groupItems.length
+#: src/pages/Gallery.tsx
+msgid "{0, plural, one {# item} other {# items}}"
+msgstr ""
+
 #. placeholder {0}: skills.length - shownSkills.length
 #: src/components/integrations/plugin-marketplace.tsx
 msgid "{0, plural, one {# more} other {# more}}"
@@ -57,6 +67,11 @@ msgstr "{0, plural, other {#個のスペース}}"
 #: src/pages/McpServersOverlay.tsx
 msgid "{0, plural, one {# tool} other {# tools}}"
 msgstr "{0, plural, other {#個のツール}}"
+
+#. placeholder {0}: pendingDelete.length
+#: src/pages/Gallery.tsx
+msgid "{0, plural, one {Delete # item?} other {Delete # items?}}"
+msgstr ""
 
 #. placeholder {0}: items.length
 #: src/components/prompt-templates/PromptTemplateImportDialog.tsx
@@ -974,6 +989,7 @@ msgstr "他のアプリのエージェント"
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "All"
 msgstr "すべて"
@@ -1687,6 +1703,7 @@ msgstr "画像を読み取れません"
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/components/vault/VaultItemDetail.tsx
 #: src/pages/AccountSettingsOverlay.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
@@ -2688,6 +2705,11 @@ msgstr ""
 msgid "Could not create your bot"
 msgstr "ボットを作成できませんでした"
 
+#. placeholder {0}: failed.map((item) => item.name).join("、")
+#: src/pages/Gallery.tsx
+msgid "Could not delete {0}. Try again."
+msgstr ""
+
 #: src/pages/shell/dialogs.tsx
 msgid "Could not delete bot"
 msgstr "ボットを削除できませんでした"
@@ -3018,6 +3040,11 @@ msgstr "認証情報を削除できませんでした"
 msgid "Could not remove this favorite."
 msgstr ""
 
+#. placeholder {0}: artifact.name
+#: src/pages/Gallery.tsx
+msgid "Could not rename {0}. Try again."
+msgstr ""
+
 #: src/pages/model-settings/providers-section.tsx
 #: src/pages/plugins/use-plugin-connections.ts
 msgid "Could not rename connection"
@@ -3080,6 +3107,10 @@ msgstr "ルーティンを実行できませんでした"
 #: src/pages/shell/use-space-roster.ts
 msgid "Could not save"
 msgstr "保存できませんでした"
+
+#: src/pages/Gallery.tsx
+msgid "Could not save {failedName}. Try again."
+msgstr ""
 
 #: src/components/admin/AdminAppDownloadSettings.tsx
 msgid "Could not save app download links"
@@ -3154,6 +3185,10 @@ msgstr "そのボイスを保存できませんでした"
 #: src/components/VaultSettings.tsx
 msgid "Could not save the credential"
 msgstr "認証情報を保存できませんでした"
+
+#: src/pages/Gallery.tsx
+msgid "Could not save the selected files. Try again."
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Could not save this choice"
@@ -3558,6 +3593,14 @@ msgstr "ダーク"
 msgid "Data"
 msgstr "データ"
 
+#: src/pages/Gallery.tsx
+msgid "Date ↑"
+msgstr ""
+
+#: src/pages/Gallery.tsx
+msgid "Date ↓"
+msgstr ""
+
 #: src/lib/billing.ts
 #: src/lib/cron.ts
 msgid "day"
@@ -3620,6 +3663,7 @@ msgstr "デフォルトのテンプレートを復元しました"
 #: src/components/ShareConversationDialog.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/BotContextMenu.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
@@ -3720,9 +3764,14 @@ msgstr ""
 msgid "Deleted bot"
 msgstr ""
 
+#: src/pages/Gallery.tsx
+msgid "Deleted files can't be recovered. Save them to your device first."
+msgstr ""
+
 #: src/components/admin/AdminUsers.tsx
 #: src/components/PasskeySettings.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/OrganizationSettingsPanel.tsx
 #: src/pages/shell/dialogs.tsx
 msgid "Deleting…"
@@ -4433,6 +4482,7 @@ msgid "Filter by date"
 msgstr "日付で絞り込む"
 
 #: src/components/admin/AdminAuditLog.tsx
+#: src/pages/Gallery.tsx
 msgid "Filter by type"
 msgstr ""
 
@@ -4839,6 +4889,10 @@ msgstr ""
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Image upload area"
 msgstr "画像アップロードエリア"
+
+#: src/pages/Gallery.tsx
+msgid "Images"
+msgstr ""
 
 #: src/components/AccountDataSettings.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
@@ -6144,6 +6198,14 @@ msgstr ""
 msgid "No generated images or videos yet"
 msgstr ""
 
+#: src/pages/Gallery.tsx
+msgid "No generated images yet"
+msgstr ""
+
+#: src/pages/Gallery.tsx
+msgid "No generated videos yet"
+msgstr ""
+
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "No invite codes yet"
 msgstr ""
@@ -7420,8 +7482,14 @@ msgstr "削除中…"
 #: src/components/pages/PagesList.tsx
 #: src/components/pages/PageView.tsx
 #: src/components/PasskeySettings.tsx
+#: src/pages/Gallery.tsx
 msgid "Rename"
 msgstr "名前を変更"
+
+#. placeholder {0}: artifact.name
+#: src/pages/Gallery.tsx
+msgid "Rename {0}"
+msgstr ""
 
 #: src/pages/BotContextMenu.tsx
 #: src/pages/shell/dialogs.tsx
@@ -7805,6 +7873,7 @@ msgstr "土曜日"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Board.tsx
 #: src/pages/ExternalConversationSettings.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/GroupPanel.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/McpServerForm.tsx
@@ -7844,6 +7913,10 @@ msgstr "ワークスペースを保存して、最新のソフトウェアをイ
 
 #: src/components/admin/AdminTwoFactor.tsx
 msgid "Save these somewhere safe. Each code works once, and they are only shown this one time."
+msgstr ""
+
+#: src/pages/Gallery.tsx
+msgid "Save to device"
 msgstr ""
 
 #: src/components/vault/VaultItemEditor.tsx
@@ -8043,12 +8116,21 @@ msgstr "セキュリティコード"
 msgid "Segment {0} of {1}"
 msgstr ""
 
+#. placeholder {0}: artifact.name
+#: src/pages/Gallery.tsx
+msgid "Select {0}"
+msgstr ""
+
 #: src/pages/shell/chat-header.tsx
 msgid "Select a bot"
 msgstr "ボットを選択"
 
 #: src/pages/shell/chat-header.tsx
 msgid "Select messages"
+msgstr ""
+
+#: src/pages/Gallery.tsx
+msgid "Selected files are over 500 MB. Save them in smaller batches."
 msgstr ""
 
 #. placeholder {0}: selection.size
@@ -8362,6 +8444,14 @@ msgstr "サイト"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Sites you sign in to stay signed in for everyone in this space"
 msgstr "ログインしたサイトは、このスペースの全員に対してログイン状態が維持されます"
+
+#: src/pages/Gallery.tsx
+msgid "Size ↑"
+msgstr ""
+
+#: src/pages/Gallery.tsx
+msgid "Size ↓"
+msgstr ""
 
 #: src/components/bot-templates/bot-templates-dialog.tsx
 #: src/components/BotPackageDocumentView.tsx
@@ -9299,6 +9389,7 @@ msgstr "宛先:"
 
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/Gallery.tsx
 #: src/pages/shell/chat-context.tsx
 msgid "Today"
 msgstr "今日"
@@ -9898,6 +9989,10 @@ msgstr ""
 msgid "Video trigger words"
 msgstr ""
 
+#: src/pages/Gallery.tsx
+msgid "Videos"
+msgstr ""
+
 #: src/pages/plugins/plugin-browse.tsx
 msgid "View all"
 msgstr "すべて表示"
@@ -10141,6 +10236,7 @@ msgstr "年"
 msgid "Yearly"
 msgstr "年払い"
 
+#: src/pages/Gallery.tsx
 #: src/pages/shell/chat-context.tsx
 #: src/pages/shell/sidebar-roster.tsx
 msgid "Yesterday"

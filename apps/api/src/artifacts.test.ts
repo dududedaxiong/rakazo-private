@@ -1,12 +1,15 @@
 import type { ArtifactStore } from "@rakazo_mickvvw/adapter-kit";
 import type { Actor } from "@rakazo_mickvvw/contracts";
+import { AttachmentValidationError } from "@rakazo_mickvvw/core";
 import type { PrismaClient } from "@rakazo_mickvvw/db";
+import { IsolationError } from "@rakazo_mickvvw/db";
 import { describe, expect, it, vi } from "vitest";
 import {
   ArtifactListCursorError,
   createOwnedArtifact,
   deleteArtifactFamily,
   listSpaceArtifacts,
+  renameArtifact,
   resolveGroupSendAttachments,
   resolveSendAttachments,
   storeInboundAttachment,
@@ -19,7 +22,7 @@ const actor: Actor = {
   isDeploymentOwner: false,
 };
 
-function listRow(id: string, familyId: string, createdAt = "2026-09-01T00:00:00.000Z") {
+function listRow(id: string, familyId: string, createdAt = "2026-09-01T00:00:00.000Z", size = 12) {
   return {
     id,
     familyId,
@@ -29,14 +32,21 @@ function listRow(id: string, familyId: string, createdAt = "2026-09-01T00:00:00.
     name: familyId,
     description: null,
     mimeType: "text/markdown",
-    size: 12,
+    size,
     version: 1,
     createdAt: new Date(createdAt),
     versionCount: 1,
   };
 }
 
-function cursor(input: { createdAt: string; id: string; botId: string | null; asOf?: string }) {
+function cursor(input: {
+  createdAt: string;
+  id: string;
+  botId: string | null;
+  asOf?: string;
+  sort?: string;
+  size?: number;
+}) {
   return `v1.${Buffer.from(
     JSON.stringify({
       createdAt: input.createdAt,
@@ -44,9 +54,18 @@ function cursor(input: { createdAt: string; id: string; botId: string | null; as
       botId: input.botId,
       madeByBots: false,
       asOf: input.asOf ?? "2026-09-20T00:00:00.000Z",
+      ...(input.sort ? { sort: input.sort } : {}),
+      ...(input.size !== undefined ? { size: input.size } : {}),
     }),
     "utf8",
   ).toString("base64url")}`;
+}
+
+function decodeCursor(value: string): Record<string, unknown> {
+  return JSON.parse(Buffer.from(value.slice("v1.".length), "base64url").toString("utf8")) as Record<
+    string,
+    unknown
+  >;
 }
 
 function statement(query: { strings: string[] }) {
@@ -265,6 +284,274 @@ describe("listSpaceArtifacts", () => {
     expect(text).not.toContain('"botId" IS NULL');
     expect(sql.values).toContain("bot-1");
     expect(sql.values).toContain("version-b");
+  });
+
+  it.each([
+    ["date-desc", 'ORDER BY latest."createdAt" DESC, latest.id DESC', "<"],
+    ["date-asc", 'ORDER BY latest."createdAt" ASC, latest.id ASC', ">"],
+    ["size-desc", 'ORDER BY latest."size" DESC, latest.id DESC', "<"],
+    ["size-asc", 'ORDER BY latest."size" ASC, latest.id ASC', ">"],
+  ] as const)(
+    "orders by %s and pages with a cursor that compares in the same direction",
+    async (sort, orderBy, direction) => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-09-20T12:00:00.000Z"));
+      try {
+        const rows = [
+          listRow("version-a", "family-a", "2026-09-03T00:00:00.000Z", 300),
+          listRow("version-b", "family-b", "2026-09-02T00:00:00.000Z", 200),
+          listRow("version-c", "family-c", "2026-09-01T00:00:00.000Z", 100),
+        ];
+        const queryRaw = vi.fn().mockResolvedValueOnce(rows).mockResolvedValueOnce([]);
+        const deps = {
+          prisma: { artifact: { findFirst: vi.fn() }, $queryRaw: queryRaw } as unknown as Pick<
+            PrismaClient,
+            "artifact" | "$queryRaw"
+          >,
+        };
+        const first = await listSpaceArtifacts(deps, actor, { sort, limit: 2 });
+        expect(first.items.map((item) => item.id)).toEqual(["family-a", "family-b"]);
+        expect(first.nextCursor).not.toBeNull();
+        const firstSql = queryRaw.mock.calls[0]?.[0] as { strings: string[]; values: unknown[] };
+        expect(statement(firstSql)).toContain(orderBy);
+
+        const cursorRecord = decodeCursor(first.nextCursor!);
+        if (sort.startsWith("size")) {
+          expect(cursorRecord.sort).toBe(sort);
+          expect(cursorRecord.size).toBe(200);
+        } else {
+          expect(cursorRecord.sort ?? "date-desc").toBe(sort);
+        }
+
+        await listSpaceArtifacts(deps, actor, {
+          sort,
+          cursor: first.nextCursor ?? undefined,
+          limit: 2,
+        });
+        const secondSql = queryRaw.mock.calls[1]?.[0] as { strings: string[]; values: unknown[] };
+        const secondText = statement(secondSql);
+        expect(secondText).toContain(orderBy);
+        if (sort.startsWith("size")) {
+          expect(secondText).toContain('latest."size", latest.id');
+          expect(secondText).toContain(`) ${direction} (`);
+          expect(secondSql.values).toContain(200);
+        } else {
+          expect(secondText).toContain('latest."createdAt", latest.id');
+          expect(secondText).toContain(`) ${direction} (`);
+          expect(secondSql.values).toContainEqual(new Date("2026-09-02T00:00:00.000Z"));
+        }
+        expect(secondSql.values).toContain("version-b");
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
+
+  it("rejects a cursor whose sort differs from the requested sort", async () => {
+    const queryRaw = vi.fn();
+    await expect(
+      listSpaceArtifacts(
+        {
+          prisma: { artifact: { findFirst: vi.fn() }, $queryRaw: queryRaw } as unknown as Pick<
+            PrismaClient,
+            "artifact" | "$queryRaw"
+          >,
+        },
+        actor,
+        {
+          sort: "date-desc",
+          cursor: cursor({
+            createdAt: "2026-08-01T00:00:00.000Z",
+            id: "version-b",
+            botId: null,
+            sort: "size-desc",
+            size: 200,
+          }),
+        },
+      ),
+    ).rejects.toBeInstanceOf(ArtifactListCursorError);
+    expect(queryRaw).not.toHaveBeenCalled();
+  });
+
+  it("rejects a size cursor without a size position", async () => {
+    const queryRaw = vi.fn();
+    await expect(
+      listSpaceArtifacts(
+        {
+          prisma: { artifact: { findFirst: vi.fn() }, $queryRaw: queryRaw } as unknown as Pick<
+            PrismaClient,
+            "artifact" | "$queryRaw"
+          >,
+        },
+        actor,
+        {
+          sort: "size-desc",
+          cursor: cursor({
+            createdAt: "2026-08-01T00:00:00.000Z",
+            id: "version-b",
+            botId: null,
+            sort: "size-desc",
+          }),
+        },
+      ),
+    ).rejects.toBeInstanceOf(ArtifactListCursorError);
+    expect(queryRaw).not.toHaveBeenCalled();
+  });
+
+  it("reads a cursor issued before sorting as newest first", async () => {
+    const queryRaw = vi.fn().mockResolvedValue([]);
+    await listSpaceArtifacts(
+      {
+        prisma: { artifact: { findFirst: vi.fn() }, $queryRaw: queryRaw } as unknown as Pick<
+          PrismaClient,
+          "artifact" | "$queryRaw"
+        >,
+      },
+      actor,
+      {
+        cursor: cursor({
+          createdAt: "2026-08-01T00:00:00.000Z",
+          id: "version-b",
+          botId: null,
+        }),
+      },
+    );
+    const sql = queryRaw.mock.calls[0]?.[0] as { strings: string[]; values: unknown[] };
+    expect(statement(sql)).toContain('ORDER BY latest."createdAt" DESC, latest.id DESC');
+    await expect(
+      listSpaceArtifacts(
+        {
+          prisma: { artifact: { findFirst: vi.fn() }, $queryRaw: queryRaw } as unknown as Pick<
+            PrismaClient,
+            "artifact" | "$queryRaw"
+          >,
+        },
+        actor,
+        {
+          sort: "date-asc",
+          cursor: cursor({
+            createdAt: "2026-08-01T00:00:00.000Z",
+            id: "version-b",
+            botId: null,
+          }),
+        },
+      ),
+    ).rejects.toBeInstanceOf(ArtifactListCursorError);
+  });
+});
+
+describe("renameArtifact", () => {
+  function renameClient(
+    anchor: { id: string; rootArtifactId: string | null } | null,
+    latest: {
+      id: string;
+      name: string;
+    } | null,
+  ) {
+    const findFirst = vi.fn().mockResolvedValueOnce(anchor).mockResolvedValueOnce(latest);
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const deps = {
+      prisma: { artifact: { findFirst, updateMany } } as unknown as Pick<PrismaClient, "artifact">,
+    };
+    return { deps, findFirst, updateMany };
+  }
+
+  it("renames the latest version and keeps the original extension", async () => {
+    const { deps, updateMany } = renameClient(
+      { id: "family-1", rootArtifactId: null },
+      { id: "version-2", name: "generated-abc.png" },
+    );
+    await expect(
+      renameArtifact(deps, actor, { artifactId: "family-1", name: "sunset" }),
+    ).resolves.toEqual({ ok: true, name: "sunset.png" });
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: "version-2", spaceId: "space-1" },
+      data: { name: "sunset.png" },
+    });
+  });
+
+  it("drops a different typed extension instead of changing the file kind", async () => {
+    const { deps, updateMany } = renameClient(
+      { id: "family-1", rootArtifactId: null },
+      { id: "version-2", name: "generated-abc.png" },
+    );
+    await renameArtifact(deps, actor, { artifactId: "family-1", name: "sunset.jpg" });
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: "version-2", spaceId: "space-1" },
+      data: { name: "sunset.png" },
+    });
+  });
+
+  it("keeps the name when it already ends with the original extension", async () => {
+    const { deps, updateMany } = renameClient(
+      { id: "family-1", rootArtifactId: null },
+      { id: "version-2", name: "generated-abc.mp4" },
+    );
+    await renameArtifact(deps, actor, { artifactId: "family-1", name: "clip.mp4" });
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: "version-2", spaceId: "space-1" },
+      data: { name: "clip.mp4" },
+    });
+  });
+
+  it("renames the latest version of a family with several versions", async () => {
+    const { deps, findFirst, updateMany } = renameClient(
+      { id: "root-1", rootArtifactId: "root-1" },
+      { id: "version-3", name: "generated-abc.png" },
+    );
+    await renameArtifact(deps, actor, { artifactId: "root-1", name: "sunset" });
+    expect(findFirst.mock.calls[1]?.[0]).toMatchObject({
+      where: { spaceId: "space-1", OR: [{ id: "root-1" }, { rootArtifactId: "root-1" }] },
+      orderBy: { version: "desc" },
+    });
+    expect(updateMany).toHaveBeenCalledWith({
+      where: { id: "version-3", spaceId: "space-1" },
+      data: { name: "sunset.png" },
+    });
+  });
+
+  it.each(["   ", ".png", "a/b", "a\\b"])("rejects an invalid name %s", async (name) => {
+    const { deps, updateMany } = renameClient(
+      { id: "family-1", rootArtifactId: null },
+      { id: "version-2", name: "generated-abc.png" },
+    );
+    await expect(
+      renameArtifact(deps, actor, { artifactId: "family-1", name }),
+    ).rejects.toBeInstanceOf(AttachmentValidationError);
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects a name that is too long once the extension is kept", async () => {
+    const { deps, updateMany } = renameClient(
+      { id: "family-1", rootArtifactId: null },
+      { id: "version-2", name: "generated-abc.png" },
+    );
+    await expect(
+      renameArtifact(deps, actor, { artifactId: "family-1", name: "a".repeat(300) }),
+    ).rejects.toBeInstanceOf(AttachmentValidationError);
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects a family outside the caller's space", async () => {
+    const { deps, updateMany } = renameClient(null, null);
+    await expect(
+      renameArtifact(deps, actor, { artifactId: "family-1", name: "sunset" }),
+    ).rejects.toBeInstanceOf(IsolationError);
+    expect(updateMany).not.toHaveBeenCalled();
+  });
+
+  it("rejects the rename when the row vanished before the update", async () => {
+    const findFirst = vi
+      .fn()
+      .mockResolvedValueOnce({ id: "family-1", rootArtifactId: null })
+      .mockResolvedValueOnce({ id: "version-2", name: "generated-abc.png" });
+    const updateMany = vi.fn().mockResolvedValue({ count: 0 });
+    const deps = {
+      prisma: { artifact: { findFirst, updateMany } } as unknown as Pick<PrismaClient, "artifact">,
+    };
+    await expect(
+      renameArtifact(deps, actor, { artifactId: "family-1", name: "sunset" }),
+    ).rejects.toBeInstanceOf(IsolationError);
   });
 });
 

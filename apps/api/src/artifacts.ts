@@ -1,9 +1,10 @@
 import { createHash } from "node:crypto";
 import type { ArtifactStore, MessagingInboundAttachment } from "@rakazo_mickvvw/adapter-kit";
 import { createAdapterContext } from "@rakazo_mickvvw/adapter-kit";
-import type { Actor } from "@rakazo_mickvvw/contracts";
+import type { Actor, ArtifactListSort } from "@rakazo_mickvvw/contracts";
 import {
   ARTIFACT_NAME_MAX_LENGTH,
+  ArtifactListSortSchema,
   ATTACHMENT_MAX_BYTES,
   attachmentMaxCount,
   attachmentSizeLabel,
@@ -327,6 +328,10 @@ type ArtifactListCursor = {
   madeByBots: boolean;
   // Freezes the version set for this page sequence.
   asOf: string;
+  /** Absent on cursors issued before sorting; those read as newest first. */
+  sort?: ArtifactListSort;
+  /** Position for size sorts; absent otherwise. */
+  size?: number;
 };
 
 const ARTIFACT_LIST_CURSOR_PREFIX = "v1.";
@@ -365,13 +370,31 @@ function decodeArtifactListCursor(value: string): ArtifactListCursor {
   if (Number.isNaN(createdAt.getTime()) || Number.isNaN(asOf.getTime())) {
     throw new ArtifactListCursorError();
   }
+  const sort = parseArtifactListSort(record.sort);
+  const size = sort.startsWith("size") ? parseArtifactListSize(record.size) : undefined;
   return {
     createdAt: createdAt.toISOString(),
     id: record.id,
     botId,
     madeByBots,
     asOf: asOf.toISOString(),
+    ...(sort !== "date-desc" ? { sort } : {}),
+    ...(size !== undefined ? { size } : {}),
   };
+}
+
+function parseArtifactListSort(value: unknown): ArtifactListSort {
+  if (value === undefined) return "date-desc";
+  const parsed = ArtifactListSortSchema.safeParse(value);
+  if (!parsed.success) throw new ArtifactListCursorError();
+  return parsed.data;
+}
+
+function parseArtifactListSize(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
+    throw new ArtifactListCursorError();
+  }
+  return value;
 }
 
 function cursorBotId(value: unknown): string | null {
@@ -382,24 +405,54 @@ function cursorBotId(value: unknown): string | null {
 export async function listSpaceArtifacts(
   deps: { prisma: Pick<PrismaClient, "artifact" | "$queryRaw"> },
   actor: Actor,
-  input: { botId?: string; madeByBots?: boolean; cursor?: string; limit?: number },
+  input: {
+    botId?: string;
+    madeByBots?: boolean;
+    sort?: ArtifactListSort;
+    cursor?: string;
+    limit?: number;
+  },
 ) {
   const take = Math.min(Math.max(input.limit ?? 30, 1), 60);
   const scopeBotId = input.botId ?? null;
   const botFilter = scopeBotId ? Prisma.sql`AND "botId" = ${scopeBotId}` : Prisma.empty;
   const madeByBots = input.madeByBots ?? false;
   const madeByBotsFilter = madeByBots ? Prisma.sql`AND latest."runId" IS NOT NULL` : Prisma.empty;
+  const sort = input.sort ?? "date-desc";
 
   let asOf = new Date();
   let cursorFilter = Prisma.empty;
   if (input.cursor) {
     // Position is stored on the cursor so a deleted row cannot replay the first page.
     const cursor = decodeArtifactListCursor(input.cursor);
-    if (cursor.botId !== scopeBotId || cursor.madeByBots !== madeByBots)
+    if (
+      cursor.botId !== scopeBotId ||
+      cursor.madeByBots !== madeByBots ||
+      (cursor.sort ?? "date-desc") !== sort
+    )
       throw new ArtifactListCursorError();
     asOf = new Date(cursor.asOf);
-    cursorFilter = Prisma.sql`AND (latest."createdAt", latest.id) < (${new Date(cursor.createdAt)}, ${cursor.id})`;
+    // The comparison direction follows the sort, so paging never replays or skips a row.
+    if (sort === "date-asc") {
+      cursorFilter = Prisma.sql`AND (latest."createdAt", latest.id) > (${new Date(cursor.createdAt)}, ${cursor.id})`;
+    } else if (sort === "size-desc") {
+      if (cursor.size === undefined) throw new ArtifactListCursorError();
+      cursorFilter = Prisma.sql`AND (latest."size", latest.id) < (${cursor.size}, ${cursor.id})`;
+    } else if (sort === "size-asc") {
+      if (cursor.size === undefined) throw new ArtifactListCursorError();
+      cursorFilter = Prisma.sql`AND (latest."size", latest.id) > (${cursor.size}, ${cursor.id})`;
+    } else {
+      cursorFilter = Prisma.sql`AND (latest."createdAt", latest.id) < (${new Date(cursor.createdAt)}, ${cursor.id})`;
+    }
   }
+  const orderBy =
+    sort === "date-asc"
+      ? Prisma.sql`ORDER BY latest."createdAt" ASC, latest.id ASC`
+      : sort === "size-desc"
+        ? Prisma.sql`ORDER BY latest."size" DESC, latest.id DESC`
+        : sort === "size-asc"
+          ? Prisma.sql`ORDER BY latest."size" ASC, latest.id ASC`
+          : Prisma.sql`ORDER BY latest."createdAt" DESC, latest.id DESC`;
 
   const rows = await deps.prisma.$queryRaw<ListSpaceRow[]>(Prisma.sql`
     WITH scoped AS (
@@ -425,7 +478,7 @@ export async function listSpaceArtifacts(
     FROM latest
     JOIN counts ON counts."familyId" = COALESCE(latest."rootArtifactId", latest.id)
     WHERE true ${madeByBotsFilter} ${cursorFilter}
-    ORDER BY latest."createdAt" DESC, latest.id DESC
+    ${orderBy}
     LIMIT ${take + 1}
   `);
 
@@ -456,6 +509,8 @@ export async function listSpaceArtifacts(
             botId: scopeBotId,
             madeByBots,
             asOf: asOf.toISOString(),
+            ...(sort !== "date-desc" ? { sort } : {}),
+            ...(sort.startsWith("size") ? { size: last.size } : {}),
           })
         : null,
   };
@@ -485,6 +540,63 @@ export async function listArtifactVersions(
     name: row.name,
     createdAt: row.createdAt.toISOString(),
   }));
+}
+
+/**
+ * Renames a family's latest version in the caller's space. The typed name keeps the
+ * original extension, so a `.png` stays a `.png` even when the new name carries another
+ * suffix or none at all.
+ */
+export async function renameArtifact(
+  deps: { prisma: Pick<PrismaClient, "artifact"> },
+  actor: Actor,
+  input: { artifactId: string; name: string },
+) {
+  const anchor = await deps.prisma.artifact.findFirst({
+    where: { id: input.artifactId, spaceId: actor.spaceId },
+    select: { id: true, rootArtifactId: true },
+  });
+  if (!anchor) throw new IsolationError();
+  const rootId = anchor.rootArtifactId ?? anchor.id;
+  const latest = await deps.prisma.artifact.findFirst({
+    where: {
+      spaceId: actor.spaceId,
+      OR: [{ id: rootId }, { rootArtifactId: rootId }],
+    },
+    orderBy: { version: "desc" },
+    select: { id: true, name: true },
+  });
+  if (!latest) throw new IsolationError();
+  const nextName = renameWithOriginalExtension(latest.name, input.name);
+  if (!nextName) {
+    throw new AttachmentValidationError("Enter a name for this file.");
+  }
+  if (nextName.length > ARTIFACT_NAME_MAX_LENGTH) {
+    throw new AttachmentValidationError("That name is too long.");
+  }
+  const updated = await deps.prisma.artifact.updateMany({
+    where: { id: latest.id, spaceId: actor.spaceId },
+    data: { name: nextName },
+  });
+  if (updated.count !== 1) throw new IsolationError();
+  return { ok: true as const, name: nextName };
+}
+
+function renameWithOriginalExtension(currentName: string, next: string): string | null {
+  const trimmed = next.trim();
+  if (!trimmed || trimmed.includes("/") || trimmed.includes("\\")) return null;
+  const dot = currentName.lastIndexOf(".");
+  const extension = dot > 0 ? currentName.slice(dot) : "";
+  let base = trimmed;
+  if (extension && base.toLowerCase().endsWith(extension.toLowerCase())) {
+    base = base.slice(0, base.length - extension.length);
+  } else if (extension) {
+    const lastDot = base.lastIndexOf(".");
+    if (lastDot > 0) base = base.slice(0, lastDot);
+  }
+  base = base.trim();
+  if (!base) return null;
+  return base + extension;
 }
 
 type ArtifactMember = { id: string; storageKey: string; botId: string | null };

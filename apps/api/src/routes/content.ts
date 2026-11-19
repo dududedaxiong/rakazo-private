@@ -24,6 +24,7 @@ import {
   getSpaceArtifactById,
   listArtifactVersions,
   listSpaceArtifacts,
+  renameArtifact,
 } from "../artifacts.js";
 import { requireIdentityConfirmation } from "../identity-confirmation.js";
 import { listSpaceRuns } from "../runs.js";
@@ -121,6 +122,16 @@ export function contentRoutes(ctx: RouterContext) {
       }),
       remove: authed.artifacts.remove.handler(async ({ context, input }) => {
         return deleteArtifactFamily(deps, context.actor, { familyId: input.artifactId });
+      }),
+      rename: authed.artifacts.rename.handler(async ({ context, input }) => {
+        try {
+          return await renameArtifact(deps, context.actor, input);
+        } catch (error) {
+          if (error instanceof AttachmentValidationError) {
+            throw new ORPCError("BAD_REQUEST", { message: error.message });
+          }
+          throw error;
+        }
       }),
     },
     usage: {
