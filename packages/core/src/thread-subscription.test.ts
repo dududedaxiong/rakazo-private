@@ -1,6 +1,10 @@
 import type { ProductEvent } from "@rakazo_mickvvw/contracts";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { IDLE_TIMEOUT_MS, runThreadSubscription } from "./thread-subscription.js";
+import {
+  IDLE_TIMEOUT_MS,
+  runThreadSubscription,
+  watchThreadSettled,
+} from "./thread-subscription.js";
 
 const head = { threadId: "thread", cursor: 10 };
 function event(seq: number): ProductEvent {
@@ -991,5 +995,79 @@ describe("thread subscription recovery", () => {
     expect(currentSignal?.reason).toBe(reason);
     await expect(running).resolves.toBeUndefined();
     expect(add.mock.calls.length).toBe(remove.mock.calls.length);
+  });
+});
+
+describe("watchThreadSettled", () => {
+  it("refreshes until the run settles, then stops", async () => {
+    vi.useFakeTimers();
+    const abort = new AbortController();
+    const refresh = vi.fn(async () => undefined);
+    const working = [true, true, false];
+    const running = watchThreadSettled({
+      signal: abort.signal,
+      refresh,
+      isWorking: () => working.shift() ?? false,
+      intervalMs: 100,
+      timeoutMs: 10_000,
+    });
+    await vi.advanceTimersByTimeAsync(1_000);
+    await expect(running).resolves.toBeUndefined();
+    expect(refresh).toHaveBeenCalledTimes(3);
+  });
+
+  it("stops at the timeout while the run is still working", async () => {
+    vi.useFakeTimers();
+    const abort = new AbortController();
+    const refresh = vi.fn(async () => undefined);
+    const running = watchThreadSettled({
+      signal: abort.signal,
+      refresh,
+      isWorking: () => true,
+      intervalMs: 100,
+      timeoutMs: 250,
+    });
+    await vi.advanceTimersByTimeAsync(1_000);
+    await expect(running).resolves.toBeUndefined();
+    expect(refresh).toHaveBeenCalledTimes(3);
+  });
+
+  it("stops when the signal aborts", async () => {
+    vi.useFakeTimers();
+    const abort = new AbortController();
+    const refresh = vi.fn(async () => undefined);
+    const running = watchThreadSettled({
+      signal: abort.signal,
+      refresh,
+      isWorking: () => true,
+      intervalMs: 100,
+      timeoutMs: 10_000,
+    });
+    await vi.advanceTimersByTimeAsync(150);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    abort.abort();
+    await vi.advanceTimersByTimeAsync(1_000);
+    await expect(running).resolves.toBeUndefined();
+    expect(refresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries after a failed refresh instead of dying", async () => {
+    vi.useFakeTimers();
+    const abort = new AbortController();
+    const refresh = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("snapshot timed out"))
+      .mockResolvedValue(undefined);
+    const working = [true, false];
+    const running = watchThreadSettled({
+      signal: abort.signal,
+      refresh,
+      isWorking: () => working.shift() ?? false,
+      intervalMs: 100,
+      timeoutMs: 10_000,
+    });
+    await vi.advanceTimersByTimeAsync(1_000);
+    await expect(running).resolves.toBeUndefined();
+    expect(refresh).toHaveBeenCalledTimes(2);
   });
 });

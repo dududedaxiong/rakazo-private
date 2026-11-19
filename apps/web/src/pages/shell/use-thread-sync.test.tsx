@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import type { ProductEvent, ThreadSnapshot } from "@rakazo_mickvvw/contracts";
-import { runThreadSubscription } from "@rakazo_mickvvw/core";
+import { runThreadSubscription, watchThreadSettled } from "@rakazo_mickvvw/core";
 import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, expect, it, vi } from "vitest";
@@ -11,6 +11,7 @@ import { useThreadSync } from "./use-thread-sync";
 vi.mock("@rakazo_mickvvw/core", async (original) => ({
   ...(await original<typeof import("@rakazo_mickvvw/core")>()),
   runThreadSubscription: vi.fn(async () => {}),
+  watchThreadSettled: vi.fn(async () => {}),
 }));
 vi.mock("../../lib/query", () => ({
   queryClient: {
@@ -194,6 +195,64 @@ async function expectCachedPaint(
   expect(commitSnapshot.mock.calls.some(([next]) => next === cached)).toBe(painted);
   act(() => root.unmount());
 }
+
+it.each([false, true])(
+  "watches a media run by snapshot, and ignores other run starts (%s group)",
+  async (inGroup) => {
+    vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    const snapshot = {
+      threadId: "thread-1",
+      cursor: 1,
+      messages: [],
+      run: null,
+    } as unknown as ThreadSnapshot;
+    const get = vi.fn(async () => snapshot);
+    const input = syncInput({ inGroup, get, commitSnapshot: vi.fn() });
+    function Probe() {
+      useThreadSync(input);
+      return null;
+    }
+    const root = createRoot(document.createElement("div"));
+    await act(async () => root.render(createElement(Probe)));
+    const subscription = vi.mocked(runThreadSubscription).mock.calls[0]![0];
+    const started = (trigger: string | undefined) =>
+      ({
+        type: "run.started",
+        threadId: "thread-1",
+        runId: "run-1",
+        payload: trigger === undefined ? {} : { trigger },
+      }) as ProductEvent;
+    subscription.onEvent(started("chat"), snapshot);
+    subscription.onEvent(started(undefined), snapshot);
+    await flush();
+    expect(watchThreadSettled).not.toHaveBeenCalled();
+    subscription.onEvent(started("media"), snapshot);
+    await flush();
+    expect(watchThreadSettled).toHaveBeenCalledTimes(1);
+    // The same thread's next media run is already covered by the live watch.
+    subscription.onEvent(started("media"), snapshot);
+    await flush();
+    expect(watchThreadSettled).toHaveBeenCalledTimes(1);
+    const watch = vi.mocked(watchThreadSettled).mock.calls[0]![0];
+    expect(watch.signal).toBeInstanceOf(AbortSignal);
+    input.thread.snapshotRef.current = {
+      threadId: "thread-1",
+      run: { status: "running" },
+    } as unknown as ThreadSnapshot;
+    expect(watch.isWorking()).toBe(true);
+    input.thread.snapshotRef.current = {
+      threadId: "thread-1",
+      run: { status: "completed" },
+    } as unknown as ThreadSnapshot;
+    expect(watch.isWorking()).toBe(false);
+    input.thread.snapshotRef.current = {
+      threadId: "thread-2",
+      run: { status: "running" },
+    } as unknown as ThreadSnapshot;
+    expect(watch.isWorking()).toBe(false);
+    act(() => root.unmount());
+  },
+);
 
 it("anchors Load earlier on the first visible row, not the whole height delta", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);

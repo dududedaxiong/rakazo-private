@@ -11,6 +11,38 @@ type SnapshotRecovery =
 /** No frame at all for this long means the stream is half-open; the server beats far faster. */
 export const IDLE_TIMEOUT_MS = 45_000;
 
+/** Snapshot refresh cadence while a media regenerate is settling. */
+export const MEDIA_RUN_WATCH_INTERVAL_MS = 2_000;
+/** Give slow video providers room, but never poll forever. */
+export const MEDIA_RUN_WATCH_TIMEOUT_MS = 10 * 60_000;
+
+/**
+ * Reconcile a thread by snapshot while a run is working. A media regenerate
+ * announces itself with run.started but settles through a worker poll, so the
+ * live stream alone cannot be trusted to surface its progress or its result:
+ * refresh until no run is working, the timeout passes, or the caller aborts.
+ * A failed refresh is retried on the next tick instead of killing the watch.
+ */
+export async function watchThreadSettled(options: {
+  signal: AbortSignal;
+  refresh: () => Promise<unknown>;
+  isWorking: () => boolean;
+  intervalMs?: number;
+  timeoutMs?: number;
+}): Promise<void> {
+  const { signal, refresh, isWorking } = options;
+  const intervalMs = options.intervalMs ?? MEDIA_RUN_WATCH_INTERVAL_MS;
+  const timeoutMs = options.timeoutMs ?? MEDIA_RUN_WATCH_TIMEOUT_MS;
+  const deadline = Date.now() + timeoutMs;
+  while (!signal.aborted) {
+    await abortableDelay(intervalMs, signal);
+    if (signal.aborted) return;
+    await refresh().catch(() => undefined);
+    if (!isWorking()) return;
+    if (Date.now() >= deadline) return;
+  }
+}
+
 /**
  * Recover a durable stream while its caller owns snapshot commits and UI effects.
  * Missing snapshot state is replayed from storage without retaining delivered payloads.

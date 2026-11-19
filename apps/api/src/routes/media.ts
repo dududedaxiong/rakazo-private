@@ -214,6 +214,20 @@ export function mediaRoutes(ctx: RouterContext) {
           botId: bot.id,
           signal: context.signal ?? AbortSignal.timeout(5 * 60_000),
         };
+        // The run announces itself first: without run.started the web client
+        // never marks the thread as working, so the progress line below has
+        // nowhere to render (its bubble is filtered by design; only the
+        // working label shows it, and that needs a working run).
+        await deps.events
+          .append({
+            spaceId: actor.spaceId,
+            threadId: thread.id,
+            botId: bot.id,
+            type: "run.started",
+            runId: created.run.id,
+            payload: { trigger: "media", routineId: null },
+          })
+          .catch(() => undefined);
         // The chat shows it is generating right away, the same progress line
         // a fresh generation shows; it clears when the run settles.
         await deps.events
@@ -275,6 +289,18 @@ export function mediaRoutes(ctx: RouterContext) {
                 where: { id: created.task.id },
                 data: { status: "failed" },
               });
+            })
+            .catch(() => undefined);
+          // The run already announced itself above; close it the same way so
+          // the client does not keep showing it as working.
+          await deps.events
+            .append({
+              spaceId: actor.spaceId,
+              threadId: thread.id,
+              botId: bot.id,
+              type: "run.failed",
+              runId: created.run.id,
+              payload: { error },
             })
             .catch(() => undefined);
           throw new ORPCError("INTERNAL_SERVER_ERROR", { message: error });

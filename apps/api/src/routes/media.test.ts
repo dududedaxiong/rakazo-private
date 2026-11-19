@@ -1,5 +1,6 @@
 import type * as Adapters from "@rakazo_mickvvw/adapters";
 import type { Actor } from "@rakazo_mickvvw/contracts";
+import type { AppendEventInput } from "@rakazo_mickvvw/db";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mediaRoutes } from "./media.js";
 
@@ -130,7 +131,10 @@ function setup(prismaOverrides: Record<string, unknown> = {}) {
       secrets: {},
       billing: undefined,
       env: {},
-      events: { notify: vi.fn(async () => undefined), append: vi.fn(async () => undefined) },
+      events: {
+        notify: vi.fn(async () => undefined),
+        append: vi.fn(async (_input: AppendEventInput) => undefined),
+      },
       artifacts: {},
       jobs: {},
       mediaGeneration: undefined,
@@ -242,7 +246,7 @@ describe("media regenerate", () => {
   it("queues a random image re-run with the raw prompt plus the supplementary prompt", async () => {
     const runCreates: Record<string, unknown>[] = [];
     const taskCreates: Record<string, unknown>[] = [];
-    const { routes } = setup({
+    const { routes, ctx } = setup({
       $transaction: vi.fn(async (fn: (tx: unknown) => unknown) =>
         fn({
           task: {
@@ -296,6 +300,18 @@ describe("media regenerate", () => {
     expect(runCreates[0]).not.toHaveProperty("completedAt");
     expect(runCreates[0]).toHaveProperty("startedAt");
     expect(mockedAdapters.scheduleMediaPoll).toHaveBeenCalledWith(expect.anything(), "job-2");
+    // The run announces itself before the progress line: without run.started
+    // the client never marks the thread as working, so the line has nowhere
+    // to render.
+    const append = vi.mocked(ctx.deps.events.append);
+    expect(append.mock.calls.map(([input]) => input.type)).toEqual([
+      "run.started",
+      "thread.progress",
+    ]);
+    expect(append.mock.calls[0]?.[0]).toMatchObject({
+      runId: "run-2",
+      payload: { trigger: "media", routineId: null },
+    });
   });
 
   it("queues a video re-run through the existing poll", async () => {
@@ -463,5 +479,33 @@ describe("media regenerate", () => {
       }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(mockedAdapters.generateMediaFromTool).not.toHaveBeenCalled();
+  });
+
+  it("closes the announced run when submission itself fails", async () => {
+    const { routes, ctx } = setup();
+    mockedAdapters.resolveBotMediaGenerationProvider.mockResolvedValueOnce({
+      id: "bot-media",
+      capabilities: { images: true, video: false, offline: false },
+    } as never);
+    mockedAdapters.generateMediaFromTool.mockResolvedValueOnce({
+      error: "provider refused",
+    });
+    await expect(
+      (routes.media.regenerate as unknown as Handler)({
+        context: { actor },
+        input: { artifactId: "artifact-1" },
+      }),
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    expect(mockedAdapters.scheduleMediaPoll).not.toHaveBeenCalled();
+    const append = vi.mocked(ctx.deps.events.append);
+    expect(append.mock.calls.map(([input]) => input.type)).toEqual([
+      "run.started",
+      "thread.progress",
+      "run.failed",
+    ]);
+    expect(append.mock.calls[2]?.[0]).toMatchObject({
+      runId: "run-2",
+      payload: { error: "provider refused" },
+    });
   });
 });

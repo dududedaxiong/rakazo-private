@@ -18,6 +18,7 @@ import {
   reduceThreadSnapshot,
   rememberTerminalRun,
   runThreadSubscription,
+  watchThreadSettled,
 } from "@rakazo_mickvvw/core";
 import { fetchFresh } from "@rakazo_mickvvw/core/query";
 import type { RefObject } from "react";
@@ -50,6 +51,33 @@ const THREAD_SNAPSHOT_TIMEOUT_MS = 2_000;
 
 function threadSnapshotSignal(parent: AbortSignal): AbortSignal {
   return anySignal([parent, AbortSignal.timeout(THREAD_SNAPSHOT_TIMEOUT_MS)]);
+}
+
+type MediaRunWatch = { threadId: string; abort: AbortController };
+
+/**
+ * A media regenerate settles through a worker poll, not through the run
+ * lifecycle the live stream narrates, so reconcile the thread by snapshot
+ * until no run is working. One watch per thread: a new media run for the
+ * same thread is already covered, and a run for another thread takes over.
+ */
+function startMediaRunWatch(
+  current: RefObject<MediaRunWatch | null>,
+  parent: AbortSignal,
+  threadId: string,
+  refresh: () => Promise<unknown>,
+  isWorking: () => boolean,
+): void {
+  const running = current.current;
+  if (running?.threadId === threadId && !running.abort.signal.aborted) return;
+  running?.abort.abort();
+  const abort = new AbortController();
+  current.current = { threadId, abort };
+  void watchThreadSettled({
+    signal: anySignal([parent, abort.signal]),
+    refresh,
+    isWorking,
+  }).catch(() => undefined);
 }
 
 function applyThreadEvent(
@@ -138,6 +166,8 @@ export function useThreadSync({
   // A very fast run can finish over SSE while its threads.send response is still
   // returning. Do not let that late receipt resurrect terminal work as queued.
   const terminalRunReceipts = useRef(new Set<string>());
+  // The one media-regenerate watch currently reconciling a thread by snapshot.
+  const mediaRunWatchRef = useRef<MediaRunWatch | null>(null);
 
   /**
    * Each chat's last snapshot, so reopening it paints at once. The live load and
@@ -390,6 +420,17 @@ export function useThreadSync({
         ) {
           void sidebarRefresh.invalidate().catch(() => undefined);
         }
+        if (event.type === "run.started" && event.payload.trigger === "media") {
+          startMediaRunWatch(
+            mediaRunWatchRef,
+            abort.signal,
+            event.threadId,
+            () => snapshotRefresh.invalidate().catch(() => undefined),
+            () =>
+              snapshotRef.current?.threadId === event.threadId &&
+              activeThreadRuns(snapshotRef.current).some((run) => isRunWorking(run.status)),
+          );
+        }
         if (event.type === "thread.message.created") {
           const blocks = (event.payload.blocks as Array<{ kind?: string }>) ?? [];
           relistPagesForBlocks(queries, queryClient, blocks);
@@ -493,6 +534,17 @@ export function useThreadSync({
           isRunTerminalEvent(event)
         ) {
           void sidebarRefresh.invalidate().catch(() => undefined);
+        }
+        if (event.type === "run.started" && event.payload.trigger === "media") {
+          startMediaRunWatch(
+            mediaRunWatchRef,
+            abort.signal,
+            event.threadId,
+            () => snapshotRefresh.invalidate().catch(() => undefined),
+            () =>
+              snapshotRef.current?.threadId === event.threadId &&
+              activeThreadRuns(snapshotRef.current).some((run) => isRunWorking(run.status)),
+          );
         }
         if (isRunTerminalEvent(event) || event.type === "run.waiting_input") {
           // waiting_input: reconcile ask cards if a stale post-send refresh raced SSE.
