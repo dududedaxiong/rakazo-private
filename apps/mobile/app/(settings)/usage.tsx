@@ -10,8 +10,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { NativeActionButton } from "../../components/native-action-button";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { NativeSegmentedControl } from "../../components/native-segmented-control";
 import { rpc } from "../../lib/api";
 import { mobileTokens } from "../../lib/appearance";
@@ -35,6 +34,8 @@ type UsageRange = "today" | "total";
 
 export default function UsageDetail() {
   const sideInsets = useSideInsets();
+  const insets = useSafeAreaInsets();
+  const uiTokens = mobileTokens();
   const { t, locale } = useI18n();
   const styles = useThemedStyles(createUsageStyles);
   const [range, setRange] = useState<UsageRange>("today");
@@ -193,13 +194,15 @@ export default function UsageDetail() {
                 <View style={styles.bars}>
                   {trend.map((day) => (
                     <View key={day.date} style={styles.barColumn}>
-                      <Text style={styles.barValue}>{compactTokenCount(day.tokens)}</Text>
+                      <Text style={styles.barValue} numberOfLines={1} adjustsFontSizeToFit>
+                        {compactTokenCount(day.tokens)}
+                      </Text>
                       <View style={styles.barTrack}>
                         <View
                           style={[
                             styles.bar,
                             {
-                              height: `${Math.max(day.tokens > 0 ? 6 : 2, (day.tokens / trendMax) * 100)}%`,
+                              height: `${Math.max(day.tokens > 0 ? 6 : 2, (day.tokens / trendMax) * 85)}%`,
                             },
                             day.isToday && styles.barToday,
                           ]}
@@ -361,20 +364,29 @@ export default function UsageDetail() {
                 )}
               </Text>
             </View>
-
-            <View style={styles.resetWrap}>
-              <NativeActionButton
-                busy={resetting}
-                disabled={resetting}
-                fill
-                label={t("Reset usage")}
-                onPress={confirmReset}
-                prominence="destructive"
-              />
-            </View>
           </>
         )}
       </ScrollView>
+      {!loading && !loadError ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("Reset usage")}
+          disabled={resetting}
+          onPress={confirmReset}
+          android_ripple={{ color: native.fillPressed, borderless: true, radius: 22 }}
+          style={({ pressed }) => [
+            styles.resetFloat,
+            { bottom: insets.bottom + 12 },
+            { opacity: resetting ? 0.45 : pressed ? 0.6 : 1 },
+          ]}
+        >
+          {resetting ? (
+            <ActivityIndicator color={uiTokens.destructive} />
+          ) : (
+            <Text style={styles.resetFloatLabel}>{t("Reset usage")}</Text>
+          )}
+        </Pressable>
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -389,7 +401,9 @@ function createUsageStyles() {
     content: {
       paddingHorizontal: 16,
       paddingTop: 16,
-      paddingBottom: 32,
+      // Clearance for the floating reset button (44 tall, 12 above the safe
+      // area) so the last row scrolls above it instead of under it.
+      paddingBottom: 80,
       gap: 4,
     },
     centered: {
@@ -488,6 +502,9 @@ function createUsageStyles() {
     barValue: {
       color: tokens.mutedForeground,
       fontSize: 10,
+      // One line, fixed height: a long value never wraps to a second line
+      // and squeezes the track, so the label can never touch the bar top.
+      height: 14,
     },
     barTrack: {
       flex: 1,
@@ -666,8 +683,32 @@ function createUsageStyles() {
       marginTop: 16,
       padding: 12,
     },
-    resetWrap: {
-      marginTop: 16,
+    // The reset button floats over the trailing bottom corner (the same
+    // corner the thread's jump-to-latest button uses), so it stays visible
+    // while scrolling; `bottom` is set inline from the safe-area inset.
+    resetFloat: {
+      position: "absolute",
+      end: 16,
+      height: 44,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: 16,
+      borderRadius: 22,
+      backgroundColor: tokens.card,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: tokens.border,
+      shadowColor: tokens.foreground,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.12,
+      shadowRadius: 4,
+      elevation: 2,
+      zIndex: 10,
+    },
+    resetFloatLabel: {
+      color: tokens.destructive,
+      fontSize: 15,
+      fontWeight: "600",
     },
     ruleText: {
       color: tokens.mutedForeground,

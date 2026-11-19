@@ -36,13 +36,15 @@ vi.mock("react-native", () => ({
     onPress?: () => void;
     disabled?: boolean;
   }) => createElement("button", { type: "button", disabled, onClick: onPress }, children),
-  ScrollView: ({ children }: { children?: ReactNode }) => createElement("div", null, children),
+  ScrollView: ({ children }: { children?: ReactNode }) =>
+    createElement("div", { "data-testid": "usage-scroll" }, children),
   View: ({ children }: { children?: ReactNode }) => createElement("div", null, children),
   Text: ({ children }: { children?: ReactNode }) => createElement("span", null, children),
   StyleSheet: { create: (styles: unknown) => styles },
 }));
 vi.mock("react-native-safe-area-context", () => ({
   SafeAreaView: ({ children }: { children?: ReactNode }) => createElement("div", null, children),
+  useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }),
 }));
 vi.mock("../components/native-segmented-control", () => ({ NativeSegmentedControl: () => null }));
 vi.mock("../components/native-action-button", () => ({
@@ -177,6 +179,41 @@ describe("usage reset", () => {
   it("shows a Reset usage button once the usage loads", async () => {
     await renderScreen();
     expect(button("Reset usage")).not.toBeNull();
+  });
+
+  it("renders a single floating reset button outside the scroll content", async () => {
+    await renderScreen();
+    const buttons = [...container.querySelectorAll("button")].filter(
+      (node) => node.textContent === "Reset usage",
+    );
+    expect(buttons).toHaveLength(1);
+    const scroll = container.querySelector('[data-testid="usage-scroll"]');
+    expect(scroll).not.toBeNull();
+    expect(scroll!.contains(buttons[0]!)).toBe(false);
+  });
+
+  it("shows the compact value labels for the last 7 days", async () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const key = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
+    summary = {
+      ...summaryFixture,
+      daily: [
+        {
+          date: key,
+          inputTokens: 3200000,
+          outputTokens: 0,
+          totalTokens: 3200000,
+          costUsd: 0,
+          modelCalls: 5,
+          unknownTokensCalls: 0,
+          unknownCostCalls: 0,
+          totalOnlyCalls: 0,
+        },
+      ],
+    };
+    await renderScreen();
+    expect(container.textContent).toContain("320万");
   });
 
   it("cancelling the reset confirmation does nothing", async () => {
