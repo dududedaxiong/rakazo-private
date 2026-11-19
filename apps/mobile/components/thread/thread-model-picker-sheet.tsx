@@ -26,7 +26,14 @@ import { ModelTestRowMenu } from "../model-test-row-menu";
 import { NativeActionButton } from "../native-action-button";
 import { NativeSheet, useNativeSheet } from "../native-sheet";
 
-export type ThreadModelPickerRole = "main" | "computer" | "video" | "image" | "translation";
+export type ThreadModelPickerRole =
+  | "main"
+  | "computer"
+  | "video"
+  | "image"
+  | "translation"
+  | "videoEdit"
+  | "imageEdit";
 
 export type ThreadModelSave = {
   provider: string | null;
@@ -101,7 +108,11 @@ export function ThreadModelPickerSheet({
           ? t("Video generation model")
           : role === "image"
             ? t("Image generation model")
-            : t("Translation model");
+            : role === "videoEdit"
+              ? t("Video edit model")
+              : role === "imageEdit"
+                ? t("Image edit model")
+                : t("Translation model");
 
   // The store keys results by model; rows key by picker key, so the space
   // default row reads the result of the model behind it.
@@ -202,7 +213,13 @@ export function ThreadModelPickerSheet({
       const modelId = choice.modelId ?? null;
       if (role === "main") {
         await rpc("bots/update", { botId, modelProvider: provider, modelId });
-      } else if (role === "video" || role === "image" || role === "translation") {
+      } else if (
+        role === "video" ||
+        role === "image" ||
+        role === "translation" ||
+        role === "videoEdit" ||
+        role === "imageEdit"
+      ) {
         // A pick moves to the front of the ordered list; the rest stay as
         // fallbacks. Picking the space default clears the list.
         const next =
@@ -215,7 +232,11 @@ export function ThreadModelPickerSheet({
             ? { videoModels: next }
             : role === "image"
               ? { imageModels: next }
-              : { translationModels: next }),
+              : role === "videoEdit"
+                ? { videoEditModels: next }
+                : role === "imageEdit"
+                  ? { imageEditModels: next }
+                  : { translationModels: next }),
         });
       } else {
         await rpc("models/setRole", {
@@ -265,7 +286,13 @@ export function ThreadModelPickerSheet({
       if (choice.key === selectedKey) {
         if (role === "main") {
           await rpc("bots/update", { botId, modelProvider: null, modelId: null });
-        } else if (role === "video" || role === "image" || role === "translation") {
+        } else if (
+          role === "video" ||
+          role === "image" ||
+          role === "translation" ||
+          role === "videoEdit" ||
+          role === "imageEdit"
+        ) {
           // Dropping a listed model removes it from the ordered list; the
           // next entry becomes primary.
           const next = (currentModels ?? []).filter(
@@ -278,7 +305,11 @@ export function ThreadModelPickerSheet({
               ? { videoModels: next }
               : role === "image"
                 ? { imageModels: next }
-                : { translationModels: next }),
+                : role === "videoEdit"
+                  ? { videoEditModels: next }
+                  : role === "imageEdit"
+                    ? { imageEditModels: next }
+                    : { translationModels: next }),
           });
         } else {
           await rpc("models/setRole", {
@@ -289,7 +320,14 @@ export function ThreadModelPickerSheet({
           });
         }
         onSaved({ provider: null, modelId: null });
-      } else if ((role === "video" || role === "image" || role === "translation") && removed) {
+      } else if (
+        (role === "video" ||
+          role === "image" ||
+          role === "translation" ||
+          role === "videoEdit" ||
+          role === "imageEdit") &&
+        removed
+      ) {
         // A fallback was removed: save the list without it, primary unchanged.
         const next = (currentModels ?? []).filter(
           (item) => !(item.provider === removed.provider && item.model === removed.model),
@@ -301,7 +339,11 @@ export function ThreadModelPickerSheet({
               ? { videoModels: next }
               : role === "image"
                 ? { imageModels: next }
-                : { translationModels: next }),
+                : role === "videoEdit"
+                  ? { videoEditModels: next }
+                  : role === "imageEdit"
+                    ? { imageEditModels: next }
+                    : { translationModels: next }),
           });
         }
       }

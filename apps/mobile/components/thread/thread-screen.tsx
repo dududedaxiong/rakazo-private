@@ -181,6 +181,9 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   // The media models saved from the sheet, until the chat's bot list catches up with it.
   const [videoOverride, setVideoOverride] = useState<ThreadModelSave | null>(null);
   const [imageOverride, setImageOverride] = useState<ThreadModelSave | null>(null);
+  // The media edit models saved from the sheet, until the chat's bot list catches up with it.
+  const [videoEditOverride, setVideoEditOverride] = useState<ThreadModelSave | null>(null);
+  const [imageEditOverride, setImageEditOverride] = useState<ThreadModelSave | null>(null);
   // The translation model saved from the sheet, until the chat's bot list catches up with it.
   const [translationOverride, setTranslationOverride] = useState<ThreadModelSave | null>(null);
   const [mediaOpen, setMediaOpen] = useState(false);
@@ -1060,6 +1063,16 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   const imagePrimary = primaryBotModel(currentBot?.imageModels);
   const imageProvider = imageOverride !== null ? imageOverride.provider : imagePrimary?.provider;
   const imageModelId = imageOverride !== null ? imageOverride.modelId : imagePrimary?.model;
+  const videoEditPrimary = primaryBotModel(currentBot?.videoEditModels);
+  const videoEditProvider =
+    videoEditOverride !== null ? videoEditOverride.provider : videoEditPrimary?.provider;
+  const videoEditModelId =
+    videoEditOverride !== null ? videoEditOverride.modelId : videoEditPrimary?.model;
+  const imageEditPrimary = primaryBotModel(currentBot?.imageEditModels);
+  const imageEditProvider =
+    imageEditOverride !== null ? imageEditOverride.provider : imageEditPrimary?.provider;
+  const imageEditModelId =
+    imageEditOverride !== null ? imageEditOverride.modelId : imageEditPrimary?.model;
   const translationSettings = translationSettingsFromBot(currentBot);
   const translationProvider =
     translationOverride !== null ? translationOverride.provider : translationSettings.modelProvider;
@@ -1074,17 +1087,25 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
         ? videoProvider && videoModelId
           ? modelOptionKey(videoProvider, videoModelId)
           : ""
-        : sheetRole === "image"
-          ? imageProvider && imageModelId
-            ? modelOptionKey(imageProvider, imageModelId)
+        : sheetRole === "videoEdit"
+          ? videoEditProvider && videoEditModelId
+            ? modelOptionKey(videoEditProvider, videoEditModelId)
             : ""
-          : sheetRole === "translation"
-            ? translationProvider && translationModelId
-              ? modelOptionKey(translationProvider, translationModelId)
+          : sheetRole === "image"
+            ? imageProvider && imageModelId
+              ? modelOptionKey(imageProvider, imageModelId)
               : ""
-            : computerChoice
-              ? modelOptionKey(computerChoice.provider, computerChoice.modelId)
-              : "";
+            : sheetRole === "imageEdit"
+              ? imageEditProvider && imageEditModelId
+                ? modelOptionKey(imageEditProvider, imageEditModelId)
+                : ""
+              : sheetRole === "translation"
+                ? translationProvider && translationModelId
+                  ? modelOptionKey(translationProvider, translationModelId)
+                  : ""
+                : computerChoice
+                  ? modelOptionKey(computerChoice.provider, computerChoice.modelId)
+                  : "";
 
   return (
     <View style={{ flex: 1 }}>
@@ -1342,11 +1363,15 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             currentModels={
               sheetRole === "video"
                 ? currentBot?.videoModels
-                : sheetRole === "image"
-                  ? currentBot?.imageModels
-                  : sheetRole === "translation"
-                    ? currentBot?.translationModels
-                    : undefined
+                : sheetRole === "videoEdit"
+                  ? currentBot?.videoEditModels
+                  : sheetRole === "image"
+                    ? currentBot?.imageModels
+                    : sheetRole === "imageEdit"
+                      ? currentBot?.imageEditModels
+                      : sheetRole === "translation"
+                        ? currentBot?.translationModels
+                        : undefined
             }
             onClose={() => {
               setSheetRole(null);
@@ -1362,8 +1387,12 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
                 if (pending) void resendMessage(pending);
               } else if (sheetRole === "video") {
                 setVideoOverride(choice);
+              } else if (sheetRole === "videoEdit") {
+                setVideoEditOverride(choice);
               } else if (sheetRole === "image") {
                 setImageOverride(choice);
+              } else if (sheetRole === "imageEdit") {
+                setImageEditOverride(choice);
               } else if (sheetRole === "translation") {
                 setTranslationOverride(choice);
               } else {
@@ -1384,6 +1413,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             image={{ provider: imageProvider ?? null, modelId: imageModelId ?? null }}
             videoModels={currentBot?.videoModels ?? null}
             imageModels={currentBot?.imageModels ?? null}
+            videoEdit={{ provider: videoEditProvider ?? null, modelId: videoEditModelId ?? null }}
+            imageEdit={{ provider: imageEditProvider ?? null, modelId: imageEditModelId ?? null }}
+            videoEditModels={currentBot?.videoEditModels ?? null}
+            imageEditModels={currentBot?.imageEditModels ?? null}
             videoPresets={currentBot?.videoPromptPresets ?? null}
             imagePresets={currentBot?.imagePromptPresets ?? null}
             activeVideoPreset={currentBot?.activeVideoPromptPreset ?? null}
@@ -1406,6 +1439,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
             onPickRole={(role) => {
               setMediaOpen(false);
               setSheetRole(role);
+            }}
+            onPickEditRole={(role) => {
+              setMediaOpen(false);
+              setSheetRole(role === "video" ? "videoEdit" : "imageEdit");
             }}
             onPickTranslation={() => {
               setMediaOpen(false);

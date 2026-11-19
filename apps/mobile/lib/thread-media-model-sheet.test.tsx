@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const picked = vi.hoisted(() => ({
   role: null as string | null,
+  editRole: null as string | null,
   preset: null as { role: string; name: string | null } | null,
   presetsChange: null as { role: string; count: number } | null,
   saveDirectory: null as { role: string; value: string | null } | null,
@@ -193,6 +194,10 @@ async function mountSheet(
     image?: { provider: string | null; modelId: string | null };
     videoModels?: { provider: string; model: string }[] | null;
     imageModels?: { provider: string; model: string }[] | null;
+    videoEdit?: { provider: string | null; modelId: string | null };
+    imageEdit?: { provider: string | null; modelId: string | null };
+    videoEditModels?: { provider: string; model: string }[] | null;
+    imageEditModels?: { provider: string; model: string }[] | null;
     videoPresets?: { name: string; prompt: string }[] | null;
     imagePresets?: { name: string; prompt: string }[] | null;
     activeVideoPreset?: string | null;
@@ -231,6 +236,10 @@ async function mountSheet(
         image={options.image ?? { provider: "provider-a", modelId: "image-a" }}
         videoModels={options.videoModels ?? [{ provider: "provider-a", model: "video-a" }]}
         imageModels={options.imageModels ?? [{ provider: "provider-a", model: "image-a" }]}
+        videoEdit={options.videoEdit ?? { provider: null, modelId: null }}
+        imageEdit={options.imageEdit ?? { provider: null, modelId: null }}
+        videoEditModels={options.videoEditModels ?? []}
+        imageEditModels={options.imageEditModels ?? []}
         videoPresets={options.videoPresets ?? null}
         imagePresets={options.imagePresets ?? null}
         activeVideoPreset={options.activeVideoPreset ?? null}
@@ -251,6 +260,9 @@ async function mountSheet(
         showMediaDownload={options.showMediaDownload ?? true}
         onPickRole={(role) => {
           picked.role = role;
+        }}
+        onPickEditRole={(role) => {
+          picked.editRole = role === "video" ? "videoEdit" : "imageEdit";
         }}
         onPickTranslation={() => {
           picked.role = "translation";
@@ -287,6 +299,7 @@ async function mountSheet(
 
 beforeEach(() => {
   picked.role = null;
+  picked.editRole = null;
   picked.preset = null;
   picked.presetsChange = null;
   picked.saveDirectory = null;
@@ -314,6 +327,60 @@ describe("ThreadMediaModelSheet", () => {
     expect(node.textContent).toContain("Image A");
   });
 
+  it("shows the edit model rows after the generation rows and before the presets", async () => {
+    await mountSheet({
+      videoEdit: { provider: "provider-a", modelId: "video-a" },
+      imageEdit: { provider: "provider-a", modelId: "image-a" },
+      videoEditModels: [{ provider: "provider-a", model: "video-a" }],
+      imageEditModels: [{ provider: "provider-a", model: "image-a" }],
+    });
+    const text = node.textContent ?? "";
+    expect(text).toContain("Video edit model");
+    expect(text).toContain("Image edit model");
+    expect(
+      text.indexOf("Video generation model") < text.indexOf("Video edit model") &&
+        text.indexOf("Video edit model") < text.indexOf("Video prompt presets"),
+    ).toBe(true);
+    expect(
+      text.indexOf("Image generation model") < text.indexOf("Image edit model") &&
+        text.indexOf("Image edit model") < text.indexOf("Image prompt presets"),
+    ).toBe(true);
+  });
+
+  it("shows Not set for unset edit models and opens the edit picker on tap", async () => {
+    await mountSheet();
+    const videoRow = node.querySelector<HTMLButtonElement>(
+      '[aria-label="Video edit model: Not set"]',
+    );
+    expect(videoRow).not.toBeNull();
+    await act(async () => videoRow!.click());
+    expect(picked.editRole).toBe("videoEdit");
+    const imageRow = node.querySelector<HTMLButtonElement>(
+      '[aria-label="Image edit model: Not set"]',
+    );
+    expect(imageRow).not.toBeNull();
+    await act(async () => imageRow!.click());
+    expect(picked.editRole).toBe("imageEdit");
+  });
+
+  it("numbers edit fallback models and offers Add edit backup", async () => {
+    await mountSheet({
+      videoEdit: { provider: "provider-a", modelId: "video-a" },
+      videoEditModels: [
+        { provider: "provider-a", model: "video-a" },
+        { provider: "provider-a", model: "video-b" },
+        { provider: "provider-a", model: "video-c" },
+      ],
+    });
+    expect(node.textContent).toContain("2. Video B");
+    expect(node.textContent).toContain("3. Video C");
+    expect(node.textContent).toContain("Add video edit backup");
+    const fallbackRow = node.querySelector<HTMLButtonElement>('[aria-label="Fallback 2: Video B"]');
+    expect(fallbackRow).not.toBeNull();
+    await act(async () => fallbackRow!.click());
+    expect(picked.editRole).toBe("videoEdit");
+  });
+
   it("shows Not set for an unpicked role and opens its picker on tap", async () => {
     await mountSheet({
       video: { provider: null, modelId: null },
@@ -338,6 +405,10 @@ describe("ThreadMediaModelSheet", () => {
           image={{ provider: null, modelId: null }}
           videoModels={null}
           imageModels={null}
+          videoEdit={{ provider: null, modelId: null }}
+          imageEdit={{ provider: null, modelId: null }}
+          videoEditModels={null}
+          imageEditModels={null}
           videoPresets={null}
           imagePresets={null}
           activeVideoPreset={null}
@@ -355,6 +426,7 @@ describe("ThreadMediaModelSheet", () => {
           showMediaPreview
           showMediaDownload
           onPickRole={() => {}}
+          onPickEditRole={() => {}}
           onPickTranslation={() => {}}
           onTranslationSourceChange={() => {}}
           onTranslationTargetChange={() => {}}

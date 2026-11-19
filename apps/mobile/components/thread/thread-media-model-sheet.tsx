@@ -29,13 +29,13 @@ export type MediaActionKind = "favorite" | "share" | "preview" | "download";
 
 /**
  * The 其他模型 panel from the chat's Other models card: one section per
- * media kind (image, video), each with its ordered model list (primary
- * plus fallbacks), its prompt presets, and its save directory; then the
- * translation section (ordered model list, direction, source and target
- * languages, auto-translate and its action switches); then the switches
- * for which actions show on generated media. Model picks happen in the
- * model picker sheet, in place, without leaving the chat; everything
- * else saves here.
+ * media kind (image, video), each with its ordered generation model list
+ * (primary plus fallbacks), its ordered edit model list right after it,
+ * its prompt presets, and its save directory; then the translation section
+ * (ordered model list, direction, source and target languages,
+ * auto-translate and its action switches); then the switches for which
+ * actions show on generated media. Model picks happen in the model picker
+ * sheet, in place, without leaving the chat; everything else saves here.
  */
 export function ThreadMediaModelSheet({
   visible,
@@ -44,6 +44,10 @@ export function ThreadMediaModelSheet({
   image,
   videoModels,
   imageModels,
+  videoEdit,
+  imageEdit,
+  videoEditModels,
+  imageEditModels,
   videoPresets,
   imagePresets,
   activeVideoPreset,
@@ -61,6 +65,7 @@ export function ThreadMediaModelSheet({
   showMediaPreview,
   showMediaDownload,
   onPickRole,
+  onPickEditRole,
   onPickTranslation,
   onTranslationSourceChange,
   onTranslationTargetChange,
@@ -80,6 +85,12 @@ export function ThreadMediaModelSheet({
   /** The full ordered model lists; first is primary, rest are fallbacks. */
   videoModels: readonly BotModelEntry[] | null;
   imageModels: readonly BotModelEntry[] | null;
+  /** The primary edit model per role, with any just-picked override applied. */
+  videoEdit: ThreadModelSave;
+  imageEdit: ThreadModelSave;
+  /** The full ordered edit model lists; first is primary, rest are fallbacks. */
+  videoEditModels: readonly BotModelEntry[] | null;
+  imageEditModels: readonly BotModelEntry[] | null;
   videoPresets: readonly BotPromptPreset[] | null;
   imagePresets: readonly BotPromptPreset[] | null;
   activeVideoPreset: string | null;
@@ -106,6 +117,7 @@ export function ThreadMediaModelSheet({
   /** Whether the download action shows on generated media. */
   showMediaDownload: boolean;
   onPickRole: (role: MediaModelRole) => void;
+  onPickEditRole: (role: MediaModelRole) => void;
   onPickTranslation: () => void;
   onTranslationSourceChange: (source: TranslationSourceLanguage) => void;
   onTranslationTargetChange: (target: TranslationTargetLanguage) => void;
@@ -254,6 +266,13 @@ export function ThreadMediaModelSheet({
           modelLabel: isVideo ? t("Video generation model") : t("Image generation model"),
           addBackupLabel: isVideo ? t("Add video backup") : t("Add image backup"),
           onPick: () => onPickRole(role),
+        })}
+        {modelList({
+          primary: isVideo ? videoEdit : imageEdit,
+          models: isVideo ? videoEditModels : imageEditModels,
+          modelLabel: isVideo ? t("Video edit model") : t("Image edit model"),
+          addBackupLabel: isVideo ? t("Add video edit backup") : t("Add image edit backup"),
+          onPick: () => onPickEditRole(role),
         })}
         <Pressable
           accessibilityRole="button"

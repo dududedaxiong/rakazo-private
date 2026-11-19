@@ -37,6 +37,8 @@ export type MobileBot = Pick<
   | "translationModels"
   | "videoModels"
   | "imageModels"
+  | "videoEditModels"
+  | "imageEditModels"
   | "videoPromptPresets"
   | "activeVideoPromptPreset"
   | "imagePromptPresets"
