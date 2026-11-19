@@ -2132,7 +2132,7 @@ const FakeSheet = ({ children }: { children?: ReactNode }) =>
   createElement("div", { "data-native-sheet": true }, children);
 
 describe("thread composer quick cards", () => {
-  it("shows live values on nine cards in the mockup's order", async () => {
+  it("shows live values on ten cards in the mockup's order", async () => {
     await renderChips();
     expect(
       [...container.querySelectorAll("button")].map((button) => button.getAttribute("aria-label")),
@@ -2146,6 +2146,7 @@ describe("thread composer quick cards", () => {
       "Favorites: No favorites",
       "Background: Default",
       "Backup: Not set up",
+      "Gallery: No generated media",
     ]);
   });
 

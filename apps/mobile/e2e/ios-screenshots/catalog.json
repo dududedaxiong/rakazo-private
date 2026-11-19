@@ -89,7 +89,7 @@
     "id": "files",
     "title": "Files",
     "flow": "flows/files.yaml",
-    "screens": ["artifact", "image"]
+    "screens": ["artifact", "image", "gallery"]
   },
   {
     "id": "skills",

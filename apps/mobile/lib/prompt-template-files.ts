@@ -71,21 +71,22 @@ export function safDisplayPath(directoryUri: string): string | null {
   }
 }
 
-type Saf = typeof import("expo-file-system/legacy").StorageAccessFramework;
+export type Saf = typeof import("expo-file-system/legacy").StorageAccessFramework;
 
-function loadSaf(): Promise<Saf> {
+export function loadSaf(): Promise<Saf> {
   return import("expo-file-system/legacy").then((module) => module.StorageAccessFramework);
 }
 
 /**
  * The export folder, asking once. The system picker opens at Download; the
- * user picks (or creates) the folder, and the grant is kept for later exports.
- * Backing out of the picker is a cancel, not an error.
+ * user picks (or creates) the folder, and the grant is kept for later exports
+ * under `key`, so each export kind keeps its own folder. Backing out of the
+ * picker is a cancel, not an error.
  */
-async function safExportDirectory(saf: Saf): Promise<string> {
+export async function safExportDirectory(saf: Saf, key: string): Promise<string> {
   let stored: string | null = null;
   try {
-    stored = await SecureStore.getItemAsync(PROMPT_TEMPLATE_EXPORT_DIR_KEY);
+    stored = await SecureStore.getItemAsync(key);
   } catch {
     stored = null;
   }
@@ -94,7 +95,7 @@ async function safExportDirectory(saf: Saf): Promise<string> {
   const permission = await saf.requestDirectoryPermissionsAsync(initial);
   if (!permission.granted) throw new PromptTemplateFileError("cancelled");
   try {
-    await SecureStore.setItemAsync(PROMPT_TEMPLATE_EXPORT_DIR_KEY, permission.directoryUri);
+    await SecureStore.setItemAsync(key, permission.directoryUri);
   } catch {
     // The export still lands; only the remember-me step failed.
   }
@@ -124,7 +125,7 @@ async function writeSafFile(saf: Saf, directoryUri: string, fileName: string, co
 /** Android: every template as its own .txt in the export folder. */
 async function exportViaSaf(templates: PromptTemplate[]): Promise<PromptTemplateExportResult> {
   const saf = await loadSaf();
-  const directoryUri = await safExportDirectory(saf);
+  const directoryUri = await safExportDirectory(saf, PROMPT_TEMPLATE_EXPORT_DIR_KEY);
   for (const template of templates) {
     await writeSafFile(saf, directoryUri, promptTemplateFileName(template.name), template.content);
   }

@@ -1,10 +1,10 @@
 import { ChatMarkdown } from "@rakazo_mickvvw/chat-ui/native";
 import type { ArtifactVersion, ArtifactWithContent } from "@rakazo_mickvvw/contracts";
-import { artifactPreviewKind } from "@rakazo_mickvvw/contracts";
+import { ARTIFACT_NAME_MAX_LENGTH, artifactPreviewKind } from "@rakazo_mickvvw/contracts";
 import type { File } from "expo-file-system";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -19,6 +19,7 @@ import {
 import { MediaViewerTitleBar } from "../components/media-viewer-title-bar";
 import { NativeSymbol } from "../components/native-symbol";
 import { PdfPreview } from "../components/pdf-preview";
+import { useTextEditDialog } from "../components/profile-edit-dialog";
 import { SandboxedHtmlPreview } from "../components/sandboxed-html-preview";
 import { VideoPreview } from "../components/video-preview";
 import { formatActivityRelativeTime } from "../lib/activity";
@@ -29,16 +30,16 @@ import {
   getArtifactById,
   listArtifactVersions,
   removeArtifact,
+  renameArtifact,
 } from "../lib/artifacts";
 import { useFloatingHeaderInset } from "../lib/floating-header";
 import { t, useI18n } from "../lib/i18n";
 import { saveGeneratedMedia } from "../lib/media-folders";
-import { regenerateMedia } from "../lib/media-supplementary";
 import { presentMessageActionSheet } from "../lib/message-action-sheet";
-import { showModelErrorAlert } from "../lib/model-error-alert";
 import { native, useResolvedAppearance, useThemedStyles } from "../lib/native";
 import { iosAtLeast } from "../lib/native-controls";
 import { useSideInsets } from "../lib/side-insets";
+import { useMediaRegenerate } from "../lib/use-media-regenerate";
 import { errorText } from "../lib/user-error";
 
 type PreviewContent =
@@ -95,7 +96,7 @@ export default function ArtifactDetailScreen() {
   const navigation = useNavigation();
   const router = useRouter();
   const headerInset = useFloatingHeaderInset();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const colorScheme = useResolvedAppearance();
   const styles = useThemedStyles(createStyles);
 
@@ -174,6 +175,29 @@ export default function ArtifactDetailScreen() {
     );
   }, [artifactId, content, router, t, versions]);
 
+  const rename = useTextEditDialog(t("Rename"), ARTIFACT_NAME_MAX_LENGTH);
+  // The dialog hook rebuilds `ask` every render; the ref keeps the header
+  // callback stable while always calling the latest one.
+  const renameAskRef = useRef(rename.ask);
+  useEffect(() => {
+    renameAskRef.current = rename.ask;
+  });
+  const askRename = useCallback(() => {
+    if (content.status !== "ready") return;
+    renameAskRef.current(content.artifact.name, (name) => {
+      if (!name.trim()) return;
+      void renameArtifact(content.artifact.id, name)
+        .then((result) => {
+          setContent((current) =>
+            current.status === "ready"
+              ? { ...current, artifact: { ...current.artifact, name: result.name } }
+              : current,
+          );
+        })
+        .catch(() => Alert.alert(t("Could not rename {name}. Try again.", { name })));
+    });
+  }, [content, t]);
+
   // The full-screen viewer fetches through the thread the artifact belongs to.
   const imageTarget = content.status === "ready" ? artifactThreadTarget(content.artifact) : null;
   const openImage =
@@ -231,26 +255,17 @@ export default function ArtifactDetailScreen() {
   // app header to rearrange: the file name is already the header title, and
   // regenerate joins share and download there. A completed regeneration
   // loads the new file; a queued one finishes in the background.
-  const [regenerating, setRegenerating] = useState(false);
   const isVideo = content.status === "ready" && content.preview.kind === "video";
   const videoBotId = imageTarget && "botId" in imageTarget ? imageTarget.botId : undefined;
-  const regenerate = useCallback(() => {
-    if (content.status !== "ready" || regenerating) return;
-    const artifactId = content.artifact.id;
-    setRegenerating(true);
-    void regenerateMedia(artifactId)
-      .then((result) => {
-        if (result.status === "queued") {
-          Alert.alert(t("Regenerating…"));
-          return;
-        }
-        if (result.artifactId && result.artifactId !== artifactId) {
-          setSelectedVersionId(result.artifactId);
-        }
-      })
-      .catch((error: unknown) => showModelErrorAlert(t, error, { retry: regenerate, locale }))
-      .finally(() => setRegenerating(false));
-  }, [content, locale, regenerating, t]);
+  // Edit details reworks the video from the supplementary prompt alone
+  // through the edit model; Generate random replays the original prompt
+  // plus preset plus supplementary prompt through the preset model.
+  const { regenerating, startEdit, regenerateRandom, editDialog } = useMediaRegenerate({
+    artifactId: content.status === "ready" ? content.artifact.id : artifactId,
+    kind: "video",
+    botId: content.status === "ready" ? (content.artifact.botId ?? videoBotId) : videoBotId,
+    onNewArtifact: setSelectedVersionId,
+  });
 
   // The media toggles gate only image and video artifacts; documents and
   // other files always keep Share, and never show Download.
@@ -278,15 +293,26 @@ export default function ArtifactDetailScreen() {
               </Pressable>
             ) : null}
             {isVideo ? (
-              <Pressable
-                accessibilityLabel={t("Regenerate")}
-                hitSlop={8}
-                disabled={regenerating}
-                onPress={regenerate}
-                style={styles.headerButton}
-              >
-                <NativeSymbol ios="arrow.clockwise" android="refresh-outline" size={19} />
-              </Pressable>
+              <>
+                <Pressable
+                  accessibilityLabel={t("Edit details")}
+                  hitSlop={8}
+                  disabled={regenerating}
+                  onPress={startEdit}
+                  style={styles.headerButton}
+                >
+                  <NativeSymbol ios="wand.and.rays" android="sparkles-outline" size={19} />
+                </Pressable>
+                <Pressable
+                  accessibilityLabel={t("Generate random")}
+                  hitSlop={8}
+                  disabled={regenerating}
+                  onPress={regenerateRandom}
+                  style={styles.headerButton}
+                >
+                  <NativeSymbol ios="arrow.clockwise" android="refresh-outline" size={19} />
+                </Pressable>
+              </>
             ) : null}
             {showDownloadButton ? (
               <Pressable
@@ -298,6 +324,14 @@ export default function ArtifactDetailScreen() {
                 <NativeSymbol ios="square.and.arrow.down" android="download-outline" size={19} />
               </Pressable>
             ) : null}
+            <Pressable
+              accessibilityLabel={t("Rename")}
+              hitSlop={8}
+              onPress={askRename}
+              style={styles.headerButton}
+            >
+              <NativeSymbol ios="pencil" android="pencil-outline" size={19} />
+            </Pressable>
             <Pressable
               accessibilityLabel={t("Delete")}
               hitSlop={8}
@@ -332,9 +366,15 @@ export default function ArtifactDetailScreen() {
                       ? [
                           {
                             type: "button" as const,
-                            label: t("Regenerate"),
+                            label: t("Edit details"),
+                            icon: { type: "sfSymbol" as const, name: "wand.and.rays" },
+                            onPress: startEdit,
+                          },
+                          {
+                            type: "button" as const,
+                            label: t("Generate random"),
                             icon: { type: "sfSymbol" as const, name: "arrow.clockwise" },
-                            onPress: regenerate,
+                            onPress: regenerateRandom,
                           },
                         ]
                       : []),
@@ -350,6 +390,12 @@ export default function ArtifactDetailScreen() {
                       : []),
                     {
                       type: "button" as const,
+                      label: t("Rename"),
+                      icon: { type: "sfSymbol" as const, name: "pencil" },
+                      onPress: askRename,
+                    },
+                    {
+                      type: "button" as const,
                       label: t("Delete"),
                       icon: { type: "sfSymbol" as const, name: "trash" },
                       tintColor: mobileTokens().destructive,
@@ -362,6 +408,7 @@ export default function ArtifactDetailScreen() {
     });
   }, [
     confirmDelete,
+    askRename,
     content,
     navigation,
     share,
@@ -371,7 +418,8 @@ export default function ArtifactDetailScreen() {
     styles,
     t,
     isVideo,
-    regenerate,
+    startEdit,
+    regenerateRandom,
     regenerating,
   ]);
 
@@ -423,6 +471,8 @@ export default function ArtifactDetailScreen() {
           />
         )}
       </View>
+      {rename.dialog}
+      {editDialog}
     </View>
   );
 }

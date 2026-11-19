@@ -26,6 +26,8 @@ function bot(id = "bot-1"): Bot {
     translationModels: null,
     videoModels: null,
     imageModels: null,
+    videoEditModels: null,
+    imageEditModels: null,
     videoPromptPresets: null,
     activeVideoPromptPreset: null,
     imagePromptPresets: null,

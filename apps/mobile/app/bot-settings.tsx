@@ -70,6 +70,7 @@ import {
   withAvatarColor,
   withAvatarShape,
 } from "../lib/bot-avatar-edit";
+import { sameModelList, samePresetList } from "../lib/bot-model-lists";
 import { deviceVoices, setVoiceForBot, voiceForBot, voiceLabel } from "../lib/bot-voices";
 import { chatModelPickerChoices } from "../lib/chat-model";
 import { COMPUTER_LIFECYCLE_TIMEOUT_MS } from "../lib/computer";
@@ -128,32 +129,6 @@ type MediaModelTestState =
       modelKey: string;
       modelId: string;
     };
-
-/** True when two ordered model lists hold the same entries in the same order. */
-function sameModelList(
-  a: readonly BotModelEntry[] | null | undefined,
-  b: readonly BotModelEntry[] | null | undefined,
-): boolean {
-  const left = a ?? [];
-  const right = b ?? [];
-  return (
-    left.length === right.length &&
-    left.every((item, i) => item.provider === right[i]?.provider && item.model === right[i]?.model)
-  );
-}
-
-/** True when two preset lists hold the same names and prompts in the same order. */
-function samePresetList(
-  a: readonly BotPromptPreset[] | null | undefined,
-  b: readonly BotPromptPreset[] | null | undefined,
-): boolean {
-  const left = a ?? [];
-  const right = b ?? [];
-  return (
-    left.length === right.length &&
-    left.every((item, i) => item.name === right[i]?.name && item.prompt === right[i]?.prompt)
-  );
-}
 
 /**
  * One ordered model list: each row shows its rank (primary first, then
@@ -430,6 +405,8 @@ export default function BotSettingsScreen() {
   const [translationModels, setTranslationModels] = useState<BotModelEntry[]>([]);
   const [videoModels, setVideoModels] = useState<BotModelEntry[]>([]);
   const [imageModels, setImageModels] = useState<BotModelEntry[]>([]);
+  const [videoEditModels, setVideoEditModels] = useState<BotModelEntry[]>([]);
+  const [imageEditModels, setImageEditModels] = useState<BotModelEntry[]>([]);
   const [videoPresets, setVideoPresets] = useState<BotPromptPreset[]>([]);
   const [activeVideoPreset, setActiveVideoPreset] = useState<string | null>(null);
   const [imagePresets, setImagePresets] = useState<BotPromptPreset[]>([]);
@@ -438,6 +415,8 @@ export default function BotSettingsScreen() {
   const [imageTriggerWords, setImageTriggerWords] = useState("");
   const [videoTest, setVideoTest] = useState<MediaModelTestState>({ status: "idle" });
   const [imageTest, setImageTest] = useState<MediaModelTestState>({ status: "idle" });
+  const [videoEditTest, setVideoEditTest] = useState<MediaModelTestState>({ status: "idle" });
+  const [imageEditTest, setImageEditTest] = useState<MediaModelTestState>({ status: "idle" });
   const [translationSource, setTranslationSource] = useState<TranslationSourceLanguage>("auto");
   const [translationTarget, setTranslationTarget] = useState<TranslationTargetLanguage>("auto");
   const [autoTranslate, setAutoTranslate] = useState(false);
@@ -578,6 +557,8 @@ export default function BotSettingsScreen() {
         setTranslationModels(next.translationModels ?? []);
         setVideoModels(next.videoModels ?? []);
         setImageModels(next.imageModels ?? []);
+        setVideoEditModels(next.videoEditModels ?? []);
+        setImageEditModels(next.imageEditModels ?? []);
         setVideoPresets(next.videoPromptPresets ?? []);
         setActiveVideoPreset(next.activeVideoPromptPreset ?? null);
         setImagePresets(next.imagePromptPresets ?? []);
@@ -902,20 +883,28 @@ export default function BotSettingsScreen() {
     setPackError(null);
   }
 
-  async function testMediaModel(kind: "video" | "image", entry: BotModelEntry) {
+  async function testMediaModel(kind: "video" | "image", entry: BotModelEntry, edit = false) {
     if (!botId) return;
     const selected = {
       provider: entry.provider,
       modelId: resolveSelectableModelId(catalog, entry.provider, entry.model),
     };
-    const setTest = kind === "video" ? setVideoTest : setImageTest;
+    const setTest = edit
+      ? kind === "video"
+        ? setVideoEditTest
+        : setImageEditTest
+      : kind === "video"
+        ? setVideoTest
+        : setImageTest;
     const started = Date.now();
     const seconds = () => Math.round(((Date.now() - started) / 1000) * 10) / 10;
     setTest({ status: "testing", modelKey: modelOptionKey(entry.provider, entry.model) });
     try {
       // The probe runs with the active preset, so the test reflects real usage.
-      const preset =
-        kind === "video"
+      // An edit has no preset: the edit prompt alone drives it.
+      const preset = edit
+        ? undefined
+        : kind === "video"
           ? activeBotPromptPreset(videoPresets, activeVideoPreset)
           : activeBotPromptPreset(imagePresets, activeImagePreset);
       const result = await rpc("bots/testMediaModel", {
@@ -946,21 +935,40 @@ export default function BotSettingsScreen() {
   }
 
   /** Applies a tested model in one tap: it moves to primary, the rest stay as fallbacks. */
-  async function applyTestedMediaModel(kind: "video" | "image") {
+  async function applyTestedMediaModel(kind: "video" | "image", edit = false) {
     if (!botId || !bot) return;
-    const test = kind === "video" ? videoTest : imageTest;
+    const test = edit
+      ? kind === "video"
+        ? videoEditTest
+        : imageEditTest
+      : kind === "video"
+        ? videoTest
+        : imageTest;
     if (test.status !== "done" || !test.supported) return;
     const parsed = parseModelOptionKey(test.modelKey);
     if (!parsed) return;
-    const models = kind === "video" ? videoModels : imageModels;
+    const models = edit
+      ? kind === "video"
+        ? videoEditModels
+        : imageEditModels
+      : kind === "video"
+        ? videoModels
+        : imageModels;
     const next = moveBotModelToFront(models, { provider: parsed.provider, model: parsed.modelId });
-    if (kind === "video") setVideoModels(next);
+    if (edit) {
+      if (kind === "video") setVideoEditModels(next);
+      else setImageEditModels(next);
+    } else if (kind === "video") setVideoModels(next);
     else setImageModels(next);
     try {
-      const updated = await rpc(
-        "bots/update",
-        kind === "video" ? { botId, videoModels: next } : { botId, imageModels: next },
-      );
+      const input = edit
+        ? kind === "video"
+          ? { botId, videoEditModels: next }
+          : { botId, imageEditModels: next }
+        : kind === "video"
+          ? { botId, videoModels: next }
+          : { botId, imageModels: next };
+      const updated = await rpc("bots/update", input);
       setBot((prev) => (prev ? { ...prev, ...updated } : prev));
     } catch (err) {
       setError(errorText(err, t("Could not save bot")));
@@ -988,6 +996,8 @@ export default function BotSettingsScreen() {
         translationModels?: BotModelEntry[] | null;
         videoModels?: BotModelEntry[] | null;
         imageModels?: BotModelEntry[] | null;
+        videoEditModels?: BotModelEntry[] | null;
+        imageEditModels?: BotModelEntry[] | null;
         videoPromptPresets?: BotPromptPreset[] | null;
         activeVideoPromptPreset?: string | null;
         imagePromptPresets?: BotPromptPreset[] | null;
@@ -1030,6 +1040,12 @@ export default function BotSettingsScreen() {
       }
       if (!sameModelList(imageModels, bot.imageModels)) {
         input.imageModels = imageModels;
+      }
+      if (!sameModelList(videoEditModels, bot.videoEditModels)) {
+        input.videoEditModels = videoEditModels;
+      }
+      if (!sameModelList(imageEditModels, bot.imageEditModels)) {
+        input.imageEditModels = imageEditModels;
       }
       if (!samePresetList(videoPresets, bot.videoPromptPresets)) {
         input.videoPromptPresets = videoPresets;
@@ -1104,6 +1120,8 @@ export default function BotSettingsScreen() {
       !sameModelList(translationModels, bot.translationModels) ||
       !sameModelList(videoModels, bot.videoModels) ||
       !sameModelList(imageModels, bot.imageModels) ||
+      !sameModelList(videoEditModels, bot.videoEditModels) ||
+      !sameModelList(imageEditModels, bot.imageEditModels) ||
       !samePresetList(videoPresets, bot.videoPromptPresets) ||
       (activeVideoPreset ?? null) !== (bot.activeVideoPromptPreset ?? null) ||
       !samePresetList(imagePresets, bot.imagePromptPresets) ||
@@ -1365,6 +1383,38 @@ export default function BotSettingsScreen() {
                   }}
                 />
               </View>
+              <OrderedModelList
+                kind="video"
+                label={t("Video edit model")}
+                models={videoEditModels}
+                onChange={(next) => {
+                  setVideoEditModels(next);
+                  setVideoEditTest({ status: "idle" });
+                }}
+                addChoices={addChoices(videoEditModels)}
+                catalog={catalog}
+                test={videoEditTest}
+                onTest={(entry) => void testMediaModel("video", entry, true)}
+                onApplyPrimary={() => void applyTestedMediaModel("video", true)}
+                testable
+                labelFor={labelForModelEntry}
+              />
+              <OrderedModelList
+                kind="image"
+                label={t("Image edit model")}
+                models={imageEditModels}
+                onChange={(next) => {
+                  setImageEditModels(next);
+                  setImageEditTest({ status: "idle" });
+                }}
+                addChoices={addChoices(imageEditModels)}
+                catalog={catalog}
+                test={imageEditTest}
+                onTest={(entry) => void testMediaModel("image", entry, true)}
+                onApplyPrimary={() => void applyTestedMediaModel("image", true)}
+                testable
+                labelFor={labelForModelEntry}
+              />
               <OrderedModelList
                 kind="translation"
                 label={t("Translation model")}

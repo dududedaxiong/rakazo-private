@@ -1,5 +1,25 @@
 import { attachmentExtensionForMimeType } from "@rakazo_mickvvw/core";
 
+/** Base64 for raw bytes; Buffer when available, `btoa` otherwise. */
+export function bytesToBase64(bytes: Uint8Array): string {
+  if (typeof Buffer !== "undefined") return Buffer.from(bytes).toString("base64");
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+/** Raw bytes for base64; the inverse of `bytesToBase64`. */
+export function base64ToBytes(base64: string): Uint8Array {
+  if (typeof Buffer !== "undefined") return new Uint8Array(Buffer.from(base64, "base64"));
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
 // Constructors, not literals: an unknown property escape must fail here, not while parsing.
 const emojiSequences = (() => {
   try {

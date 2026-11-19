@@ -654,6 +654,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Read replies aloud": "Antworten vorlesen",
   Save: "Speichern",
   "Saving…": "Wird gespeichert…",
+  "Deleting…": "Wird gelöscht…",
   "Space default": "Space-Standard",
   "Can't read images": "Kann keine Bilder lesen",
   Thinking: "Denkmodus",
@@ -1991,6 +1992,49 @@ export const DE_MESSAGES: Record<string, string> = {
   "Image prompt preset": "Prompt-Preset für Bilder",
   "Image prompt presets": "Prompt-Presets für Bilder",
   "Other models": "Andere Modelle",
+
+  Gallery: "Galerie",
+  Images: "Bilder",
+  Videos: "Videos",
+  "{count} item": "{count} Element",
+  "{count} items": "{count} Elemente",
+  "No generated images yet": "Noch keine generierten Bilder",
+  "No generated videos yet": "Noch keine generierten Videos",
+  "No generated images or videos yet": "Noch keine generierten Bilder oder Videos",
+  "No generated media": "Noch nichts generiert",
+  "Could not load gallery.": "Galerie konnte nicht geladen werden.",
+  "Save to device": "Auf dem Gerät speichern",
+  "Delete {count} items?": "{count} Elemente löschen?",
+  "Deleted files can't be recovered. Save them to your device first.":
+    "Gelöschte Dateien können nicht wiederhergestellt werden. Bitte zuerst auf dem Gerät speichern.",
+  "Selected files are over 500 MB. Save them in smaller batches.":
+    "Die ausgewählten Dateien sind über 500 MB. Bitte in kleineren Stapeln speichern.",
+  "Could not save {name}. Try again.":
+    "{name} konnte nicht gespeichert werden. Bitte erneut versuchen.",
+  "Could not save the selected files. Try again.":
+    "Die ausgewählten Dateien konnten nicht gespeichert werden. Bitte erneut versuchen.",
+  "Could not delete {names}. Try again.":
+    "{names} konnten nicht gelöscht werden. Bitte erneut versuchen.",
+  "Could not rename {name}. Try again.":
+    "{name} konnte nicht umbenannt werden. Bitte erneut versuchen.",
+  "Filter by type": "Nach Typ filtern",
+  "Long press to select": "Lange drücken zum Auswählen",
+  "Video edit model": "Videobearbeitungsmodell",
+  "Image edit model": "Bildbearbeitungsmodell",
+  "Video trigger words": "Auslösewörter für Videos",
+  "Image trigger words": "Auslösewörter für Bilder",
+  "Edit details": "Details bearbeiten",
+  "Generate random": "Neu zufällig generieren",
+  "Reference image": "Referenzbild",
+  "Choose a reference image": "Referenzbild wählen",
+  "Start edit": "Bearbeitung starten",
+  "Open settings": "Einstellungen öffnen",
+  "This bot has no image edit model yet. Add one in Other models first.":
+    "Dieser Bot hat noch kein Bildbearbeitungsmodell. Bitte zuerst unter „Andere Modelle“ hinzufügen.",
+  "This bot has no video edit model yet. Add one in Other models first.":
+    "Dieser Bot hat noch kein Videobearbeitungsmodell. Bitte zuerst unter „Andere Modelle“ hinzufügen.",
+  "Could not read the selected image. Try again.":
+    "Das ausgewählte Bild konnte nicht gelesen werden. Bitte erneut versuchen.",
   "My subscription": "Mein Abonnement",
   "New preset": "Neues Preset",
   "No preset": "Kein Preset",

@@ -17,6 +17,7 @@ import { promptAiConsent } from "./ai-consent";
 import type { ApiRequestContext } from "./api";
 import { aiConsentCoalesceKey, captureApiRequestContext, rpc } from "./api";
 import { subscribeConfirmedSpaceSwitch } from "./api-server";
+import { bytesToBase64 } from "./artifact-file";
 import { voiceForBot } from "./bot-voices";
 import { loadDeviceVoiceEnabled } from "./device-voice";
 import { t } from "./i18n";
@@ -1016,14 +1017,4 @@ async function playWithNativeAudio(bytes: Uint8Array, session?: HostedSession): 
       // already gone
     }
   }
-}
-
-function bytesToBase64(bytes: Uint8Array): string {
-  if (typeof Buffer !== "undefined") return Buffer.from(bytes).toString("base64");
-  let binary = "";
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
-  }
-  return btoa(binary);
 }

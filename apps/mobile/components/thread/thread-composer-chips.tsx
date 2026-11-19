@@ -10,9 +10,12 @@ import { primaryBotModel } from "@rakazo_mickvvw/contracts";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { formatActivityRelativeTime } from "../../lib/activity";
 import { rpc } from "../../lib/api";
 import { mobileTokens } from "../../lib/appearance";
+import { listSpaceArtifacts } from "../../lib/artifacts";
 import { useCustomSettings } from "../../lib/custom-settings";
+import { isGeneratedMedia } from "../../lib/gallery";
 import { useI18n } from "../../lib/i18n";
 import type { MobileBot, MobileModel } from "../../lib/mobile-types";
 import { NativeSymbol } from "../native-symbol";
@@ -28,7 +31,8 @@ export type ComposerChip = {
     | "routines"
     | "favorites"
     | "background"
-    | "backup";
+    | "backup"
+    | "gallery";
   label: string;
   value: string;
   active: boolean;
@@ -87,6 +91,7 @@ export function ThreadComposerChips({
   const [computerStatus, setComputerStatus] = useState<ComputerStatus | null>(null);
   const [routines, setRoutines] = useState<Routine[] | null>(null);
   const [backupHost, setBackupHost] = useState<string | null>(null);
+  const [latestGeneratedAt, setLatestGeneratedAt] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,6 +105,22 @@ export function ThreadComposerChips({
         setBackupHost(null);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    // The gallery card shows when the latest generated image or video landed.
+    // A page can hold only non-generated bot files, so scan a page and filter.
+    void listSpaceArtifacts({ madeByBots: true, sort: "date-desc", limit: 60 })
+      .then((page) => {
+        if (cancelled) return;
+        const latest = page.items.find((item) => isGeneratedMedia(item));
+        setLatestGeneratedAt(latest ? latest.createdAt : null);
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -261,6 +282,15 @@ export function ThreadComposerChips({
         active: Boolean(backupHost),
         onPress: onOpenBackup,
       },
+      {
+        id: "gallery",
+        label: t("Gallery"),
+        value: latestGeneratedAt
+          ? formatActivityRelativeTime(latestGeneratedAt)
+          : t("No generated media"),
+        active: Boolean(latestGeneratedAt),
+        onPress: () => router.push("/gallery"),
+      },
     ];
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -281,6 +311,7 @@ export function ThreadComposerChips({
     favoriteCount,
     backgroundLabel,
     backupHost,
+    latestGeneratedAt,
     t,
   ]);
 
@@ -292,7 +323,7 @@ export function ThreadComposerChips({
   // The quick row from the chat mockup (v3): five big cards in one horizontally
   // scrolling row, icon on top, name in the middle, live value underneath in
   // small grey type. Card width matches the v3 grid (412px phone, 12px insets,
-  // 7px gaps -> 72px a card); the row scrolls so all nine stay reachable.
+  // 7px gaps -> 72px a card); the row scrolls so all ten stay reachable.
   return (
     <ScrollView
       horizontal
@@ -358,7 +389,9 @@ export function ThreadComposerChips({
                               ? "bookmark"
                               : chip.id === "backup"
                                 ? "icloud"
-                                : "photo"
+                                : chip.id === "gallery"
+                                  ? "photo"
+                                  : "photo"
               }
               android={
                 chip.id === "mainModel"
@@ -377,7 +410,9 @@ export function ThreadComposerChips({
                               ? "bookmark-outline"
                               : chip.id === "backup"
                                 ? "cloud-upload-outline"
-                                : "image-outline"
+                                : chip.id === "gallery"
+                                  ? "images-outline"
+                                  : "image-outline"
               }
               size={21}
               color={tokens.link}

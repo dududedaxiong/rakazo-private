@@ -19,9 +19,8 @@ import { imageDismissBackdropOpacity, shouldDismissImage } from "../lib/image-di
 import type { ImageSize } from "../lib/inline-image";
 import { fitImageSize } from "../lib/inline-image";
 import { saveGeneratedMedia } from "../lib/media-folders";
-import { regenerateMedia } from "../lib/media-supplementary";
-import { showModelErrorAlert } from "../lib/model-error-alert";
 import { iosAtLeast } from "../lib/native-controls";
+import { useMediaRegenerate } from "../lib/use-media-regenerate";
 import { errorText } from "../lib/user-error";
 import { GlassIconButton } from "./glass-icon-button";
 import { MediaViewerTitleBar } from "./media-viewer-title-bar";
@@ -220,9 +219,9 @@ function ZoomableImage({
  * Full-screen image viewer: zoom, share or export through the system sheet, close. Rendered as
  * a transparent stack screen (see app/image.tsx) so dragging reveals the thread underneath.
  * A React Native Modal instead leaves the viewer black on iOS after cancelling the share sheet.
- * The header names the file on the left, with share, regenerate, download, and close on the
- * right; the title bar under it switches the prompt preset, supplementary prompt, and model
- * for the next generation.
+ * The header names the file on the left, with share, edit details, generate random, download,
+ * and close on the right; the title bar under it switches the prompt preset, supplementary
+ * prompt, and model for the next generation.
  */
 export function ImageArtifactViewer({
   threadTarget,
@@ -242,7 +241,7 @@ export function ImageArtifactViewer({
   showShare?: boolean;
   onClose: () => void;
 }) {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const tokens = mobileTokens();
   const insets = useSafeAreaInsets();
   const dismissY = useSharedValue(0);
@@ -273,7 +272,19 @@ export function ImageArtifactViewer({
   // loads that file instead of the one it opened with.
   const [activeArtifactId, setActiveArtifactId] = useState(target.artifactId);
   const [reloadKey, setReloadKey] = useState(0);
-  const [regenerating, setRegenerating] = useState(false);
+  // Re-renders this image: Edit details reworks it from the supplementary
+  // prompt alone through the edit model; Generate random replays the
+  // original prompt plus preset plus supplementary prompt through the
+  // preset model. A completed regeneration loads the new file here; a
+  // queued one finishes in the background and the new file arrives as its
+  // own message.
+  const { regenerating, startEdit, regenerateRandom, editDialog } = useMediaRegenerate({
+    artifactId: activeArtifactId,
+    kind: "image",
+    botId: targetBotId,
+    onNewArtifact: setActiveArtifactId,
+    onReload: () => setReloadKey((key) => key + 1),
+  });
   const fail = (error: unknown) =>
     setState({
       status: "error",
@@ -314,28 +325,6 @@ export function ImageArtifactViewer({
       })
       .catch((error) => Alert.alert(t("Could not save image"), errorText(error, t("Try again."))));
 
-  // Re-renders this image with its prompt preset plus supplementary prompt.
-  // A completed regeneration loads the new file here; a queued one finishes
-  // in the background and the new file arrives as its own message.
-  const regenerate = () => {
-    if (regenerating) return;
-    setRegenerating(true);
-    void regenerateMedia(activeArtifactId)
-      .then((result) => {
-        if (result.status === "queued") {
-          Alert.alert(t("Regenerating…"));
-          return;
-        }
-        if (result.artifactId && result.artifactId !== activeArtifactId) {
-          setActiveArtifactId(result.artifactId);
-          return;
-        }
-        setReloadKey((key) => key + 1);
-      })
-      .catch((error: unknown) => showModelErrorAlert(t, error, { retry: regenerate, locale }))
-      .finally(() => setRegenerating(false));
-  };
-
   return (
     // Insets come from the SafeAreaProvider mounted by app/image.tsx, seeded with the window
     // metrics so they are right on the first frame.
@@ -372,12 +361,20 @@ export function ImageArtifactViewer({
             />
           ) : null}
           <GlassIconButton
-            accessibilityLabel={t("Regenerate")}
+            accessibilityLabel={t("Edit details")}
+            ios="wand.and.rays"
+            android="sparkles-outline"
+            iconSize={18}
+            disabled={regenerating}
+            onPress={startEdit}
+          />
+          <GlassIconButton
+            accessibilityLabel={t("Generate random")}
             ios="arrow.clockwise"
             android="refresh-outline"
             iconSize={18}
             disabled={regenerating}
-            onPress={regenerate}
+            onPress={regenerateRandom}
           />
           {showDownload ? (
             <GlassIconButton
@@ -428,6 +425,7 @@ export function ImageArtifactViewer({
           />
         )}
       </View>
+      {editDialog}
     </Animated.View>
   );
 }

@@ -28,6 +28,11 @@ export function removeArtifact(artifactId: string) {
   return rpc("artifacts/remove", { artifactId });
 }
 
+/** Renames the family's latest version; the server returns the saved name. */
+export function renameArtifact(artifactId: string, name: string) {
+  return rpc("artifacts/rename", { artifactId, name });
+}
+
 /** Group scope wins: a bot-scoped read drops rows that also have a group id. */
 export function artifactThreadTarget(
   artifact: Pick<Artifact, "botId" | "groupId">,

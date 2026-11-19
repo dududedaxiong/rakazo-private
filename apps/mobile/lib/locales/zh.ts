@@ -900,6 +900,7 @@ export const ZH_MESSAGES: Record<string, string> = {
   Save: "保存",
   "Saved.": "已保存。",
   "Saving…": "正在保存…",
+  "Deleting…": "删除中…",
   "Scheduled tasks": "计划任务",
   Search: "搜索",
   "Search apps": "搜索应用",
@@ -1166,6 +1167,50 @@ export const ZH_MESSAGES: Record<string, string> = {
     "这将删除此制品的全部 {count} 个版本，且无法撤销。",
   Versions: "版本",
   "No preview for this file type.": "此文件类型无法预览。",
+
+  Gallery: "画廊",
+  Images: "图片",
+  Videos: "视频",
+  "Date ↓": "日期 ↓",
+  "Date ↑": "日期 ↑",
+  "Size ↓": "大小 ↓",
+  "Size ↑": "大小 ↑",
+  "{count} item": "{count} 项",
+  "{count} items": "{count} 项",
+  "No generated images yet": "还没有生成的图片",
+  "No generated videos yet": "还没有生成的视频",
+  "No generated images or videos yet": "还没有生成的图片或视频",
+  "No generated media": "暂无生成",
+  "Could not load gallery.": "无法加载画廊。",
+  "Save to device": "保存到本地",
+  "Delete {count} items?": "删除 {count} 项？",
+  "Deleted files can't be recovered. Save them to your device first.":
+    "删除后服务器上的文件无法恢复，请先保存到本地。",
+  "Selected files are over 500 MB. Save them in smaller batches.":
+    "选中的文件超过 500 MB，请分批保存。",
+  "Could not save {name}. Try again.": "无法保存 {name}，请重试。",
+  "Could not save the selected files. Try again.": "无法保存选中的文件，请重试。",
+  "Could not delete {names}. Try again.": "无法删除 {names}，请重试。",
+  "Could not rename {name}. Try again.": "无法重命名 {name}，请重试。",
+  "Filter by type": "按类型筛选",
+  "Long press to select": "长按以选择",
+
+  "Video edit model": "视频编辑模型",
+  "Image edit model": "图片编辑模型",
+  "Video trigger words": "视频触发词",
+  "Image trigger words": "图片触发词",
+
+  "Edit details": "细节修改",
+  "Generate random": "随机生成",
+  "Reference image": "参考图",
+  "Choose a reference image": "选择参考图",
+  "Start edit": "开始修改",
+  "Open settings": "去设置",
+  "This bot has no image edit model yet. Add one in Other models first.":
+    "这个机器人还没有配置图片编辑模型，请先在「其他模型」里添加。",
+  "This bot has no video edit model yet. Add one in Other models first.":
+    "这个机器人还没有配置视频编辑模型，请先在「其他模型」里添加。",
+  "Could not read the selected image. Try again.": "无法读取选中的图片，请重试。",
 
   "Your phone's built-in voice — free, no account needed": "手机自带的语音 — 免费，无需账户",
   "Speaks with your phone's own text-to-speech instead of a connected provider.":
