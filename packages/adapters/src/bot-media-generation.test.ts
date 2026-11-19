@@ -51,6 +51,17 @@ const videoBot = {
   videoModels: [{ provider: "openai_compatible", model: "video-model" }],
 };
 const bothBot = { ...imageBot, ...videoBot };
+const editImageBot = {
+  ...noMediaBot,
+  imageEditModels: [{ provider: "openai_compatible", model: "edit-model" }],
+};
+const fallbackEditImageBot = {
+  ...noMediaBot,
+  imageEditModels: [
+    { provider: "openai_compatible", model: "primary-edit-model" },
+    { provider: "openai_compatible", model: "fallback-edit-model" },
+  ],
+};
 const fallbackImageBot = {
   ...noMediaBot,
   imageModels: [
@@ -287,6 +298,73 @@ describe("bot media routing", () => {
     });
   });
 
+  it("routes an image edit to the bot's edit model with the original as a reference", async () => {
+    await withChatServer(`data:image/png;base64,${tinyPngBase64}`, async (baseUrl, seen) => {
+      mockedResolveKey.mockResolvedValue(resolveKeyValue(baseUrl));
+      const fallback = new FakeMediaGenerationProvider();
+      const provider = await resolveBotMediaGenerationProvider(deps, scope, editImageBot, fallback);
+      expect(provider?.editCapabilities).toEqual({ images: true, video: false });
+      // The generation capability still counts the global provider: a kind
+      // the bot did not configure answers from it, as the routing test above
+      // already shows for video.
+      const media = await provider?.generateImage(
+        {
+          prompt: "add a cat",
+          references: [{ bytes: tinyPng, mimeType: "image/png" }],
+        },
+        context,
+      );
+      expect(media).toEqual({ bytes: tinyPng, mimeType: "image/png", modelId: "edit-model" });
+      expect(seen).toHaveLength(1);
+      expect(seen[0]?.model).toBe("edit-model");
+      expect(seen[0]?.messages).toEqual([
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "add a cat" },
+            {
+              type: "image_url",
+              image_url: { url: `data:image/png;base64,${tinyPngBase64}` },
+            },
+          ],
+        },
+      ]);
+      // Without a reference the edit-only bot has no generation list, so the
+      // global provider answers instead of the edit model.
+      expect(await provider?.generateImage({ prompt: "画一只猫" }, context)).toEqual({
+        bytes: tinyPng,
+        mimeType: "image/png",
+      });
+      expect(seen).toHaveLength(1);
+    });
+  });
+
+  it("tries the next edit model when the primary edit model no longer resolves", async () => {
+    await withChatServer(`data:image/png;base64,${tinyPngBase64}`, async (baseUrl, seen) => {
+      mockedResolveKey.mockImplementation(async (_deps, _scope, _provider, modelId) => {
+        if (modelId === "primary-edit-model") throw new Error("not connected");
+        return resolveKeyValue(baseUrl);
+      });
+      const fallback = new FakeMediaGenerationProvider();
+      const provider = await resolveBotMediaGenerationProvider(
+        deps,
+        scope,
+        fallbackEditImageBot,
+        fallback,
+      );
+      const media = await provider?.generateImage(
+        {
+          prompt: "add a cat",
+          references: [{ bytes: tinyPng, mimeType: "image/png" }],
+        },
+        context,
+      );
+      expect(media?.modelId).toBe("fallback-edit-model");
+      expect(seen).toHaveLength(1);
+      expect(seen[0]?.model).toBe("fallback-edit-model");
+    });
+  });
+
   it("tries the fallback when the primary no longer resolves", async () => {
     await withChatServer(`data:image/png;base64,${tinyPngBase64}`, async (baseUrl, seen) => {
       mockedResolveKey.mockImplementation(async (_deps, _scope, _provider, modelId) => {
@@ -378,6 +456,68 @@ describe("BotMediaGenerationProvider", () => {
     await expect(provider.pollVideo("whatever", context)).rejects.toBeInstanceOf(
       MediaGenerationError,
     );
+  });
+
+  it("routes an edit with references to the edit list, never the generation list", async () => {
+    const generationCall = vi.fn(async () => ({ bytes: tinyPng, mimeType: "image/png" as const }));
+    const editCall = vi.fn(async () => ({ bytes: tinyPng, mimeType: "image/png" as const }));
+    const provider = new BotMediaGenerationProvider(
+      { calls: [{ modelId: "generation-model", call: generationCall }], failures: [] },
+      noCalls,
+      undefined,
+      { calls: [{ modelId: "edit-model", call: editCall }], failures: [] },
+    );
+    expect(provider.editCapabilities).toEqual({ images: true, video: false });
+    const media = await provider.generateImage(
+      { prompt: "add a cat", references: [{ bytes: tinyPng, mimeType: "image/png" }] },
+      context,
+    );
+    expect(media.modelId).toBe("edit-model");
+    expect(editCall).toHaveBeenCalledTimes(1);
+    expect(generationCall).not.toHaveBeenCalled();
+  });
+
+  it("falls through the edit list in order and never drops to a fresh generation", async () => {
+    const failingEdit = vi.fn(async () => {
+      throw new MediaGenerationError("provider_failure", "boom");
+    });
+    const editCall = vi.fn(async () => ({ bytes: tinyPng, mimeType: "image/png" as const }));
+    const generationCall = vi.fn(async () => ({ bytes: tinyPng, mimeType: "image/png" as const }));
+    const provider = new BotMediaGenerationProvider(
+      { calls: [{ modelId: "generation-model", call: generationCall }], failures: [] },
+      noCalls,
+      undefined,
+      {
+        calls: [
+          { modelId: "edit-primary", call: failingEdit },
+          { modelId: "edit-fallback", call: editCall },
+        ],
+        failures: [],
+      },
+    );
+    const media = await provider.generateImage(
+      { prompt: "add a cat", references: [{ bytes: tinyPng, mimeType: "image/png" }] },
+      context,
+    );
+    expect(media.modelId).toBe("edit-fallback");
+    expect(failingEdit).toHaveBeenCalledTimes(1);
+    expect(editCall).toHaveBeenCalledTimes(1);
+    expect(generationCall).not.toHaveBeenCalled();
+  });
+
+  it("throws unsupported for an edit with no edit models", async () => {
+    const provider = new BotMediaGenerationProvider(
+      { calls: [{ modelId: "generation-model", call: imageCall }], failures: [] },
+      noCalls,
+      undefined,
+    );
+    expect(provider.editCapabilities).toEqual({ images: false, video: false });
+    await expect(
+      provider.generateImage(
+        { prompt: "add a cat", references: [{ bytes: tinyPng, mimeType: "image/png" }] },
+        context,
+      ),
+    ).rejects.toBeInstanceOf(MediaGenerationError);
   });
 
   it("uses the fallback when the primary fails and marks which model produced the result", async () => {

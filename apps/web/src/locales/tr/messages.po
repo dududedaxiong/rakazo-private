@@ -3970,6 +3970,10 @@ msgstr "Her ad yalnızca bir kez kullanılabilir."
 msgid "Edit"
 msgstr "Düzenle"
 
+#: src/pages/shell/media-result.tsx
+msgid "Edit details"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "Önce düzenle"
@@ -4588,6 +4592,7 @@ msgid "Generate invite codes"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Generate random"
 msgstr ""
 
@@ -4793,6 +4798,10 @@ msgstr "Bunu duyduysan ses hazır."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "Yoksay"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image edit model"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Image generation"
@@ -6127,10 +6136,6 @@ msgstr "Bot yok"
 msgid "No bots match"
 msgstr "Eşleşen bot yok"
 
-#: src/pages/Shell.tsx
-msgid "No earlier message to regenerate from"
-msgstr ""
-
 #: src/pages/Favorites.tsx
 msgid "No favorites yet"
 msgstr ""
@@ -7176,6 +7181,10 @@ msgstr "İşe alım ve İK"
 msgid "Redirect URI"
 msgstr "Yönlendirme URI'si"
 
+#: src/pages/shell/media-result.tsx
+msgid "Reference image"
+msgstr ""
+
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Referral"
 msgstr ""
@@ -7205,10 +7214,6 @@ msgstr "Görünümü yenile"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refreshing…"
 msgstr "Yenileniyor…"
-
-#: src/pages/shell/media-result.tsx
-msgid "Regenerate"
-msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Regenerated"
@@ -8535,6 +8540,10 @@ msgstr "Başlat"
 msgid "Start {trialDays}-day free trial"
 msgstr "{trialDays} günlük ücretsiz denemeyi başlat"
 
+#: src/pages/shell/media-result.tsx
+msgid "Start edit"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Start plan"
 msgstr "Planı başlat"
@@ -8572,6 +8581,7 @@ msgstr "Başlıyor"
 #: src/lib/roster-status.ts
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Starting…"
 msgstr "Başlatılıyor…"
 
@@ -9555,7 +9565,9 @@ msgstr ""
 msgid "Unread"
 msgstr "Okunmamış"
 
+#. placeholder {0}: editFile.name
 #. placeholder {0}: pending.file.name
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "Desteklenmeyen dosya türü: {0}"
@@ -9857,6 +9869,10 @@ msgstr "Doğrulanıyor…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Sürüm"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video edit model"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Video generation"

@@ -3970,6 +3970,10 @@ msgstr "Każdej nazwy można użyć raz."
 msgid "Edit"
 msgstr "Edytuj"
 
+#: src/pages/shell/media-result.tsx
+msgid "Edit details"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "Najpierw edytuj"
@@ -4588,6 +4592,7 @@ msgid "Generate invite codes"
 msgstr "Generuj kody zaproszenia"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Generate random"
 msgstr ""
 
@@ -4793,6 +4798,10 @@ msgstr "Jeśli było słychać próbkę, głos jest gotowy."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "Ignoruj"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image edit model"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Image generation"
@@ -6127,10 +6136,6 @@ msgstr "Brak botów"
 msgid "No bots match"
 msgstr "Brak pasujących botów"
 
-#: src/pages/Shell.tsx
-msgid "No earlier message to regenerate from"
-msgstr "Brak wcześniejszej wiadomości do ponownego wygenerowania"
-
 #: src/pages/Favorites.tsx
 msgid "No favorites yet"
 msgstr "Brak ulubionych"
@@ -7176,6 +7181,10 @@ msgstr "Rekrutacja i HR"
 msgid "Redirect URI"
 msgstr "Adres URI przekierowania"
 
+#: src/pages/shell/media-result.tsx
+msgid "Reference image"
+msgstr ""
+
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Referral"
 msgstr ""
@@ -7205,10 +7214,6 @@ msgstr "Odśwież widok"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refreshing…"
 msgstr "Odświeżanie…"
-
-#: src/pages/shell/media-result.tsx
-msgid "Regenerate"
-msgstr "Wygeneruj ponownie"
 
 #: src/pages/shell/media-result.tsx
 msgid "Regenerated"
@@ -8535,6 +8540,10 @@ msgstr "Rozpocznij"
 msgid "Start {trialDays}-day free trial"
 msgstr "Rozpocznij bezpłatny okres próbny na {trialDays} dni"
 
+#: src/pages/shell/media-result.tsx
+msgid "Start edit"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Start plan"
 msgstr "Uruchom plan"
@@ -8572,6 +8581,7 @@ msgstr "Uruchamianie"
 #: src/lib/roster-status.ts
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Starting…"
 msgstr "Uruchamianie…"
 
@@ -9555,7 +9565,9 @@ msgstr ""
 msgid "Unread"
 msgstr "Nieprzeczytane"
 
+#. placeholder {0}: editFile.name
 #. placeholder {0}: pending.file.name
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "Nieobsługiwany typ pliku: {0}"
@@ -9857,6 +9869,10 @@ msgstr "Weryfikowanie…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Wersja"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video edit model"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Video generation"

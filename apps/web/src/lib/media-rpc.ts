@@ -36,6 +36,7 @@ export async function setSupplementaryPrompt(
 export async function regenerateMedia(
   rpc: ReturnType<typeof createSpaceRpc>,
   artifactId: string,
+  options?: { mode?: "edit" | "random"; referenceArtifactId?: string },
 ): Promise<MediaRegenerateResult> {
-  return rpc.media.regenerate({ artifactId });
+  return rpc.media.regenerate({ artifactId, ...options });
 }

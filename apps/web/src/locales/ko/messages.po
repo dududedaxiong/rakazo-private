@@ -3970,6 +3970,10 @@ msgstr "각 이름은 한 번만 사용할 수 있습니다."
 msgid "Edit"
 msgstr "편집"
 
+#: src/pages/shell/media-result.tsx
+msgid "Edit details"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "수정 후 보내기"
@@ -4588,6 +4592,7 @@ msgid "Generate invite codes"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Generate random"
 msgstr ""
 
@@ -4793,6 +4798,10 @@ msgstr "샘플이 들렸다면 음성 설정이 완료되었습니다."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "무시"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image edit model"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Image generation"
@@ -6127,10 +6136,6 @@ msgstr "봇 없음"
 msgid "No bots match"
 msgstr "일치하는 봇 없음"
 
-#: src/pages/Shell.tsx
-msgid "No earlier message to regenerate from"
-msgstr ""
-
 #: src/pages/Favorites.tsx
 msgid "No favorites yet"
 msgstr ""
@@ -7176,6 +7181,10 @@ msgstr "채용 및 HR"
 msgid "Redirect URI"
 msgstr "리디렉션 URI"
 
+#: src/pages/shell/media-result.tsx
+msgid "Reference image"
+msgstr ""
+
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Referral"
 msgstr ""
@@ -7205,10 +7214,6 @@ msgstr "화면 새로고침"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refreshing…"
 msgstr "새로고침 중…"
-
-#: src/pages/shell/media-result.tsx
-msgid "Regenerate"
-msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Regenerated"
@@ -8535,6 +8540,10 @@ msgstr "시작"
 msgid "Start {trialDays}-day free trial"
 msgstr "{trialDays}일 무료 체험 시작"
 
+#: src/pages/shell/media-result.tsx
+msgid "Start edit"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Start plan"
 msgstr "요금제 시작"
@@ -8572,6 +8581,7 @@ msgstr "시작 중"
 #: src/lib/roster-status.ts
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Starting…"
 msgstr "시작하는 중…"
 
@@ -9555,7 +9565,9 @@ msgstr ""
 msgid "Unread"
 msgstr "읽지 않음"
 
+#. placeholder {0}: editFile.name
 #. placeholder {0}: pending.file.name
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "지원하지 않는 파일 형식: {0}"
@@ -9857,6 +9869,10 @@ msgstr "확인 중…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "버전"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video edit model"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Video generation"

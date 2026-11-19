@@ -3970,6 +3970,10 @@ msgstr "Каждое имя можно использовать только о�
 msgid "Edit"
 msgstr "Изменить"
 
+#: src/pages/shell/media-result.tsx
+msgid "Edit details"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "Сначала отредактируйте"
@@ -4588,6 +4592,7 @@ msgid "Generate invite codes"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Generate random"
 msgstr ""
 
@@ -4793,6 +4798,10 @@ msgstr "Если вы это услышали, голос готов."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "игнорировать"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image edit model"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Image generation"
@@ -6127,10 +6136,6 @@ msgstr "Нет ботов"
 msgid "No bots match"
 msgstr "Ни один бот не подходит"
 
-#: src/pages/Shell.tsx
-msgid "No earlier message to regenerate from"
-msgstr ""
-
 #: src/pages/Favorites.tsx
 msgid "No favorites yet"
 msgstr ""
@@ -7176,6 +7181,10 @@ msgstr "Подбор персонала и HR"
 msgid "Redirect URI"
 msgstr "URI перенаправления"
 
+#: src/pages/shell/media-result.tsx
+msgid "Reference image"
+msgstr ""
+
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Referral"
 msgstr ""
@@ -7205,10 +7214,6 @@ msgstr "Обновить экран"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refreshing…"
 msgstr "Обновление…"
-
-#: src/pages/shell/media-result.tsx
-msgid "Regenerate"
-msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Regenerated"
@@ -8535,6 +8540,10 @@ msgstr "Запустить"
 msgid "Start {trialDays}-day free trial"
 msgstr "Начать бесплатный пробный период на {trialDays} дн."
 
+#: src/pages/shell/media-result.tsx
+msgid "Start edit"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Start plan"
 msgstr "Начать тариф"
@@ -8572,6 +8581,7 @@ msgstr "Запуск"
 #: src/lib/roster-status.ts
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Starting…"
 msgstr "Запуск…"
 
@@ -9555,7 +9565,9 @@ msgstr ""
 msgid "Unread"
 msgstr "Непрочитанные"
 
+#. placeholder {0}: editFile.name
 #. placeholder {0}: pending.file.name
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "Неподдерживаемый тип файла: {0}."
@@ -9857,6 +9869,10 @@ msgstr "Проверка…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Версия"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video edit model"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Video generation"

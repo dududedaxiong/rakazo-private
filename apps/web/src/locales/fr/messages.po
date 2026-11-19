@@ -3970,6 +3970,10 @@ msgstr "Chaque nom ne peut être utilisé qu’une fois."
 msgid "Edit"
 msgstr "Modifier"
 
+#: src/pages/shell/media-result.tsx
+msgid "Edit details"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "Modifier d'abord"
@@ -4588,6 +4592,7 @@ msgid "Generate invite codes"
 msgstr ""
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Generate random"
 msgstr ""
 
@@ -4793,6 +4798,10 @@ msgstr "Si vous avez entendu cela, la voix est prête."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "Ignorer"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image edit model"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Image generation"
@@ -6127,10 +6136,6 @@ msgstr "Aucun bot"
 msgid "No bots match"
 msgstr "Aucun bot ne correspond"
 
-#: src/pages/Shell.tsx
-msgid "No earlier message to regenerate from"
-msgstr ""
-
 #: src/pages/Favorites.tsx
 msgid "No favorites yet"
 msgstr ""
@@ -7176,6 +7181,10 @@ msgstr "Recrutement et RH"
 msgid "Redirect URI"
 msgstr "URI de redirection"
 
+#: src/pages/shell/media-result.tsx
+msgid "Reference image"
+msgstr ""
+
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Referral"
 msgstr ""
@@ -7205,10 +7214,6 @@ msgstr "Actualiser la vue"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refreshing…"
 msgstr "Actualisation en cours…"
-
-#: src/pages/shell/media-result.tsx
-msgid "Regenerate"
-msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Regenerated"
@@ -8535,6 +8540,10 @@ msgstr "Démarrer"
 msgid "Start {trialDays}-day free trial"
 msgstr "Commencer l’essai gratuit de {trialDays} jours"
 
+#: src/pages/shell/media-result.tsx
+msgid "Start edit"
+msgstr ""
+
 #: src/components/ModelCredits.tsx
 msgid "Start plan"
 msgstr "Démarrer"
@@ -8572,6 +8581,7 @@ msgstr "Démarrage"
 #: src/lib/roster-status.ts
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Starting…"
 msgstr "Démarrage en cours…"
 
@@ -9555,7 +9565,9 @@ msgstr ""
 msgid "Unread"
 msgstr "Non lus"
 
+#. placeholder {0}: editFile.name
 #. placeholder {0}: pending.file.name
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "Type de fichier non pris en charge : {0}"
@@ -9857,6 +9869,10 @@ msgstr "Vérification en cours…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video edit model"
+msgstr ""
 
 #: src/pages/shell/media-result.tsx
 msgid "Video generation"

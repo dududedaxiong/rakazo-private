@@ -29,7 +29,7 @@ import { performComputerUpdate } from "./computer-update.js";
 import type { createRunExecutor } from "./executor.js";
 import type { ExpoPushProvider } from "./expo-push.js";
 import { compactHistory } from "./history-compaction.js";
-import { pollMediaVideo } from "./media-video-poll.js";
+import { pollMediaJob } from "./media-video-poll.js";
 import type { MemoryProviderResolver } from "./memory-provider-factory.js";
 import {
   deliverMessagingOutbound,
@@ -235,7 +235,7 @@ export function createBackgroundJobHandlers(deps: {
       );
     }),
     "media.poll": asOwner(mediaJob, async (payload) => {
-      await pollMediaVideo(deps, payload);
+      await pollMediaJob(deps, payload);
     }),
     // A receipt belongs to a device's push token, not to a Space.
     "push.receipt": async (payload) => {

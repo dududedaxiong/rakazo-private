@@ -228,6 +228,10 @@ export const BotSchema = z.object({
   videoModels: z.array(BotModelEntrySchema).nullable(),
   /** The models used to generate images; the first entry is the primary, the rest are fallbacks. */
   imageModels: z.array(BotModelEntrySchema).nullable(),
+  /** The models used to edit images; the first entry is the primary, the rest are fallbacks. */
+  imageEditModels: z.array(BotModelEntrySchema).nullable(),
+  /** The models used to edit videos; the first entry is the primary, the rest are fallbacks. */
+  videoEditModels: z.array(BotModelEntrySchema).nullable(),
   /** Named prompt presets for video generation. */
   videoPromptPresets: z.array(BotPromptPresetSchema).nullable(),
   /** The name of the active video prompt preset; null means no preset. */
@@ -674,6 +678,10 @@ export const UpdateBotInput = z
     videoModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
     /** Ordered image generation models; first is primary, rest are fallbacks. */
     imageModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Ordered image edit models; first is primary, rest are fallbacks. */
+    imageEditModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Ordered video edit models; first is primary, rest are fallbacks. */
+    videoEditModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
     /** Named prompt presets for video generation. */
     videoPromptPresets: z
       .array(BotPromptPresetSchema)

@@ -4,6 +4,7 @@ import type {
   GeneratedMedia,
   MediaGenerationInput,
   MediaGenerationProvider,
+  MediaReference,
   MediaVideoJob,
 } from "@rakazo_mickvvw/adapter-kit";
 import {
@@ -303,14 +304,26 @@ export type BotMediaCallEntry = {
   providerLabel?: string;
   /** The prompt preset applied by this call; absent when no preset was active. */
   presetName?: string;
-  call: (prompt: string, signal: AbortSignal) => Promise<GeneratedMedia>;
+  /**
+   * Generate from the prompt, editing the references when given. References
+   * select the edit list; a call without them is a fresh generation.
+   */
+  call: (
+    prompt: string,
+    signal: AbortSignal,
+    references?: MediaReference[],
+  ) => Promise<GeneratedMedia>;
   /**
    * Async video submission for this call, when the connection's protocol has
    * one; absent for image calls and for protocols without an async video
    * endpoint. The sync `call` is tried first; only a model that refuses a
    * synchronous call falls through to these.
    */
-  submitVideo?: (prompt: string, signal: AbortSignal) => Promise<string>;
+  submitVideo?: (
+    prompt: string,
+    signal: AbortSignal,
+    references?: MediaReference[],
+  ) => Promise<string>;
   pollVideo?: (
     taskId: string,
     signal: AbortSignal,
@@ -345,25 +358,35 @@ export type BotMediaKindCalls = {
 /**
  * A media provider that answers each kind from a bot's configured models,
  * tried in order, or the global provider when the bot has none for that kind.
- * The chat model returns the finished media inline, so its video is already
+ * Calls that carry references are edits and run against the bot's edit lists,
+ * never against the fresh-generation lists; an edit with no edit models is
+ * unsupported instead of silently generating a fresh image or video. The
+ * chat model returns the finished media inline, so its video is already
  * complete and never needs polling. The id stays the fallback's so a job the
  * fallback submitted still polls under the provider that saved it.
  */
 export class BotMediaGenerationProvider implements MediaGenerationProvider {
   readonly id: string;
   readonly capabilities: { images: boolean; video: boolean; offline: boolean };
+  readonly editCapabilities: { images: boolean; video: boolean };
   /** Called for each tried model that fails; never breaks the fallback chain. */
   onModelFailed?: (failure: BotMediaModelFailure) => void;
   constructor(
     private readonly image: BotMediaKindCalls,
     private readonly video: BotMediaKindCalls,
     private readonly fallback?: MediaGenerationProvider,
+    private readonly imageEdit: BotMediaKindCalls = { calls: [], failures: [] },
+    private readonly videoEdit: BotMediaKindCalls = { calls: [], failures: [] },
   ) {
     this.id = fallback?.id ?? "bot-media";
     this.capabilities = {
       images: Boolean(image.calls.length > 0 || fallback?.capabilities.images),
       video: Boolean(video.calls.length > 0 || fallback?.capabilities.video),
       offline: fallback?.capabilities.offline ?? false,
+    };
+    this.editCapabilities = {
+      images: imageEdit.calls.length > 0,
+      video: videoEdit.calls.length > 0,
     };
   }
   private async tryCalls(
@@ -386,7 +409,7 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
     for (let index = 0; index < kind.calls.length; index++) {
       const entry = kind.calls[index]!;
       try {
-        const output = await entry.call(input.prompt, signal);
+        const output = await entry.call(input.prompt, signal, input.references);
         recordModelSwitchAttempt(
           attempts,
           createModelSwitchAttempt({
@@ -440,6 +463,12 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
     input: MediaGenerationInput,
     context: AdapterContext,
   ): Promise<GeneratedMedia> {
+    // References mean an edit: only the edit list may answer, never the
+    // fresh-generation list or the global provider.
+    if (input.references?.length) {
+      if (this.imageEdit.calls.length === 0) throw new MediaGenerationError("unsupported");
+      return this.tryCalls(this.imageEdit, input, context.signal);
+    }
     if (this.image.calls.length > 0) return this.tryCalls(this.image, input, context.signal);
     if (this.fallback) return this.fallback.generateImage(input, context);
     throw new MediaGenerationError("unsupported");
@@ -449,20 +478,25 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
    * first, and only a model that refuses a synchronous call falls through to
    * its async submission, which returns a queued job for the background poll.
    * A model that answered inline closes the chain with a finished video.
+   * References mean an edit: only the edit list may answer.
    */
   async generateVideo(
     input: MediaGenerationInput,
     context: AdapterContext,
   ): Promise<MediaVideoJob> {
-    if (this.video.calls.length > 0) return this.tryVideoCalls(input, context.signal);
+    if (input.references?.length) {
+      if (this.videoEdit.calls.length === 0) throw new MediaGenerationError("unsupported");
+      return this.tryVideoCalls(this.videoEdit, input, context.signal);
+    }
+    if (this.video.calls.length > 0) return this.tryVideoCalls(this.video, input, context.signal);
     if (this.fallback) return this.fallback.generateVideo(input, context);
     throw new MediaGenerationError("unsupported");
   }
   private async tryVideoCalls(
+    kind: BotMediaKindCalls,
     input: MediaGenerationInput,
     signal: AbortSignal,
   ): Promise<MediaVideoJob> {
-    const kind = this.video;
     const failures: BotMediaFailure[] = [...kind.failures];
     // The timeline, in try order: models that never resolved were skipped,
     // each call that failed is a failed attempt, and the model that answered
@@ -509,7 +543,7 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
       const entry = kind.calls[index]!;
       const nextModelId = kind.calls[index + 1]?.modelId;
       try {
-        const output = await entry.call(input.prompt, signal);
+        const output = await entry.call(input.prompt, signal, input.references);
         recordModelSwitchAttempt(
           attempts,
           createModelSwitchAttempt({
@@ -537,7 +571,7 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
           entry.submitVideo
         ) {
           try {
-            const taskId = await entry.submitVideo(input.prompt, signal);
+            const taskId = await entry.submitVideo(input.prompt, signal, input.references);
             return {
               id: encodeAsyncVideoJobId(entry.modelId, taskId),
               status: "queued",
@@ -560,7 +594,11 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
       if (this.fallback) return this.fallback.pollVideo(id, context);
       throw new MediaGenerationError("invalid_input");
     }
-    const entry = this.video.calls.find((call) => call.modelId === decoded.model);
+    // The job may have been submitted by a fresh-generation call or an edit
+    // call; both lists are searched by model.
+    const entry =
+      this.video.calls.find((call) => call.modelId === decoded.model) ??
+      this.videoEdit.calls.find((call) => call.modelId === decoded.model);
     if (!entry?.pollVideo) return { id, status: "failed" };
     const polled = await entry.pollVideo(decoded.task, context.signal);
     if (polled.status === "completed") {

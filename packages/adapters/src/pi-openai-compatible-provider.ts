@@ -6,7 +6,7 @@ import { anthropicMessagesApi } from "@earendil-works/pi-ai/api/anthropic-messag
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
 import { openAIResponsesApi } from "@earendil-works/pi-ai/api/openai-responses.lazy";
 import { builtinModels } from "@earendil-works/pi-ai/providers/all";
-import type { GeneratedMedia } from "@rakazo_mickvvw/adapter-kit";
+import type { GeneratedMedia, MediaReference } from "@rakazo_mickvvw/adapter-kit";
 import { MediaGenerationError } from "@rakazo_mickvvw/adapter-kit";
 import type {
   ModelApiProtocol,
@@ -1211,6 +1211,13 @@ export interface ChatMediaModelInput {
   model: string;
   kind: MediaModelProbeKind;
   prompt: string;
+  /** Reference media for an edit; absent, the call is a fresh generation. */
+  references?: MediaReference[];
+}
+
+/** A reference image as a data URL, for a chat message part. */
+function referenceDataUrl(reference: MediaReference): string {
+  return `data:${reference.mimeType};base64,${Buffer.from(reference.bytes).toString("base64")}`;
 }
 
 async function requestChatMedia(
@@ -1252,8 +1259,31 @@ async function requestChatMedia(
     let body: Record<string, unknown>;
     if (input.apiProtocol === "anthropic-messages") {
       url = new URL("v1/messages", `${anthropicMessagesBaseUrl(baseUrl.href)}/`).href;
-      body = { model: input.model, max_tokens: MEDIA_MODEL_MAX_TOKENS, messages, temperature: 0 };
+      body = {
+        model: input.model,
+        max_tokens: MEDIA_MODEL_MAX_TOKENS,
+        messages: input.references?.length
+          ? [
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: input.prompt },
+                  ...input.references.map((reference) => ({
+                    type: "image",
+                    source: {
+                      type: "base64",
+                      media_type: reference.mimeType,
+                      data: Buffer.from(reference.bytes).toString("base64"),
+                    },
+                  })),
+                ],
+              },
+            ]
+          : messages,
+        temperature: 0,
+      };
     } else if (input.apiProtocol === "responses") {
+      if (input.references?.length) throw new MediaGenerationError("unsupported");
       url = new URL("responses", `${baseUrl.href}/`).href;
       body = {
         model: input.model,
@@ -1263,7 +1293,25 @@ async function requestChatMedia(
       };
     } else {
       url = new URL("chat/completions", `${baseUrl.href}/`).href;
-      body = { model: input.model, messages, max_tokens: MEDIA_MODEL_MAX_TOKENS, temperature: 0 };
+      body = {
+        model: input.model,
+        messages: input.references?.length
+          ? [
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: input.prompt },
+                  ...input.references.map((reference) => ({
+                    type: "image_url",
+                    image_url: { url: referenceDataUrl(reference) },
+                  })),
+                ],
+              },
+            ]
+          : messages,
+        max_tokens: MEDIA_MODEL_MAX_TOKENS,
+        temperature: 0,
+      };
     }
     const response = await safeFetch(url, {
       method: "POST",
@@ -1450,7 +1498,7 @@ function asyncVideoError(status: number): MediaGenerationError {
  * per-generation provider, billed) a video.
  */
 export async function submitAsyncVideo(
-  input: AsyncVideoConnection & { prompt: string },
+  input: AsyncVideoConnection & { prompt: string; firstFrame?: MediaReference },
   fetchImpl?: typeof fetch,
   signal?: AbortSignal,
   opts?: OpenAiCompatibleUrlPolicy,
@@ -1459,7 +1507,18 @@ export async function submitAsyncVideo(
     input,
     "videos/generations",
     "POST",
-    { model: input.model, prompt: input.prompt },
+    {
+      model: input.model,
+      prompt: input.prompt,
+      // A reference frame for an edit, as a data URL; the endpoint decides
+      // whether it honors it. Only the first frame is sent: the last frame
+      // needs server-side extraction, which is not available yet.
+      ...(input.firstFrame
+        ? {
+            image_url: `data:${input.firstFrame.mimeType};base64,${Buffer.from(input.firstFrame.bytes).toString("base64")}`,
+          }
+        : {}),
+    },
     fetchImpl,
     signal,
     opts,

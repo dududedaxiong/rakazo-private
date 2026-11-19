@@ -443,6 +443,8 @@ export function botsRoutes(ctx: RouterContext) {
         const existingTranslationModels = parseBotModelList(existing.translationModels);
         const existingVideoModels = parseBotModelList(existing.videoModels);
         const existingImageModels = parseBotModelList(existing.imageModels);
+        const existingImageEditModels = parseBotModelList(existing.imageEditModels);
+        const existingVideoEditModels = parseBotModelList(existing.videoEditModels);
         const existingVideoPresets = parseBotPromptPresets(existing.videoPromptPresets);
         const existingImagePresets = parseBotPromptPresets(existing.imagePromptPresets);
         // Every entry of an ordered model list must be a model this user has
@@ -502,6 +504,16 @@ export function botsRoutes(ctx: RouterContext) {
         );
         await validateModelListChange(input.videoModels, existingVideoModels, "Video model");
         await validateModelListChange(input.imageModels, existingImageModels, "Image model");
+        await validateModelListChange(
+          input.imageEditModels,
+          existingImageEditModels,
+          "Image edit model",
+        );
+        await validateModelListChange(
+          input.videoEditModels,
+          existingVideoEditModels,
+          "Video edit model",
+        );
         // A named active preset must exist in the presets it names; when the
         // preset list itself changes and the stored active is gone, the first
         // preset takes over (or none, when the list is empty).
@@ -608,6 +620,20 @@ export function botsRoutes(ctx: RouterContext) {
               ? {
                   imageModels: input.imageModels?.length
                     ? (input.imageModels as Prisma.InputJsonValue)
+                    : Prisma.DbNull,
+                }
+              : {}),
+            ...(input.imageEditModels !== undefined
+              ? {
+                  imageEditModels: input.imageEditModels?.length
+                    ? (input.imageEditModels as Prisma.InputJsonValue)
+                    : Prisma.DbNull,
+                }
+              : {}),
+            ...(input.videoEditModels !== undefined
+              ? {
+                  videoEditModels: input.videoEditModels?.length
+                    ? (input.videoEditModels as Prisma.InputJsonValue)
                     : Prisma.DbNull,
                 }
               : {}),

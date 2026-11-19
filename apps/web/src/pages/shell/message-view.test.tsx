@@ -1160,7 +1160,8 @@ describe("generated media result", () => {
     finalModel: string;
   }) {
     const update = vi.fn(async () => ({}));
-    const onRegenerate = vi.fn(async () => undefined);
+    const regenerate = vi.fn(async () => ({ ok: true as const, status: "queued" as const }));
+    const getSupplementaryPrompt = vi.fn(async () => ({ supplementaryPrompt: "" }));
     const favorites = {
       list: vi.fn(async () => []),
       add: vi.fn(async () => ({})),
@@ -1183,10 +1184,13 @@ describe("generated media result", () => {
         modelSwitches,
       },
       peerBot: mediaBot,
-      rpc: { bots: { update }, favorites } as never,
-      onRegenerate,
+      rpc: {
+        bots: { update },
+        favorites,
+        media: { regenerate, getSupplementaryPrompt },
+      } as never,
     });
-    return { update, onRegenerate };
+    return { update, regenerate, getSupplementaryPrompt };
   }
 
   it("renders the result with its mark and action row, not a mark bubble", async () => {
@@ -1195,19 +1199,40 @@ describe("generated media result", () => {
     expect(container.querySelector('[data-testid="message-bot-bubble"]')).toBeNull();
     expect(buttonByText("model-a")).not.toBeUndefined();
     expect(buttonByText("水彩")).not.toBeUndefined();
-    for (const label of ["Preview", "Download", "Share", "Favorite", "Regenerate", "Collapse"]) {
+    for (const label of [
+      "Preview",
+      "Download",
+      "Share",
+      "Favorite",
+      "Edit details",
+      "Generate random",
+      "Collapse",
+    ]) {
       expect(buttonByText(label)).not.toBeUndefined();
     }
   });
 
-  it("regenerates from the message that produced the result", async () => {
-    const { onRegenerate } = renderMedia();
+  it("regenerates randomly from the message action row", async () => {
+    const { regenerate } = renderMedia();
     await flush();
     await act(async () => {
-      buttonByText("Regenerate")?.click();
+      buttonByText("Generate random")?.click();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(onRegenerate).toHaveBeenCalledExactlyOnceWith("message-media");
+    expect(regenerate).toHaveBeenCalledExactlyOnceWith({
+      artifactId: "art-1",
+      mode: "random",
+    });
+  });
+
+  it("opens the edit dialog from the message action row when the prompt is empty", async () => {
+    renderMedia();
+    await flush();
+    await act(async () => {
+      buttonByText("Edit details")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(document.querySelector('[data-testid="media-edit-dialog"]')).not.toBeNull();
   });
 
   it("switches the image model from the mark and moves it to the front", async () => {

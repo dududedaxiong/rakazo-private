@@ -177,6 +177,8 @@ function bot(description = "Billing", overrides: Partial<Bot> = {}): Bot {
     translationModels: null,
     videoModels: null,
     imageModels: null,
+    videoEditModels: null,
+    imageEditModels: null,
     videoPromptPresets: null,
     activeVideoPromptPreset: null,
     imagePromptPresets: null,

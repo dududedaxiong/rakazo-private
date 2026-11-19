@@ -4,6 +4,7 @@ import type {
   ArtifactStore,
   JobPublisher,
   MediaGenerationProvider,
+  MediaReference,
   SecretStore,
 } from "@rakazo_mickvvw/adapter-kit";
 import { mediaPollJob, runContinueJob } from "@rakazo_mickvvw/adapter-kit";
@@ -11,7 +12,12 @@ import type { ModelSwitches } from "@rakazo_mickvvw/contracts";
 import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
 import { getLogger } from "@rakazo_mickvvw/logging";
 import { resolveBotMediaGenerationProvider } from "./bot-media-generation.js";
-import { generateMediaFromTool, MEDIA_JOB_KIND } from "./media-generation-tools.js";
+import {
+  generateMediaFromTool,
+  MEDIA_JOB_KIND,
+  mediaJobRequest,
+  savedJob,
+} from "./media-generation-tools.js";
 import type { CodexLiveCatalog } from "./pi-codex-catalog.js";
 import { persistMessageInTransaction } from "./run-messages.js";
 import { attachWorkspaceFileToThread } from "./thread-artifacts.js";
@@ -27,6 +33,8 @@ const STALLED_MS = 10 * 60_000;
 const PENDING_STATUSES = ["media_pending", "media_polling"];
 /** Images share the job kind but finish within their turn; only videos are polled. */
 const VIDEO_JOB = { kind: MEDIA_JOB_KIND, request: { path: ["tool"], equals: "generate_video" } };
+/** An image regenerate job: submitted by the RPC, finished by a background poll. */
+const IMAGE_JOB = { kind: MEDIA_JOB_KIND, request: { path: ["tool"], equals: "generate_image" } };
 
 export interface MediaVideoDeps {
   prisma: PrismaClient;
@@ -224,6 +232,8 @@ async function resolveMediaProviderForJob(
     select: {
       videoModels: true,
       imageModels: true,
+      imageEditModels: true,
+      videoEditModels: true,
       videoPromptPresets: true,
       activeVideoPromptPreset: true,
       imagePromptPresets: true,
@@ -256,11 +266,16 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
   const artifacts = deps.artifacts;
   if (!artifacts) return;
   const job = await deps.prisma.externalEffect.findFirst({
-    where: { id: payload.jobId, ...VIDEO_JOB, status: { in: PENDING_STATUSES } },
+    where: {
+      id: payload.jobId,
+      ...VIDEO_JOB,
+      status: { in: ["media_submitting", ...PENDING_STATUSES] },
+    },
     select: {
       id: true,
       createdAt: true,
       request: true,
+      result: true,
       run: {
         select: {
           id: true,
@@ -280,9 +295,16 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
   // a bot with no media models. Without a secret store (unit callers) there
   // is nothing to resolve with, and only the global provider can poll.
   const provider = await resolveMediaProviderForJob(deps, run);
-  if (!provider?.capabilities.video) return;
-  const saved = (job.request as { threadGeneration?: unknown }).threadGeneration;
-  const threadGeneration = typeof saved === "number" ? saved : undefined;
+  const request = mediaJobRequest.safeParse(job.request);
+  const threadGeneration = request.success ? request.data.threadGeneration : undefined;
+  // A regenerate job's run is the anchor the RPC created; its status is
+  // settled here, while a chat run's status belongs to the executor.
+  const isRegenerate = request.success && request.data.mode !== undefined;
+  // An edit answers from the bot's edit list; a fresh generation from its
+  // generation list. A bot with only edit models still has no generation list.
+  const isEdit = request.success && request.data.mode === "edit";
+  const canGenerate = isEdit ? provider?.editCapabilities?.video : provider?.capabilities.video;
+  if (!provider || !canGenerate) return;
   const expired = Date.now() - job.createdAt.getTime() >= MEDIA_POLL_DEADLINE_MS;
   // Nobody is left to tell once the bot or its owner is gone or the chat was cleared. A job
   // saved before background delivery existed is closed quietly once overdue, so old chats stay
@@ -291,9 +313,16 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
     (threadGeneration === undefined && expired) ||
     !(await recipientRemains(deps.prisma, run, threadGeneration))
   ) {
-    await deps.prisma.externalEffect.updateMany({
-      where: { id: job.id, status: { in: PENDING_STATUSES } },
-      data: { status: "media_failed" },
+    await deps.prisma.$transaction(async (tx) => {
+      const failed = await tx.externalEffect.updateMany({
+        where: {
+          id: job.id,
+          status: { in: ["media_submitting", ...PENDING_STATUSES] },
+        },
+        data: { status: "media_failed" },
+      });
+      if (failed.count && isRegenerate)
+        await settleRegenerateRun(tx, run.id, "failed", "Media generation failed.");
     });
     return;
   }
@@ -304,6 +333,7 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
       if (status === "completed") throw new MediaRecipientGone();
       return;
     }
+    if (isRegenerate) await settleRegenerateRun(tx, run.id, status);
     wakeRunId = await queueWake(tx, job.id, run, status === "completed");
   };
   const operationId = `media.poll:${job.id}`;
@@ -315,23 +345,67 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
     botId: run.botId,
     signal: AbortSignal.timeout(5 * 60_000),
   };
-  const result = await generateMediaFromTool({
-    name: "generate_video",
-    args: { jobId: job.id },
-    executionId: operationId,
-    recoverOnly: true,
-    provider,
-    prisma: deps.prisma,
-    context,
-    run,
-    ...mediaDelivery({ ...deps, artifacts }, run, {
-      providerId: provider.id,
-      groupId: thread.groupId ?? undefined,
-      operationId,
-      afterRun: true,
-      onSettled,
-    }),
+  const saved = savedJob.safeParse(job.result);
+  const delivery = mediaDelivery({ ...deps, artifacts }, run, {
+    providerId: provider.id,
+    groupId: thread.groupId ?? undefined,
+    operationId,
+    afterRun: true,
+    onSettled,
   });
+  // A job the provider already accepted is polled; a regenerate job the RPC
+  // only reserved is submitted here, from the stored prompt and references.
+  // A chat job still submitting is left alone: its own call finishes it.
+  const result =
+    saved.success && saved.data.jobId
+      ? await generateMediaFromTool({
+          name: "generate_video",
+          args: { jobId: job.id },
+          executionId: operationId,
+          recoverOnly: true,
+          provider,
+          prisma: deps.prisma,
+          context,
+          run,
+          ...delivery,
+        })
+      : isRegenerate && request.success
+        ? await (async () => {
+            const references = await loadMediaReferences(deps, run, request.data, context);
+            if (request.data.mode === "edit" && !references?.length) {
+              await deps.prisma.$transaction(async (tx) => {
+                const failed = await tx.externalEffect.updateMany({
+                  where: { id: job.id, status: { in: ["media_submitting", ...PENDING_STATUSES] } },
+                  data: { status: "media_failed" },
+                });
+                if (failed.count) {
+                  await settleRegenerateRun(
+                    tx,
+                    run.id,
+                    "failed",
+                    "The reference image is unavailable.",
+                  );
+                  if (await recipientRemains(tx, run, threadGeneration))
+                    wakeRunId = await queueWake(tx, job.id, run, false);
+                }
+              });
+              return { status: "failed" as const };
+            }
+            return generateMediaFromTool({
+              name: "generate_video",
+              args: { prompt: request.data.prompt },
+              executionId: request.data.executionId,
+              resume: true,
+              ...(references?.length ? { references } : {}),
+              provider,
+              prisma: deps.prisma,
+              context,
+              run,
+              threadGeneration,
+              ...delivery,
+            });
+          })()
+        : undefined;
   let settled = result?.status === "completed" || result?.status === "failed";
   // A final check that errored is no answer; keep trying a little longer before giving up.
   const unanswered = Boolean(result && "error" in result);
@@ -341,12 +415,14 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
     (!unanswered || Date.now() - job.createdAt.getTime() >= MEDIA_POLL_DEADLINE_MS + ERROR_GRACE_MS)
   ) {
     // Still unfinished after the final check: report it failed. Only a released or abandoned
-    // claim is taken, so a check still in flight decides instead.
+    // claim is taken, so a check still in flight decides instead. A job still
+    // submitting past the deadline lost its submitter.
     settled = await deps.prisma.$transaction(async (tx) => {
       const failed = await tx.externalEffect.updateMany({
         where: {
           id: job.id,
           OR: [
+            { status: "media_submitting" },
             { status: "media_pending" },
             {
               status: "media_polling",
@@ -356,7 +432,11 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
         },
         data: { status: "media_failed" },
       });
-      if (failed.count) await onSettled(tx, "failed");
+      if (failed.count) {
+        if (isRegenerate)
+          await settleRegenerateRun(tx, run.id, "failed", "Media generation failed.");
+        await onSettled(tx, "failed");
+      }
       return failed.count > 0;
     });
   }
@@ -379,6 +459,7 @@ async function queueWake(
   jobId: string,
   run: MediaRun,
   completed: boolean,
+  label = "Video",
 ): Promise<string | null> {
   const clientNonce = `media-wake:${jobId}`;
   const prior = await tx.run.findFirst({
@@ -393,8 +474,8 @@ async function queueWake(
       threadId: run.threadId,
       userId: run.userId,
       prompt: completed
-        ? `Video job ${jobId} finished and is attached to the chat.`
-        : `Video job ${jobId} failed. Do not resubmit unless the user asks.`,
+        ? `${label} job ${jobId} finished and is attached to the chat.`
+        : `${label} job ${jobId} failed. Do not resubmit unless the user asks.`,
       status: "queued",
     },
   });
@@ -411,6 +492,194 @@ async function queueWake(
     },
   });
   return wake.id;
+}
+
+/**
+ * Mark a regenerate run and its task finished. Only regenerate jobs have one:
+ * a chat run's status belongs to the executor, never to a media poll. The
+ * update only moves a run still marked running, so a concurrent settle cannot
+ * rewrite a terminal state.
+ */
+async function settleRegenerateRun(
+  tx: Prisma.TransactionClient,
+  runId: string,
+  status: Settled,
+  error?: string,
+): Promise<void> {
+  const updated = await tx.run.updateMany({
+    where: { id: runId, status: "running" },
+    data: { status, ...(error ? { error } : {}), completedAt: new Date() },
+  });
+  if (!updated.count) return;
+  const run = await tx.run.findUnique({ where: { id: runId }, select: { taskId: true } });
+  if (run) await tx.task.updateMany({ where: { id: run.taskId }, data: { status } });
+}
+
+/**
+ * The reference media for an edit job: the original image for an image edit,
+ * or the uploaded image for a video edit. The bytes come from the artifact
+ * store; a missing artifact means the edit cannot run.
+ */
+async function loadMediaReferences(
+  deps: Pick<MediaVideoDeps, "prisma" | "artifacts">,
+  run: MediaRun,
+  request: { mode?: "edit" | "random"; sourceArtifactId?: string; referenceArtifactId?: string },
+  context: AdapterContext,
+): Promise<MediaReference[] | undefined> {
+  if (request.mode !== "edit") return undefined;
+  const artifactId = request.sourceArtifactId ?? request.referenceArtifactId;
+  if (!artifactId || !deps.artifacts) return undefined;
+  const artifact = await deps.prisma.artifact.findFirst({
+    where: { id: artifactId, spaceId: run.spaceId, userId: run.userId },
+    select: { id: true, mimeType: true },
+  });
+  if (!artifact) return undefined;
+  const bytes = await deps.artifacts.get(artifact.id, context).catch(() => undefined);
+  if (!bytes) return undefined;
+  return [{ bytes, mimeType: artifact.mimeType, role: "first" }];
+}
+
+/**
+ * Run one submitted image regenerate job. Unlike a video poll, this is the
+ * generation itself, not a status check: it runs once, so a failed image is
+ * reported failed instead of retried into another billed generation. A job
+ * another worker already claimed reports running and is left alone.
+ */
+export async function pollMediaImage(deps: MediaVideoDeps, payload: { jobId: string }) {
+  const artifacts = deps.artifacts;
+  if (!artifacts) return;
+  const job = await deps.prisma.externalEffect.findFirst({
+    where: {
+      id: payload.jobId,
+      ...IMAGE_JOB,
+      status: { in: ["media_submitting", "media_polling"] },
+    },
+    select: {
+      id: true,
+      createdAt: true,
+      request: true,
+      run: {
+        select: {
+          id: true,
+          taskId: true,
+          threadId: true,
+          botId: true,
+          userId: true,
+          spaceId: true,
+          thread: { select: { groupId: true } },
+        },
+      },
+    },
+  });
+  if (!job) return;
+  const { thread, ...run } = job.run;
+  const request = mediaJobRequest.safeParse(job.request);
+  if (!request.success) {
+    getLogger().warn("media.image_job_request", { "media.job_id": job.id });
+    return;
+  }
+  const threadGeneration = request.data.threadGeneration;
+  const expired = Date.now() - job.createdAt.getTime() >= MEDIA_POLL_DEADLINE_MS;
+  const fail = async (error: string) => {
+    await deps.prisma.$transaction(async (tx) => {
+      const failed = await tx.externalEffect.updateMany({
+        where: { id: job.id, status: { in: ["media_submitting", "media_polling"] } },
+        data: { status: "media_failed" },
+      });
+      if (!failed.count) return;
+      if (request.data.mode) await settleRegenerateRun(tx, run.id, "failed", error);
+      if (await recipientRemains(tx, run, threadGeneration))
+        await queueWake(tx, job.id, run, false, "Image");
+    });
+  };
+  if (expired || !(await recipientRemains(deps.prisma, run, threadGeneration))) {
+    await fail("Media generation failed.");
+    return;
+  }
+  const provider = await resolveMediaProviderForJob(deps, run);
+  const canGenerate =
+    request.data.mode === "edit"
+      ? provider?.editCapabilities?.images
+      : provider?.capabilities.images;
+  if (!canGenerate) {
+    await fail("Media generation is unavailable.");
+    return;
+  }
+  const operationId = `media.image-poll:${job.id}`;
+  const context: AdapterContext = {
+    operationId,
+    traceId: job.id,
+    spaceId: run.spaceId,
+    userId: run.userId,
+    botId: run.botId,
+    signal: AbortSignal.timeout(5 * 60_000),
+  };
+  const references = await loadMediaReferences(deps, run, request.data, context);
+  if (request.data.mode === "edit" && !references?.length) {
+    await fail("The image to edit is unavailable.");
+    return;
+  }
+  let wakeRunId: string | null = null;
+  const onSettled = async (tx: Prisma.TransactionClient, status: Settled) => {
+    if (!(await recipientRemains(tx, run, threadGeneration))) {
+      if (status === "completed") throw new MediaRecipientGone();
+      return;
+    }
+    if (request.data.mode) await settleRegenerateRun(tx, run.id, status);
+    wakeRunId = await queueWake(tx, job.id, run, status === "completed", "Image");
+  };
+  const result = await generateMediaFromTool({
+    name: "generate_image",
+    args: { prompt: request.data.prompt },
+    executionId: request.data.executionId,
+    resume: true,
+    ...(references?.length ? { references } : {}),
+    provider: provider!,
+    prisma: deps.prisma,
+    context,
+    run,
+    threadGeneration,
+    ...mediaDelivery({ ...deps, artifacts }, run, {
+      providerId: provider!.id,
+      groupId: thread.groupId ?? undefined,
+      operationId,
+      afterRun: true,
+      onSettled,
+    }),
+  });
+  if (result?.status === "completed") {
+    // The publish already settled the run and queued the wake.
+  } else if (result && "status" in result && result.status === "running") {
+    // Another worker owns the generation; its outcome settles the job.
+    return;
+  } else {
+    const error =
+      result && "error" in result && result.error ? result.error : "Media generation failed.";
+    await fail(error);
+    return;
+  }
+  // The run reconciler recovers a queued wake after an enqueue failure.
+  if (wakeRunId)
+    await deps.jobs.enqueue(runContinueJob(wakeRunId)).catch((error) => {
+      getLogger().warn("media.wake_deferred", {
+        "media.job_id": job.id,
+        "run.id": wakeRunId,
+        error,
+      });
+    });
+}
+
+/** A media poll finishes whichever kind the job row holds: a video or an image. */
+export async function pollMediaJob(deps: MediaVideoDeps, payload: { jobId: string }) {
+  const job = await deps.prisma.externalEffect.findUnique({
+    where: { id: payload.jobId },
+    select: { request: true },
+  });
+  if (!job) return;
+  const request = mediaJobRequest.safeParse(job.request);
+  if (!request.success) return;
+  if (request.data.tool === "generate_image") await pollMediaImage(deps, payload);
+  else await pollMediaVideo(deps, payload);
 }
 
 /**
@@ -449,6 +718,77 @@ export async function reconcileMediaVideos(
         })
         .catch((error) =>
           getLogger().warn("media.poll_recovery_deferred", { "media.job_id": job.id, error }),
+        );
+    }
+    if (page.length < pageSize) return;
+    after = page.at(-1)?.id;
+  }
+}
+
+/**
+ * Close image regenerate jobs whose poll was lost, for example to a worker
+ * restart. Unlike videos, an image poll IS the generation, so a lost one is
+ * not re-run: re-running could bill a second generation for the same image.
+ * The job is reported failed and the bot gets one turn to follow up.
+ */
+export async function reconcileMediaImages(deps: Pick<MediaVideoDeps, "prisma" | "jobs">) {
+  const now = Date.now();
+  const pageSize = 100;
+  let after: string | undefined;
+  for (;;) {
+    const page = await deps.prisma.externalEffect.findMany({
+      where: {
+        ...IMAGE_JOB,
+        status: { in: ["media_submitting", "media_polling"] },
+        updatedAt: { lt: new Date(now - STALLED_MS) },
+      },
+      orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
+      take: pageSize,
+      ...(after ? { cursor: { id: after }, skip: 1 } : {}),
+      select: {
+        id: true,
+        request: true,
+        run: {
+          select: {
+            id: true,
+            threadId: true,
+            botId: true,
+            userId: true,
+            spaceId: true,
+          },
+        },
+      },
+    });
+    for (const job of page) {
+      const request = mediaJobRequest.safeParse(job.request);
+      const threadGeneration = request.success ? request.data.threadGeneration : undefined;
+      await deps.prisma
+        .$transaction(async (tx) => {
+          const failed = await tx.externalEffect.updateMany({
+            where: {
+              id: job.id,
+              status: { in: ["media_submitting", "media_polling"] },
+            },
+            data: { status: "media_failed" },
+          });
+          if (!failed.count) return null;
+          if (request.success && request.data.mode)
+            await settleRegenerateRun(tx, job.run.id, "failed", "Media generation failed.");
+          if (!(await recipientRemains(tx, job.run, threadGeneration))) return null;
+          return queueWake(tx, job.id, job.run, false, "Image");
+        })
+        .then(async (wakeRunId) => {
+          if (wakeRunId)
+            await deps.jobs.enqueue(runContinueJob(wakeRunId)).catch((error) => {
+              getLogger().warn("media.wake_deferred", {
+                "media.job_id": job.id,
+                "run.id": wakeRunId,
+                error,
+              });
+            });
+        })
+        .catch((error) =>
+          getLogger().warn("media.image_recovery_deferred", { "media.job_id": job.id, error }),
         );
     }
     if (page.length < pageSize) return;

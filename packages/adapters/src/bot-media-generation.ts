@@ -26,7 +26,11 @@ type BotMediaFields = Pick<
   | "activeVideoPromptPreset"
   | "imagePromptPresets"
   | "activeImagePromptPreset"
->;
+> & {
+  // Bots created before the edit lists existed carry no edit fields.
+  imageEditModels?: Bot["imageEditModels"];
+  videoEditModels?: Bot["videoEditModels"];
+};
 
 /**
  * Resolves one bot media kind's ordered list into the calls to try, in order.
@@ -77,12 +81,13 @@ async function resolveBotMediaKind(
         provider: entry.provider,
         ...(credential?.label ? { providerLabel: credential.label } : {}),
         ...(preset ? { presetName: preset.name } : {}),
-        call: (prompt, signal) =>
+        call: (prompt, signal, references) =>
           generateMediaWithChatModel(
             {
               ...connection,
               kind,
               prompt: withPromptPreset(preset?.prompt ?? null, prompt),
+              ...(references?.length ? { references } : {}),
             },
             undefined,
             signal,
@@ -90,11 +95,18 @@ async function resolveBotMediaKind(
           ),
         ...(asyncVideo
           ? {
-              submitVideo: async (prompt, signal) => {
+              submitVideo: async (prompt, signal, references) => {
                 const { taskId } = await submitAsyncVideo(
                   {
                     ...connection,
                     prompt: withPromptPreset(preset?.prompt ?? null, prompt),
+                    ...(references?.length
+                      ? {
+                          firstFrame:
+                            references.find((reference) => reference.role === "first") ??
+                            references[0],
+                        }
+                      : {}),
                   },
                   undefined,
                   signal,
@@ -140,7 +152,9 @@ export async function resolveBotMediaGenerationProvider(
 ): Promise<MediaGenerationProvider | undefined> {
   const imageEntries = parseBotModelList(bot.imageModels);
   const videoEntries = parseBotModelList(bot.videoModels);
-  if (!imageEntries && !videoEntries) return fallback;
+  const imageEditEntries = parseBotModelList(bot.imageEditModels);
+  const videoEditEntries = parseBotModelList(bot.videoEditModels);
+  if (!imageEntries && !videoEntries && !imageEditEntries && !videoEditEntries) return fallback;
   const imagePreset = activeBotPromptPreset(
     parseBotPromptPresets(bot.imagePromptPresets),
     bot.activeImagePromptPreset,
@@ -149,10 +163,20 @@ export async function resolveBotMediaGenerationProvider(
     parseBotPromptPresets(bot.videoPromptPresets),
     bot.activeVideoPromptPreset,
   );
-  const [image, video] = await Promise.all([
+  // Edit calls never apply a prompt preset: the reference already carries the
+  // content, and the supplementary prompt is the edit instruction.
+  const [image, video, imageEdit, videoEdit] = await Promise.all([
     resolveBotMediaKind(deps, scope, imageEntries, "image", imagePreset),
     resolveBotMediaKind(deps, scope, videoEntries, "video", videoPreset),
+    resolveBotMediaKind(deps, scope, imageEditEntries, "image", null),
+    resolveBotMediaKind(deps, scope, videoEditEntries, "video", null),
   ]);
-  if (image.calls.length === 0 && video.calls.length === 0) return fallback;
-  return new BotMediaGenerationProvider(image, video, fallback);
+  if (
+    image.calls.length === 0 &&
+    video.calls.length === 0 &&
+    imageEdit.calls.length === 0 &&
+    videoEdit.calls.length === 0
+  )
+    return fallback;
+  return new BotMediaGenerationProvider(image, video, fallback, imageEdit, videoEdit);
 }

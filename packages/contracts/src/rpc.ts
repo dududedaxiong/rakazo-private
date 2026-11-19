@@ -808,13 +808,23 @@ export const appContract = {
     setSupplementaryPrompt: oc
       .input(z.object({ artifactId: Id, supplementaryPrompt: z.string().max(4000) }))
       .output(z.object({ ok: z.literal(true) })),
-    regenerate: oc.input(z.object({ artifactId: Id })).output(
-      z.object({
-        ok: z.literal(true),
-        status: z.enum(["completed", "queued"]),
-        artifactId: Id.optional(),
-      }),
-    ),
+    regenerate: oc
+      .input(
+        z.object({
+          artifactId: Id,
+          /** Detail edit (image-to-image / frame-referenced video) or a fresh random generation. */
+          mode: z.enum(["edit", "random"]).optional(),
+          /** An uploaded image to use as the video edit's first-frame reference. */
+          referenceArtifactId: Id.optional(),
+        }),
+      )
+      .output(
+        z.object({
+          ok: z.literal(true),
+          status: z.enum(["completed", "queued"]),
+          artifactId: Id.optional(),
+        }),
+      ),
   },
   promptTemplates: {
     list: oc.output(z.array(PromptTemplateSchema)),

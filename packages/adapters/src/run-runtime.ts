@@ -27,7 +27,7 @@ import { IntegrationProviderSettings } from "./integration-provider-settings.js"
 import { createJobReconciler } from "./job-reconciler.js";
 import { McpConnector, mcpStdioOptionsFromEnv } from "./mcp-connector.js";
 import { McpOAuthBroker } from "./mcp-oauth.js";
-import { reconcileMediaVideos } from "./media-video-poll.js";
+import { reconcileMediaImages, reconcileMediaVideos } from "./media-video-poll.js";
 import { createMessagingContextLoader } from "./messaging-context.js";
 import { createModelCreditReconciler } from "./model-credit-reconciler.js";
 import type { PipedreamEnvironmentValues } from "./pipedream-connector.js";
@@ -268,6 +268,7 @@ export function createRunReconciler(
     reconcileCloudAgents: () => reconcileCloudAgents({ prisma, jobs, cloudAgent }),
     reconcilePurchases: () => reconcilePurchases({ prisma, jobs, paymentWallet }),
     reconcileMediaVideos: () => reconcileMediaVideos({ prisma, jobs, mediaGeneration }),
+    reconcileMediaImages: () => reconcileMediaImages({ prisma, jobs }),
     reconcileComputerUpdates: () => reconcileComputerUpdates({ prisma, jobs }),
     reconcileSecurityEventRetention: createSecurityEventPruner(
       prisma,

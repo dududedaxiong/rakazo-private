@@ -303,4 +303,61 @@ describe("bot media tools", () => {
     expect(await generateMediaFromTool(options)).toHaveProperty("error");
     expect(attach).not.toHaveBeenCalled();
   });
+  it("submitOnly reserves without calling the provider and replays the same job id", async () => {
+    const { options, externalEffect, provider } = setup();
+    const generate = vi.spyOn(provider, "generateImage");
+    const submit = { ...options, submitOnly: true, mode: "random" as const };
+    expect(await generateMediaFromTool(submit)).toEqual({
+      jobId: "local-job",
+      status: "queued",
+    });
+    expect(generate).not.toHaveBeenCalled();
+    expect(externalEffect.create).toHaveBeenCalledTimes(1);
+    expect(externalEffect.create.mock.calls[0]?.[0]?.data.request).toMatchObject({
+      tool: "generate_image",
+      prompt: "draw",
+      executionId: "execution",
+      mode: "random",
+    });
+    // The same execution id replays the reservation instead of reserving twice.
+    externalEffect.findFirst.mockResolvedValue({
+      id: "local-job",
+      status: "media_submitting",
+      result: { provider: "fake" },
+    });
+    expect(await generateMediaFromTool(submit)).toEqual({
+      jobId: "local-job",
+      status: "queued",
+    });
+    expect(externalEffect.create).toHaveBeenCalledTimes(1);
+    expect(generate).not.toHaveBeenCalled();
+  });
+  it("resume runs a reserved generation once and a racing worker sees it running", async () => {
+    const { options, externalEffect, provider, attach, publish } = setup();
+    const generate = vi.spyOn(provider, "generateImage");
+    const reserved = {
+      id: "local-job",
+      status: "media_submitting",
+      result: { provider: "fake" },
+    };
+    externalEffect.findFirst.mockResolvedValue(reserved);
+    expect(await generateMediaFromTool({ ...options, resume: true })).toEqual({
+      status: "completed",
+      artifactId: "artifact",
+    });
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(externalEffect.updateMany).toHaveBeenCalledWith({
+      where: { id: "local-job", status: "media_submitting" },
+      data: { status: "media_polling" },
+    });
+    expect(attach).toHaveBeenCalledTimes(1);
+    expect(publish).toHaveBeenCalledTimes(1);
+    // The claim is gone: a second worker does not generate again.
+    externalEffect.updateMany.mockResolvedValueOnce({ count: 0 });
+    expect(await generateMediaFromTool({ ...options, resume: true })).toEqual({
+      jobId: "local-job",
+      status: "running",
+    });
+    expect(generate).toHaveBeenCalledTimes(1);
+  });
 });

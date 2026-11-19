@@ -2,6 +2,7 @@ import type {
   AdapterContext,
   GeneratedMedia,
   MediaGenerationProvider,
+  MediaReference,
   MediaVideoJob,
 } from "@rakazo_mickvvw/adapter-kit";
 import { MediaGenerationError } from "@rakazo_mickvvw/adapter-kit";
@@ -10,6 +11,7 @@ import { ModelSwitchesSchema } from "@rakazo_mickvvw/contracts";
 import { messageBlockForArtifact } from "@rakazo_mickvvw/core";
 import type { ExternalEffect, Prisma, PrismaClient } from "@rakazo_mickvvw/db";
 import { isUniqueViolation } from "@rakazo_mickvvw/db";
+import { getLogger } from "@rakazo_mickvvw/logging";
 import { z } from "zod";
 import { mediaPromptSchema, validateGeneratedMedia } from "./media-generation-provider.js";
 
@@ -28,6 +30,21 @@ export const savedJob = z.object({
   modelSwitches: ModelSwitchesSchema.optional(),
 });
 
+/** What a media job row stores as its request: the prompt plus how to re-run it. */
+export const mediaJobRequest = z.object({
+  tool: z.enum(["generate_image", "generate_video"]),
+  prompt: z.string().min(1),
+  executionId: z.string().min(1),
+  threadGeneration: z.number().int().optional(),
+  /** Detail edit or a fresh random generation; absent means a chat-triggered generation. */
+  mode: z.enum(["edit", "random"]).optional(),
+  /** The artifact being edited, for an image edit; the reference is its bytes. */
+  sourceArtifactId: z.string().optional(),
+  /** An uploaded image, for a video edit; the reference is its bytes. */
+  referenceArtifactId: z.string().optional(),
+});
+export type MediaJobRequest = z.infer<typeof mediaJobRequest>;
+
 /** The mark under a generated image or video: which model made it, and which preset. */
 function mediaModelMark(modelId: string, presetName?: string): MessageBlock {
   return {
@@ -41,6 +58,27 @@ export async function generateMediaFromTool(options: {
   executionId: string;
   /** Recover only persisted state; never submit a new billed generation. */
   recoverOnly?: boolean;
+  /**
+   * Only create the job row and return its id; the provider is not called.
+   * A background poll finishes the job. Idempotent: an existing unsubmitted
+   * reservation returns its id instead of submitting twice.
+   */
+  submitOnly?: boolean;
+  /**
+   * Run the provider call for a reservation an earlier submitOnly created.
+   * Claims the reservation first, so two workers never generate twice.
+   */
+  resume?: boolean;
+  /** Reference media for an edit; absent, the call is a fresh generation. */
+  references?: MediaReference[];
+  /** Detail edit or a fresh random generation; stored on the job row. */
+  mode?: "edit" | "random";
+  /** The artifact being edited, for an image edit; stored on the job row. */
+  sourceArtifactId?: string;
+  /** An uploaded image, for a video edit; stored on the job row. */
+  referenceArtifactId?: string;
+  /** The viewer's extra prompt; seeded onto the job row so the result keeps it. */
+  supplementaryPrompt?: string;
   provider: MediaGenerationProvider;
   prisma: PrismaClient;
   context: AdapterContext;
@@ -83,6 +121,7 @@ export async function generateMediaFromTool(options: {
     }
     let reservation: ExternalEffect | null = null;
     let polling = false;
+    let resumed = false;
     if (video && typeof args.jobId === "string") {
       reservation = await prisma.externalEffect.findFirst({
         where: {
@@ -124,11 +163,24 @@ export async function generateMediaFromTool(options: {
               jobId: prior.id,
               status: prior.status === "media_failed" ? "failed" : "queued",
             };
-          if (options.recoverOnly) return undefined;
-          return {
-            jobId: prior.id,
-            error: "Submission already attempted. Poll a video job; do not resubmit automatically.",
-          };
+          if (options.submitOnly) return { jobId: prior.id, status: "queued" };
+          if (options.resume) {
+            // One worker owns the generation: the claim below moves the row
+            // out of media_submitting, so a racing worker sees it as running.
+            const claimed = await prisma.externalEffect.updateMany({
+              where: { id: prior.id, status: "media_submitting" },
+              data: { status: "media_polling" },
+            });
+            if (!claimed.count) return { jobId: prior.id, status: "running" };
+            resumed = true;
+            reservation = prior;
+          } else if (options.recoverOnly) return undefined;
+          else
+            return {
+              jobId: prior.id,
+              error:
+                "Submission already attempted. Poll a video job; do not resubmit automatically.",
+            };
         }
       }
       if (!reservation) {
@@ -152,8 +204,20 @@ export async function generateMediaFromTool(options: {
                   ...(options.threadGeneration === undefined
                     ? {}
                     : { threadGeneration: options.threadGeneration }),
+                  ...(options.mode ? { mode: options.mode } : {}),
+                  ...(options.sourceArtifactId
+                    ? { sourceArtifactId: options.sourceArtifactId }
+                    : {}),
+                  ...(options.referenceArtifactId
+                    ? { referenceArtifactId: options.referenceArtifactId }
+                    : {}),
                 },
-                result: { provider: provider.id },
+                result: {
+                  provider: provider.id,
+                  ...(options.supplementaryPrompt
+                    ? { supplementaryPrompt: options.supplementaryPrompt }
+                    : {}),
+                },
               },
             });
             break;
@@ -163,7 +227,15 @@ export async function generateMediaFromTool(options: {
         }
         if (!reservation)
           return { error: "Media generation limit reached (two submissions per run)." };
+        // The final prompt, as submitted: the preset and the supplementary
+        // prompt are already folded in by the caller.
+        getLogger().info("media.generate", {
+          "media.tool": options.name,
+          "media.prompt": input.data.prompt,
+          "media.execution_id": options.executionId,
+        });
       }
+      if (options.submitOnly) return { jobId: reservation.id, status: "queued" };
     }
     const saved = savedJob.parse(reservation.result);
     if (saved.artifactId) {
@@ -214,13 +286,19 @@ export async function generateMediaFromTool(options: {
     }
     let output: MediaVideoJob | { status: "completed"; output: GeneratedMedia };
     try {
+      // The prompt is parsed only when a generation runs: polling an
+      // already-submitted video carries no prompt at all.
+      const input = () => ({
+        ...mediaPromptSchema.parse(args),
+        ...(options.references?.length ? { references: options.references } : {}),
+      });
       output = video
         ? saved.jobId
           ? await provider.pollVideo(saved.jobId, context)
-          : await provider.generateVideo(mediaPromptSchema.parse(args), context)
+          : await provider.generateVideo(input(), context)
         : {
             status: "completed" as const,
-            output: await provider.generateImage(mediaPromptSchema.parse(args), context),
+            output: await provider.generateImage(input(), context),
           };
     } catch (error) {
       // Release only this check's claim; a finished or failed job stays settled.
@@ -236,7 +314,9 @@ export async function generateMediaFromTool(options: {
         const updated = await tx.externalEffect.updateMany({
           where: {
             id: reservation.id,
-            status: polling ? "media_polling" : "media_submitting",
+            // A resumed submit claimed media_polling; a fresh submit is still
+            // media_submitting. The poll claim is media_polling either way.
+            status: polling || resumed ? "media_polling" : "media_submitting",
             result: { equals: saved },
           },
           data: {

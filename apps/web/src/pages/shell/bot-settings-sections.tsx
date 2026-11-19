@@ -534,6 +534,26 @@ export function MediaModelGroup({
   onVideoTriggerWordsChange,
   imageTriggerWords,
   onImageTriggerWordsChange,
+  videoEditChoices,
+  videoEditValue,
+  onVideoEditModelChange,
+  videoEditFallbacks,
+  onAddVideoEditFallback,
+  onMoveVideoEditFallback,
+  onRemoveVideoEditFallback,
+  videoEditTest,
+  onTestVideoEditModel,
+  onApplyVideoEditTestedModel,
+  imageEditChoices,
+  imageEditValue,
+  onImageEditModelChange,
+  imageEditFallbacks,
+  onAddImageEditFallback,
+  onMoveImageEditFallback,
+  onRemoveImageEditFallback,
+  imageEditTest,
+  onTestImageEditModel,
+  onApplyImageEditTestedModel,
 }: {
   ids: string;
   /** The model-option key a timeline name pointed at; that row is tagged. */
@@ -574,6 +594,27 @@ export function MediaModelGroup({
   /** Stored "|" trigger words; empty means the defaults. */
   imageTriggerWords: string;
   onImageTriggerWordsChange: (value: string) => void;
+  /** The edit lists: picker, ordered fallbacks and test only. An edit never applies a preset or trigger words, so those sections are absent. */
+  videoEditChoices: readonly ChatModelChoice[];
+  videoEditValue: string;
+  onVideoEditModelChange: (key: string) => void;
+  videoEditFallbacks: readonly MediaModelFallback[];
+  onAddVideoEditFallback: (key: string) => void;
+  onMoveVideoEditFallback: (key: string, delta: -1 | 1) => void;
+  onRemoveVideoEditFallback: (key: string) => void;
+  videoEditTest: MediaModelTestState;
+  onTestVideoEditModel: (key: string) => void;
+  onApplyVideoEditTestedModel: () => void;
+  imageEditChoices: readonly ChatModelChoice[];
+  imageEditValue: string;
+  onImageEditModelChange: (key: string) => void;
+  imageEditFallbacks: readonly MediaModelFallback[];
+  onAddImageEditFallback: (key: string) => void;
+  onMoveImageEditFallback: (key: string, delta: -1 | 1) => void;
+  onRemoveImageEditFallback: (key: string) => void;
+  imageEditTest: MediaModelTestState;
+  onTestImageEditModel: (key: string) => void;
+  onApplyImageEditTestedModel: () => void;
 }) {
   const { t } = useLingui();
   return (
@@ -630,6 +671,36 @@ export function MediaModelGroup({
         onTriggerWordsChange={onImageTriggerWordsChange}
         triggerWordsPlaceholder={DEFAULT_IMAGE_TRIGGER_WORDS}
       />
+      <MediaRoleSection
+        ids={`${ids}-edit`}
+        kind="video"
+        modelLabel={t`Video edit model`}
+        choices={videoEditChoices}
+        value={videoEditValue}
+        onModelChange={onVideoEditModelChange}
+        fallbacks={videoEditFallbacks}
+        onAddFallback={onAddVideoEditFallback}
+        onMoveFallback={onMoveVideoEditFallback}
+        onRemoveFallback={onRemoveVideoEditFallback}
+        test={videoEditTest}
+        onTestModel={onTestVideoEditModel}
+        onApplyTestedModel={onApplyVideoEditTestedModel}
+      />
+      <MediaRoleSection
+        ids={`${ids}-edit`}
+        kind="image"
+        modelLabel={t`Image edit model`}
+        choices={imageEditChoices}
+        value={imageEditValue}
+        onModelChange={onImageEditModelChange}
+        fallbacks={imageEditFallbacks}
+        onAddFallback={onAddImageEditFallback}
+        onMoveFallback={onMoveImageEditFallback}
+        onRemoveFallback={onRemoveImageEditFallback}
+        test={imageEditTest}
+        onTestModel={onTestImageEditModel}
+        onApplyTestedModel={onApplyImageEditTestedModel}
+      />
     </BotPanelGroup>
   );
 }
@@ -677,16 +748,17 @@ function MediaRoleSection({
   test: MediaModelTestState;
   onTestModel: (key: string) => void;
   onApplyTestedModel: () => void;
-  presetsLabel: string;
-  presets: readonly BotPromptPreset[];
-  onPresetsChange: (presets: BotPromptPreset[]) => void;
-  activePreset: string | null;
-  onPresetChange: (name: string | null) => void;
-  triggerWordsLabel: string;
+  /** Absent for the edit lists: an edit never applies a preset or trigger words. */
+  presetsLabel?: string;
+  presets?: readonly BotPromptPreset[];
+  onPresetsChange?: (presets: BotPromptPreset[]) => void;
+  activePreset?: string | null;
+  onPresetChange?: (name: string | null) => void;
+  triggerWordsLabel?: string;
   /** Stored "|" trigger words; empty means the defaults. */
-  triggerWords: string;
-  onTriggerWordsChange: (value: string) => void;
-  triggerWordsPlaceholder: string;
+  triggerWords?: string;
+  onTriggerWordsChange?: (value: string) => void;
+  triggerWordsPlaceholder?: string;
 }) {
   const { t } = useLingui();
   const usedKeys = new Set([value, ...fallbacks.map((fallback) => fallback.key)]);
@@ -747,26 +819,32 @@ function MediaRoleSection({
           onApplyTestedModel={onApplyTestedModel}
         />
       ) : null}
-      <PromptPresetSection
-        label={presetsLabel}
-        presets={presets}
-        active={activePreset}
-        onPresetsChange={onPresetsChange}
-        onActiveChange={onPresetChange}
-      />
-      <div className="flex min-h-11 items-center justify-between gap-3">
-        <label htmlFor={`${ids}-${kind}-trigger-words`} className={rowLabelClass}>
-          {triggerWordsLabel}
-        </label>
-        <Input
-          id={`${ids}-${kind}-trigger-words`}
-          value={triggerWords}
-          placeholder={triggerWordsPlaceholder}
-          onChange={(event) => onTriggerWordsChange(event.target.value)}
-          className="min-w-0 flex-1"
-          aria-label={triggerWordsLabel}
-        />
-      </div>
+      {presets && presetsLabel && onPresetsChange && onPresetChange ? (
+        <>
+          <PromptPresetSection
+            label={presetsLabel}
+            presets={presets}
+            active={activePreset ?? null}
+            onPresetsChange={onPresetsChange}
+            onActiveChange={onPresetChange}
+          />
+          {triggerWords !== undefined && triggerWordsLabel && onTriggerWordsChange ? (
+            <div className="flex min-h-11 items-center justify-between gap-3">
+              <label htmlFor={`${ids}-${kind}-trigger-words`} className={rowLabelClass}>
+                {triggerWordsLabel}
+              </label>
+              <Input
+                id={`${ids}-${kind}-trigger-words`}
+                value={triggerWords}
+                placeholder={triggerWordsPlaceholder}
+                onChange={(event) => onTriggerWordsChange(event.target.value)}
+                className="min-w-0 flex-1"
+                aria-label={triggerWordsLabel}
+              />
+            </div>
+          ) : null}
+        </>
+      ) : null}
     </>
   );
 }

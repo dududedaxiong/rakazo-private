@@ -323,20 +323,32 @@ describe("MediaResult preview title bar", () => {
     expect(titleBar()?.textContent).toContain("bluer sky");
   });
 
-  it("regenerates from the preview header and toasts the result", async () => {
+  it("regenerates randomly from the preview header and toasts the result", async () => {
     const { media } = renderResult();
     await openPreview();
     await flush();
-    const regenerate = container.querySelector<HTMLButtonElement>(
-      'button[aria-label="Regenerate"]',
-    );
-    expect(regenerate).not.toBeNull();
+    const regenerate = buttonByText("Generate random");
+    expect(regenerate).not.toBeUndefined();
     await act(async () => {
       regenerate?.click();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
-    expect(media.regenerate).toHaveBeenCalledExactlyOnceWith({ artifactId: "art-1" });
+    expect(media.regenerate).toHaveBeenCalledExactlyOnceWith({
+      artifactId: "art-1",
+      mode: "random",
+    });
     expect(toastMock).toHaveBeenCalledWith("Regenerated");
+  });
+
+  it("opens the edit dialog from the preview header when the supplementary prompt is empty", async () => {
+    renderResult();
+    await openPreview();
+    await flush();
+    await act(async () => {
+      buttonByText("Edit details")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(document.querySelector('[data-testid="media-edit-dialog"]')).not.toBeNull();
   });
 
   it("toasts an unknown regeneration failure with the raw error as its description", async () => {
@@ -345,7 +357,7 @@ describe("MediaResult preview title bar", () => {
     await openPreview();
     await flush();
     await act(async () => {
-      container.querySelector<HTMLButtonElement>('button[aria-label="Regenerate"]')?.click();
+      buttonByText("Generate random")?.click();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(toastMock).toHaveBeenCalledWith("The model provider returned an error.", {
@@ -377,7 +389,7 @@ describe("MediaResult preview title bar", () => {
     await openPreview();
     await flush();
     await act(async () => {
-      container.querySelector<HTMLButtonElement>('button[aria-label="Regenerate"]')?.click();
+      buttonByText("Generate random")?.click();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(toastMock).toHaveBeenCalledWith(
@@ -403,7 +415,7 @@ describe("MediaResult preview title bar", () => {
     await openPreview();
     await flush();
     await act(async () => {
-      container.querySelector<HTMLButtonElement>('button[aria-label="Regenerate"]')?.click();
+      buttonByText("Generate random")?.click();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(toastMock).toHaveBeenCalledWith(

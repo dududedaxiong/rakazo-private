@@ -63,6 +63,18 @@ const onMoveImageFallback = vi.fn();
 const onRemoveImageFallback = vi.fn();
 const onTestImageModel = vi.fn();
 const onApplyImageTestedModel = vi.fn();
+const onVideoEditModelChange = vi.fn();
+const onAddVideoEditFallback = vi.fn();
+const onMoveVideoEditFallback = vi.fn();
+const onRemoveVideoEditFallback = vi.fn();
+const onTestVideoEditModel = vi.fn();
+const onApplyVideoEditTestedModel = vi.fn();
+const onImageEditModelChange = vi.fn();
+const onAddImageEditFallback = vi.fn();
+const onMoveImageEditFallback = vi.fn();
+const onRemoveImageEditFallback = vi.fn();
+const onTestImageEditModel = vi.fn();
+const onApplyImageEditTestedModel = vi.fn();
 const onImagePresetsChange = vi.fn();
 const onVideoPresetChange = vi.fn();
 const onImagePresetChange = vi.fn();
@@ -81,6 +93,12 @@ async function renderGroup(
     activeImagePreset?: string | null;
     videoTriggerWords?: string;
     imageTriggerWords?: string;
+    videoEditValue?: string;
+    imageEditValue?: string;
+    videoEditFallbacks?: { key: string; label: string }[];
+    imageEditFallbacks?: { key: string; label: string }[];
+    videoEditTest?: MediaModelTestState;
+    imageEditTest?: MediaModelTestState;
   } = {},
 ) {
   await act(async () =>
@@ -119,6 +137,26 @@ async function renderGroup(
         onVideoTriggerWordsChange={onVideoTriggerWordsChange}
         imageTriggerWords={overrides.imageTriggerWords ?? ""}
         onImageTriggerWordsChange={onImageTriggerWordsChange}
+        videoEditChoices={videoChoices}
+        videoEditValue={overrides.videoEditValue ?? ""}
+        onVideoEditModelChange={onVideoEditModelChange}
+        videoEditFallbacks={overrides.videoEditFallbacks ?? []}
+        onAddVideoEditFallback={onAddVideoEditFallback}
+        onMoveVideoEditFallback={onMoveVideoEditFallback}
+        onRemoveVideoEditFallback={onRemoveVideoEditFallback}
+        videoEditTest={overrides.videoEditTest ?? { status: "idle" }}
+        onTestVideoEditModel={onTestVideoEditModel}
+        onApplyVideoEditTestedModel={onApplyVideoEditTestedModel}
+        imageEditChoices={imageChoices}
+        imageEditValue={overrides.imageEditValue ?? ""}
+        onImageEditModelChange={onImageEditModelChange}
+        imageEditFallbacks={overrides.imageEditFallbacks ?? []}
+        onAddImageEditFallback={onAddImageEditFallback}
+        onMoveImageEditFallback={onMoveImageEditFallback}
+        onRemoveImageEditFallback={onRemoveImageEditFallback}
+        imageEditTest={overrides.imageEditTest ?? { status: "idle" }}
+        onTestImageEditModel={onTestImageEditModel}
+        onApplyImageEditTestedModel={onApplyImageEditTestedModel}
       />,
     ),
   );
@@ -295,6 +333,16 @@ describe("MediaModelGroup", () => {
         { key: "provider-a::video-c", label: "Video C" },
       ],
       imageValue: "provider-a::image-a",
+      videoEditValue: "provider-a::video-a",
+      videoEditFallbacks: [
+        { key: "provider-a::video-b", label: "Video B" },
+        { key: "provider-a::video-c", label: "Video C" },
+      ],
+      imageEditValue: "provider-a::image-a",
+      imageEditFallbacks: [
+        { key: "provider-a::image-b", label: "Image B" },
+        { key: "provider-a::image-c", label: "Image C" },
+      ],
     });
     expect(container.textContent).toContain("Fallback models");
     expect(container.querySelector('select[aria-label="Add fallback model"]')).toBeNull();

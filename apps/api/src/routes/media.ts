@@ -6,6 +6,7 @@ import {
   generateMediaFromTool,
   MEDIA_JOB_KIND,
   mediaDelivery,
+  mediaJobRequest,
   resolveBotMediaGenerationProvider,
   savedJob,
   scheduleMediaPoll,
@@ -13,17 +14,6 @@ import {
 import type { Actor } from "@rakazo_mickvvw/contracts";
 import type { Prisma, PrismaClient } from "@rakazo_mickvvw/db";
 import type { RouterContext } from "./context.js";
-
-/** What generateMediaFromTool stored on the job row when it submitted. */
-function parseMediaJobRequest(
-  value: unknown,
-): { tool: "generate_image" | "generate_video"; prompt: string } | undefined {
-  if (!value || typeof value !== "object") return undefined;
-  const record = value as Record<string, unknown>;
-  if (record.tool !== "generate_image" && record.tool !== "generate_video") return undefined;
-  if (typeof record.prompt !== "string" || !record.prompt) return undefined;
-  return { tool: record.tool, prompt: record.prompt };
-}
 
 /** A bot-owned generated file; anything else is NOT_FOUND, never a leak. */
 async function loadOwnedArtifact(prisma: PrismaClient, actor: Actor, artifactId: string) {
@@ -92,12 +82,15 @@ export function mediaRoutes(ctx: RouterContext) {
       ),
       regenerate: authed.media.regenerate.handler(async ({ context, input }) => {
         const actor = context.actor;
+        // Old clients send no mode; they keep the previous single-button
+        // behavior, which is a fresh random generation.
+        const mode = input.mode ?? "random";
         const artifact = await loadOwnedArtifact(deps.prisma, actor, input.artifactId);
         const bot = await repos.getBot(actor, artifact.botId);
         const job = await loadMediaJob(deps.prisma, actor, input.artifactId);
         if (!job) throw new ORPCError("NOT_FOUND", { message: "找不到这次生成" });
-        const request = parseMediaJobRequest(job.request);
-        if (!request) throw new ORPCError("NOT_FOUND", { message: "找不到这次生成" });
+        const request = mediaJobRequest.safeParse(job.request);
+        if (!request.success) throw new ORPCError("NOT_FOUND", { message: "找不到这次生成" });
         const saved = savedJob.safeParse(job.result);
         const supplementaryPrompt = saved.success ? saved.data.supplementaryPrompt : undefined;
         const originalRun = await deps.prisma.run.findUnique({
@@ -127,12 +120,58 @@ export function mediaRoutes(ctx: RouterContext) {
           bot,
           deps.mediaGeneration,
         );
-        if (!provider)
-          throw new ORPCError("BAD_REQUEST", { message: "这个机器人没有可用的媒体模型" });
+        const isImage = request.data.tool === "generate_image";
+        // An edit answers from the bot's edit list, never the generation
+        // list; a random generation from the generation list. A bot with no
+        // list for the mode has nothing to run.
+        const hasModels =
+          mode === "edit"
+            ? provider?.editCapabilities?.[isImage ? "images" : "video"]
+            : isImage
+              ? provider?.capabilities.images
+              : provider?.capabilities.video;
+        if (!provider || !hasModels)
+          throw new ORPCError("BAD_REQUEST", {
+            message:
+              mode === "edit"
+                ? "这个机器人还没有配置编辑模型，请先在影图模型设置里添加"
+                : "这个机器人没有可用的媒体模型",
+          });
+        // An edit is the supplementary prompt alone: the reference already
+        // carries the content, and no preset is applied. A random generation
+        // replays the raw prompt plus the supplementary prompt, with the
+        // current preset applied inside the provider call, as for a fresh
+        // request. The supplementary prompt applies to both modes.
+        if (mode === "edit" && !supplementaryPrompt)
+          throw new ORPCError("BAD_REQUEST", { message: "请先填写细节提示词" });
+        const prompt =
+          mode === "edit"
+            ? supplementaryPrompt!
+            : supplementaryPrompt
+              ? `${request.data.prompt}\n${supplementaryPrompt}`
+              : request.data.prompt;
+        // A video edit needs a reference frame: the uploaded image, which
+        // takes priority, or a frame the server extracted from the original
+        // video. Extraction is not available yet, so without an upload there
+        // is no reference to edit from.
+        let referenceArtifactId: string | undefined;
+        if (mode === "edit" && !isImage) {
+          if (!input.referenceArtifactId)
+            throw new ORPCError("BAD_REQUEST", { message: "视频编辑需要上传一张参考图" });
+          const reference = await deps.prisma.artifact.findFirst({
+            where: { id: input.referenceArtifactId, spaceId: actor.spaceId, userId: actor.userId },
+            select: { id: true, mimeType: true },
+          });
+          if (!reference?.mimeType.startsWith("image/"))
+            throw new ORPCError("NOT_FOUND", { message: "找不到这张参考图" });
+          referenceArtifactId = reference.id;
+        }
         // A fresh run anchors the new job: its own idempotency namespace, so
-        // the original run's two media slots are never contended, and a
-        // status that the run reconciler never picks up, so no stray turn
-        // starts. The message still lands in the original thread.
+        // the original run's two media slots are never contended. It starts
+        // running, with no lease, so the run reconciler never picks it up
+        // and no stray turn starts; the background poll settles it to
+        // completed or failed when the media lands or fails. The message
+        // still lands in the original thread.
         const operationId = `media-regenerate:${input.artifactId}:${randomUUID()}`;
         const created = await deps.prisma.$transaction(async (tx) => {
           const task = await tx.task.create({
@@ -142,7 +181,7 @@ export function mediaRoutes(ctx: RouterContext) {
               threadId: thread.id,
               userId: actor.userId,
               prompt: "重新生成媒体",
-              status: "completed",
+              status: "running",
             },
           });
           const run = await tx.run.create({
@@ -152,9 +191,10 @@ export function mediaRoutes(ctx: RouterContext) {
               threadId: thread.id,
               userId: actor.userId,
               taskId: task.id,
-              status: "completed",
+              status: "running",
               trigger: "media",
               clientNonce: operationId,
+              startedAt: new Date(),
             },
           });
           return { task, run };
@@ -174,11 +214,21 @@ export function mediaRoutes(ctx: RouterContext) {
           botId: bot.id,
           signal: context.signal ?? AbortSignal.timeout(5 * 60_000),
         };
-        // The raw prompt, plus the extra prompt when one is set; the current
-        // preset is applied inside the provider call, as for a fresh request.
-        const prompt = supplementaryPrompt
-          ? `${request.prompt}\n${supplementaryPrompt}`
-          : request.prompt;
+        // The chat shows it is generating right away, the same progress line
+        // a fresh generation shows; it clears when the run settles.
+        await deps.events
+          .append({
+            spaceId: actor.spaceId,
+            threadId: thread.id,
+            botId: bot.id,
+            type: "thread.progress",
+            payload: {
+              text: isImage ? "正在生成图片…" : "正在生成视频…",
+              activity: true,
+            },
+            runId: created.run.id,
+          })
+          .catch(() => undefined);
         const delivery = mediaDelivery(
           { prisma: deps.prisma, events: deps.events, artifacts: deps.artifacts },
           run,
@@ -188,10 +238,18 @@ export function mediaRoutes(ctx: RouterContext) {
             operationId,
           },
         );
+        // Submit only: the job row is created and the poll is scheduled, and
+        // the RPC returns at once instead of holding the connection while
+        // the media renders. The poll runs the generation and delivers it.
         const result = await generateMediaFromTool({
-          name: request.tool,
+          name: request.data.tool,
           args: { prompt },
           executionId: operationId,
+          submitOnly: true,
+          mode,
+          ...(mode === "edit" && isImage ? { sourceArtifactId: artifact.id } : {}),
+          ...(referenceArtifactId ? { referenceArtifactId } : {}),
+          ...(supplementaryPrompt ? { supplementaryPrompt } : {}),
           provider,
           prisma: deps.prisma,
           context: adapterContext,
@@ -199,17 +257,32 @@ export function mediaRoutes(ctx: RouterContext) {
           threadGeneration: thread.historyCompactionGeneration,
           ...delivery,
         });
-        if (!result || "error" in result)
-          throw new ORPCError("INTERNAL_SERVER_ERROR", {
-            message: result && "error" in result ? result.error : "重新生成失败",
-          });
-        if ("jobId" in result && result.jobId && result.status !== "completed") {
-          // A video still rendering: the existing poll delivers it.
+        if (!result || "error" in result) {
+          // Nothing was submitted; close the run honestly instead of
+          // leaving it working, and close any reservation this run made.
+          const error = result && "error" in result && result.error ? result.error : "重新生成失败";
+          await deps.prisma
+            .$transaction(async (tx) => {
+              await tx.externalEffect.updateMany({
+                where: { runId: created.run.id, kind: MEDIA_JOB_KIND },
+                data: { status: "media_failed" },
+              });
+              await tx.run.updateMany({
+                where: { id: created.run.id, status: "running" },
+                data: { status: "failed", error, completedAt: new Date() },
+              });
+              await tx.task.updateMany({
+                where: { id: created.task.id },
+                data: { status: "failed" },
+              });
+            })
+            .catch(() => undefined);
+          throw new ORPCError("INTERNAL_SERVER_ERROR", { message: error });
+        }
+        if ("jobId" in result && result.jobId) {
           await scheduleMediaPoll(deps.jobs, result.jobId);
           return { ok: true as const, status: "queued" as const };
         }
-        if (result.status === "completed" && "artifactId" in result && result.artifactId)
-          return { ok: true as const, status: "completed" as const, artifactId: result.artifactId };
         throw new ORPCError("INTERNAL_SERVER_ERROR", { message: "重新生成失败" });
       }),
     },

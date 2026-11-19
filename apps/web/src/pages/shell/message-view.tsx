@@ -141,7 +141,6 @@ export const MessageView = memo(function MessageView({
   onRefresh,
   onBotChanged,
   onAddRoutine,
-  onRegenerate,
   regenerateDisabled,
   onResend,
   showResend,
@@ -225,8 +224,6 @@ export const MessageView = memo(function MessageView({
   onRefresh: () => Promise<void>;
   onBotChanged: () => Promise<void>;
   onAddRoutine: (name: string, prompt: string) => void;
-  /** Re-sends the user message that produced a generated result. */
-  onRegenerate?: (messageId: string) => Promise<void>;
   /** A send or a run is in progress, so a regenerate would wait. */
   regenerateDisabled?: boolean;
   /** Re-sends a user message that got no normal reply. */
@@ -848,7 +845,6 @@ export const MessageView = memo(function MessageView({
                     showDownload={bot?.showMediaDownload ?? true}
                     modelSwitches={message.modelSwitches}
                     onLocateModel={onLocateModel}
-                    onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}
                     regenerateDisabled={regenerateDisabled}
                     onOpenModelSettings={onOpenModelSettings}
                   />
@@ -894,7 +890,6 @@ export const MessageView = memo(function MessageView({
                     showDownload={bot?.showMediaDownload ?? true}
                     modelSwitches={message.modelSwitches}
                     onLocateModel={onLocateModel}
-                    onRegenerate={onRegenerate ? () => onRegenerate(message.id) : undefined}
                     regenerateDisabled={regenerateDisabled}
                     onOpenModelSettings={onOpenModelSettings}
                   />

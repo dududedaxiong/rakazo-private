@@ -103,6 +103,8 @@ function fakeBot(id: string, name: string): Bot {
     translationModels: null,
     videoModels: null,
     imageModels: null,
+    videoEditModels: null,
+    imageEditModels: null,
     videoPromptPresets: null,
     activeVideoPromptPreset: null,
     imagePromptPresets: null,

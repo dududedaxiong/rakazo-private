@@ -1,9 +1,12 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { BotModelEntry, BotPromptPreset, ModelSwitches } from "@rakazo_mickvvw/contracts";
 import { moveBotModelToFront } from "@rakazo_mickvvw/contracts";
-import { displayName, modelOptionKey } from "@rakazo_mickvvw/core";
+import { displayName, inferAttachmentMimeType, modelOptionKey } from "@rakazo_mickvvw/core";
 import {
   Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
@@ -13,11 +16,10 @@ import {
   Input,
   toast,
 } from "@rakazo_mickvvw/ui-web";
-import { Check, RotateCw } from "lucide-react";
+import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
-import { IconTooltip } from "../../components/IconTooltip";
 import type { ArtifactTarget } from "../../lib/artifact-open";
 import { downloadArtifact, fetchArtifactBytes } from "../../lib/artifact-open";
 import type { MediaMark } from "../../lib/media-mark";
@@ -27,6 +29,8 @@ import {
   setSupplementaryPrompt as saveSupplementaryPromptRemote,
 } from "../../lib/media-rpc";
 import type { ModelLocateTarget } from "../../lib/model-locate";
+import { readFileAsBase64 } from "../../lib/pending-attachments";
+import { prepareImage } from "../../lib/prepare-image";
 import type { createSpaceRpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";
 import { ArtifactImage } from "./message-cards";
@@ -112,7 +116,6 @@ export function MediaResult({
   showDownload = true,
   modelSwitches,
   onLocateModel,
-  onRegenerate,
   regenerateDisabled,
   onOpenModelSettings,
 }: {
@@ -147,8 +150,6 @@ export function MediaResult({
   modelSwitches?: ModelSwitches | null;
   /** Opens the bot's settings at the model named in a switch timeline. */
   onLocateModel?: (target: ModelLocateTarget) => void;
-  /** Re-sends the user message that produced this result. */
-  onRegenerate?: () => Promise<void>;
   /** A send or a run is in progress, so a regenerate would wait. */
   regenerateDisabled?: boolean;
   /** Opens the supplier settings, for a quota failure's provider switch. */
@@ -283,14 +284,90 @@ export function MediaResult({
     [artifactId, rpc, t],
   );
 
-  // Re-renders this artifact with the active preset plus the supplementary
-  // prompt; the new file arrives as a fresh result in the chat.
-  const regenerateMediaResult = useCallback(async () => {
+  // The edit dialog: the supplementary prompt, and for a video a reference
+  // image to edit from. It opens when the prompt is empty (an edit needs
+  // one) or for a video (an upload is needed every time).
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editDraft, setEditDraft] = useState("");
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editBusy, setEditBusy] = useState(false);
+
+  // Re-renders this artifact: a random generation replays the raw prompt
+  // with the active preset plus the supplementary prompt; an edit reworks
+  // the original from the supplementary prompt alone. The new file arrives
+  // as a fresh result in the chat.
+  const regenerateMediaResult = useCallback(
+    async (mode: "edit" | "random", referenceArtifactId?: string) => {
+      if (regenerating) return;
+      setRegenerating(true);
+      try {
+        const result = await regenerateMedia(rpc, artifactId, {
+          mode,
+          ...(referenceArtifactId ? { referenceArtifactId } : {}),
+        });
+        toast(result.status === "queued" ? t`Regenerating…` : t`Regenerated`);
+      } catch (err) {
+        toastModelError(err, {
+          rpc,
+          provider: primary?.provider,
+          model: primary?.model,
+          botId,
+          kind,
+          onLocateModel,
+          onOpenModelSettings,
+          onRetry: () => void regenerateMediaResult(mode, referenceArtifactId),
+        });
+      } finally {
+        setRegenerating(false);
+      }
+    },
+    [artifactId, botId, kind, onLocateModel, onOpenModelSettings, primary, regenerating, rpc, t],
+  );
+
+  // An edit needs a supplementary prompt; a video edit also needs a
+  // reference image, uploaded in the dialog. The prompt loads on demand:
+  // the preview may never have opened, so the saved value may not be in state.
+  const startEdit = useCallback(async () => {
     if (regenerating) return;
-    setRegenerating(true);
+    const saved = supplementaryPrompt ?? (await getSupplementaryPrompt(rpc, artifactId));
+    if (supplementaryPrompt === null) setSupplementaryPrompt(saved);
+    if (kind === "video" || !saved.trim()) {
+      setEditDraft(saved);
+      setEditFile(null);
+      setEditDialogOpen(true);
+      return;
+    }
+    await regenerateMediaResult("edit");
+  }, [artifactId, kind, regenerating, regenerateMediaResult, rpc, supplementaryPrompt]);
+
+  const submitEdit = useCallback(async () => {
+    if (editBusy || regenerating) return;
+    const prompt = editDraft.trim();
+    if (!prompt) return;
+    if (kind === "video" && !editFile) return;
+    setEditBusy(true);
     try {
-      const result = await regenerateMedia(rpc, artifactId);
-      toast(result.status === "queued" ? t`Regenerating…` : t`Regenerated`);
+      if (prompt !== (supplementaryPrompt ?? "")) {
+        await saveSupplementaryPromptRemote(rpc, artifactId, prompt);
+        setSupplementaryPrompt(prompt);
+      }
+      let referenceArtifactId: string | undefined;
+      if (kind === "video" && editFile && botId) {
+        const mimeType = inferAttachmentMimeType(editFile.name, editFile.type);
+        if (!mimeType) throw new Error(t`Unsupported file type: ${editFile.name}`);
+        const file = await prepareImage(editFile);
+        const contentBase64 = await readFileAsBase64(file);
+        const reference = await rpc.artifacts.create({
+          botId,
+          name: editFile.name,
+          mimeType,
+          contentBase64,
+          clientNonce: `reference:${artifactId}:${crypto.randomUUID()}`,
+        });
+        referenceArtifactId = reference.id;
+      }
+      setEditDialogOpen(false);
+      await regenerateMediaResult("edit", referenceArtifactId);
     } catch (err) {
       toastModelError(err, {
         rpc,
@@ -300,12 +377,27 @@ export function MediaResult({
         kind,
         onLocateModel,
         onOpenModelSettings,
-        onRetry: () => void regenerateMediaResult(),
+        onRetry: () => void submitEdit(),
       });
     } finally {
-      setRegenerating(false);
+      setEditBusy(false);
     }
-  }, [artifactId, regenerating, rpc, t]);
+  }, [
+    artifactId,
+    botId,
+    editBusy,
+    editDraft,
+    editFile,
+    kind,
+    onLocateModel,
+    onOpenModelSettings,
+    primary,
+    regenerateMediaResult,
+    regenerating,
+    rpc,
+    supplementaryPrompt,
+    t,
+  ]);
 
   const modelName = mark ? displayName(mark.modelId, t`Model`) : t`Model`;
   const primaryModelName = primary ? displayName(primary.model, t`Model`) : modelName;
@@ -325,19 +417,27 @@ export function MediaResult({
       onSaveSupplementaryPrompt={saveSupplementaryPrompt}
     />
   ) : undefined;
-  const previewRegenerateAction = botId ? (
-    <IconTooltip label={t`Regenerate`}>
+  const previewRegenerateActions = botId ? (
+    <>
       <Button
-        variant="ghost"
-        size="icon-lg"
-        className="rounded-full text-muted-foreground"
-        aria-label={t`Regenerate`}
+        variant="text"
+        size="xs"
         disabled={regenerating}
-        onClick={() => void regenerateMediaResult()}
+        onClick={() => void startEdit()}
+        className="font-normal"
       >
-        <RotateCw />
+        <Trans>Edit details</Trans>
       </Button>
-    </IconTooltip>
+      <Button
+        variant="text"
+        size="xs"
+        disabled={regenerating}
+        onClick={() => void regenerateMediaResult("random")}
+        className="font-normal"
+      >
+        <Trans>Generate random</Trans>
+      </Button>
+    </>
   ) : undefined;
   const markLine = (
     <div className="flex flex-wrap items-center gap-x-1 text-body-sm text-muted-foreground">
@@ -420,7 +520,7 @@ export function MediaResult({
           name={name}
           previewOpen={previewOpen}
           onPreviewOpenChange={showPreview ? setPreviewOpen : () => {}}
-          previewHeaderActions={previewRegenerateAction}
+          previewHeaderActions={previewRegenerateActions}
           previewTitleBar={previewTitleBar}
         />
       ) : (
@@ -433,7 +533,7 @@ export function MediaResult({
           inlineVideo
           previewOpen={previewOpen}
           onPreviewOpenChange={showPreview ? setPreviewOpen : () => {}}
-          previewHeaderActions={previewRegenerateAction}
+          previewHeaderActions={previewRegenerateActions}
           previewTitleBar={previewTitleBar}
         />
       )}
@@ -484,16 +584,27 @@ export function MediaResult({
             {favorite.favorited ? <Trans>Favorited</Trans> : <Trans>Favorite</Trans>}
           </Button>
         ) : null}
-        {onRegenerate ? (
-          <Button
-            variant="text"
-            size="xs"
-            disabled={regenerateDisabled}
-            onClick={() => void onRegenerate()}
-            className="font-normal"
-          >
-            <Trans>Regenerate</Trans>
-          </Button>
+        {botId ? (
+          <>
+            <Button
+              variant="text"
+              size="xs"
+              disabled={regenerateDisabled || regenerating}
+              onClick={() => void startEdit()}
+              className="font-normal"
+            >
+              <Trans>Edit details</Trans>
+            </Button>
+            <Button
+              variant="text"
+              size="xs"
+              disabled={regenerateDisabled || regenerating}
+              onClick={() => void regenerateMediaResult("random")}
+              className="font-normal"
+            >
+              <Trans>Generate random</Trans>
+            </Button>
+          </>
         ) : null}
         <Button variant="text" size="xs" onClick={() => setCollapsed(true)} className="font-normal">
           <Trans>Collapse</Trans>
@@ -504,6 +615,63 @@ export function MediaResult({
           {downloadError}
         </div>
       ) : null}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent data-testid="media-edit-dialog" size="md" className="gap-0 p-0">
+          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-4">
+            <DialogTitle className="text-body-lg font-semibold">
+              <Trans>Edit details</Trans>
+            </DialogTitle>
+          </div>
+          <div className="space-y-3 px-5 py-4">
+            <label htmlFor="media-edit-prompt" className="block space-y-1 text-body-sm">
+              <span className="text-muted-foreground">
+                <Trans>Supplementary prompt</Trans>
+              </span>
+              <Input
+                autoFocus
+                id="media-edit-prompt"
+                value={editDraft}
+                onChange={(event) => setEditDraft(event.target.value)}
+                aria-label={t`Supplementary prompt`}
+              />
+            </label>
+            {kind === "video" ? (
+              <label htmlFor="media-edit-reference" className="block space-y-1 text-body-sm">
+                <span className="text-muted-foreground">
+                  <Trans>Reference image</Trans>
+                </span>
+                <Input
+                  type="file"
+                  id="media-edit-reference"
+                  accept="image/*"
+                  onChange={(event) => setEditFile(event.target.files?.[0] ?? null)}
+                  aria-label={t`Reference image`}
+                />
+                {editFile ? (
+                  <span className="block truncate text-foreground">{editFile.name}</span>
+                ) : null}
+              </label>
+            ) : null}
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="text"
+                size="sm"
+                onClick={() => setEditDialogOpen(false)}
+                className="font-normal"
+              >
+                <Trans>Cancel</Trans>
+              </Button>
+              <Button
+                size="sm"
+                disabled={editBusy || !editDraft.trim() || (kind === "video" && !editFile)}
+                onClick={() => void submitEdit()}
+              >
+                {editBusy ? <Trans>Starting…</Trans> : <Trans>Start edit</Trans>}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

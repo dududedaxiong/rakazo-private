@@ -119,6 +119,7 @@ export function createJobReconciler(
     reconcileCloudAgents?: () => Promise<void>;
     reconcilePurchases?: () => Promise<void>;
     reconcileMediaVideos?: () => Promise<void>;
+    reconcileMediaImages?: () => Promise<void>;
     reconcileModelCredits?: () => Promise<void>;
     reconcileRoutineRetryNotices?: () => Promise<void>;
     reconcileStrategicInitiatives?: () => Promise<void>;
@@ -152,6 +153,7 @@ export function createJobReconciler(
     deps.reconcileCloudAgents,
     deps.reconcilePurchases,
     deps.reconcileMediaVideos,
+    deps.reconcileMediaImages,
     deps.reconcileModelCredits,
     deps.reconcileComputerUpdates,
     deps.reconcileRoutineRetryNotices,

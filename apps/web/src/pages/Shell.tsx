@@ -758,28 +758,6 @@ function SpaceShell() {
     flushPendingBrowserNotifications,
   });
   const { sending, sendError, stopRun } = composer;
-  /**
-   * Re-sends the nearest user message before a generated result, with the
-   * same prompt and the bot's current model and preset. The generation
-   * progress shows exactly as it does for a fresh send.
-   */
-  const regenerateFromMessage = useCallback(
-    async (messageId: string) => {
-      const messages = transcript.messages;
-      const index = messages.findIndex((entry) => entry.id === messageId);
-      if (index === -1) return;
-      for (let i = index - 1; i >= 0; i--) {
-        const prior = messages[i];
-        if (prior?.role !== "user") continue;
-        const text = copyableMessageText(prior);
-        if (!text.trim()) continue;
-        await composer.sendMessage(text, [], crypto.randomUUID());
-        return;
-      }
-      toast(t`No earlier message to regenerate from`);
-    },
-    [composer, t, transcript],
-  );
 
   /**
    * Re-runs the AI on one user message that got no normal reply, without
@@ -1409,7 +1387,6 @@ function SpaceShell() {
               runs={currentRuns}
               workingBots={workingBots}
               workingRoutine={workingRoutineName(workingRuns)}
-              onRegenerate={regenerateFromMessage}
               regenerateDisabled={sending || transcriptRunning}
               onResend={resendMessage}
               onStopRun={stopRun}

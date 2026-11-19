@@ -115,7 +115,6 @@ export const Transcript = memo(function Transcript({
   onRefresh,
   onBotChanged,
   onAddRoutine,
-  onRegenerate,
   regenerateDisabled,
   onResend,
   onStopRun,
@@ -197,8 +196,6 @@ export const Transcript = memo(function Transcript({
   onRefresh: () => Promise<void>;
   onBotChanged: () => Promise<void>;
   onAddRoutine: (name: string, prompt: string) => void;
-  /** Re-sends the user message that produced a generated result. */
-  onRegenerate?: (messageId: string) => Promise<void>;
   /** A send or a run is in progress, so a regenerate would wait. */
   regenerateDisabled?: boolean;
   /** Re-sends a user message that got no normal reply. */
@@ -737,7 +734,6 @@ export const Transcript = memo(function Transcript({
                       onRefresh={onRefresh}
                       onBotChanged={onBotChanged}
                       onAddRoutine={onAddRoutine}
-                      onRegenerate={onRegenerate}
                       regenerateDisabled={regenerateDisabled}
                       onResend={onResend}
                       showResend={unrepliedMessageIds.has(message.id)}

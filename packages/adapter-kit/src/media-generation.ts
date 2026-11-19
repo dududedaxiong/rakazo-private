@@ -1,7 +1,23 @@
 import type { ModelSwitches } from "@rakazo_mickvvw/contracts";
 import type { AdapterContext } from "./types.js";
 
-export type MediaGenerationInput = { prompt: string };
+export type MediaGenerationInput = {
+  prompt: string;
+  /**
+   * Reference media for an edit: the original image for an image edit, or the
+   * first (and, when available, last) frame for a video edit. Absent, the
+   * call is a fresh generation from the prompt alone.
+   */
+  references?: MediaReference[];
+};
+
+/** One reference image or frame, as bytes; the provider decides how to send it. */
+export type MediaReference = {
+  bytes: Uint8Array;
+  mimeType: string;
+  /** Which frame this is, for a video edit; an image edit has one reference. */
+  role?: "first" | "last";
+};
 export type GeneratedMedia = {
   bytes: Uint8Array;
   mimeType: "image/png" | "video/mp4";
@@ -19,6 +35,8 @@ export type MediaVideoJob =
 export interface MediaGenerationProvider {
   readonly id: string;
   readonly capabilities: { images: boolean; video: boolean; offline: boolean };
+  /** Whether an edit (reference-carrying) call is supported per kind; absent means no edit models. */
+  readonly editCapabilities?: { images: boolean; video: boolean };
   generateImage(input: MediaGenerationInput, context: AdapterContext): Promise<GeneratedMedia>;
   generateVideo(input: MediaGenerationInput, context: AdapterContext): Promise<MediaVideoJob>;
   pollVideo(id: string, context: AdapterContext): Promise<MediaVideoJob>;

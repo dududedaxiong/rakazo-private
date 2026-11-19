@@ -129,6 +129,8 @@ function mapBot(
     translationModels?: unknown;
     videoModels?: unknown;
     imageModels?: unknown;
+    imageEditModels?: unknown;
+    videoEditModels?: unknown;
     videoPromptPresets?: unknown;
     activeVideoPromptPreset?: string | null;
     imagePromptPresets?: unknown;
@@ -197,6 +199,8 @@ function mapBot(
     translationModels: resolveTranslationModels(bot),
     videoModels: parseBotModelList(bot.videoModels),
     imageModels: parseBotModelList(bot.imageModels),
+    imageEditModels: parseBotModelList(bot.imageEditModels),
+    videoEditModels: parseBotModelList(bot.videoEditModels),
     videoPromptPresets: parseBotPromptPresets(bot.videoPromptPresets),
     activeVideoPromptPreset: bot.activeVideoPromptPreset ?? null,
     imagePromptPresets: parseBotPromptPresets(bot.imagePromptPresets),

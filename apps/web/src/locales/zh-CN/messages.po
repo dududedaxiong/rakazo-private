@@ -3970,6 +3970,10 @@ msgstr "每个名称只能使用一次。"
 msgid "Edit"
 msgstr "编辑"
 
+#: src/pages/shell/media-result.tsx
+msgid "Edit details"
+msgstr "细节修改"
+
 #: src/components/AskCard.tsx
 msgid "Edit first"
 msgstr "先编辑"
@@ -4588,6 +4592,7 @@ msgid "Generate invite codes"
 msgstr "生成邀请码"
 
 #: src/components/admin/AdminInviteCodes.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Generate random"
 msgstr "随机生成"
 
@@ -4793,6 +4798,10 @@ msgstr "如果听到了，说明语音已就绪。"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "忽略"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image edit model"
+msgstr "图片编辑模型"
 
 #: src/pages/shell/media-result.tsx
 msgid "Image generation"
@@ -6127,10 +6136,6 @@ msgstr "没有机器人"
 msgid "No bots match"
 msgstr "没有匹配的 Bot"
 
-#: src/pages/Shell.tsx
-msgid "No earlier message to regenerate from"
-msgstr "没有更早的消息可重新生成"
-
 #: src/pages/Favorites.tsx
 msgid "No favorites yet"
 msgstr "还没有收藏"
@@ -7176,6 +7181,10 @@ msgstr "招聘与人事"
 msgid "Redirect URI"
 msgstr "重定向 URI"
 
+#: src/pages/shell/media-result.tsx
+msgid "Reference image"
+msgstr "参考图"
+
 #: src/components/admin/AdminInviteCodes.tsx
 msgid "Referral"
 msgstr "推广码"
@@ -7205,10 +7214,6 @@ msgstr "刷新画面"
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Refreshing…"
 msgstr "正在刷新…"
-
-#: src/pages/shell/media-result.tsx
-msgid "Regenerate"
-msgstr "重新生成"
 
 #: src/pages/shell/media-result.tsx
 msgid "Regenerated"
@@ -8535,6 +8540,10 @@ msgstr "启动"
 msgid "Start {trialDays}-day free trial"
 msgstr "开始 {trialDays} 天免费试用"
 
+#: src/pages/shell/media-result.tsx
+msgid "Start edit"
+msgstr "开始修改"
+
 #: src/components/ModelCredits.tsx
 msgid "Start plan"
 msgstr "开始套餐"
@@ -8572,6 +8581,7 @@ msgstr "正在开始"
 #: src/lib/roster-status.ts
 #: src/pages/model-settings/connection-controls.tsx
 #: src/pages/onboarding/model-step.tsx
+#: src/pages/shell/media-result.tsx
 msgid "Starting…"
 msgstr "正在开始…"
 
@@ -9555,7 +9565,9 @@ msgstr "无法连接"
 msgid "Unread"
 msgstr "未读"
 
+#. placeholder {0}: editFile.name
 #. placeholder {0}: pending.file.name
+#: src/pages/shell/media-result.tsx
 #: src/pages/shell/use-composer-actions.ts
 msgid "Unsupported file type: {0}"
 msgstr "不支持的文件类型：{0}"
@@ -9857,6 +9869,10 @@ msgstr "正在校验…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "版本"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Video edit model"
+msgstr "视频编辑模型"
 
 #: src/pages/shell/media-result.tsx
 msgid "Video generation"

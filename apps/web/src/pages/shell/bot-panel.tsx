@@ -99,6 +99,8 @@ function advancedValues(bot: Bot) {
     JSON.stringify(bot.imagePromptPresets ?? []),
     bot.videoTriggerWords ?? "",
     bot.imageTriggerWords ?? "",
+    JSON.stringify(bot.imageEditModels ?? []),
+    JSON.stringify(bot.videoEditModels ?? []),
   ] as const;
 }
 
@@ -179,6 +181,8 @@ export function BotSettings({
     autoTranslate?: boolean;
     videoModels?: BotModelEntry[] | null;
     imageModels?: BotModelEntry[] | null;
+    videoEditModels?: BotModelEntry[] | null;
+    imageEditModels?: BotModelEntry[] | null;
     videoPromptPresets?: BotPromptPreset[] | null;
     imagePromptPresets?: BotPromptPreset[] | null;
     activeVideoPromptPreset?: string | null;
@@ -258,6 +262,12 @@ export function BotSettings({
   );
   const [videoModels, setVideoModels] = useState<BotModelEntry[]>(() => bot.videoModels ?? []);
   const [imageModels, setImageModels] = useState<BotModelEntry[]>(() => bot.imageModels ?? []);
+  const [videoEditModels, setVideoEditModels] = useState<BotModelEntry[]>(
+    () => bot.videoEditModels ?? [],
+  );
+  const [imageEditModels, setImageEditModels] = useState<BotModelEntry[]>(
+    () => bot.imageEditModels ?? [],
+  );
   const [activeVideoPreset, setActiveVideoPreset] = useState<string | null>(
     () => bot.activeVideoPromptPreset ?? null,
   );
@@ -274,6 +284,8 @@ export function BotSettings({
   const [imageTriggerWords, setImageTriggerWords] = useState(() => bot.imageTriggerWords ?? "");
   const [videoTest, setVideoTest] = useState<MediaModelTestState>({ status: "idle" });
   const [imageTest, setImageTest] = useState<MediaModelTestState>({ status: "idle" });
+  const [videoEditTest, setVideoEditTest] = useState<MediaModelTestState>({ status: "idle" });
+  const [imageEditTest, setImageEditTest] = useState<MediaModelTestState>({ status: "idle" });
   const [disabledBuiltinTools, setDisabledBuiltinTools] = useState<string[]>(
     bot.disabledBuiltinTools ?? [],
   );
@@ -326,6 +338,8 @@ export function BotSettings({
     JSON.stringify(imagePresets),
     videoTriggerWords,
     imageTriggerWords,
+    JSON.stringify(imageEditModels),
+    JSON.stringify(videoEditModels),
   ]);
   const dirty =
     name.trim() !== savedNameRef.current.trim() ||
@@ -400,6 +414,10 @@ export function BotSettings({
       setImagePresets(JSON.parse(next[16] as string) as BotPromptPreset[]);
     if (videoTriggerWords === saved[17]) setVideoTriggerWords(next[17] as string);
     if (imageTriggerWords === saved[18]) setImageTriggerWords(next[18] as string);
+    if (JSON.stringify(imageEditModels) === saved[19])
+      setImageEditModels(JSON.parse(next[19] as string) as BotModelEntry[]);
+    if (JSON.stringify(videoEditModels) === saved[20])
+      setVideoEditModels(JSON.parse(next[20] as string) as BotModelEntry[]);
     setSavedAdvanced(JSON.stringify(next));
   }, [bot]);
 
@@ -471,10 +489,75 @@ export function BotSettings({
       label: imageChoices.find((choice) => choice.key === key)?.label ?? entry.model,
     };
   });
+  const videoEditPrimary = primaryBotModel(videoEditModels);
+  const videoEditValue = videoEditPrimary
+    ? modelOptionKey(
+        videoEditPrimary.provider,
+        resolveSelectableModelId(catalog, videoEditPrimary.provider, videoEditPrimary.model),
+      )
+    : "";
+  const videoEditChoices = chatModelChoices(connectedOptions, videoEditValue, t`Not selected`);
+  const videoEditFallbacks: MediaModelFallback[] = videoEditModels.slice(1).map((entry) => {
+    const key = modelOptionKey(
+      entry.provider,
+      resolveSelectableModelId(catalog, entry.provider, entry.model),
+    );
+    return {
+      key,
+      label: videoEditChoices.find((choice) => choice.key === key)?.label ?? entry.model,
+    };
+  });
+  const imageEditPrimary = primaryBotModel(imageEditModels);
+  const imageEditValue = imageEditPrimary
+    ? modelOptionKey(
+        imageEditPrimary.provider,
+        resolveSelectableModelId(catalog, imageEditPrimary.provider, imageEditPrimary.model),
+      )
+    : "";
+  const imageEditChoices = chatModelChoices(connectedOptions, imageEditValue, t`Not selected`);
+  const imageEditFallbacks: MediaModelFallback[] = imageEditModels.slice(1).map((entry) => {
+    const key = modelOptionKey(
+      entry.provider,
+      resolveSelectableModelId(catalog, entry.provider, entry.model),
+    );
+    return {
+      key,
+      label: imageEditChoices.find((choice) => choice.key === key)?.label ?? entry.model,
+    };
+  });
+
+  /** A media list: the generation lists and the edit lists. */
+  type MediaListRole = "video" | "image" | "videoEdit" | "imageEdit";
+
+  function mediaListSetter(role: MediaListRole) {
+    switch (role) {
+      case "video":
+        return setVideoModels;
+      case "image":
+        return setImageModels;
+      case "videoEdit":
+        return setVideoEditModels;
+      case "imageEdit":
+        return setImageEditModels;
+    }
+  }
+
+  function mediaList(role: MediaListRole) {
+    switch (role) {
+      case "video":
+        return videoModels;
+      case "image":
+        return imageModels;
+      case "videoEdit":
+        return videoEditModels;
+      case "imageEdit":
+        return imageEditModels;
+    }
+  }
 
   /** Picking a media model moves it to the front of that role's list; the rest stay as fallbacks. */
-  function changeMediaModel(role: "video" | "image", key: string) {
-    const setList = role === "video" ? setVideoModels : setImageModels;
+  function changeMediaModel(role: MediaListRole, key: string) {
+    const setList = mediaListSetter(role);
     if (!key) {
       setList([]);
       return;
@@ -485,8 +568,8 @@ export function BotSettings({
     setList((current) => moveBotModelToFront(current, entry));
   }
 
-  function removeMediaFallback(role: "video" | "image", key: string) {
-    const setList = role === "video" ? setVideoModels : setImageModels;
+  function removeMediaFallback(role: MediaListRole, key: string) {
+    const setList = mediaListSetter(role);
     setList((current) =>
       current.filter(
         (entry) =>
@@ -498,8 +581,8 @@ export function BotSettings({
     );
   }
 
-  function addMediaFallback(role: "video" | "image", key: string) {
-    const setList = role === "video" ? setVideoModels : setImageModels;
+  function addMediaFallback(role: MediaListRole, key: string) {
+    const setList = mediaListSetter(role);
     const parsed = parseModelOptionKey(key);
     if (!parsed) return;
     const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
@@ -513,8 +596,8 @@ export function BotSettings({
     });
   }
 
-  function moveMediaFallback(role: "video" | "image", key: string, delta: -1 | 1) {
-    const setList = role === "video" ? setVideoModels : setImageModels;
+  function moveMediaFallback(role: MediaListRole, key: string, delta: -1 | 1) {
+    const setList = mediaListSetter(role);
     setList((current) => {
       const index = current.findIndex(
         (entry) =>
@@ -533,11 +616,19 @@ export function BotSettings({
     });
   }
 
-  /** Probes one media model with the role's active preset, so the test reflects real usage. */
-  async function testMediaModel(role: "video" | "image", key: string) {
+  /** Probes one media model with the role's active preset, so the test reflects real usage. Edit models take no preset: an edit never applies one. */
+  async function testMediaModel(role: MediaListRole, key: string) {
     const parsed = parseModelOptionKey(key);
     if (!parsed) return;
-    const setTest = role === "video" ? setVideoTest : setImageTest;
+    const kind = role === "video" || role === "videoEdit" ? "video" : "image";
+    const setTest =
+      role === "video"
+        ? setVideoTest
+        : role === "image"
+          ? setImageTest
+          : role === "videoEdit"
+            ? setVideoEditTest
+            : setImageEditTest;
     const started = Date.now();
     const seconds = () => Math.round(((Date.now() - started) / 1000) * 10) / 10;
     setTest({ status: "testing", modelKey: key });
@@ -545,10 +636,12 @@ export function BotSettings({
       const preset =
         role === "video"
           ? activeBotPromptPreset(videoPresets, activeVideoPreset)
-          : activeBotPromptPreset(imagePresets, activeImagePreset);
+          : role === "image"
+            ? activeBotPromptPreset(imagePresets, activeImagePreset)
+            : undefined;
       const result = await rpc.bots.testMediaModel({
         botId: bot.id,
-        kind: role,
+        kind,
         provider: parsed.provider,
         modelId: resolveSelectableModelId(catalog, parsed.provider, parsed.modelId),
         ...(preset?.prompt.trim() ? { presetPrompt: preset.prompt } : {}),
@@ -576,13 +669,20 @@ export function BotSettings({
   }
 
   /** Applies a tested model in one tap: it moves to primary, the rest stay as fallbacks. */
-  function applyTestedMediaModel(role: "video" | "image") {
-    const test = role === "video" ? videoTest : imageTest;
+  function applyTestedMediaModel(role: MediaListRole) {
+    const test =
+      role === "video"
+        ? videoTest
+        : role === "image"
+          ? imageTest
+          : role === "videoEdit"
+            ? videoEditTest
+            : imageEditTest;
     if (test.status !== "done" || !test.supported) return;
     const parsed = parseModelOptionKey(test.modelKey);
     if (!parsed) return;
-    const setList = role === "video" ? setVideoModels : setImageModels;
-    const list = role === "video" ? videoModels : imageModels;
+    const setList = mediaListSetter(role);
+    const list = mediaList(role);
     setList(moveBotModelToFront(list, { provider: parsed.provider, model: parsed.modelId }));
   }
 
@@ -753,6 +853,8 @@ export function BotSettings({
         showTranslationActions,
         videoModels,
         imageModels,
+        videoEditModels,
+        imageEditModels,
         videoPromptPresets: videoPresets,
         imagePromptPresets: imagePresets,
         activeVideoPromptPreset: activeVideoPreset,
@@ -830,6 +932,8 @@ export function BotSettings({
           JSON.stringify(imagePresets),
           videoTriggerWords,
           imageTriggerWords,
+          JSON.stringify(imageEditModels),
+          JSON.stringify(videoEditModels),
         ]),
       );
     } catch (err) {
@@ -1069,6 +1173,26 @@ export function BotSettings({
               onVideoTriggerWordsChange={setVideoTriggerWords}
               imageTriggerWords={imageTriggerWords}
               onImageTriggerWordsChange={setImageTriggerWords}
+              videoEditChoices={videoEditChoices}
+              videoEditValue={videoEditValue}
+              onVideoEditModelChange={(key) => changeMediaModel("videoEdit", key)}
+              videoEditFallbacks={videoEditFallbacks}
+              onAddVideoEditFallback={(key) => addMediaFallback("videoEdit", key)}
+              onMoveVideoEditFallback={(key, delta) => moveMediaFallback("videoEdit", key, delta)}
+              onRemoveVideoEditFallback={(key) => removeMediaFallback("videoEdit", key)}
+              videoEditTest={videoEditTest}
+              onTestVideoEditModel={(key) => void testMediaModel("videoEdit", key)}
+              onApplyVideoEditTestedModel={() => applyTestedMediaModel("videoEdit")}
+              imageEditChoices={imageEditChoices}
+              imageEditValue={imageEditValue}
+              onImageEditModelChange={(key) => changeMediaModel("imageEdit", key)}
+              imageEditFallbacks={imageEditFallbacks}
+              onAddImageEditFallback={(key) => addMediaFallback("imageEdit", key)}
+              onMoveImageEditFallback={(key, delta) => moveMediaFallback("imageEdit", key, delta)}
+              onRemoveImageEditFallback={(key) => removeMediaFallback("imageEdit", key)}
+              imageEditTest={imageEditTest}
+              onTestImageEditModel={(key) => void testMediaModel("imageEdit", key)}
+              onApplyImageEditTestedModel={() => applyTestedMediaModel("imageEdit")}
             />
             <TranslationGroup
               ids={ids}
