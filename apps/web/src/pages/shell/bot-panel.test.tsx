@@ -965,6 +965,7 @@ describe("BotSettings translation settings", () => {
   it("shows a Test button on the translation row and probes that model alone", async () => {
     vi.mocked(rpc.bots.testTranslationModel).mockResolvedValueOnce({
       supported: true,
+      outcome: "supported",
       seconds: 1.2,
       detail: "你好",
     });

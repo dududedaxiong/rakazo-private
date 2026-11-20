@@ -399,6 +399,7 @@ describe("createTranslationProber", () => {
     });
     const result = await prober(actor, "bot-1", "test-provider", "model-1");
     expect(result.supported).toBe(true);
+    expect(result.outcome).toBe("supported");
     expect(result.detail).toBe("你好");
     expect(typeof result.seconds).toBe("number");
     const request = run.mock.calls[0]?.[0] as { prompt: string; model: { id: string } };
@@ -416,6 +417,7 @@ describe("createTranslationProber", () => {
     const result = await prober(actor, "bot-1", "test-provider", "model-1");
     expect(result).toEqual({
       supported: false,
+      outcome: "unknown",
       seconds: expect.any(Number),
       detail: "该模型未连接",
     });
@@ -428,7 +430,32 @@ describe("createTranslationProber", () => {
     });
     const result = await prober(actor, "bot-1", "test-provider", "model-1");
     expect(result.supported).toBe(false);
+    expect(result.outcome).toBe("unsupported");
     expect(result.detail).toContain("Translation did not return JSON");
     expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports an aborted run as unknown, not unsupported", async () => {
+    // An iterable whose first pull rejects, like a run cut off mid-flight.
+    const abortRun = () => ({
+      [Symbol.asyncIterator](): AsyncIterator<unknown> {
+        return {
+          next: () => Promise.reject(new DOMException("Request aborted", "AbortError")),
+        };
+      },
+    });
+    const { prober } = probeHarness({ runs: [abortRun] });
+    const result = await prober(actor, "bot-1", "test-provider", "model-1");
+    expect(result.supported).toBe(false);
+    expect(result.outcome).toBe("unknown");
+    expect(result.detail).toBe("请求中断");
+  });
+
+  it("reports a run that never answers before the probe timeout as unknown", async () => {
+    const { prober } = probeHarness({ runs: [hangingRun()], timeoutMs: 100 });
+    const result = await prober(actor, "bot-1", "test-provider", "model-1");
+    expect(result.supported).toBe(false);
+    expect(result.outcome).toBe("unknown");
+    expect(result.detail).toMatch(/秒内没有回音/);
   });
 });

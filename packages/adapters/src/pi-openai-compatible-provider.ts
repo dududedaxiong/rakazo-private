@@ -15,6 +15,7 @@ import type {
   ModelHealthResult,
   ModelHealthState,
   ModelHealthSummary,
+  ProbeOutcome,
 } from "@rakazo_mickvvw/contracts";
 import {
   ATTACHMENT_MAX_BYTES,
@@ -1193,6 +1194,8 @@ export type MediaModelProbeKind = "image" | "video";
 export interface MediaModelProbeResult {
   /** True when the probe reply actually carried an image (or a video). */
   supported: boolean;
+  /** What the probe established; `supported` is false for both other outcomes. */
+  outcome: ProbeOutcome;
   /** Seconds the probe took, one decimal. */
   seconds: number;
   /** Short reason: what was found, or why it did not count as supported. */
@@ -1371,32 +1374,47 @@ export async function probeMediaModel(
         return probeAsyncVideo(input, fetchImpl, signal, opts, seconds);
       }
       const classified = classifyHealthResponse(status, bodyText, parsed);
-      return { supported: false, seconds: seconds(), detail: classified.detail };
+      // An error status is never a verdict on the model's capability: the
+      // call never reached a model that could answer.
+      return {
+        supported: false,
+        outcome: "unknown",
+        seconds: seconds(),
+        detail: classified.detail,
+      };
     }
     if (parsed === null) {
-      return { supported: false, seconds: seconds(), detail: "返回不是 JSON" };
+      return {
+        supported: false,
+        outcome: "unknown",
+        seconds: seconds(),
+        detail: "返回不是 JSON",
+      };
     }
     const found = extractMediaFromReply(parsed, input.kind) !== null;
     if (found) {
       return {
         supported: true,
+        outcome: "supported",
         seconds: seconds(),
         detail: input.kind === "image" ? "返回了图片" : "返回了视频",
       };
     }
     return {
       supported: false,
+      outcome: "unsupported",
       seconds: seconds(),
       detail: input.kind === "image" ? "只回了文字，没有图片" : "只回了文字，没有视频",
     };
   } catch (error) {
     if (signal?.aborted) throw error;
     if (isAbortError(error)) {
-      return { supported: false, seconds: seconds(), detail: "请求超时" };
+      return { supported: false, outcome: "unknown", seconds: seconds(), detail: "请求超时" };
     }
     const message = error instanceof Error ? error.message : "";
     return {
       supported: false,
+      outcome: "unknown",
       seconds: seconds(),
       detail: message ? healthDetail(`网络错误：${message}`, 120) : "网络错误",
     };
@@ -1609,7 +1627,7 @@ async function probeAsyncVideo(
   } catch (error) {
     if (signal?.aborted) throw error;
     if (error instanceof MediaGenerationError) {
-      return { supported: false, seconds: seconds(), detail: asyncVideoProbeDetail(error) };
+      return { ...asyncVideoProbeResult(error), seconds: seconds() };
     }
     throw error;
   }
@@ -1617,22 +1635,39 @@ async function probeAsyncVideo(
   const stop = signal ? AbortSignal.any([signal, deadline]) : deadline;
   for (;;) {
     if (stop.aborted) {
-      return { supported: true, seconds: seconds(), detail: "任务已提交，正在生成" };
+      return {
+        supported: true,
+        outcome: "supported",
+        seconds: seconds(),
+        detail: "任务已提交，正在生成",
+      };
     }
     try {
       const polled = await pollAsyncVideo({ ...input, taskId }, fetchImpl, stop, opts);
       if (polled.status === "completed") {
-        return { supported: true, seconds: seconds(), detail: "返回了视频" };
+        return { supported: true, outcome: "supported", seconds: seconds(), detail: "返回了视频" };
       }
       if (polled.status === "failed") {
-        return { supported: false, seconds: seconds(), detail: "视频生成失败" };
+        // The task was accepted, so the model takes video work; the
+        // generation itself failed — not a verdict on capability.
+        return {
+          supported: false,
+          outcome: "unknown",
+          seconds: seconds(),
+          detail: "视频生成失败",
+        };
       }
     } catch (error) {
       if (stop.aborted) {
-        return { supported: true, seconds: seconds(), detail: "任务已提交，正在生成" };
+        return {
+          supported: true,
+          outcome: "supported",
+          seconds: seconds(),
+          detail: "任务已提交，正在生成",
+        };
       }
       if (error instanceof MediaGenerationError) {
-        return { supported: false, seconds: seconds(), detail: asyncVideoProbeDetail(error) };
+        return { ...asyncVideoProbeResult(error), seconds: seconds() };
       }
       throw error;
     }
@@ -1650,16 +1685,28 @@ async function probeAsyncVideo(
   }
 }
 
-function asyncVideoProbeDetail(error: MediaGenerationError): string {
+/**
+ * A failed async-video submission, classified like the sync probe: only an
+ * explicit unsupported verdict counts as unsupported; anything upstream or
+ * transient is unknown.
+ */
+function asyncVideoProbeResult(error: MediaGenerationError): {
+  supported: false;
+  outcome: ProbeOutcome;
+  detail: string;
+} {
+  if (error.code === "unsupported") {
+    return { supported: false, outcome: "unsupported", detail: "不支持视频生成" };
+  }
   switch (error.code) {
     case "authentication":
-      return "认证失败";
+      return { supported: false, outcome: "unknown", detail: "认证失败" };
     case "rate_limit":
-      return "限流";
+      return { supported: false, outcome: "unknown", detail: "限流" };
     case "timeout":
-      return "请求超时";
+      return { supported: false, outcome: "unknown", detail: "请求超时" };
     default:
-      return "上游服务错误";
+      return { supported: false, outcome: "unknown", detail: "上游服务错误" };
   }
 }
 

@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
 import type { AgentRunRequest, AgentRuntime, AgentRuntimeEvent } from "@rakazo_mickvvw/adapter-kit";
 import { sanitizeProviderError } from "@rakazo_mickvvw/adapters";
-import type { Actor, BotModelEntry, ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
+import type {
+  Actor,
+  BotModelEntry,
+  ModelSwitchAttempt,
+  ProbeOutcome,
+} from "@rakazo_mickvvw/contracts";
 import {
   resolveTargetLanguage,
   TRANSLATION_SOURCE_LANGUAGE_CODES,
@@ -288,6 +293,11 @@ async function translateOnce(
  * can be tested, and the probe's usage is recorded like a real translation.
  * The sentence is fixed and unrelated to the bot's saved target language:
  * this is a capability probe, not a translation the user asked for.
+ *
+ * The verdict is three-way: an interruption, a rate limit, or any other
+ * failure to reach a verdict is `unknown`, never `unsupported`. Only a
+ * model that answered and still produced no translation counts as
+ * unsupported.
  */
 export type TranslationProber = (
   actor: Actor,
@@ -295,7 +305,14 @@ export type TranslationProber = (
   provider: string,
   modelId: string,
   signal?: AbortSignal,
-) => Promise<{ supported: boolean; seconds: number; detail: string }>;
+) => Promise<{ supported: boolean; outcome: ProbeOutcome; seconds: number; detail: string }>;
+
+/** An abort raised by the runtime or a timeout signal: interrupted, not a verdict. */
+function isProbeAbort(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const name = (error as { name?: unknown }).name;
+  return name === "AbortError" || name === "TimeoutError";
+}
 
 export function createTranslationProber(deps: {
   prisma: PrismaClient;
@@ -317,30 +334,59 @@ export function createTranslationProber(deps: {
     try {
       model = await deps.resolveConnectedModel(scope, provider, modelId);
     } catch {
-      return { supported: false, seconds: seconds(), detail: "该模型未连接" };
+      return { supported: false, outcome: "unknown", seconds: seconds(), detail: "该模型未连接" };
     }
     const id = `translation-probe:${randomUUID()}`;
     const record = async (event: UsageEvent) => {
       await recordUsage(deps.prisma, event, { ...scope, operationId: id, operationKind: "setup" });
     };
+    // The timeout gets its own signal so the catch can tell "ran out of
+    // time" apart from "the client went away" and "the runtime aborted".
+    const timeoutSignal = AbortSignal.timeout(timeoutMs);
     try {
       const result = await translateOnce(deps.runtime, actor, botId, "Hello", "en", "zh", model, {
         operationId: id,
         record,
         signal: AbortSignal.any(
-          [signal, AbortSignal.timeout(timeoutMs)].filter((value): value is AbortSignal =>
-            Boolean(value),
-          ),
+          [signal, timeoutSignal].filter((value): value is AbortSignal => Boolean(value)),
         ),
       });
-      return { supported: true, seconds: seconds(), detail: result.translatedText };
+      return {
+        supported: true,
+        outcome: "supported",
+        seconds: seconds(),
+        detail: result.translatedText,
+      };
     } catch (error) {
+      if (timeoutSignal.aborted) {
+        return {
+          supported: false,
+          outcome: "unknown",
+          seconds: seconds(),
+          detail: `${timeoutMs / 1000} 秒内没有回音`,
+        };
+      }
+      if (signal?.aborted || isProbeAbort(error)) {
+        return {
+          supported: false,
+          outcome: "unknown",
+          seconds: seconds(),
+          detail: "请求中断",
+        };
+      }
       const message = error instanceof Error ? error.message : String(error ?? "");
+      const detail =
+        sanitizeProviderError(provider, message).replace(/\s+/g, " ").slice(0, 80) || "failed";
+      // The model answered but produced no translation: the only evidence
+      // that counts as "cannot translate". Anything else is inconclusive.
+      const unsupported =
+        message.trim() === "Translation did not return JSON" ||
+        message.trim() === "Translation produced no text";
       return {
         supported: false,
+        outcome: unsupported ? "unsupported" : "unknown",
         seconds: seconds(),
-        detail:
-          sanitizeProviderError(provider, message).replace(/\s+/g, " ").slice(0, 80) || "failed",
+        detail,
       };
     }
   };

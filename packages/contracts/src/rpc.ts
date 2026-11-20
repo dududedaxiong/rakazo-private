@@ -366,6 +366,14 @@ export type OrganizationList = z.infer<typeof OrganizationListSchema>;
 export const ArtifactListSortSchema = z.enum(["date-desc", "date-asc", "size-desc", "size-asc"]);
 export type ArtifactListSort = z.infer<typeof ArtifactListSortSchema>;
 
+/**
+ * A capability probe's verdict: the model can, cannot, or the probe could
+ * not tell (interrupted, rate-limited, unreachable). Only an answer that
+ * tried and failed the task counts as unsupported.
+ */
+export const ProbeOutcomeSchema = z.enum(["supported", "unsupported", "unknown"]);
+export type ProbeOutcome = z.infer<typeof ProbeOutcomeSchema>;
+
 export const appContract = {
   analytics: { screen: oc.input(AnalyticsScreenInput).output(z.object({ ok: z.literal(true) })) },
   aiConsent: {
@@ -761,6 +769,8 @@ export const appContract = {
         z.object({
           /** True when the probe reply actually carried an image (or a video). */
           supported: z.boolean(),
+          /** What the probe established; `supported` is false for both other outcomes. */
+          outcome: ProbeOutcomeSchema,
           /** Seconds the probe took, one decimal. */
           seconds: z.number(),
           /** Short reason: what was found, or why it did not count as supported. */
@@ -782,6 +792,8 @@ export const appContract = {
         z.object({
           /** True when the probe reply actually carried a translation. */
           supported: z.boolean(),
+          /** What the probe established; `supported` is false for both other outcomes. */
+          outcome: ProbeOutcomeSchema,
           /** Seconds the probe took, one decimal. */
           seconds: z.number(),
           /** Short reason: what was found, or why it did not count as supported. */

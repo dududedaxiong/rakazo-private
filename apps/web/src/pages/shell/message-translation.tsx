@@ -262,10 +262,11 @@ export function useMessageTranslation({
           messageId,
         });
         if (!result.usedFallback) {
-          recordModelStatus(
-            primaryKey,
-            modelStatusFromProbe({ supported: true, seconds: (Date.now() - started) / 1000 }),
-          );
+          const status = modelStatusFromProbe({
+            supported: true,
+            seconds: (Date.now() - started) / 1000,
+          });
+          if (status) recordModelStatus(primaryKey, status);
         }
         setState({ status: "done", result });
       } catch (err) {

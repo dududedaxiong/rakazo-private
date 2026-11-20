@@ -4,6 +4,8 @@
  * media-model test in bot settings, and a translation's own outcome.
  * A probe that takes over this long counts as slow.
  */
+import type { ProbeOutcome } from "@rakazo_mickvvw/contracts";
+
 export const MODEL_SLOW_SECONDS = 30;
 
 export type ModelHealthState = "ok" | "slow" | "unavailable";
@@ -63,14 +65,17 @@ export function recordModelStatus(
   }
 }
 
-/** Maps a probe outcome to a status: unsupported is unavailable, slow is over the threshold. */
+/** Maps a probe outcome to a status: unsupported is unavailable, slow is over the threshold. An inconclusive probe records nothing, so it never marks a working model unavailable. */
 export function modelStatusFromProbe({
   supported,
   seconds,
+  outcome,
 }: {
   supported: boolean;
   seconds: number;
-}): { state: ModelHealthState; seconds: number } {
+  outcome?: ProbeOutcome;
+}): { state: ModelHealthState; seconds: number } | null {
+  if (outcome === "unknown") return null;
   if (!supported) return { state: "unavailable", seconds };
   return { state: seconds > MODEL_SLOW_SECONDS ? "slow" : "ok", seconds };
 }

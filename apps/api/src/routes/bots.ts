@@ -917,7 +917,12 @@ export function botsRoutes(ctx: RouterContext) {
           ? deps.env.defaultProvider
           : undefined;
         if (hostedProvider && input.provider === hostedProvider) {
-          return { supported: false, seconds: 0, detail: "托管模型暂不支持这样测试" };
+          return {
+            supported: false,
+            outcome: "unknown",
+            seconds: 0,
+            detail: "托管模型暂不支持这样测试",
+          };
         }
         let credential: Awaited<ReturnType<typeof findConnectedModelCredential>> | null = null;
         try {
@@ -932,7 +937,7 @@ export function botsRoutes(ctx: RouterContext) {
           credential = null;
         }
         if (!credential) {
-          return { supported: false, seconds: 0, detail: "该模型未连接" };
+          return { supported: false, outcome: "unknown", seconds: 0, detail: "该模型未连接" };
         }
         let plaintext: string;
         try {
@@ -940,16 +945,27 @@ export function botsRoutes(ctx: RouterContext) {
             where: { id: credential.secretId, userId: context.actor.userId, spaceId: null },
             select: { ciphertext: true },
           });
-          if (!secret) return { supported: false, seconds: 0, detail: "该模型未连接" };
+          if (!secret)
+            return { supported: false, outcome: "unknown", seconds: 0, detail: "该模型未连接" };
           plaintext = await deps.secrets.load(secret.ciphertext, credential.secretId);
         } catch (error) {
           if (error instanceof SecretStoreUnavailableError)
             throw new ORPCError("SERVICE_UNAVAILABLE", { cause: error });
-          return { supported: false, seconds: 0, detail: "读不到该连接的密钥" };
+          return {
+            supported: false,
+            outcome: "unknown",
+            seconds: 0,
+            detail: "读不到该连接的密钥",
+          };
         }
         const parsed = parseModelSecret(plaintext);
         if (parsed.kind !== "openai_compatible") {
-          return { supported: false, seconds: 0, detail: "该连接不支持这样测试" };
+          return {
+            supported: false,
+            outcome: "unknown",
+            seconds: 0,
+            detail: "该连接不支持这样测试",
+          };
         }
         return probeMediaModel(
           {

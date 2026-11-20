@@ -25,6 +25,7 @@ vi.mock("@rakazo_mickvvw/adapters", async (original) => {
     findConnectedModelCredential: vi.fn(async () => ({ secretId: "sec-1" }) as never),
     probeMediaModel: vi.fn(async () => ({
       supported: true,
+      outcome: "supported",
       seconds: 2.3,
       detail: "image",
     })),
@@ -132,6 +133,7 @@ function setup() {
       events: { notify: vi.fn(async () => undefined) },
       translationProber: vi.fn(async () => ({
         supported: true,
+        outcome: "supported",
         seconds: 1.5,
         detail: "你好",
       })),
@@ -154,7 +156,12 @@ describe("bots testMediaModel", () => {
       context: { actor },
       input: { botId: "bot-1", kind: "image", provider: "provider-a", modelId: "model-a" },
     });
-    expect(result).toEqual({ supported: true, seconds: 2.3, detail: "image" });
+    expect(result).toEqual({
+      supported: true,
+      outcome: "supported",
+      seconds: 2.3,
+      detail: "image",
+    });
     expect(mockedAdapters.probeMediaModel).toHaveBeenCalledWith(
       expect.objectContaining({ model: "model-a", kind: "image" }),
       undefined,
@@ -167,6 +174,7 @@ describe("bots testMediaModel", () => {
     const { routes } = setup();
     mockedAdapters.probeMediaModel.mockResolvedValueOnce({
       supported: false,
+      outcome: "unsupported",
       seconds: 1.1,
       detail: "只回了文字，没有视频",
     });
@@ -174,7 +182,12 @@ describe("bots testMediaModel", () => {
       context: { actor },
       input: { botId: "bot-1", kind: "video", provider: "provider-a", modelId: "model-a" },
     });
-    expect(result).toEqual({ supported: false, seconds: 1.1, detail: "只回了文字，没有视频" });
+    expect(result).toEqual({
+      supported: false,
+      outcome: "unsupported",
+      seconds: 1.1,
+      detail: "只回了文字，没有视频",
+    });
   });
 
   it("passes the preset prompt to the probe", async () => {
@@ -189,7 +202,12 @@ describe("bots testMediaModel", () => {
         presetPrompt: "用水彩风格画",
       },
     });
-    expect(result).toEqual({ supported: true, seconds: 2.3, detail: "image" });
+    expect(result).toEqual({
+      supported: true,
+      outcome: "supported",
+      seconds: 2.3,
+      detail: "image",
+    });
     expect(mockedAdapters.probeMediaModel).toHaveBeenCalledWith(
       expect.objectContaining({ model: "model-a", kind: "image", presetPrompt: "用水彩风格画" }),
       undefined,
@@ -220,7 +238,12 @@ describe("bots testMediaModel", () => {
       context: { actor },
       input: { botId: "bot-1", kind: "image", provider: "provider-a", modelId: "model-a" },
     });
-    expect(result).toEqual({ supported: false, seconds: 0, detail: "该模型未连接" });
+    expect(result).toEqual({
+      supported: false,
+      outcome: "unknown",
+      seconds: 0,
+      detail: "该模型未连接",
+    });
     expect(mockedAdapters.probeMediaModel).not.toHaveBeenCalled();
   });
 
@@ -233,6 +256,7 @@ describe("bots testMediaModel", () => {
     });
     expect(result).toEqual({
       supported: false,
+      outcome: "unknown",
       seconds: 0,
       detail: "托管模型暂不支持这样测试",
     });
@@ -251,7 +275,7 @@ describe("bots testTranslationModel", () => {
       context: { actor },
       input: { botId: "bot-1", provider: "provider-a", modelId: "model-a" },
     });
-    expect(result).toEqual({ supported: true, seconds: 1.5, detail: "你好" });
+    expect(result).toEqual({ supported: true, outcome: "supported", seconds: 1.5, detail: "你好" });
     expect(ctx.deps.translationProber).toHaveBeenCalledWith(
       actor,
       "bot-1",
@@ -265,6 +289,7 @@ describe("bots testTranslationModel", () => {
     const { routes, ctx } = setup();
     vi.mocked(ctx.deps.translationProber).mockResolvedValueOnce({
       supported: false,
+      outcome: "unsupported",
       seconds: 2,
       detail: "只回了原文，没有译文",
     });
@@ -272,7 +297,12 @@ describe("bots testTranslationModel", () => {
       context: { actor },
       input: { botId: "bot-1", provider: "provider-a", modelId: "model-a" },
     });
-    expect(result).toEqual({ supported: false, seconds: 2, detail: "只回了原文，没有译文" });
+    expect(result).toEqual({
+      supported: false,
+      outcome: "unsupported",
+      seconds: 2,
+      detail: "只回了原文，没有译文",
+    });
   });
 
   it("refuses a model the validation rejects", async () => {

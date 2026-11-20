@@ -805,20 +805,22 @@ export function BotSettings({
         modelId: resolveSelectableModelId(catalog, parsed.provider, parsed.modelId),
         ...(preset?.prompt.trim() ? { presetPrompt: preset.prompt } : {}),
       });
-      recordModelStatus(key, modelStatusFromProbe(result));
+      const status = modelStatusFromProbe(result);
+      if (status) recordModelStatus(key, status);
       setTest({
         status: "done",
         supported: result.supported,
+        outcome: result.outcome,
         seconds: result.seconds,
         detail: result.detail,
         modelKey: key,
         modelId: parsed.modelId,
       });
     } catch (err) {
-      recordModelStatus(key, { state: "unavailable", seconds: seconds() });
       setTest({
         status: "done",
         supported: false,
+        outcome: "unknown",
         seconds: seconds(),
         detail: errorText(err, t`Could not test this model`),
         modelKey: key,
@@ -840,20 +842,22 @@ export function BotSettings({
         provider: parsed.provider,
         modelId: resolveSelectableModelId(catalog, parsed.provider, parsed.modelId),
       });
-      recordModelStatus(key, modelStatusFromProbe(result));
+      const status = modelStatusFromProbe(result);
+      if (status) recordModelStatus(key, status);
       setTranslationTest({
         status: "done",
         supported: result.supported,
+        outcome: result.outcome,
         seconds: result.seconds,
         detail: result.detail,
         modelKey: key,
         modelId: parsed.modelId,
       });
     } catch (err) {
-      recordModelStatus(key, { state: "unavailable", seconds: seconds() });
       setTranslationTest({
         status: "done",
         supported: false,
+        outcome: "unknown",
         seconds: seconds(),
         detail: errorText(err, t`Could not test this model`),
         modelKey: key,

@@ -718,6 +718,7 @@ describe("MediaModelGroup", () => {
       videoTest: {
         status: "done",
         supported: true,
+        outcome: "supported",
         seconds: 1.2,
         detail: "",
         modelKey: "provider-a::video-a",
@@ -750,6 +751,7 @@ describe("MediaModelGroup", () => {
       videoTest: {
         status: "done",
         supported: false,
+        outcome: "unsupported",
         seconds: 0.8,
         detail: "authentication failed",
         modelKey: "provider-a::video-b",
@@ -765,6 +767,7 @@ describe("MediaModelGroup", () => {
       videoTest: {
         status: "done",
         supported: true,
+        outcome: "supported",
         seconds: 1.2,
         detail: "",
         modelKey: "provider-a::video-b",
@@ -774,6 +777,33 @@ describe("MediaModelGroup", () => {
     expect(container.textContent).toContain("video-b supports video generation · 1.2s");
     await click(buttonByText("Set as primary"));
     expect(onApplyVideoTestedModel).toHaveBeenCalled();
+  });
+
+  it("shows an inconclusive probe as unknown with its reason and seconds", async () => {
+    await renderGroup({
+      videoValue: "provider-a::video-a",
+      videoBackupFallbacks: [{ key: "provider-a::video-b", label: "Video B" }],
+      videoTest: {
+        status: "done",
+        supported: false,
+        outcome: "unknown",
+        seconds: 30,
+        detail: "30 秒内没有回音",
+        modelKey: "provider-a::video-b",
+        modelId: "video-b",
+      },
+    });
+    // An interrupted probe is not "does not support": the reason and the
+    // seconds it took both show, and there is no set-as-primary offer.
+    expect(container.textContent).toContain(
+      "Could not determine whether video-b supports video generation · 30 秒内没有回音 · 30s",
+    );
+    expect(container.textContent).not.toContain("Does not support video generation");
+    expect(
+      [...container.querySelectorAll("button")].some(
+        (node) => node.textContent === "Set as primary",
+      ),
+    ).toBe(false);
   });
 
   it("lists fallback models and removes one", async () => {

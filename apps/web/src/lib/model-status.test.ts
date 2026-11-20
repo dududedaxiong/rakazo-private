@@ -23,8 +23,16 @@ describe("modelStatusFromProbe", () => {
   });
 
   it("marks a fast probe ok and a slow one slow", () => {
-    expect(modelStatusFromProbe({ supported: true, seconds: 2 }).state).toBe("ok");
-    expect(modelStatusFromProbe({ supported: true, seconds: 45 }).state).toBe("slow");
+    expect(modelStatusFromProbe({ supported: true, seconds: 2 })?.state).toBe("ok");
+    expect(modelStatusFromProbe({ supported: true, seconds: 45 })?.state).toBe("slow");
+  });
+
+  it("records nothing for an inconclusive probe, so it never marks a working model unavailable", () => {
+    expect(modelStatusFromProbe({ supported: false, seconds: 30, outcome: "unknown" })).toBeNull();
+    expect(modelStatusFromProbe({ supported: false, seconds: 1, outcome: "unsupported" })).toEqual({
+      state: "unavailable",
+      seconds: 1,
+    });
   });
 });
 

@@ -2,6 +2,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type {
   BotPromptPreset,
   ComputerMode,
+  ProbeOutcome,
   ReplyMode,
   ThinkingLevel,
 } from "@rakazo_mickvvw/contracts";
@@ -648,6 +649,8 @@ export type MediaModelTestState =
   | {
       status: "done";
       supported: boolean;
+      /** What the probe established; `supported` is false for both other outcomes. */
+      outcome: ProbeOutcome;
       seconds: number;
       detail: string;
       modelKey: string;
@@ -1104,20 +1107,40 @@ function MediaModelTestResult({
   onApplyPrimary?: () => void;
 }) {
   const { t } = useLingui();
+  // Three verdicts, not two: an interrupted or rate-limited probe is
+  // inconclusive, and must not read as "does not support". The seconds
+  // stay on the inconclusive line — a 30-second timeout and a 2-second
+  // interruption are different information.
+  const line =
+    test.outcome === "unknown"
+      ? kind === "video"
+        ? t`? Could not determine whether ${test.modelId} supports video generation · ${test.detail} · ${test.seconds}s`
+        : kind === "image"
+          ? t`? Could not determine whether ${test.modelId} supports image generation · ${test.detail} · ${test.seconds}s`
+          : t`? Could not determine whether ${test.modelId} supports translation · ${test.detail} · ${test.seconds}s`
+      : test.supported
+        ? kind === "video"
+          ? t`✓ ${test.modelId} supports video generation · ${test.seconds}s`
+          : kind === "image"
+            ? t`✓ ${test.modelId} supports image generation · ${test.seconds}s`
+            : t`✓ ${test.modelId} supports translation · ${test.seconds}s`
+        : kind === "video"
+          ? t`✗ Does not support video generation · ${test.detail}`
+          : kind === "image"
+            ? t`✗ Does not support image generation · ${test.detail}`
+            : t`✗ Does not support translation · ${test.detail}`;
   return (
     <div>
-      <p className={test.supported ? "text-body-sm text-success" : "text-body-sm text-destructive"}>
-        {test.supported
-          ? kind === "video"
-            ? t`✓ ${test.modelId} supports video generation · ${test.seconds}s`
-            : kind === "image"
-              ? t`✓ ${test.modelId} supports image generation · ${test.seconds}s`
-              : t`✓ ${test.modelId} supports translation · ${test.seconds}s`
-          : kind === "video"
-            ? t`✗ Does not support video generation · ${test.detail}`
-            : kind === "image"
-              ? t`✗ Does not support image generation · ${test.detail}`
-              : t`✗ Does not support translation · ${test.detail}`}
+      <p
+        className={
+          test.supported
+            ? "text-body-sm text-success"
+            : test.outcome === "unknown"
+              ? "text-body-sm text-warning"
+              : "text-body-sm text-destructive"
+        }
+      >
+        {line}
       </p>
       {test.supported && onApplyPrimary ? (
         <Button variant="link" size="sm" className="px-0" onClick={onApplyPrimary}>

@@ -2141,6 +2141,7 @@ describe("media model reply", () => {
     );
     expect(supported).toEqual({
       supported: true,
+      outcome: "supported",
       seconds: expect.any(Number),
       detail: "返回了图片",
     });
@@ -2151,6 +2152,7 @@ describe("media model reply", () => {
       OWNER,
     );
     expect(unsupported.supported).toBe(false);
+    expect(unsupported.outcome).toBe("unsupported");
     expect(unsupported.detail).toBe("只回了文字，没有图片");
     const denied = await probeMediaModel(
       { baseUrl, model: "m", kind: "video" },
@@ -2159,6 +2161,32 @@ describe("media model reply", () => {
       OWNER,
     );
     expect(denied.supported).toBe(false);
+    expect(denied.outcome).toBe("unknown");
+  });
+
+  it("reports a rate-limited probe as unknown, not unsupported", async () => {
+    const limited = await probeMediaModel(
+      { baseUrl, model: "m", kind: "image" },
+      chatFetch({ error: { message: "slow down" } }, 429),
+      undefined,
+      OWNER,
+    );
+    expect(limited.supported).toBe(false);
+    expect(limited.outcome).toBe("unknown");
+  });
+
+  it("reports an aborted probe as unknown, not unsupported", async () => {
+    const aborted = await probeMediaModel(
+      { baseUrl, model: "m", kind: "image" },
+      (async () => {
+        throw new DOMException("Request aborted", "AbortError");
+      }) as typeof fetch,
+      undefined,
+      OWNER,
+    );
+    expect(aborted.supported).toBe(false);
+    expect(aborted.outcome).toBe("unknown");
+    expect(aborted.detail).toBe("请求超时");
   });
 });
 
@@ -2309,6 +2337,7 @@ describe("async video generation", () => {
       OWNER,
     );
     expect(probed.supported).toBe(true);
+    expect(probed.outcome).toBe("supported");
     expect(probed.detail).toBe("返回了视频");
     expect(seen.map((entry) => entry.url)).toEqual([
       `${baseUrl}/chat/completions`,
@@ -2336,6 +2365,7 @@ describe("async video generation", () => {
       OWNER,
     );
     expect(probed.supported).toBe(true);
+    expect(probed.outcome).toBe("supported");
     expect(probed.detail).toBe("任务已提交，正在生成");
   });
 });

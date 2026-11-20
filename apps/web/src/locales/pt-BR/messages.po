@@ -17,6 +17,27 @@ msgstr ""
 msgid " (unread)"
 msgstr " (não lido)"
 
+#. placeholder {0}: test.modelId
+#. placeholder {1}: test.detail
+#. placeholder {2}: test.seconds
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "? Could not determine whether {0} supports image generation · {1} · {2}s"
+msgstr ""
+
+#. placeholder {0}: test.modelId
+#. placeholder {1}: test.detail
+#. placeholder {2}: test.seconds
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "? Could not determine whether {0} supports translation · {1} · {2}s"
+msgstr ""
+
+#. placeholder {0}: test.modelId
+#. placeholder {1}: test.detail
+#. placeholder {2}: test.seconds
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "? Could not determine whether {0} supports video generation · {1} · {2}s"
+msgstr ""
+
 #. placeholder {0}: servers.length
 #: src/pages/plugins/manage-view.tsx
 msgid "{0, plural, one {# connector} other {# connectors}}"
