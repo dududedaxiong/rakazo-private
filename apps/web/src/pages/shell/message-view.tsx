@@ -365,6 +365,20 @@ export const MessageView = memo(function MessageView({
         </span>
       </p>
     ) : null;
+  // A computer-mode run's own switch timeline, under the chat model bar: the
+  // computer models live in the member's model settings, not the bot's list,
+  // so this entry locates there (kind="computer").
+  const computerSwitchBar = message.computerModelSwitches ? (
+    <div className="flex justify-start px-1 pt-1">
+      <ModelSwitchHistoryEntry
+        attempts={message.computerModelSwitches.attempts}
+        finalModel={message.computerModelSwitches.finalModel}
+        kind="computer"
+        botId={message.botId}
+        onLocateModel={onLocateModel}
+      />
+    </div>
+  ) : null;
   const favorite = useMessageFavorite({
     rpc,
     botId: message.role === "bot" ? message.botId : undefined,
@@ -606,6 +620,7 @@ export const MessageView = memo(function MessageView({
                   </div>
                 ) : null}
               </div>
+              {computerSwitchBar}
               {translation.panel}
               {readAloudProgress}
             </div>
@@ -956,6 +971,7 @@ export const MessageView = memo(function MessageView({
                       onLocateModel={onLocateModel}
                     />
                   </div>
+                  {computerSwitchBar}
                   {firstText ? translation.panel : null}
                 </div>
               );
@@ -989,6 +1005,7 @@ export const MessageView = memo(function MessageView({
               return (
                 <div key={i} className="flex flex-col items-start">
                   <div className="flex justify-start px-1">{trailingBar}</div>
+                  {computerSwitchBar}
                   {firstText ? translation.panel : null}
                 </div>
               );
@@ -1035,6 +1052,7 @@ export const MessageView = memo(function MessageView({
                   {trailingBar ? (
                     <div className="flex justify-start px-1 pt-1">{trailingBar}</div>
                   ) : null}
+                  {computerSwitchBar}
                   {firstText ? translation.panel : null}
                 </div>
                 {i === hoverAnchorIndex ? hoverActions : null}

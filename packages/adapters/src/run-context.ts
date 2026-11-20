@@ -215,6 +215,13 @@ export interface RunState {
    * it only when a switch really happened.
    */
   modelSwitchAttempts: ModelSwitchAttempt[];
+  /**
+   * Computer-mode models tried this attempt, in order, for the computer
+   * switch timeline the reply carries. Separate from the chat's timeline:
+   * the runtime appends to this same array; completeRun persists it only
+   * when a computer switch really happened.
+   */
+  computerModelSwitchAttempts: ModelSwitchAttempt[];
 }
 
 export interface RunComputerContext {

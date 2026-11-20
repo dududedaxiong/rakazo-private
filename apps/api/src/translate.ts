@@ -3,13 +3,16 @@ import type { AgentRunRequest, AgentRuntime, AgentRuntimeEvent } from "@rakazo_m
 import { sanitizeProviderError } from "@rakazo_mickvvw/adapters";
 import type { Actor, BotModelEntry, ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
 import {
-  parseBotModelList,
   resolveTargetLanguage,
   TRANSLATION_SOURCE_LANGUAGE_CODES,
   TRANSLATION_SOURCE_LANGUAGE_LABELS,
   TRANSLATION_TARGET_LANGUAGE_LABELS,
 } from "@rakazo_mickvvw/contracts";
-import { createModelSwitchAttempt, recordModelSwitchAttempt } from "@rakazo_mickvvw/core";
+import {
+  createModelSwitchAttempt,
+  recordModelSwitchAttempt,
+  splitBotModelPools,
+} from "@rakazo_mickvvw/core";
 import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { recordUsage } from "@rakazo_mickvvw/db";
 import { getLogger } from "@rakazo_mickvvw/logging";
@@ -44,6 +47,19 @@ export class TranslationModelNotConfiguredError extends Error {
   }
 }
 
+/**
+ * Thrown when every translation model failed; carries the attempts, so the
+ * route can hand them to the client's error panel instead of losing them.
+ */
+export class TranslationFailedError extends Error {
+  readonly attempts: ModelSwitchAttempt[];
+  constructor(attempts: ModelSwitchAttempt[], detail: string) {
+    super(`Translation failed: ${detail}`);
+    this.name = "TranslationFailedError";
+    this.attempts = attempts;
+  }
+}
+
 /** One line of a failure listing: the model and why it failed, kept short. */
 function shortReason(error: unknown): string {
   const message = error instanceof Error ? error.message.trim() : String(error ?? "").trim();
@@ -69,18 +85,27 @@ export function createTranslator(deps: {
       where: { id: botId, userId: actor.userId, spaceId: actor.spaceId },
       select: {
         translationModels: true,
+        translationBackupModels: true,
         translationModelProvider: true,
         translationModelId: true,
       },
     });
     if (!bot) throw new Error("Translation bot not found");
-    // The ordered list is the source of truth; rows the migration has not
-    // backfilled yet still carry the single model instead.
-    const models: BotModelEntry[] =
-      parseBotModelList(bot.translationModels) ??
-      (bot.translationModelProvider && bot.translationModelId
-        ? [{ provider: bot.translationModelProvider, model: bot.translationModelId }]
-        : []);
+    // Two pools: the chain walks the whole main pool first, then the backup
+    // pool. Rows the migration has not backfilled yet still carry the single
+    // model instead.
+    const pools = splitBotModelPools(bot.translationModels, bot.translationBackupModels);
+    const models: Array<BotModelEntry & { pool: "main" | "backup" }> = [
+      ...(pools.mainPool ?? []).map((entry) => ({ ...entry, pool: "main" as const })),
+      ...(pools.backupPool ?? []).map((entry) => ({ ...entry, pool: "backup" as const })),
+    ];
+    if (models.length === 0 && bot.translationModelProvider && bot.translationModelId) {
+      models.push({
+        provider: bot.translationModelProvider,
+        model: bot.translationModelId,
+        pool: "main",
+      });
+    }
     if (models.length === 0) throw new TranslationModelNotConfiguredError();
     const target = resolveTargetLanguage(targetLanguage);
 
@@ -103,6 +128,7 @@ export function createTranslator(deps: {
           createModelSwitchAttempt({
             model: entry.model,
             outcome: "skipped",
+            pool: entry.pool,
             error: "not connected",
           }),
         );
@@ -132,6 +158,7 @@ export function createTranslator(deps: {
                 model: entry.model,
                 provider: model.connectionLabel,
                 outcome: "succeeded",
+                pool: entry.pool,
               }),
             );
             // The timeline always rides along, even for a single model: its
@@ -159,6 +186,7 @@ export function createTranslator(deps: {
           model: entry.model,
           provider: model.connectionLabel,
           outcome: "failed",
+          pool: entry.pool,
           error:
             lastError instanceof Error
               ? sanitizeProviderError(entry.provider, lastError.message)
@@ -169,7 +197,7 @@ export function createTranslator(deps: {
     }
     const detail = failures.map((f) => `${f.modelId} (${f.reason})`).join(", ");
     getLogger().warn("translation failed", { reason: detail });
-    throw new Error(`Translation failed: ${detail}`);
+    throw new TranslationFailedError(attempts, detail);
   };
 
   async function translateOnce(

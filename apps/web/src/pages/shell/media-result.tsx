@@ -2,22 +2,7 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import type { BotModelEntry, BotPromptPreset, ModelSwitches } from "@rakazo_mickvvw/contracts";
 import { moveBotModelToFront } from "@rakazo_mickvvw/contracts";
 import { displayName, inferAttachmentMimeType, modelOptionKey } from "@rakazo_mickvvw/core";
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-  Input,
-  toast,
-} from "@rakazo_mickvvw/ui-web";
-import { Check } from "lucide-react";
-import type { ReactNode } from "react";
+import { Button, Dialog, DialogContent, DialogTitle, Input, toast } from "@rakazo_mickvvw/ui-web";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArtifactFileCard } from "../../components/ArtifactFileCard";
 import type { ArtifactTarget } from "../../lib/artifact-open";
@@ -35,59 +20,9 @@ import type { createSpaceRpc } from "../../lib/rpc";
 import { errorText } from "../../lib/user-error";
 import { ArtifactImage } from "./message-cards";
 import { toastModelError } from "./model-error-actions";
-import { ModelSwitchHistoryDialog } from "./model-switch-history-dialog";
+import { ModelSwitchHistoryEntry } from "./model-switch-history-dialog";
 import { ModelSwitchMenu } from "./model-switch-menu";
-
-/**
- * The preset list for this generation kind: the preset names, with the active
- * one checked. Selecting one switches the bot's active preset for later
- * generations; it never re-generates this result.
- */
-function PresetSwitchMenu({
-  presets,
-  activePreset,
-  applying,
-  onSelect,
-  children,
-}: {
-  presets: readonly BotPromptPreset[];
-  activePreset: string | null | undefined;
-  applying: boolean;
-  onSelect: (preset: BotPromptPreset) => void;
-  children: ReactNode;
-}) {
-  const { t } = useLingui();
-  const [open, setOpen] = useState(false);
-  return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger
-        render={
-          <button
-            type="button"
-            className="rounded-sm underline decoration-dotted underline-offset-2"
-          />
-        }
-      >
-        {children}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-64">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>{t`Prompt preset`}</DropdownMenuLabel>
-        </DropdownMenuGroup>
-        {presets.map((preset) => (
-          <DropdownMenuItem key={preset.name} disabled={applying} onClick={() => onSelect(preset)}>
-            {preset.name === activePreset ? (
-              <Check className="size-4" />
-            ) : (
-              <span className="size-4" aria-hidden="true" />
-            )}
-            <span className="truncate">{preset.name}</span>
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
+import { PromptPresetTags } from "./prompt-preset-tags";
 
 /**
  * One generated image or video, with its "经 <model> · <preset>" attribution
@@ -162,7 +97,6 @@ export function MediaResult({
   const [sharing, setSharing] = useState(false);
   const [applyingModelKey, setApplyingModelKey] = useState<string | null>(null);
   const [applyingPreset, setApplyingPreset] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   /** The saved supplementary prompt for this artifact; null until loaded. */
   const [supplementaryPrompt, setSupplementaryPrompt] = useState<string | null>(null);
@@ -213,6 +147,49 @@ export function MediaResult({
       }
     },
     [activePreset, applyingPreset, botId, kind, onBotChanged, rpc, t],
+  );
+
+  // Saving a preset edit from the tag dialog: the bot's list for this kind
+  // is replaced wholesale, then the roster refreshes behind it.
+  const updatePresets = useCallback(
+    async (next: readonly BotPromptPreset[]) => {
+      if (!botId) return;
+      try {
+        await rpc.bots.update({
+          botId,
+          ...(kind === "image"
+            ? { imagePromptPresets: [...next] }
+            : { videoPromptPresets: [...next] }),
+        });
+        await onBotChanged?.();
+      } catch (err) {
+        toast(errorText(err, t`Could not save prompt preset`));
+      }
+    },
+    [botId, kind, onBotChanged, rpc, t],
+  );
+
+  const handlePresetActiveChange = useCallback(
+    async (name: string | null) => {
+      if (!botId) return;
+      if (name === null) {
+        try {
+          await rpc.bots.update({
+            botId,
+            ...(kind === "image"
+              ? { activeImagePromptPreset: null }
+              : { activeVideoPromptPreset: null }),
+          });
+          await onBotChanged?.();
+        } catch (err) {
+          toast(errorText(err, t`Could not switch prompt preset`));
+        }
+        return;
+      }
+      const preset = presets?.find((entry) => entry.name === name);
+      if (preset) await switchPreset(preset);
+    },
+    [botId, kind, onBotChanged, presets, rpc, switchPreset, t],
   );
 
   const download = useCallback(async () => {
@@ -285,8 +262,9 @@ export function MediaResult({
   );
 
   // The edit dialog: the supplementary prompt, and for a video a reference
-  // image to edit from. It opens when the prompt is empty (an edit needs
-  // one) or for a video (an upload is needed every time).
+  // image to edit from. It opens every time, prefilled with the saved
+  // prompt, so an edit can be changed again and again instead of replaying
+  // the last one.
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editDraft, setEditDraft] = useState("");
   const [editFile, setEditFile] = useState<File | null>(null);
@@ -331,14 +309,10 @@ export function MediaResult({
     if (regenerating) return;
     const saved = supplementaryPrompt ?? (await getSupplementaryPrompt(rpc, artifactId));
     if (supplementaryPrompt === null) setSupplementaryPrompt(saved);
-    if (kind === "video" || !saved.trim()) {
-      setEditDraft(saved);
-      setEditFile(null);
-      setEditDialogOpen(true);
-      return;
-    }
-    await regenerateMediaResult("edit");
-  }, [artifactId, kind, regenerating, regenerateMediaResult, rpc, supplementaryPrompt]);
+    setEditDraft(saved);
+    setEditFile(null);
+    setEditDialogOpen(true);
+  }, [artifactId, regenerating, rpc, supplementaryPrompt]);
 
   const submitEdit = useCallback(async () => {
     if (editBusy || regenerating) return;
@@ -411,8 +385,8 @@ export function MediaResult({
       modelName={primaryModelName}
       presets={presets ?? []}
       activePreset={activePreset}
-      applyingPreset={applyingPreset}
-      onSelectPreset={(preset) => void switchPreset(preset)}
+      onPresetsChange={(next) => void updatePresets(next)}
+      onPresetActiveChange={(name) => void handlePresetActiveChange(name)}
       supplementaryPrompt={supplementaryPrompt ?? ""}
       onSaveSupplementaryPrompt={saveSupplementaryPrompt}
     />
@@ -439,53 +413,41 @@ export function MediaResult({
       </Button>
     </>
   ) : undefined;
+  // The model line under a result: with a switch timeline it is the entry
+  // itself, opening the history; without one it stays the model picker.
+  // The preset tags sit after it; the switch menu for the model stays in
+  // the preview title bar.
   const markLine = (
     <div className="flex flex-wrap items-center gap-x-1 text-body-sm text-muted-foreground">
-      <span>
-        {t`Current model`}:{" "}
-        <ModelSwitchMenu
-          label={kind === "image" ? t`Image model` : t`Video model`}
-          models={models ?? []}
-          currentKey={primaryKey}
-          applyingKey={applyingModelKey}
-          onSelect={(entry) => void switchModel(entry)}
-        >
-          {modelName}
-        </ModelSwitchMenu>
-      </span>
-      {mark?.presetName ? (
-        <span>
-          {" · "}
-          <PresetSwitchMenu
-            presets={presets ?? []}
-            activePreset={activePreset}
-            applying={applyingPreset}
-            onSelect={(preset) => void switchPreset(preset)}
-          >
-            {mark.presetName}
-          </PresetSwitchMenu>
-        </span>
-      ) : null}
       {modelSwitches ? (
-        <>
-          <Button
-            variant="text"
-            size="xs"
-            onClick={() => setHistoryOpen(true)}
-            className="ms-auto font-normal"
+        <ModelSwitchHistoryEntry
+          attempts={modelSwitches.attempts}
+          finalModel={modelSwitches.finalModel}
+          kind={kind}
+          botId={botId}
+          onLocateModel={onLocateModel}
+        />
+      ) : (
+        <span>
+          {t`Current model`}:{" "}
+          <ModelSwitchMenu
+            label={kind === "image" ? t`Image model` : t`Video model`}
+            models={models ?? []}
+            currentKey={primaryKey}
+            applyingKey={applyingModelKey}
+            onSelect={(entry) => void switchModel(entry)}
           >
-            <Trans>Switch history</Trans>
-          </Button>
-          <ModelSwitchHistoryDialog
-            open={historyOpen}
-            onOpenChange={setHistoryOpen}
-            attempts={modelSwitches.attempts}
-            finalModel={modelSwitches.finalModel}
-            kind={kind}
-            botId={botId ?? ""}
-            onLocateModel={botId && onLocateModel ? onLocateModel : undefined}
-          />
-        </>
+            {modelName}
+          </ModelSwitchMenu>
+        </span>
+      )}
+      {presets?.length ? (
+        <PromptPresetTags
+          presets={presets}
+          active={activePreset ?? null}
+          onPresetsChange={(next) => void updatePresets(next)}
+          onActiveChange={(name) => void handlePresetActiveChange(name)}
+        />
       ) : null}
     </div>
   );
@@ -693,8 +655,8 @@ function MediaPreviewTitleBar({
   modelName,
   presets,
   activePreset,
-  applyingPreset,
-  onSelectPreset,
+  onPresetsChange,
+  onPresetActiveChange,
   supplementaryPrompt,
   onSaveSupplementaryPrompt,
 }: {
@@ -706,8 +668,8 @@ function MediaPreviewTitleBar({
   modelName: string;
   presets: readonly BotPromptPreset[];
   activePreset: string | null | undefined;
-  applyingPreset: boolean;
-  onSelectPreset: (preset: BotPromptPreset) => void;
+  onPresetsChange: (presets: readonly BotPromptPreset[]) => void;
+  onPresetActiveChange: (name: string | null) => void;
   supplementaryPrompt: string;
   onSaveSupplementaryPrompt: (value: string) => Promise<void>;
 }) {
@@ -726,14 +688,12 @@ function MediaPreviewTitleBar({
           {kind === "image" ? t`Image generation` : t`Video generation`}:
         </span>
         {presets.length ? (
-          <PresetSwitchMenu
+          <PromptPresetTags
             presets={presets}
-            activePreset={activePreset}
-            applying={applyingPreset}
-            onSelect={(preset) => void onSelectPreset(preset)}
-          >
-            <span className="block max-w-44 truncate">{presetName}</span>
-          </PresetSwitchMenu>
+            active={activePreset ?? null}
+            onPresetsChange={onPresetsChange}
+            onActiveChange={onPresetActiveChange}
+          />
         ) : (
           <span className="block max-w-44 truncate text-foreground">{presetName}</span>
         )}

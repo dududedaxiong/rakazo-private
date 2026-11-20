@@ -1,4 +1,4 @@
-import type { ModelSwitches } from "@rakazo_mickvvw/contracts";
+import type { ModelSwitchAttempt, ModelSwitches } from "@rakazo_mickvvw/contracts";
 import type { AdapterContext } from "./types.js";
 
 export type MediaGenerationInput = {
@@ -29,9 +29,9 @@ export type GeneratedMedia = {
   modelSwitches?: ModelSwitches;
 };
 export type MediaVideoJob =
-  | { id: string; status: "queued" | "running"; progress?: number }
+  | { id: string; status: "queued" | "running"; progress?: number; modelSwitches?: ModelSwitches }
   | { id: string; status: "completed"; output: GeneratedMedia }
-  | { id: string; status: "failed" };
+  | { id: string; status: "failed"; modelSwitches?: ModelSwitches };
 export interface MediaGenerationProvider {
   readonly id: string;
   readonly capabilities: { images: boolean; video: boolean; offline: boolean };
@@ -40,6 +40,23 @@ export interface MediaGenerationProvider {
   generateImage(input: MediaGenerationInput, context: AdapterContext): Promise<GeneratedMedia>;
   generateVideo(input: MediaGenerationInput, context: AdapterContext): Promise<MediaVideoJob>;
   pollVideo(id: string, context: AdapterContext): Promise<MediaVideoJob>;
+  /**
+   * After a submitted video task failed in polling, try the next model in the
+   * same chain from the failed one, within the same job. `jobId` is the async
+   * video job id of the failed task; `priorAttempts` is the timeline so far
+   * and the new attempts continue it. Returns a queued job when the next
+   * model submitted, a failed job carrying the full timeline when the chain
+   * is exhausted, or undefined when the job is not this provider's to
+   * resubmit. Absent on providers with no per-model chain (the global
+   * provider keeps its current behavior). Only the poll worker calls this,
+   * never a run.
+   */
+  resubmitVideoAfter?(
+    jobId: string,
+    input: MediaGenerationInput,
+    context: AdapterContext,
+    priorAttempts?: ModelSwitchAttempt[],
+  ): Promise<MediaVideoJob | undefined>;
 }
 export type MediaGenerationErrorCode =
   | "invalid_input"

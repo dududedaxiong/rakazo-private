@@ -358,17 +358,30 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
   // A chat job still submitting is left alone: its own call finishes it.
   const result =
     saved.success && saved.data.jobId
-      ? await generateMediaFromTool({
-          name: "generate_video",
-          args: { jobId: job.id },
-          executionId: operationId,
-          recoverOnly: true,
-          provider,
-          prisma: deps.prisma,
-          context,
-          run,
-          ...delivery,
-        })
+      ? await (async () => {
+          // An edit's resubmit needs its reference frame; load it only for
+          // edit jobs, mirroring the regenerate-submit branch below.
+          const references =
+            isEdit && request.success
+              ? await loadMediaReferences(deps, run, request.data, context)
+              : undefined;
+          return generateMediaFromTool({
+            name: "generate_video",
+            args: { jobId: job.id },
+            executionId: operationId,
+            recoverOnly: true,
+            // A failed task may resubmit to the next model in its chain until
+            // the job deadline; the deadline is from job creation and a
+            // resubmit never extends it.
+            resubmitUntil: job.createdAt.getTime() + MEDIA_POLL_DEADLINE_MS,
+            ...(references?.length ? { references } : {}),
+            provider,
+            prisma: deps.prisma,
+            context,
+            run,
+            ...delivery,
+          });
+        })()
       : isRegenerate && request.success
         ? await (async () => {
             const references = await loadMediaReferences(deps, run, request.data, context);

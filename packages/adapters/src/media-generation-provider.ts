@@ -17,6 +17,7 @@ import { ATTACHMENT_MAX_BYTES } from "@rakazo_mickvvw/contracts";
 import {
   buildModelSwitches,
   createModelSwitchAttempt,
+  failModelSwitchAttempt,
   recordModelSwitchAttempt,
 } from "@rakazo_mickvvw/core";
 import { z } from "zod";
@@ -298,6 +299,8 @@ export const CHAT_MEDIA_VIDEO_JOB_ID = "chat-media-video";
 /** One bot-configured model to try, in list order. */
 export type BotMediaCallEntry = {
   modelId: string;
+  /** Which pool this model belongs to: "main" for the main pool, "backup" for the backup pool. */
+  pool?: "main" | "backup";
   /** The provider id this model runs on, for error sanitizing; absent in older callers. */
   provider?: string;
   /** The connection display name the model runs on; absent when unknown. */
@@ -338,6 +341,8 @@ export type BotMediaCallEntry = {
 export type BotMediaFailure = {
   modelId: string;
   reason: string;
+  /** Which pool this model belongs to; absent when unknown. */
+  pool?: "main" | "backup";
   /** The connection display name the model runs on; absent when unknown. */
   providerLabel?: string;
   /** Short failure class for the timeline label (e.g. rate_limit, connection). */
@@ -403,6 +408,7 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
         model: failure.modelId,
         provider: failure.providerLabel,
         outcome: "skipped",
+        ...(failure.pool ? { pool: failure.pool } : {}),
         error: failure.reason,
       }),
     );
@@ -416,6 +422,7 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
             model: entry.modelId,
             provider: entry.providerLabel,
             outcome: "succeeded",
+            ...(entry.pool ? { pool: entry.pool } : {}),
           }),
         );
         const modelSwitches = buildModelSwitches(attempts);
@@ -438,6 +445,7 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
           model: entry.modelId,
           provider: entry.providerLabel,
           outcome: "failed",
+          ...(entry.pool ? { pool: entry.pool } : {}),
           error: sanitizeProviderError(entry.provider ?? "", raw),
           ...(errorCode ? { errorCode } : {}),
         });
@@ -445,6 +453,7 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
         const failure: BotMediaFailure = {
           modelId: entry.modelId,
           reason: mediaGenerationFailureReason(error),
+          ...(entry.pool ? { pool: entry.pool } : {}),
           ...(entry.providerLabel ? { providerLabel: entry.providerLabel } : {}),
           ...(attempt.errorCode ? { errorCode: attempt.errorCode } : {}),
           ...(attempt.errorMessage ? { errorMessage: attempt.errorMessage } : {}),
@@ -496,19 +505,28 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
     kind: BotMediaKindCalls,
     input: MediaGenerationInput,
     signal: AbortSignal,
+    startIndex = 0,
+    priorAttempts: ModelSwitchAttempt[] = [],
   ): Promise<MediaVideoJob> {
     const failures: BotMediaFailure[] = [...kind.failures];
     // The timeline, in try order: models that never resolved were skipped,
     // each call that failed is a failed attempt, and the model that answered
-    // closes it. Only a real switch is kept on the finished media.
-    const attempts: ModelSwitchAttempt[] = kind.failures.map((failure) =>
-      createModelSwitchAttempt({
-        model: failure.modelId,
-        provider: failure.providerLabel,
-        outcome: "skipped",
-        error: failure.reason,
-      }),
-    );
+    // closes it. Only a real switch is kept on the finished media. A resubmit
+    // continues the timeline its submit started, so prior attempts come first
+    // and this call appends to the same array the caller keeps.
+    const attempts: ModelSwitchAttempt[] = priorAttempts;
+    for (const failure of kind.failures) {
+      recordModelSwitchAttempt(
+        attempts,
+        createModelSwitchAttempt({
+          model: failure.modelId,
+          provider: failure.providerLabel,
+          outcome: "skipped",
+          ...(failure.pool ? { pool: failure.pool } : {}),
+          error: failure.reason,
+        }),
+      );
+    }
     const recordFailure = (entry: BotMediaCallEntry, error: unknown, nextModelId?: string) => {
       const raw = error instanceof Error ? error.message : String(error);
       // A coded provider error names its class directly; an uncoded one is
@@ -521,6 +539,7 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
         model: entry.modelId,
         provider: entry.providerLabel,
         outcome: "failed",
+        ...(entry.pool ? { pool: entry.pool } : {}),
         error: sanitizeProviderError(entry.provider ?? "", raw),
         ...(errorCode ? { errorCode } : {}),
       });
@@ -528,6 +547,7 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
       const failure: BotMediaFailure = {
         modelId: entry.modelId,
         reason: mediaGenerationFailureReason(error),
+        ...(entry.pool ? { pool: entry.pool } : {}),
         ...(entry.providerLabel ? { providerLabel: entry.providerLabel } : {}),
         ...(attempt.errorCode ? { errorCode: attempt.errorCode } : {}),
         ...(attempt.errorMessage ? { errorMessage: attempt.errorMessage } : {}),
@@ -539,7 +559,7 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
         // A failing notifier must never break the fallback chain.
       }
     };
-    for (let index = 0; index < kind.calls.length; index++) {
+    for (let index = startIndex; index < kind.calls.length; index++) {
       const entry = kind.calls[index]!;
       const nextModelId = kind.calls[index + 1]?.modelId;
       try {
@@ -550,6 +570,7 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
             model: entry.modelId,
             provider: entry.providerLabel,
             outcome: "succeeded",
+            ...(entry.pool ? { pool: entry.pool } : {}),
           }),
         );
         const modelSwitches = buildModelSwitches(attempts);
@@ -572,9 +593,22 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
         ) {
           try {
             const taskId = await entry.submitVideo(input.prompt, signal, input.references);
+            // The submit succeeded, so the model that submitted it closes
+            // the timeline so far; the job row keeps it for the poll cycle.
+            recordModelSwitchAttempt(
+              attempts,
+              createModelSwitchAttempt({
+                model: entry.modelId,
+                provider: entry.providerLabel,
+                outcome: "succeeded",
+                ...(entry.pool ? { pool: entry.pool } : {}),
+              }),
+            );
+            const modelSwitches = buildModelSwitches(attempts);
             return {
               id: encodeAsyncVideoJobId(entry.modelId, taskId),
               status: "queued",
+              ...(modelSwitches ? { modelSwitches } : {}),
             };
           } catch (submitError) {
             signal.throwIfAborted();
@@ -613,6 +647,46 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
       };
     }
     return { id, status: polled.status };
+  }
+  /**
+   * After a submitted video task failed in polling, continue the same chain
+   * from the next model after the one that submitted it. The failed model's
+   * submit becomes a failed attempt; the timeline continues from there. A
+   * queued job carries the timeline so far; an exhausted chain returns a
+   * failed job carrying the full timeline, so the caller can settle it with
+   * the record intact.
+   */
+  async resubmitVideoAfter(
+    jobId: string,
+    input: MediaGenerationInput,
+    context: AdapterContext,
+    priorAttempts: ModelSwitchAttempt[] = [],
+  ): Promise<MediaVideoJob | undefined> {
+    const decoded = decodeAsyncVideoJobId(jobId);
+    if (!decoded) return undefined;
+    for (const kind of [this.video, this.videoEdit]) {
+      const index = kind.calls.findIndex((call) => call.modelId === decoded.model);
+      if (index < 0) continue;
+      const entry = kind.calls[index]!;
+      const attempts = [...priorAttempts];
+      failModelSwitchAttempt(attempts, decoded.model, "video task failed", {
+        ...(entry.providerLabel ? { provider: entry.providerLabel } : {}),
+        ...(entry.pool ? { pool: entry.pool } : {}),
+      });
+      try {
+        return await this.tryVideoCalls(kind, input, context.signal, index + 1, attempts);
+      } catch (error) {
+        if (!(error instanceof MediaGenerationError)) throw error;
+        // The chain is exhausted: every remaining model failed.
+        const modelSwitches = buildModelSwitches(attempts);
+        return {
+          id: jobId,
+          status: "failed",
+          ...(modelSwitches ? { modelSwitches } : {}),
+        };
+      }
+    }
+    return undefined;
   }
 }
 

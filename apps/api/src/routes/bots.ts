@@ -42,7 +42,13 @@ import {
   resolveBotAvatarSet,
   resolveTargetLanguage,
 } from "@rakazo_mickvvw/contracts";
-import { ACTIVE_RUN_STATUSES, COMPUTER_USING_RUNS, displayName } from "@rakazo_mickvvw/core";
+import {
+  ACTIVE_RUN_STATUSES,
+  COMPUTER_USING_RUNS,
+  displayName,
+  mergeBotModelPools,
+  splitBotModelPools,
+} from "@rakazo_mickvvw/core";
 import {
   BotSectionNameConflictError,
   botProfileLabelsChanged,
@@ -72,7 +78,11 @@ import { mayUsePrivateEndpoint } from "../mcp-servers.js";
 import { managedAppCatalog } from "../onboarding.js";
 import type { RouterDeps } from "../router.js";
 import { loadMessagePage } from "../thread-message-pages.js";
-import { keepMessageTranslation, TranslationModelNotConfiguredError } from "../translate.js";
+import {
+  keepMessageTranslation,
+  TranslationFailedError,
+  TranslationModelNotConfiguredError,
+} from "../translate.js";
 import type { RouterContext } from "./context.js";
 import { computerContext, modelSetup, THREAD_MESSAGE_PAGE_SIZE } from "./shared.js";
 
@@ -440,11 +450,33 @@ export function botsRoutes(ctx: RouterContext) {
         if (!modelChange.ok) throw new ORPCError("BAD_REQUEST", { message: modelChange.error });
         // `existing` is the Prisma row, so its JSON columns parse first; the
         // contract lists they become are what validation and writes use.
-        const existingTranslationModels = parseBotModelList(existing.translationModels);
-        const existingVideoModels = parseBotModelList(existing.videoModels);
-        const existingImageModels = parseBotModelList(existing.imageModels);
-        const existingImageEditModels = parseBotModelList(existing.imageEditModels);
-        const existingVideoEditModels = parseBotModelList(existing.videoEditModels);
+        // Each family's stored lists split into its two pools; the merged
+        // list is what older clients read and what re-checks compare against.
+        const existingTranslationPools = splitBotModelPools(
+          existing.translationModels,
+          existing.translationBackupModels,
+        );
+        const existingVideoPools = splitBotModelPools(
+          existing.videoModels,
+          existing.videoBackupModels,
+        );
+        const existingImagePools = splitBotModelPools(
+          existing.imageModels,
+          existing.imageBackupModels,
+        );
+        const existingImageEditPools = splitBotModelPools(
+          existing.imageEditModels,
+          existing.imageEditBackupModels,
+        );
+        const existingVideoEditPools = splitBotModelPools(
+          existing.videoEditModels,
+          existing.videoEditBackupModels,
+        );
+        const existingTranslationModels = mergeBotModelPools(existingTranslationPools);
+        const existingVideoModels = mergeBotModelPools(existingVideoPools);
+        const existingImageModels = mergeBotModelPools(existingImagePools);
+        const existingImageEditModels = mergeBotModelPools(existingImageEditPools);
+        const existingVideoEditModels = mergeBotModelPools(existingVideoEditPools);
         const existingVideoPresets = parseBotPromptPresets(existing.videoPromptPresets);
         const existingImagePresets = parseBotPromptPresets(existing.imagePromptPresets);
         // Every entry of an ordered model list must be a model this user has
@@ -497,20 +529,98 @@ export function botsRoutes(ctx: RouterContext) {
           ];
         };
         const effectiveTranslationModels = legacyTranslationModels();
-        await validateModelListChange(
+        /**
+         * One family's two pools, resolved from the update input. New clients
+         * send the pools separately; older ones send the single ordered list
+         * (first entry -> main pool, rest -> backup pool). Undefined when the
+         * client sent neither shape, so the family is left alone.
+         */
+        const resolveFamilyPools = (
+          main: readonly BotModelEntry[] | null | undefined,
+          backup: readonly BotModelEntry[] | null | undefined,
+          legacy: readonly BotModelEntry[] | null | undefined,
+        ): { mainPool: BotModelEntry[]; backupPool: BotModelEntry[] } | undefined => {
+          if (main === undefined && backup === undefined && legacy === undefined)
+            return undefined;
+          const mainPool = [...(main !== undefined ? (main ?? []) : (legacy?.slice(0, 1) ?? []))];
+          const backupPool = [
+            ...(backup !== undefined ? (backup ?? []) : (legacy?.slice(1) ?? [])),
+          ];
+          // A model cannot sit in both pools; the main pool wins.
+          const mainKeys = new Set(
+            mainPool.map((entry) => `${entry.provider}\0${entry.model}`),
+          );
+          return {
+            mainPool,
+            backupPool: backupPool.filter(
+              (entry) => !mainKeys.has(`${entry.provider}\0${entry.model}`),
+            ),
+          };
+        };
+        const translationPools = resolveFamilyPools(
+          input.translationMainModels,
+          input.translationBackupModels,
           effectiveTranslationModels,
+        );
+        const videoPools = resolveFamilyPools(
+          input.videoMainModels,
+          input.videoBackupModels,
+          input.videoModels,
+        );
+        const imagePools = resolveFamilyPools(
+          input.imageMainModels,
+          input.imageBackupModels,
+          input.imageModels,
+        );
+        const imageEditPools = resolveFamilyPools(
+          input.imageEditMainModels,
+          input.imageEditBackupModels,
+          input.imageEditModels,
+        );
+        const videoEditPools = resolveFamilyPools(
+          input.videoEditMainModels,
+          input.videoEditBackupModels,
+          input.videoEditModels,
+        );
+        await validateModelListChange(
+          translationPools?.mainPool,
           existingTranslationModels,
           "Translation model",
         );
-        await validateModelListChange(input.videoModels, existingVideoModels, "Video model");
-        await validateModelListChange(input.imageModels, existingImageModels, "Image model");
         await validateModelListChange(
-          input.imageEditModels,
+          translationPools?.backupPool,
+          existingTranslationModels,
+          "Translation model",
+        );
+        await validateModelListChange(videoPools?.mainPool, existingVideoModels, "Video model");
+        await validateModelListChange(
+          videoPools?.backupPool,
+          existingVideoModels,
+          "Video model",
+        );
+        await validateModelListChange(imagePools?.mainPool, existingImageModels, "Image model");
+        await validateModelListChange(
+          imagePools?.backupPool,
+          existingImageModels,
+          "Image model",
+        );
+        await validateModelListChange(
+          imageEditPools?.mainPool,
           existingImageEditModels,
           "Image edit model",
         );
         await validateModelListChange(
-          input.videoEditModels,
+          imageEditPools?.backupPool,
+          existingImageEditModels,
+          "Image edit model",
+        );
+        await validateModelListChange(
+          videoEditPools?.mainPool,
+          existingVideoEditModels,
+          "Video edit model",
+        );
+        await validateModelListChange(
+          videoEditPools?.backupPool,
           existingVideoEditModels,
           "Video edit model",
         );
@@ -596,45 +706,57 @@ export function botsRoutes(ctx: RouterContext) {
             ...(input.modelProvider !== undefined
               ? { modelProvider: input.modelProvider, modelId: input.modelId ?? null }
               : {}),
-            ...(effectiveTranslationModels !== undefined
+            ...(translationPools !== undefined
               ? {
                   translationModels:
-                    effectiveTranslationModels && effectiveTranslationModels.length > 0
-                      ? (effectiveTranslationModels as Prisma.InputJsonValue)
+                    translationPools.mainPool.length > 0
+                      ? (translationPools.mainPool as Prisma.InputJsonValue)
                       : Prisma.DbNull,
+                  // Always an array, even when empty: it marks the row as
+                  // two-pool data, so reads do not split the main list again.
+                  translationBackupModels: translationPools.backupPool as Prisma.InputJsonValue,
                   // The old columns mirror the list's first entry, so older
                   // releases keep reading the primary.
                   translationModelProvider:
-                    primaryBotModel(effectiveTranslationModels)?.provider ?? null,
-                  translationModelId: primaryBotModel(effectiveTranslationModels)?.model ?? null,
+                    primaryBotModel(mergeBotModelPools(translationPools))?.provider ?? null,
+                  translationModelId:
+                    primaryBotModel(mergeBotModelPools(translationPools))?.model ?? null,
                 }
               : {}),
-            ...(input.videoModels !== undefined
+            ...(videoPools !== undefined
               ? {
-                  videoModels: input.videoModels?.length
-                    ? (input.videoModels as Prisma.InputJsonValue)
-                    : Prisma.DbNull,
+                  videoModels:
+                    videoPools.mainPool.length > 0
+                      ? (videoPools.mainPool as Prisma.InputJsonValue)
+                      : Prisma.DbNull,
+                  videoBackupModels: videoPools.backupPool as Prisma.InputJsonValue,
                 }
               : {}),
-            ...(input.imageModels !== undefined
+            ...(imagePools !== undefined
               ? {
-                  imageModels: input.imageModels?.length
-                    ? (input.imageModels as Prisma.InputJsonValue)
-                    : Prisma.DbNull,
+                  imageModels:
+                    imagePools.mainPool.length > 0
+                      ? (imagePools.mainPool as Prisma.InputJsonValue)
+                      : Prisma.DbNull,
+                  imageBackupModels: imagePools.backupPool as Prisma.InputJsonValue,
                 }
               : {}),
-            ...(input.imageEditModels !== undefined
+            ...(imageEditPools !== undefined
               ? {
-                  imageEditModels: input.imageEditModels?.length
-                    ? (input.imageEditModels as Prisma.InputJsonValue)
-                    : Prisma.DbNull,
+                  imageEditModels:
+                    imageEditPools.mainPool.length > 0
+                      ? (imageEditPools.mainPool as Prisma.InputJsonValue)
+                      : Prisma.DbNull,
+                  imageEditBackupModels: imageEditPools.backupPool as Prisma.InputJsonValue,
                 }
               : {}),
-            ...(input.videoEditModels !== undefined
+            ...(videoEditPools !== undefined
               ? {
-                  videoEditModels: input.videoEditModels?.length
-                    ? (input.videoEditModels as Prisma.InputJsonValue)
-                    : Prisma.DbNull,
+                  videoEditModels:
+                    videoEditPools.mainPool.length > 0
+                      ? (videoEditPools.mainPool as Prisma.InputJsonValue)
+                      : Prisma.DbNull,
+                  videoEditBackupModels: videoEditPools.backupPool as Prisma.InputJsonValue,
                 }
               : {}),
             ...(videoPresetUpdate.presets !== undefined
@@ -769,6 +891,14 @@ export function botsRoutes(ctx: RouterContext) {
         } catch (error) {
           if (error instanceof TranslationModelNotConfiguredError) {
             throw new ORPCError("BAD_REQUEST", { message: "先选择翻译模型" });
+          }
+          if (error instanceof TranslationFailedError) {
+            // The attempts ride the error, so the client can show the switch
+            // timeline in the error panel instead of losing it.
+            throw new ORPCError("INTERNAL", {
+              message: error.message,
+              data: { attempts: error.attempts },
+            });
           }
           throw error;
         }

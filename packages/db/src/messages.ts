@@ -72,6 +72,8 @@ export interface CreateThreadMessageInput {
   markUnread?: boolean;
   /** The reply's model-switch timeline; only present when a switch happened. */
   modelSwitches?: ModelSwitches;
+  /** The reply's computer-mode switch timeline; only present when computer mode switched. */
+  computerModelSwitches?: ModelSwitches;
   /** Terminal echo after the run is already cancelled. Every other write stays rejected. */
   allowCancelledRun?: boolean;
   /** The executing attempt's lease; a superseded attempt cannot write. */
@@ -117,6 +119,9 @@ export async function createThreadMessageInTransaction(
       clientNonce: input.clientNonce,
       ...(input.modelSwitches
         ? { modelSwitches: input.modelSwitches as Prisma.InputJsonValue }
+        : {}),
+      ...(input.computerModelSwitches
+        ? { computerModelSwitches: input.computerModelSwitches as Prisma.InputJsonValue }
         : {}),
     },
   });

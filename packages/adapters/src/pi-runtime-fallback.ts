@@ -334,6 +334,7 @@ export function fallbackAwareModelStream(
     provider: string | undefined,
     outcome: ModelSwitchAttempt["outcome"],
     error?: string,
+    pool?: ModelSwitchAttempt["pool"],
   ) => {
     if (!state.switchAttempts) return;
     recordModelSwitchAttempt(
@@ -342,9 +343,26 @@ export function fallbackAwareModelStream(
         model,
         provider,
         outcome,
+        ...(pool ? { pool } : {}),
         ...(error ? { error } : {}),
       }),
     );
+  };
+  /**
+   * Which pool a target belongs to: the running model and the main pool are
+   * "main", the backup pool is "backup". Unknown targets (checkpoint pins)
+   * carry no pool.
+   */
+  const poolOfTarget = (
+    config: RuntimeModelTarget["config"],
+  ): ModelSwitchAttempt["pool"] | undefined => {
+    if (sameModelTarget(config, state.request.model)) return "main";
+    const key = modelTargetKey(config);
+    if ((state.request.mainPoolModels ?? []).some((choice) => modelTargetKey(choice) === key))
+      return "main";
+    if ((state.request.fallbackModels ?? []).some((choice) => modelTargetKey(choice) === key))
+      return "backup";
+    return undefined;
   };
   const recordTargetAttempt = (
     target: RuntimeModelTarget,
@@ -356,6 +374,7 @@ export function fallbackAwareModelStream(
       target.config.connectionLabel,
       outcome,
       error === undefined ? undefined : sanitizeProviderError(target.config.provider, error),
+      poolOfTarget(target.config),
     );
   const recordFailure = (target: RuntimeModelTarget, error: string) => {
     if (!/abort|cancel/i.test(error)) recordTargetAttempt(target, "failed", error);
@@ -419,10 +438,14 @@ export function fallbackAwareModelStream(
   const resolveNext = async (
     current: RuntimeModelTarget,
   ): Promise<RuntimeModelTarget | undefined> => {
-    const choices = state.request.fallbackModels ?? [];
+    // The chain walks the whole main pool first, then the backup pool.
+    const mainPool = state.request.mainPoolModels ?? [];
+    const choices = [...mainPool, ...(state.request.fallbackModels ?? [])];
     while (state.nextIndex < choices.length && !signalAborted()) {
-      const choice = choices[state.nextIndex++];
+      const index = state.nextIndex++;
+      const choice = choices[index];
       if (!choice) continue;
+      const pool: ModelSwitchAttempt["pool"] = index < mainPool.length ? "main" : "backup";
       const key = modelTargetKey(choice);
       if (state.attempted.has(key)) continue;
       state.attempted.add(key);
@@ -436,7 +459,7 @@ export function fallbackAwareModelStream(
         });
         // The connection label is unknown for a model that never resolved,
         // so the timeline names the model alone.
-        recordSwitchAttempt(choice.id, undefined, "skipped", reason);
+        recordSwitchAttempt(choice.id, undefined, "skipped", reason, pool);
       };
       try {
         const config = state.request.resolveFallbackModel
@@ -572,7 +595,7 @@ export function fallbackAwareModelStream(
           sentTarget,
           requestContext(),
           // With backups the switch replaces the SDK's retry, so a hung model is not waited on twice.
-          state.request.fallbackModels?.length
+          state.request.fallbackModels?.length || state.request.mainPoolModels?.length
             ? { ...attemptOptions, apiKey, reasoning, maxRetries: 0 }
             : thinkingOverride
               ? { ...attemptOptions, reasoning }
@@ -730,6 +753,13 @@ export function fallbackAwareModelStream(
                   event.error.errorMessage === MODEL_STREAM_IDLE_TIMEOUT_MESSAGE,
                 );
                 if (failIfAborted(target)) return;
+                // A new model earns a new retry window: the budget is per
+                // attempt, so a slow primary must not starve the backup's
+                // retries, and the failed model's sizing failure must not
+                // decide the next model's fate.
+                startedAt = Date.now();
+                recoveredIdle = false;
+                sizingFailure = undefined;
                 // A raised budget or lower thinking level fitted the failed model, not this one.
                 outputBudget = undefined;
                 thinkingOverride = undefined;
@@ -801,6 +831,13 @@ export function fallbackAwareModelStream(
                 });
                 await switchToBackup(target, next, true);
                 if (failIfAborted(target)) return;
+                // A new model earns a new retry window: the budget is per
+                // attempt, so a slow primary must not starve the backup's
+                // retries, and the failed model's sizing failure must not
+                // decide the next model's fate.
+                startedAt = Date.now();
+                recoveredIdle = false;
+                sizingFailure = undefined;
                 // A raised budget or lower thinking level fitted the failed model, not this one.
                 outputBudget = undefined;
                 thinkingOverride = undefined;

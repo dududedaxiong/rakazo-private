@@ -696,7 +696,7 @@ msgstr "このペルソナの名前"
 msgid "A parent directory is missing on the server."
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "A preset with this name already exists"
 msgstr ""
 
@@ -885,9 +885,17 @@ msgstr "ヘッダーを追加"
 msgid "Add item"
 msgstr "項目を追加"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Add main pool model"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Add MCP server"
 msgstr "MCPサーバーを追加"
+
+#: src/pages/ModelRoleSettings.tsx
+msgid "Add model"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Add open work"
@@ -1007,6 +1015,10 @@ msgstr "すべてのボット"
 #: src/pages/Artifacts.tsx
 msgid "All files"
 msgstr "すべてのファイル"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "All models failed"
+msgstr ""
 
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
@@ -1477,6 +1489,10 @@ msgstr ""
 msgid "Backup passwords need an HTTPS connection"
 msgstr ""
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Backup pool"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "ベースURL"
@@ -1709,11 +1725,11 @@ msgstr "画像を読み取れません"
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
-#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
 msgstr "キャンセル"
@@ -3145,6 +3161,10 @@ msgstr "モデルを保存できませんでした"
 msgid "Could not save models"
 msgstr ""
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not save prompt preset"
+msgstr ""
+
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not save routine"
 msgstr "ルーティンを保存できませんでした"
@@ -3671,6 +3691,7 @@ msgstr "デフォルトのテンプレートを復元しました"
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
 msgstr "削除"
@@ -3725,7 +3746,7 @@ msgstr "組織を削除"
 msgid "Delete permanently"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Delete preset"
 msgstr ""
 
@@ -4031,7 +4052,7 @@ msgstr "先に編集"
 msgid "Edit name"
 msgstr "名前を編集"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Edit preset"
 msgstr ""
 
@@ -4140,11 +4161,11 @@ msgstr "パスワードを入力してください"
 msgid "Enter a port between 1 and 65535"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Enter a preset name"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Enter a prompt"
 msgstr ""
 
@@ -4411,8 +4432,8 @@ msgstr "失敗しました。"
 msgid "Failure handling"
 msgstr "失敗時の対応"
 
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Fallback models"
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Fallback models ({count})"
 msgstr ""
 
 #: src/pages/shell/media-result.tsx
@@ -5511,6 +5532,14 @@ msgstr "メインモデル"
 msgid "Main persona"
 msgstr ""
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Main pool"
+msgstr ""
+
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Main pool ({count})"
+msgstr ""
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Make share card"
 msgstr ""
@@ -5859,6 +5888,7 @@ msgstr "月間クレジットは更新時に失効します。追加購入分は
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-hover-actions.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "More"
 msgstr "その他"
 
@@ -6074,7 +6104,7 @@ msgstr "新しい未完了の作業"
 msgid "New password"
 msgstr "新しいパスワード"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "New preset"
 msgstr ""
 
@@ -6940,11 +6970,11 @@ msgstr "PRレビュアー"
 msgid "Preferences"
 msgstr "環境設定"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Preset name"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Preset prompt"
 msgstr ""
 
@@ -7018,10 +7048,6 @@ msgstr "プログラム: {name}"
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "Prompt"
 msgstr "プロンプト"
-
-#: src/pages/shell/media-result.tsx
-msgid "Prompt preset"
-msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Prompt templates"
@@ -7882,9 +7908,9 @@ msgstr "土曜日"
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/media-result.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Save"
 msgstr "保存"
 
@@ -8347,6 +8373,10 @@ msgstr "すべて表示"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "ボットを表示"
+
+#: src/pages/shell/prompt-preset-tags.tsx
+msgid "Show less"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -8816,7 +8846,6 @@ msgstr "思考に対応"
 msgid "Switch"
 msgstr "切り替え"
 
-#: src/pages/shell/media-result.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Switch history"
 msgstr ""

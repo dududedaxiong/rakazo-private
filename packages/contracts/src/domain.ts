@@ -224,14 +224,34 @@ export const BotSchema = z.object({
   thinkingLevel: ThinkingLevelSchema.nullable(),
   /** The model used for translation; the first entry is the primary, the rest are fallbacks. */
   translationModels: z.array(BotModelEntrySchema).nullable(),
+  /** The translation main pool; the first entry is the primary. Null when no translation model is set. */
+  translationMainModels: z.array(BotModelEntrySchema).nullable(),
+  /** The translation backup pool; tried only after the main pool is exhausted. Null when empty. */
+  translationBackupModels: z.array(BotModelEntrySchema).nullable(),
   /** The models used to generate videos; the first entry is the primary, the rest are fallbacks. */
   videoModels: z.array(BotModelEntrySchema).nullable(),
+  /** The video generation main pool; the first entry is the primary. Null when no video model is set. */
+  videoMainModels: z.array(BotModelEntrySchema).nullable(),
+  /** The video generation backup pool; tried only after the main pool is exhausted. Null when empty. */
+  videoBackupModels: z.array(BotModelEntrySchema).nullable(),
   /** The models used to generate images; the first entry is the primary, the rest are fallbacks. */
   imageModels: z.array(BotModelEntrySchema).nullable(),
+  /** The image generation main pool; the first entry is the primary. Null when no image model is set. */
+  imageMainModels: z.array(BotModelEntrySchema).nullable(),
+  /** The image generation backup pool; tried only after the main pool is exhausted. Null when empty. */
+  imageBackupModels: z.array(BotModelEntrySchema).nullable(),
   /** The models used to edit images; the first entry is the primary, the rest are fallbacks. */
   imageEditModels: z.array(BotModelEntrySchema).nullable(),
+  /** The image edit main pool; the first entry is the primary. Null when no image edit model is set. */
+  imageEditMainModels: z.array(BotModelEntrySchema).nullable(),
+  /** The image edit backup pool; tried only after the main pool is exhausted. Null when empty. */
+  imageEditBackupModels: z.array(BotModelEntrySchema).nullable(),
   /** The models used to edit videos; the first entry is the primary, the rest are fallbacks. */
   videoEditModels: z.array(BotModelEntrySchema).nullable(),
+  /** The video edit main pool; the first entry is the primary. Null when no video edit model is set. */
+  videoEditMainModels: z.array(BotModelEntrySchema).nullable(),
+  /** The video edit backup pool; tried only after the main pool is exhausted. Null when empty. */
+  videoEditBackupModels: z.array(BotModelEntrySchema).nullable(),
   /** Named prompt presets for video generation. */
   videoPromptPresets: z.array(BotPromptPresetSchema).nullable(),
   /** The name of the active video prompt preset; null means no preset. */
@@ -674,14 +694,34 @@ export const UpdateBotInput = z
     translationModelId: z.string().trim().min(1).max(200).nullable().optional(),
     /** Ordered translation models; first is primary, rest are fallbacks. */
     translationModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Translation main pool; first is primary. New clients send this plus `translationBackupModels`. */
+    translationMainModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Translation backup pool; tried only after the main pool is exhausted. */
+    translationBackupModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
     /** Ordered video generation models; first is primary, rest are fallbacks. */
     videoModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Video generation main pool; first is primary. New clients send this plus `videoBackupModels`. */
+    videoMainModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Video generation backup pool; tried only after the main pool is exhausted. */
+    videoBackupModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
     /** Ordered image generation models; first is primary, rest are fallbacks. */
     imageModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Image generation main pool; first is primary. New clients send this plus `imageBackupModels`. */
+    imageMainModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Image generation backup pool; tried only after the main pool is exhausted. */
+    imageBackupModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
     /** Ordered image edit models; first is primary, rest are fallbacks. */
     imageEditModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Image edit main pool; first is primary. New clients send this plus `imageEditBackupModels`. */
+    imageEditMainModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Image edit backup pool; tried only after the main pool is exhausted. */
+    imageEditBackupModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
     /** Ordered video edit models; first is primary, rest are fallbacks. */
     videoEditModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Video edit main pool; first is primary. New clients send this plus `videoEditBackupModels`. */
+    videoEditMainModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
+    /** Video edit backup pool; tried only after the main pool is exhausted. */
+    videoEditBackupModels: z.array(BotModelEntrySchema).max(BOT_MODEL_LIST_MAX).nullable().optional(),
     /** Named prompt presets for video generation. */
     videoPromptPresets: z
       .array(BotPromptPresetSchema)

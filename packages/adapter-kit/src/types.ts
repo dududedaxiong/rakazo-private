@@ -611,6 +611,32 @@ export interface AgentRunRequest {
   /** Ordered, user-selected models eligible after provider unavailability. */
   fallbackModels?: Array<Pick<AgentRunModel, "provider" | "id" | "connectionId">>;
   /**
+   * The main pool's models after the running one, in try order. The chain
+   * walks these before `fallbackModels` (the backup pool); the running model
+   * itself is the main pool's first entry.
+   */
+  mainPoolModels?: Array<Pick<AgentRunModel, "provider" | "id" | "connectionId">>;
+  /**
+   * The computer-mode detour's own switch timeline, separate from the chat's
+   * `modelSwitchAttempts`: the runtime appends each computer failure, skip
+   * and success here; the caller persists it with the reply only when a
+   * computer switch really happened.
+   */
+  computerModelSwitchAttempts?: ModelSwitchAttempt[];
+  /** The computer-mode detour's backup pool, in try order. */
+  computerModelBackups?: Array<Pick<AgentRunModel, "provider" | "id" | "connectionId">>;
+  /**
+   * The computer-mode detour's main-pool models after the running one, in try
+   * order; walked before `computerModelBackups`.
+   */
+  computerMainPoolModels?: Array<Pick<AgentRunModel, "provider" | "id" | "connectionId">>;
+  /** Resolve one configured computer backup lazily so healthy runs do no extra auth work. */
+  resolveComputerModel?: (
+    provider: string,
+    modelId: string,
+    connectionId?: string,
+  ) => Promise<AgentRunModel>;
+  /**
    * Collects one entry per model tried, in order, for the switch timeline
    * (see `buildModelSwitches` in `@rakazo_mickvvw/core`): the runtime appends each
    * failure, skip and success here; the caller persists it with the reply

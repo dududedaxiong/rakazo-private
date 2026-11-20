@@ -893,8 +893,10 @@ export async function completeRun(ctx: RunContext) {
       : null;
   await ctx.settleRunningHelpers();
   // Only a reply that really switched models carries a timeline; a
-  // first-model answer, or a retry of the same model, carries none.
+  // first-model answer, or a retry of the same model, carries none. The
+  // computer detour's timeline rides the same reply, in its own field.
   const modelSwitches = buildModelSwitches(ctx.state.modelSwitchAttempts);
+  const computerModelSwitches = buildModelSwitches(ctx.state.computerModelSwitchAttempts);
   const completed = await deps.events.finalizeRun({
     spaceId: run.spaceId,
     threadId: thread.id,
@@ -907,6 +909,7 @@ export async function completeRun(ctx: RunContext) {
     outcome: "completed",
     blocks,
     ...(modelSwitches ? { modelSwitches } : {}),
+    ...(computerModelSwitches ? { computerModelSwitches } : {}),
     markUnread:
       !groupSilentEnd &&
       completionMarksUnread(run.trigger, text, ctx.source.peerMessage?.repliesToRequest === true),
@@ -1032,6 +1035,11 @@ export async function failRun(
       ? [{ kind: "text" as const, text: partialText }]
       : [];
   await ctx.settleRunningHelpers();
+  // A run where no model answered still carries the timelines: the attempts
+  // are the record of what was tried and why each failed. They ride the
+  // partial-reply message when one exists, else the run.failed event.
+  const modelSwitches = buildModelSwitches(ctx.state.modelSwitchAttempts);
+  const computerModelSwitches = buildModelSwitches(ctx.state.computerModelSwitchAttempts);
   const failed = await deps.events.finalizeRun({
     spaceId: run.spaceId,
     threadId: thread.id,
@@ -1044,6 +1052,8 @@ export async function failRun(
     outcome: "failed",
     error: message,
     ...(partialReply.length > 0 ? { partialReply } : {}),
+    ...(modelSwitches ? { modelSwitches } : {}),
+    ...(computerModelSwitches ? { computerModelSwitches } : {}),
   });
   if (!failed) return;
   if (

@@ -596,6 +596,102 @@ describe("BotMediaGenerationProvider", () => {
     expect(media.modelSwitches).toBeUndefined();
   });
 
+  it("resubmits a failed video task to the next model, continuing the timeline", async () => {
+    const asyncRequired = vi.fn(async () => {
+      throw new MediaGenerationError("async_required");
+    });
+    const submitA = vi.fn(async () => "task-a");
+    const submitB = vi.fn(async () => "task-b");
+    const pollA = vi.fn(async () => ({ status: "failed" as const }));
+    const provider = new BotMediaGenerationProvider(
+      noCalls,
+      {
+        calls: [
+          {
+            modelId: "video-a",
+            pool: "main",
+            providerLabel: "主站",
+            call: asyncRequired,
+            submitVideo: submitA,
+            pollVideo: pollA,
+          },
+          {
+            modelId: "video-b",
+            pool: "backup",
+            providerLabel: "GB中转",
+            call: asyncRequired,
+            submitVideo: submitB,
+          },
+        ],
+        failures: [],
+      },
+      undefined,
+    );
+    const queued = await provider.generateVideo({ prompt: "move" }, context);
+    if (queued.status !== "queued") throw new Error("expected a queued video job");
+    expect(queued.modelSwitches).toBeUndefined();
+    expect(await provider.pollVideo(queued.id, context)).toMatchObject({ status: "failed" });
+    const resubmitted = await provider.resubmitVideoAfter(
+      queued.id,
+      { prompt: "move" },
+      context,
+      queued.modelSwitches?.attempts ?? [],
+    );
+    if (resubmitted?.status !== "queued")
+      throw new Error("expected a resubmitted queued video job");
+    expect(resubmitted.modelSwitches).toMatchObject({
+      finalModel: "video-b",
+      attempts: [
+        { model: "video-a", provider: "主站", outcome: "failed", pool: "main" },
+        { model: "video-b", provider: "GB中转", outcome: "succeeded", pool: "backup" },
+      ],
+    });
+    expect(submitA).toHaveBeenCalledTimes(1);
+    expect(submitB).toHaveBeenCalledTimes(1);
+  });
+
+  it("settles a failed video job with the full timeline when the chain is exhausted", async () => {
+    const asyncRequired = vi.fn(async () => {
+      throw new MediaGenerationError("async_required");
+    });
+    const submitA = vi.fn(async () => "task-a");
+    const pollA = vi.fn(async () => ({ status: "failed" as const }));
+    const provider = new BotMediaGenerationProvider(
+      noCalls,
+      {
+        calls: [
+          {
+            modelId: "video-a",
+            pool: "main",
+            providerLabel: "主站",
+            call: asyncRequired,
+            submitVideo: submitA,
+            pollVideo: pollA,
+          },
+        ],
+        failures: [],
+      },
+      undefined,
+    );
+    const queued = await provider.generateVideo({ prompt: "move" }, context);
+    if (queued.status !== "queued") throw new Error("expected a queued video job");
+    const resubmitted = await provider.resubmitVideoAfter(
+      queued.id,
+      { prompt: "move" },
+      context,
+      [],
+    );
+    expect(resubmitted).toMatchObject({
+      id: queued.id,
+      status: "failed",
+      modelSwitches: {
+        finalModel: "video-a",
+        attempts: [{ model: "video-a", provider: "主站", outcome: "failed", pool: "main" }],
+      },
+    });
+    expect(submitA).toHaveBeenCalledTimes(1);
+  });
+
   it("notifies each failed model and keeps trying until one succeeds", async () => {
     const primary = vi.fn(async () => {
       throw new MediaGenerationError("authentication");

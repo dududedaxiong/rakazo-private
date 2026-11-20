@@ -43,6 +43,13 @@ export function ModelSwitchHistoryDialog({
 }) {
   const { t } = useLingui();
   const [expandedError, setExpandedError] = useState<number | null>(null);
+  /** The pool a try belonged to; old records carry no pool and show none. */
+  const poolTag = (attempt: ModelSwitchAttempt) =>
+    attempt.pool ? (
+      <span className="rounded-full bg-accent px-2 py-0.5 text-body-sm text-muted-foreground">
+        {attempt.pool === "main" ? <Trans>Main pool</Trans> : <Trans>Backup pool</Trans>}
+      </span>
+    ) : null;
   /** The short failure label for a timeline row; the detail holds the full text. */
   const switchErrorLabel = (errorCode: string | undefined): string => {
     switch (errorCode) {
@@ -111,6 +118,7 @@ export function ModelSwitchHistoryDialog({
                     <span>
                       <Trans>Finished, current model</Trans> {modelName(attempt, true)}
                       {provider}
+                      {poolTag(attempt)}
                     </span>
                   </div>
                 ) : (
@@ -128,6 +136,7 @@ export function ModelSwitchHistoryDialog({
                       </span>
                       {modelName(attempt)}
                       {provider}
+                      {poolTag(attempt)}
                       {attempt.outcome === "skipped" ? (
                         <span className="text-muted-foreground">
                           <Trans>Skipped</Trans>
@@ -163,11 +172,19 @@ export function ModelSwitchHistoryDialog({
           })}
           {attempts.every((attempt) => attempt.outcome !== "succeeded") ? (
             <li>
-              <div className="flex items-baseline gap-2 py-1 text-body text-success">
-                <span aria-hidden="true">✓</span>
+              <div className="flex items-baseline gap-2 py-1 text-body text-destructive">
+                <span aria-hidden="true">●</span>
                 <span>
-                  <Trans>Finished, current model</Trans>{" "}
-                  <span className="font-semibold">{displayName(finalModel, t`Model`)}</span>
+                  <Trans>All models failed</Trans>{" "}
+                  {modelName(
+                    {
+                      model: finalModel,
+                      provider: finalModelProvider(attempts, finalModel),
+                      outcome: "failed",
+                      at: attempts.at(-1)?.at ?? "",
+                    },
+                    false,
+                  )}
                 </span>
               </div>
             </li>

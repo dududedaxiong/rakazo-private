@@ -218,17 +218,55 @@ describe("MediaResult switch history", () => {
     finalModel: "model-b",
   };
 
-  it("shows no history button without a switch, and opens the timeline with one", async () => {
+  it("shows the model picker without a switch, and the history entry with one", async () => {
     renderResult();
     expect(buttonByText("Switch history")).toBeUndefined();
+    expect(document.querySelector('[data-testid="model-switch-history-entry"]')).toBeNull();
     renderResult({ modelSwitches: switches });
-    expect(buttonByText("Switch history")).not.toBeUndefined();
+    expect(buttonByText("Switch history")).toBeUndefined();
+    const entry = document.querySelector('[data-testid="model-switch-history-entry"]');
+    expect(entry?.textContent).toContain("Current model: model-b");
     await act(async () => {
-      buttonByText("Switch history")?.click();
+      (entry as HTMLButtonElement | null)?.click();
     });
     const dialog = document.querySelector('[data-testid="model-switch-history"]');
     expect(dialog?.textContent).toContain("Switch history");
     expect(dialog?.textContent).toContain("429 rate limit");
+  });
+
+  it("always opens the edit dialog for an image, prefilled with the saved prompt", async () => {
+    const { media } = renderResult();
+    media.getSupplementaryPrompt.mockResolvedValueOnce({ supplementaryPrompt: "bluer sky" });
+    await act(async () => {
+      buttonByText("Edit details")?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const dialog = document.querySelector('[data-testid="media-edit-dialog"]');
+    expect(dialog).not.toBeNull();
+    const input = dialog?.querySelector<HTMLInputElement>("#media-edit-prompt");
+    expect(input?.value).toBe("bluer sky");
+    await act(async () => {
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(
+        input!,
+        "greener grass",
+      );
+      input!.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const start = [...document.querySelectorAll("button")].find(
+      (button) => button.textContent === "Start edit",
+    );
+    await act(async () => {
+      start?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(media.setSupplementaryPrompt).toHaveBeenCalledWith({
+      artifactId: "art-1",
+      supplementaryPrompt: "greener grass",
+    });
+    expect(media.regenerate).toHaveBeenCalledExactlyOnceWith({
+      artifactId: "art-1",
+      mode: "edit",
+    });
   });
 });
 

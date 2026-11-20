@@ -212,6 +212,13 @@ function SpaceShell() {
     modelLocateRequest,
     setModelLocateRequest,
   } = rightPanel;
+  /** A computer timeline's model: it lives in the member's model settings,
+   * not a bot's list, so it opens the Models page instead of a bot panel. */
+  const [computerLocateRequest, setComputerLocateRequest] = useState<{
+    model: string;
+    provider?: string;
+    requestId: number;
+  } | null>(null);
   const lastBotTab = useRef<Panel>("routines");
   if (
     panel === "routines" ||
@@ -998,9 +1005,19 @@ function SpaceShell() {
 
   // A model named in a switch timeline: open that bot's settings and scroll
   // its model list to the row. The request is set after the panel opens so
-  // the panel switch does not clear it.
+  // the panel switch does not clear it. A computer model is a member-level
+  // role, so it opens the Models page at the computer-use list instead.
   const locateBotModel = useCallback(
     (target: ModelLocateTarget) => {
+      if (target.kind === "computer") {
+        setComputerLocateRequest({
+          model: target.model,
+          provider: target.provider,
+          requestId: Date.now(),
+        });
+        openSettings("models");
+        return;
+      }
       if (target.botId === active?.id && !inGroup) setPanel("settings");
       else openChatSettings("bot", target.botId);
       setModelLocateRequest({ ...target, requestId: Date.now() });
@@ -1716,6 +1733,7 @@ function SpaceShell() {
           peerConversation={peerConversation}
           setPeerConversation={setPeerConversation}
           active={active}
+          locateComputerModel={computerLocateRequest}
           onBotUpdated={(updated) =>
             setBots((current) =>
               current.map((entry) => (entry.id === updated.id ? updated : entry)),

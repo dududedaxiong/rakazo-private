@@ -80,7 +80,8 @@ import {
   computerCheckpointResolver,
   isLostPinnedModel,
   PINNED_COMPUTER_MODEL_LOST_RUN_ERROR,
-  resolveComputerRunModel,
+  resolveComputerRunModels,
+  type ComputerRunModel,
 } from "./computer-model-settings.js";
 import { teamWorkspaceInstruction } from "./computer-support.js";
 import { checkpointRunComputerWorkspace } from "./computer-workspace.js";
@@ -1187,29 +1188,31 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           thinkingLevel: thinkingLevel ?? resolved.thinkingLevel ?? null,
         };
         // Saved identities win on resume, including when the setting was cleared meanwhile.
-        const computerModel =
-          pinnedComputerModels?.computer ??
-          // A paused turn resumes with the models it started with, even one saved before this setting.
-          (scripted || storedTurnCheckpoint || !graphical
-            ? undefined
-            : await resolveComputerRunModel(
-                {
-                  prisma: deps.prisma,
-                  resolve: resolveCheckpointModel,
-                  connectionFor: async (provider, modelId) =>
-                    (
-                      await findConnectedModelCredential(
-                        deps.prisma,
-                        deps.secretStore,
-                        run,
-                        provider,
-                        modelId,
-                      )
-                    )?.id,
-                },
-                { userId: run.userId, spaceId: run.spaceId },
-                mainRunModel,
-              ));
+        // A pinned run keeps only its pinned computer model: no switching on resume.
+        const computerRunModels: ComputerRunModel[] = pinnedComputerModels?.computer
+          ? [{ ...pinnedComputerModels.computer, pool: "main" }]
+          : // A paused turn resumes with the models it started with, even one saved before this setting.
+            (scripted || storedTurnCheckpoint || !graphical
+              ? []
+              : await resolveComputerRunModels(
+                  {
+                    prisma: deps.prisma,
+                    resolve: resolveCheckpointModel,
+                    connectionFor: async (provider, modelId) =>
+                      (
+                        await findConnectedModelCredential(
+                          deps.prisma,
+                          deps.secretStore,
+                          run,
+                          provider,
+                          modelId,
+                        )
+                      )?.id,
+                  },
+                  { userId: run.userId, spaceId: run.spaceId },
+                  mainRunModel,
+                ));
+        const computerModel = computerRunModels[0];
         const sourceMessage =
           (run.trigger === "user" || run.trigger === "follow_up") && run.sourceMessageId
             ? await deps.prisma.message.findUnique({
@@ -1438,6 +1441,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           handedOff: false,
           terminalCheckpointComplete: false,
           modelSwitchAttempts: [],
+          computerModelSwitchAttempts: [],
         };
         const { effects } = state;
         /** Fleet tools take every scope from the run, never from arguments. */
@@ -1729,16 +1733,56 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               (candidate.credentialId !== undefined &&
                 candidate.credentialId !== mainRunModel.connectionId)),
         );
+        // The main pool's models after the running one, in try order: the
+        // chain walks these before the backup pool.
+        const mainRole = await backups.role();
+        const mainPoolModels = mainRole.mainPool.filter(
+          (candidate) =>
+            !backups.unavailable.has(candidate) &&
+            (candidate.provider !== runModelProvider ||
+              candidate.modelId !== runModelId ||
+              (candidate.credentialId !== undefined &&
+                candidate.credentialId !== mainRunModel.connectionId)),
+        );
         const fallbackKey = (provider: string, modelId: string, credentialId?: string | null) =>
           JSON.stringify([provider, modelId, credentialId ?? null]);
-        const fallbackModelKeys = new Set(
-          fallbackModels.map((candidate) =>
+        const fallbackModelKeys = new Set([
+          ...mainPoolModels.map((candidate) =>
             fallbackKey(candidate.provider, candidate.modelId, candidate.credentialId),
           ),
-        );
-        const fallbackModelIds = new Set(
-          fallbackModels.map((candidate) => fallbackKey(candidate.provider, candidate.modelId)),
-        );
+          ...fallbackModels.map((candidate) =>
+            fallbackKey(candidate.provider, candidate.modelId, candidate.credentialId),
+          ),
+        ]);
+        const fallbackModelIds = new Set([
+          ...mainPoolModels.map((candidate) =>
+            fallbackKey(candidate.provider, candidate.modelId),
+          ),
+          ...fallbackModels.map((candidate) =>
+            fallbackKey(candidate.provider, candidate.modelId),
+          ),
+        ]);
+        // The computer detour's own pools, minus the computer model already
+        // running; the runtime walks the main pool first, then the backups.
+        const computerModelKey = (model: ComputerRunModel) =>
+          JSON.stringify([model.provider, model.id, model.connectionId ?? null]);
+        const computerRunningKey = computerModel
+          ? computerModelKey(computerModel)
+          : undefined;
+        const computerPoolTriples = (pool: "main" | "backup") =>
+          computerRunModels
+            .filter((model) => model.pool === pool && computerModelKey(model) !== computerRunningKey)
+            .map((model) => ({
+              provider: model.provider,
+              id: model.id,
+              ...(model.connectionId ? { connectionId: model.connectionId } : {}),
+            }));
+        const computerMainPoolModels = computerPoolTriples("main");
+        const computerModelBackups = computerPoolTriples("backup");
+        const computerModelIds = new Set([
+          ...computerMainPoolModels.map((model) => fallbackKey(model.provider, model.id)),
+          ...computerModelBackups.map((model) => fallbackKey(model.provider, model.id)),
+        ]);
         // Provider kind and model id only: custom endpoints are identified by kind, never host.
         const activeModel = { "model.provider": runModelProvider, "model.id": runModelId };
         // Shutdown must not finalize the attempt. The finally block queues the run
@@ -1892,6 +1936,26 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               // The same array completeRun reads for the reply's switch timeline.
               modelSwitchAttempts: state.modelSwitchAttempts,
               computerModel,
+              // The same array completeRun reads for the computer switch timeline.
+              computerModelSwitchAttempts: state.computerModelSwitchAttempts,
+              computerMainPoolModels,
+              computerModelBackups,
+              resolveComputerModel: computerRunModels.length
+                ? async (provider, modelId, connectionId) => {
+                    const key = fallbackKey(provider, modelId, connectionId);
+                    const found = computerRunModels.find(
+                      (model) =>
+                        fallbackKey(model.provider, model.id, model.connectionId) === key,
+                    );
+                    if (!found) throw new Error("Computer backup model is not selected");
+                    return found;
+                  }
+                : undefined,
+              mainPoolModels: mainPoolModels.map(({ provider, modelId, credentialId }) => ({
+                provider,
+                id: modelId,
+                ...(credentialId ? { connectionId: credentialId } : {}),
+              })),
               fallbackModels: fallbackModels.map(({ provider, modelId, credentialId }) => ({
                 provider,
                 id: modelId,
@@ -1928,7 +1992,11 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   [mainRunModel, computerModel].some(
                     (model) => model?.provider === provider && model.id === modelId,
                   ) || checkpointModelResolver?.hasModel(provider, modelId);
-                if (!roleModel && !fallbackModelIds.has(fallbackKey(provider, modelId))) {
+                if (
+                  !roleModel &&
+                  !fallbackModelIds.has(fallbackKey(provider, modelId)) &&
+                  !(computerMode && computerModelIds.has(fallbackKey(provider, modelId)))
+                ) {
                   throw new Error("Model is not selected");
                 }
                 // The run's model is what retries and pins rerun; computer mode is a detour from it.

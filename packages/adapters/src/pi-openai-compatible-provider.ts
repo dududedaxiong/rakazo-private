@@ -1669,12 +1669,30 @@ function asyncVideoProbeDetail(error: MediaGenerationError): string {
  * not a result. Remote URLs are downloaded through the SSRF-safe fetch and
  * capped at the attachment limit.
  */
+/**
+ * Model families that only generate from text and take no image input. They
+ * are named here, in the adapter, so an edit call never reaches them: sent
+ * an image anyway, such a model would silently return a fresh image instead
+ * of editing the one given. Matched by model id so it holds behind relays
+ * that hide the upstream host.
+ */
+const TEXT_TO_IMAGE_ONLY_MODEL_PATTERN = /^(cogview-|glm-image(-|$))/i;
+function isTextToImageOnlyModel(modelId: string): boolean {
+  return TEXT_TO_IMAGE_ONLY_MODEL_PATTERN.test(modelId.trim());
+}
+
 export async function generateMediaWithChatModel(
   input: ChatMediaModelInput,
   fetchImpl?: typeof fetch,
   signal?: AbortSignal,
   opts?: OpenAiCompatibleUrlPolicy,
 ): Promise<GeneratedMedia> {
+  // An edit sends the original image as input; a text-to-image-only model
+  // cannot take it, so fail fast here instead of silently re-randomizing.
+  // The chain records it as a failed attempt and tries the next edit model.
+  if (input.references?.length && isTextToImageOnlyModel(input.model)) {
+    throw new MediaGenerationError("unsupported");
+  }
   const mimeType = input.kind === "image" ? "image/png" : "video/mp4";
   try {
     const { status, parsed, bodyText } = await requestChatMedia(input, fetchImpl, signal, opts);

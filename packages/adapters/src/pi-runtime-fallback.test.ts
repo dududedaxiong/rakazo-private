@@ -186,7 +186,10 @@ function countContextImages(context: { messages?: unknown[] }): number {
   return count;
 }
 
-function request(fallbackModels: AgentRunRequest["model"][] = []): AgentRunRequest {
+function request(
+  fallbackModels: AgentRunRequest["model"][] = [],
+  mainPoolModels: AgentRunRequest["model"][] = [],
+): AgentRunRequest {
   return {
     botId: "bot",
     threadId: "thread",
@@ -207,6 +210,7 @@ function request(fallbackModels: AgentRunRequest["model"][] = []): AgentRunReque
       },
     ],
     model: { provider: primary.provider, id: primary.id, apiKey: "fake-primary-key" },
+    mainPoolModels,
     fallbackModels,
     executeTool: vi.fn(async () => ({ ok: true })),
   } as unknown as AgentRunRequest;
@@ -2595,6 +2599,62 @@ describe("Pi runtime ordered model fallback", () => {
     expect(requestKeys.at(-1)).toBe("fake-work-key");
     expect(JSON.stringify(events)).toContain("from work");
   });
+
+  it("renews the retry budget when switching to a backup", async () => {
+    vi.useFakeTimers();
+    let backupAttempts = 0;
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) => {
+      if (target.provider === primary.provider) {
+        // The primary stalls after burning most of the shared 120s budget.
+        vi.setSystemTime(Date.now() + 100_000);
+        return stream(target, message(target, [], "error", MODEL_STREAM_IDLE_TIMEOUT_MESSAGE));
+      }
+      backupAttempts += 1;
+      if (backupAttempts === 1) {
+        // The backup fails transiently after burning 60s of its own window.
+        vi.setSystemTime(Date.now() + 60_000);
+        return stream(target, message(target, [], "error", "HTTP 503 unavailable"));
+      }
+      return stream(target, message(target, [{ type: "text", text: "backup answer" }], "stop"));
+    });
+    const events = await run(
+      request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]),
+    );
+    expect(events.at(-1)).toEqual({ type: "done", text: "backup answer" });
+    expect(providerState.stream).toHaveBeenCalledTimes(3);
+    expect(providerState.delay).toHaveBeenCalledTimes(1);
+  });
+
+  it("walks the main pool before the backup pool and tags each attempt", async () => {
+    const input = request(
+      [{ provider: backupB.provider, id: backupB.id }],
+      [{ provider: backupA.provider, id: backupA.id }],
+    );
+    input.modelSwitchAttempts = [];
+    input.resolveFallbackModel = async (provider: string, id: string) => ({
+      provider,
+      id,
+      apiKey: "key",
+    });
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) => {
+      if (target.provider === backupB.provider) {
+        return stream(target, message(target, [{ type: "text", text: "backup answer" }], "stop"));
+      }
+      return stream(target, message(target, [], "error", "503 Service unavailable"));
+    });
+    const events = await run(input);
+    expect(events.at(-1)).toEqual({ type: "done", text: "backup answer" });
+    expect(providerState.stream.mock.calls.map(([target]) => target.provider)).toEqual([
+      primary.provider,
+      backupA.provider,
+      backupB.provider,
+    ]);
+    expect(input.modelSwitchAttempts).toMatchObject([
+      { model: primary.id, outcome: "failed", pool: "main" },
+      { model: backupA.id, outcome: "failed", pool: "main" },
+      { model: backupB.id, outcome: "succeeded", pool: "backup" },
+    ]);
+  });
 });
 
 describe("Pi runtime thinking blocks bound to a different conversation", () => {
@@ -3094,6 +3154,38 @@ describe("Pi runtime account request ceilings", () => {
       expect(input.model).not.toHaveProperty("contextWindow");
     },
   );
+
+  it("drops a stale sizing failure when switching to a backup", async () => {
+    vi.useFakeTimers();
+    const input = {
+      ...request([{ provider: backupA.provider, id: backupA.id, apiKey: "fixture-key" }]),
+      model: compatibleModel(),
+      history: [{ role: "user" as const, content: "Synthetic older context. ".repeat(200) }],
+    };
+    let primaryAttempts = 0;
+    providerState.stream.mockImplementation((target) => {
+      if (target.provider !== "openai-compatible") {
+        return stream(target, message(target, [{ type: "text", text: "Ready" }], "stop"));
+      }
+      primaryAttempts += 1;
+      if (primaryAttempts === 1) {
+        // The server reports a smaller window: the run rebuilds once and the
+        // sizing failure is kept for the retry budget.
+        return stream(target, message(target, [], "error", llamaCppOverflow(6000)));
+      }
+      // The rebuilt call fails retryably after the shared budget is spent; the
+      // switch must not resurrect the stale sizing failure as terminal.
+      vi.setSystemTime(Date.now() + MODEL_STREAM_TIMEOUT_MS + 10_000);
+      return stream(target, message(target, [], "error", "503 service unavailable"));
+    });
+    const events = await run(input);
+    expect(events).toContainEqual(expect.objectContaining({ type: "done", text: "Ready" }));
+    expect(providerState.stream.mock.calls.map(([target]) => target.provider)).toEqual([
+      "openai-compatible",
+      "openai-compatible",
+      backupA.provider,
+    ]);
+  });
 });
 
 describe("Pi runtime fallback error classes and mid-run switches", () => {

@@ -511,6 +511,46 @@ describe("message translation", () => {
     expect(dialog?.textContent).not.toContain("Switch to");
   });
 
+  it("shows the switch timeline when a translation fails after trying models", async () => {
+    const error = Object.assign(new Error("All translation models failed"), {
+      data: {
+        attempts: [
+          {
+            model: "deepseek-v4.1-flash",
+            provider: "deepseek",
+            outcome: "failed",
+            errorCode: "rate_limit",
+            errorMessage: "slow down",
+            at: "2026-11-15T10:00:00.000Z",
+          },
+          {
+            model: "other-model",
+            provider: "other",
+            outcome: "failed",
+            errorCode: "timeout",
+            at: "2026-11-15T10:00:01.000Z",
+          },
+        ],
+      },
+    });
+    const { translate } = renderTranslated();
+    translate.mockRejectedValueOnce(error);
+    await act(async () => {
+      translateButton()?.click();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const panel = translationPanel();
+    const entry = panel?.querySelector('[data-testid="model-switch-history-entry"]');
+    expect(entry?.textContent).toContain("Current model: other-model");
+    await act(async () => {
+      (entry as HTMLButtonElement | null)?.click();
+    });
+    const dialog = document.querySelector('[data-testid="model-switch-history"]');
+    expect(dialog?.textContent).toContain("Switch history");
+    expect(dialog?.textContent).toContain("All models failed");
+    expect(dialog?.textContent).toContain("429 rate limit");
+  });
+
   it("opens the translation timeline with its failed attempts", async () => {
     const onLocateModel = vi.fn();
     renderTranslated(
@@ -1198,7 +1238,8 @@ describe("generated media result", () => {
     await flush();
     expect(container.querySelector('[data-testid="message-bot-bubble"]')).toBeNull();
     expect(buttonByText("model-a")).not.toBeUndefined();
-    expect(buttonByText("水彩")).not.toBeUndefined();
+    expect(buttonByText("✓ 水彩")).not.toBeUndefined();
+    expect(buttonByText("油画")).not.toBeUndefined();
     for (const label of [
       "Preview",
       "Download",
@@ -1256,10 +1297,8 @@ describe("generated media result", () => {
   it("switches the prompt preset from the mark", async () => {
     const { update } = renderMedia();
     await flush();
-    act(() => buttonByText("水彩")?.click());
-    await act(async () => {});
     await act(async () => {
-      menuItem("油画")?.click();
+      buttonByText("油画")?.click();
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
     expect(update).toHaveBeenCalledExactlyOnceWith({
@@ -1278,10 +1317,10 @@ describe("generated media result", () => {
     expect(buttonByText("Preview")).not.toBeUndefined();
   });
 
-  it("shows a switch-history button only when the message switched models", async () => {
+  it("shows a switch-history entry only when the message switched models", async () => {
     renderMedia();
     await flush();
-    expect(buttonByText("Switch history")).toBeUndefined();
+    expect(document.querySelector('[data-testid="model-switch-history-entry"]')).toBeNull();
     renderMedia({
       attempts: [
         {
@@ -1297,9 +1336,10 @@ describe("generated media result", () => {
       finalModel: "model-b",
     });
     await flush();
-    expect(buttonByText("Switch history")).not.toBeUndefined();
+    const entry = document.querySelector('[data-testid="model-switch-history-entry"]');
+    expect(entry?.textContent).toContain("Current model: model-b");
     await act(async () => {
-      buttonByText("Switch history")?.click();
+      (entry as HTMLButtonElement | null)?.click();
     });
     const dialog = document.querySelector('[data-testid="model-switch-history"]');
     expect(dialog?.textContent).toContain("Switch history");
@@ -1370,6 +1410,42 @@ describe("model switch history", () => {
     });
     expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
       kind: "chat",
+      botId: "bot-1",
+      model: "model-a",
+      provider: "p1",
+    });
+  });
+
+  it("shows a computer switch timeline under the chat model bar", async () => {
+    const onLocateModel = vi.fn();
+    renderView("bot", [{ kind: "text", text: "Here is the answer." }], {
+      message: {
+        id: "message",
+        threadId: "thread",
+        seq: 1,
+        role: "bot",
+        botId: "bot-1",
+        createdAt: new Date().toISOString(),
+        blocks: [{ kind: "text", text: "Here is the answer." }],
+        computerModelSwitches: switches,
+      },
+      onLocateModel,
+    });
+    expect(historyEntry()?.textContent).toContain("Current model: model-b · p2");
+    expect(historyDialog()).toBeNull();
+    await act(async () => {
+      (historyEntry() as HTMLButtonElement | null)?.click();
+    });
+    expect(historyDialog()?.textContent).toContain("Switch history");
+    expect(historyDialog()?.textContent).toContain("429 rate limit");
+    const modelButton = [...document.querySelectorAll("button")].find(
+      (button) => button.textContent === "model-a",
+    );
+    await act(async () => {
+      modelButton?.click();
+    });
+    expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
+      kind: "computer",
       botId: "bot-1",
       model: "model-a",
       provider: "p1",

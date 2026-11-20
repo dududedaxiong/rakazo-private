@@ -696,7 +696,7 @@ msgstr "给这个人设起个名字"
 msgid "A parent directory is missing on the server."
 msgstr "服务器上缺少父目录。"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "A preset with this name already exists"
 msgstr "已存在同名预设"
 
@@ -885,9 +885,17 @@ msgstr "添加请求头"
 msgid "Add item"
 msgstr "添加项目"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Add main pool model"
+msgstr "添加主池模型"
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Add MCP server"
 msgstr "添加 MCP 服务器"
+
+#: src/pages/ModelRoleSettings.tsx
+msgid "Add model"
+msgstr "添加模型"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Add open work"
@@ -1007,6 +1015,10 @@ msgstr "全部 Bot"
 #: src/pages/Artifacts.tsx
 msgid "All files"
 msgstr "全部文件"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "All models failed"
+msgstr "全部模型都失败了"
 
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
@@ -1477,6 +1489,10 @@ msgstr "两次备份密码不一致"
 msgid "Backup passwords need an HTTPS connection"
 msgstr "备份密码需要 HTTPS 连接"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Backup pool"
+msgstr "备用池"
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "Base URL"
@@ -1709,11 +1725,11 @@ msgstr "无法读取图像"
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
-#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
 msgstr "取消"
@@ -3145,6 +3161,10 @@ msgstr "无法保存模型"
 msgid "Could not save models"
 msgstr "无法保存模型"
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not save prompt preset"
+msgstr "无法保存提示词预设"
+
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not save routine"
 msgstr "无法保存例行任务"
@@ -3671,6 +3691,7 @@ msgstr "已恢复默认模板"
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
 msgstr "删除"
@@ -3725,7 +3746,7 @@ msgstr "删除组织"
 msgid "Delete permanently"
 msgstr "永久删除"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Delete preset"
 msgstr "删除预设"
 
@@ -4031,7 +4052,7 @@ msgstr "先编辑"
 msgid "Edit name"
 msgstr "编辑名称"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Edit preset"
 msgstr "编辑预设"
 
@@ -4140,11 +4161,11 @@ msgstr "请输入密码"
 msgid "Enter a port between 1 and 65535"
 msgstr "输入 1 到 65535 之间的端口"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Enter a preset name"
 msgstr "请输入预设名称"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Enter a prompt"
 msgstr "请输入提示词"
 
@@ -4411,9 +4432,9 @@ msgstr "失败。"
 msgid "Failure handling"
 msgstr "失败处理"
 
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Fallback models"
-msgstr "备选模型"
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Fallback models ({count})"
+msgstr "备用模型（{count}）"
 
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
@@ -5511,6 +5532,14 @@ msgstr "主模型"
 msgid "Main persona"
 msgstr "主人设"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Main pool"
+msgstr "主池"
+
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Main pool ({count})"
+msgstr "主池（{count}）"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Make share card"
 msgstr "做成分享卡"
@@ -5859,6 +5888,7 @@ msgstr "每月额度在续订时到期。充值额度不会过期。"
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-hover-actions.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "More"
 msgstr "更多"
 
@@ -6074,7 +6104,7 @@ msgstr "新的待办"
 msgid "New password"
 msgstr "新密码"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "New preset"
 msgstr "新建预设"
 
@@ -6940,11 +6970,11 @@ msgstr "PR 审查员"
 msgid "Preferences"
 msgstr "偏好设置"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Preset name"
 msgstr "预设名称"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Preset prompt"
 msgstr "预设提示词"
 
@@ -7018,10 +7048,6 @@ msgstr "程序：{name}"
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "Prompt"
 msgstr "提示词"
-
-#: src/pages/shell/media-result.tsx
-msgid "Prompt preset"
-msgstr "提示词预设"
 
 #: src/pages/settings-nav.ts
 msgid "Prompt templates"
@@ -7882,9 +7908,9 @@ msgstr "周六"
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/media-result.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Save"
 msgstr "保存"
 
@@ -8347,6 +8373,10 @@ msgstr "显示全部"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "显示 Bot"
+
+#: src/pages/shell/prompt-preset-tags.tsx
+msgid "Show less"
+msgstr "收起"
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -8816,7 +8846,6 @@ msgstr "支持思考"
 msgid "Switch"
 msgstr "切换"
 
-#: src/pages/shell/media-result.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Switch history"
 msgstr "切换记录"

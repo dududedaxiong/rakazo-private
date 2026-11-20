@@ -444,6 +444,37 @@ export class PiAgentRuntime implements AgentRuntime {
         let activeStreamTarget = host.activeModel;
         // A tool result that ended the turn carries the reply the user must still see.
         let terminatedReply: string | undefined;
+        /**
+         * The one switch entry, shared by the chat chain and the computer
+         * detour: persist the new model against the run lease, then move the
+         * stream to it. A computer switch passes computerMode, so the
+         * executor never rewrites the run's model for a detour model.
+         */
+        const switchTarget = async (target: RuntimeModelTarget, computerMode: boolean) => {
+          // Only a computer switch carries the flag: a chat switch keeps the
+          // two-argument call its callers assert on.
+          if (computerMode) {
+            await request.onModelChange?.(target.config.provider, target.config.id, true);
+          } else {
+            await request.onModelChange?.(target.config.provider, target.config.id);
+          }
+          activeStreamTarget = target;
+          contextPolicy = contextPolicyFor(target);
+          host.activeModel = target;
+          // A backup keeps its own effort.
+          const nextThinkingLevel = thinkingLevelFor(
+            target.model,
+            target.config.thinkingLevel ??
+              (sameModelTarget(target.config, request.model)
+                ? request.model.thinkingLevel
+                : undefined),
+          );
+          agent.state.model = target.model;
+          agent.state.thinkingLevel = nextThinkingLevel;
+          host.models = target.models;
+          host.model = target.model;
+          host.apiKey = target.credentials?.accessToken ?? target.apiKey;
+        };
         let fallbackState: FallbackStreamState = {
           request,
           getActive: () => activeStreamTarget,
@@ -507,34 +538,28 @@ export class PiAgentRuntime implements AgentRuntime {
             contextPolicy = contextPolicyFor(target);
           },
           onSwitch: async (target) => {
-            await request.onModelChange?.(target.config.provider, target.config.id);
-            activeStreamTarget = target;
-            contextPolicy = contextPolicyFor(target);
-            host.activeModel = target;
-            // A backup keeps its own effort.
-            const nextThinkingLevel = thinkingLevelFor(
-              target.model,
-              target.config.thinkingLevel ??
-                (sameModelTarget(target.config, request.model)
-                  ? request.model.thinkingLevel
-                  : undefined),
-            );
-            agent.state.model = target.model;
-            agent.state.thinkingLevel = nextThinkingLevel;
-            host.models = target.models;
-            host.model = target.model;
-            host.apiKey = target.credentials?.accessToken ?? target.apiKey;
+            await switchTarget(target, false);
           },
         };
         const mainFallbackState = fallbackState;
         const computerFallbackState: FallbackStreamState | undefined = computer
           ? {
               ...fallbackState,
-              request: { ...request, model: computer.config, fallbackModels: [] },
+              request: {
+                ...request,
+                model: computer.config,
+                mainPoolModels: request.computerMainPoolModels,
+                fallbackModels: request.computerModelBackups,
+                resolveFallbackModel: request.resolveComputerModel,
+              },
               attempted: new Set(),
               backupOutcomes: new Map(),
-              // A computer-mode detour is not the chat's model switch.
-              switchAttempts: undefined,
+              // The computer detour keeps its own switch timeline, separate
+              // from the chat's.
+              switchAttempts: request.computerModelSwitchAttempts,
+              onSwitch: async (target) => {
+                await switchTarget(target, true);
+              },
             }
           : undefined;
         const setTarget = (target: RuntimeModelTarget) => {

@@ -38,8 +38,13 @@ import { ErrorBoundary, SectionLoadFailed } from "../../components/ErrorBoundary
 import { InstructionSettings } from "../../components/InstructionSettings";
 import { PagesList } from "../../components/pages/PagesList";
 import { BotPersonaSection } from "../../components/prompt-templates/BotPersonaSection";
+import { botFamilyPools } from "../../lib/bot-model-pools";
 import { botProfilePatch } from "../../lib/bot-profile-patch";
-import type { ModelLocateChoice, ModelLocateRequest } from "../../lib/model-locate";
+import type {
+  ModelLocateChoice,
+  ModelLocateKind,
+  ModelLocateRequest,
+} from "../../lib/model-locate";
 import { locateModelChoiceKey } from "../../lib/model-locate";
 import { modelStatusFromProbe, recordModelStatus } from "../../lib/model-status";
 import { lazyComponent } from "../../lib/preload-recovery";
@@ -79,6 +84,11 @@ const KnowledgeSection = lazyComponent(() =>
 /** The advanced fields one Save sends, in the order their saved snapshot keeps them. */
 function advancedValues(bot: Bot) {
   const translation = botTranslationSettings(bot);
+  const video = botFamilyPools(bot, "video");
+  const image = botFamilyPools(bot, "image");
+  const imageEdit = botFamilyPools(bot, "imageEdit");
+  const videoEdit = botFamilyPools(bot, "videoEdit");
+  const translationPools = botFamilyPools(bot, "translation");
   return [
     bot.modelProvider && bot.modelId ? modelOptionKey(bot.modelProvider, bot.modelId) : "",
     bot.thinkingLevel ?? "",
@@ -91,16 +101,22 @@ function advancedValues(bot: Bot) {
     translation.translationTargetLanguage ?? DEFAULT_TRANSLATION_TARGET_LANGUAGE,
     translation.autoTranslate,
     translation.showTranslationActions,
-    JSON.stringify(bot.videoModels ?? []),
-    JSON.stringify(bot.imageModels ?? []),
+    JSON.stringify(video.main),
+    JSON.stringify(image.main),
     bot.activeVideoPromptPreset ?? "",
     bot.activeImagePromptPreset ?? "",
     JSON.stringify(bot.videoPromptPresets ?? []),
     JSON.stringify(bot.imagePromptPresets ?? []),
     bot.videoTriggerWords ?? "",
     bot.imageTriggerWords ?? "",
-    JSON.stringify(bot.imageEditModels ?? []),
-    JSON.stringify(bot.videoEditModels ?? []),
+    JSON.stringify(imageEdit.main),
+    JSON.stringify(videoEdit.main),
+    JSON.stringify(translationPools.main),
+    JSON.stringify(video.backup),
+    JSON.stringify(image.backup),
+    JSON.stringify(imageEdit.backup),
+    JSON.stringify(videoEdit.backup),
+    JSON.stringify(translationPools.backup),
   ] as const;
 }
 
@@ -176,13 +192,24 @@ export function BotSettings({
     thinkingLevel?: ThinkingLevel | null;
     translationModelProvider?: string | null;
     translationModelId?: string | null;
+    translationModels?: BotModelEntry[] | null;
+    translationMainModels?: BotModelEntry[] | null;
+    translationBackupModels?: BotModelEntry[] | null;
     translationSourceLanguage?: TranslationSourceLanguage;
     translationTargetLanguage?: TranslationTargetLanguage | null;
     autoTranslate?: boolean;
     videoModels?: BotModelEntry[] | null;
+    videoMainModels?: BotModelEntry[] | null;
+    videoBackupModels?: BotModelEntry[] | null;
     imageModels?: BotModelEntry[] | null;
+    imageMainModels?: BotModelEntry[] | null;
+    imageBackupModels?: BotModelEntry[] | null;
     videoEditModels?: BotModelEntry[] | null;
+    videoEditMainModels?: BotModelEntry[] | null;
+    videoEditBackupModels?: BotModelEntry[] | null;
     imageEditModels?: BotModelEntry[] | null;
+    imageEditMainModels?: BotModelEntry[] | null;
+    imageEditBackupModels?: BotModelEntry[] | null;
     videoPromptPresets?: BotPromptPreset[] | null;
     imagePromptPresets?: BotPromptPreset[] | null;
     activeVideoPromptPreset?: string | null;
@@ -241,9 +268,17 @@ export function BotSettings({
     bot.modelProvider && bot.modelId ? modelOptionKey(bot.modelProvider, bot.modelId) : "",
   );
   const [thinkingLevel, setThinkingLevel] = useState(bot.thinkingLevel ?? "");
-  const [translationModel, setTranslationModel] = useState(() =>
-    translationModelKey(botTranslationSettings(bot)),
+  const [translationMainModels, setTranslationMainModels] = useState<BotModelEntry[]>(
+    () => botFamilyPools(bot, "translation").main,
   );
+  const [translationBackupModels, setTranslationBackupModels] = useState<BotModelEntry[]>(
+    () => botFamilyPools(bot, "translation").backup,
+  );
+  /** The primary translation model's key, from the main pool's first entry. */
+  const translationPrimary = primaryBotModel(translationMainModels);
+  const translationModel = translationPrimary
+    ? modelOptionKey(translationPrimary.provider, translationPrimary.model)
+    : "";
   const [translationSourceLanguage, setTranslationSourceLanguage] =
     useState<TranslationSourceLanguage>(
       () => botTranslationSettings(bot).translationSourceLanguage,
@@ -260,14 +295,36 @@ export function BotSettings({
   const [showTranslationActions, setShowTranslationActions] = useState(
     () => botTranslationSettings(bot).showTranslationActions,
   );
-  const [videoModels, setVideoModels] = useState<BotModelEntry[]>(() => bot.videoModels ?? []);
-  const [imageModels, setImageModels] = useState<BotModelEntry[]>(() => bot.imageModels ?? []);
-  const [videoEditModels, setVideoEditModels] = useState<BotModelEntry[]>(
-    () => bot.videoEditModels ?? [],
+  const [videoMainModels, setVideoMainModels] = useState<BotModelEntry[]>(
+    () => botFamilyPools(bot, "video").main,
   );
-  const [imageEditModels, setImageEditModels] = useState<BotModelEntry[]>(
-    () => bot.imageEditModels ?? [],
+  const [videoBackupModels, setVideoBackupModels] = useState<BotModelEntry[]>(
+    () => botFamilyPools(bot, "video").backup,
   );
+  const [imageMainModels, setImageMainModels] = useState<BotModelEntry[]>(
+    () => botFamilyPools(bot, "image").main,
+  );
+  const [imageBackupModels, setImageBackupModels] = useState<BotModelEntry[]>(
+    () => botFamilyPools(bot, "image").backup,
+  );
+  const [videoEditMainModels, setVideoEditMainModels] = useState<BotModelEntry[]>(
+    () => botFamilyPools(bot, "videoEdit").main,
+  );
+  const [videoEditBackupModels, setVideoEditBackupModels] = useState<BotModelEntry[]>(
+    () => botFamilyPools(bot, "videoEdit").backup,
+  );
+  const [imageEditMainModels, setImageEditMainModels] = useState<BotModelEntry[]>(
+    () => botFamilyPools(bot, "imageEdit").main,
+  );
+  const [imageEditBackupModels, setImageEditBackupModels] = useState<BotModelEntry[]>(
+    () => botFamilyPools(bot, "imageEdit").backup,
+  );
+  /** The legacy single lists, kept for the save patch older clients read. */
+  const videoModels = [...videoMainModels, ...videoBackupModels];
+  const imageModels = [...imageMainModels, ...imageBackupModels];
+  const videoEditModels = [...videoEditMainModels, ...videoEditBackupModels];
+  const imageEditModels = [...imageEditMainModels, ...imageEditBackupModels];
+  const translationModels = [...translationMainModels, ...translationBackupModels];
   const [activeVideoPreset, setActiveVideoPreset] = useState<string | null>(
     () => bot.activeVideoPromptPreset ?? null,
   );
@@ -330,16 +387,22 @@ export function BotSettings({
     translationTargetLanguage,
     autoTranslate,
     showTranslationActions,
-    JSON.stringify(videoModels),
-    JSON.stringify(imageModels),
+    JSON.stringify(videoMainModels),
+    JSON.stringify(imageMainModels),
     activeVideoPreset ?? "",
     activeImagePreset ?? "",
     JSON.stringify(videoPresets),
     JSON.stringify(imagePresets),
     videoTriggerWords,
     imageTriggerWords,
-    JSON.stringify(imageEditModels),
-    JSON.stringify(videoEditModels),
+    JSON.stringify(imageEditMainModels),
+    JSON.stringify(videoEditMainModels),
+    JSON.stringify(translationMainModels),
+    JSON.stringify(videoBackupModels),
+    JSON.stringify(imageBackupModels),
+    JSON.stringify(imageEditBackupModels),
+    JSON.stringify(videoEditBackupModels),
+    JSON.stringify(translationBackupModels),
   ]);
   const dirty =
     name.trim() !== savedNameRef.current.trim() ||
@@ -395,17 +458,16 @@ export function BotSettings({
     if (memoryScope === saved[3]) setMemoryScope(next[3]);
     if (autoSpeak === saved[4]) setAutoSpeak(next[4]);
     if (voiceId === saved[5]) setVoiceId(next[5]);
-    if (translationModel === saved[6]) setTranslationModel(next[6]);
     if (translationSourceLanguage === saved[7])
       setTranslationSourceLanguage(next[7] as TranslationSourceLanguage);
     if (translationTargetLanguage === saved[8])
       setTranslationTargetLanguage(next[8] as TranslationTargetLanguage);
     if (autoTranslate === saved[9]) setAutoTranslate(next[9] as boolean);
     if (showTranslationActions === saved[10]) setShowTranslationActions(next[10] as boolean);
-    if (JSON.stringify(videoModels) === saved[11])
-      setVideoModels(JSON.parse(next[11] as string) as BotModelEntry[]);
-    if (JSON.stringify(imageModels) === saved[12])
-      setImageModels(JSON.parse(next[12] as string) as BotModelEntry[]);
+    if (JSON.stringify(videoMainModels) === saved[11])
+      setVideoMainModels(JSON.parse(next[11] as string) as BotModelEntry[]);
+    if (JSON.stringify(imageMainModels) === saved[12])
+      setImageMainModels(JSON.parse(next[12] as string) as BotModelEntry[]);
     if ((activeVideoPreset ?? "") === saved[13]) setActiveVideoPreset((next[13] as string) || null);
     if ((activeImagePreset ?? "") === saved[14]) setActiveImagePreset((next[14] as string) || null);
     if (JSON.stringify(videoPresets) === saved[15])
@@ -414,10 +476,22 @@ export function BotSettings({
       setImagePresets(JSON.parse(next[16] as string) as BotPromptPreset[]);
     if (videoTriggerWords === saved[17]) setVideoTriggerWords(next[17] as string);
     if (imageTriggerWords === saved[18]) setImageTriggerWords(next[18] as string);
-    if (JSON.stringify(imageEditModels) === saved[19])
-      setImageEditModels(JSON.parse(next[19] as string) as BotModelEntry[]);
-    if (JSON.stringify(videoEditModels) === saved[20])
-      setVideoEditModels(JSON.parse(next[20] as string) as BotModelEntry[]);
+    if (JSON.stringify(imageEditMainModels) === saved[19])
+      setImageEditMainModels(JSON.parse(next[19] as string) as BotModelEntry[]);
+    if (JSON.stringify(videoEditMainModels) === saved[20])
+      setVideoEditMainModels(JSON.parse(next[20] as string) as BotModelEntry[]);
+    if (JSON.stringify(translationMainModels) === saved[21])
+      setTranslationMainModels(JSON.parse(next[21] as string) as BotModelEntry[]);
+    if (JSON.stringify(videoBackupModels) === saved[22])
+      setVideoBackupModels(JSON.parse(next[22] as string) as BotModelEntry[]);
+    if (JSON.stringify(imageBackupModels) === saved[23])
+      setImageBackupModels(JSON.parse(next[23] as string) as BotModelEntry[]);
+    if (JSON.stringify(imageEditBackupModels) === saved[24])
+      setImageEditBackupModels(JSON.parse(next[24] as string) as BotModelEntry[]);
+    if (JSON.stringify(videoEditBackupModels) === saved[25])
+      setVideoEditBackupModels(JSON.parse(next[25] as string) as BotModelEntry[]);
+    if (JSON.stringify(translationBackupModels) === saved[26])
+      setTranslationBackupModels(JSON.parse(next[26] as string) as BotModelEntry[]);
     setSavedAdvanced(JSON.stringify(next));
   }, [bot]);
 
@@ -453,7 +527,23 @@ export function BotSettings({
     t`Not selected`,
   );
 
-  const videoPrimary = primaryBotModel(videoModels);
+  /** One pool's rows for the settings lists: keyed by provider and model id. */
+  const toFallbackRows = (
+    list: readonly BotModelEntry[],
+    choices: readonly ChatModelChoice[],
+  ): MediaModelFallback[] =>
+    list.map((entry) => {
+      const key = modelOptionKey(
+        entry.provider,
+        resolveSelectableModelId(catalog, entry.provider, entry.model),
+      );
+      return {
+        key,
+        label: choices.find((choice) => choice.key === key)?.label ?? entry.model,
+      };
+    });
+
+  const videoPrimary = primaryBotModel(videoMainModels);
   const videoValue = videoPrimary
     ? modelOptionKey(
         videoPrimary.provider,
@@ -461,17 +551,9 @@ export function BotSettings({
       )
     : "";
   const videoChoices = chatModelChoices(connectedOptions, videoValue, t`Not selected`);
-  const videoFallbacks: MediaModelFallback[] = videoModels.slice(1).map((entry) => {
-    const key = modelOptionKey(
-      entry.provider,
-      resolveSelectableModelId(catalog, entry.provider, entry.model),
-    );
-    return {
-      key,
-      label: videoChoices.find((choice) => choice.key === key)?.label ?? entry.model,
-    };
-  });
-  const imagePrimary = primaryBotModel(imageModels);
+  const videoMainFallbacks = toFallbackRows(videoMainModels.slice(1), videoChoices);
+  const videoBackupFallbacks = toFallbackRows(videoBackupModels, videoChoices);
+  const imagePrimary = primaryBotModel(imageMainModels);
   const imageValue = imagePrimary
     ? modelOptionKey(
         imagePrimary.provider,
@@ -479,17 +561,9 @@ export function BotSettings({
       )
     : "";
   const imageChoices = chatModelChoices(connectedOptions, imageValue, t`Not selected`);
-  const imageFallbacks: MediaModelFallback[] = imageModels.slice(1).map((entry) => {
-    const key = modelOptionKey(
-      entry.provider,
-      resolveSelectableModelId(catalog, entry.provider, entry.model),
-    );
-    return {
-      key,
-      label: imageChoices.find((choice) => choice.key === key)?.label ?? entry.model,
-    };
-  });
-  const videoEditPrimary = primaryBotModel(videoEditModels);
+  const imageMainFallbacks = toFallbackRows(imageMainModels.slice(1), imageChoices);
+  const imageBackupFallbacks = toFallbackRows(imageBackupModels, imageChoices);
+  const videoEditPrimary = primaryBotModel(videoEditMainModels);
   const videoEditValue = videoEditPrimary
     ? modelOptionKey(
         videoEditPrimary.provider,
@@ -497,17 +571,9 @@ export function BotSettings({
       )
     : "";
   const videoEditChoices = chatModelChoices(connectedOptions, videoEditValue, t`Not selected`);
-  const videoEditFallbacks: MediaModelFallback[] = videoEditModels.slice(1).map((entry) => {
-    const key = modelOptionKey(
-      entry.provider,
-      resolveSelectableModelId(catalog, entry.provider, entry.model),
-    );
-    return {
-      key,
-      label: videoEditChoices.find((choice) => choice.key === key)?.label ?? entry.model,
-    };
-  });
-  const imageEditPrimary = primaryBotModel(imageEditModels);
+  const videoEditMainFallbacks = toFallbackRows(videoEditMainModels.slice(1), videoEditChoices);
+  const videoEditBackupFallbacks = toFallbackRows(videoEditBackupModels, videoEditChoices);
+  const imageEditPrimary = primaryBotModel(imageEditMainModels);
   const imageEditValue = imageEditPrimary
     ? modelOptionKey(
         imageEditPrimary.provider,
@@ -515,62 +581,68 @@ export function BotSettings({
       )
     : "";
   const imageEditChoices = chatModelChoices(connectedOptions, imageEditValue, t`Not selected`);
-  const imageEditFallbacks: MediaModelFallback[] = imageEditModels.slice(1).map((entry) => {
-    const key = modelOptionKey(
-      entry.provider,
-      resolveSelectableModelId(catalog, entry.provider, entry.model),
-    );
-    return {
-      key,
-      label: imageEditChoices.find((choice) => choice.key === key)?.label ?? entry.model,
-    };
-  });
+  const imageEditMainFallbacks = toFallbackRows(imageEditMainModels.slice(1), imageEditChoices);
+  const imageEditBackupFallbacks = toFallbackRows(imageEditBackupModels, imageEditChoices);
+  const translationMainFallbacks = toFallbackRows(
+    translationMainModels.slice(1),
+    translationModelChoices,
+  );
+  const translationBackupFallbacks = toFallbackRows(
+    translationBackupModels,
+    translationModelChoices,
+  );
 
   /** A media list: the generation lists and the edit lists. */
   type MediaListRole = "video" | "image" | "videoEdit" | "imageEdit";
 
-  function mediaListSetter(role: MediaListRole) {
+  function mediaPoolSetter(role: MediaListRole, pool: "main" | "backup") {
     switch (role) {
       case "video":
-        return setVideoModels;
+        return pool === "main" ? setVideoMainModels : setVideoBackupModels;
       case "image":
-        return setImageModels;
+        return pool === "main" ? setImageMainModels : setImageBackupModels;
       case "videoEdit":
-        return setVideoEditModels;
+        return pool === "main" ? setVideoEditMainModels : setVideoEditBackupModels;
       case "imageEdit":
-        return setImageEditModels;
+        return pool === "main" ? setImageEditMainModels : setImageEditBackupModels;
     }
   }
 
-  function mediaList(role: MediaListRole) {
+  function mediaPool(role: MediaListRole, pool: "main" | "backup") {
     switch (role) {
       case "video":
-        return videoModels;
+        return pool === "main" ? videoMainModels : videoBackupModels;
       case "image":
-        return imageModels;
+        return pool === "main" ? imageMainModels : imageBackupModels;
       case "videoEdit":
-        return videoEditModels;
+        return pool === "main" ? videoEditMainModels : videoEditBackupModels;
       case "imageEdit":
-        return imageEditModels;
+        return pool === "main" ? imageEditMainModels : imageEditBackupModels;
     }
   }
 
-  /** Picking a media model moves it to the front of that role's list; the rest stay as fallbacks. */
+  const sameBotModel = (left: BotModelEntry, right: BotModelEntry) =>
+    left.provider === right.provider && left.model === right.model;
+
+  /** Picking a media model moves it to the front of that role's main pool, out of the backup pool. */
   function changeMediaModel(role: MediaListRole, key: string) {
-    const setList = mediaListSetter(role);
+    const setMain = mediaPoolSetter(role, "main");
+    const setBackup = mediaPoolSetter(role, "backup");
     if (!key) {
-      setList([]);
+      setMain([]);
+      setBackup([]);
       return;
     }
     const parsed = parseModelOptionKey(key);
     if (!parsed) return;
     const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
-    setList((current) => moveBotModelToFront(current, entry));
+    setMain((current) => moveBotModelToFront(current, entry));
+    setBackup((current) => current.filter((item) => !sameBotModel(item, entry)));
   }
 
-  function removeMediaFallback(role: MediaListRole, key: string) {
-    const setList = mediaListSetter(role);
-    setList((current) =>
+  function removeMediaPoolFallback(role: MediaListRole, pool: "main" | "backup", key: string) {
+    const setPool = mediaPoolSetter(role, pool);
+    setPool((current) =>
       current.filter(
         (entry) =>
           modelOptionKey(
@@ -581,24 +653,89 @@ export function BotSettings({
     );
   }
 
-  function addMediaFallback(role: MediaListRole, key: string) {
-    const setList = mediaListSetter(role);
+  function addMediaPoolFallback(role: MediaListRole, pool: "main" | "backup", key: string) {
     const parsed = parseModelOptionKey(key);
     if (!parsed) return;
     const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
-    setList((current) => {
-      if (
-        current.length >= BOT_MODEL_LIST_MAX ||
-        current.some((item) => item.provider === entry.provider && item.model === entry.model)
-      )
+    const other = mediaPool(role, pool === "main" ? "backup" : "main");
+    if (other.some((item) => sameBotModel(item, entry))) return;
+    const setPool = mediaPoolSetter(role, pool);
+    setPool((current) => {
+      if (current.length >= BOT_MODEL_LIST_MAX || current.some((item) => sameBotModel(item, entry)))
         return current;
       return [...current, entry];
     });
   }
 
-  function moveMediaFallback(role: MediaListRole, key: string, delta: -1 | 1) {
-    const setList = mediaListSetter(role);
-    setList((current) => {
+  function moveMediaPoolFallback(
+    role: MediaListRole,
+    pool: "main" | "backup",
+    key: string,
+    delta: -1 | 1,
+  ) {
+    const setPool = mediaPoolSetter(role, pool);
+    setPool((current) => {
+      const index = current.findIndex(
+        (entry) =>
+          modelOptionKey(
+            entry.provider,
+            resolveSelectableModelId(catalog, entry.provider, entry.model),
+          ) === key,
+      );
+      const target = index + delta;
+      if (index < 0 || target < 0 || target >= current.length) return current;
+      const next = [...current];
+      const item = next[index]!;
+      next[index] = next[target]!;
+      next[target] = item;
+      return next;
+    });
+  }
+
+  /** Picking a translation model moves it to the front of the main pool, out of the backup pool. */
+  function changeTranslationModel(key: string) {
+    if (!key) {
+      setTranslationMainModels([]);
+      setTranslationBackupModels([]);
+      return;
+    }
+    const parsed = parseModelOptionKey(key);
+    if (!parsed) return;
+    const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
+    setTranslationMainModels((current) => moveBotModelToFront(current, entry));
+    setTranslationBackupModels((current) => current.filter((item) => !sameBotModel(item, entry)));
+  }
+
+  function removeTranslationPoolFallback(pool: "main" | "backup", key: string) {
+    const setPool = pool === "main" ? setTranslationMainModels : setTranslationBackupModels;
+    setPool((current) =>
+      current.filter(
+        (entry) =>
+          modelOptionKey(
+            entry.provider,
+            resolveSelectableModelId(catalog, entry.provider, entry.model),
+          ) !== key,
+      ),
+    );
+  }
+
+  function addTranslationPoolFallback(pool: "main" | "backup", key: string) {
+    const parsed = parseModelOptionKey(key);
+    if (!parsed) return;
+    const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
+    const other = pool === "main" ? translationBackupModels : translationMainModels;
+    if (other.some((item) => sameBotModel(item, entry))) return;
+    const setPool = pool === "main" ? setTranslationMainModels : setTranslationBackupModels;
+    setPool((current) => {
+      if (current.length >= BOT_MODEL_LIST_MAX || current.some((item) => sameBotModel(item, entry)))
+        return current;
+      return [...current, entry];
+    });
+  }
+
+  function moveTranslationPoolFallback(pool: "main" | "backup", key: string, delta: -1 | 1) {
+    const setPool = pool === "main" ? setTranslationMainModels : setTranslationBackupModels;
+    setPool((current) => {
       const index = current.findIndex(
         (entry) =>
           modelOptionKey(
@@ -681,9 +818,12 @@ export function BotSettings({
     if (test.status !== "done" || !test.supported) return;
     const parsed = parseModelOptionKey(test.modelKey);
     if (!parsed) return;
-    const setList = mediaListSetter(role);
-    const list = mediaList(role);
-    setList(moveBotModelToFront(list, { provider: parsed.provider, model: parsed.modelId }));
+    const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
+    mediaPoolSetter(role, "main")(moveBotModelToFront(mediaPool(role, "main"), entry));
+    mediaPoolSetter(
+      role,
+      "backup",
+    )(mediaPool(role, "backup").filter((item) => !sameBotModel(item, entry)));
   }
 
   const defaultEntry = me?.defaultModel
@@ -700,64 +840,120 @@ export function BotSettings({
   // sits after every choices list it reads, so the dependency array never
   // touches a binding that is still in its temporal dead zone.
   const [locatedKey, setLocatedKey] = useState<string | null>(null);
+  /** The section the located row actually matched: an image or video timeline
+   * can name a model in the edit list, whose section differs from its kind. */
+  const [locatedSection, setLocatedSection] = useState<ModelLocateKind | null>(null);
+  const locateKindForSections = locatedSection ?? locateModel?.kind ?? null;
   useEffect(() => {
     if (!locateModel || tab !== "settings") {
-      if (!locateModel) setLocatedKey(null);
+      if (!locateModel) {
+        setLocatedKey(null);
+        setLocatedSection(null);
+      }
       return;
     }
     // Match against the model list itself, by model id plus the connection
     // display name, so two rows for the same model on different connections
     // stay distinct. A row key alone cannot tell them apart, because every
     // connection here shares one provider id.
-    const choices =
-      locateModel.kind === "translation"
-        ? translationModelChoices
-        : locateModel.kind === "video"
-          ? videoChoices
-          : locateModel.kind === "image"
-            ? imageChoices
-            : modelChoices;
-    const currentKey =
-      locateModel.kind === "translation"
-        ? selectedTranslationModelKey
-        : locateModel.kind === "video"
-          ? videoValue
-          : locateModel.kind === "image"
-            ? imageValue
-            : selectedModelKey;
-    // Fallback rows are not picker options, so they are not in the choices
-    // list; a timeline name can still point at one. Match them by their
-    // key's provider and model id, with the connection label from the
-    // choices list when the same key is listed there.
-    const fallbackChoices: ModelLocateChoice[] =
-      locateModel.kind === "video"
-        ? videoFallbacks
-            .map((fallback) => fallbackLocateChoice(fallback, videoChoices))
-            .filter((choice): choice is ModelLocateChoice => choice !== null)
-        : locateModel.kind === "image"
-          ? imageFallbacks
-              .map((fallback) => fallbackLocateChoice(fallback, imageChoices))
-              .filter((choice): choice is ModelLocateChoice => choice !== null)
-          : [];
-    setLocatedKey(
-      locateModelChoiceKey([...choices, ...fallbackChoices], locateModel, currentKey || null),
-    );
+    const matchIn = (
+      listChoices: readonly ChatModelChoice[],
+      listFallbacks: readonly MediaModelFallback[],
+      preferredKey: string,
+    ): string | null =>
+      locateModelChoiceKey(
+        [
+          ...listChoices,
+          ...listFallbacks
+            .map((fallback) => fallbackLocateChoice(fallback, listChoices))
+            .filter((choice): choice is ModelLocateChoice => choice !== null),
+        ],
+        locateModel,
+        preferredKey || null,
+      );
+    // An image or video timeline can name a model in either the generation
+    // list or the edit list; the match decides which section scrolls into view.
+    let section = locateModel.kind;
+    let key: string | null;
+    if (locateModel.kind === "image") {
+      key = matchIn(imageChoices, [...imageMainFallbacks, ...imageBackupFallbacks], imageValue);
+      if (!key) {
+        const editKey = matchIn(
+          imageEditChoices,
+          [...imageEditMainFallbacks, ...imageEditBackupFallbacks],
+          imageEditValue,
+        );
+        if (editKey) {
+          key = editKey;
+          section = "imageEdit";
+        }
+      }
+    } else if (locateModel.kind === "video") {
+      key = matchIn(videoChoices, [...videoMainFallbacks, ...videoBackupFallbacks], videoValue);
+      if (!key) {
+        const editKey = matchIn(
+          videoEditChoices,
+          [...videoEditMainFallbacks, ...videoEditBackupFallbacks],
+          videoEditValue,
+        );
+        if (editKey) {
+          key = editKey;
+          section = "videoEdit";
+        }
+      }
+    } else if (locateModel.kind === "translation") {
+      key = matchIn(
+        translationModelChoices,
+        [...translationMainFallbacks, ...translationBackupFallbacks],
+        selectedTranslationModelKey,
+      );
+    } else if (locateModel.kind === "videoEdit") {
+      key = matchIn(
+        videoEditChoices,
+        [...videoEditMainFallbacks, ...videoEditBackupFallbacks],
+        videoEditValue,
+      );
+    } else if (locateModel.kind === "imageEdit") {
+      key = matchIn(
+        imageEditChoices,
+        [...imageEditMainFallbacks, ...imageEditBackupFallbacks],
+        imageEditValue,
+      );
+    } else {
+      key = matchIn(modelChoices, [], selectedModelKey);
+    }
+    setLocatedKey(key);
+    setLocatedSection(section as ModelLocateKind);
     // The settings tab is the only panel in the DOM with this test id.
     const root = document.querySelector<HTMLElement>('[data-testid="bot-settings-advanced"]');
     root
-      ?.querySelector<HTMLElement>(`[data-model-section="${locateModel.kind}"]`)
+      ?.querySelector<HTMLElement>(`[data-model-section="${section}"]`)
       ?.scrollIntoView?.({ block: "nearest" });
   }, [
     locateModel,
     tab,
     modelChoices,
     translationModelChoices,
+    translationMainFallbacks,
+    translationBackupFallbacks,
     videoChoices,
     imageChoices,
+    videoEditChoices,
+    imageEditChoices,
+    videoMainFallbacks,
+    videoBackupFallbacks,
+    imageMainFallbacks,
+    imageBackupFallbacks,
+    videoEditMainFallbacks,
+    videoEditBackupFallbacks,
+    imageEditMainFallbacks,
+    imageEditBackupFallbacks,
     selectedModelKey,
     selectedTranslationModelKey,
     videoValue,
     imageValue,
+    videoEditValue,
+    imageEditValue,
   ]);
 
   const effectiveProvider = selectedModel?.provider ?? me?.defaultProvider ?? null;
@@ -847,14 +1043,25 @@ export function BotSettings({
         modelId: selected?.modelId ?? null,
         translationModelProvider: selectedTranslation?.provider ?? null,
         translationModelId: selectedTranslation?.modelId ?? null,
+        translationModels,
+        translationMainModels,
+        translationBackupModels,
         translationSourceLanguage,
         translationTargetLanguage,
         autoTranslate,
         showTranslationActions,
         videoModels,
+        videoMainModels,
+        videoBackupModels,
         imageModels,
+        imageMainModels,
+        imageBackupModels,
         videoEditModels,
+        videoEditMainModels,
+        videoEditBackupModels,
         imageEditModels,
+        imageEditMainModels,
+        imageEditBackupModels,
         videoPromptPresets: videoPresets,
         imagePromptPresets: imagePresets,
         activeVideoPromptPreset: activeVideoPreset,
@@ -924,16 +1131,22 @@ export function BotSettings({
           translationTargetLanguage,
           autoTranslate,
           showTranslationActions,
-          JSON.stringify(videoModels),
-          JSON.stringify(imageModels),
+          JSON.stringify(videoMainModels),
+          JSON.stringify(imageMainModels),
           activeVideoPreset ?? "",
           activeImagePreset ?? "",
           JSON.stringify(videoPresets),
           JSON.stringify(imagePresets),
           videoTriggerWords,
           imageTriggerWords,
-          JSON.stringify(imageEditModels),
-          JSON.stringify(videoEditModels),
+          JSON.stringify(imageEditMainModels),
+          JSON.stringify(videoEditMainModels),
+          JSON.stringify(translationMainModels),
+          JSON.stringify(videoBackupModels),
+          JSON.stringify(imageBackupModels),
+          JSON.stringify(imageEditBackupModels),
+          JSON.stringify(videoEditBackupModels),
+          JSON.stringify(translationBackupModels),
         ]),
       );
     } catch (err) {
@@ -1112,7 +1325,7 @@ export function BotSettings({
               choices={modelChoices}
               value={selectedModelKey}
               locatedKey={locatedKey}
-              locateKind={locateModel?.kind ?? null}
+              locateKind={locateKindForSections}
               onModelChange={(key) => {
                 setModelKey(key);
                 setThinkingLevel("");
@@ -1140,24 +1353,30 @@ export function BotSettings({
             <MediaModelGroup
               ids={ids}
               locatedKey={locatedKey}
-              locateKind={locateModel?.kind ?? null}
+              locateKind={locateKindForSections}
               videoChoices={videoChoices}
               videoValue={videoValue}
               onVideoModelChange={(key) => changeMediaModel("video", key)}
-              videoFallbacks={videoFallbacks}
-              onAddVideoFallback={(key) => addMediaFallback("video", key)}
-              onMoveVideoFallback={(key, delta) => moveMediaFallback("video", key, delta)}
-              onRemoveVideoFallback={(key) => removeMediaFallback("video", key)}
+              videoMainFallbacks={videoMainFallbacks}
+              videoBackupFallbacks={videoBackupFallbacks}
+              onAddVideoFallback={(pool, key) => addMediaPoolFallback("video", pool, key)}
+              onMoveVideoFallback={(pool, key, delta) =>
+                moveMediaPoolFallback("video", pool, key, delta)
+              }
+              onRemoveVideoFallback={(pool, key) => removeMediaPoolFallback("video", pool, key)}
               videoTest={videoTest}
               onTestVideoModel={(key) => void testMediaModel("video", key)}
               onApplyVideoTestedModel={() => applyTestedMediaModel("video")}
               imageChoices={imageChoices}
               imageValue={imageValue}
               onImageModelChange={(key) => changeMediaModel("image", key)}
-              imageFallbacks={imageFallbacks}
-              onAddImageFallback={(key) => addMediaFallback("image", key)}
-              onMoveImageFallback={(key, delta) => moveMediaFallback("image", key, delta)}
-              onRemoveImageFallback={(key) => removeMediaFallback("image", key)}
+              imageMainFallbacks={imageMainFallbacks}
+              imageBackupFallbacks={imageBackupFallbacks}
+              onAddImageFallback={(pool, key) => addMediaPoolFallback("image", pool, key)}
+              onMoveImageFallback={(pool, key, delta) =>
+                moveMediaPoolFallback("image", pool, key, delta)
+              }
+              onRemoveImageFallback={(pool, key) => removeMediaPoolFallback("image", pool, key)}
               imageTest={imageTest}
               onTestImageModel={(key) => void testMediaModel("image", key)}
               onApplyImageTestedModel={() => applyTestedMediaModel("image")}
@@ -1176,20 +1395,30 @@ export function BotSettings({
               videoEditChoices={videoEditChoices}
               videoEditValue={videoEditValue}
               onVideoEditModelChange={(key) => changeMediaModel("videoEdit", key)}
-              videoEditFallbacks={videoEditFallbacks}
-              onAddVideoEditFallback={(key) => addMediaFallback("videoEdit", key)}
-              onMoveVideoEditFallback={(key, delta) => moveMediaFallback("videoEdit", key, delta)}
-              onRemoveVideoEditFallback={(key) => removeMediaFallback("videoEdit", key)}
+              videoEditMainFallbacks={videoEditMainFallbacks}
+              videoEditBackupFallbacks={videoEditBackupFallbacks}
+              onAddVideoEditFallback={(pool, key) => addMediaPoolFallback("videoEdit", pool, key)}
+              onMoveVideoEditFallback={(pool, key, delta) =>
+                moveMediaPoolFallback("videoEdit", pool, key, delta)
+              }
+              onRemoveVideoEditFallback={(pool, key) =>
+                removeMediaPoolFallback("videoEdit", pool, key)
+              }
               videoEditTest={videoEditTest}
               onTestVideoEditModel={(key) => void testMediaModel("videoEdit", key)}
               onApplyVideoEditTestedModel={() => applyTestedMediaModel("videoEdit")}
               imageEditChoices={imageEditChoices}
               imageEditValue={imageEditValue}
               onImageEditModelChange={(key) => changeMediaModel("imageEdit", key)}
-              imageEditFallbacks={imageEditFallbacks}
-              onAddImageEditFallback={(key) => addMediaFallback("imageEdit", key)}
-              onMoveImageEditFallback={(key, delta) => moveMediaFallback("imageEdit", key, delta)}
-              onRemoveImageEditFallback={(key) => removeMediaFallback("imageEdit", key)}
+              imageEditMainFallbacks={imageEditMainFallbacks}
+              imageEditBackupFallbacks={imageEditBackupFallbacks}
+              onAddImageEditFallback={(pool, key) => addMediaPoolFallback("imageEdit", pool, key)}
+              onMoveImageEditFallback={(pool, key, delta) =>
+                moveMediaPoolFallback("imageEdit", pool, key, delta)
+              }
+              onRemoveImageEditFallback={(pool, key) =>
+                removeMediaPoolFallback("imageEdit", pool, key)
+              }
               imageEditTest={imageEditTest}
               onTestImageEditModel={(key) => void testMediaModel("imageEdit", key)}
               onApplyImageEditTestedModel={() => applyTestedMediaModel("imageEdit")}
@@ -1197,10 +1426,20 @@ export function BotSettings({
             <TranslationGroup
               ids={ids}
               locatedKey={locatedKey}
-              locateKind={locateModel?.kind ?? null}
+              locateKind={locateKindForSections}
               choices={translationModelChoices}
               value={selectedTranslationModelKey}
-              onModelChange={setTranslationModel}
+              onModelChange={changeTranslationModel}
+              mainFallbacks={translationMainFallbacks}
+              backupFallbacks={translationBackupFallbacks}
+              onAddMainFallback={(key) => addTranslationPoolFallback("main", key)}
+              onMoveMainFallback={(key, delta) => moveTranslationPoolFallback("main", key, delta)}
+              onRemoveMainFallback={(key) => removeTranslationPoolFallback("main", key)}
+              onAddBackupFallback={(key) => addTranslationPoolFallback("backup", key)}
+              onMoveBackupFallback={(key, delta) =>
+                moveTranslationPoolFallback("backup", key, delta)
+              }
+              onRemoveBackupFallback={(key) => removeTranslationPoolFallback("backup", key)}
               sourceLanguage={translationSourceLanguage}
               onSourceLanguageChange={setTranslationSourceLanguage}
               targetLanguage={translationTargetLanguage}

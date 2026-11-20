@@ -39,6 +39,7 @@ export function ModelSettingsOverlay({
   onClose,
   embedded = false,
   scope,
+  locateComputerModel,
 }: {
   onClose: () => void;
   /** Render the content only, inside the shared Settings shell's scroller. */
@@ -48,6 +49,8 @@ export function ModelSettingsOverlay({
    * account-wide, so a Space shows only its role lists.
    */
   scope: SettingsScope;
+  /** A computer timeline's model: opens the computer-use list at its row. */
+  locateComputerModel?: { model: string; provider?: string; requestId: number } | null;
 }) {
   const { t } = useLingui();
   const model = useModelSettings(onClose, scope);
@@ -140,6 +143,11 @@ export function ModelSettingsOverlay({
   // Screen work runs on the main model unless it cannot read images, so the computer-use
   // list shows only then, once one is chosen, or when asked for from the main model's menu.
   const [computerOpened, setComputerOpened] = useState(false);
+  // A computer timeline asks for its row: the list may be hidden behind the
+  // main model's menu, so a locate request opens it.
+  useEffect(() => {
+    if (locateComputerModel) setComputerOpened(true);
+  }, [locateComputerModel]);
   const mainRole = useModelRole(me, scope, "main");
   const computerRole = useModelRole(me, scope, "computer");
   const mainChoice = mainRole?.primary ?? mainRole?.deploymentPrimary ?? null;
@@ -381,6 +389,7 @@ export function ModelSettingsOverlay({
                 openConnection({ id, name: id }, null, credentialId, "computer")
               }
               panel={connectionAt === "computer" ? panelFor(true) : null}
+              locatedModel={locateComputerModel}
             />
           ) : null}
           {scope === "space" ? null : (

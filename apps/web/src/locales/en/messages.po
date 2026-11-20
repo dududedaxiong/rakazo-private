@@ -696,7 +696,7 @@ msgstr "A name for this persona"
 msgid "A parent directory is missing on the server."
 msgstr "A parent directory is missing on the server."
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "A preset with this name already exists"
 msgstr "A preset with this name already exists"
 
@@ -885,9 +885,17 @@ msgstr "Add header"
 msgid "Add item"
 msgstr "Add item"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Add main pool model"
+msgstr "Add main pool model"
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Add MCP server"
 msgstr "Add MCP server"
+
+#: src/pages/ModelRoleSettings.tsx
+msgid "Add model"
+msgstr "Add model"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Add open work"
@@ -1007,6 +1015,10 @@ msgstr "All bots"
 #: src/pages/Artifacts.tsx
 msgid "All files"
 msgstr "All files"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "All models failed"
+msgstr "All models failed"
 
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
@@ -1477,6 +1489,10 @@ msgstr "Backup passwords do not match"
 msgid "Backup passwords need an HTTPS connection"
 msgstr "Backup passwords need an HTTPS connection"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Backup pool"
+msgstr "Backup pool"
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "Base URL"
@@ -1709,11 +1725,11 @@ msgstr "Can't read images"
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
-#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
 msgstr "Cancel"
@@ -3145,6 +3161,10 @@ msgstr "Could not save model"
 msgid "Could not save models"
 msgstr "Could not save models"
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not save prompt preset"
+msgstr "Could not save prompt preset"
+
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not save routine"
 msgstr "Could not save routine"
@@ -3671,6 +3691,7 @@ msgstr "Default templates restored"
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
 msgstr "Delete"
@@ -3725,7 +3746,7 @@ msgstr "Delete organization"
 msgid "Delete permanently"
 msgstr "Delete permanently"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Delete preset"
 msgstr "Delete preset"
 
@@ -4031,7 +4052,7 @@ msgstr "Edit first"
 msgid "Edit name"
 msgstr "Edit name"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Edit preset"
 msgstr "Edit preset"
 
@@ -4140,11 +4161,11 @@ msgstr "Enter a password"
 msgid "Enter a port between 1 and 65535"
 msgstr "Enter a port between 1 and 65535"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Enter a preset name"
 msgstr "Enter a preset name"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Enter a prompt"
 msgstr "Enter a prompt"
 
@@ -4411,9 +4432,9 @@ msgstr "Failed."
 msgid "Failure handling"
 msgstr "Failure handling"
 
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Fallback models"
-msgstr "Fallback models"
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Fallback models ({count})"
+msgstr "Fallback models ({count})"
 
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-translation.tsx
@@ -5511,6 +5532,14 @@ msgstr "Main model"
 msgid "Main persona"
 msgstr "Main persona"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Main pool"
+msgstr "Main pool"
+
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Main pool ({count})"
+msgstr "Main pool ({count})"
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Make share card"
 msgstr "Make share card"
@@ -5859,6 +5888,7 @@ msgstr "Monthly credits expire at renewal. Top-ups do not expire."
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-hover-actions.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "More"
 msgstr "More"
 
@@ -6074,7 +6104,7 @@ msgstr "New open-work item"
 msgid "New password"
 msgstr "New password"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "New preset"
 msgstr "New preset"
 
@@ -6940,11 +6970,11 @@ msgstr "PR reviewer"
 msgid "Preferences"
 msgstr "Preferences"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Preset name"
 msgstr "Preset name"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Preset prompt"
 msgstr "Preset prompt"
 
@@ -7018,10 +7048,6 @@ msgstr "Program: {name}"
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "Prompt"
 msgstr "Prompt"
-
-#: src/pages/shell/media-result.tsx
-msgid "Prompt preset"
-msgstr "Prompt preset"
 
 #: src/pages/settings-nav.ts
 msgid "Prompt templates"
@@ -7882,9 +7908,9 @@ msgstr "Saturday"
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/media-result.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Save"
 msgstr "Save"
 
@@ -8347,6 +8373,10 @@ msgstr "Show all"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "Show bots"
+
+#: src/pages/shell/prompt-preset-tags.tsx
+msgid "Show less"
+msgstr "Show less"
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -8816,7 +8846,6 @@ msgstr "Supports thinking"
 msgid "Switch"
 msgstr "Switch"
 
-#: src/pages/shell/media-result.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Switch history"
 msgstr "Switch history"

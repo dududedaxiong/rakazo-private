@@ -15,6 +15,13 @@ export type ModelRoleChoice = z.infer<typeof ModelRoleChoiceSchema>;
 export const ModelRoleSettingsSchema = z.object({
   primary: ModelRoleChoiceSchema.nullable(),
   backups: modelChoiceListSchema(ModelRoleChoiceSchema),
+  /**
+   * The main pool, in try order: the primary is its first entry. The chain
+   * walks the whole main pool before the backup pool.
+   */
+  mainPool: modelChoiceListSchema(ModelRoleChoiceSchema),
+  /** The backup pool, in try order; tried only after the main pool is exhausted. */
+  backupPool: modelChoiceListSchema(ModelRoleChoiceSchema),
 });
 export type ModelRoleSettings = z.infer<typeof ModelRoleSettingsSchema>;
 export const ModelRoleUpdateSchema = ModelRoleSettingsSchema.partial();

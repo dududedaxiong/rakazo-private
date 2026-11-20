@@ -83,8 +83,20 @@ async function renderGroup(
   overrides: {
     videoValue?: string;
     imageValue?: string;
-    videoFallbacks?: { key: string; label: string }[];
-    imageFallbacks?: { key: string; label: string }[];
+    videoMainFallbacks?: { key: string; label: string }[];
+    videoBackupFallbacks?: { key: string; label: string }[];
+    imageMainFallbacks?: { key: string; label: string }[];
+    imageBackupFallbacks?: { key: string; label: string }[];
+    locatedKey?: string | null;
+    locateKind?:
+      | "chat"
+      | "translation"
+      | "image"
+      | "video"
+      | "imageEdit"
+      | "videoEdit"
+      | "computer"
+      | null;
     videoTest?: MediaModelTestState;
     imageTest?: MediaModelTestState;
     videoPresets?: { name: string; prompt: string }[];
@@ -95,8 +107,10 @@ async function renderGroup(
     imageTriggerWords?: string;
     videoEditValue?: string;
     imageEditValue?: string;
-    videoEditFallbacks?: { key: string; label: string }[];
-    imageEditFallbacks?: { key: string; label: string }[];
+    videoEditMainFallbacks?: { key: string; label: string }[];
+    videoEditBackupFallbacks?: { key: string; label: string }[];
+    imageEditMainFallbacks?: { key: string; label: string }[];
+    imageEditBackupFallbacks?: { key: string; label: string }[];
     videoEditTest?: MediaModelTestState;
     imageEditTest?: MediaModelTestState;
   } = {},
@@ -105,10 +119,13 @@ async function renderGroup(
     root.render(
       <MediaModelGroup
         ids="media"
+        locatedKey={overrides.locatedKey ?? null}
+        locateKind={overrides.locateKind ?? null}
         videoChoices={videoChoices}
         videoValue={overrides.videoValue ?? ""}
         onVideoModelChange={onVideoModelChange}
-        videoFallbacks={overrides.videoFallbacks ?? []}
+        videoMainFallbacks={overrides.videoMainFallbacks ?? []}
+        videoBackupFallbacks={overrides.videoBackupFallbacks ?? []}
         onAddVideoFallback={onAddVideoFallback}
         onMoveVideoFallback={onMoveVideoFallback}
         onRemoveVideoFallback={onRemoveVideoFallback}
@@ -118,7 +135,8 @@ async function renderGroup(
         imageChoices={imageChoices}
         imageValue={overrides.imageValue ?? ""}
         onImageModelChange={onImageModelChange}
-        imageFallbacks={overrides.imageFallbacks ?? []}
+        imageMainFallbacks={overrides.imageMainFallbacks ?? []}
+        imageBackupFallbacks={overrides.imageBackupFallbacks ?? []}
         onAddImageFallback={onAddImageFallback}
         onMoveImageFallback={onMoveImageFallback}
         onRemoveImageFallback={onRemoveImageFallback}
@@ -140,7 +158,8 @@ async function renderGroup(
         videoEditChoices={videoChoices}
         videoEditValue={overrides.videoEditValue ?? ""}
         onVideoEditModelChange={onVideoEditModelChange}
-        videoEditFallbacks={overrides.videoEditFallbacks ?? []}
+        videoEditMainFallbacks={overrides.videoEditMainFallbacks ?? []}
+        videoEditBackupFallbacks={overrides.videoEditBackupFallbacks ?? []}
         onAddVideoEditFallback={onAddVideoEditFallback}
         onMoveVideoEditFallback={onMoveVideoEditFallback}
         onRemoveVideoEditFallback={onRemoveVideoEditFallback}
@@ -150,7 +169,8 @@ async function renderGroup(
         imageEditChoices={imageChoices}
         imageEditValue={overrides.imageEditValue ?? ""}
         onImageEditModelChange={onImageEditModelChange}
-        imageEditFallbacks={overrides.imageEditFallbacks ?? []}
+        imageEditMainFallbacks={overrides.imageEditMainFallbacks ?? []}
+        imageEditBackupFallbacks={overrides.imageEditBackupFallbacks ?? []}
         onAddImageEditFallback={onAddImageEditFallback}
         onMoveImageEditFallback={onMoveImageEditFallback}
         onRemoveImageEditFallback={onRemoveImageEditFallback}
@@ -196,12 +216,19 @@ async function setInput(input: HTMLInputElement | HTMLTextAreaElement, value: st
   });
 }
 
-function inputByLabel(label: string) {
-  const input = container.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+/** The preset dialog renders in a portal, outside the test container. */
+function dialogInputByLabel(label: string) {
+  const input = document.querySelector<HTMLInputElement | HTMLTextAreaElement>(
     `[aria-label="${label}"]`,
   );
-  if (!input) throw new Error(`Missing input "${label}"`);
+  if (!input) throw new Error(`Missing dialog input "${label}"`);
   return input;
+}
+
+function dialogButtonByText(text: string) {
+  const button = [...document.querySelectorAll("button")].find((node) => node.textContent === text);
+  if (!button) throw new Error(`Missing dialog button "${text}"`);
+  return button;
 }
 
 function buttonByText(text: string) {
@@ -225,14 +252,22 @@ async function click(button: Element) {
 }
 
 async function openNewPreset() {
-  await click(buttonByText("New preset"));
-  expect(inputByLabel("Preset name")).not.toBeNull();
-  expect(inputByLabel("Preset prompt")).not.toBeNull();
+  const add = container.querySelector<HTMLButtonElement>('[aria-label="New preset"]');
+  if (!add) throw new Error('Missing "+" preset button');
+  await click(add);
+  expect(dialogInputByLabel("Preset name")).not.toBeNull();
+  expect(dialogInputByLabel("Preset prompt")).not.toBeNull();
+}
+
+/** Opens the tag dialog for an existing preset. */
+async function openPreset(name: string) {
+  await click(presetRowButton(name));
+  expect(dialogInputByLabel("Preset name").value).toBe(name);
 }
 
 async function fillPreset(name: string, prompt: string) {
-  await setInput(inputByLabel("Preset name"), name);
-  await setInput(inputByLabel("Preset prompt"), prompt);
+  await setInput(dialogInputByLabel("Preset name"), name);
+  await setInput(dialogInputByLabel("Preset prompt"), prompt);
 }
 
 beforeEach(() => {
@@ -322,24 +357,24 @@ describe("MediaModelGroup", () => {
     expect(options).toContain("provider-a::video-c");
     expect(options).not.toContain("provider-a::video-a");
     await setSelect(add, "provider-a::video-b");
-    expect(onAddVideoFallback).toHaveBeenCalledWith("provider-a::video-b");
+    expect(onAddVideoFallback).toHaveBeenCalledWith("backup", "provider-a::video-b");
   });
 
   it("offers no fallback add when every choice is already used", async () => {
     await renderGroup({
       videoValue: "provider-a::video-a",
-      videoFallbacks: [
+      videoBackupFallbacks: [
         { key: "provider-a::video-b", label: "Video B" },
         { key: "provider-a::video-c", label: "Video C" },
       ],
       imageValue: "provider-a::image-a",
       videoEditValue: "provider-a::video-a",
-      videoEditFallbacks: [
+      videoEditBackupFallbacks: [
         { key: "provider-a::video-b", label: "Video B" },
         { key: "provider-a::video-c", label: "Video C" },
       ],
       imageEditValue: "provider-a::image-a",
-      imageEditFallbacks: [
+      imageEditBackupFallbacks: [
         { key: "provider-a::image-b", label: "Image B" },
         { key: "provider-a::image-c", label: "Image C" },
       ],
@@ -350,19 +385,50 @@ describe("MediaModelGroup", () => {
 
   it("offers a fallback add before a primary model is picked", async () => {
     await renderGroup();
-    const add = selectByLabel("Add fallback model");
+    const add = selectByLabel("Add main pool model");
     const options = [...add.options].map((option) => option.value);
     expect(options).toContain("provider-a::video-a");
     expect(options).toContain("provider-a::video-b");
     expect(options).toContain("provider-a::video-c");
     await setSelect(add, "provider-a::video-a");
-    expect(onAddVideoFallback).toHaveBeenCalledWith("provider-a::video-a");
+    expect(onAddVideoFallback).toHaveBeenCalledWith("main", "provider-a::video-a");
+  });
+
+  it("shows the main pool and the backup pool as separate sections", async () => {
+    await renderGroup({
+      videoValue: "provider-a::video-a",
+      videoMainFallbacks: [{ key: "provider-a::video-b", label: "Video B" }],
+      videoBackupFallbacks: [{ key: "provider-a::video-c", label: "Video C" }],
+    });
+    expect(container.textContent).toContain("Main pool (2)");
+    expect(container.textContent).toContain("Fallback models (1)");
+    expect(container.textContent).toContain("Video B");
+    expect(container.textContent).toContain("Video C");
+    // The main pool's add entry offers only models in neither pool.
+    const add = selectByLabel("Add main pool model");
+    const options = [...add.options].map((option) => option.value);
+    expect(options).not.toContain("provider-a::video-b");
+    expect(options).not.toContain("provider-a::video-c");
+  });
+
+  it("unfolds the backup pool onto a located fallback row", async () => {
+    await renderGroup({
+      videoValue: "provider-a::video-a",
+      videoBackupFallbacks: [{ key: "provider-a::video-c", label: "Video C" }],
+      locatedKey: "provider-a::video-c",
+      locateKind: "video",
+    });
+    const backup = [...container.querySelectorAll('[data-testid="fallback-disclosure"]')].find(
+      (node) => node.textContent?.includes("Fallback models"),
+    );
+    expect(backup?.querySelector("button")?.getAttribute("aria-expanded")).toBe("true");
+    expect(container.textContent).toContain("Located here");
   });
 
   it("moves a fallback up and down", async () => {
     await renderGroup({
       videoValue: "provider-a::video-a",
-      videoFallbacks: [
+      videoBackupFallbacks: [
         { key: "provider-a::video-b", label: "Video B" },
         { key: "provider-a::video-c", label: "Video C" },
       ],
@@ -371,9 +437,9 @@ describe("MediaModelGroup", () => {
     const downButtons = container.querySelectorAll('[aria-label="Move fallback model down"]');
     expect(upButtons).toHaveLength(2);
     await click(upButtons[1]!);
-    expect(onMoveVideoFallback).toHaveBeenCalledWith("provider-a::video-c", -1);
+    expect(onMoveVideoFallback).toHaveBeenCalledWith("backup", "provider-a::video-c", -1);
     await click(downButtons[0]!);
-    expect(onMoveVideoFallback).toHaveBeenCalledWith("provider-a::video-b", 1);
+    expect(onMoveVideoFallback).toHaveBeenCalledWith("backup", "provider-a::video-b", 1);
     expect((downButtons[1] as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -381,7 +447,7 @@ describe("MediaModelGroup", () => {
     await renderGroup();
     await openNewPreset();
     await fillPreset("水彩", "用水彩风格画");
-    await click(buttonByText("Save"));
+    await click(dialogButtonByText("Save"));
     expect(onVideoPresetsChange).toHaveBeenCalledWith([{ name: "水彩", prompt: "用水彩风格画" }]);
     expect(onVideoPresetChange).toHaveBeenCalledWith("水彩");
   });
@@ -390,8 +456,8 @@ describe("MediaModelGroup", () => {
     await renderGroup();
     await openNewPreset();
     await fillPreset("", "用水彩风格画");
-    await click(buttonByText("Save"));
-    expect(container.textContent).toContain("Enter a preset name");
+    await click(dialogButtonByText("Save"));
+    expect(document.body.textContent).toContain("Enter a preset name");
     expect(onVideoPresetsChange).not.toHaveBeenCalled();
   });
 
@@ -399,8 +465,8 @@ describe("MediaModelGroup", () => {
     await renderGroup({ videoPresets: [{ name: "水彩", prompt: "用水彩风格画" }] });
     await openNewPreset();
     await fillPreset("水彩", "换个画法");
-    await click(buttonByText("Save"));
-    expect(container.textContent).toContain("A preset with this name already exists");
+    await click(dialogButtonByText("Save"));
+    expect(document.body.textContent).toContain("A preset with this name already exists");
     expect(onVideoPresetsChange).not.toHaveBeenCalled();
   });
 
@@ -412,10 +478,9 @@ describe("MediaModelGroup", () => {
       ],
       activeVideoPreset: "水彩",
     });
-    await click(container.querySelectorAll('[aria-label="Edit preset"]')[0]!);
-    expect(inputByLabel("Preset name").value).toBe("水彩");
+    await openPreset("水彩");
     await fillPreset("水墨", "用水墨风格画");
-    await click(buttonByText("Save"));
+    await click(dialogButtonByText("Save"));
     expect(onVideoPresetsChange).toHaveBeenCalledWith([
       { name: "水墨", prompt: "用水墨风格画" },
       { name: "赛博", prompt: "赛博朋克风格" },
@@ -431,7 +496,10 @@ describe("MediaModelGroup", () => {
       ],
       activeVideoPreset: "水彩",
     });
-    await click(container.querySelectorAll('[aria-label="Delete preset"]')[0]!);
+    await openPreset("水彩");
+    const remove = document.querySelector<HTMLButtonElement>('[aria-label="Delete preset"]');
+    if (!remove) throw new Error("Missing Delete preset button");
+    await click(remove);
     expect(onVideoPresetsChange).toHaveBeenCalledWith([{ name: "赛博", prompt: "赛博朋克风格" }]);
     expect(onVideoPresetChange).toHaveBeenCalledWith(null);
   });
@@ -444,9 +512,7 @@ describe("MediaModelGroup", () => {
       })),
     });
     // The video section is at the limit; the image section still offers one.
-    expect(
-      [...container.querySelectorAll("button")].filter((node) => node.textContent === "New preset"),
-    ).toHaveLength(1);
+    expect(container.querySelectorAll('[aria-label="New preset"]')).toHaveLength(1);
   });
 
   it("tests the primary model and shows the result", async () => {
@@ -483,7 +549,7 @@ describe("MediaModelGroup", () => {
   it("tests a fallback, shows the failure, and offers set as primary on success", async () => {
     await renderGroup({
       videoValue: "provider-a::video-a",
-      videoFallbacks: [{ key: "provider-a::video-b", label: "Video B" }],
+      videoBackupFallbacks: [{ key: "provider-a::video-b", label: "Video B" }],
       videoTest: {
         status: "done",
         supported: false,
@@ -498,7 +564,7 @@ describe("MediaModelGroup", () => {
     );
     await renderGroup({
       videoValue: "provider-a::video-a",
-      videoFallbacks: [{ key: "provider-a::video-b", label: "Video B" }],
+      videoBackupFallbacks: [{ key: "provider-a::video-b", label: "Video B" }],
       videoTest: {
         status: "done",
         supported: true,
@@ -516,7 +582,7 @@ describe("MediaModelGroup", () => {
   it("lists fallback models and removes one", async () => {
     await renderGroup({
       videoValue: "provider-a::video-a",
-      videoFallbacks: [{ key: "provider-a::video-b", label: "Video B" }],
+      videoBackupFallbacks: [{ key: "provider-a::video-b", label: "Video B" }],
     });
     expect(container.textContent).toContain("Fallback models");
     expect(container.textContent).toContain("Video B");
@@ -525,13 +591,13 @@ describe("MediaModelGroup", () => {
     );
     expect(remove).not.toBeNull();
     await act(async () => remove!.click());
-    expect(onRemoveVideoFallback).toHaveBeenCalledWith("provider-a::video-b");
+    expect(onRemoveVideoFallback).toHaveBeenCalledWith("backup", "provider-a::video-b");
   });
 
   it("does not show an opaque fallback name directly", async () => {
     await renderGroup({
       videoValue: "provider-a::video-a",
-      videoFallbacks: [{ key: "provider-a::video-b", label: "7C3irl" }],
+      videoBackupFallbacks: [{ key: "provider-a::video-b", label: "7C3irl" }],
     });
     expect(container.textContent).not.toContain("7C3irl");
     expect(container.textContent).toContain("Model");

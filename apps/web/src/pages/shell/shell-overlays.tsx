@@ -125,6 +125,7 @@ export function SettingsOverlays({
   peerConversation,
   setPeerConversation,
   active,
+  locateComputerModel,
   onBotUpdated,
   peerBot,
 }: {
@@ -150,6 +151,8 @@ export function SettingsOverlays({
   peerConversation: { peerBotId: string; peerBotName: string } | null;
   setPeerConversation: (peer: null) => void;
   active: Bot | undefined;
+  /** A computer timeline's model, to open the Models page at its row. */
+  locateComputerModel?: { model: string; provider?: string; requestId: number } | null;
   /** After a persona switch from the template library, so the roster follows it. */
   onBotUpdated?: (bot: Bot) => void;
   peerBot: (botId: string) => { color: string; avatarSet?: BotAvatarSet } | undefined;
@@ -201,6 +204,7 @@ export function SettingsOverlays({
           section={overlay.section}
           onSectionChange={(section) => setOverlay({ ...overlay, section })}
           activeBot={active}
+          locateComputerModel={locateComputerModel}
           onBotUpdated={onBotUpdated}
           billingEnabled={bootstrapMe?.billingEnabled === true}
           sandboxProvider={bootstrapMe?.sandboxProvider}

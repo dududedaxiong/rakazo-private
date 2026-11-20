@@ -69,6 +69,8 @@ export function createModelSwitchAttempt(input: {
   /** The connection display name the model ran on; absent when unknown. */
   provider?: string;
   outcome: ModelSwitchAttempt["outcome"];
+  /** Which pool the model belongs to: "main" for the main pool, "backup" for the backup pool. */
+  pool?: ModelSwitchAttempt["pool"];
   /** Sanitized failure detail; ignored for a succeeded attempt. */
   error?: string;
   errorCode?: string;
@@ -85,6 +87,7 @@ export function createModelSwitchAttempt(input: {
     model: input.model,
     ...(input.provider?.trim() ? { provider: input.provider.trim() } : {}),
     outcome: input.outcome,
+    ...(input.pool ? { pool: input.pool } : {}),
     ...(errorCode ? { errorCode } : {}),
     ...(message ? { errorMessage: message } : {}),
     at: input.at ?? new Date().toISOString(),
@@ -111,20 +114,59 @@ export function recordModelSwitchAttempt(
 }
 
 /**
+ * The submitted video task failed upstream, so the model that submitted it
+ * did not deliver: its "succeeded" submit becomes a failed attempt. The
+ * entry keeps its provider and pool; a model with no entry gains a failed one.
+ */
+export function failModelSwitchAttempt(
+  attempts: ModelSwitchAttempt[],
+  model: string,
+  reason: string,
+  detail?: { provider?: string; pool?: ModelSwitchAttempt["pool"] },
+): void {
+  for (let index = attempts.length - 1; index >= 0; index--) {
+    const item = attempts[index]!;
+    if (item.model !== model) continue;
+    attempts[index] = createModelSwitchAttempt({
+      model: item.model,
+      ...(item.provider ? { provider: item.provider } : {}),
+      outcome: "failed",
+      ...(item.pool ? { pool: item.pool } : {}),
+      error: reason,
+    });
+    return;
+  }
+  recordModelSwitchAttempt(
+    attempts,
+    createModelSwitchAttempt({
+      model,
+      ...(detail?.provider ? { provider: detail.provider } : {}),
+      outcome: "failed",
+      ...(detail?.pool ? { pool: detail.pool } : {}),
+      error: reason,
+    }),
+  );
+}
+
+/**
  * The timeline for a finished message, or undefined when no switch happened:
  * a message answered by its first model carries none, even if that model was
- * retried, and a run with no successful attempt has no message to hang one on.
- * The final model is the last one that succeeded.
+ * retried. A run where no model answered still carries one: the attempts are
+ * the record of what was tried and why each failed, and the final model is
+ * the last one tried.
  */
 export function buildModelSwitches(
   attempts: readonly ModelSwitchAttempt[],
 ): ModelSwitches | undefined {
+  if (attempts.length === 0) return undefined;
   const succeeded = [...attempts].reverse().find((item) => item.outcome === "succeeded");
-  if (!succeeded) return undefined;
-  const finalKey = attemptKey(succeeded);
-  const switched = attempts.some(
-    (item) => item.outcome !== "succeeded" && attemptKey(item) !== finalKey,
-  );
-  if (!switched) return undefined;
-  return { attempts: [...attempts], finalModel: succeeded.model };
+  if (succeeded) {
+    const finalKey = attemptKey(succeeded);
+    const switched = attempts.some(
+      (item) => item.outcome !== "succeeded" && attemptKey(item) !== finalKey,
+    );
+    if (!switched) return undefined;
+    return { attempts: [...attempts], finalModel: succeeded.model };
+  }
+  return { attempts: [...attempts], finalModel: attempts.at(-1)!.model };
 }

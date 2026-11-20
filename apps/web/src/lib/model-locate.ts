@@ -1,7 +1,14 @@
 import { sameModelId } from "@rakazo_mickvvw/core";
 
 /** Which model list a timeline model name points at. */
-export type ModelLocateKind = "chat" | "translation" | "image" | "video";
+export type ModelLocateKind =
+  | "chat"
+  | "translation"
+  | "image"
+  | "video"
+  | "imageEdit"
+  | "videoEdit"
+  | "computer";
 
 /** A model named in a switch timeline, with the bot that owns its list. */
 export type ModelLocateTarget = {

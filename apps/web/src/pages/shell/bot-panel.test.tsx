@@ -40,6 +40,29 @@ vi.mock("@lingui/react/macro", () => {
 });
 vi.mock("@rakazo_mickvvw/ui-web", () => ({
   useCopyText: () => [false, () => {}],
+  Disclosure: ({
+    summary,
+    children,
+    defaultOpen: _defaultOpen,
+    open: _open,
+    onOpenChange: _onOpenChange,
+    ...props
+  }: {
+    summary?: ReactNode;
+    children?: ReactNode;
+    defaultOpen?: boolean;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+  } & ComponentProps<"div">) => (
+    <div {...props}>
+      {summary}
+      {children}
+    </div>
+  ),
+  Dialog: ({ open, children }: { open?: boolean; children?: ReactNode }) =>
+    open ? children : null,
+  DialogContent: (props: ComponentProps<"div">) => <div {...props} />,
+  DialogTitle: (props: ComponentProps<"div">) => <div {...props} />,
   SectionHeading: ({
     variant: _variant,
     ...props
@@ -175,10 +198,20 @@ function bot(description = "Billing", overrides: Partial<Bot> = {}): Bot {
     modelId: null,
     thinkingLevel: null,
     translationModels: null,
+    translationMainModels: null,
+    translationBackupModels: null,
     videoModels: null,
+    videoMainModels: null,
+    videoBackupModels: null,
     imageModels: null,
+    imageMainModels: null,
+    imageBackupModels: null,
     videoEditModels: null,
+    videoEditMainModels: null,
+    videoEditBackupModels: null,
     imageEditModels: null,
+    imageEditMainModels: null,
+    imageEditBackupModels: null,
     videoPromptPresets: null,
     activeVideoPromptPreset: null,
     imagePromptPresets: null,
@@ -1055,6 +1088,12 @@ describe("BotSettings media model settings", () => {
     await act(async () => {
       presetRowButton("赛博").click();
     });
+    // The tag opens its editor; close it before saving the panel.
+    await act(async () => {
+      [...container.querySelectorAll("button")]
+        .find((node) => node.textContent === "Cancel")!
+        .click();
+    });
     await clickSave();
     expect(onSave.mock.lastCall?.[0]).toMatchObject({
       videoModels: [
@@ -1068,9 +1107,7 @@ describe("BotSettings media model settings", () => {
   it("saves a newly created preset and activates the first one", async () => {
     await render("Billing", {} as Partial<Bot>);
     await act(async () => {
-      [...container.querySelectorAll("button")]
-        .find((node) => node.textContent === "New preset")!
-        .click();
+      container.querySelector<HTMLButtonElement>('[aria-label="New preset"]')!.click();
     });
     const nameInput = container.querySelector<HTMLInputElement>('[aria-label="Preset name"]');
     const promptInput = container.querySelector<HTMLTextAreaElement>(

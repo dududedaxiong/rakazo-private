@@ -1168,16 +1168,26 @@ model Bot {
   thinkingLevel     String?
   translationModelProvider  String?
   translationModelId        String?
-  /** Ordered translation models as JSON [{provider, model}]; first is primary, rest are fallbacks. */
+  /** Translation main pool as JSON [{provider, model}]; first is primary. */
   translationModels         Json?
-  /** Ordered video generation models as JSON [{provider, model}]; first is primary, rest are fallbacks. */
+  /** Translation backup pool as JSON [{provider, model}]; tried only after the main pool is exhausted. Null on rows written before the two pools existed: read as the main list's tail. */
+  translationBackupModels   Json?
+  /** Video generation main pool as JSON [{provider, model}]; first is primary. */
   videoModels               Json?
-  /** Ordered image generation models as JSON [{provider, model}]; first is primary, rest are fallbacks. */
+  /** Video generation backup pool as JSON [{provider, model}]; tried only after the main pool is exhausted. Null on rows written before the two pools existed: read as the main list's tail. */
+  videoBackupModels         Json?
+  /** Image generation main pool as JSON [{provider, model}]; first is primary. */
   imageModels               Json?
-  /** Ordered image edit models as JSON [{provider, model}]; first is primary, rest are fallbacks. */
+  /** Image generation backup pool as JSON [{provider, model}]; tried only after the main pool is exhausted. Null on rows written before the two pools existed: read as the main list's tail. */
+  imageBackupModels         Json?
+  /** Image edit main pool as JSON [{provider, model}]; first is primary. */
   imageEditModels           Json?
-  /** Ordered video edit models as JSON [{provider, model}]; first is primary, rest are fallbacks. */
+  /** Image edit backup pool as JSON [{provider, model}]; tried only after the main pool is exhausted. Null on rows written before the two pools existed: read as the main list's tail. */
+  imageEditBackupModels     Json?
+  /** Video edit main pool as JSON [{provider, model}]; first is primary. */
   videoEditModels           Json?
+  /** Video edit backup pool as JSON [{provider, model}]; tried only after the main pool is exhausted. Null on rows written before the two pools existed: read as the main list's tail. */
+  videoEditBackupModels     Json?
   /** Named prompt presets for video generation as JSON [{name, prompt}]. */
   videoPromptPresets        Json?
   /** Name of the active video prompt preset; null means no preset. */
@@ -1466,6 +1476,9 @@ model Message {
   /// The model-switch timeline for this message ({attempts, finalModel});
   /// NULL when the first model answered with no switch. Old rows stay NULL.
   modelSwitches    Json?
+  /// The computer-mode model-switch timeline for this message; NULL when
+  /// computer mode answered with no switch, or was never used.
+  computerModelSwitches Json?
   /// Blind-index search tokens for the encrypted blocks; NULL until the row is encrypted.
   searchTokens     Int[]
   sourceRuns            Run[]             @relation("RunSourceMessage")
@@ -2870,6 +2883,8 @@ model SpaceModelRoleChoice {
   modelId       String
   thinkingLevel String?
   credentialId  String?
+  /** Which pool this row belongs to: "main" or "backup". Null on rows written before the two pools existed: read as position 0 → main, rest → backup. */
+  pool          String?
   credential    UserModelCredential? @relation(fields: [credentialId, userId], references: [id, userId], onDelete: Cascade)
 
   @@id([spaceId, userId, role, position])
@@ -2901,6 +2916,8 @@ model UserModelRoleChoice {
   modelId       String
   thinkingLevel String?
   credentialId  String?
+  /** Which pool this row belongs to: "main" or "backup". Null on rows written before the two pools existed: read as position 0 → main, rest → backup. */
+  pool          String?
   credential    UserModelCredential? @relation(fields: [credentialId, userId], references: [id, userId], onDelete: Cascade)
 
   @@id([userId, role, position])

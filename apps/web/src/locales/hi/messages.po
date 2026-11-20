@@ -696,7 +696,7 @@ msgstr "इस पर्सोना के लिए एक नाम"
 msgid "A parent directory is missing on the server."
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "A preset with this name already exists"
 msgstr ""
 
@@ -885,9 +885,17 @@ msgstr "हेडर जोड़ें"
 msgid "Add item"
 msgstr "आइटम जोड़ें"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Add main pool model"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Add MCP server"
 msgstr "MCP सर्वर जोड़ें"
+
+#: src/pages/ModelRoleSettings.tsx
+msgid "Add model"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Add open work"
@@ -1007,6 +1015,10 @@ msgstr "सभी बॉट"
 #: src/pages/Artifacts.tsx
 msgid "All files"
 msgstr "सभी फ़ाइलें"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "All models failed"
+msgstr ""
 
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
@@ -1477,6 +1489,10 @@ msgstr ""
 msgid "Backup passwords need an HTTPS connection"
 msgstr ""
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Backup pool"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "बेस URL"
@@ -1709,11 +1725,11 @@ msgstr "तस्वीरें नहीं पढ़ सकता"
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
-#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
 msgstr "रद्द करें"
@@ -3145,6 +3161,10 @@ msgstr "मॉडल सहेजा नहीं जा सका"
 msgid "Could not save models"
 msgstr ""
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not save prompt preset"
+msgstr ""
+
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not save routine"
 msgstr "रूटीन सहेजा नहीं जा सका"
@@ -3671,6 +3691,7 @@ msgstr "डिफ़ॉल्ट टेम्पलेट पुनर्स्�
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
 msgstr "डिलीट करें"
@@ -3725,7 +3746,7 @@ msgstr "संगठन हटाएँ"
 msgid "Delete permanently"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Delete preset"
 msgstr ""
 
@@ -4031,7 +4052,7 @@ msgstr "पहले संपादित करें"
 msgid "Edit name"
 msgstr "नाम संपादित करें"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Edit preset"
 msgstr ""
 
@@ -4140,11 +4161,11 @@ msgstr "पासवर्ड दर्ज करें"
 msgid "Enter a port between 1 and 65535"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Enter a preset name"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Enter a prompt"
 msgstr ""
 
@@ -4411,8 +4432,8 @@ msgstr "विफल।"
 msgid "Failure handling"
 msgstr "विफलता प्रबंधन"
 
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Fallback models"
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Fallback models ({count})"
 msgstr ""
 
 #: src/pages/shell/media-result.tsx
@@ -5511,6 +5532,14 @@ msgstr "मुख्य मॉडल"
 msgid "Main persona"
 msgstr ""
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Main pool"
+msgstr ""
+
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Main pool ({count})"
+msgstr ""
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Make share card"
 msgstr ""
@@ -5859,6 +5888,7 @@ msgstr "मासिक क्रेडिट नवीनीकरण पर �
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-hover-actions.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "More"
 msgstr "और"
 
@@ -6074,7 +6104,7 @@ msgstr "नया खुला-कार्य आइटम"
 msgid "New password"
 msgstr "नया पासवर्ड"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "New preset"
 msgstr ""
 
@@ -6940,11 +6970,11 @@ msgstr "PR रिव्यूअर"
 msgid "Preferences"
 msgstr "प्राथमिकताएँ"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Preset name"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Preset prompt"
 msgstr ""
 
@@ -7018,10 +7048,6 @@ msgstr "प्रोग्राम: {name}"
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "Prompt"
 msgstr "प्रॉम्प्ट"
-
-#: src/pages/shell/media-result.tsx
-msgid "Prompt preset"
-msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Prompt templates"
@@ -7882,9 +7908,9 @@ msgstr "शनिवार"
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/media-result.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Save"
 msgstr "सहेजें"
 
@@ -8347,6 +8373,10 @@ msgstr "सभी दिखाएँ"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "बॉट दिखाएँ"
+
+#: src/pages/shell/prompt-preset-tags.tsx
+msgid "Show less"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -8816,7 +8846,6 @@ msgstr "सोचने की क्षमता का समर्थन क�
 msgid "Switch"
 msgstr "बदलें"
 
-#: src/pages/shell/media-result.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Switch history"
 msgstr ""

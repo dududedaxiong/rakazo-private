@@ -9,10 +9,12 @@ function deferred<T>() {
   });
   return { promise, resolve };
 }
-const empty: ModelRoleSettings = { primary: null, backups: [] };
+const empty: ModelRoleSettings = { primary: null, backups: [], mainPool: [], backupPool: [] };
 const saved: ModelRoleSettings = {
   primary: { provider: "openrouter", modelId: "typesafe/jev-1.14" },
   backups: [],
+  mainPool: [{ provider: "openrouter", modelId: "typesafe/jev-1.14" }],
+  backupPool: [],
 };
 function setup(key = crypto.randomUUID()) {
   const transport = {
@@ -89,6 +91,8 @@ describe("shared model role settings lifecycle", () => {
     const loaded: ModelRoleSettings = {
       primary: saved.primary,
       backups: [{ provider: "openrouter", modelId: "chat" }],
+      mainPool: saved.mainPool,
+      backupPool: [{ provider: "openrouter", modelId: "chat" }],
     };
     const load = deferred<ModelRoleSettings>();
     transport.load.mockReturnValueOnce(load.promise);
@@ -115,6 +119,8 @@ describe("shared model role settings lifecycle", () => {
         { provider: "openrouter", modelId: "chat" },
         { provider: "openrouter", modelId: "mini" },
       ],
+      mainPool: saved.mainPool,
+      backupPool: [{ provider: "openrouter", modelId: "chat" }],
     });
   });
   it("waits for a newer load that starts while a save is waiting", async () => {
@@ -155,22 +161,42 @@ describe("modelRoleListPatch", () => {
   });
 
   it("leaves an unchanged primary out of the save", () => {
-    expect(modelRoleListPatch({ primary, backups: [] }, [{ ...primary }, backup])).toEqual({
+    expect(
+      modelRoleListPatch(
+        { primary, backups: [], mainPool: [primary], backupPool: [] },
+        [{ ...primary }, backup],
+      ),
+    ).toEqual({
       backups: [backup],
     });
   });
 
   it("sends the primary when it changes, including the same model on another connection", () => {
-    expect(modelRoleListPatch({ primary, backups: [backup] }, [backup, primary])).toEqual({
+    expect(
+      modelRoleListPatch(
+        { primary, backups: [backup], mainPool: [primary], backupPool: [backup] },
+        [backup, primary],
+      ),
+    ).toEqual({
       primary: backup,
       backups: [primary],
     });
     const other = { ...primary, credentialId: "b" };
-    expect(modelRoleListPatch({ primary, backups: [] }, [other])).toEqual({
+    expect(
+      modelRoleListPatch(
+        { primary, backups: [], mainPool: [primary], backupPool: [] },
+        [other],
+      ),
+    ).toEqual({
       primary: other,
       backups: [],
     });
-    expect(modelRoleListPatch({ primary, backups: [] }, [])).toEqual({
+    expect(
+      modelRoleListPatch(
+        { primary, backups: [], mainPool: [primary], backupPool: [] },
+        [],
+      ),
+    ).toEqual({
       primary: null,
       backups: [],
     });

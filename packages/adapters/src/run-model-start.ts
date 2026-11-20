@@ -1,6 +1,6 @@
 import type { AgentRunRequest } from "@rakazo_mickvvw/adapter-kit";
 import { isModelCredentialRejected } from "@rakazo_mickvvw/adapter-kit";
-import type { ModelRoleChoice } from "@rakazo_mickvvw/contracts";
+import type { ModelRoleChoice, ModelRoleSettings } from "@rakazo_mickvvw/contracts";
 import { MISSING_MODEL_RUN_ERROR, MODEL_ACCESS_REQUIRED_RUN_ERROR } from "@rakazo_mickvvw/core";
 import { memberHasModelAccess } from "@rakazo_mickvvw/db";
 import { getLogger } from "@rakazo_mickvvw/logging";
@@ -25,24 +25,34 @@ export function runModelBackups(
   scripted: boolean,
   registerSecrets: (values: string[]) => void,
 ) {
-  let backupChoices: Promise<ModelRoleChoice[]> | undefined;
-  const load = () =>
-    (backupChoices ??= scripted
-      ? Promise.resolve([])
-      : effectiveModelRole(deps.prisma, run, "main", defaults).then(
-          (role) => role.backups,
-          (error: unknown) => {
-            getLogger().warn("Backup models could not be loaded", { runId: run.id, error });
-            return [];
-          },
-        ));
+  // The member's "main" role, both pools: the chain walks the whole main
+  // pool first, then the backup pool.
+  let roleChoices: Promise<ModelRoleSettings> | undefined;
+  const role = () =>
+    (roleChoices ??= scripted
+      ? Promise.resolve({ primary: null, backups: [], mainPool: [], backupPool: [] })
+      : effectiveModelRole(deps.prisma, run, "main", defaults).catch((error: unknown) => {
+          getLogger().warn("Backup models could not be loaded", { runId: run.id, error });
+          return { primary: null, backups: [], mainPool: [], backupPool: [] };
+        }));
+  const load = () => role().then((role) => role.backupPool);
   // Backups that could not start here are not offered again once the model runs.
   const unavailable = new Set<ModelRoleChoice>();
   // A main model with no connection, or whose provider refused its sign-in, runs on the
-  // first backup that starts. A pinned run asked for its model and keeps it.
-  const startOnBackup = async () => {
+  // first main-pool model that starts, then the first backup. A pinned run asked for
+  // its model and keeps it.
+  const startOnBackup = async (selected?: { provider: string | null | undefined; id: string | null | undefined }) => {
     if (run.modelPinned) return undefined;
-    for (const choice of await load()) {
+    const { mainPool, backupPool } = await role();
+    const choices = [
+      // The selected model is the main pool's first entry when it comes from
+      // the role; a bot override is not in the role at all.
+      ...mainPool.filter(
+        (choice) => choice.provider !== selected?.provider || choice.modelId !== selected?.id,
+      ),
+      ...backupPool,
+    ];
+    for (const choice of choices) {
       try {
         const backup = await resolveConnectedModelKey(
           deps,
@@ -73,7 +83,7 @@ export function runModelBackups(
     }
     return undefined;
   };
-  return { load, unavailable, startOnBackup };
+  return { load, role, unavailable, startOnBackup };
 }
 
 /**
@@ -144,7 +154,7 @@ export async function startRunModel(
   } else if (await modelAccessDenied()) {
     return { failure: { message: MISSING_MODEL_RUN_ERROR, accountFailure: true } };
   }
-  start ??= await backups.startOnBackup();
+  start ??= await backups.startOnBackup(selected);
   if (!start) {
     if (retryPrimary) throw retryPrimary;
     return { failure: primaryFailure };

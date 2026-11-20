@@ -28,17 +28,16 @@ export function deploymentModelRole(
 ): ModelRoleSettings {
   if (role === "approval") {
     const checker = resolveAutoReviewChecker(defaults.env);
-    return {
-      primary: checker ? { provider: checker.provider, modelId: checker.model } : null,
-      backups: [],
-    };
+    const primary = checker ? { provider: checker.provider, modelId: checker.model } : null;
+    return { primary, backups: [], mainPool: primary ? [primary] : [], backupPool: [] };
   }
   // No computer model means the main model works the screen itself.
-  if (role === "computer") return { primary: null, backups: [] };
+  if (role === "computer") return { primary: null, backups: [], mainPool: [], backupPool: [] };
   const provider = defaults.settings?.defaultModelProvider ?? defaults.deployment?.provider;
   const modelId =
     usableModelId(defaults.settings?.defaultModelId) ?? usableModelId(defaults.deployment?.model);
-  return { primary: provider && modelId ? { provider, modelId } : null, backups: [] };
+  const primary = provider && modelId ? { provider, modelId } : null;
+  return { primary, backups: [], mainPool: primary ? [primary] : [], backupPool: [] };
 }
 
 export type EffectiveModelRole = ModelRoleSettings & {
@@ -62,7 +61,9 @@ export async function effectiveModelRole(
   const deployment = deploymentModelRole(role, defaults);
   return {
     primary: deployment.primary,
-    backups: own.backups.length ? own.backups : deployment.backups,
+    backups: own.backupPool.length ? own.backupPool : deployment.backupPool,
+    mainPool: deployment.mainPool,
+    backupPool: own.backupPool.length ? own.backupPool : deployment.backupPool,
     primarySource: deployment.primary ? "deployment" : null,
   };
 }

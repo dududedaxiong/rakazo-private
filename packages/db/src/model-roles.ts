@@ -26,6 +26,7 @@ type StoredChoice = {
   modelId: string;
   thinkingLevel: string | null;
   credentialId: string | null;
+  pool: string | null;
 };
 type RoleOwner = { userId: string; spaceId?: string };
 /** The columns both copies share; the Space's rows are also keyed by its id. */
@@ -45,6 +46,7 @@ const storedChoice = {
   modelId: true,
   thinkingLevel: true,
   credentialId: true,
+  pool: true,
 } as const;
 
 function roleChoice(row: StoredChoice): ModelRoleChoice {
@@ -55,6 +57,29 @@ function roleChoice(row: StoredChoice): ModelRoleChoice {
     ...(thinkingLevel.success ? { thinkingLevel: thinkingLevel.data } : {}),
     ...(row.credentialId ? { credentialId: row.credentialId } : {}),
   };
+}
+
+/**
+ * Which pool a stored row belongs to. Rows written before the two pools
+ * existed carry no pool: position 0 is the main pool, the rest are the
+ * backup pool. A stored value outside "main" | "backup" reads the same way.
+ */
+function rowPool(row: StoredChoice): "main" | "backup" {
+  if (row.pool === "main" || row.pool === "backup") return row.pool;
+  return row.position === 0 ? "main" : "backup";
+}
+
+/** A role's rows split into its two pools, each in try order. */
+function splitRoleRows(rows: StoredChoice[]): {
+  mainPool: ModelRoleChoice[];
+  backupPool: ModelRoleChoice[];
+} {
+  const mainPool: ModelRoleChoice[] = [];
+  const backupPool: ModelRoleChoice[] = [];
+  for (const row of rows) {
+    (rowPool(row) === "main" ? mainPool : backupPool).push(roleChoice(row));
+  }
+  return { mainPool, backupPool };
 }
 
 function roleRows(prisma: RoleClient, target: ModelRoleTarget) {
@@ -107,10 +132,13 @@ export async function getModelRole(
     orderBy: [{ position: "asc" }],
     select: storedChoice,
   });
-  const primary = rows.find((row) => row.position === 0);
+  const { mainPool, backupPool } = splitRoleRows(rows);
   return {
-    primary: primary ? roleChoice(primary) : null,
-    backups: rows.filter((row) => row.position > 0).map(roleChoice),
+    // Kept for older clients: the primary is the main pool's first entry.
+    primary: mainPool[0] ?? null,
+    backups: backupPool,
+    mainPool,
+    backupPool,
   };
 }
 
@@ -118,14 +146,14 @@ export async function getModelRole(
 export async function listModelRoleChoices(
   prisma: RoleClient,
   target: ModelRoleTarget,
-): Promise<Array<ModelRoleChoice & { role: string; position: number }>> {
+): Promise<Array<ModelRoleChoice & { role: string; position: number; pool: "main" | "backup" }>> {
   const { table, owner } = roleRows(prisma, target);
   const rows = await table.findMany({
     where: owner,
     orderBy: [{ role: "asc" }, { position: "asc" }],
     select: storedChoice,
   });
-  return rows.map((row) => ({ ...roleChoice(row), role: row.role, position: row.position }));
+  return rows.map((row) => ({ ...roleChoice(row), role: row.role, position: row.position, pool: rowPool(row) }));
 }
 
 /**
@@ -174,7 +202,7 @@ export async function writeModelRole(
 ): Promise<ModelRoleSettings> {
   const { table, owner } = roleRows(tx, target);
   const current = await getModelRole(tx, target, role);
-  const saved = [...(current.primary ? [current.primary] : []), ...current.backups];
+  const saved = [...current.mainPool, ...current.backupPool];
   // The same row first, then the same model on another connection.
   const savedThinking = (choice: ModelRoleChoice) =>
     (
@@ -198,21 +226,42 @@ export async function writeModelRole(
         choice.thinkingLevel !== undefined ? choice.thinkingLevel : savedThinking(choice),
     };
   };
-  const primary =
-    patch.primary === undefined ? current.primary : patch.primary && withThinking(patch.primary);
-  // The primary already runs first, so a matching fallback would never be tried.
-  const backups = (patch.backups ?? current.backups)
+  // Two pools, one ordered list of rows: the main pool first, then the
+  // backup pool. New clients send mainPool/backupPool; older ones send
+  // primary/backups (primary = the main pool's only entry). A patch that
+  // names one pool leaves the other as it is.
+  const mainPool = (
+    patch.mainPool ??
+    (patch.primary === undefined
+      ? current.mainPool
+      : patch.primary
+        ? [patch.primary]
+        : [])
+  )
     .map(withThinking)
     .filter(
-      (backup, index, list) =>
-        (!primary || modelRoleChoiceKey(backup) !== modelRoleChoiceKey(primary)) &&
-        list.findIndex((item) => modelRoleChoiceKey(item) === modelRoleChoiceKey(backup)) === index,
+      (choice, index, list) =>
+        list.findIndex((item) => modelRoleChoiceKey(item) === modelRoleChoiceKey(choice)) ===
+        index,
+    );
+  const backupPool = (patch.backupPool ?? patch.backups ?? current.backupPool)
+    .map(withThinking)
+    .filter(
+      (choice, index, list) =>
+        // The main pool already runs first, so a matching backup would never be tried.
+        !mainPool.some((item) => modelRoleChoiceKey(item) === modelRoleChoiceKey(choice)) &&
+        list.findIndex((item) => modelRoleChoiceKey(item) === modelRoleChoiceKey(choice)) ===
+          index,
     );
   await table.deleteMany({ where: { ...owner, role } });
   await table.createMany({
     data: [
-      ...(primary ? [{ ...primary, position: 0 }] : []),
-      ...backups.map((backup, index) => ({ ...backup, position: index + 1 })),
+      ...mainPool.map((choice, index) => ({ ...choice, position: index, pool: "main" })),
+      ...backupPool.map((choice, index) => ({
+        ...choice,
+        position: mainPool.length + index,
+        pool: "backup",
+      })),
     ].map((row) => ({
       ...owner,
       role,
@@ -221,6 +270,7 @@ export async function writeModelRole(
       modelId: row.modelId,
       thinkingLevel: row.thinkingLevel ?? null,
       credentialId: row.credentialId ?? null,
+      pool: row.pool,
     })),
   });
   return getModelRole(tx, target, role);

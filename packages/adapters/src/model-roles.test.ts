@@ -217,12 +217,19 @@ describe("model roles", () => {
     expect(deploymentModelRole("main", deploymentDefaults)).toEqual({
       primary: { provider: "settings-provider", modelId: "settings-model" },
       backups: [],
+      mainPool: [{ provider: "settings-provider", modelId: "settings-model" }],
+      backupPool: [],
     });
     expect(
       deploymentModelRole("approval", {
         env: { RAKAZO_AUTO_REVIEW_PROVIDER: "local-provider", RAKAZO_AUTO_REVIEW_MODEL: "judge" },
       }),
-    ).toEqual({ primary: { provider: "local-provider", modelId: "judge" }, backups: [] });
+    ).toEqual({
+      primary: { provider: "local-provider", modelId: "judge" },
+      backups: [],
+      mainPool: [{ provider: "local-provider", modelId: "judge" }],
+      backupPool: [],
+    });
   });
 
   it("uses the deployment's defaults for a member who chose nothing", async () => {
@@ -231,11 +238,15 @@ describe("model roles", () => {
     ).resolves.toEqual({
       primary: { provider: "settings-provider", modelId: "settings-model" },
       backups: [],
+      mainPool: [{ provider: "settings-provider", modelId: "settings-model" }],
+      backupPool: [],
       primarySource: "deployment",
     });
     await expect(effectiveModelRole(roleClient([]), scope, "main", {})).resolves.toEqual({
       primary: null,
       backups: [],
+      mainPool: [],
+      backupPool: [],
       primarySource: null,
     });
   });
@@ -249,6 +260,8 @@ describe("model roles", () => {
     await expect(effectiveModelRole(prisma, scope, "main", deploymentDefaults)).resolves.toEqual({
       primary: { provider: "a", modelId: "m", thinkingLevel: "high" },
       backups: [{ provider: "b", modelId: "n" }],
+      mainPool: [{ provider: "a", modelId: "m", thinkingLevel: "high" }],
+      backupPool: [{ provider: "b", modelId: "n" }],
       primarySource: "member",
     });
   });
@@ -288,6 +301,8 @@ describe("model roles", () => {
     await expect(effectiveModelRole(prisma, scope, "main", deploymentDefaults)).resolves.toEqual({
       primary: { provider: "settings-provider", modelId: "settings-model" },
       backups: [{ provider: "b", modelId: "n" }],
+      mainPool: [{ provider: "settings-provider", modelId: "settings-model" }],
+      backupPool: [{ provider: "b", modelId: "n" }],
       primarySource: "deployment",
     });
   });

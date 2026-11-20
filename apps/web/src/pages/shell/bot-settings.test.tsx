@@ -32,6 +32,29 @@ vi.mock("@lingui/react/macro", () => {
   return { useLingui: () => ({ t }), Trans: ({ children }: { children: ReactNode }) => children };
 });
 vi.mock("@rakazo_mickvvw/ui-web", () => ({
+  Disclosure: ({
+    summary,
+    children,
+    defaultOpen: _defaultOpen,
+    open: _open,
+    onOpenChange: _onOpenChange,
+    ...props
+  }: {
+    summary?: ReactNode;
+    children?: ReactNode;
+    defaultOpen?: boolean;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+  } & ComponentProps<"div">) => (
+    <div {...props}>
+      {summary}
+      {children}
+    </div>
+  ),
+  Dialog: ({ open, children }: { open?: boolean; children?: ReactNode }) =>
+    open ? children : null,
+  DialogContent: (props: ComponentProps<"div">) => <div {...props} />,
+  DialogTitle: (props: ComponentProps<"div">) => <div {...props} />,
   SectionHeading: ({ variant, ...props }: ComponentProps<"h3"> & { variant?: string }) => (
     <h3 data-variant={variant} {...props} />
   ),

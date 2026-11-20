@@ -17,6 +17,7 @@ export * from "./bot-avatar-colors.js";
 export * from "./bot-avatar-shapes.js";
 export * from "./bot-mentions.js";
 export * from "./bot-messages.js";
+export * from "./bot-model-pools.js";
 export * from "./bot-package-export.js";
 export * from "./bot-package-import.js";
 export * from "./bot-package-skills.js";

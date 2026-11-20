@@ -2,7 +2,11 @@ import type { AgentRunModel } from "@rakazo_mickvvw/adapter-kit";
 import type { ModelRoleChoice } from "@rakazo_mickvvw/contracts";
 import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { describe, expect, it, vi } from "vitest";
-import { computerCheckpointResolver, resolveComputerRunModel } from "./computer-model-settings.js";
+import {
+  computerCheckpointResolver,
+  resolveComputerRunModel,
+  resolveComputerRunModels,
+} from "./computer-model-settings.js";
 
 const main: AgentRunModel = {
   provider: "openai",
@@ -98,6 +102,48 @@ describe("computer-use model resolution", () => {
     const deps = setup([vision]);
     const hosted = { ...main, connectionId: undefined };
     expect(await resolveComputerRunModel(deps, scope, hosted)).toBeUndefined();
+  });
+});
+describe("computer-use model chain", () => {
+  it("returns every usable model in pool order, tagged by pool", async () => {
+    const deps = setup([
+      vision,
+      { provider: "openai", modelId: "gpt-4o-mini", credentialId: "account-a" },
+      { provider: "openai", modelId: "gpt-4o", credentialId: "account-b" },
+    ]);
+    const models = await resolveComputerRunModels(deps, scope, main);
+    expect(models.map((model) => [model.id, model.pool, model.connectionId])).toEqual([
+      ["claude-sonnet-4-5", "main", "account-b"],
+      ["gpt-4o-mini", "backup", "account-a"],
+      ["gpt-4o", "backup", "account-b"],
+    ]);
+  });
+  it("skips an unavailable choice but keeps the rest of the chain", async () => {
+    const deps = setup(
+      [
+        { ...vision, modelId: "gone" },
+        { provider: "openai", modelId: "gpt-4o-mini", credentialId: "account-a" },
+      ],
+      ["gone"],
+    );
+    const models = await resolveComputerRunModels(deps, scope, main);
+    expect(models.map((model) => [model.id, model.pool])).toEqual([["gpt-4o-mini", "backup"]]);
+  });
+  it("returns no chain when the first choice is the main model on its connection", async () => {
+    const deps = setup([{ provider: main.provider, modelId: main.id }]);
+    expect(await resolveComputerRunModels(deps, scope, main)).toEqual([]);
+  });
+  it("keeps earlier models when the main model itself appears later in the list", async () => {
+    const deps = setup([
+      vision,
+      { provider: main.provider, modelId: main.id, credentialId: "account-a" },
+      { provider: "openai", modelId: "gpt-4o-mini", credentialId: "account-a" },
+    ]);
+    const models = await resolveComputerRunModels(deps, scope, main);
+    expect(models.map((model) => [model.id, model.pool])).toEqual([
+      ["claude-sonnet-4-5", "main"],
+      ["gpt-4o-mini", "backup"],
+    ]);
   });
 });
 it("leaves legacy checkpoint compatibility to the existing executor, including provider changes", () => {

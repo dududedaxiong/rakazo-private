@@ -77,6 +77,8 @@ export function SettingsOverlay({
   /** The chat open behind settings, when one is; the template library acts on it. */
   activeBot,
   onBotUpdated,
+  /** A computer timeline's model, to open the Models page at its row. */
+  locateComputerModel,
 }: {
   /** The space the Space page edits; it need not be the selected space. */
   space?: SettingsSpace | null;
@@ -122,6 +124,8 @@ export function SettingsOverlay({
   shellRpc: RpcClient;
   activeBot?: Bot | null;
   onBotUpdated?: (bot: Bot) => void;
+  /** A computer timeline's model, to open the Models page at its row. */
+  locateComputerModel?: { model: string; provider?: string; requestId: number } | null;
 }) {
   const { t, i18n } = useLingui();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -484,7 +488,12 @@ export function SettingsOverlay({
                   ) : null}
                   {section === "updates" && showUpdates ? <UpdatesSettingsPanel /> : null}
                   {section === "models" ? (
-                    <ModelSettingsOverlay embedded scope="account" onClose={requestClose} />
+                    <ModelSettingsOverlay
+                      embedded
+                      scope="account"
+                      onClose={requestClose}
+                      locateComputerModel={locateComputerModel}
+                    />
                   ) : null}
                   {section === "prompt-templates" ? (
                     <PromptTemplatesLibrary bot={activeBot} onBotUpdated={onBotUpdated} />

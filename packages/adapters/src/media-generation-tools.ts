@@ -8,12 +8,20 @@ import type {
 import { MediaGenerationError } from "@rakazo_mickvvw/adapter-kit";
 import type { MessageBlock, ModelSwitches } from "@rakazo_mickvvw/contracts";
 import { ModelSwitchesSchema } from "@rakazo_mickvvw/contracts";
-import { messageBlockForArtifact } from "@rakazo_mickvvw/core";
+import {
+  buildModelSwitches,
+  failModelSwitchAttempt,
+  messageBlockForArtifact,
+} from "@rakazo_mickvvw/core";
 import type { ExternalEffect, Prisma, PrismaClient } from "@rakazo_mickvvw/db";
 import { isUniqueViolation } from "@rakazo_mickvvw/db";
 import { getLogger } from "@rakazo_mickvvw/logging";
 import { z } from "zod";
-import { mediaPromptSchema, validateGeneratedMedia } from "./media-generation-provider.js";
+import {
+  decodeAsyncVideoJobId,
+  mediaPromptSchema,
+  validateGeneratedMedia,
+} from "./media-generation-provider.js";
 
 export const MEDIA_JOB_KIND = "media_generation_job";
 export const savedJob = z.object({
@@ -71,6 +79,14 @@ export async function generateMediaFromTool(options: {
   resume?: boolean;
   /** Reference media for an edit; absent, the call is a fresh generation. */
   references?: MediaReference[];
+  /**
+   * Until when (epoch ms) a failed polled video task may resubmit to the next
+   * model in its chain, inside the poll cycle. Only the poll worker passes
+   * it; without it a failed task settles failed. A resubmit is not a new
+   * generation: it continues the same job's model chain (same prompt, same
+   * job row), so `recoverOnly` still blocks fresh submissions.
+   */
+  resubmitUntil?: number;
   /** Detail edit or a fresh random generation; stored on the job row. */
   mode?: "edit" | "random";
   /** The artifact being edited, for an image edit; stored on the job row. */
@@ -300,6 +316,33 @@ export async function generateMediaFromTool(options: {
             status: "completed" as const,
             output: await provider.generateImage(input(), context),
           };
+      // A failed polled task moves to the next model in the same chain,
+      // within the poll cycle and before the job deadline. The prompt comes
+      // from the stored request; an edit needs its reference frame, and
+      // without one the chain cannot continue.
+      if (
+        video &&
+        saved.jobId &&
+        output.status === "failed" &&
+        options.resubmitUntil !== undefined &&
+        Date.now() < options.resubmitUntil &&
+        provider.resubmitVideoAfter
+      ) {
+        const request = mediaJobRequest.safeParse(reservation.request);
+        const isEdit = request.success && request.data.mode === "edit";
+        if (request.success && (!isEdit || options.references?.length)) {
+          const resubmitted = await provider.resubmitVideoAfter(
+            saved.jobId,
+            {
+              prompt: request.data.prompt,
+              ...(options.references?.length ? { references: options.references } : {}),
+            },
+            context,
+            saved.modelSwitches?.attempts ?? [],
+          );
+          if (resubmitted) output = resubmitted;
+        }
+      }
     } catch (error) {
       // Release only this check's claim; a finished or failed job stays settled.
       if (polling)
@@ -310,6 +353,20 @@ export async function generateMediaFromTool(options: {
       throw error;
     }
     if (video && "id" in output) {
+      // The timeline the settled result keeps: the output's own when it has
+      // one (a resubmit's), else the submit-time timeline with the failed
+      // submitter flipped to failed, so a failed job never records a success.
+      let settledSwitches: ModelSwitches | undefined;
+      if ("modelSwitches" in output && output.modelSwitches) {
+        settledSwitches = output.modelSwitches;
+      } else if (output.status === "failed" && saved.jobId) {
+        const failedModel = decodeAsyncVideoJobId(saved.jobId)?.model;
+        if (failedModel) {
+          const attempts = [...(saved.modelSwitches?.attempts ?? [])];
+          failModelSwitchAttempt(attempts, failedModel, "video task failed");
+          settledSwitches = buildModelSwitches(attempts);
+        }
+      }
       const settle = async (tx: Prisma.TransactionClient) => {
         const updated = await tx.externalEffect.updateMany({
           where: {
@@ -332,6 +389,7 @@ export async function generateMediaFromTool(options: {
               ...(saved.supplementaryPrompt
                 ? { supplementaryPrompt: saved.supplementaryPrompt }
                 : {}),
+              ...(settledSwitches ? { modelSwitches: settledSwitches } : {}),
             },
           },
         });
@@ -346,10 +404,14 @@ export async function generateMediaFromTool(options: {
         status: output.status,
         ...("progress" in output ? { progress: output.progress } : {}),
       };
+    // The output's own timeline when it has one; otherwise the submit-time
+    // timeline, so a poll-completed video still shows its switch history.
+    const completedSwitches = output.output.modelSwitches ?? saved.modelSwitches;
     const fetched = {
       provider: provider.id,
       ...("id" in output ? { jobId: output.id } : {}),
       ...(saved.supplementaryPrompt ? { supplementaryPrompt: saved.supplementaryPrompt } : {}),
+      ...(completedSwitches ? { modelSwitches: completedSwitches } : {}),
     };
     let attached: { artifactId: string; block: MessageBlock };
     try {
@@ -373,9 +435,9 @@ export async function generateMediaFromTool(options: {
     const modelId = output.output.modelId ?? undefined;
     const presetName = output.output.presetName ?? undefined;
     const meta =
-      output.output.modelSwitches || saved.supplementaryPrompt
+      completedSwitches || saved.supplementaryPrompt
         ? {
-            modelSwitches: output.output.modelSwitches,
+            modelSwitches: completedSwitches,
             supplementaryPrompt: saved.supplementaryPrompt,
           }
         : undefined;

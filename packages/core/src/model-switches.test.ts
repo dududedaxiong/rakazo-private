@@ -98,6 +98,37 @@ describe("recordModelSwitchAttempt and buildModelSwitches", () => {
     expect(buildModelSwitches([])).toBeUndefined();
   });
 
+  it("returns a timeline when every model failed, naming the last one tried", () => {
+    const failed = [
+      createModelSwitchAttempt({
+        model: "model-a",
+        provider: "主站",
+        outcome: "failed",
+        error: "429 Too many requests",
+      }),
+      createModelSwitchAttempt({
+        model: "model-b",
+        provider: "GB中转",
+        outcome: "failed",
+        error: "401 Unauthorized",
+      }),
+    ];
+    expect(buildModelSwitches(failed)).toEqual({
+      attempts: failed,
+      finalModel: "model-b",
+    });
+    expect(
+      buildModelSwitches([
+        createModelSwitchAttempt({ model: "model-a", outcome: "failed", error: "boom" }),
+      ]),
+    ).toEqual({
+      attempts: [
+        expect.objectContaining({ model: "model-a", outcome: "failed" }),
+      ],
+      finalModel: "model-a",
+    });
+  });
+
   it("keeps same-named models on different connections apart", () => {
     const attempts = [
       createModelSwitchAttempt({

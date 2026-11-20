@@ -21,8 +21,10 @@ import {
   BACKGROUND_RUN_TRIGGERS,
   displayName,
   isBackgroundRunTrigger,
+  mergeBotModelPools,
   phoneCallSettings,
   ringingCall,
+  splitBotModelPools,
   userVisibleMessages,
 } from "@rakazo_mickvvw/core";
 import { chooseBotAvatar } from "./bot-avatar-choice.js";
@@ -127,10 +129,15 @@ function mapBot(
     translationModelProvider?: string | null;
     translationModelId?: string | null;
     translationModels?: unknown;
+    translationBackupModels?: unknown;
     videoModels?: unknown;
+    videoBackupModels?: unknown;
     imageModels?: unknown;
+    imageBackupModels?: unknown;
     imageEditModels?: unknown;
+    imageEditBackupModels?: unknown;
     videoEditModels?: unknown;
+    videoEditBackupModels?: unknown;
     videoPromptPresets?: unknown;
     activeVideoPromptPreset?: string | null;
     imagePromptPresets?: unknown;
@@ -166,6 +173,17 @@ function mapBot(
   if (!bot.thread) {
     throw new IsolationError("Bot is missing its thread");
   }
+  // Each family reads as two pools; the legacy single list is the two pools
+  // merged, so older clients keep seeing the full ordered list.
+  const translationPools = splitBotModelPools(bot.translationModels, bot.translationBackupModels);
+  if (!translationPools.mainPool) {
+    // The single model older rows still carry, when no list was ever written.
+    translationPools.mainPool = resolveTranslationModels(bot);
+  }
+  const videoPools = splitBotModelPools(bot.videoModels, bot.videoBackupModels);
+  const imagePools = splitBotModelPools(bot.imageModels, bot.imageBackupModels);
+  const imageEditPools = splitBotModelPools(bot.imageEditModels, bot.imageEditBackupModels);
+  const videoEditPools = splitBotModelPools(bot.videoEditModels, bot.videoEditBackupModels);
   return {
     id: bot.id,
     spaceId: bot.spaceId,
@@ -196,11 +214,21 @@ function mapBot(
     modelProvider: bot.modelProvider ? canonicalPiProviderId(bot.modelProvider) : null,
     modelId: bot.modelId ?? null,
     thinkingLevel: (bot.thinkingLevel as Bot["thinkingLevel"]) ?? null,
-    translationModels: resolveTranslationModels(bot),
-    videoModels: parseBotModelList(bot.videoModels),
-    imageModels: parseBotModelList(bot.imageModels),
-    imageEditModels: parseBotModelList(bot.imageEditModels),
-    videoEditModels: parseBotModelList(bot.videoEditModels),
+    translationModels: mergeBotModelPools(translationPools),
+    translationMainModels: translationPools.mainPool,
+    translationBackupModels: translationPools.backupPool,
+    videoModels: mergeBotModelPools(videoPools),
+    videoMainModels: videoPools.mainPool,
+    videoBackupModels: videoPools.backupPool,
+    imageModels: mergeBotModelPools(imagePools),
+    imageMainModels: imagePools.mainPool,
+    imageBackupModels: imagePools.backupPool,
+    imageEditModels: mergeBotModelPools(imageEditPools),
+    imageEditMainModels: imageEditPools.mainPool,
+    imageEditBackupModels: imageEditPools.backupPool,
+    videoEditModels: mergeBotModelPools(videoEditPools),
+    videoEditMainModels: videoEditPools.mainPool,
+    videoEditBackupModels: videoEditPools.backupPool,
     videoPromptPresets: parseBotPromptPresets(bot.videoPromptPresets),
     activeVideoPromptPreset: bot.activeVideoPromptPreset ?? null,
     imagePromptPresets: parseBotPromptPresets(bot.imagePromptPresets),

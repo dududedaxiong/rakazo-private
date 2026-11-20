@@ -56,6 +56,13 @@ const mini = { provider: "openrouter", modelId: "mini" };
 const deepseek = { id: "deepseek", name: "DeepSeek" };
 /** A pick from a connection runs on that connection. */
 const pin = <T extends object>(choice: T) => ({ ...choice, credentialId: "key" });
+/** A role's saved list with its pools in step: the primary leads the main pool. */
+const roleSettings = (primary: Settings["primary"], backups: Settings["backups"]): Settings => ({
+  primary,
+  backups,
+  mainPool: primary ? [primary] : [],
+  backupPool: backups,
+});
 const onConnect = vi.fn();
 const onManage = vi.fn();
 let container: HTMLDivElement;
@@ -124,7 +131,7 @@ beforeEach(() => {
     },
   );
   Element.prototype.scrollIntoView = () => undefined;
-  saved = { primary: null, backups: [] };
+  saved = roleSettings(null, []);
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   onConnect.mockReset();
   onManage.mockReset();
@@ -167,7 +174,7 @@ describe("shared role editor", () => {
     expect(container.querySelector('[data-testid="model-role-default"]')).not.toBeNull();
   });
   it("reopens on the cached list without a spinner while it refreshes", async () => {
-    saved = { primary: chat, backups: [mini] };
+    saved = roleSettings(chat, [mini]);
     await render();
     expect(rows()).toEqual(["ChatOpenRouter", "MiniOpenRouter"]);
     await act(async () => root.unmount());
@@ -189,14 +196,14 @@ describe("shared role editor", () => {
     await menu("Jev 1.14", "Move up");
     expect(saved.backups).toEqual([pin(jev), pin(chat)]);
     await menu("Chat", "Remove");
-    expect(saved).toEqual({ primary: null, backups: [pin(jev)] });
+    expect(saved).toEqual(roleSettings(null, [pin(jev)]));
     expect(api.setRole).toHaveBeenLastCalledWith(
       expect.objectContaining({ role: "main" }),
       expect.anything(),
     );
   });
   it("promotes a fallback with Move up by saving the primary and fallbacks together", async () => {
-    saved = { primary: chat, backups: [jev, mini] };
+    saved = roleSettings(chat, [jev, mini]);
     await render();
     await menu("Jev 1.14", "Move up");
     expect(api.setRole).toHaveBeenCalledTimes(1);
@@ -211,7 +218,7 @@ describe("shared role editor", () => {
     ]);
   });
   it("promotes the first fallback when the primary is removed", async () => {
-    saved = { primary: chat, backups: [jev, mini] };
+    saved = roleSettings(chat, [jev, mini]);
     await render();
     await menu("Chat", "Remove");
     expect(api.setRole).toHaveBeenLastCalledWith(
@@ -219,13 +226,35 @@ describe("shared role editor", () => {
       expect.anything(),
     );
   });
+  it("adds a model to the main pool ahead of the backups", async () => {
+    saved = roleSettings(chat, [jev]);
+    await render();
+    await pick("Add model", "Mini");
+    expect(saved.mainPool).toEqual([chat, pin(mini)]);
+    expect(saved.backupPool).toEqual([jev]);
+    expect(rows()).toEqual(["ChatOpenRouter", "MiniOpenRouter", "Jev 1.14OpenRouter"]);
+  });
+
+  it("folds extra main-pool models behind a Main pool disclosure and unfolds onto a located one", async () => {
+    saved = { ...roleSettings(chat, [jev]), mainPool: [chat, mini], backupPool: [jev] };
+    await render({ locatedModel: { model: "mini", provider: "OpenRouter", requestId: 1 } });
+    expect(container.textContent).toContain("Main pool (2)");
+    const main = [...container.querySelectorAll('[data-testid="fallback-disclosure"]')].find(
+      (node) => node.textContent?.includes("Main pool"),
+    );
+    expect(main?.querySelector("button")?.getAttribute("aria-expanded")).toBe("true");
+    expect(container.querySelector('[data-testid="model-role-row-2"]')?.className).toContain(
+      "bg-accent",
+    );
+  });
+
   it("lets any fallback lead the main model, including a deployment-managed one", async () => {
     const managed = { provider: "anthropic", modelId: "claude" };
     api.forRole.mockResolvedValue([
       ...catalog,
       { provider: "anthropic", id: "claude", label: "Claude", billing: "", managed: true },
     ]);
-    saved = { primary: chat, backups: [managed, mini] };
+    saved = roleSettings(chat, [managed, mini]);
     await render();
     await menu("Claude", "Move up");
     expect(api.setRole).toHaveBeenLastCalledWith(
@@ -234,7 +263,7 @@ describe("shared role editor", () => {
     );
   });
   it("names the deployment's model and resets to it, keeping the fallbacks", async () => {
-    saved = { primary: jev, backups: [mini], deploymentPrimary: chat };
+    saved = { ...roleSettings(jev, [mini]), deploymentPrimary: chat };
     await render({ modelRole: "approval", title: "Approval model" });
     await pick("Change Jev 1.14", "Chat");
     expect(saved).toMatchObject({ primary: null, backups: [mini] });
@@ -243,7 +272,7 @@ describe("shared role editor", () => {
     );
   });
   it("leaves a model where the loaded list has it when it is picked again", async () => {
-    saved = { primary: chat, backups: [jev] };
+    saved = roleSettings(chat, [jev]);
     await render();
     await click(trigger("Add fallback"));
     // A reload is still in flight when Mini is picked; it brings Mini in as the main model.
@@ -270,13 +299,13 @@ describe("shared role editor", () => {
     }
   });
   it("replaces a fallback in place without duplicating it", async () => {
-    saved = { primary: chat, backups: [jev] };
+    saved = roleSettings(chat, [jev]);
     await render();
     await pick("Change Jev 1.14", "Mini");
-    expect(saved).toEqual({ primary: chat, backups: [pin(mini)] });
+    expect(saved).toEqual(roleSettings(chat, [pin(mini)]));
   });
   it("hands a not-connected provider to the connect flow and reopens its models once connected", async () => {
-    saved = { primary: chat, backups: [] };
+    saved = roleSettings(chat, []);
     await render();
     await pick("Add fallback", "DeepSeek");
     expect(onConnect).toHaveBeenCalledWith(
@@ -290,7 +319,7 @@ describe("shared role editor", () => {
     expect(search?.value).toBe("OpenRouter");
   });
   it("does not reopen a picker after its model is replaced following a connection", async () => {
-    saved = { primary: chat, backups: [] };
+    saved = roleSettings(chat, []);
     await render();
     await pick("Change Chat", "DeepSeek");
     await act(async () =>
@@ -342,7 +371,7 @@ describe("shared role editor", () => {
         entry.id === "chat" ? { ...entry, thinkingLevels: ["off", "low", "high"] } : entry,
       ),
     );
-    saved = { primary: { ...chat, thinkingLevel: "high" }, backups: [jev] };
+    saved = roleSettings({ ...chat, thinkingLevel: "high" }, [jev]);
     await render({ thinking: true });
     expect(container.textContent).toContain("Thinking: High");
     await menu("Chat", "Manage OpenRouter");
@@ -358,7 +387,7 @@ describe("shared role editor", () => {
         entry.id === "chat" ? { ...entry, thinkingLevels: ["off", "low", "high"] } : entry,
       ),
     );
-    saved = { primary: { ...chat, thinkingLevel: "high" }, backups: [jev] };
+    saved = roleSettings({ ...chat, thinkingLevel: "high" }, [jev]);
     await render({ thinking: true });
     await menu("Chat", "Thinking");
     await click(
@@ -367,12 +396,14 @@ describe("shared role editor", () => {
       ),
     );
     expect(api.setRole).toHaveBeenLastCalledWith(
-      {
+      expect.objectContaining({
         role: "main",
         expectedUserId: "user",
         scope: "account",
         primary: { ...chat, thinkingLevel: "low" },
-      },
+        mainPool: [{ ...chat, thinkingLevel: "low" }],
+        backupPool: [jev],
+      }),
       expect.anything(),
     );
   });
@@ -390,7 +421,7 @@ describe("shared role editor", () => {
     expect(trigger("Change Approval model")?.disabled).toBe(false);
   });
   it("retains confirmed settings when a save fails", async () => {
-    saved = { primary: null, backups: [chat] };
+    saved = roleSettings(null, [chat]);
     api.setRole.mockRejectedValueOnce(new Error("save failed"));
     await render();
     await menu("Chat", "Remove");
@@ -409,7 +440,7 @@ it("names rows and menus by their connection", async () => {
       billing: "",
     },
   ]);
-  saved = { primary: null, backups: [{ provider: "anthropic", modelId: "claude" }] };
+  saved = roleSettings(null, [{ provider: "anthropic", modelId: "claude" }]);
   await render({
     modelRole: "approval",
     title: "Approval model",
@@ -441,7 +472,7 @@ it("groups models by connection and runs the same model on either account", asyn
     isDefault: false,
     hasKey: true,
   };
-  saved = { primary: pin(chat), backups: [] };
+  saved = roleSettings(pin(chat), []);
   await render({ credentials: [...credentials, work] });
   expect(rows()).toEqual(["ChatOpenRouter"]);
   await click(trigger("Add fallback"));
@@ -454,10 +485,7 @@ it("groups models by connection and runs the same model on either account", asyn
       entry.closest("[cmdk-group]")?.textContent?.startsWith("OpenRouter (Work)"),
   );
   await click(workChat);
-  expect(saved).toEqual({
-    primary: pin(chat),
-    backups: [{ ...chat, credentialId: "work" }],
-  });
+  expect(saved).toEqual(roleSettings(pin(chat), [{ ...chat, credentialId: "work" }]));
   expect(rows()).toEqual(["ChatOpenRouter", "ChatOpenRouter (Work)"]);
   await menu("Chat", "Manage OpenRouter");
   expect(onManage).toHaveBeenLastCalledWith("openrouter", "key");
@@ -465,8 +493,8 @@ it("groups models by connection and runs the same model on either account", asyn
 
 it("reads and saves a Space's own list without mixing it with the account's", async () => {
   const lists: Record<string, Settings> = {
-    account: { primary: pin(chat), backups: [] },
-    space: { primary: pin(mini), backups: [] },
+    account: roleSettings(pin(chat), []),
+    space: roleSettings(pin(mini), []),
   };
   api.role.mockImplementation(async ({ scope }: { scope: string }) => lists[scope]);
   api.setRole.mockImplementation(
@@ -491,7 +519,7 @@ it("reads and saves a Space's own list without mixing it with the account's", as
     expect.objectContaining({ scope: "space", backups: [pin(jev)] }),
     { context: { spaceId: "space" } },
   );
-  expect(lists.account).toEqual({ primary: pin(chat), backups: [] });
+  expect(lists.account).toEqual(roleSettings(pin(chat), []));
 
   await render({ scope: "account" });
   await vi.waitFor(() => expect(rows()).toEqual(["ChatOpenRouter"]));

@@ -3160,6 +3160,8 @@ describe("selected approval decision model execution", () => {
           approvalRole: {
             primary: { provider: "openrouter", modelId: "typesafe/jev-1.14" },
             backups: [],
+            mainPool: [{ provider: "openrouter", modelId: "typesafe/jev-1.14" }],
+            backupPool: [],
           },
         });
         await f.run();
@@ -3214,6 +3216,8 @@ it("tries a connected approval backup when the deployment checker is unavailable
       approvalRole: {
         primary: null,
         backups: [{ provider: "openrouter", modelId: "typesafe/jev-1.14" }],
+        mainPool: [],
+        backupPool: [{ provider: "openrouter", modelId: "typesafe/jev-1.14" }],
       },
     });
     await f.run();
@@ -3238,6 +3242,8 @@ it("asks instead of using deployment credentials after a selected approval conne
       approvalRole: {
         primary: { provider: "openrouter", modelId: "typesafe/jev-1.14" },
         backups: [],
+        mainPool: [{ provider: "openrouter", modelId: "typesafe/jev-1.14" }],
+        backupPool: [],
       },
     });
     await f.run();

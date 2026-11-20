@@ -696,7 +696,7 @@ msgstr "Um nome para esta persona"
 msgid "A parent directory is missing on the server."
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "A preset with this name already exists"
 msgstr ""
 
@@ -885,9 +885,17 @@ msgstr "Adicionar cabeçalho"
 msgid "Add item"
 msgstr "Adicionar item"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Add main pool model"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Add MCP server"
 msgstr "Adicionar servidor MCP"
+
+#: src/pages/ModelRoleSettings.tsx
+msgid "Add model"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Add open work"
@@ -1007,6 +1015,10 @@ msgstr "Todos os bots"
 #: src/pages/Artifacts.tsx
 msgid "All files"
 msgstr "Todos os arquivos"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "All models failed"
+msgstr ""
 
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
@@ -1477,6 +1489,10 @@ msgstr ""
 msgid "Backup passwords need an HTTPS connection"
 msgstr ""
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Backup pool"
+msgstr ""
+
 #: src/pages/memory-providers/ConnectionModeFields.tsx
 msgid "Base URL"
 msgstr "URL Base"
@@ -1709,11 +1725,11 @@ msgstr "Não pode ler imagens"
 #: src/pages/onboarding/model-step.tsx
 #: src/pages/PaymentWalletSettingsPanel.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
-#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/create-bot-dialog.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/media-result.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 #: src/pages/shell/stuck-run-actions.tsx
 msgid "Cancel"
 msgstr "Cancelar"
@@ -3145,6 +3161,10 @@ msgstr "Não foi possível salvar o modelo"
 msgid "Could not save models"
 msgstr ""
 
+#: src/pages/shell/media-result.tsx
+msgid "Could not save prompt preset"
+msgstr ""
+
 #: src/pages/shell/use-routine-editor.ts
 msgid "Could not save routine"
 msgstr "Não foi possível salvar a rotina"
@@ -3671,6 +3691,7 @@ msgstr "Modelos padrão restaurados"
 #: src/pages/shell/archived-chats.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/message-selection.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 #: src/pages/SpaceSettingOverrides.tsx
 msgid "Delete"
 msgstr "Excluir"
@@ -3725,7 +3746,7 @@ msgstr "Excluir organização"
 msgid "Delete permanently"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Delete preset"
 msgstr ""
 
@@ -4031,7 +4052,7 @@ msgstr "Editar primeiro"
 msgid "Edit name"
 msgstr "Editar nome"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Edit preset"
 msgstr ""
 
@@ -4140,11 +4161,11 @@ msgstr "Digite uma senha"
 msgid "Enter a port between 1 and 65535"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Enter a preset name"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Enter a prompt"
 msgstr ""
 
@@ -4411,8 +4432,8 @@ msgstr "Falhou."
 msgid "Failure handling"
 msgstr "Tratamento de falhas"
 
-#: src/pages/shell/bot-settings-sections.tsx
-msgid "Fallback models"
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Fallback models ({count})"
 msgstr ""
 
 #: src/pages/shell/media-result.tsx
@@ -5511,6 +5532,14 @@ msgstr "Modelo principal"
 msgid "Main persona"
 msgstr ""
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Main pool"
+msgstr ""
+
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Main pool ({count})"
+msgstr ""
+
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Make share card"
 msgstr ""
@@ -5859,6 +5888,7 @@ msgstr "Os créditos mensais expiram na renovação. As recargas não expiram."
 #: src/pages/plugins/plugin-browse.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/message-hover-actions.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "More"
 msgstr "Mais"
 
@@ -6074,7 +6104,7 @@ msgstr "Novo item de trabalho aberto"
 msgid "New password"
 msgstr "Nova senha"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "New preset"
 msgstr ""
 
@@ -6940,11 +6970,11 @@ msgstr "Revisor de PRs"
 msgid "Preferences"
 msgstr "Preferências"
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Preset name"
 msgstr ""
 
-#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Preset prompt"
 msgstr ""
 
@@ -7018,10 +7048,6 @@ msgstr "Programa: {name}"
 #: src/components/prompt-templates/PromptTemplateEditor.tsx
 msgid "Prompt"
 msgstr "Prompt"
-
-#: src/pages/shell/media-result.tsx
-msgid "Prompt preset"
-msgstr ""
 
 #: src/pages/settings-nav.ts
 msgid "Prompt templates"
@@ -7882,9 +7908,9 @@ msgstr "sábado"
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/RoutineEditor.tsx
 #: src/pages/shell/bot-panel.tsx
-#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/dialogs.tsx
 #: src/pages/shell/media-result.tsx
+#: src/pages/shell/prompt-preset-tags.tsx
 msgid "Save"
 msgstr "Salvar"
 
@@ -8347,6 +8373,10 @@ msgstr "Mostrar tudo"
 #: src/pages/shell/sidebar-header.tsx
 msgid "Show bots"
 msgstr "Mostrar bots"
+
+#: src/pages/shell/prompt-preset-tags.tsx
+msgid "Show less"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Show list"
@@ -8816,7 +8846,6 @@ msgstr "Suporta raciocínio"
 msgid "Switch"
 msgstr "Mudar"
 
-#: src/pages/shell/media-result.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Switch history"
 msgstr ""

@@ -156,12 +156,18 @@ export type FinalizeRunInput = FinalizeRunBase &
         markUnread?: boolean;
         /** The reply's model-switch timeline; only when a switch happened. */
         modelSwitches?: ModelSwitches;
+        /** The reply's computer-mode switch timeline; only when computer mode switched. */
+        computerModelSwitches?: ModelSwitches;
       }
     | {
         outcome: "failed";
         error: string;
         /** Reply text the user saw streaming before the failure, kept as a bot message. */
         partialReply?: MessageBlock[];
+        /** The run's model-switch timeline; only when a switch happened. Hangs on the partial reply when one exists. */
+        modelSwitches?: ModelSwitches;
+        /** The run's computer-mode switch timeline; only when computer mode switched. */
+        computerModelSwitches?: ModelSwitches;
       }
   );
 
@@ -772,12 +778,16 @@ async function finalizeRunOnce(
       input.outcome === "completed"
         ? completedRunBlocks(input.blocks, writableRun?.startedAt ?? null, now)
         : (input.partialReply ?? []);
+    // A malformed timeline never blocks the reply: the message lands without one.
+    // Parsed once here: the message takes them when there is one, and the
+    // run.failed event takes them when there is no message to hang them on.
+    const modelSwitches = input.modelSwitches
+      ? ModelSwitchesSchema.safeParse(input.modelSwitches).data
+      : undefined;
+    const computerModelSwitches = input.computerModelSwitches
+      ? ModelSwitchesSchema.safeParse(input.computerModelSwitches).data
+      : undefined;
     if (replyBlocks.length > 0) {
-      // A malformed timeline never blocks the reply: the message lands without one.
-      const modelSwitches =
-        input.outcome === "completed" && input.modelSwitches
-          ? ModelSwitchesSchema.safeParse(input.modelSwitches).data
-          : undefined;
       const message = await createThreadMessageInTransaction(tx, {
         threadId: input.threadId,
         role: "bot",
@@ -785,6 +795,7 @@ async function finalizeRunOnce(
         botId: input.botId,
         runId: input.runId,
         ...(modelSwitches ? { modelSwitches } : {}),
+        ...(computerModelSwitches ? { computerModelSwitches } : {}),
         ...(input.outcome === "completed"
           ? { markUnread: input.markUnread }
           : { clientNonce: partialReplyClientNonce(input.runId) }),
@@ -805,7 +816,16 @@ async function finalizeRunOnce(
       botId: input.botId,
       type: input.outcome === "completed" ? "run.completed" : "run.failed",
       runId: input.runId,
-      payload: input.outcome === "completed" ? {} : { error: input.error },
+      payload:
+        input.outcome === "completed"
+          ? {}
+          : {
+              error: input.error,
+              // A run that failed before any text streamed has no message to
+              // hang its timeline on; the record still rides the event.
+              ...(modelSwitches ? { modelSwitches } : {}),
+              ...(computerModelSwitches ? { computerModelSwitches } : {}),
+            },
     });
     await tx.event.deleteMany({
       where: { runId: input.runId, ...transientRunEventsWhere() },

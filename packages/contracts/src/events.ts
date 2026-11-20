@@ -510,6 +510,8 @@ export const ThreadMessageSchema = z.object({
   runId: Id.optional(),
   /** The model-switch timeline; only present when a switch happened. */
   modelSwitches: ModelSwitchesSchema.optional(),
+  /** The computer-mode switch timeline; only present when computer mode switched. */
+  computerModelSwitches: ModelSwitchesSchema.optional(),
   /** A translation kept on this message; only present when one was saved. */
   translation: SavedMessageTranslationSchema.optional(),
   /** Set when the message was sent from a live voice call; groups one call's transcript. */

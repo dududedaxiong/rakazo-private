@@ -1,5 +1,6 @@
 import type { AgentRunModel } from "@rakazo_mickvvw/adapter-kit";
 import { isModelCredentialRejected } from "@rakazo_mickvvw/adapter-kit";
+import type { ModelRoleChoice } from "@rakazo_mickvvw/contracts";
 import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { appliedModelRole } from "@rakazo_mickvvw/db";
 import { getLogger } from "@rakazo_mickvvw/logging";
@@ -13,6 +14,68 @@ type Resolve = (
   connectionId?: string,
   thinkingLevel?: string,
 ) => Promise<AgentRunModel>;
+
+/** A usable computer-use model, tagged with the pool it came from. */
+export type ComputerRunModel = AgentRunModel & { pool: "main" | "backup" };
+
+/**
+ * The member's usable computer-use models, in chain order: the whole main
+ * pool first, then the backup pool. None set, or none usable, leaves the main
+ * model working the screen itself.
+ */
+export async function resolveComputerRunModels(
+  deps: {
+    prisma: PrismaClient;
+    resolve: Resolve;
+    /** The connection that serves a choice saved without one. */
+    connectionFor: (provider: string, modelId: string) => Promise<string | undefined>;
+  },
+  scope: { userId: string; spaceId: string },
+  main: AgentRunModel,
+): Promise<ComputerRunModel[]> {
+  // A paused turn pins both identities by connection, so a hosted main model cannot switch.
+  if (!main.connectionId) return [];
+  const { mainPool, backupPool } = await appliedModelRole(deps.prisma, scope, "computer");
+  const choices: Array<{ choice: ModelRoleChoice; pool: "main" | "backup" }> = [
+    ...mainPool.map((choice) => ({ choice, pool: "main" as const })),
+    ...backupPool.map((choice) => ({ choice, pool: "backup" as const })),
+  ];
+  const usable: ComputerRunModel[] = [];
+  for (const { choice, pool } of choices) {
+    try {
+      const connectionId =
+        choice.credentialId ?? (await deps.connectionFor(choice.provider, choice.modelId));
+      if (!connectionId) continue;
+      if (
+        choice.provider === main.provider &&
+        choice.modelId === main.id &&
+        connectionId === main.connectionId
+      ) {
+        // The member's computer choice is the main model itself: the main
+        // model works the screen, so there is no computer detour. A usable
+        // computer model found earlier already wins; later choices are not
+        // consulted once the main model is the choice.
+        if (usable.length === 0) return [];
+        continue;
+      }
+      const model = await deps.resolve(
+        choice.provider,
+        choice.modelId,
+        connectionId,
+        choice.thinkingLevel ?? undefined,
+      );
+      // The same check computer mode runs, so a model it would refuse never breaks the run.
+      computerTarget(model);
+      usable.push({ ...model, pool });
+    } catch (error) {
+      getLogger().warn("computer_model.unavailable", {
+        "model.provider": choice.provider,
+        "error.message": error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+  return usable;
+}
 
 /**
  * The member's computer-use model: the first of their choices that computer mode can run.
@@ -28,37 +91,7 @@ export async function resolveComputerRunModel(
   scope: { userId: string; spaceId: string },
   main: AgentRunModel,
 ): Promise<AgentRunModel | undefined> {
-  // A paused turn pins both identities by connection, so a hosted main model cannot switch.
-  if (!main.connectionId) return undefined;
-  const { primary, backups } = await appliedModelRole(deps.prisma, scope, "computer");
-  for (const choice of primary ? [primary, ...backups] : []) {
-    try {
-      const connectionId =
-        choice.credentialId ?? (await deps.connectionFor(choice.provider, choice.modelId));
-      if (!connectionId) continue;
-      if (
-        choice.provider === main.provider &&
-        choice.modelId === main.id &&
-        connectionId === main.connectionId
-      )
-        return undefined;
-      const model = await deps.resolve(
-        choice.provider,
-        choice.modelId,
-        connectionId,
-        choice.thinkingLevel ?? undefined,
-      );
-      // The same check computer mode runs, so a model it would refuse never breaks the run.
-      computerTarget(model);
-      return model;
-    } catch (error) {
-      getLogger().warn("computer_model.unavailable", {
-        "model.provider": choice.provider,
-        "error.message": error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-  return undefined;
+  return (await resolveComputerRunModels(deps, scope, main))[0];
 }
 
 const LOST_PIN_MESSAGES = new Set([

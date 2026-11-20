@@ -6,6 +6,7 @@ import {
   parseBotPromptPresets,
   withPromptPreset,
 } from "@rakazo_mickvvw/contracts";
+import { splitBotModelPools } from "@rakazo_mickvvw/core";
 import type { Bot } from "@rakazo_mickvvw/db";
 import type { BotMediaCallEntry, BotMediaKindCalls } from "./media-generation-provider.js";
 import { BotMediaGenerationProvider } from "./media-generation-provider.js";
@@ -30,7 +31,53 @@ type BotMediaFields = Pick<
   // Bots created before the edit lists existed carry no edit fields.
   imageEditModels?: Bot["imageEditModels"];
   videoEditModels?: Bot["videoEditModels"];
+  // Explicit pool fields on the mapped Bot view; absent on Prisma rows,
+  // which carry the stored columns instead (main pool in XModels, backup
+  // pool in XBackupModels).
+  imageMainModels?: BotModelEntry[] | null;
+  videoMainModels?: BotModelEntry[] | null;
+  imageEditMainModels?: BotModelEntry[] | null;
+  videoEditMainModels?: BotModelEntry[] | null;
+  imageBackupModels?: Bot["imageBackupModels"];
+  videoBackupModels?: Bot["videoBackupModels"];
+  imageEditBackupModels?: Bot["imageEditBackupModels"];
+  videoEditBackupModels?: Bot["videoEditBackupModels"];
 };
+
+/**
+ * One family's models in chain order — the whole main pool first, then the
+ * backup pool — each tagged with its pool. Works from the mapped Bot view
+ * (explicit pool fields) or a Prisma row (stored columns).
+ */
+function botModelPoolEntries(
+  bot: BotMediaFields,
+  keys: {
+    mainView: "imageMainModels" | "videoMainModels" | "imageEditMainModels" | "videoEditMainModels";
+    backupView:
+      | "imageBackupModels"
+      | "videoBackupModels"
+      | "imageEditBackupModels"
+      | "videoEditBackupModels";
+    mainStored: "imageModels" | "videoModels" | "imageEditModels" | "videoEditModels";
+    backupStored:
+      | "imageBackupModels"
+      | "videoBackupModels"
+      | "imageEditBackupModels"
+      | "videoEditBackupModels";
+  },
+): Array<BotModelEntry & { pool: "main" | "backup" }> {
+  const pools =
+    keys.mainView in bot || keys.backupView in bot
+      ? {
+          mainPool: parseBotModelList(bot[keys.mainView]),
+          backupPool: parseBotModelList(bot[keys.backupView]),
+        }
+      : splitBotModelPools(bot[keys.mainStored], bot[keys.backupStored]);
+  return [
+    ...(pools.mainPool ?? []).map((entry) => ({ ...entry, pool: "main" as const })),
+    ...(pools.backupPool ?? []).map((entry) => ({ ...entry, pool: "backup" as const })),
+  ];
+}
 
 /**
  * Resolves one bot media kind's ordered list into the calls to try, in order.
@@ -41,12 +88,17 @@ type BotMediaFields = Pick<
 async function resolveBotMediaKind(
   deps: ConnectedModelKeyDeps,
   scope: { userId: string; spaceId: string },
-  entries: readonly BotModelEntry[] | null,
+  entries: readonly (BotModelEntry & { pool: "main" | "backup" })[] | null,
   kind: "image" | "video",
   preset: BotPromptPreset | null,
 ): Promise<BotMediaKindCalls> {
   const calls: BotMediaCallEntry[] = [];
-  const failures: { modelId: string; reason: string; providerLabel?: string }[] = [];
+  const failures: {
+    modelId: string;
+    reason: string;
+    providerLabel?: string;
+    pool?: "main" | "backup";
+  }[] = [];
   for (const entry of entries ?? []) {
     try {
       const { resolved, credential } = await resolveConnectedModelKey(
@@ -60,6 +112,7 @@ async function resolveBotMediaKind(
         failures.push({
           modelId: entry.model,
           reason: "not connected",
+          pool: entry.pool,
           ...(credential?.label ? { providerLabel: credential.label } : {}),
         });
         continue;
@@ -78,6 +131,7 @@ async function resolveBotMediaKind(
         kind === "video" && (!resolved.apiProtocol || resolved.apiProtocol === "chat-completions");
       calls.push({
         modelId: entry.model,
+        pool: entry.pool,
         provider: entry.provider,
         ...(credential?.label ? { providerLabel: credential.label } : {}),
         ...(preset ? { presetName: preset.name } : {}),
@@ -132,7 +186,7 @@ async function resolveBotMediaKind(
           : {}),
       });
     } catch {
-      failures.push({ modelId: entry.model, reason: "not connected" });
+      failures.push({ modelId: entry.model, reason: "not connected", pool: entry.pool });
     }
   }
   return { calls, failures };
@@ -150,11 +204,37 @@ export async function resolveBotMediaGenerationProvider(
   bot: BotMediaFields,
   fallback?: MediaGenerationProvider,
 ): Promise<MediaGenerationProvider | undefined> {
-  const imageEntries = parseBotModelList(bot.imageModels);
-  const videoEntries = parseBotModelList(bot.videoModels);
-  const imageEditEntries = parseBotModelList(bot.imageEditModels);
-  const videoEditEntries = parseBotModelList(bot.videoEditModels);
-  if (!imageEntries && !videoEntries && !imageEditEntries && !videoEditEntries) return fallback;
+  const imageEntries = botModelPoolEntries(bot, {
+    mainView: "imageMainModels",
+    backupView: "imageBackupModels",
+    mainStored: "imageModels",
+    backupStored: "imageBackupModels",
+  });
+  const videoEntries = botModelPoolEntries(bot, {
+    mainView: "videoMainModels",
+    backupView: "videoBackupModels",
+    mainStored: "videoModels",
+    backupStored: "videoBackupModels",
+  });
+  const imageEditEntries = botModelPoolEntries(bot, {
+    mainView: "imageEditMainModels",
+    backupView: "imageEditBackupModels",
+    mainStored: "imageEditModels",
+    backupStored: "imageEditBackupModels",
+  });
+  const videoEditEntries = botModelPoolEntries(bot, {
+    mainView: "videoEditMainModels",
+    backupView: "videoEditBackupModels",
+    mainStored: "videoEditModels",
+    backupStored: "videoEditBackupModels",
+  });
+  if (
+    imageEntries.length === 0 &&
+    videoEntries.length === 0 &&
+    imageEditEntries.length === 0 &&
+    videoEditEntries.length === 0
+  )
+    return fallback;
   const imagePreset = activeBotPromptPreset(
     parseBotPromptPresets(bot.imagePromptPresets),
     bot.activeImagePromptPreset,

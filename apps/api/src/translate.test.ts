@@ -3,7 +3,11 @@ import type { Actor } from "@rakazo_mickvvw/contracts";
 import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { describe, expect, it, vi } from "vitest";
 import type { Translator } from "./translate.js";
-import { createTranslator, TranslationModelNotConfiguredError } from "./translate.js";
+import {
+  createTranslator,
+  TranslationFailedError,
+  TranslationModelNotConfiguredError,
+} from "./translate.js";
 
 const actor = {
   userId: "user-1",
@@ -14,6 +18,7 @@ const actor = {
 
 type BotConfig = {
   translationModels?: { provider: string; model: string }[] | null;
+  translationBackupModels?: { provider: string; model: string }[] | null;
   translationModelProvider?: string | null;
   translationModelId?: string | null;
 };
@@ -277,6 +282,65 @@ describe("createTranslator", () => {
     await expect(translator(actor, "bot-1", "hello", "auto", "zh")).rejects.toThrow(
       "Translation failed: model-1 (not connected), model-2 (Translation produced no text)",
     );
+  });
+
+  it("carries the attempts, tagged by pool, when every pool fails", async () => {
+    const { translator, resolveConnectedModel } = harness({
+      bot: {
+        translationModels: [{ provider: "test-provider", model: "model-1" }],
+        translationBackupModels: [{ provider: "test-provider", model: "model-2" }],
+      },
+      runs: [doneRun(""), doneRun("")],
+    });
+    resolveConnectedModel.mockImplementation(async (_scope, _provider, modelId) => {
+      if (modelId === "model-1") throw new Error("not connected");
+      return { provider: "test-provider", id: modelId };
+    });
+    const failure = await translator(actor, "bot-1", "hello", "auto", "zh").catch(
+      (error: unknown) => error,
+    );
+    expect(failure).toBeInstanceOf(TranslationFailedError);
+    expect((failure as TranslationFailedError).attempts).toMatchObject([
+      { model: "model-1", outcome: "skipped", pool: "main", errorMessage: "not connected" },
+      {
+        model: "model-2",
+        outcome: "failed",
+        pool: "backup",
+        errorMessage: "Translation produced no text",
+      },
+    ]);
+  });
+
+  it("tries the backup pool only after the main pool fails", async () => {
+    const { translator, resolveConnectedModel, run } = harness({
+      bot: {
+        translationModels: [{ provider: "test-provider", model: "model-1" }],
+        translationBackupModels: [{ provider: "test-provider", model: "model-2" }],
+      },
+      runs: [doneRun(""), doneRun(""), doneRun('{"detected": "en", "text": "你好"}')],
+    });
+    resolveConnectedModel.mockImplementation(async (_scope, _provider, modelId) => ({
+      provider: "test-provider",
+      id: modelId,
+      connectionLabel: "主站",
+    }));
+    const result = await translator(actor, "bot-1", "hello", "auto", "zh");
+    expect(result).toMatchObject({
+      translatedText: "你好",
+      modelId: "model-2",
+      usedFallback: true,
+      attempts: [
+        {
+          model: "model-1",
+          provider: "主站",
+          outcome: "failed",
+          pool: "main",
+          errorMessage: "Translation produced no text",
+        },
+        { model: "model-2", provider: "主站", outcome: "succeeded", pool: "backup" },
+      ],
+    });
+    expect(run).toHaveBeenCalledTimes(3);
   });
 
   it("reads an old single-model bot as a one-element list", async () => {

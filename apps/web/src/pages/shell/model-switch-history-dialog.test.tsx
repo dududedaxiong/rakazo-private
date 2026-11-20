@@ -150,6 +150,57 @@ describe("ModelSwitchHistoryDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("marks an all-failed timeline as failed, with the last model still locatable", async () => {
+    const failed: ModelSwitchAttempt[] = [
+      {
+        model: "deepseek-v4.1-flash",
+        provider: "Main",
+        outcome: "failed",
+        errorCode: "rate_limit",
+        errorMessage: "slow down",
+        at: "2026-11-15T10:00:00.000Z",
+      },
+      {
+        model: "krisphyn-DeepSeek-V4-Pro",
+        provider: "GB relay",
+        outcome: "failed",
+        errorCode: "connection",
+        errorMessage: "Connection failed.",
+        at: "2026-11-15T10:00:01.000Z",
+      },
+    ];
+    const onLocateModel = vi.fn();
+    act(() =>
+      root.render(
+        <ModelSwitchHistoryDialog
+          open
+          onOpenChange={() => undefined}
+          attempts={failed}
+          finalModel="krisphyn-DeepSeek-V4-Pro"
+          kind="chat"
+          botId="bot-1"
+          onLocateModel={onLocateModel}
+        />,
+      ),
+    );
+    const text = dialogText();
+    expect(text).toContain("All models failed");
+    expect(text).not.toContain("Finished, current model");
+    const modelButton = [...document.querySelectorAll("button")].find(
+      (button) => button.textContent === "krisphyn-DeepSeek-V4-Pro",
+    );
+    expect(modelButton).not.toBeUndefined();
+    await act(async () => {
+      modelButton?.click();
+    });
+    expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
+      kind: "chat",
+      botId: "bot-1",
+      model: "krisphyn-DeepSeek-V4-Pro",
+      provider: "GB relay",
+    });
+  });
+
   it("shows only the finishing line when nothing switched", () => {
     const single: ModelSwitchAttempt[] = [
       {
@@ -174,6 +225,52 @@ describe("ModelSwitchHistoryDialog", () => {
     const text = dialogText();
     expect(text).toContain("Finished, current model");
     expect(text).not.toContain("Switch to");
+  });
+
+  it("tags each attempt with its pool and leaves pool-less records untagged", () => {
+    const pooled: ModelSwitchAttempt[] = [
+      {
+        model: "model-a",
+        provider: "Main",
+        outcome: "failed",
+        errorCode: "rate_limit",
+        pool: "main",
+        at: "2026-11-15T10:00:00.000Z",
+      },
+      {
+        model: "model-b",
+        provider: "Main",
+        outcome: "failed",
+        errorCode: "rate_limit",
+        pool: "backup",
+        at: "2026-11-15T10:00:01.000Z",
+      },
+      {
+        model: "model-c",
+        provider: "Main",
+        outcome: "failed",
+        errorCode: "rate_limit",
+        at: "2026-11-15T10:00:02.000Z",
+      },
+    ];
+    act(() =>
+      root.render(
+        <ModelSwitchHistoryDialog
+          open
+          onOpenChange={() => undefined}
+          attempts={pooled}
+          finalModel="model-c"
+          kind="chat"
+          botId="bot-1"
+        />,
+      ),
+    );
+    const text = dialogText();
+    expect(text).toContain("Main pool");
+    expect(text).toContain("Backup pool");
+    // One main tag, one backup tag; the pool-less record adds no third tag.
+    expect(text.match(/Main pool/g)).toHaveLength(1);
+    expect(text.match(/Backup pool/g)).toHaveLength(1);
   });
 });
 

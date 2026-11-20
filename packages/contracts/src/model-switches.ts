@@ -11,6 +11,11 @@ export const ModelSwitchAttemptSchema = z.object({
    */
   provider: z.string().min(1).optional(),
   outcome: z.enum(["failed", "skipped", "succeeded"]),
+  /**
+   * Which pool the model belongs to: "main" for the main pool, "backup" for
+   * the backup pool. Absent on records written before the two pools existed.
+   */
+  pool: z.enum(["main", "backup"]).optional(),
   /** Short failure class for the timeline label (e.g. rate_limit, connection). */
   errorCode: z.string().min(1).optional(),
   /** Sanitized failure detail, truncated to 300 characters; never contains secrets. */

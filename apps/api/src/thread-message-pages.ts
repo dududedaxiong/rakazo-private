@@ -288,6 +288,7 @@ type MessageRow = {
   runId: string | null;
   clientNonce?: string | null;
   modelSwitches: Prisma.JsonValue;
+  computerModelSwitches: Prisma.JsonValue;
   createdAt: Date;
 };
 
@@ -365,6 +366,7 @@ function toThreadMessage(
   const author = row.authorUserId ? authors.get(row.authorUserId) : undefined;
   // A malformed timeline never breaks the page: the message reads without one.
   const modelSwitches = ModelSwitchesSchema.safeParse(row.modelSwitches).data;
+  const computerModelSwitches = ModelSwitchesSchema.safeParse(row.computerModelSwitches).data;
   return {
     id: row.id,
     threadId: row.threadId,
@@ -374,6 +376,7 @@ function toThreadMessage(
     botId: row.botId ?? undefined,
     ...(author ? { author } : {}),
     ...(modelSwitches ? { modelSwitches } : {}),
+    ...(computerModelSwitches ? { computerModelSwitches } : {}),
     ...(translation ? { translation } : {}),
     replyToMessageId: row.replyToMessageId ?? undefined,
     replyQuote: row.replyQuote ?? undefined,

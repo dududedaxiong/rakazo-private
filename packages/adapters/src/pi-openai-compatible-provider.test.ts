@@ -2071,6 +2071,67 @@ describe("media model reply", () => {
     expect(failed.code).toBe("provider_failure");
   });
 
+  it("refuses an edit on a text-to-image-only model without calling it", async () => {
+    const fetchImpl = vi.fn<typeof fetch>();
+    const error = await mediaError(
+      generateMediaWithChatModel(
+        {
+          baseUrl,
+          model: "cogview-3-flash",
+          kind: "image",
+          prompt: "要有朦胧感",
+          references: [{ bytes: tinyPng, mimeType: "image/png" }],
+        },
+        fetchImpl,
+        undefined,
+        OWNER,
+      ),
+    );
+    expect(error.code).toBe("unsupported");
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("still generates from text on a text-to-image-only model", async () => {
+    const media = await generateMediaWithChatModel(
+      { baseUrl, model: "glm-image", kind: "image", prompt: "画一只猫" },
+      chatFetch(chatReply(`data:image/png;base64,${tinyPngBase64}`)),
+      undefined,
+      OWNER,
+    );
+    expect(media).toEqual({ bytes: tinyPng, mimeType: "image/png" });
+  });
+
+  it("sends the original image as input when another model edits it", async () => {
+    const seen: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      seen.push({ url: String(input), init });
+      return new Response(JSON.stringify(chatReply(`data:image/png;base64,${tinyPngBase64}`)), {
+        status: 200,
+      });
+    }) as typeof fetch;
+    const media = await generateMediaWithChatModel(
+      {
+        baseUrl,
+        model: "gemini-image-model",
+        kind: "image",
+        prompt: "要有朦胧感",
+        references: [{ bytes: tinyPng, mimeType: "image/png" }],
+      },
+      fetchImpl,
+      undefined,
+      OWNER,
+    );
+    expect(media).toEqual({ bytes: tinyPng, mimeType: "image/png" });
+    const body = JSON.parse(String(seen[0]?.init?.body ?? "{}")) as {
+      messages: Array<{ content: unknown }>;
+    };
+    const content = body.messages[0]?.content as Array<Record<string, unknown>>;
+    expect(content).toContainEqual({
+      type: "image_url",
+      image_url: { url: `data:image/png;base64,${tinyPngBase64}` },
+    });
+  });
+
   it("probes a model through the shared reply check", async () => {
     const supported = await probeMediaModel(
       { baseUrl, model: "image-model", kind: "image" },

@@ -5,7 +5,7 @@ import type {
   SavedMessageTranslation,
   TranslateOutput,
 } from "@rakazo_mickvvw/contracts";
-import { moveBotModelToFront } from "@rakazo_mickvvw/contracts";
+import { ModelSwitchAttemptSchema, moveBotModelToFront } from "@rakazo_mickvvw/contracts";
 import type { ShareCardTextOverride } from "@rakazo_mickvvw/core";
 import { displayName, modelOptionKey, stripLeadingOpaqueCodeLine } from "@rakazo_mickvvw/core";
 import {
@@ -53,7 +53,22 @@ type TranslationState =
   | { status: "idle" }
   | { status: "loading" }
   | { status: "done"; result: TranslateOutput }
-  | { status: "error"; message: string };
+  | { status: "error"; message: string; attempts?: ModelSwitchAttempt[] };
+
+/**
+ * The switch attempts a failed translation carried on its error, if the
+ * server sent any: the oRPC error's `data.attempts`, validated, never
+ * trusted blindly — a malformed list reads as no timeline, not a crash.
+ */
+function readTranslationAttempts(error: unknown): ModelSwitchAttempt[] | undefined {
+  if (!error || typeof error !== "object" || !("data" in error)) return undefined;
+  const data = (error as { data?: unknown }).data;
+  if (!data || typeof data !== "object" || !("attempts" in data)) return undefined;
+  const parsed = ModelSwitchAttemptSchema.array().safeParse(
+    (data as { attempts?: unknown }).attempts,
+  );
+  return parsed.success && parsed.data.length > 0 ? parsed.data : undefined;
+}
 
 /**
  * The language direction in a translation title: two groups, source and target,
@@ -256,10 +271,12 @@ export function useMessageTranslation({
       } catch (err) {
         recordModelStatus(primaryKey, { state: "unavailable", seconds: null });
         // The raw error, so the failure prompt can name the cause; the
-        // prompt itself turns it into plain language.
+        // prompt itself turns it into plain language. A failed run that
+        // carried its switch attempts shows the same timeline as a success.
         setState({
           status: "error",
           message: err instanceof Error ? err.message : String(err),
+          attempts: readTranslationAttempts(err),
         });
       }
     },
@@ -497,6 +514,17 @@ export function useMessageTranslation({
             retryAriaLabel={t`Retry translation`}
             modelPicker={modelPicker}
           />
+          {state.attempts ? (
+            <div className="mt-2">
+              <ModelSwitchHistoryEntry
+                attempts={state.attempts}
+                finalModel={state.attempts.at(-1)?.model ?? ""}
+                kind="translation"
+                botId={botId}
+                onLocateModel={onLocateModel}
+              />
+            </div>
+          ) : null}
         </div>
       ) : (
         <>
