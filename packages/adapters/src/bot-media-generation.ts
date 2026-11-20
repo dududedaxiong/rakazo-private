@@ -48,6 +48,13 @@ type BotMediaFields = Pick<
  * One family's models in chain order — the whole main pool first, then the
  * backup pool — each tagged with its pool. Works from the mapped Bot view
  * (explicit pool fields) or a Prisma row (stored columns).
+ *
+ * Each pool falls back on its own: a view field that is missing or null
+ * (a raw Prisma row carries the backup column but no main view field, so an
+ * all-or-nothing view check would read the main pool as empty) reads from
+ * the stored split, while an explicitly emptied pool (an empty array)
+ * parses to no list and stays empty — it must never resurrect the old
+ * stored list.
  */
 function botModelPoolEntries(
   bot: BotMediaFields,
@@ -66,13 +73,13 @@ function botModelPoolEntries(
       | "videoEditBackupModels";
   },
 ): Array<BotModelEntry & { pool: "main" | "backup" }> {
-  const pools =
-    keys.mainView in bot || keys.backupView in bot
-      ? {
-          mainPool: parseBotModelList(bot[keys.mainView]),
-          backupPool: parseBotModelList(bot[keys.backupView]),
-        }
-      : splitBotModelPools(bot[keys.mainStored], bot[keys.backupStored]);
+  const stored = splitBotModelPools(bot[keys.mainStored], bot[keys.backupStored]);
+  const mainRaw = bot[keys.mainView];
+  const backupRaw = bot[keys.backupView];
+  const pools = {
+    mainPool: mainRaw == null ? stored.mainPool : parseBotModelList(mainRaw),
+    backupPool: backupRaw == null ? stored.backupPool : parseBotModelList(backupRaw),
+  };
   return [
     ...(pools.mainPool ?? []).map((entry) => ({ ...entry, pool: "main" as const })),
     ...(pools.backupPool ?? []).map((entry) => ({ ...entry, pool: "backup" as const })),

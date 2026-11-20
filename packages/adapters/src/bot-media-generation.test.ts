@@ -339,6 +339,86 @@ describe("bot media routing", () => {
     });
   });
 
+  it("reads the edit list from a raw Prisma row, whose backup column exists but main view field does not", async () => {
+    await withChatServer(`data:image/png;base64,${tinyPngBase64}`, async (baseUrl, seen) => {
+      mockedResolveKey.mockResolvedValue(resolveKeyValue(baseUrl));
+      const fallback = new FakeMediaGenerationProvider();
+      // A raw Prisma row: the backup column is present (null) but there is
+      // no imageEditMainModels view field, so the old all-or-nothing view
+      // check read the edit list as empty and the edit never reached the
+      // guard — the client saw "no edit model configured" instead.
+      const rawRowEditImageBot = {
+        ...noMediaBot,
+        imageEditModels: [{ provider: "openai_compatible", model: "cogview-3-flash" }],
+        imageEditBackupModels: null,
+      };
+      const provider = await resolveBotMediaGenerationProvider(
+        deps,
+        scope,
+        rawRowEditImageBot,
+        fallback,
+      );
+      expect(provider?.editCapabilities).toEqual({ images: true, video: false });
+      // cogview is text-to-image-only: the guard refuses the edit before
+      // any request, so the failure names the model and says unsupported.
+      if (!provider) throw new Error("expected a media provider");
+      await expect(
+        provider.generateImage(
+          {
+            prompt: "make the sky bluer",
+            references: [{ bytes: tinyPng, mimeType: "image/png" }],
+          },
+          context,
+        ),
+      ).rejects.toThrow("cogview-3-flash (unsupported)");
+      expect(seen).toHaveLength(0);
+    });
+  });
+
+  it("keeps an explicitly emptied edit pool empty instead of resurrecting the stored list", async () => {
+    mockedResolveKey.mockResolvedValue(resolveKeyValue("http://127.0.0.1:8000/v1"));
+    const fallback = new FakeMediaGenerationProvider();
+    const emptiedEditImageBot = {
+      ...imageBot,
+      imageEditModels: [{ provider: "openai_compatible", model: "cogview-3-flash" }],
+      imageEditMainModels: [],
+      imageEditBackupModels: [],
+    };
+    const provider = await resolveBotMediaGenerationProvider(
+      deps,
+      scope,
+      emptiedEditImageBot,
+      fallback,
+    );
+    if (!provider) throw new Error("expected a media provider");
+    expect(provider.editCapabilities).toEqual({ images: false, video: false });
+    // Only the generation model resolved; the stored edit model was not revived.
+    expect(mockedResolveKey).toHaveBeenCalledTimes(1);
+    expect(mockedResolveKey).toHaveBeenCalledWith(deps, scope, "openai_compatible", "image-model");
+  });
+
+  it("reads the generation list from a raw Prisma row too", async () => {
+    await withChatServer(`data:image/png;base64,${tinyPngBase64}`, async (baseUrl, seen) => {
+      mockedResolveKey.mockResolvedValue(resolveKeyValue(baseUrl));
+      const fallback = new FakeMediaGenerationProvider();
+      const rawRowImageBot = {
+        ...noMediaBot,
+        imageModels: [{ provider: "openai_compatible", model: "image-model" }],
+        imageBackupModels: null,
+      };
+      const provider = await resolveBotMediaGenerationProvider(
+        deps,
+        scope,
+        rawRowImageBot,
+        fallback,
+      );
+      expect(provider?.capabilities).toEqual({ images: true, video: true, offline: true });
+      const media = await provider?.generateImage({ prompt: "画一只猫" }, context);
+      expect(media).toEqual({ bytes: tinyPng, mimeType: "image/png", modelId: "image-model" });
+      expect(seen).toHaveLength(1);
+    });
+  });
+
   it("tries the next edit model when the primary edit model no longer resolves", async () => {
     await withChatServer(`data:image/png;base64,${tinyPngBase64}`, async (baseUrl, seen) => {
       mockedResolveKey.mockImplementation(async (_deps, _scope, _provider, modelId) => {

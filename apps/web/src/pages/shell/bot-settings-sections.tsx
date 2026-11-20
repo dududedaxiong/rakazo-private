@@ -1076,54 +1076,76 @@ function MediaModelFallbackList({
             locatedKey !== null &&
             locatedKey !== undefined &&
             locatedKey === fallback.key;
+          // The row's buttons squeeze the name to a couple of characters, so
+          // a located row — the one a timeline name just pointed at — gives
+          // the full name (with its provider) its own line and puts the
+          // buttons on the next one. Rows nobody located stay compact.
+          const buttons = (
+            <>
+              {located ? <LocatedTag /> : null}
+              {onTest ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={testing}
+                  onClick={() => onTest(fallback.key)}
+                >
+                  {testing ? t`Testing…` : t`Test`}
+                </Button>
+              ) : null}
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t`Move fallback model up`}
+                onClick={() => onMove(fallback.key, -1)}
+              >
+                <ChevronUp className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t`Move fallback model down`}
+                disabled={index === fallbacks.length - 1}
+                onClick={() => onMove(fallback.key, 1)}
+              >
+                <ChevronDown className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label={t`Remove fallback model`}
+                onClick={() => onRemove(fallback.key)}
+              >
+                <X className="size-4" />
+              </Button>
+            </>
+          );
           return (
             <li key={fallback.key}>
               <div
                 data-model-row={fallback.key}
-                className={`flex min-h-9 items-center gap-2 ${located ? "rounded-lg bg-accent px-2" : ""}`}
+                className={
+                  located ? "rounded-lg bg-accent px-2 py-1" : "flex min-h-9 items-center gap-2"
+                }
               >
-                <span
-                  className="min-w-0 flex-1 truncate text-body text-muted-foreground"
-                  dir="auto"
-                >
-                  {displayName(fallback.label, t`Model`)}
-                </span>
-                {located ? <LocatedTag /> : null}
-                {onTest ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={testing}
-                    onClick={() => onTest(fallback.key)}
-                  >
-                    {testing ? t`Testing…` : t`Test`}
-                  </Button>
-                ) : null}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t`Move fallback model up`}
-                  onClick={() => onMove(fallback.key, -1)}
-                >
-                  <ChevronUp className="size-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t`Move fallback model down`}
-                  disabled={index === fallbacks.length - 1}
-                  onClick={() => onMove(fallback.key, 1)}
-                >
-                  <ChevronDown className="size-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label={t`Remove fallback model`}
-                  onClick={() => onRemove(fallback.key)}
-                >
-                  <X className="size-4" />
-                </Button>
+                {located ? (
+                  <>
+                    <div className="min-w-0 break-words text-body text-muted-foreground" dir="auto">
+                      {displayName(fallback.label, t`Model`)}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-2">{buttons}</div>
+                  </>
+                ) : (
+                  <>
+                    <span
+                      className="min-w-0 flex-1 truncate text-body text-muted-foreground"
+                      dir="auto"
+                    >
+                      {displayName(fallback.label, t`Model`)}
+                    </span>
+                    {buttons}
+                  </>
+                )}
               </div>
               {tested && kind !== "translation" ? (
                 <MediaModelTestResult

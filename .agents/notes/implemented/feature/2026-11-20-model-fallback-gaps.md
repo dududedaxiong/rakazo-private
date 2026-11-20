@@ -140,6 +140,19 @@ Status: implemented
 - 翻译（08:26）：先补备选入口，再按两池做——§3 的单列表 UI 改成两池：主池节 + 备用池节（各有收纳栏）；翻译链走主池再走备用池，每模型 2 次、30 秒不变；翻译当前模型栏的切换明细与可点定位见 §4。
 - 已确认 2026-11-20 09:22（用户亲口“我去配 gemini，两池默认就这样”）：主池按列表顺序试；主池空了直接走备用池；某次切到备用池模型后，下次 run 重新从主池首位开始。两池是两个独立列表；现有主模型进主池、其余进备用池，旧数据不丢。
 
+### 13. Regenerate 路读原始行丢编辑列表（2026-11-20 部署验证，分支 feature/media-edit-pool-read-fix）
+
+- 现象：图片编辑列表明明配了 cogview-3-flash（主池 1 个），点细节修改却报“这个机器人还没有配置编辑模型”，全程没有“不支持图生图”。
+- 根因：regenerate 路的 bot 来自 `repos.getBot` 的原始 Prisma 行，行里有 `imageEditBackupModels` 列（null）、没有 `imageEditMainModels` 视图字段；`botModelPoolEntries` 的 `mainView in bot || backupView in bot` 检查误走视图分支，主池从不存在的字段读出空，编辑列表被读成空；`editCapabilities.images` 为 false，media.ts 的 regenerate 预检直接抛“还没有配置编辑模型”，根本没到 cogview 守卫。生成路径走 `mapBot`（视图字段齐全）所以不受影响。
+- 修法：逐池回退——视图字段缺失或 null 时读存储拆分，显式空数组（客户端清空的池）解析为空、保持为空，绝不回退到旧列表拆分。`botModelPoolEntries` 里 `mainPool: mainRaw == null ? stored.mainPool : parseBotModelList(mainRaw)`，备用池同理。
+- 单测：原始行（存储列表有 cogview、备用列 null）→ 编辑 entries 为主池 [cogview]，编辑走到守卫、报 unsupported 且零请求；视图字段显式空主池 → 保持为空；原始行生图列表同样读回。
+- 全失败时客户端文案（只记不改）：修完后编辑链全失败，存下的 run 错误是 `Media generation: provider_failure — cogview-3-flash (unsupported)`（模型名 + unsupported，内容诚实）；但线程 UI 不渲染失败 run 的行，浏览器通知只说通用的 “Failed.”，wake 跟进提示词（`Image job … failed. Do not resubmit unless the user asks.`）不带原因——所以用户在界面上仍然看不到一句“不支持图生图”式提示，原因只存在 run 错误与 `run.failed` 事件载荷里。要可见需另做失败 run 行 + 原因展示，不在本批。
+
+### 14. 被定位行显示完整模型名（2026-11-20 用户截图）
+
+- 现象：机器人设置模型列表的行把模型名和一排按钮挤在一行，名字只剩“c…”；从切换记录点模型名定位过来时，目标行高亮了、但认不出是不是要找的那个。
+- 修法：`MediaModelFallbackList` 的行，被定位时名字（含提供方标注，label 本就是 `withConnectionName(modelId, credential.label)`）单独占一行完整显示（可换行，不截断），按钮（定位到这里、测试、上移、下移、移除）放下一行；没被定位的行保持单行紧凑。定位行为不动（滚动、高亮不变）。同一组件服务全部家族（生图/视频/编辑/翻译），一处改好、处处生效。单测覆盖：被定位行首行是完整 label、无 truncate，按钮在下一行；未定位行仍是单行 truncate。
+
 ## Alternatives considered
 
 - **全失败时间线合并进 `modelSwitches`** — 否掉：各家族时间线相互独立是用户定好的（07:52），电脑的另开字段。
@@ -171,7 +184,7 @@ Status: implemented
 - 电脑备选是**运行中**解析的整表：设置改了，下次 run 生效；暂停恢复的 run 用 pinned 主模型 + 当前设置的备选（pinned 电脑模型本身不变）。
 - 翻译备选 UI 只做网页版；App 的翻译设置是另外的界面，本次不动（API 已支持整表，App 发整表即可用）。
 - 图片编辑守卫是模型名家族匹配（`cogview-*`、`glm-image`）：同家族出新一代模型时要复核它支不支持图生图，能力变了守卫须更新；守卫只在带 `references` 的调用里生效，文生图不受影响。守卫上线后，若编辑列表里只有不能编辑的模型，点细节修改会直接报“该模型不支持图生图”，而不是悄悄重画——这是功能在起作用，不是失败；配哪一款能编辑的模型归用户，不追踪、不作部署前置。
-- 已知缺口（未做）：run 在首字前就全失败（无 partial 文本）时，时间线只在 `run.failed` 事件里，线程 UI 不渲染失败 run 的行，所以用户在界面上还看不到它——要可见需另做“失败 run 行 + 时间线入口”；编辑模型 Test 探针若本次没改成带参考图，设置里仍测不出编辑能力，见实现时的取舍记录。
+- 已知缺口（未做）：run 在首字前就全失败（无 partial 文本）时，时间线只在 `run.failed` 事件里，线程 UI 不渲染失败 run 的行，所以用户在界面上还看不到它——要可见需另做“失败 run 行 + 时间线入口”；同理，媒体编辑链全失败时原因只在 run 错误与 `run.failed` 事件载荷里（见 §13），界面上没有一句“不支持图生图”式提示；编辑模型 Test 探针若本次没改成带参考图，设置里仍测不出编辑能力，见实现时的取舍记录。
 - 备选池走完的含义收窄：切换路径本身无上限，修的是切换后重试预算的续期；400 / 403 / 模型不存在等不可切换错误、工具调用开始后、内层流抛错这三处停点仍在，全失败时间线会写明是哪一处停住的——用户再问“切了几个”时以时间线为准，不再凭感觉。
 - 视频轮询重提交只在 poll worker 里发生（`generateMediaFromTool` 的 `resubmitUntil` 由 `pollMediaVideo` 传）；全局 QueueJobProvider 没有备选列表，不实现 `resubmitVideoAfter`，行为与现在一致。重提交的 job 行复用同一行（`result.jobId` 换成新提交的 id，`createdAt` 不变，截止不延期）；时间线从提交时存的 `modelSwitches` 续上。
 - 两池存储（§12）：角色行表加可空 `pool` 列（迁移只加列，旧行 pool 为空时按 position 0/其余分池）；Bot 家族新增 `XBackupModels` 列（迁移只加列，备用列为空时按首位/其余分池）。API 旧字段继续返回整表拼接，手机端不受影响；新字段 `mainPool`/`backupPool`（角色）与 `XMainModels`/`XBackupModels`（Bot）只给新版网页用。主池初始只有一个模型（现有主模型），用户在新 UI 里往主池加模型。

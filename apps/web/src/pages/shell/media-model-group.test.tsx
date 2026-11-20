@@ -425,6 +425,27 @@ describe("MediaModelGroup", () => {
     expect(container.textContent).toContain("Located here");
   });
 
+  it("shows the full name on its own line on a located fallback row", async () => {
+    await renderGroup({
+      videoValue: "provider-a::video-a",
+      videoBackupFallbacks: [
+        { key: "provider-a::video-b", label: "Video B" },
+        { key: "provider-a::video-c", label: "Video C" },
+      ],
+      locatedKey: "provider-a::video-c",
+      locateKind: "video",
+    });
+    const located = container.querySelector('[data-model-row="provider-a::video-c"]');
+    expect(located).not.toBeNull();
+    // The name gets its own line, untruncated, with the buttons below it.
+    expect(located?.children[0]?.textContent).toBe("Video C");
+    expect(located?.children[0]?.className).not.toContain("truncate");
+    expect(located?.children[1]?.textContent).toContain("Located here");
+    // A row nobody located stays compact: name and buttons on one line.
+    const plain = container.querySelector('[data-model-row="provider-a::video-b"]');
+    expect(plain?.querySelector("span.truncate")?.textContent).toBe("Video B");
+  });
+
   it("moves a fallback up and down", async () => {
     await renderGroup({
       videoValue: "provider-a::video-a",
