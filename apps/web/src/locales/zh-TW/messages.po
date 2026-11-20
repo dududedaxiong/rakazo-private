@@ -1490,6 +1490,7 @@ msgstr "兩次備份密碼不一致"
 msgid "Backup passwords need an HTTPS connection"
 msgstr "備份密碼需要 HTTPS 連線"
 
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Backup pool"
 msgstr "備用池"
@@ -4887,6 +4888,10 @@ msgstr "圖片生成模型"
 msgid "Image generation persona"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image input"
+msgstr "圖片輸入"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Image input is not configured for this model."
@@ -5480,6 +5485,10 @@ msgstr "存取本機電腦需要最新版桌面應用程式。"
 msgid "Local file"
 msgstr "本機檔案"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Locate"
+msgstr "定位到"
+
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/chat-model-picker.tsx
 msgid "Located here"
@@ -5533,6 +5542,7 @@ msgstr "主模型"
 msgid "Main persona"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Main pool"
 msgstr "主池"
@@ -5833,6 +5843,10 @@ msgstr "模型連線"
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Model id"
+msgstr "模型 ID"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Model ID"
 msgstr "模型 ID"
 
 #: src/components/FoundModelPicker.tsx
@@ -6446,6 +6460,7 @@ msgstr "暫不"
 msgid "Not selected"
 msgstr "未選擇"
 
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Not supported"
 msgstr "不支援"
@@ -6955,6 +6970,10 @@ msgstr "外掛"
 msgid "Port"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Position"
+msgstr "位置"
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "在聊天室中傳送「沒有變更」"
@@ -7066,6 +7085,7 @@ msgstr "通訊協定"
 #: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/onboarding/model-step.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Provider"
 msgstr "供應商"
@@ -7543,6 +7563,10 @@ msgstr "替換 API 金鑰"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "替換金鑰"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Replace model"
+msgstr "替換模型"
 
 #. placeholder {0}: block.replaces.origin
 #. placeholder {0}: initial.replacedSite
@@ -8833,6 +8857,10 @@ msgstr ""
 msgid "Supplementary prompt"
 msgstr "補充提示詞"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Supported"
+msgstr "支援"
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Supports images"
@@ -8912,6 +8940,10 @@ msgstr "表格"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "接管控制權"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Tap to go"
+msgstr "點擊前往"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Target"

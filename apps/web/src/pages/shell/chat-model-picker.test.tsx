@@ -42,6 +42,15 @@ function choices(count: number): ChatModelChoice[] {
   ];
 }
 
+function stubMatchMedia(coarse: boolean) {
+  window.matchMedia = ((query: string) => ({
+    matches: coarse && query === "(pointer: coarse)",
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  })) as unknown as typeof window.matchMedia;
+}
+
 describe("ChatModelPicker", () => {
   let root: Root;
   let container: HTMLDivElement;
@@ -49,6 +58,7 @@ describe("ChatModelPicker", () => {
 
   beforeEach(() => {
     vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+    stubMatchMedia(false);
     vi.stubGlobal(
       "ResizeObserver",
       class {
@@ -185,5 +195,28 @@ describe("ChatModelPicker", () => {
       align: "start",
       collisionAvoidance: { side: "flip", align: "shift", fallbackAxisSide: "none" },
     });
+  });
+
+  it("does not autofocus the search input on a coarse pointer", () => {
+    stubMatchMedia(true);
+    render(choices(11), "");
+    act(() => container.querySelector<HTMLButtonElement>("button#model")!.click());
+    expect(popoverProps.mock.lastCall?.[0]).toMatchObject({ initialFocus: false });
+  });
+
+  it("keeps the default focus on a fine pointer", () => {
+    render(choices(11), "");
+    act(() => container.querySelector<HTMLButtonElement>("button#model")!.click());
+    expect(popoverProps.mock.lastCall?.[0].initialFocus).toBeUndefined();
+  });
+
+  it("wraps the trigger's model name instead of truncating it", () => {
+    render(choices(11), "openrouter::vendor/model-2");
+    const trigger = container.querySelector<HTMLButtonElement>("button#model")!;
+    const name = trigger.querySelector("span");
+    expect(name?.className).not.toContain("truncate");
+    expect(name?.className).toContain("break-words");
+    expect(trigger.className).toContain("min-h-8");
+    expect(trigger.className).not.toContain(" h-8 ");
   });
 });

@@ -34,6 +34,14 @@ const videoChoices: ChatModelChoice[] = [
     label: "Video C",
     provider: "provider-a",
     modelId: "video-c",
+    providerLabel: "Provider A",
+    images: true,
+  },
+  {
+    key: "provider-a::video-d",
+    label: "Video D",
+    provider: "provider-a",
+    modelId: "video-d",
   },
 ];
 const imageChoices: ChatModelChoice[] = [
@@ -52,6 +60,7 @@ const onVideoModelChange = vi.fn();
 const onAddVideoFallback = vi.fn();
 const onMoveVideoFallback = vi.fn();
 const onRemoveVideoFallback = vi.fn();
+const onReplaceVideoFallback = vi.fn();
 const onTestVideoModel = vi.fn();
 const onApplyVideoTestedModel = vi.fn();
 const onVideoPresetsChange = vi.fn();
@@ -61,18 +70,21 @@ const onImageModelChange = vi.fn();
 const onAddImageFallback = vi.fn();
 const onMoveImageFallback = vi.fn();
 const onRemoveImageFallback = vi.fn();
+const onReplaceImageFallback = vi.fn();
 const onTestImageModel = vi.fn();
 const onApplyImageTestedModel = vi.fn();
 const onVideoEditModelChange = vi.fn();
 const onAddVideoEditFallback = vi.fn();
 const onMoveVideoEditFallback = vi.fn();
 const onRemoveVideoEditFallback = vi.fn();
+const onReplaceVideoEditFallback = vi.fn();
 const onTestVideoEditModel = vi.fn();
 const onApplyVideoEditTestedModel = vi.fn();
 const onImageEditModelChange = vi.fn();
 const onAddImageEditFallback = vi.fn();
 const onMoveImageEditFallback = vi.fn();
 const onRemoveImageEditFallback = vi.fn();
+const onReplaceImageEditFallback = vi.fn();
 const onTestImageEditModel = vi.fn();
 const onApplyImageEditTestedModel = vi.fn();
 const onImagePresetsChange = vi.fn();
@@ -129,6 +141,7 @@ async function renderGroup(
         onAddVideoFallback={onAddVideoFallback}
         onMoveVideoFallback={onMoveVideoFallback}
         onRemoveVideoFallback={onRemoveVideoFallback}
+        onReplaceVideoFallback={onReplaceVideoFallback}
         videoTest={overrides.videoTest ?? { status: "idle" }}
         onTestVideoModel={onTestVideoModel}
         onApplyVideoTestedModel={onApplyVideoTestedModel}
@@ -140,6 +153,7 @@ async function renderGroup(
         onAddImageFallback={onAddImageFallback}
         onMoveImageFallback={onMoveImageFallback}
         onRemoveImageFallback={onRemoveImageFallback}
+        onReplaceImageFallback={onReplaceImageFallback}
         imageTest={overrides.imageTest ?? { status: "idle" }}
         onTestImageModel={onTestImageModel}
         onApplyImageTestedModel={onApplyImageTestedModel}
@@ -163,6 +177,7 @@ async function renderGroup(
         onAddVideoEditFallback={onAddVideoEditFallback}
         onMoveVideoEditFallback={onMoveVideoEditFallback}
         onRemoveVideoEditFallback={onRemoveVideoEditFallback}
+        onReplaceVideoEditFallback={onReplaceVideoEditFallback}
         videoEditTest={overrides.videoEditTest ?? { status: "idle" }}
         onTestVideoEditModel={onTestVideoEditModel}
         onApplyVideoEditTestedModel={onApplyVideoEditTestedModel}
@@ -174,6 +189,7 @@ async function renderGroup(
         onAddImageEditFallback={onAddImageEditFallback}
         onMoveImageEditFallback={onMoveImageEditFallback}
         onRemoveImageEditFallback={onRemoveImageEditFallback}
+        onReplaceImageEditFallback={onReplaceImageEditFallback}
         imageEditTest={overrides.imageEditTest ?? { status: "idle" }}
         onTestImageEditModel={onTestImageEditModel}
         onApplyImageEditTestedModel={onApplyImageEditTestedModel}
@@ -272,6 +288,12 @@ async function fillPreset(name: string, prompt: string) {
 
 beforeEach(() => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  window.matchMedia ??= ((query: string) => ({
+    matches: false,
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  })) as unknown as typeof window.matchMedia;
   vi.stubGlobal(
     "ResizeObserver",
     class {
@@ -285,6 +307,7 @@ beforeEach(() => {
   onAddVideoFallback.mockReset();
   onMoveVideoFallback.mockReset();
   onRemoveVideoFallback.mockReset();
+  onReplaceVideoFallback.mockReset();
   onTestVideoModel.mockReset();
   onApplyVideoTestedModel.mockReset();
   onVideoPresetsChange.mockReset();
@@ -292,6 +315,7 @@ beforeEach(() => {
   onAddImageFallback.mockReset();
   onMoveImageFallback.mockReset();
   onRemoveImageFallback.mockReset();
+  onReplaceImageFallback.mockReset();
   onTestImageModel.mockReset();
   onApplyImageTestedModel.mockReset();
   onImagePresetsChange.mockReset();
@@ -366,12 +390,14 @@ describe("MediaModelGroup", () => {
       videoBackupFallbacks: [
         { key: "provider-a::video-b", label: "Video B" },
         { key: "provider-a::video-c", label: "Video C" },
+        { key: "provider-a::video-d", label: "Video D" },
       ],
       imageValue: "provider-a::image-a",
       videoEditValue: "provider-a::video-a",
       videoEditBackupFallbacks: [
         { key: "provider-a::video-b", label: "Video B" },
         { key: "provider-a::video-c", label: "Video C" },
+        { key: "provider-a::video-d", label: "Video D" },
       ],
       imageEditValue: "provider-a::image-a",
       imageEditBackupFallbacks: [
@@ -425,7 +451,7 @@ describe("MediaModelGroup", () => {
     expect(container.textContent).toContain("Located here");
   });
 
-  it("shows the full name on its own line on a located fallback row", async () => {
+  it("shows every row as a banner card with the full name on top", async () => {
     await renderGroup({
       videoValue: "provider-a::video-a",
       videoBackupFallbacks: [
@@ -435,15 +461,104 @@ describe("MediaModelGroup", () => {
       locatedKey: "provider-a::video-c",
       locateKind: "video",
     });
-    const located = container.querySelector('[data-model-row="provider-a::video-c"]');
-    expect(located).not.toBeNull();
-    // The name gets its own line, untruncated, with the buttons below it.
-    expect(located?.children[0]?.textContent).toBe("Video C");
-    expect(located?.children[0]?.className).not.toContain("truncate");
-    expect(located?.children[1]?.textContent).toContain("Located here");
-    // A row nobody located stays compact: name and buttons on one line.
-    const plain = container.querySelector('[data-model-row="provider-a::video-b"]');
-    expect(plain?.querySelector("span.truncate")?.textContent).toBe("Video B");
+    // Both rows are banner cards: the full name is the banner header on
+    // its own line, untruncated, with the buttons below it.
+    for (const [key, name] of [
+      ["provider-a::video-b", "Video B"],
+      ["provider-a::video-c", "Video C"],
+    ] as const) {
+      const row = container.querySelector(`[data-model-row="${key}"]`);
+      expect(row).not.toBeNull();
+      expect(row?.children[0]?.textContent).toBe(name);
+      expect(row?.children[0]?.className).not.toContain("truncate");
+      expect(row?.children[1]?.textContent).toContain("Test");
+    }
+    // The located card carries the colored border; the plain card does not.
+    expect(container.querySelector('[data-model-row="provider-a::video-c"]')?.className).toContain(
+      "border-primary",
+    );
+    expect(container.querySelector('[data-model-row="provider-a::video-b"]')?.className).toContain(
+      "border-transparent",
+    );
+  });
+
+  it("expands a card's details from the banner and hides what it does not know", async () => {
+    await renderGroup({
+      videoValue: "provider-a::video-a",
+      videoBackupFallbacks: [
+        { key: "provider-a::video-b", label: "Video B" },
+        { key: "provider-a::video-c", label: "Video C" },
+      ],
+    });
+    expect(container.querySelector('[data-testid="model-fallback-details"]')).toBeNull();
+    const bannerC = container.querySelector('[data-model-row="provider-a::video-c"] button');
+    await click(bannerC!);
+    const details = container.querySelector('[data-testid="model-fallback-details"]');
+    expect(details?.textContent).toContain("Provider A");
+    expect(details?.textContent).toContain("video-c");
+    expect(details?.textContent).toContain("Supported");
+    expect(details?.textContent).toContain("Backup pool #2");
+    // Tapping the same banner again closes it; tapping another moves it.
+    await click(bannerC!);
+    expect(container.querySelector('[data-testid="model-fallback-details"]')).toBeNull();
+    const bannerB = container.querySelector('[data-model-row="provider-a::video-b"] button');
+    await click(bannerB!);
+    const detailsB = container.querySelector('[data-testid="model-fallback-details"]');
+    // No provider label or image knowledge for this one: the provider id
+    // from the key shows, and the image row is omitted, never guessed.
+    expect(detailsB?.textContent).toContain("provider-a");
+    expect(detailsB?.textContent).toContain("video-b");
+    expect(detailsB?.textContent).not.toContain("Image input");
+    expect(detailsB?.textContent).toContain("Backup pool #1");
+  });
+
+  it("does not expand a card's details from its action buttons", async () => {
+    await renderGroup({
+      videoValue: "provider-a::video-a",
+      videoBackupFallbacks: [{ key: "provider-a::video-b", label: "Video B" }],
+    });
+    const row = container.querySelector('[data-model-row="provider-a::video-b"]');
+    const testButton = [...row!.querySelectorAll("button")].find(
+      (node) => node.textContent === "Test",
+    );
+    await click(testButton!);
+    expect(container.querySelector('[data-testid="model-fallback-details"]')).toBeNull();
+    expect(onTestVideoModel).toHaveBeenCalledWith("provider-a::video-b");
+  });
+
+  it("replaces a fallback in place from the same choices as add", async () => {
+    await renderGroup({
+      videoValue: "provider-a::video-a",
+      videoBackupFallbacks: [
+        { key: "provider-a::video-b", label: "Video B" },
+        { key: "provider-a::video-c", label: "Video C" },
+      ],
+    });
+    const row = container.querySelector('[data-model-row="provider-a::video-b"]');
+    const replace = row?.querySelector<HTMLSelectElement>('select[aria-label="Replace model"]');
+    expect(replace).not.toBeNull();
+    // The replace picker offers the same unused choices as the add entry.
+    expect([...replace!.options].map((option) => option.value)).toEqual([
+      "",
+      "provider-a::video-d",
+    ]);
+    // The buttons run replace, test, up, down, remove — in that order.
+    const controls = [...row!.querySelectorAll("select, button")]
+      .filter((node) => node.getAttribute("aria-expanded") === null)
+      .map((node) => node.getAttribute("aria-label") ?? node.textContent);
+    expect(controls).toEqual([
+      "Replace model",
+      "Test",
+      "Move fallback model up",
+      "Move fallback model down",
+      "Remove fallback model",
+    ]);
+    await setSelect(replace!, "provider-a::video-d");
+    expect(onReplaceVideoFallback).toHaveBeenCalledWith(
+      "backup",
+      "provider-a::video-b",
+      "provider-a::video-d",
+    );
   });
 
   it("moves a fallback up and down", async () => {

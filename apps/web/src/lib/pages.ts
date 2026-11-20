@@ -30,9 +30,12 @@ function readSurface(on: "card" | "background"): string {
   return getComputedStyle(document.documentElement).getPropertyValue(`--${on}`).trim();
 }
 
+/** Whether a media query matches; false where matchMedia does not exist
+ * (jsdom, server render), so a missing media API never crashes a render. */
 export function useMedia(query: string) {
   const subscribe = useCallback(
     (onChange: () => void) => {
+      if (typeof window.matchMedia !== "function") return () => undefined;
       const media = window.matchMedia(query);
       media.addEventListener("change", onChange);
       return () => media.removeEventListener("change", onChange);
@@ -41,7 +44,7 @@ export function useMedia(query: string) {
   );
   return useSyncExternalStore(
     subscribe,
-    () => window.matchMedia(query).matches,
+    () => (typeof window.matchMedia === "function" ? window.matchMedia(query).matches : false),
     () => false,
   );
 }

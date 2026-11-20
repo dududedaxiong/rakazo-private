@@ -13,7 +13,11 @@ vi.mock("@lingui/react/macro", () => ({
   }),
 }));
 
-import { ModelSwitchHistoryDialog, ModelSwitchHistoryEntry } from "./model-switch-history-dialog";
+import {
+  ModelSwitchHistoryDialog,
+  ModelSwitchHistoryEntry,
+  ModelSwitchMarkButton,
+} from "./model-switch-history-dialog";
 
 const attempts: ModelSwitchAttempt[] = [
   {
@@ -118,7 +122,7 @@ describe("ModelSwitchHistoryDialog", () => {
     expect(dialogText()).toContain("429 Too Many Requests: slow down.");
   });
 
-  it("calls onLocateModel with the model and provider, then closes", async () => {
+  it("opens the confirm popup on a model name and locates only from the popup", async () => {
     const onLocateModel = vi.fn();
     const onOpenChange = vi.fn();
     act(() =>
@@ -141,13 +145,54 @@ describe("ModelSwitchHistoryDialog", () => {
     await act(async () => {
       modelButton?.click();
     });
+    // The history closes behind the popup; nothing locates yet.
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onLocateModel).not.toHaveBeenCalled();
+    const popup = document.querySelector('[data-testid="model-locate-popup"]');
+    expect(popup?.textContent).toContain("Locate");
+    expect(popup?.textContent).toContain("deepseek-v4.1-flash（Main）");
+    expect(popup?.textContent).toContain("Tap to go");
+    const confirm = document.querySelector('[data-testid="model-locate-confirm"]');
+    await act(async () => {
+      (confirm as HTMLButtonElement | null)?.click();
+    });
     expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
       kind: "chat",
       botId: "bot-1",
       model: "deepseek-v4.1-flash",
       provider: "Main",
     });
-    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("closing the popup locates nothing", async () => {
+    const onLocateModel = vi.fn();
+    act(() =>
+      root.render(
+        <ModelSwitchHistoryDialog
+          open
+          onOpenChange={() => undefined}
+          attempts={attempts}
+          finalModel="krisphyn-DeepSeek-V4-Pro"
+          kind="chat"
+          botId="bot-1"
+          onLocateModel={onLocateModel}
+        />,
+      ),
+    );
+    const modelButton = [...document.querySelectorAll("button")].find(
+      (button) => button.textContent === "deepseek-v4.1-flash",
+    );
+    await act(async () => {
+      modelButton?.click();
+    });
+    const popup = document.querySelector('[data-testid="model-locate-popup"]');
+    expect(popup).not.toBeNull();
+    const close = popup?.querySelector('[data-slot="dialog-close"]');
+    await act(async () => {
+      (close as HTMLButtonElement | null)?.click();
+    });
+    expect(document.querySelector('[data-testid="model-locate-popup"]')).toBeNull();
+    expect(onLocateModel).not.toHaveBeenCalled();
   });
 
   it("marks an all-failed timeline as failed, with the last model still locatable", async () => {
@@ -192,6 +237,12 @@ describe("ModelSwitchHistoryDialog", () => {
     expect(modelButton).not.toBeUndefined();
     await act(async () => {
       modelButton?.click();
+    });
+    // The name opens the popup; the popup's name does the locating.
+    expect(document.querySelector('[data-testid="model-locate-popup"]')).not.toBeNull();
+    const confirm = document.querySelector('[data-testid="model-locate-confirm"]');
+    await act(async () => {
+      (confirm as HTMLButtonElement | null)?.click();
     });
     expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
       kind: "chat",
@@ -294,5 +345,89 @@ describe("ModelSwitchHistoryEntry", () => {
     });
     expect(document.querySelector('[data-testid="model-switch-history"]')).not.toBeNull();
     expect(dialogText()).toContain("Switch history");
+  });
+
+  it("closes the history behind the popup and locates only from the popup", async () => {
+    const onLocateModel = vi.fn();
+    act(() =>
+      root.render(
+        <ModelSwitchHistoryEntry
+          attempts={attempts}
+          finalModel="krisphyn-DeepSeek-V4-Pro"
+          kind="chat"
+          botId="bot-1"
+          onLocateModel={onLocateModel}
+        />,
+      ),
+    );
+    const entry = container.querySelector('[data-testid="model-switch-history-entry"]');
+    await act(async () => {
+      (entry as HTMLButtonElement | null)?.click();
+    });
+    expect(document.querySelector('[data-testid="model-switch-history"]')).not.toBeNull();
+    const modelButton = [...document.querySelectorAll("button")].find(
+      (button) => button.textContent === "deepseek-v4.1-flash",
+    );
+    await act(async () => {
+      modelButton?.click();
+    });
+    // The history is gone from over the settings; the popup is up instead.
+    expect(document.querySelector('[data-testid="model-switch-history"]')).toBeNull();
+    expect(document.querySelector('[data-testid="model-locate-popup"]')).not.toBeNull();
+    expect(onLocateModel).not.toHaveBeenCalled();
+    const confirm = document.querySelector('[data-testid="model-locate-confirm"]');
+    await act(async () => {
+      (confirm as HTMLButtonElement | null)?.click();
+    });
+    expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
+      kind: "chat",
+      botId: "bot-1",
+      model: "deepseek-v4.1-flash",
+      provider: "Main",
+    });
+  });
+});
+
+describe("ModelSwitchMarkButton", () => {
+  it("opens the popup on tap and locates from the popup's name", async () => {
+    const onLocateModel = vi.fn();
+    act(() =>
+      root.render(
+        <ModelSwitchMarkButton
+          model="deepseek-v4.1-flash"
+          kind="chat"
+          botId="bot-1"
+          onLocateModel={onLocateModel}
+        />,
+      ),
+    );
+    const mark = container.querySelector('[data-testid="model-switch-mark-entry"]');
+    expect(mark?.textContent).toContain("Current model: deepseek-v4.1-flash");
+    await act(async () => {
+      (mark as HTMLButtonElement | null)?.click();
+    });
+    const popup = document.querySelector('[data-testid="model-locate-popup"]');
+    expect(popup?.textContent).toContain("deepseek-v4.1-flash");
+    expect(onLocateModel).not.toHaveBeenCalled();
+    const confirm = document.querySelector('[data-testid="model-locate-confirm"]');
+    await act(async () => {
+      (confirm as HTMLButtonElement | null)?.click();
+    });
+    expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
+      kind: "chat",
+      botId: "bot-1",
+      model: "deepseek-v4.1-flash",
+    });
+  });
+
+  it("opens no popup without a locator", async () => {
+    act(() =>
+      root.render(<ModelSwitchMarkButton model="deepseek-v4.1-flash" kind="chat" botId="bot-1" />),
+    );
+    const mark = container.querySelector('[data-testid="model-switch-mark-entry"]');
+    await act(async () => {
+      (mark as HTMLButtonElement | null)?.click();
+    });
+    expect(document.querySelector('[data-testid="model-locate-popup"]')).toBeNull();
   });
 });

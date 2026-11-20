@@ -595,6 +595,11 @@ describe("message translation", () => {
     await act(async () => {
       modelButton?.click();
     });
+    expect(document.querySelector('[data-testid="model-locate-popup"]')).not.toBeNull();
+    const confirm = document.querySelector('[data-testid="model-locate-confirm"]');
+    await act(async () => {
+      (confirm as HTMLButtonElement | null)?.click();
+    });
     expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
       kind: "translation",
       botId: "bot-1",
@@ -1408,6 +1413,11 @@ describe("model switch history", () => {
     await act(async () => {
       modelButton?.click();
     });
+    expect(document.querySelector('[data-testid="model-locate-popup"]')).not.toBeNull();
+    const confirm = document.querySelector('[data-testid="model-locate-confirm"]');
+    await act(async () => {
+      (confirm as HTMLButtonElement | null)?.click();
+    });
     expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
       kind: "chat",
       botId: "bot-1",
@@ -1443,6 +1453,11 @@ describe("model switch history", () => {
     );
     await act(async () => {
       modelButton?.click();
+    });
+    expect(document.querySelector('[data-testid="model-locate-popup"]')).not.toBeNull();
+    const confirm = document.querySelector('[data-testid="model-locate-confirm"]');
+    await act(async () => {
+      (confirm as HTMLButtonElement | null)?.click();
     });
     expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
       kind: "computer",
@@ -1485,6 +1500,11 @@ describe("model switch history", () => {
     await act(async () => {
       (markEntry() as HTMLButtonElement | null)?.click();
     });
+    expect(document.querySelector('[data-testid="model-locate-popup"]')).not.toBeNull();
+    const confirm = document.querySelector('[data-testid="model-locate-confirm"]');
+    await act(async () => {
+      (confirm as HTMLButtonElement | null)?.click();
+    });
     expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
       kind: "chat",
       botId: "bot-1",
@@ -1513,6 +1533,11 @@ describe("model switch history", () => {
     expect(markEntry()?.textContent).toContain("Current model: model-b");
     await act(async () => {
       (markEntry() as HTMLButtonElement | null)?.click();
+    });
+    expect(document.querySelector('[data-testid="model-locate-popup"]')).not.toBeNull();
+    const confirm = document.querySelector('[data-testid="model-locate-confirm"]');
+    await act(async () => {
+      (confirm as HTMLButtonElement | null)?.click();
     });
     expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
       kind: "chat",

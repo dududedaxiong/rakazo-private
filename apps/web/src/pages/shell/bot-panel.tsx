@@ -692,6 +692,34 @@ export function BotSettings({
     });
   }
 
+  function replaceMediaPoolFallback(
+    role: MediaListRole,
+    pool: "main" | "backup",
+    oldKey: string,
+    newKey: string,
+  ) {
+    const parsed = parseModelOptionKey(newKey);
+    if (!parsed) return;
+    const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
+    const other = mediaPool(role, pool === "main" ? "backup" : "main");
+    if (other.some((item) => sameBotModel(item, entry))) return;
+    const setPool = mediaPoolSetter(role, pool);
+    setPool((current) => {
+      const index = current.findIndex(
+        (item) =>
+          modelOptionKey(
+            item.provider,
+            resolveSelectableModelId(catalog, item.provider, item.model),
+          ) === oldKey,
+      );
+      if (index < 0) return current;
+      if (current.some((item, at) => at !== index && sameBotModel(item, entry))) return current;
+      const next = [...current];
+      next[index] = entry;
+      return next;
+    });
+  }
+
   /** Picking a translation model moves it to the front of the main pool, out of the backup pool. */
   function changeTranslationModel(key: string) {
     if (!key) {
@@ -749,6 +777,29 @@ export function BotSettings({
       const item = next[index]!;
       next[index] = next[target]!;
       next[target] = item;
+      return next;
+    });
+  }
+
+  function replaceTranslationPoolFallback(pool: "main" | "backup", oldKey: string, newKey: string) {
+    const parsed = parseModelOptionKey(newKey);
+    if (!parsed) return;
+    const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
+    const other = pool === "main" ? translationBackupModels : translationMainModels;
+    if (other.some((item) => sameBotModel(item, entry))) return;
+    const setPool = pool === "main" ? setTranslationMainModels : setTranslationBackupModels;
+    setPool((current) => {
+      const index = current.findIndex(
+        (item) =>
+          modelOptionKey(
+            item.provider,
+            resolveSelectableModelId(catalog, item.provider, item.model),
+          ) === oldKey,
+      );
+      if (index < 0) return current;
+      if (current.some((item, at) => at !== index && sameBotModel(item, entry))) return current;
+      const next = [...current];
+      next[index] = entry;
       return next;
     });
   }
@@ -1364,6 +1415,9 @@ export function BotSettings({
                 moveMediaPoolFallback("video", pool, key, delta)
               }
               onRemoveVideoFallback={(pool, key) => removeMediaPoolFallback("video", pool, key)}
+              onReplaceVideoFallback={(pool, oldKey, newKey) =>
+                replaceMediaPoolFallback("video", pool, oldKey, newKey)
+              }
               videoTest={videoTest}
               onTestVideoModel={(key) => void testMediaModel("video", key)}
               onApplyVideoTestedModel={() => applyTestedMediaModel("video")}
@@ -1377,6 +1431,9 @@ export function BotSettings({
                 moveMediaPoolFallback("image", pool, key, delta)
               }
               onRemoveImageFallback={(pool, key) => removeMediaPoolFallback("image", pool, key)}
+              onReplaceImageFallback={(pool, oldKey, newKey) =>
+                replaceMediaPoolFallback("image", pool, oldKey, newKey)
+              }
               imageTest={imageTest}
               onTestImageModel={(key) => void testMediaModel("image", key)}
               onApplyImageTestedModel={() => applyTestedMediaModel("image")}
@@ -1404,6 +1461,9 @@ export function BotSettings({
               onRemoveVideoEditFallback={(pool, key) =>
                 removeMediaPoolFallback("videoEdit", pool, key)
               }
+              onReplaceVideoEditFallback={(pool, oldKey, newKey) =>
+                replaceMediaPoolFallback("videoEdit", pool, oldKey, newKey)
+              }
               videoEditTest={videoEditTest}
               onTestVideoEditModel={(key) => void testMediaModel("videoEdit", key)}
               onApplyVideoEditTestedModel={() => applyTestedMediaModel("videoEdit")}
@@ -1418,6 +1478,9 @@ export function BotSettings({
               }
               onRemoveImageEditFallback={(pool, key) =>
                 removeMediaPoolFallback("imageEdit", pool, key)
+              }
+              onReplaceImageEditFallback={(pool, oldKey, newKey) =>
+                replaceMediaPoolFallback("imageEdit", pool, oldKey, newKey)
               }
               imageEditTest={imageEditTest}
               onTestImageEditModel={(key) => void testMediaModel("imageEdit", key)}
@@ -1435,11 +1498,17 @@ export function BotSettings({
               onAddMainFallback={(key) => addTranslationPoolFallback("main", key)}
               onMoveMainFallback={(key, delta) => moveTranslationPoolFallback("main", key, delta)}
               onRemoveMainFallback={(key) => removeTranslationPoolFallback("main", key)}
+              onReplaceMainFallback={(oldKey, newKey) =>
+                replaceTranslationPoolFallback("main", oldKey, newKey)
+              }
               onAddBackupFallback={(key) => addTranslationPoolFallback("backup", key)}
               onMoveBackupFallback={(key, delta) =>
                 moveTranslationPoolFallback("backup", key, delta)
               }
               onRemoveBackupFallback={(key) => removeTranslationPoolFallback("backup", key)}
+              onReplaceBackupFallback={(oldKey, newKey) =>
+                replaceTranslationPoolFallback("backup", oldKey, newKey)
+              }
               sourceLanguage={translationSourceLanguage}
               onSourceLanguageChange={setTranslationSourceLanguage}
               targetLanguage={translationTargetLanguage}

@@ -18,6 +18,7 @@ import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { TextOnlyMark } from "../../components/TextOnlyMark";
 import { readModelStatus } from "../../lib/model-status";
+import { useMedia } from "../../lib/pages";
 import { useListSearch } from "../../lib/use-list-search";
 import { ModelStatusBadge } from "./model-switch-menu";
 
@@ -43,6 +44,10 @@ export function ChatModelPicker({
   const imagesHintId = useId();
   const [open, setOpen] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
+  // On a touch device the popover's default initial focus lands on the
+  // search input and pops the keyboard; the keyboard only belongs to a
+  // tap on the input itself, so coarse pointers open unfocused.
+  const coarsePointer = useMedia("(pointer: coarse)");
   // A timeline tap opens the list on its row exactly once; closing it never
   // reopens it until a new locate request arrives. A located key that is
   // not one of this list's options (a fallback row, or a model that is no
@@ -110,9 +115,9 @@ export function ChatModelPicker({
       <PopoverTrigger
         id={id}
         aria-describedby={textOnly ? imagesHintId : undefined}
-        className="mt-2 flex h-8 w-full items-center justify-between gap-2 rounded-lg border border-input bg-transparent pr-2.5 pl-2.5 text-start text-body text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
+        className="mt-2 flex min-h-8 w-full items-center justify-between gap-2 rounded-lg border border-input bg-transparent px-2.5 py-1 text-start text-body text-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50"
       >
-        <span className="min-w-0 truncate">{selected?.label}</span>
+        <span className="min-w-0 break-words">{selected?.label}</span>
         <span className="flex shrink-0 items-center gap-2 text-muted-foreground">
           {textOnly ? <TextOnlyMark /> : null}
           <ChevronDownIcon className="size-4" aria-hidden="true" />
@@ -123,6 +128,7 @@ export function ChatModelPicker({
           align="start"
           side="bottom"
           collisionAvoidance={{ side: "flip", align: "shift", fallbackAxisSide: "none" }}
+          initialFocus={coarsePointer ? false : undefined}
           className="w-(--anchor-width) max-h-(--available-height) gap-0 overflow-hidden bg-popover p-0 opacity-100 animate-none! backdrop-filter-none"
         >
           <Command

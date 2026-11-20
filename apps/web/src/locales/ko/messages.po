@@ -1489,6 +1489,7 @@ msgstr ""
 msgid "Backup passwords need an HTTPS connection"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Backup pool"
 msgstr ""
@@ -4886,6 +4887,10 @@ msgstr ""
 msgid "Image generation persona"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image input"
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Image input is not configured for this model."
@@ -5479,6 +5484,10 @@ msgstr "로컬 컴퓨터에 액세스하려면 최신 데스크톱 앱이 필요
 msgid "Local file"
 msgstr "로컬 파일"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Locate"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/chat-model-picker.tsx
 msgid "Located here"
@@ -5532,6 +5541,7 @@ msgstr "기본 모델"
 msgid "Main persona"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Main pool"
 msgstr ""
@@ -5833,6 +5843,10 @@ msgstr "모델 연결"
 #: src/pages/onboarding/model-step.tsx
 msgid "Model id"
 msgstr "모델 ID"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Model ID"
+msgstr ""
 
 #: src/components/FoundModelPicker.tsx
 #: src/pages/model-settings/role-model-picker.tsx
@@ -6445,6 +6459,7 @@ msgstr "나중에"
 msgid "Not selected"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Not supported"
 msgstr ""
@@ -6954,6 +6969,10 @@ msgstr "플러그인"
 msgid "Port"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Position"
+msgstr ""
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "채팅에 “변경 없음” 게시"
@@ -7065,6 +7084,7 @@ msgstr "프로토콜"
 #: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/onboarding/model-step.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Provider"
 msgstr "서비스"
@@ -7542,6 +7562,10 @@ msgstr "API 키 교체"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "키 교체"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Replace model"
+msgstr ""
 
 #. placeholder {0}: block.replaces.origin
 #. placeholder {0}: initial.replacedSite
@@ -8832,6 +8856,10 @@ msgstr ""
 msgid "Supplementary prompt"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Supported"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Supports images"
@@ -8911,6 +8939,10 @@ msgstr "표"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "제어권 가져오기"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Tap to go"
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Target"

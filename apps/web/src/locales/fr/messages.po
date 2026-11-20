@@ -1489,6 +1489,7 @@ msgstr ""
 msgid "Backup passwords need an HTTPS connection"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Backup pool"
 msgstr ""
@@ -4886,6 +4887,10 @@ msgstr ""
 msgid "Image generation persona"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image input"
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "Image input is not configured for this model."
@@ -5479,6 +5484,10 @@ msgstr "L'accès à l'ordinateur local nécessite la dernière version de l'appl
 msgid "Local file"
 msgstr "Fichier local"
 
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Locate"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/chat-model-picker.tsx
 msgid "Located here"
@@ -5532,6 +5541,7 @@ msgstr "Modèle principal"
 msgid "Main persona"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Main pool"
 msgstr ""
@@ -5833,6 +5843,10 @@ msgstr "Connexions aux modèles"
 #: src/pages/onboarding/model-step.tsx
 msgid "Model id"
 msgstr "ID du modèle"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Model ID"
+msgstr ""
 
 #: src/components/FoundModelPicker.tsx
 #: src/pages/model-settings/role-model-picker.tsx
@@ -6445,6 +6459,7 @@ msgstr "Pas maintenant"
 msgid "Not selected"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "Not supported"
 msgstr ""
@@ -6954,6 +6969,10 @@ msgstr "Plugins"
 msgid "Port"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Position"
+msgstr ""
+
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "Post \"No changes\" in chat"
 msgstr "Publier « Aucun changement » dans le chat"
@@ -7065,6 +7084,7 @@ msgstr "Protocole"
 #: src/components/admin/AdminEmailSettings.tsx
 #: src/pages/MemorySettingsOverlay.tsx
 #: src/pages/onboarding/model-step.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Provider"
 msgstr "Fournisseur"
@@ -7542,6 +7562,10 @@ msgstr "Remplacer la clé API"
 #: src/pages/VoiceSettingsOverlay.tsx
 msgid "Replace key"
 msgstr "Remplacer la clé"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Replace model"
+msgstr ""
 
 #. placeholder {0}: block.replaces.origin
 #. placeholder {0}: initial.replacedSite
@@ -8832,6 +8856,10 @@ msgstr ""
 msgid "Supplementary prompt"
 msgstr ""
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Supported"
+msgstr ""
+
 #: src/pages/model-settings/compatible-model-fields.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "Supports images"
@@ -8911,6 +8939,10 @@ msgstr "Tableau"
 #: src/pages/shell/computer-overlay.tsx
 msgid "Take control"
 msgstr "Prendre le contrôle"
+
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Tap to go"
+msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "Target"

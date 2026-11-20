@@ -14,7 +14,7 @@ import {
   DEFAULT_VIDEO_TRIGGER_WORDS,
 } from "@rakazo_mickvvw/contracts";
 import type { ChatModelChoice } from "@rakazo_mickvvw/core";
-import { displayName } from "@rakazo_mickvvw/core";
+import { displayName, parseModelOptionKey } from "@rakazo_mickvvw/core";
 import {
   Button,
   Input,
@@ -192,7 +192,7 @@ export function ModelSection({
         ) : null}
       </div>
       <div
-        className={`rounded-xl bg-muted/50 p-4 space-y-3 ${located ? "ring-1 ring-primary/40" : ""}`}
+        className={`rounded-xl bg-muted/50 p-4 space-y-3 ${located ? "ring-2 ring-primary" : ""}`}
       >
         <div data-model-row={value} className="flex min-h-11 items-center justify-between gap-3">
           <label htmlFor={`${ids}-model`} className="sr-only">
@@ -353,9 +353,11 @@ export function TranslationGroup({
   onAddMainFallback,
   onMoveMainFallback,
   onRemoveMainFallback,
+  onReplaceMainFallback,
   onAddBackupFallback,
   onMoveBackupFallback,
   onRemoveBackupFallback,
+  onReplaceBackupFallback,
   sourceLanguage,
   onSourceLanguageChange,
   targetLanguage,
@@ -380,9 +382,11 @@ export function TranslationGroup({
   onAddMainFallback: (key: string) => void;
   onMoveMainFallback: (key: string, delta: -1 | 1) => void;
   onRemoveMainFallback: (key: string) => void;
+  onReplaceMainFallback: (oldKey: string, newKey: string) => void;
   onAddBackupFallback: (key: string) => void;
   onMoveBackupFallback: (key: string, delta: -1 | 1) => void;
   onRemoveBackupFallback: (key: string) => void;
+  onReplaceBackupFallback: (oldKey: string, newKey: string) => void;
   sourceLanguage: TranslationSourceLanguage;
   onSourceLanguageChange: (language: TranslationSourceLanguage) => void;
   targetLanguage: TranslationTargetLanguage;
@@ -410,12 +414,12 @@ export function TranslationGroup({
       <div
         data-model-section="translation"
         data-model-row={value}
-        className={`flex min-h-11 items-center justify-between gap-3 ${located ? "rounded-lg bg-accent px-2" : ""}`}
+        className={`flex min-h-11 flex-wrap items-center justify-between gap-3 ${located ? "rounded-lg border-2 border-primary bg-accent px-2" : "border-2 border-transparent"}`}
       >
         <label htmlFor={`${ids}-translation-model`} className={rowLabelClass}>
           <Trans>Translation model</Trans>
         </label>
-        <div className="min-w-0 w-full max-w-2/3 [&>div]:mt-0 [&>button]:mt-0">
+        <div className="min-w-56 flex-1 [&>div]:mt-0 [&>button]:mt-0">
           <ChatModelPicker
             id={`${ids}-translation-model`}
             choices={choices}
@@ -435,11 +439,13 @@ export function TranslationGroup({
           locatedKey={locatedKey}
           locateKind={locateKind}
           locateSection="translation"
+          choices={choices}
           addChoices={addChoices}
           canAdd={canAddMain}
           onAdd={onAddMainFallback}
           onMove={onMoveMainFallback}
           onRemove={onRemoveMainFallback}
+          onReplace={onReplaceMainFallback}
           kind="translation"
         />
       ) : null}
@@ -450,11 +456,13 @@ export function TranslationGroup({
           locatedKey={locatedKey}
           locateKind={locateKind}
           locateSection="translation"
+          choices={choices}
           addChoices={addChoices}
           canAdd={canAddBackup}
           onAdd={onAddBackupFallback}
           onMove={onMoveBackupFallback}
           onRemove={onRemoveBackupFallback}
+          onReplace={onReplaceBackupFallback}
           kind="translation"
         />
       ) : null}
@@ -537,6 +545,58 @@ export type MediaModelFallback = {
   label: string;
 };
 
+/**
+ * A fallback card's expanded details. Only real data, taken from the
+ * fallback's key and the connected choices: the provider, the raw model
+ * id, whether the catalog says the model reads images, and the card's
+ * pool and position. A row renders only when its value exists — a
+ * free-form id the catalog does not know gets no image row at all, never
+ * a guess — and there is no usage row: this page carries no per-model
+ * usage data.
+ */
+function FallbackDetails({
+  fallback,
+  pool,
+  index,
+  choices,
+}: {
+  fallback: MediaModelFallback;
+  pool: "main" | "backup";
+  index: number;
+  choices: readonly ChatModelChoice[];
+}) {
+  const { t } = useLingui();
+  const choice = choices.find((candidate) => candidate.key === fallback.key);
+  const parsed = parseModelOptionKey(fallback.key);
+  const modelId = choice?.modelId ?? parsed?.modelId;
+  const provider = choice?.providerLabel ?? parsed?.provider;
+  const rows: { label: string; value: string }[] = [];
+  if (provider) rows.push({ label: t`Provider`, value: provider });
+  if (modelId) rows.push({ label: t`Model ID`, value: modelId });
+  if (choice?.images !== undefined)
+    rows.push({
+      label: t`Image input`,
+      value: choice.images ? t`Supported` : t`Not supported`,
+    });
+  rows.push({
+    label: t`Position`,
+    value: `${pool === "main" ? t`Main pool` : t`Backup pool`} #${index + 1}`,
+  });
+  return (
+    <dl
+      data-testid="model-fallback-details"
+      className="mt-1.5 space-y-0.5 border-t border-border/60 pt-1.5 text-body-sm"
+    >
+      {rows.map((row) => (
+        <div key={row.label} className="flex gap-2">
+          <dt className="shrink-0 text-muted-foreground">{row.label}</dt>
+          <dd className="min-w-0 break-words text-foreground">{row.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 /** One media-capability probe: idle until tested, then the inline result. */
 export type MediaModelTestState =
   | { status: "idle" }
@@ -569,6 +629,7 @@ export function MediaModelGroup({
   onAddVideoFallback,
   onMoveVideoFallback,
   onRemoveVideoFallback,
+  onReplaceVideoFallback,
   videoTest,
   onTestVideoModel,
   onApplyVideoTestedModel,
@@ -580,6 +641,7 @@ export function MediaModelGroup({
   onAddImageFallback,
   onMoveImageFallback,
   onRemoveImageFallback,
+  onReplaceImageFallback,
   imageTest,
   onTestImageModel,
   onApplyImageTestedModel,
@@ -603,6 +665,7 @@ export function MediaModelGroup({
   onAddVideoEditFallback,
   onMoveVideoEditFallback,
   onRemoveVideoEditFallback,
+  onReplaceVideoEditFallback,
   videoEditTest,
   onTestVideoEditModel,
   onApplyVideoEditTestedModel,
@@ -614,6 +677,7 @@ export function MediaModelGroup({
   onAddImageEditFallback,
   onMoveImageEditFallback,
   onRemoveImageEditFallback,
+  onReplaceImageEditFallback,
   imageEditTest,
   onTestImageEditModel,
   onApplyImageEditTestedModel,
@@ -631,6 +695,7 @@ export function MediaModelGroup({
   onAddVideoFallback: (pool: "main" | "backup", key: string) => void;
   onMoveVideoFallback: (pool: "main" | "backup", key: string, delta: -1 | 1) => void;
   onRemoveVideoFallback: (pool: "main" | "backup", key: string) => void;
+  onReplaceVideoFallback: (pool: "main" | "backup", oldKey: string, newKey: string) => void;
   videoTest: MediaModelTestState;
   onTestVideoModel: (key: string) => void;
   onApplyVideoTestedModel: () => void;
@@ -642,6 +707,7 @@ export function MediaModelGroup({
   onAddImageFallback: (pool: "main" | "backup", key: string) => void;
   onMoveImageFallback: (pool: "main" | "backup", key: string, delta: -1 | 1) => void;
   onRemoveImageFallback: (pool: "main" | "backup", key: string) => void;
+  onReplaceImageFallback: (pool: "main" | "backup", oldKey: string, newKey: string) => void;
   imageTest: MediaModelTestState;
   onTestImageModel: (key: string) => void;
   onApplyImageTestedModel: () => void;
@@ -668,6 +734,7 @@ export function MediaModelGroup({
   onAddVideoEditFallback: (pool: "main" | "backup", key: string) => void;
   onMoveVideoEditFallback: (pool: "main" | "backup", key: string, delta: -1 | 1) => void;
   onRemoveVideoEditFallback: (pool: "main" | "backup", key: string) => void;
+  onReplaceVideoEditFallback: (pool: "main" | "backup", oldKey: string, newKey: string) => void;
   videoEditTest: MediaModelTestState;
   onTestVideoEditModel: (key: string) => void;
   onApplyVideoEditTestedModel: () => void;
@@ -679,6 +746,7 @@ export function MediaModelGroup({
   onAddImageEditFallback: (pool: "main" | "backup", key: string) => void;
   onMoveImageEditFallback: (pool: "main" | "backup", key: string, delta: -1 | 1) => void;
   onRemoveImageEditFallback: (pool: "main" | "backup", key: string) => void;
+  onReplaceImageEditFallback: (pool: "main" | "backup", oldKey: string, newKey: string) => void;
   imageEditTest: MediaModelTestState;
   onTestImageEditModel: (key: string) => void;
   onApplyImageEditTestedModel: () => void;
@@ -700,9 +768,13 @@ export function MediaModelGroup({
         onAddMainFallback={(key) => onAddVideoFallback("main", key)}
         onMoveMainFallback={(key, delta) => onMoveVideoFallback("main", key, delta)}
         onRemoveMainFallback={(key) => onRemoveVideoFallback("main", key)}
+        onReplaceMainFallback={(oldKey, newKey) => onReplaceVideoFallback("main", oldKey, newKey)}
         onAddBackupFallback={(key) => onAddVideoFallback("backup", key)}
         onMoveBackupFallback={(key, delta) => onMoveVideoFallback("backup", key, delta)}
         onRemoveBackupFallback={(key) => onRemoveVideoFallback("backup", key)}
+        onReplaceBackupFallback={(oldKey, newKey) =>
+          onReplaceVideoFallback("backup", oldKey, newKey)
+        }
         test={videoTest}
         onTestModel={onTestVideoModel}
         onApplyTestedModel={onApplyVideoTestedModel}
@@ -730,9 +802,13 @@ export function MediaModelGroup({
         onAddMainFallback={(key) => onAddImageFallback("main", key)}
         onMoveMainFallback={(key, delta) => onMoveImageFallback("main", key, delta)}
         onRemoveMainFallback={(key) => onRemoveImageFallback("main", key)}
+        onReplaceMainFallback={(oldKey, newKey) => onReplaceImageFallback("main", oldKey, newKey)}
         onAddBackupFallback={(key) => onAddImageFallback("backup", key)}
         onMoveBackupFallback={(key, delta) => onMoveImageFallback("backup", key, delta)}
         onRemoveBackupFallback={(key) => onRemoveImageFallback("backup", key)}
+        onReplaceBackupFallback={(oldKey, newKey) =>
+          onReplaceImageFallback("backup", oldKey, newKey)
+        }
         test={imageTest}
         onTestModel={onTestImageModel}
         onApplyTestedModel={onApplyImageTestedModel}
@@ -761,9 +837,15 @@ export function MediaModelGroup({
         onAddMainFallback={(key) => onAddVideoEditFallback("main", key)}
         onMoveMainFallback={(key, delta) => onMoveVideoEditFallback("main", key, delta)}
         onRemoveMainFallback={(key) => onRemoveVideoEditFallback("main", key)}
+        onReplaceMainFallback={(oldKey, newKey) =>
+          onReplaceVideoEditFallback("main", oldKey, newKey)
+        }
         onAddBackupFallback={(key) => onAddVideoEditFallback("backup", key)}
         onMoveBackupFallback={(key, delta) => onMoveVideoEditFallback("backup", key, delta)}
         onRemoveBackupFallback={(key) => onRemoveVideoEditFallback("backup", key)}
+        onReplaceBackupFallback={(oldKey, newKey) =>
+          onReplaceVideoEditFallback("backup", oldKey, newKey)
+        }
         test={videoEditTest}
         onTestModel={onTestVideoEditModel}
         onApplyTestedModel={onApplyVideoEditTestedModel}
@@ -783,9 +865,15 @@ export function MediaModelGroup({
         onAddMainFallback={(key) => onAddImageEditFallback("main", key)}
         onMoveMainFallback={(key, delta) => onMoveImageEditFallback("main", key, delta)}
         onRemoveMainFallback={(key) => onRemoveImageEditFallback("main", key)}
+        onReplaceMainFallback={(oldKey, newKey) =>
+          onReplaceImageEditFallback("main", oldKey, newKey)
+        }
         onAddBackupFallback={(key) => onAddImageEditFallback("backup", key)}
         onMoveBackupFallback={(key, delta) => onMoveImageEditFallback("backup", key, delta)}
         onRemoveBackupFallback={(key) => onRemoveImageEditFallback("backup", key)}
+        onReplaceBackupFallback={(oldKey, newKey) =>
+          onReplaceImageEditFallback("backup", oldKey, newKey)
+        }
         test={imageEditTest}
         onTestModel={onTestImageEditModel}
         onApplyTestedModel={onApplyImageEditTestedModel}
@@ -809,9 +897,11 @@ function MediaRoleSection({
   onAddMainFallback,
   onMoveMainFallback,
   onRemoveMainFallback,
+  onReplaceMainFallback,
   onAddBackupFallback,
   onMoveBackupFallback,
   onRemoveBackupFallback,
+  onReplaceBackupFallback,
   test,
   onTestModel,
   onApplyTestedModel,
@@ -844,9 +934,11 @@ function MediaRoleSection({
   onAddMainFallback: (key: string) => void;
   onMoveMainFallback: (key: string, delta: -1 | 1) => void;
   onRemoveMainFallback: (key: string) => void;
+  onReplaceMainFallback: (oldKey: string, newKey: string) => void;
   onAddBackupFallback: (key: string) => void;
   onMoveBackupFallback: (key: string, delta: -1 | 1) => void;
   onRemoveBackupFallback: (key: string) => void;
+  onReplaceBackupFallback: (oldKey: string, newKey: string) => void;
   test: MediaModelTestState;
   onTestModel: (key: string) => void;
   onApplyTestedModel: () => void;
@@ -882,12 +974,12 @@ function MediaRoleSection({
       <div
         data-model-section={section}
         data-model-row={value}
-        className={`flex min-h-11 items-center justify-between gap-3 ${locatedPrimary ? "rounded-lg bg-accent px-2" : ""}`}
+        className={`flex min-h-11 flex-wrap items-center justify-between gap-3 ${locatedPrimary ? "rounded-lg border-2 border-primary bg-accent px-2" : "border-2 border-transparent"}`}
       >
         <label htmlFor={`${ids}-${kind}-model`} className={rowLabelClass}>
           {modelLabel}
         </label>
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+        <div className="flex min-w-64 flex-1 items-center gap-2">
           <div className="min-w-0 flex-1 [&>div]:mt-0 [&>button]:mt-0">
             <ChatModelPicker
               id={`${ids}-${kind}-model`}
@@ -918,11 +1010,13 @@ function MediaRoleSection({
           locatedKey={locatedKey}
           locateKind={locateKind}
           locateSection={section}
+          choices={choices}
           addChoices={addChoices}
           canAdd={canAddMain}
           onAdd={onAddMainFallback}
           onMove={onMoveMainFallback}
           onRemove={onRemoveMainFallback}
+          onReplace={onReplaceMainFallback}
           kind={kind}
           test={test}
           onTest={onTestModel}
@@ -936,11 +1030,13 @@ function MediaRoleSection({
           locatedKey={locatedKey}
           locateKind={locateKind}
           locateSection={section}
+          choices={choices}
           addChoices={addChoices}
           canAdd={canAddBackup}
           onAdd={onAddBackupFallback}
           onMove={onMoveBackupFallback}
           onRemove={onRemoveBackupFallback}
+          onReplace={onReplaceBackupFallback}
           kind={kind}
           test={test}
           onTest={onTestModel}
@@ -1015,11 +1111,13 @@ function MediaModelFallbackList({
   locatedKey,
   locateKind,
   locateSection,
+  choices,
   addChoices,
   canAdd,
   onAdd,
   onMove,
   onRemove,
+  onReplace,
   kind,
   test,
   onTest,
@@ -1036,11 +1134,15 @@ function MediaModelFallbackList({
   locateKind?: ModelLocateKind | null;
   /** The locate anchor of this list; the edit lists anchor apart from generation. */
   locateSection: ModelLocateKind;
+  /** Every connected choice, for the expanded details lookup. */
+  choices: readonly ChatModelChoice[];
   addChoices: readonly ChatModelChoice[];
   canAdd: boolean;
   onAdd: (key: string) => void;
   onMove: (key: string, delta: -1 | 1) => void;
   onRemove: (key: string) => void;
+  /** Swap one row for another model, in place; the rest of the pool is untouched. */
+  onReplace: (oldKey: string, newKey: string) => void;
   kind: "video" | "image" | "translation";
   /** Absent for translation: there is no capability probe, so no Test button. */
   test?: MediaModelTestState;
@@ -1050,6 +1152,8 @@ function MediaModelFallbackList({
   const { t } = useLingui();
   // A located row inside a folded list unfolds it, so the tag is visible.
   const [open, setOpen] = useState<boolean | undefined>(undefined);
+  // One card's details at a time; tapping the same banner closes it again.
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
   useEffect(() => {
     if (
       locatedKey &&
@@ -1067,7 +1171,7 @@ function MediaModelFallbackList({
       open={open}
       onOpenChange={setOpen}
     >
-      <ul className="mt-1 space-y-1">
+      <ul className="mt-1 space-y-2">
         {fallbacks.map((fallback, index) => {
           const testing = test?.status === "testing" && test.modelKey === fallback.key;
           const tested = test?.status === "done" && test.modelKey === fallback.key ? test : null;
@@ -1076,13 +1180,31 @@ function MediaModelFallbackList({
             locatedKey !== null &&
             locatedKey !== undefined &&
             locatedKey === fallback.key;
-          // The row's buttons squeeze the name to a couple of characters, so
-          // a located row — the one a timeline name just pointed at — gives
-          // the full name (with its provider) its own line and puts the
-          // buttons on the next one. Rows nobody located stay compact.
+          // Every row is a banner card: the full name (with its provider)
+          // is the banner header on its own line, the buttons sit below
+          // it. A located card adds the colored border on top of that.
+          // Replace opens the same picker as the add entry below the
+          // list, and leads the buttons: replace, test, up, down, remove.
           const buttons = (
             <>
               {located ? <LocatedTag /> : null}
+              {addChoices.length > 0 ? (
+                <NativeSelect
+                  size="sm"
+                  aria-label={t`Replace model`}
+                  value=""
+                  onChange={(event) => {
+                    if (event.target.value) onReplace(fallback.key, event.target.value);
+                  }}
+                >
+                  <NativeSelectOption value="">{t`Replace model`}</NativeSelectOption>
+                  {addChoices.map((choice) => (
+                    <NativeSelectOption key={choice.key} value={choice.key}>
+                      {choice.label}
+                    </NativeSelectOption>
+                  ))}
+                </NativeSelect>
+              ) : null}
               {onTest ? (
                 <Button
                   variant="outline"
@@ -1124,28 +1246,38 @@ function MediaModelFallbackList({
             <li key={fallback.key}>
               <div
                 data-model-row={fallback.key}
-                className={
-                  located ? "rounded-lg bg-accent px-2 py-1" : "flex min-h-9 items-center gap-2"
-                }
+                className={`rounded-lg border-2 px-3 py-2 ${
+                  located ? "border-primary bg-accent" : "border-transparent bg-muted/50"
+                }`}
               >
-                {located ? (
-                  <>
-                    <div className="min-w-0 break-words text-body text-muted-foreground" dir="auto">
-                      {displayName(fallback.label, t`Model`)}
-                    </div>
-                    <div className="mt-1 flex flex-wrap items-center gap-2">{buttons}</div>
-                  </>
-                ) : (
-                  <>
-                    <span
-                      className="min-w-0 flex-1 truncate text-body text-muted-foreground"
-                      dir="auto"
-                    >
-                      {displayName(fallback.label, t`Model`)}
-                    </span>
-                    {buttons}
-                  </>
-                )}
+                <button
+                  type="button"
+                  aria-expanded={expandedKey === fallback.key}
+                  onClick={() => setExpandedKey(expandedKey === fallback.key ? null : fallback.key)}
+                  className="flex w-full items-center justify-between gap-2 rounded-lg px-1 py-0.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                >
+                  <span
+                    className="min-w-0 break-words text-body font-medium text-foreground"
+                    dir="auto"
+                  >
+                    {displayName(fallback.label, t`Model`)}
+                  </span>
+                  <ChevronDown
+                    className={`size-4 shrink-0 text-muted-foreground transition-transform ${
+                      expandedKey === fallback.key ? "rotate-180" : ""
+                    }`}
+                    aria-hidden="true"
+                  />
+                </button>
+                {expandedKey === fallback.key ? (
+                  <FallbackDetails
+                    fallback={fallback}
+                    pool={pool}
+                    index={index}
+                    choices={choices}
+                  />
+                ) : null}
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">{buttons}</div>
               </div>
               {tested && kind !== "translation" ? (
                 <MediaModelTestResult
