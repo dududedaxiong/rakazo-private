@@ -317,10 +317,10 @@ describe("ModelSwitchHistoryDialog", () => {
       ),
     );
     const text = dialogText();
-    expect(text).toContain("Main pool");
+    expect(text).toContain("Main models");
     expect(text).toContain("Backup pool");
     // One main tag, one backup tag; the pool-less record adds no third tag.
-    expect(text.match(/Main pool/g)).toHaveLength(1);
+    expect(text.match(/Main models/g)).toHaveLength(1);
     expect(text.match(/Backup pool/g)).toHaveLength(1);
   });
 });

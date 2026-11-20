@@ -897,8 +897,8 @@ msgid "Add item"
 msgstr "Add item"
 
 #: src/pages/shell/bot-settings-sections.tsx
-msgid "Add main pool model"
-msgstr "Add main pool model"
+msgid "Add main model"
+msgstr "Add main model"
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Add MCP server"
@@ -5548,18 +5548,18 @@ msgstr "Made by bots"
 msgid "Main model"
 msgstr "Main model"
 
+#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Main models"
+msgstr "Main models"
+
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Main models ({count})"
+msgstr "Main models ({count})"
+
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Main persona"
 msgstr "Main persona"
-
-#: src/pages/shell/bot-settings-sections.tsx
-#: src/pages/shell/model-switch-history-dialog.tsx
-msgid "Main pool"
-msgstr "Main pool"
-
-#: src/pages/shell/fallback-disclosure.tsx
-msgid "Main pool ({count})"
-msgstr "Main pool ({count})"
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Make share card"

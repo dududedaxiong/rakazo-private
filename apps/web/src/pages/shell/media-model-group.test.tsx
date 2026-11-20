@@ -324,7 +324,7 @@ describe("MediaModelGroup", () => {
     expect(container.textContent).toContain("Image generation model");
     expect(container.querySelector('[data-model-row="provider-a::video-a"]')).toBeNull();
     const adds = [
-      ...container.querySelectorAll<HTMLSelectElement>('select[aria-label="Add main pool model"]'),
+      ...container.querySelectorAll<HTMLSelectElement>('select[aria-label="Add main model"]'),
     ];
     expect(adds).toHaveLength(4);
     await setSelect(adds[0]!, "provider-a::video-a");
@@ -340,7 +340,7 @@ describe("MediaModelGroup", () => {
     });
     // The main pool starts open: the primary is visible without expanding.
     const main = [...container.querySelectorAll('[data-testid="fallback-disclosure"]')].find(
-      (node) => node.textContent?.includes("Main pool"),
+      (node) => node.textContent?.includes("Main models"),
     );
     expect(main?.querySelector("button")?.getAttribute("aria-expanded")).toBe("true");
     const videoRow = container.querySelector('[data-model-row="provider-a::video-a"]');
@@ -403,7 +403,7 @@ describe("MediaModelGroup", () => {
 
   it("offers a fallback add before a primary model is picked", async () => {
     await renderGroup();
-    const add = selectByLabel("Add main pool model");
+    const add = selectByLabel("Add main model");
     const options = [...add.options].map((option) => option.value);
     expect(options).toContain("provider-a::video-a");
     expect(options).toContain("provider-a::video-b");
@@ -418,12 +418,12 @@ describe("MediaModelGroup", () => {
       videoMainFallbacks: [{ key: "provider-a::video-b", label: "Video B" }],
       videoBackupFallbacks: [{ key: "provider-a::video-c", label: "Video C" }],
     });
-    expect(container.textContent).toContain("Main pool (2)");
+    expect(container.textContent).toContain("Main models (2)");
     expect(container.textContent).toContain("Fallback models (1)");
     expect(container.textContent).toContain("Video B");
     expect(container.textContent).toContain("Video C");
     // The main pool's add entry offers only models in neither pool.
-    const add = selectByLabel("Add main pool model");
+    const add = selectByLabel("Add main model");
     const options = [...add.options].map((option) => option.value);
     expect(options).not.toContain("provider-a::video-b");
     expect(options).not.toContain("provider-a::video-c");

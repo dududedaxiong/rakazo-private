@@ -907,7 +907,7 @@ describe("BotSettings translation settings", () => {
 
   function translationAddSelect() {
     const select = translationSection().querySelector<HTMLSelectElement>(
-      'select[aria-label="Add main pool model"]',
+      'select[aria-label="Add main model"]',
     );
     if (!select) throw new Error("Missing translation add select");
     return select;
@@ -1070,9 +1070,7 @@ describe("BotSettings media model settings", () => {
   // Media families render in order: video, image, video edit, image edit.
   function mediaAddSelects() {
     return [
-      ...mediaSection().querySelectorAll<HTMLSelectElement>(
-        'select[aria-label="Add main pool model"]',
-      ),
+      ...mediaSection().querySelectorAll<HTMLSelectElement>('select[aria-label="Add main model"]'),
     ];
   }
 

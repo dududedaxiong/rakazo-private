@@ -96,7 +96,7 @@ export function ModelSwitchHistoryDialog({
   const poolTag = (attempt: ModelSwitchAttempt) =>
     attempt.pool ? (
       <span className="rounded-full bg-accent px-2 py-0.5 text-body-sm text-muted-foreground">
-        {attempt.pool === "main" ? <Trans>Main pool</Trans> : <Trans>Backup pool</Trans>}
+        {attempt.pool === "main" ? <Trans>Main models</Trans> : <Trans>Backup pool</Trans>}
       </span>
     ) : null;
   /** The short failure label for a timeline row; the detail holds the full text. */

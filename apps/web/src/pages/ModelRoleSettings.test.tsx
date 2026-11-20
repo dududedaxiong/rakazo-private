@@ -235,12 +235,12 @@ describe("shared role editor", () => {
     expect(rows()).toEqual(["ChatOpenRouter", "MiniOpenRouter", "Jev 1.14OpenRouter"]);
   });
 
-  it("folds extra main-pool models behind a Main pool disclosure and unfolds onto a located one", async () => {
+  it("folds extra main-pool models behind a Main models disclosure and unfolds onto a located one", async () => {
     saved = { ...roleSettings(chat, [jev]), mainPool: [chat, mini], backupPool: [jev] };
     await render({ locatedModel: { model: "mini", provider: "OpenRouter", requestId: 1 } });
-    expect(container.textContent).toContain("Main pool (2)");
+    expect(container.textContent).toContain("Main models (2)");
     const main = [...container.querySelectorAll('[data-testid="fallback-disclosure"]')].find(
-      (node) => node.textContent?.includes("Main pool"),
+      (node) => node.textContent?.includes("Main models"),
     );
     expect(main?.querySelector("button")?.getAttribute("aria-expanded")).toBe("true");
     expect(container.querySelector('[data-testid="model-role-row-2"]')?.className).toContain(

@@ -10,7 +10,7 @@ import { useState } from "react";
  * list starts closed to save room. The open state is local only and never
  * persisted; a caller may drive it with `open` and `onOpenChange`, for
  * example to unfold onto a located row. The main pool titles itself
- * "Main pool (N)"; the backup pool keeps "Fallback models (N)".
+ * "Main models (N)"; the backup pool keeps "Fallback models (N)".
  *
  * The open state is always defined here: Base UI locks a Collapsible into
  * controlled or uncontrolled mode on its first render, so an `open` that
@@ -48,7 +48,7 @@ export function FallbackDisclosure({
       summary={
         <span className="text-body text-foreground">
           {pool === "main" ? (
-            <Trans>Main pool ({count})</Trans>
+            <Trans>Main models ({count})</Trans>
           ) : (
             <Trans>Fallback models ({count})</Trans>
           )}

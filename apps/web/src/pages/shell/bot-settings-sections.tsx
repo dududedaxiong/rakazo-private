@@ -610,7 +610,7 @@ function FallbackDetails({
     });
   rows.push({
     label: t`Position`,
-    value: `${pool === "main" ? t`Main pool` : t`Backup pool`} #${index + 1}`,
+    value: `${pool === "main" ? t`Main models` : t`Backup pool`} #${index + 1}`,
   });
   return (
     <dl
@@ -1319,7 +1319,7 @@ function MediaModelFallbackList({
       </ul>
       {canAdd ? (
         <NativeSelect
-          aria-label={pool === "main" ? t`Add main pool model` : t`Add fallback model`}
+          aria-label={pool === "main" ? t`Add main model` : t`Add fallback model`}
           className="mt-1 w-full"
           value=""
           onChange={(event) => {
@@ -1327,7 +1327,7 @@ function MediaModelFallbackList({
           }}
         >
           <NativeSelectOption value="">
-            {pool === "main" ? t`Add main pool model` : t`Add fallback model`}
+            {pool === "main" ? t`Add main model` : t`Add fallback model`}
           </NativeSelectOption>
           {addChoices.map((choice) => (
             <NativeSelectOption key={choice.key} value={choice.key}>

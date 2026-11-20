@@ -897,8 +897,8 @@ msgid "Add item"
 msgstr "添加项目"
 
 #: src/pages/shell/bot-settings-sections.tsx
-msgid "Add main pool model"
-msgstr "添加主池模型"
+msgid "Add main model"
+msgstr "添加主力模型"
 
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Add MCP server"
@@ -5548,18 +5548,18 @@ msgstr "由 Bot 创建"
 msgid "Main model"
 msgstr "主模型"
 
+#: src/pages/shell/bot-settings-sections.tsx
+#: src/pages/shell/model-switch-history-dialog.tsx
+msgid "Main models"
+msgstr "主力模型"
+
+#: src/pages/shell/fallback-disclosure.tsx
+msgid "Main models ({count})"
+msgstr "主力模型（{count}）"
+
 #: src/pages/shell/chat-persona-switcher.tsx
 msgid "Main persona"
 msgstr "主人设"
-
-#: src/pages/shell/bot-settings-sections.tsx
-#: src/pages/shell/model-switch-history-dialog.tsx
-msgid "Main pool"
-msgstr "主池"
-
-#: src/pages/shell/fallback-disclosure.tsx
-msgid "Main pool ({count})"
-msgstr "主池（{count}）"
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Make share card"

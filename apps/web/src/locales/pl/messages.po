@@ -897,7 +897,7 @@ msgid "Add item"
 msgstr "Dodaj element"
 
 #: src/pages/shell/bot-settings-sections.tsx
-msgid "Add main pool model"
+msgid "Add main model"
 msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
@@ -5548,18 +5548,18 @@ msgstr "Utworzone przez boty"
 msgid "Main model"
 msgstr "Główny model"
 
-#: src/pages/shell/chat-persona-switcher.tsx
-msgid "Main persona"
-msgstr "Główna persona"
-
 #: src/pages/shell/bot-settings-sections.tsx
 #: src/pages/shell/model-switch-history-dialog.tsx
-msgid "Main pool"
+msgid "Main models"
 msgstr ""
 
 #: src/pages/shell/fallback-disclosure.tsx
-msgid "Main pool ({count})"
+msgid "Main models ({count})"
 msgstr ""
+
+#: src/pages/shell/chat-persona-switcher.tsx
+msgid "Main persona"
+msgstr "Główna persona"
 
 #: src/pages/shell/message-hover-actions.tsx
 msgid "Make share card"
