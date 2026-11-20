@@ -16,6 +16,7 @@ export function ThreadErrorNotice({
   extraActions,
   modelProbe,
   userId,
+  noReply,
 }: {
   error: string | null;
   summary: string | null;
@@ -29,6 +30,8 @@ export function ThreadErrorNotice({
   modelProbe?: AvailableModelProbe | null;
   /** The account whose interface settings style the error text. */
   userId?: string;
+  /** The failed run's message was delivered but never answered. */
+  noReply?: boolean;
 }) {
   const { t, locale } = useI18n();
   const tokens = useMobileTokens();
@@ -52,6 +55,7 @@ export function ThreadErrorNotice({
     action ||
     (extraActions?.length ?? 0) > 0 ||
     modelProbe?.available ||
+    noReply ||
     (summary && onDetails);
   return (
     <View
@@ -97,6 +101,11 @@ export function ThreadErrorNotice({
           {upcomingReset ? (
             <Text style={[errorStyle, { color: errorStyle.color ?? tokens.mutedForeground }]}>
               {upcomingReset}
+            </Text>
+          ) : null}
+          {noReply ? (
+            <Text style={[errorStyle, { color: errorStyle.color ?? tokens.mutedForeground }]}>
+              {t("Delivered, but no reply came back.")}
             </Text>
           ) : null}
           {action ? <RunErrorAction label={action.label} onPress={action.onPress} /> : null}

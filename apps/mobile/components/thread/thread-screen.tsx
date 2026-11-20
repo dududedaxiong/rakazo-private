@@ -2,6 +2,7 @@ import type { AgentSkillCatalogEntry, ModelRoleChoice } from "@rakazo_mickvvw/co
 import { primaryBotModel } from "@rakazo_mickvvw/contracts";
 import type { ShareCardTextOverride } from "@rakazo_mickvvw/core";
 import {
+  activeThreadRuns,
   buildComposerMentionOptions,
   channelMessageSender,
   chatUserBubbleColors,
@@ -13,7 +14,9 @@ import {
   modelOptionKey,
   newClientId,
   newestPageCards,
+  noReplyMessageIds,
   otherAuthor,
+  ReplyWatchdog,
   displayName as safeDisplayName,
   selectableMessageText,
   workingRoutineName,
@@ -420,10 +423,6 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   // The group's members in its order, once the chat or its group list has loaded them; the
   // title seats the inbox's copy until then.
   const groupMembers = threadGroupMembers(groupId, snap, mentionGroups);
-  // Only reply text being written replaces the footer; earlier sentences above a tool call don't.
-  const hasLiveProgress = visibleMessages.some(
-    (message) => message.id.startsWith("progress:") && liveMessageComposing(message.blocks),
-  );
   const activityLine = liveActivityLine(snap?.messages ?? []);
   const workingRoutine = workingRoutineName(snap?.activeRuns ?? (snap?.run ? [snap.run] : []));
   const userBubble = useMemo(
@@ -535,6 +534,10 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     speakFinishedReplyRef,
   });
 
+  // One watchdog per open chat: the last live event per bot, so a run whose
+  // events stopped arriving is treated as stalled.
+  const replyWatchdog = useRef(new ReplyWatchdog()).current;
+
   const { isCurrentTarget, refresh, applyMessageJump, showLatest } = useThreadSync({
     history,
     scroll,
@@ -553,6 +556,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     onRefreshed: feedback.refreshed,
     refreshMentionBots,
     markReadIfVisible,
+    replyWatchdog,
   });
 
   // The search steps only on an explicit prev/next tap, never per keystroke: a
@@ -926,7 +930,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
         }
       : null);
 
-  const { liveItems, renderMessageRow, renderItem } = useThreadRows({
+  const { liveItems, renderMessageRow, renderItem, stuckRunIds, stuckBotIds } = useThreadRows({
     snap,
     userId,
     transcript,
@@ -954,10 +958,24 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     favoriteIds,
     searchHitIds,
     searchCurrentId,
+    replyWatchdog,
   });
 
+  // Only reply text being written replaces the footer; earlier sentences above a tool call don't.
+  // A stuck run's frozen progress line does not count as live.
+  const hasLiveProgress = visibleMessages.some(
+    (message) =>
+      message.id.startsWith("progress:") &&
+      (!message.runId || !stuckRunIds.has(message.runId)) &&
+      liveMessageComposing(message.blocks),
+  );
+
   const workingBots =
-    !inGroup && titleBot && isRunWorking(currentBotStatus) && !hasLiveProgress
+    !inGroup &&
+    titleBot &&
+    isRunWorking(currentBotStatus) &&
+    !hasLiveProgress &&
+    !stuckBotIds.has(titleBot.id)
       ? [
           {
             id: titleBot.id,
@@ -968,13 +986,15 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
           },
         ]
       : inGroup
-        ? workingGroupBots.map((bot) => ({
-            id: bot.botId,
-            name: bot.name,
-            color: bot.color,
-            avatarSet: bot.avatarSet,
-            status: bot.status,
-          }))
+        ? workingGroupBots
+            .filter((bot) => !stuckBotIds.has(bot.botId))
+            .map((bot) => ({
+              id: bot.botId,
+              name: bot.name,
+              color: bot.color,
+              avatarSet: bot.avatarSet,
+              status: bot.status,
+            }))
         : [];
   const workingFooter = (
     <ThreadWorkingFooter
@@ -1042,6 +1062,16 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
   const visibleRunError = runErrorHandled
     ? null
     : liveEndRunError(normalizedRunError, scroll.pinnedNewerCursor);
+  /** The failed run's message was delivered but never answered: check before resending. */
+  const runNoReply = useMemo(() => {
+    const run = snap?.run;
+    if (run?.status !== "failed" || !visibleRunError) return false;
+    const ids = noReplyMessageIds(snap?.messages ?? [], activeThreadRuns(snap));
+    return (snap?.messages ?? []).some(
+      (message) => message.role === "user" && message.runId === run.id && ids.has(message.id),
+    );
+  }, [snap, visibleRunError]);
+
   const errorNotice = (
     <ThreadErrorNotice
       error={null}
@@ -1052,6 +1082,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
       extraActions={visibleRunError ? runErrorExtraActions : null}
       modelProbe={visibleRunError ? modelProbe : null}
       userId={userId}
+      noReply={runNoReply}
     />
   );
 

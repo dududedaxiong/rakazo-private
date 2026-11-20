@@ -4,6 +4,8 @@ import {
   isImageInputConfirmation,
   isModelRequiredSendError,
   isServerUnreachable,
+  SEND_HARD_TIMEOUT_MS,
+  SendTimeoutError,
 } from "@rakazo_mickvvw/core";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { RpcOptions, rpc } from "./api";
@@ -62,6 +64,25 @@ export type SendAttempt = {
 
 const UPLOAD_TIMEOUT_MS = 60_000;
 
+/**
+ * A send that answers in time; a timeout aborts the wait, not the send — the
+ * server may already have it, so the error says so and the retry replays the
+ * same nonce instead of sending a second copy.
+ */
+async function timedSend<T>(promise: Promise<T>): Promise<T> {
+  try {
+    return await promise;
+  } catch (error) {
+    if (error instanceof Error && error.name === "TimeoutError")
+      throw new SendTimeoutError(
+        t(
+          "Send timed out. It may already have been delivered — check the thread before resending.",
+        ),
+      );
+    throw error;
+  }
+}
+
 export async function deliverSend(
   payload: SendPayload,
   attempt: SendAttempt,
@@ -71,11 +92,17 @@ export async function deliverSend(
   const target = groupTarget ? { groupId: groupTarget } : { botId: botTarget! };
   if (!plan.shouldSend) {
     if (plan.shouldRunRoutines)
-      await request("threads/sendWithRoutines", {
-        ...target,
-        clientNonce: attempt.clientNonce,
-        routineIds: plan.routineIds,
-      });
+      await timedSend(
+        request(
+          "threads/sendWithRoutines",
+          {
+            ...target,
+            clientNonce: attempt.clientNonce,
+            routineIds: plan.routineIds,
+          },
+          { timeoutMs: SEND_HARD_TIMEOUT_MS },
+        ),
+      );
     return undefined;
   }
   const artifactIds: string[] = [];
@@ -111,10 +138,20 @@ export async function deliverSend(
   } as const;
   // The routines run in the same server operation as the message: both or neither.
   const sent = plan.shouldRunRoutines
-    ? (await request("threads/sendWithRoutines", { ...message, routineIds: plan.routineIds })).send
+    ? (
+        await timedSend(
+          request(
+            "threads/sendWithRoutines",
+            { ...message, routineIds: plan.routineIds },
+            { timeoutMs: SEND_HARD_TIMEOUT_MS },
+          ),
+        )
+      ).send
     : undefined;
   // Runs already saved for this nonce return no message; the plain send saves or replays it.
-  const accepted = sent ?? (await request("threads/send", message));
+  const accepted =
+    sent ??
+    (await timedSend(request("threads/send", message, { timeoutMs: SEND_HARD_TIMEOUT_MS })));
   attempt.acceptedRun = { runId: accepted.runId, taskId: accepted.taskId };
   return accepted.seq;
 }

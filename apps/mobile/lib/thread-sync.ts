@@ -1,3 +1,4 @@
+import type { ReplyWatchdog } from "@rakazo_mickvvw/core";
 import { isRetryableError, reconcileRefreshedThread } from "@rakazo_mickvvw/core";
 import { useFocusEffect } from "expo-router";
 import type { Dispatch, RefObject, SetStateAction } from "react";
@@ -49,6 +50,7 @@ export function useThreadSync({
   onRefreshed,
   refreshMentionBots,
   markReadIfVisible,
+  replyWatchdog,
 }: {
   history: ThreadHistory;
   scroll: ThreadListScroll;
@@ -69,6 +71,8 @@ export function useThreadSync({
   onRefreshed: (threadKey: string | undefined) => void;
   refreshMentionBots: () => Promise<unknown>;
   markReadIfVisible: () => void;
+  /** Last-activity clock per bot; without it, stalled runs use start time only. */
+  replyWatchdog?: ReplyWatchdog;
 }) {
   const { t } = useI18n();
   const {
@@ -209,6 +213,7 @@ export function useThreadSync({
     setError,
     refreshMentionBots,
     markReadIfVisible,
+    replyWatchdog,
   });
 
   useEffect(() => () => pendingSave.current?.(), [botId, groupId]);
