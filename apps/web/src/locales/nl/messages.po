@@ -48,6 +48,12 @@ msgstr "{0, plural, one {# connector} other {# connectors}}"
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, one {# bestand} other {# bestanden}}"
 
+#. placeholder {0}: files.length
+#. placeholder {1}: formatFileSize(totalSize)
+#: src/pages/Artifacts.tsx
+msgid "{0, plural, one {# file} other {# files}} · {1}"
+msgstr ""
+
 #. placeholder {0}: referral.rewards
 #: src/components/InviteDialog.tsx
 msgid "{0, plural, one {# free month earned} other {# free months earned}}"
@@ -1508,6 +1514,14 @@ msgstr "Terug of vooruit"
 #: src/components/pages/PageNotice.tsx
 msgid "Back to chat"
 msgstr "Terug naar chat"
+
+#: src/pages/Artifacts.tsx
+msgid "Back to file list"
+msgstr ""
+
+#: src/pages/Artifacts.tsx
+msgid "Back to parent folder"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
@@ -3079,6 +3093,14 @@ msgstr "De server is niet bereikbaar"
 #: src/pages/shell/use-agent-import-source.ts
 msgid "Could not read these files"
 msgstr "Deze bestanden konden niet worden gelezen"
+
+#: src/pages/Artifacts.tsx
+msgid "Could not read this archive."
+msgstr ""
+
+#: src/pages/Artifacts.tsx
+msgid "Could not read this file."
+msgstr ""
 
 #: src/components/BotPackageImport.tsx
 msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
@@ -6724,6 +6746,11 @@ msgstr "Computerinstellingen openen"
 msgid "Open external link?"
 msgstr "Externe link openen?"
 
+#. placeholder {0}: child.name
+#: src/pages/Artifacts.tsx
+msgid "Open folder {0}"
+msgstr ""
+
 #: src/pages/shell/computer-panel.tsx
 msgid "Open in full window"
 msgstr "In volledig venster openen"
@@ -7118,8 +7145,10 @@ msgid "Preview"
 msgstr "Voorbeeld"
 
 #. placeholder {0}: artifact.name
+#. placeholder {0}: child.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
 msgid "Preview {0}"
 msgstr "{0} bekijken"
@@ -9401,9 +9430,17 @@ msgstr ""
 msgid "This deletes all {0} versions of this artifact. This can't be undone."
 msgstr "Hiermee worden alle {0} versies van dit artefact verwijderd. Dit kan niet ongedaan worden gemaakt."
 
+#: src/pages/Artifacts.tsx
+msgid "This file can't be previewed."
+msgstr ""
+
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "Dit bestand is geen geldige UTF-8-tekst."
+
+#: src/pages/Artifacts.tsx
+msgid "This file is too large to preview."
+msgstr ""
 
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."

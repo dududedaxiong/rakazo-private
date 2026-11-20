@@ -58,4 +58,7 @@ Status: implemented
 
 ## Commits
 
-- 待补
+- `e3b1778` docs: note artifacts mobile layout and zip preview
+- `438ec49` feat(core): list zip archive entries from the central directory
+- `b43f5ee` feat(web): preview zip archives inline in the artifacts page
+- （移动端布局 + 测试 + 翻译，待补）

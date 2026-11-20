@@ -377,7 +377,7 @@ export function ArtifactsPage() {
               }
             }}
             spacing={1}
-            className="h-8 rounded-lg border border-input p-0.5"
+            className="h-8 rounded-lg border border-input p-0.5 max-md:max-w-full max-md:overflow-x-auto"
             aria-label={t`Filter by category`}
           >
             {categoryOptions.map((option) => (
@@ -399,7 +399,7 @@ export function ArtifactsPage() {
                 if (next) setSoftwareKind(next as ArtifactSoftwareKind | "all");
               }}
               spacing={1}
-              className="h-8 rounded-lg border border-input p-0.5"
+              className="h-8 rounded-lg border border-input p-0.5 max-md:max-w-full max-md:overflow-x-auto"
               aria-label={t`Filter by software kind`}
             >
               {softwareOptions.map((option) => (
@@ -515,7 +515,7 @@ function BrowsingPane({
   }
   if (items.length === 0) return empty;
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+    <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-5">
       {viewMode === "grid" ? (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4">
           {items.map((item) => (
@@ -782,7 +782,7 @@ function IndexPane({
   empty: ReactNode;
 }) {
   return (
-    <aside className="flex w-[320px] shrink-0 flex-col overflow-y-auto border-e border-border">
+    <aside className="flex w-[320px] shrink-0 flex-col overflow-y-auto border-e border-border max-md:hidden">
       {items === null ? (
         <div className="grid flex-1 place-items-center p-6 text-center text-body text-muted-foreground/80">
           {loadError ?? <Spinner aria-label={t`Loading…`} />}
@@ -991,6 +991,7 @@ function PreviewPane({
   onToggleMaximize: () => void;
 }) {
   const { t } = useLingui();
+  const navigate = useNavigate();
   const queries = useSpaceQueries();
   const versionsQuery = useQuery(
     queries.artifacts.listVersions.queryOptions({
@@ -1026,7 +1027,18 @@ function PreviewPane({
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
-      <header className="flex items-center gap-3 border-b border-border px-6 py-3">
+      <header className="flex items-center gap-3 border-b border-border px-4 py-3 md:px-6">
+        <IconTooltip label={t`Back`}>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t`Back`}
+            onClick={() => navigate("/app/artifacts")}
+            className="shrink-0 text-muted-foreground md:hidden"
+          >
+            <ChevronLeft />
+          </Button>
+        </IconTooltip>
         <div className="min-w-0 flex-1">
           <h2 className="truncate text-body-lg font-semibold">
             {state.status === "ready" ? state.artifact.name : null}
@@ -1059,6 +1071,7 @@ function PreviewPane({
               onClick={() =>
                 downloadArtifactBytes(state.artifact.name, state.artifact.mimeType, state.bytes)
               }
+              className="shrink-0"
             >
               <Download className="me-1.5" size={15} strokeWidth={1.9} />
               <Trans>Download</Trans>
@@ -1069,7 +1082,7 @@ function PreviewPane({
                 size="icon"
                 aria-label={maximized ? t`Show list` : t`Maximize`}
                 onClick={onToggleMaximize}
-                className="text-muted-foreground"
+                className="text-muted-foreground max-md:hidden"
               >
                 {maximized ? (
                   <Minimize2 size={15} strokeWidth={1.9} />
@@ -1082,7 +1095,7 @@ function PreviewPane({
         ) : null}
       </header>
 
-      <div className="min-h-0 flex-1 p-5">
+      <div className="min-h-0 flex-1 p-4 md:p-5">
         {state.status === "loading" ? (
           <div className="grid h-full place-items-center text-body text-muted-foreground/80">
             <Spinner aria-label={t`Loading…`} />

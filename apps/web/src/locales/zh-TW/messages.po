@@ -49,6 +49,12 @@ msgstr "{0, plural, other {# 個連接器}}"
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {# 個檔案}}"
 
+#. placeholder {0}: files.length
+#. placeholder {1}: formatFileSize(totalSize)
+#: src/pages/Artifacts.tsx
+msgid "{0, plural, one {# file} other {# files}} · {1}"
+msgstr "{0, plural, one {# 個檔案} other {# 個檔案}} · {1}"
+
 #. placeholder {0}: referral.rewards
 #: src/components/InviteDialog.tsx
 msgid "{0, plural, one {# free month earned} other {# free months earned}}"
@@ -1509,6 +1515,14 @@ msgstr "上一頁或下一頁"
 #: src/components/pages/PageNotice.tsx
 msgid "Back to chat"
 msgstr "返回聊天"
+
+#: src/pages/Artifacts.tsx
+msgid "Back to file list"
+msgstr "返回檔案清單"
+
+#: src/pages/Artifacts.tsx
+msgid "Back to parent folder"
+msgstr "返回上一層"
 
 #: src/pages/Auth.tsx
 msgid "Back to sign in"
@@ -3080,6 +3094,14 @@ msgstr "無法連線伺服器"
 #: src/pages/shell/use-agent-import-source.ts
 msgid "Could not read these files"
 msgstr "無法讀取這些檔案"
+
+#: src/pages/Artifacts.tsx
+msgid "Could not read this archive."
+msgstr "無法讀取此壓縮包。"
+
+#: src/pages/Artifacts.tsx
+msgid "Could not read this file."
+msgstr "無法讀取此檔案。"
 
 #: src/components/BotPackageImport.tsx
 msgid "Could not read this package. Use a UTF-8 JSON file up to 4 MiB."
@@ -6725,6 +6747,11 @@ msgstr "開啟電腦設定"
 msgid "Open external link?"
 msgstr "開啟外部連結？"
 
+#. placeholder {0}: child.name
+#: src/pages/Artifacts.tsx
+msgid "Open folder {0}"
+msgstr "開啟資料夾 {0}"
+
 #: src/pages/shell/computer-panel.tsx
 msgid "Open in full window"
 msgstr "在完整視窗中開啟"
@@ -7119,8 +7146,10 @@ msgid "Preview"
 msgstr "預覽"
 
 #. placeholder {0}: artifact.name
+#. placeholder {0}: child.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
 msgid "Preview {0}"
 msgstr "預覽 {0}"
@@ -9402,9 +9431,17 @@ msgstr ""
 msgid "This deletes all {0} versions of this artifact. This can't be undone."
 msgstr "這將刪除此成品的全部 {0} 個版本，且無法復原。"
 
+#: src/pages/Artifacts.tsx
+msgid "This file can't be previewed."
+msgstr "此檔案無法預覽。"
+
 #: src/components/ArtifactFileCard.tsx
 msgid "This file is not valid UTF-8 text."
 msgstr "此檔案不是有效的 UTF-8 文字。"
+
+#: src/pages/Artifacts.tsx
+msgid "This file is too large to preview."
+msgstr "此檔案太大，無法預覽。"
 
 #: src/lib/agent-import-errors.ts
 msgid "This import was already used. Choose the files again."
