@@ -775,6 +775,7 @@ model Space {
   actionApprovalRules         ActionApprovalRule[]
   actionAutoReviewPreferences ActionAutoReviewPreference[]
   memoryConfig                SpaceMemoryConfig?
+  miscConfig                  SpaceMiscConfig?
   secrets                     Secret[]
   chatGroups                  ChatGroup[]
   botSecrets                  BotSecret[]
@@ -2368,6 +2369,18 @@ model SpaceMemoryConfig {
   updatedAt          DateTime @updatedAt
 
   @@map("space_memory_configs")
+}
+
+/// A space's misc settings: artifact category mapping and chat upload formats.
+model SpaceMiscConfig {
+  id        String   @id @default(cuid())
+  spaceId   String   @unique
+  space     Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  settings  Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("space_misc_configs")
 }
 
 model Secret {
