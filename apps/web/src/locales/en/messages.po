@@ -829,6 +829,7 @@ msgstr "Activity"
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/SecretAskCard.tsx
 #: src/pages/McpServerForm.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/plugins/domain-search.tsx
 #: src/pages/plugins/parts.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -896,6 +897,10 @@ msgstr "Add credits"
 #: src/pages/plugins/add-menu.tsx
 msgid "Add custom"
 msgstr "Add custom"
+
+#: src/pages/MiscSettings.tsx
+msgid "Add extension"
+msgstr "Add extension"
 
 #: src/pages/ModelRoleSettings.tsx
 msgid "Add fallback"
@@ -1029,6 +1034,7 @@ msgstr "Agent from another app"
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "All"
@@ -1051,6 +1057,10 @@ msgstr "All files"
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "All models failed"
 msgstr "All models failed"
+
+#: src/pages/Artifacts.tsx
+msgid "All software"
+msgstr "All software"
 
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
@@ -1169,6 +1179,11 @@ msgstr "Android"
 msgid "Android download link"
 msgstr "Android download link"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Android software"
+msgstr "Android software"
+
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
 msgstr "Another agent"
@@ -1264,6 +1279,11 @@ msgstr "Appearance"
 msgid "Appearance: {label}"
 msgstr "Appearance: {label}"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Apple software"
+msgstr "Apple software"
+
 #: src/components/AskCard.tsx
 msgid "Apply"
 msgstr "Apply"
@@ -1318,6 +1338,11 @@ msgstr "archived"
 #: src/pages/shell/archived-chats.tsx
 msgid "Archived"
 msgstr "Archived"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Archives"
+msgstr "Archives"
 
 #: src/pages/McpServerForm.tsx
 msgid "Arguments"
@@ -1466,6 +1491,7 @@ msgstr "Avatar Studio"
 #: src/pages/Favorites.tsx
 #: src/pages/Gallery.tsx
 #: src/pages/McpServerForm.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/plugins/connector-detail.tsx
 #: src/pages/plugins/parts.tsx
@@ -2960,6 +2986,10 @@ msgstr "Could not load recent imports."
 msgid "Could not load run history"
 msgstr "Could not load run history"
 
+#: src/pages/MiscSettings.tsx
+msgid "Could not load settings"
+msgstr "Could not load settings"
+
 #: src/lib/account-security.ts
 #: src/pages/Auth.tsx
 msgid "Could not load sign-in options"
@@ -3211,6 +3241,7 @@ msgid "Could not save rule"
 msgstr "Could not save rule"
 
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/pages/MiscSettings.tsx
 msgid "Could not save settings"
 msgstr "Could not save settings"
 
@@ -3864,6 +3895,11 @@ msgstr "Desktop app"
 msgid "Desktop ID"
 msgstr "Desktop ID"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Desktop software"
+msgstr "Desktop software"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Desktop update"
 msgstr "Desktop update"
@@ -3986,6 +4022,11 @@ msgstr "Docker limits access to your computer for added security. Using {hostLab
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "Document changed. Reopen to edit the latest version."
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Documents"
+msgstr "Documents"
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -4527,6 +4568,11 @@ msgstr "Files or folders, one per line"
 msgid "Files your bots create, like reports, docs and images, collect here."
 msgstr "Files your bots create, like reports, docs and images, collect here."
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Film and video"
+msgstr "Film and video"
+
 #: src/pages/GroupPanel.tsx
 msgid "Filter bots"
 msgstr "Filter bots"
@@ -4536,8 +4582,16 @@ msgid "Filter by bot"
 msgstr "Filter by bot"
 
 #: src/pages/Artifacts.tsx
+msgid "Filter by category"
+msgstr "Filter by category"
+
+#: src/pages/Artifacts.tsx
 msgid "Filter by date"
 msgstr "Filter by date"
+
+#: src/pages/Artifacts.tsx
+msgid "Filter by software kind"
+msgstr "Filter by software kind"
 
 #: src/components/admin/AdminAuditLog.tsx
 #: src/pages/Gallery.tsx
@@ -4956,7 +5010,9 @@ msgstr "Image trigger words"
 msgid "Image upload area"
 msgstr "Image upload area"
 
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
+#: src/pages/MiscSettings.tsx
 msgid "Images"
 msgstr "Images"
 
@@ -5503,6 +5559,7 @@ msgstr "Loading voice providers…"
 #: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Invite.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
@@ -5850,6 +5907,11 @@ msgstr "minute"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "minutes"
 msgstr "minutes"
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Miscellaneous settings"
+msgstr "Miscellaneous settings"
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Missed call"
@@ -6385,6 +6447,7 @@ msgstr "No rows"
 msgid "No runs match these filters."
 msgstr "No runs match these filters."
 
+#: src/pages/ActivityList.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "No runs yet"
 msgstr "No runs yet"
@@ -6744,6 +6807,11 @@ msgstr "Original message unavailable"
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "Other model…"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Other software"
+msgstr "Other software"
 
 #: src/pages/AdminPage.tsx
 msgid "Overview"
@@ -7455,6 +7523,10 @@ msgstr "Reload"
 msgid "Remove"
 msgstr "Remove"
 
+#: src/pages/MiscSettings.tsx
+msgid "Remove \"{extension}\""
+msgstr "Remove \"{extension}\""
+
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
 #. placeholder {0}: item.name
@@ -8092,6 +8164,11 @@ msgstr "Scopes (optional)"
 msgid "Screen not connected"
 msgstr "Screen not connected"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Scripts"
+msgstr "Scripts"
+
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/FoundModelPicker.tsx
 #: src/components/VaultSettings.tsx
@@ -8619,6 +8696,11 @@ msgstr "Slide up to lock"
 #: src/pages/shell/model-switch-menu.tsx
 msgid "Slow"
 msgstr "Slow"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Software"
+msgstr "Software"
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/plugins/plugin-browse.tsx
@@ -9658,6 +9740,7 @@ msgstr "Trusted sites"
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/onboarding/first-bot.tsx
 #: src/pages/SharedPage.tsx
 #: src/pages/SpaceSearch.tsx
@@ -9834,6 +9917,10 @@ msgstr "Upload"
 #: src/components/ShareCardDialog.tsx
 msgid "Upload background image"
 msgstr "Upload background image"
+
+#: src/pages/MiscSettings.tsx
+msgid "Upload formats"
+msgstr "Upload formats"
 
 #: src/components/WebdavBackupSettings.tsx
 msgid "Uploading…"

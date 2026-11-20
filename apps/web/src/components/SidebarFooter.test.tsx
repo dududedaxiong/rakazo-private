@@ -37,6 +37,7 @@ async function render(
   onFavorites = vi.fn(),
   appDownloads?: { androidUrl: string | null; iosUrl: string | null } | null,
   onMyInviteCode = vi.fn(),
+  onMiscSettings = vi.fn(),
 ) {
   const email = "account@rakazo.test";
   await act(async () =>
@@ -60,6 +61,7 @@ async function render(
           onBoard={onBoard}
           onArtifacts={() => {}}
           onFavorites={onFavorites}
+          onMiscSettings={onMiscSettings}
           onSettings={() => {}}
           onMyInviteCode={onMyInviteCode}
           onLogOut={() => {}}
@@ -151,6 +153,7 @@ it("opens integrations and keeps the existing account actions and links", async 
     "Artifacts",
     "Favorites",
     "Board",
+    "Miscellaneous settings",
     "Get the mobile app",
     "My invite code",
     "Log out",
@@ -164,6 +167,29 @@ it("omits Board when unavailable", async () => {
   expect(document.querySelector('[data-slot="popover-content"]')?.textContent).not.toContain(
     "Board",
   );
+});
+
+it("opens miscellaneous settings above Get the mobile app", async () => {
+  const onMiscSettings = vi.fn();
+  await render(
+    "Demo User",
+    undefined,
+    vi.fn(),
+    vi.fn(),
+    undefined,
+    vi.fn(),
+    undefined,
+    vi.fn(),
+    onMiscSettings,
+  );
+  const menu = document.querySelector('[data-slot="popover-content"]')!;
+  const labels = [...menu.querySelectorAll("button, a")].map((row) => row.textContent);
+  expect(labels.indexOf("Miscellaneous settings")).toBe(labels.indexOf("Get the mobile app") - 1);
+  const miscSettings = [...document.querySelectorAll("button")].find(
+    (button) => button.textContent === "Miscellaneous settings",
+  )!;
+  await act(async () => miscSettings.click());
+  expect(onMiscSettings).toHaveBeenCalledOnce();
 });
 
 it("opens my invite code below Get the mobile app", async () => {

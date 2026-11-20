@@ -532,6 +532,22 @@ export function artifactCategoryForFile(
   return { category: "other" };
 }
 
+/** Client-side category filter for the artifacts list, App and web alike. */
+export function matchesArtifactCategory(
+  input: { name: string; mimeType: string },
+  category: ArtifactCategory | "all",
+  softwareKind: ArtifactSoftwareKind | "all",
+  mapping: ArtifactCategoryMapping = DEFAULT_ARTIFACT_CATEGORY_MAPPING,
+): boolean {
+  if (category === "all") return true;
+  const result = artifactCategoryForFile(input, mapping);
+  if (result.category !== category) return false;
+  if (category === "software" && softwareKind !== "all") {
+    return result.softwareKind === softwareKind;
+  }
+  return true;
+}
+
 export function inferAttachmentMimeType(
   name: string,
   reportedType?: string,

@@ -17,6 +17,7 @@ import {
   Plug,
   ScrollText,
   Settings,
+  SlidersHorizontal,
   Smartphone,
   SquareKanban,
   Star,
@@ -47,6 +48,7 @@ type Props = {
   onArtifacts: () => void;
   onFavorites?: () => void;
   onGallery?: () => void;
+  onMiscSettings?: () => void;
   onSettings: () => void;
   onInvite?: () => void;
   onMyInviteCode?: () => void;
@@ -82,6 +84,7 @@ export function SidebarFooter({
   onArtifacts,
   onFavorites,
   onGallery,
+  onMiscSettings,
   onSettings,
   onInvite,
   onMyInviteCode,
@@ -257,6 +260,16 @@ export function SidebarFooter({
               </Button>
             ))}
             <div className="my-1 border-t border-border" />
+            {onMiscSettings ? (
+              <Button
+                variant="ghost"
+                className="h-9 w-full justify-start gap-2.5 font-normal"
+                onClick={onMiscSettings}
+              >
+                <SlidersHorizontal className="text-muted-foreground" strokeWidth={1.75} />
+                <Trans>Miscellaneous settings</Trans>
+              </Button>
+            ) : null}
             <Button
               variant="ghost"
               className="h-9 w-full justify-start gap-2.5 font-normal"

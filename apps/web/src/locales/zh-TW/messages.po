@@ -830,6 +830,7 @@ msgstr "動態"
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/SecretAskCard.tsx
 #: src/pages/McpServerForm.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/plugins/domain-search.tsx
 #: src/pages/plugins/parts.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -897,6 +898,10 @@ msgstr "加值"
 #: src/pages/plugins/add-menu.tsx
 msgid "Add custom"
 msgstr "新增自訂項目"
+
+#: src/pages/MiscSettings.tsx
+msgid "Add extension"
+msgstr ""
 
 #: src/pages/ModelRoleSettings.tsx
 msgid "Add fallback"
@@ -1030,6 +1035,7 @@ msgstr "其他應用程式中的代理"
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "All"
@@ -1052,6 +1058,10 @@ msgstr "所有檔案"
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "All models failed"
 msgstr "全部模型皆失敗"
+
+#: src/pages/Artifacts.tsx
+msgid "All software"
+msgstr ""
 
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
@@ -1170,6 +1180,11 @@ msgstr "Android"
 msgid "Android download link"
 msgstr "Android 下載地址"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Android software"
+msgstr ""
+
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
 msgstr "其他代理程式"
@@ -1265,6 +1280,11 @@ msgstr "外觀"
 msgid "Appearance: {label}"
 msgstr "外觀：{label}"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Apple software"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Apply"
 msgstr "套用"
@@ -1319,6 +1339,11 @@ msgstr "已封存"
 #: src/pages/shell/archived-chats.tsx
 msgid "Archived"
 msgstr "已封存"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Archives"
+msgstr ""
 
 #: src/pages/McpServerForm.tsx
 msgid "Arguments"
@@ -1467,6 +1492,7 @@ msgstr "頭像工作室"
 #: src/pages/Favorites.tsx
 #: src/pages/Gallery.tsx
 #: src/pages/McpServerForm.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/plugins/connector-detail.tsx
 #: src/pages/plugins/parts.tsx
@@ -2961,6 +2987,10 @@ msgstr ""
 msgid "Could not load run history"
 msgstr "無法載入執行歷史紀錄"
 
+#: src/pages/MiscSettings.tsx
+msgid "Could not load settings"
+msgstr ""
+
 #: src/lib/account-security.ts
 #: src/pages/Auth.tsx
 msgid "Could not load sign-in options"
@@ -3212,6 +3242,7 @@ msgid "Could not save rule"
 msgstr "無法儲存規則"
 
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/pages/MiscSettings.tsx
 msgid "Could not save settings"
 msgstr "無法儲存設定"
 
@@ -3865,6 +3896,11 @@ msgstr "桌面應用程式"
 msgid "Desktop ID"
 msgstr "桌面 ID"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Desktop software"
+msgstr ""
+
 #: src/components/DesktopUpdates.tsx
 msgid "Desktop update"
 msgstr "桌面版更新"
@@ -3987,6 +4023,11 @@ msgstr "Docker 限制對你電腦的存取，以提高安全性。使用 {hostLa
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "文件已變更，請重新開啟以編輯最新版本。"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Documents"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -4528,6 +4569,11 @@ msgstr "檔案或資料夾，每行一個"
 msgid "Files your bots create, like reports, docs and images, collect here."
 msgstr "你的機器人建立的檔案，例如報告、文件和圖片，都會匯集在這裡。"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Film and video"
+msgstr ""
+
 #: src/pages/GroupPanel.tsx
 msgid "Filter bots"
 msgstr "篩選機器人"
@@ -4537,8 +4583,16 @@ msgid "Filter by bot"
 msgstr "依機器人篩選"
 
 #: src/pages/Artifacts.tsx
+msgid "Filter by category"
+msgstr ""
+
+#: src/pages/Artifacts.tsx
 msgid "Filter by date"
 msgstr "依日期篩選"
+
+#: src/pages/Artifacts.tsx
+msgid "Filter by software kind"
+msgstr ""
 
 #: src/components/admin/AdminAuditLog.tsx
 #: src/pages/Gallery.tsx
@@ -4957,7 +5011,9 @@ msgstr ""
 msgid "Image upload area"
 msgstr "圖片上傳區域"
 
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
+#: src/pages/MiscSettings.tsx
 msgid "Images"
 msgstr ""
 
@@ -5504,6 +5560,7 @@ msgstr "正在載入語音供應商…"
 #: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Invite.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
@@ -5851,6 +5908,11 @@ msgstr "分鐘"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "minutes"
 msgstr "分鐘"
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Miscellaneous settings"
+msgstr ""
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Missed call"
@@ -6386,6 +6448,7 @@ msgstr "沒有資料列"
 msgid "No runs match these filters."
 msgstr "沒有符合篩選條件的執行紀錄。"
 
+#: src/pages/ActivityList.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "No runs yet"
 msgstr "還沒有執行紀錄"
@@ -6745,6 +6808,11 @@ msgstr "原訊息不可用"
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "其他模型…"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Other software"
+msgstr ""
 
 #: src/pages/AdminPage.tsx
 msgid "Overview"
@@ -7456,6 +7524,10 @@ msgstr "重新載入"
 msgid "Remove"
 msgstr "移除"
 
+#: src/pages/MiscSettings.tsx
+msgid "Remove \"{extension}\""
+msgstr ""
+
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
 #. placeholder {0}: item.name
@@ -8093,6 +8165,11 @@ msgstr "範圍（選填）"
 msgid "Screen not connected"
 msgstr "螢幕未連線"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Scripts"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/FoundModelPicker.tsx
 #: src/components/VaultSettings.tsx
@@ -8619,6 +8696,11 @@ msgstr "向上滑動以鎖定"
 
 #: src/pages/shell/model-switch-menu.tsx
 msgid "Slow"
+msgstr ""
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Software"
 msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
@@ -9659,6 +9741,7 @@ msgstr "受信任的網站"
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/onboarding/first-bot.tsx
 #: src/pages/SharedPage.tsx
 #: src/pages/SpaceSearch.tsx
@@ -9834,6 +9917,10 @@ msgstr "上傳"
 
 #: src/components/ShareCardDialog.tsx
 msgid "Upload background image"
+msgstr ""
+
+#: src/pages/MiscSettings.tsx
+msgid "Upload formats"
 msgstr ""
 
 #: src/components/WebdavBackupSettings.tsx

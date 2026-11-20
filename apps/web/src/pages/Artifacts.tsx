@@ -3,7 +3,12 @@ import { Trans, useLingui } from "@lingui/react/macro";
 import { ChatMarkdown } from "@rakazo_mickvvw/chat-ui/web";
 import type { Artifact, Bot } from "@rakazo_mickvvw/contracts";
 import { artifactPreviewKind } from "@rakazo_mickvvw/contracts";
-import { artifactTypeLabel } from "@rakazo_mickvvw/core";
+import type { ArtifactCategory, ArtifactSoftwareKind } from "@rakazo_mickvvw/core";
+import {
+  artifactTypeLabel,
+  DEFAULT_ARTIFACT_CATEGORY_MAPPING,
+  matchesArtifactCategory,
+} from "@rakazo_mickvvw/core";
 import { writeSaved } from "@rakazo_mickvvw/core/query";
 import {
   BotAvatar,
@@ -30,6 +35,10 @@ import {
 } from "@rakazo_mickvvw/ui-web";
 import { skipToken, useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Apple,
+  AppWindow,
+  Archive,
+  Box,
   ChevronLeft,
   Download,
   FileCode2,
@@ -40,9 +49,12 @@ import {
   Lock,
   Maximize2,
   Minimize2,
+  Monitor,
   Search,
   SearchX,
+  Smartphone,
   Trash2,
+  Video,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -98,6 +110,13 @@ export function ArtifactsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState<DateFilter>("all");
   const [madeByBots, setMadeByBots] = useState(false);
+  const [category, setCategory] = useState<Exclude<ArtifactCategory, "other"> | "all">("all");
+  const [softwareKind, setSoftwareKind] = useState<ArtifactSoftwareKind | "all">("all");
+  const mapping =
+    useQuery({
+      queryKey: ["misc-settings"],
+      queryFn: () => rpc.miscSettings.get(),
+    }).data?.categories ?? DEFAULT_ARTIFACT_CATEGORY_MAPPING;
   const [maximized, setMaximized] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<ArtifactSummary | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -154,20 +173,22 @@ export function ArtifactsPage() {
     const query = searchQuery.trim().toLowerCase();
     return items.filter((item) => {
       if (!matchesCalendarDateFilter(item.createdAt, dateFilter, now)) return false;
+      if (!matchesArtifactCategory(item, category, softwareKind, mapping)) return false;
       if (!query) return true;
       return (
         item.name.toLowerCase().includes(query) ||
         (item.description?.toLowerCase().includes(query) ?? false)
       );
     });
-  }, [items, searchQuery, dateFilter]);
+  }, [items, searchQuery, dateFilter, category, softwareKind, mapping]);
 
-  const clientFilterActive = searchQuery.trim().length > 0 || dateFilter !== "all";
+  const clientFilterActive =
+    searchQuery.trim().length > 0 || dateFilter !== "all" || category !== "all";
   const autoFetchedCursorRef = useRef<string | null>(null);
 
   useEffect(() => {
     autoFetchedCursorRef.current = null;
-  }, [searchQuery, dateFilter, activeBotId, madeByBots]);
+  }, [searchQuery, dateFilter, activeBotId, madeByBots, category, softwareKind]);
 
   // Search and date filters only see loaded pages, so keep paging until something matches.
   useEffect(() => {
@@ -215,6 +236,8 @@ export function ArtifactsPage() {
     setDateFilter("all");
     setActiveBotId(null);
     setMadeByBots(false);
+    setCategory("all");
+    setSoftwareKind("all");
   }
 
   const emptyState = (
@@ -226,6 +249,28 @@ export function ArtifactsPage() {
       onLoadMore={loadMore}
     />
   );
+
+  const categoryOptions: {
+    value: Exclude<ArtifactCategory, "other"> | "all";
+    label: string;
+    icon: ReactNode;
+  }[] = [
+    { value: "all", label: t`All`, icon: null },
+    { value: "image", label: t`Images`, icon: <ImageIcon className="size-3.5" /> },
+    { value: "video", label: t`Film and video`, icon: <Video className="size-3.5" /> },
+    { value: "archive", label: t`Archives`, icon: <Archive className="size-3.5" /> },
+    { value: "script", label: t`Scripts`, icon: <FileCode2 className="size-3.5" /> },
+    { value: "document", label: t`Documents`, icon: <FileText className="size-3.5" /> },
+    { value: "software", label: t`Software`, icon: <AppWindow className="size-3.5" /> },
+  ];
+  const softwareOptions: { value: ArtifactSoftwareKind | "all"; label: string; icon: ReactNode }[] =
+    [
+      { value: "all", label: t`All software`, icon: null },
+      { value: "desktop", label: t`Desktop software`, icon: <Monitor className="size-3.5" /> },
+      { value: "apple", label: t`Apple software`, icon: <Apple className="size-3.5" /> },
+      { value: "android", label: t`Android software`, icon: <Smartphone className="size-3.5" /> },
+      { value: "other", label: t`Other software`, icon: <Box className="size-3.5" /> },
+    ];
 
   return (
     <div className="flex h-full min-w-0 flex-col bg-background text-foreground/90">
@@ -310,6 +355,58 @@ export function ArtifactsPage() {
           </div>
         ) : null}
       </header>
+
+      {showFilters ? (
+        <div className="app-no-drag flex flex-wrap items-center gap-2 border-b border-border px-4 py-2">
+          <ToggleGroup
+            value={[category]}
+            onValueChange={([next]) => {
+              if (next) {
+                setCategory(next as Exclude<ArtifactCategory, "other"> | "all");
+                setSoftwareKind("all");
+              }
+            }}
+            spacing={1}
+            className="h-8 rounded-lg border border-input p-0.5"
+            aria-label={t`Filter by category`}
+          >
+            {categoryOptions.map((option) => (
+              <ToggleGroupItem
+                key={option.value}
+                value={option.value}
+                aria-label={option.label}
+                className="h-full min-w-0 gap-1.5 rounded-md px-2.5 text-body-sm text-muted-foreground aria-pressed:bg-accent aria-pressed:text-accent-foreground"
+              >
+                {option.icon}
+                {option.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+          {category === "software" ? (
+            <ToggleGroup
+              value={[softwareKind]}
+              onValueChange={([next]) => {
+                if (next) setSoftwareKind(next as ArtifactSoftwareKind | "all");
+              }}
+              spacing={1}
+              className="h-8 rounded-lg border border-input p-0.5"
+              aria-label={t`Filter by software kind`}
+            >
+              {softwareOptions.map((option) => (
+                <ToggleGroupItem
+                  key={option.value}
+                  value={option.value}
+                  aria-label={option.label}
+                  className="h-full min-w-0 gap-1.5 rounded-md px-2.5 text-body-sm text-muted-foreground aria-pressed:bg-accent aria-pressed:text-accent-foreground"
+                >
+                  {option.icon}
+                  {option.label}
+                </ToggleGroupItem>
+              ))}
+            </ToggleGroup>
+          ) : null}
+        </div>
+      ) : null}
 
       {refreshError ? (
         <p role="alert" className="px-6 py-2 text-body text-destructive">

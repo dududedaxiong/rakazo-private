@@ -417,6 +417,11 @@ function ShellSidebarFooter({
           closeMobileSidebar();
           navigate("/app/gallery");
         }}
+        onMiscSettings={() => {
+          setMenuOpen(false);
+          closeMobileSidebar();
+          navigate("/app/misc-settings");
+        }}
         onSettings={() => {
           setMenuOpen(false);
           openSettings("general");

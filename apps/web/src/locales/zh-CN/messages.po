@@ -829,6 +829,7 @@ msgstr "动态"
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/SecretAskCard.tsx
 #: src/pages/McpServerForm.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/plugins/domain-search.tsx
 #: src/pages/plugins/parts.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -896,6 +897,10 @@ msgstr "添加额度"
 #: src/pages/plugins/add-menu.tsx
 msgid "Add custom"
 msgstr "添加自定义"
+
+#: src/pages/MiscSettings.tsx
+msgid "Add extension"
+msgstr "添加后缀"
 
 #: src/pages/ModelRoleSettings.tsx
 msgid "Add fallback"
@@ -1029,6 +1034,7 @@ msgstr "其他应用中的智能体"
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "All"
@@ -1051,6 +1057,10 @@ msgstr "全部文件"
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "All models failed"
 msgstr "全部模型都失败了"
+
+#: src/pages/Artifacts.tsx
+msgid "All software"
+msgstr "全部软件"
 
 #: src/components/integrations/space-availability.tsx
 msgid "All spaces"
@@ -1169,6 +1179,11 @@ msgstr "安卓"
 msgid "Android download link"
 msgstr "安卓下载地址"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Android software"
+msgstr "安卓软件"
+
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
 msgstr "其他 Agent"
@@ -1264,6 +1279,11 @@ msgstr "外观"
 msgid "Appearance: {label}"
 msgstr "外观：{label}"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Apple software"
+msgstr "苹果软件"
+
 #: src/components/AskCard.tsx
 msgid "Apply"
 msgstr "应用"
@@ -1318,6 +1338,11 @@ msgstr "已归档"
 #: src/pages/shell/archived-chats.tsx
 msgid "Archived"
 msgstr "已归档"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Archives"
+msgstr "压缩包"
 
 #: src/pages/McpServerForm.tsx
 msgid "Arguments"
@@ -1466,6 +1491,7 @@ msgstr "头像工作室"
 #: src/pages/Favorites.tsx
 #: src/pages/Gallery.tsx
 #: src/pages/McpServerForm.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/plugins/connector-detail.tsx
 #: src/pages/plugins/parts.tsx
@@ -2960,6 +2986,10 @@ msgstr "无法加载最近的导入。"
 msgid "Could not load run history"
 msgstr "无法加载运行历史记录"
 
+#: src/pages/MiscSettings.tsx
+msgid "Could not load settings"
+msgstr "无法加载设置"
+
 #: src/lib/account-security.ts
 #: src/pages/Auth.tsx
 msgid "Could not load sign-in options"
@@ -3211,6 +3241,7 @@ msgid "Could not save rule"
 msgstr "无法保存规则"
 
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/pages/MiscSettings.tsx
 msgid "Could not save settings"
 msgstr "无法保存设置"
 
@@ -3864,6 +3895,11 @@ msgstr "桌面应用"
 msgid "Desktop ID"
 msgstr "桌面 ID"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Desktop software"
+msgstr "电脑软件"
+
 #: src/components/DesktopUpdates.tsx
 msgid "Desktop update"
 msgstr "桌面更新"
@@ -3986,6 +4022,11 @@ msgstr "Docker 限制对你电脑的访问，以提高安全性。使用{hostLab
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "文档已更改。请重新打开以编辑最新版本。"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Documents"
+msgstr "文档"
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -4527,6 +4568,11 @@ msgstr "文件或文件夹，每行一个"
 msgid "Files your bots create, like reports, docs and images, collect here."
 msgstr "你的机器人创建的文件，例如报告、文档和图片，都会汇集在这里。"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Film and video"
+msgstr "影视"
+
 #: src/pages/GroupPanel.tsx
 msgid "Filter bots"
 msgstr "筛选 Bot"
@@ -4536,8 +4582,16 @@ msgid "Filter by bot"
 msgstr "按机器人筛选"
 
 #: src/pages/Artifacts.tsx
+msgid "Filter by category"
+msgstr "按分类筛选"
+
+#: src/pages/Artifacts.tsx
 msgid "Filter by date"
 msgstr "按日期筛选"
+
+#: src/pages/Artifacts.tsx
+msgid "Filter by software kind"
+msgstr "按软件类型筛选"
 
 #: src/components/admin/AdminAuditLog.tsx
 #: src/pages/Gallery.tsx
@@ -4956,7 +5010,9 @@ msgstr "图片触发词"
 msgid "Image upload area"
 msgstr "图片上传区域"
 
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
+#: src/pages/MiscSettings.tsx
 msgid "Images"
 msgstr "图片"
 
@@ -5503,6 +5559,7 @@ msgstr "正在加载语音提供方…"
 #: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Invite.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
@@ -5850,6 +5907,11 @@ msgstr "分钟"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "minutes"
 msgstr "分钟"
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Miscellaneous settings"
+msgstr "杂项设置"
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Missed call"
@@ -6385,6 +6447,7 @@ msgstr "无行"
 msgid "No runs match these filters."
 msgstr "没有符合筛选的运行记录。"
 
+#: src/pages/ActivityList.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "No runs yet"
 msgstr "还没有运行记录"
@@ -6744,6 +6807,11 @@ msgstr "原消息不可用"
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "其他模型…"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Other software"
+msgstr "其他软件"
 
 #: src/pages/AdminPage.tsx
 msgid "Overview"
@@ -7455,6 +7523,10 @@ msgstr "重新加载"
 msgid "Remove"
 msgstr "移除"
 
+#: src/pages/MiscSettings.tsx
+msgid "Remove \"{extension}\""
+msgstr "移除“{extension}”"
+
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
 #. placeholder {0}: item.name
@@ -8092,6 +8164,11 @@ msgstr "范围（可选）"
 msgid "Screen not connected"
 msgstr "屏幕未连接"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Scripts"
+msgstr "脚本"
+
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/FoundModelPicker.tsx
 #: src/components/VaultSettings.tsx
@@ -8619,6 +8696,11 @@ msgstr "上滑锁定"
 #: src/pages/shell/model-switch-menu.tsx
 msgid "Slow"
 msgstr "慢"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Software"
+msgstr "软件"
 
 #: src/components/integrations/skills-dialog.tsx
 #: src/pages/plugins/plugin-browse.tsx
@@ -9658,6 +9740,7 @@ msgstr "受信任的网站"
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/onboarding/first-bot.tsx
 #: src/pages/SharedPage.tsx
 #: src/pages/SpaceSearch.tsx
@@ -9834,6 +9917,10 @@ msgstr "上传"
 #: src/components/ShareCardDialog.tsx
 msgid "Upload background image"
 msgstr "上传背景图"
+
+#: src/pages/MiscSettings.tsx
+msgid "Upload formats"
+msgstr "上传格式"
 
 #: src/components/WebdavBackupSettings.tsx
 msgid "Uploading…"

@@ -829,6 +829,7 @@ msgstr "Actividad"
 #: src/components/integrations/plugin-marketplace.tsx
 #: src/components/SecretAskCard.tsx
 #: src/pages/McpServerForm.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/plugins/domain-search.tsx
 #: src/pages/plugins/parts.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -896,6 +897,10 @@ msgstr "Agregar créditos"
 #: src/pages/plugins/add-menu.tsx
 msgid "Add custom"
 msgstr "Agregar personalizada"
+
+#: src/pages/MiscSettings.tsx
+msgid "Add extension"
+msgstr ""
 
 #: src/pages/ModelRoleSettings.tsx
 msgid "Add fallback"
@@ -1029,6 +1034,7 @@ msgstr "Agente de otra app"
 #: src/components/admin/AdminInviteCodes.tsx
 #: src/components/admin/AdminUsers.tsx
 #: src/components/VaultSettings.tsx
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "All"
@@ -1050,6 +1056,10 @@ msgstr "Todos los archivos"
 
 #: src/pages/shell/model-switch-history-dialog.tsx
 msgid "All models failed"
+msgstr ""
+
+#: src/pages/Artifacts.tsx
+msgid "All software"
 msgstr ""
 
 #: src/components/integrations/space-availability.tsx
@@ -1169,6 +1179,11 @@ msgstr ""
 msgid "Android download link"
 msgstr ""
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Android software"
+msgstr ""
+
 #: src/lib/activity-list-filters.ts
 msgid "Another agent"
 msgstr "Otro agente"
@@ -1264,6 +1279,11 @@ msgstr "Apariencia"
 msgid "Appearance: {label}"
 msgstr "Apariencia: {label}"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Apple software"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Apply"
 msgstr "Aplicar"
@@ -1318,6 +1338,11 @@ msgstr "archivado"
 #: src/pages/shell/archived-chats.tsx
 msgid "Archived"
 msgstr "Archivado"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Archives"
+msgstr ""
 
 #: src/pages/McpServerForm.tsx
 msgid "Arguments"
@@ -1466,6 +1491,7 @@ msgstr "Estudio de avatares"
 #: src/pages/Favorites.tsx
 #: src/pages/Gallery.tsx
 #: src/pages/McpServerForm.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/NavLinkPage.tsx
 #: src/pages/plugins/connector-detail.tsx
 #: src/pages/plugins/parts.tsx
@@ -2960,6 +2986,10 @@ msgstr ""
 msgid "Could not load run history"
 msgstr "No se pudo cargar el historial de ejecuciones"
 
+#: src/pages/MiscSettings.tsx
+msgid "Could not load settings"
+msgstr ""
+
 #: src/lib/account-security.ts
 #: src/pages/Auth.tsx
 msgid "Could not load sign-in options"
@@ -3211,6 +3241,7 @@ msgid "Could not save rule"
 msgstr "No se pudo guardar la regla"
 
 #: src/components/admin/AdminRegistrationSettings.tsx
+#: src/pages/MiscSettings.tsx
 msgid "Could not save settings"
 msgstr ""
 
@@ -3864,6 +3895,11 @@ msgstr "App de escritorio"
 msgid "Desktop ID"
 msgstr "ID de escritorio"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Desktop software"
+msgstr ""
+
 #: src/components/DesktopUpdates.tsx
 msgid "Desktop update"
 msgstr "Actualización de escritorio"
@@ -3986,6 +4022,11 @@ msgstr "Docker limita el acceso a tu computadora para mayor seguridad. Usar {hos
 #: src/pages/KnowledgeSection.tsx
 msgid "Document changed. Reopen to edit the latest version."
 msgstr "El documento ha cambiado. Vuelve a abrirlo para editar la última versión."
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Documents"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Don’t have an account?"
@@ -4527,6 +4568,11 @@ msgstr "Archivos o carpetas, uno por línea"
 msgid "Files your bots create, like reports, docs and images, collect here."
 msgstr "Los archivos que crean tus bots, como informes, documentos e imágenes, se reúnen aquí."
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Film and video"
+msgstr ""
+
 #: src/pages/GroupPanel.tsx
 msgid "Filter bots"
 msgstr "Filtrar bots"
@@ -4536,8 +4582,16 @@ msgid "Filter by bot"
 msgstr "Filtrar por bot"
 
 #: src/pages/Artifacts.tsx
+msgid "Filter by category"
+msgstr ""
+
+#: src/pages/Artifacts.tsx
 msgid "Filter by date"
 msgstr "Filtrar por fecha"
+
+#: src/pages/Artifacts.tsx
+msgid "Filter by software kind"
+msgstr ""
 
 #: src/components/admin/AdminAuditLog.tsx
 #: src/pages/Gallery.tsx
@@ -4956,7 +5010,9 @@ msgstr ""
 msgid "Image upload area"
 msgstr "Área de carga de imagen"
 
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
+#: src/pages/MiscSettings.tsx
 msgid "Images"
 msgstr ""
 
@@ -5503,6 +5559,7 @@ msgstr "Cargando proveedores de voz…"
 #: src/pages/Gallery.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/Invite.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/PluginSubmissionsPanel.tsx
 #: src/pages/RoutineRunHistory.tsx
@@ -5850,6 +5907,11 @@ msgstr "minuto"
 #: src/pages/routine-editor/trigger-cards.tsx
 msgid "minutes"
 msgstr "minutos"
+
+#: src/components/SidebarFooter.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Miscellaneous settings"
+msgstr ""
 
 #: src/components/call/VoiceChatCard.tsx
 msgid "Missed call"
@@ -6385,6 +6447,7 @@ msgstr "Sin filas"
 msgid "No runs match these filters."
 msgstr "Ninguna ejecución coincide con estos filtros."
 
+#: src/pages/ActivityList.tsx
 #: src/pages/RoutineRunHistory.tsx
 msgid "No runs yet"
 msgstr "Aún no hay ejecuciones"
@@ -6744,6 +6807,11 @@ msgstr "Mensaje original no disponible"
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Other model…"
 msgstr "Otro modelo…"
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Other software"
+msgstr ""
 
 #: src/pages/AdminPage.tsx
 msgid "Overview"
@@ -7455,6 +7523,10 @@ msgstr "Recargar"
 msgid "Remove"
 msgstr "Quitar"
 
+#: src/pages/MiscSettings.tsx
+msgid "Remove \"{extension}\""
+msgstr ""
+
 #. placeholder {0}: attachment.file.name
 #. placeholder {0}: device.name
 #. placeholder {0}: item.name
@@ -8092,6 +8164,11 @@ msgstr "Ámbitos (opcional)"
 msgid "Screen not connected"
 msgstr "Pantalla no conectada"
 
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Scripts"
+msgstr ""
+
 #: src/components/ApprovalRulesSettings.tsx
 #: src/components/FoundModelPicker.tsx
 #: src/components/VaultSettings.tsx
@@ -8618,6 +8695,11 @@ msgstr "Desliza hacia arriba para bloquear"
 
 #: src/pages/shell/model-switch-menu.tsx
 msgid "Slow"
+msgstr ""
+
+#: src/pages/Artifacts.tsx
+#: src/pages/MiscSettings.tsx
+msgid "Software"
 msgstr ""
 
 #: src/components/integrations/skills-dialog.tsx
@@ -9658,6 +9740,7 @@ msgstr "Sitios de confianza"
 #: src/components/pages/PageNotice.tsx
 #: src/components/pages/PagesList.tsx
 #: src/pages/ActivityList.tsx
+#: src/pages/MiscSettings.tsx
 #: src/pages/onboarding/first-bot.tsx
 #: src/pages/SharedPage.tsx
 #: src/pages/SpaceSearch.tsx
@@ -9833,6 +9916,10 @@ msgstr "Subir"
 
 #: src/components/ShareCardDialog.tsx
 msgid "Upload background image"
+msgstr ""
+
+#: src/pages/MiscSettings.tsx
+msgid "Upload formats"
 msgstr ""
 
 #: src/components/WebdavBackupSettings.tsx

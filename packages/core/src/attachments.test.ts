@@ -10,6 +10,7 @@ import {
   DEFAULT_ARTIFACT_CATEGORY_MAPPING,
   decodeAttachmentBase64,
   inferAttachmentMimeType,
+  matchesArtifactCategory,
   normalizeVoiceTranscript,
   promptTextForAttachments,
   userTurnMessageForRun,
@@ -605,5 +606,73 @@ describe("validateUploadFile", () => {
       "Unsupported attachment type: .env",
     );
     expect(() => validateUploadFile("photo.png", "image/png", allowed)).not.toThrow();
+  });
+});
+
+describe("matchesArtifactCategory", () => {
+  const items = [
+    { name: "photo.png", mimeType: "image/png" },
+    { name: "clip.mp4", mimeType: "video/mp4" },
+    { name: "backup.zip", mimeType: "application/zip" },
+    { name: "hello.py", mimeType: "text/x-python" },
+    { name: "notes.md", mimeType: "text/markdown" },
+    { name: "setup.exe", mimeType: "application/octet-stream" },
+    { name: "app.apk", mimeType: "application/octet-stream" },
+    { name: "song.mp3", mimeType: "audio/mpeg" },
+  ];
+
+  it("passes everything for all", () => {
+    for (const item of items) {
+      expect(matchesArtifactCategory(item, "all", "all")).toBe(true);
+    }
+  });
+
+  it("filters by category", () => {
+    expect(items.filter((item) => matchesArtifactCategory(item, "image", "all"))).toEqual([
+      items[0],
+    ]);
+    expect(items.filter((item) => matchesArtifactCategory(item, "script", "all"))).toEqual([
+      items[3],
+    ]);
+    expect(items.filter((item) => matchesArtifactCategory(item, "software", "all"))).toEqual([
+      items[5],
+      items[6],
+    ]);
+  });
+
+  it("splits software by kind", () => {
+    expect(items.filter((item) => matchesArtifactCategory(item, "software", "desktop"))).toEqual([
+      items[5],
+    ]);
+    expect(items.filter((item) => matchesArtifactCategory(item, "software", "android"))).toEqual([
+      items[6],
+    ]);
+    expect(items.filter((item) => matchesArtifactCategory(item, "software", "apple"))).toEqual([]);
+  });
+
+  it("leaves uncategorized files out of every category", () => {
+    for (const category of [
+      "image",
+      "video",
+      "archive",
+      "script",
+      "document",
+      "software",
+    ] as const) {
+      expect(matchesArtifactCategory(items[7]!, category, "all")).toBe(false);
+    }
+  });
+
+  it("follows a saved mapping", () => {
+    const mapping: ArtifactCategoryMapping = {
+      image: [],
+      video: [],
+      archive: [],
+      script: [],
+      document: ["apk"],
+      software: { desktop: [], apple: [], android: [], other: [] },
+    };
+    expect(matchesArtifactCategory(items[6]!, "document", "all", mapping)).toBe(true);
+    expect(matchesArtifactCategory(items[6]!, "software", "all", mapping)).toBe(false);
   });
 });
