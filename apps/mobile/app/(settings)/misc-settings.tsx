@@ -350,6 +350,7 @@ const createStyles = () => {
     },
     input: {
       flex: 1,
+      minWidth: 0,
       backgroundColor: native.fill,
       borderRadius: 10,
       paddingHorizontal: 12,
