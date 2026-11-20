@@ -18,6 +18,7 @@ import { generateMediaFromTool } from "./media-generation-tools.js";
 import {
   MEDIA_POLL_DEADLINE_MS,
   mediaDelivery,
+  pollMediaJob,
   pollMediaVideo,
   reconcileMediaVideos,
 } from "./media-video-poll.js";
@@ -27,6 +28,7 @@ const describePostgres =
 
 /** A provider whose remote job finishes, fails or errors when the test says so. */
 class ScriptedVideoProvider extends FakeMediaGenerationProvider {
+  readonly editCapabilities = { images: true, video: true };
   remote: "running" | "completed" | "failed" | "error" = "running";
   submissions = 0;
   polls = 0;
@@ -175,6 +177,8 @@ describePostgres("background video delivery (PostgreSQL)", () => {
       return result.jobId;
     };
     const poll = (jobId: string) => runAsTenant(tenant, () => pollMediaVideo(process(), { jobId }));
+    const pollJob = (jobId: string) =>
+      runAsTenant(tenant, () => pollMediaJob(process(), { jobId }));
     const reconcile = () => runAsSystem("reconcile", () => reconcileMediaVideos(process()));
     const job = (jobId: string) =>
       asSystem(prisma).externalEffect.findUniqueOrThrow({ where: { id: jobId } });
@@ -211,6 +215,7 @@ describePostgres("background video delivery (PostgreSQL)", () => {
       recovered,
       submit,
       poll,
+      pollJob,
       reconcile,
       job,
       messages,
@@ -382,6 +387,67 @@ describePostgres("background video delivery (PostgreSQL)", () => {
     expect((await h.job(image.id)).status).toBe("media_polling");
     expect(await h.messages()).toHaveLength(0);
     expect(await h.wakes()).toHaveLength(0);
+  });
+
+  it("edits an image from its stored bytes, not its row id", async () => {
+    const h = await setup();
+    // The source image's bytes live under the storage key the put
+    // returned; the artifact row id is a different string, and the edit
+    // must not mistake one for the other.
+    const sourceBytes = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a0u8AAAAASUVORK5CYII=",
+      "base64",
+    );
+    const store = createArtifactStore(dataDir, prisma, {});
+    const context = {
+      operationId: "test",
+      traceId: "test",
+      spaceId: h.user.id,
+      userId: h.user.id,
+      botId: h.user.bot.id,
+      signal: new AbortController().signal,
+    };
+    const stored = await store.put(
+      { bytes: sourceBytes, name: "source.png", mimeType: "image/png" },
+      context,
+    );
+    const artifact = await runAsSystem("test fixture", () =>
+      prisma.artifact.create({
+        data: {
+          id: randomUUID(),
+          spaceId: h.user.id,
+          userId: h.user.id,
+          name: "source.png",
+          mimeType: "image/png",
+          size: sourceBytes.length,
+          hash: stored.hash,
+          storageKey: stored.id,
+        },
+      }),
+    );
+    const job = await runAsSystem("test fixture", () =>
+      prisma.externalEffect.create({
+        data: {
+          spaceId: h.user.id,
+          runId: h.user.run.id,
+          kind: "media_generation_job",
+          idempotencyKey: `media:${h.user.run.id}:image-edit`,
+          status: "media_submitting",
+          request: {
+            tool: "generate_image",
+            mode: "edit",
+            sourceArtifactId: artifact.id,
+            prompt: "make the sky bluer",
+            executionId: "image-edit",
+          },
+          result: { provider: h.media.id },
+        },
+      }),
+    );
+    await h.pollJob(job.id);
+    expect((await h.job(job.id)).status).toBe("media_completed");
+    expect(await h.messages()).toHaveLength(1);
+    expect(await h.wakes()).toHaveLength(1);
   });
 
   it("still delivers when the turn that asked was stopped or closed", async () => {

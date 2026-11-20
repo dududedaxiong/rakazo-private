@@ -577,9 +577,9 @@ describe("BotSettings model locate", () => {
       provider: "deepseek",
       requestId: 1,
     });
-    const row = container.querySelector('[data-model-section="translation"]');
-    expect(row?.getAttribute("data-model-row")).not.toBeNull();
-    expect(row?.textContent).toContain("Located here");
+    const rows = [...container.querySelectorAll("[data-model-row]")];
+    const located = rows.find((row) => row.textContent?.includes("Located here"));
+    expect(located?.textContent).toContain("deepseek-flash");
   });
 
   it("tags a media fallback row by its model key", async () => {

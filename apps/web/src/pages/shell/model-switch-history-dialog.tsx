@@ -328,12 +328,15 @@ export function ModelSwitchHistoryEntry({
 export function ModelSwitchMarkButton({
   model,
   presetName,
+  provider,
   kind,
   botId,
   onLocateModel,
 }: {
   model: string;
   presetName?: string;
+  /** The connection display name; shown in the locate popup. */
+  provider?: string;
   kind: ModelLocateKind;
   botId: string | undefined;
   onLocateModel?: (target: ModelLocateTarget) => void;
@@ -346,7 +349,7 @@ export function ModelSwitchMarkButton({
         type="button"
         data-testid="model-switch-mark-entry"
         onClick={() => {
-          if (botId && onLocateModel) setPendingLocate({ kind, botId, model });
+          if (botId && onLocateModel) setPendingLocate({ kind, botId, model, provider });
         }}
         className="flex items-center gap-1 rounded-sm px-1 py-0.5 text-left text-body-sm text-muted-foreground hover:text-foreground"
       >

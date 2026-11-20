@@ -17,6 +17,7 @@ import {
   chatUserBubbleColors,
   connectedModelChoices,
   copyableMessageText,
+  credentialForModel,
   dismissableAskMessageIds,
   foldPeerReplies,
   groupBotsForSidebar,
@@ -657,10 +658,21 @@ function SpaceShell() {
   const resolveTranscriptBot = useCallback(
     (botId: string) => {
       const bot = bots.find((candidate) => candidate.id === botId);
-      if (bot) return bot;
+      if (bot) {
+        // The chat mark names only a model id; the locate popup shows
+        // its connection too, but only when the mark names the bot's
+        // current model — the label comes from the connection that owns it.
+        if (!bot.modelProvider || !bot.modelId) return bot;
+        return {
+          ...bot,
+          modelProviderLabel:
+            credentialForModel(credentialsQuery.data ?? [], bot.modelProvider, bot.modelId)
+              ?.label ?? null,
+        };
+      }
       return transcriptMembers?.find((member) => member.botId === botId);
     },
-    [bots, transcriptMembers],
+    [bots, transcriptMembers, credentialsQuery.data],
   );
   const workingBots: GroupAvatarMember[] = workingRuns.map((run) => {
     const bot = resolveTranscriptBot(run.botId);

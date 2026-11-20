@@ -27,7 +27,7 @@ import {
 } from "@rakazo_mickvvw/ui-web";
 import { ChevronDown, ChevronUp, Download, Settings, X } from "lucide-react";
 import type { ReactNode, RefObject } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { thinkingLevelLabel } from "../../lib/model-catalog";
 import type { ModelLocateKind } from "../../lib/model-locate";
 import type { TranslationSourceLanguage, TranslationTargetLanguage } from "../../lib/translation";
@@ -45,7 +45,7 @@ const rowLabelClass = "text-body text-foreground";
 /** The "you are here" tag on a model row a timeline name pointed at. */
 function LocatedTag() {
   return (
-    <span className="shrink-0 rounded-full border border-primary/40 px-2 py-0.5 text-body-sm text-primary">
+    <span className="shrink-0 rounded-full border border-link/40 px-2 py-0.5 text-body-sm text-link">
       <Trans>Located here</Trans>
     </span>
   );
@@ -163,7 +163,7 @@ export function ModelSection({
   value: string;
   /** The model-option key a timeline name pointed at; that row is tagged. */
   locatedKey?: string | null;
-  /** Which list a timeline name pointed at; its picker opens on the located row. */
+  /** Which list a timeline name pointed at; that row is tagged. */
   locateKind?: ModelLocateKind | null;
   onModelChange: (key: string) => void;
   thinkingOptions: ThinkingLevel[];
@@ -176,7 +176,7 @@ export function ModelSection({
   // listed: the timeline pointed here, so the section still carries the tag.
   const located = locateKind === "chat" && (locatedKey == null || locatedKey === value);
   return (
-    <div ref={containerRef} data-model-section="chat">
+    <div ref={containerRef} data-model-section="chat" tabIndex={-1} className="outline-none">
       <div className="mb-2 flex items-center justify-between text-label font-medium text-muted-foreground pe-1">
         <Trans>Model</Trans>
         {located ? <LocatedTag /> : null}
@@ -191,9 +191,7 @@ export function ModelSection({
           </Button>
         ) : null}
       </div>
-      <div
-        className={`rounded-xl bg-muted/50 p-4 space-y-3 ${located ? "ring-2 ring-primary" : ""}`}
-      >
+      <div className={`rounded-xl bg-muted/50 p-4 space-y-3 ${located ? "ring-2 ring-link" : ""}`}>
         <div data-model-row={value} className="flex min-h-11 items-center justify-between gap-3">
           <label htmlFor={`${ids}-model`} className="sr-only">
             <Trans>Model</Trans>
@@ -204,7 +202,6 @@ export function ModelSection({
               choices={choices}
               value={value}
               locatedKey={locatedKey}
-              autoOpen={locateKind === "chat"}
               onChange={onModelChange}
             />
           </div>
@@ -347,7 +344,6 @@ export function TranslationGroup({
   value,
   locatedKey,
   locateKind,
-  onModelChange,
   mainFallbacks,
   backupFallbacks,
   onAddMainFallback,
@@ -372,9 +368,8 @@ export function TranslationGroup({
   value: string;
   /** The model-option key a timeline name pointed at; that row is tagged. */
   locatedKey?: string | null;
-  /** Which list a timeline name pointed at; its picker opens on the located row. */
+  /** Which list a timeline name pointed at; that row is tagged. */
   locateKind?: ModelLocateKind | null;
-  onModelChange: (key: string) => void;
   /** Main-pool models after the primary, in try order. */
   mainFallbacks: readonly MediaModelFallback[];
   /** Backup-pool models, tried only after the main pool is exhausted. */
@@ -398,44 +393,48 @@ export function TranslationGroup({
 }) {
   const { t } = useLingui();
   // The section itself is the locate target when the model is no longer
-  // listed: the timeline pointed here, so the section still carries the tag.
-  const located = locateKind === "translation" && (locatedKey == null || locatedKey === value);
+  // listed; the primary is the first card of the main pool below, so a
+  // located primary is tagged there, not here.
+  const locatedSection = locateKind === "translation" && locatedKey == null;
+  // The primary is the first row of the main pool, not a picker above it:
+  // the count and the rows finally agree, and the primary gets the same
+  // replace, reorder, remove and locate as every other row.
+  const mainRows: readonly MediaModelFallback[] = value
+    ? [
+        {
+          key: value,
+          label:
+            choices.find((choice) => choice.key === value)?.label ??
+            parseModelOptionKey(value)?.modelId ??
+            value,
+        },
+        ...mainFallbacks,
+      ]
+    : mainFallbacks;
   const usedKeys = new Set([
     value,
     ...mainFallbacks.map((fallback) => fallback.key),
     ...backupFallbacks.map((fallback) => fallback.key),
   ]);
   const addChoices = choices.filter((choice) => choice.key !== "" && !usedKeys.has(choice.key));
-  const mainTotal = (value ? 1 : 0) + mainFallbacks.length;
-  const canAddMain = mainTotal < BOT_MODEL_LIST_MAX && addChoices.length > 0;
+  const canAddMain = mainRows.length < BOT_MODEL_LIST_MAX && addChoices.length > 0;
   const canAddBackup = backupFallbacks.length < BOT_MODEL_LIST_MAX && addChoices.length > 0;
   return (
     <BotPanelGroup label={t`Translation`}>
       <div
         data-model-section="translation"
-        data-model-row={value}
-        className={`flex min-h-11 flex-wrap items-center justify-between gap-3 ${located ? "rounded-lg border-2 border-primary bg-accent px-2" : "border-2 border-transparent"}`}
+        tabIndex={-1}
+        className={`flex min-h-11 flex-wrap items-center justify-between gap-3 outline-none ${locatedSection ? "rounded-lg border-2 border-link bg-accent px-2" : "border-2 border-transparent"}`}
       >
-        <label htmlFor={`${ids}-translation-model`} className={rowLabelClass}>
+        <span className={rowLabelClass}>
           <Trans>Translation model</Trans>
-        </label>
-        <div className="min-w-56 flex-1 [&>div]:mt-0 [&>button]:mt-0">
-          <ChatModelPicker
-            id={`${ids}-translation-model`}
-            choices={choices}
-            value={value}
-            locatedKey={locatedKey}
-            autoOpen={locateKind === "translation"}
-            onChange={onModelChange}
-          />
-        </div>
-        {located ? <LocatedTag /> : null}
+        </span>
+        {locatedSection ? <LocatedTag /> : null}
       </div>
-      {mainFallbacks.length > 0 || canAddMain ? (
+      {mainRows.length > 0 || canAddMain ? (
         <MediaModelFallbackList
           pool="main"
-          poolSize={mainTotal}
-          fallbacks={mainFallbacks}
+          fallbacks={mainRows}
           locatedKey={locatedKey}
           locateKind={locateKind}
           locateSection="translation"
@@ -612,9 +611,9 @@ export type MediaModelTestState =
 
 /**
  * A bot's image and video generation models, one block per role: the primary
- * picker with a test button, the ordered fallbacks with add, reorder and
- * remove, and the prompt presets with create, edit, delete and activate.
- * Picking a model moves it to the front of that role's list; the rest stay
+ * as the first card of the main pool, the ordered fallbacks with add,
+ * reorder and remove, and the prompt presets with create, edit, delete and
+ * activate. Picking a model moves it to the front of that role's list; the rest stay
  * as fallbacks, tried in order.
  */
 export function MediaModelGroup({
@@ -623,7 +622,6 @@ export function MediaModelGroup({
   locateKind,
   videoChoices,
   videoValue,
-  onVideoModelChange,
   videoMainFallbacks,
   videoBackupFallbacks,
   onAddVideoFallback,
@@ -635,7 +633,6 @@ export function MediaModelGroup({
   onApplyVideoTestedModel,
   imageChoices,
   imageValue,
-  onImageModelChange,
   imageMainFallbacks,
   imageBackupFallbacks,
   onAddImageFallback,
@@ -659,7 +656,6 @@ export function MediaModelGroup({
   onImageTriggerWordsChange,
   videoEditChoices,
   videoEditValue,
-  onVideoEditModelChange,
   videoEditMainFallbacks,
   videoEditBackupFallbacks,
   onAddVideoEditFallback,
@@ -671,7 +667,6 @@ export function MediaModelGroup({
   onApplyVideoEditTestedModel,
   imageEditChoices,
   imageEditValue,
-  onImageEditModelChange,
   imageEditMainFallbacks,
   imageEditBackupFallbacks,
   onAddImageEditFallback,
@@ -689,7 +684,6 @@ export function MediaModelGroup({
   locateKind?: ModelLocateKind | null;
   videoChoices: readonly ChatModelChoice[];
   videoValue: string;
-  onVideoModelChange: (key: string) => void;
   videoMainFallbacks: readonly MediaModelFallback[];
   videoBackupFallbacks: readonly MediaModelFallback[];
   onAddVideoFallback: (pool: "main" | "backup", key: string) => void;
@@ -701,7 +695,6 @@ export function MediaModelGroup({
   onApplyVideoTestedModel: () => void;
   imageChoices: readonly ChatModelChoice[];
   imageValue: string;
-  onImageModelChange: (key: string) => void;
   imageMainFallbacks: readonly MediaModelFallback[];
   imageBackupFallbacks: readonly MediaModelFallback[];
   onAddImageFallback: (pool: "main" | "backup", key: string) => void;
@@ -728,7 +721,6 @@ export function MediaModelGroup({
   /** The edit lists: picker, ordered fallbacks and test only. An edit never applies a preset or trigger words, so those sections are absent. */
   videoEditChoices: readonly ChatModelChoice[];
   videoEditValue: string;
-  onVideoEditModelChange: (key: string) => void;
   videoEditMainFallbacks: readonly MediaModelFallback[];
   videoEditBackupFallbacks: readonly MediaModelFallback[];
   onAddVideoEditFallback: (pool: "main" | "backup", key: string) => void;
@@ -740,7 +732,6 @@ export function MediaModelGroup({
   onApplyVideoEditTestedModel: () => void;
   imageEditChoices: readonly ChatModelChoice[];
   imageEditValue: string;
-  onImageEditModelChange: (key: string) => void;
   imageEditMainFallbacks: readonly MediaModelFallback[];
   imageEditBackupFallbacks: readonly MediaModelFallback[];
   onAddImageEditFallback: (pool: "main" | "backup", key: string) => void;
@@ -762,7 +753,6 @@ export function MediaModelGroup({
         modelLabel={t`Video generation model`}
         choices={videoChoices}
         value={videoValue}
-        onModelChange={onVideoModelChange}
         mainFallbacks={videoMainFallbacks}
         backupFallbacks={videoBackupFallbacks}
         onAddMainFallback={(key) => onAddVideoFallback("main", key)}
@@ -796,7 +786,6 @@ export function MediaModelGroup({
         modelLabel={t`Image generation model`}
         choices={imageChoices}
         value={imageValue}
-        onModelChange={onImageModelChange}
         mainFallbacks={imageMainFallbacks}
         backupFallbacks={imageBackupFallbacks}
         onAddMainFallback={(key) => onAddImageFallback("main", key)}
@@ -831,7 +820,6 @@ export function MediaModelGroup({
         modelLabel={t`Video edit model`}
         choices={videoEditChoices}
         value={videoEditValue}
-        onModelChange={onVideoEditModelChange}
         mainFallbacks={videoEditMainFallbacks}
         backupFallbacks={videoEditBackupFallbacks}
         onAddMainFallback={(key) => onAddVideoEditFallback("main", key)}
@@ -859,7 +847,6 @@ export function MediaModelGroup({
         modelLabel={t`Image edit model`}
         choices={imageEditChoices}
         value={imageEditValue}
-        onModelChange={onImageEditModelChange}
         mainFallbacks={imageEditMainFallbacks}
         backupFallbacks={imageEditBackupFallbacks}
         onAddMainFallback={(key) => onAddImageEditFallback("main", key)}
@@ -891,7 +878,6 @@ function MediaRoleSection({
   modelLabel,
   choices,
   value,
-  onModelChange,
   mainFallbacks,
   backupFallbacks,
   onAddMainFallback,
@@ -921,12 +907,11 @@ function MediaRoleSection({
   section?: ModelLocateKind;
   /** The model-option key a timeline name pointed at; that row is tagged. */
   locatedKey?: string | null;
-  /** Which list a timeline name pointed at; its picker opens on the located row. */
+  /** Which list a timeline name pointed at; that row is tagged. */
   locateKind?: ModelLocateKind | null;
   modelLabel: string;
   choices: readonly ChatModelChoice[];
   value: string;
-  onModelChange: (key: string) => void;
   /** Main-pool models after the primary, in try order. */
   mainFallbacks: readonly MediaModelFallback[];
   /** Backup-pool models, tried only after the main pool is exhausted. */
@@ -954,59 +939,49 @@ function MediaRoleSection({
   onTriggerWordsChange?: (value: string) => void;
   triggerWordsPlaceholder?: string;
 }) {
-  const { t } = useLingui();
+  // The section itself is the locate target when the model is no longer
+  // listed; the primary is the first card of the main pool below, so a
+  // located primary is tagged there, not here.
+  const locatedSection = locateKind === section && locatedKey == null;
+  // The primary is the first row of the main pool, not a picker above it:
+  // the count and the rows finally agree, and the primary gets the same
+  // replace, test, reorder, remove and locate as every other row. The
+  // main pool is primary-first: the first model added becomes the
+  // primary, so its section stays visible even before one is picked.
+  const mainRows: readonly MediaModelFallback[] = value
+    ? [
+        {
+          key: value,
+          label:
+            choices.find((choice) => choice.key === value)?.label ??
+            parseModelOptionKey(value)?.modelId ??
+            value,
+        },
+        ...mainFallbacks,
+      ]
+    : mainFallbacks;
   const usedKeys = new Set([
     value,
     ...mainFallbacks.map((fallback) => fallback.key),
     ...backupFallbacks.map((fallback) => fallback.key),
   ]);
   const addChoices = choices.filter((choice) => choice.key !== "" && !usedKeys.has(choice.key));
-  // The main pool is primary-first: the first model added becomes the
-  // primary, so its section stays visible even before one is picked.
-  const mainTotal = (value ? 1 : 0) + mainFallbacks.length;
-  const canAddMain = mainTotal < BOT_MODEL_LIST_MAX && addChoices.length > 0;
+  const canAddMain = mainRows.length < BOT_MODEL_LIST_MAX && addChoices.length > 0;
   const canAddBackup = backupFallbacks.length < BOT_MODEL_LIST_MAX && addChoices.length > 0;
-  const primaryTest = test.status === "done" && test.modelKey === value ? test : null;
-  const testingPrimary = test.status === "testing" && test.modelKey === value;
-  const locatedPrimary = locateKind === section && (locatedKey == null || locatedKey === value);
   return (
     <>
       <div
         data-model-section={section}
-        data-model-row={value}
-        className={`flex min-h-11 flex-wrap items-center justify-between gap-3 ${locatedPrimary ? "rounded-lg border-2 border-primary bg-accent px-2" : "border-2 border-transparent"}`}
+        tabIndex={-1}
+        className={`flex min-h-11 flex-wrap items-center justify-between gap-3 outline-none ${locatedSection ? "rounded-lg border-2 border-link bg-accent px-2" : "border-2 border-transparent"}`}
       >
-        <label htmlFor={`${ids}-${kind}-model`} className={rowLabelClass}>
-          {modelLabel}
-        </label>
-        <div className="flex min-w-64 flex-1 items-center gap-2">
-          <div className="min-w-0 flex-1 [&>div]:mt-0 [&>button]:mt-0">
-            <ChatModelPicker
-              id={`${ids}-${kind}-model`}
-              choices={choices}
-              value={value}
-              locatedKey={locatedKey}
-              autoOpen={locateKind === section}
-              onChange={onModelChange}
-            />
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!value || testingPrimary}
-            onClick={() => onTestModel(value)}
-          >
-            {testingPrimary ? t`Testing…` : t`Test`}
-          </Button>
-          {locatedPrimary ? <LocatedTag /> : null}
-        </div>
+        <span className={rowLabelClass}>{modelLabel}</span>
+        {locatedSection ? <LocatedTag /> : null}
       </div>
-      {primaryTest ? <MediaModelTestResult test={primaryTest} kind={kind} /> : null}
-      {mainFallbacks.length > 0 || canAddMain ? (
+      {mainRows.length > 0 || canAddMain ? (
         <MediaModelFallbackList
           pool="main"
-          poolSize={mainTotal}
-          fallbacks={mainFallbacks}
+          fallbacks={mainRows}
           locatedKey={locatedKey}
           locateKind={locateKind}
           locateSection={section}
@@ -1106,7 +1081,6 @@ function MediaModelTestResult({
 
 function MediaModelFallbackList({
   pool,
-  poolSize,
   fallbacks,
   locatedKey,
   locateKind,
@@ -1125,8 +1099,6 @@ function MediaModelFallbackList({
 }: {
   /** Which pool this list is; the title and the add entry follow it. */
   pool: "main" | "backup";
-  /** Models in the whole pool; the main pool's primary row is not in `fallbacks`. */
-  poolSize?: number;
   fallbacks: readonly MediaModelFallback[];
   /** The model-option key a timeline name pointed at; that row is tagged. */
   locatedKey?: string | null;
@@ -1154,6 +1126,11 @@ function MediaModelFallbackList({
   const [open, setOpen] = useState<boolean | undefined>(undefined);
   // One card's details at a time; tapping the same banner closes it again.
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const listRef = useRef<HTMLUListElement | null>(null);
+  // The main pool starts open: the primary is its first card, so a closed
+  // list would hide the model the section is about. The backup pool still
+  // starts closed when it has rows, to save room.
+  const effectiveOpen = open ?? (pool === "main" || fallbacks.length === 0);
   useEffect(() => {
     if (
       locatedKey &&
@@ -1163,15 +1140,27 @@ function MediaModelFallbackList({
       setOpen(true);
     }
   }, [locatedKey, locateKind, locateSection, fallbacks]);
+  // A locate lands keyboard focus on the located row's banner button, so
+  // the row is the next Tab stop and the focus ring marks it. The list
+  // focuses its own row: it knows when it unfolded onto it, and the panel
+  // cannot, since the row may not exist yet when the panel scrolls.
+  useEffect(() => {
+    if (!effectiveOpen || !locatedKey || locateKind !== locateSection) return;
+    if (!fallbacks.some((fallback) => fallback.key === locatedKey)) return;
+    const row = [...(listRef.current?.querySelectorAll("[data-model-row]") ?? [])].find(
+      (node) => node.getAttribute("data-model-row") === locatedKey,
+    );
+    row?.querySelector<HTMLElement>("button")?.focus();
+  }, [effectiveOpen, locatedKey, locateKind, locateSection, fallbacks]);
   return (
     <FallbackDisclosure
-      count={poolSize ?? fallbacks.length}
+      count={fallbacks.length}
       pool={pool}
-      defaultOpen={fallbacks.length === 0}
+      defaultOpen={pool === "main" || fallbacks.length === 0}
       open={open}
       onOpenChange={setOpen}
     >
-      <ul className="mt-1 space-y-2">
+      <ul ref={listRef} className="mt-1 space-y-2">
         {fallbacks.map((fallback, index) => {
           const testing = test?.status === "testing" && test.modelKey === fallback.key;
           const tested = test?.status === "done" && test.modelKey === fallback.key ? test : null;
@@ -1219,6 +1208,7 @@ function MediaModelFallbackList({
                 variant="ghost"
                 size="icon"
                 aria-label={t`Move fallback model up`}
+                disabled={index === 0}
                 onClick={() => onMove(fallback.key, -1)}
               >
                 <ChevronUp className="size-4" />
@@ -1247,7 +1237,7 @@ function MediaModelFallbackList({
               <div
                 data-model-row={fallback.key}
                 className={`rounded-lg border-2 px-3 py-2 ${
-                  located ? "border-primary bg-accent" : "border-transparent bg-muted/50"
+                  located ? "border-link bg-accent" : "border-transparent bg-muted/50"
                 }`}
               >
                 <button
@@ -1283,7 +1273,9 @@ function MediaModelFallbackList({
                 <MediaModelTestResult
                   test={tested}
                   kind={kind}
-                  onApplyPrimary={onApplyTestedModel}
+                  // The main pool's first row already is the primary;
+                  // offering to set it as primary would be a no-op.
+                  onApplyPrimary={pool === "main" && index === 0 ? undefined : onApplyTestedModel}
                 />
               ) : null}
             </li>

@@ -624,22 +624,6 @@ export function BotSettings({
   const sameBotModel = (left: BotModelEntry, right: BotModelEntry) =>
     left.provider === right.provider && left.model === right.model;
 
-  /** Picking a media model moves it to the front of that role's main pool, out of the backup pool. */
-  function changeMediaModel(role: MediaListRole, key: string) {
-    const setMain = mediaPoolSetter(role, "main");
-    const setBackup = mediaPoolSetter(role, "backup");
-    if (!key) {
-      setMain([]);
-      setBackup([]);
-      return;
-    }
-    const parsed = parseModelOptionKey(key);
-    if (!parsed) return;
-    const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
-    setMain((current) => moveBotModelToFront(current, entry));
-    setBackup((current) => current.filter((item) => !sameBotModel(item, entry)));
-  }
-
   function removeMediaPoolFallback(role: MediaListRole, pool: "main" | "backup", key: string) {
     const setPool = mediaPoolSetter(role, pool);
     setPool((current) =>
@@ -718,20 +702,6 @@ export function BotSettings({
       next[index] = entry;
       return next;
     });
-  }
-
-  /** Picking a translation model moves it to the front of the main pool, out of the backup pool. */
-  function changeTranslationModel(key: string) {
-    if (!key) {
-      setTranslationMainModels([]);
-      setTranslationBackupModels([]);
-      return;
-    }
-    const parsed = parseModelOptionKey(key);
-    if (!parsed) return;
-    const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
-    setTranslationMainModels((current) => moveBotModelToFront(current, entry));
-    setTranslationBackupModels((current) => current.filter((item) => !sameBotModel(item, entry)));
   }
 
   function removeTranslationPoolFallback(pool: "main" | "backup", key: string) {
@@ -977,9 +947,19 @@ export function BotSettings({
     setLocatedSection(section as ModelLocateKind);
     // The settings tab is the only panel in the DOM with this test id.
     const root = document.querySelector<HTMLElement>('[data-testid="bot-settings-advanced"]');
-    root
-      ?.querySelector<HTMLElement>(`[data-model-section="${section}"]`)
-      ?.scrollIntoView?.({ block: "nearest" });
+    const sectionEl = root?.querySelector<HTMLElement>(`[data-model-section="${section}"]`);
+    sectionEl?.scrollIntoView?.({ block: "nearest" });
+    // Focus lands on the located row: the chat row's picker trigger here,
+    // a pool row's banner button in its list once it unfolds, or the
+    // section itself when the model is no longer listed. The picker never
+    // opens on a locate, so it cannot steal the focus.
+    if (key == null) {
+      sectionEl?.focus();
+    } else if (section === "chat") {
+      sectionEl
+        ?.querySelector<HTMLElement>("[data-model-row] button, [data-model-row] select")
+        ?.focus();
+    }
   }, [
     locateModel,
     tab,
@@ -1407,7 +1387,6 @@ export function BotSettings({
               locateKind={locateKindForSections}
               videoChoices={videoChoices}
               videoValue={videoValue}
-              onVideoModelChange={(key) => changeMediaModel("video", key)}
               videoMainFallbacks={videoMainFallbacks}
               videoBackupFallbacks={videoBackupFallbacks}
               onAddVideoFallback={(pool, key) => addMediaPoolFallback("video", pool, key)}
@@ -1423,7 +1402,6 @@ export function BotSettings({
               onApplyVideoTestedModel={() => applyTestedMediaModel("video")}
               imageChoices={imageChoices}
               imageValue={imageValue}
-              onImageModelChange={(key) => changeMediaModel("image", key)}
               imageMainFallbacks={imageMainFallbacks}
               imageBackupFallbacks={imageBackupFallbacks}
               onAddImageFallback={(pool, key) => addMediaPoolFallback("image", pool, key)}
@@ -1451,7 +1429,6 @@ export function BotSettings({
               onImageTriggerWordsChange={setImageTriggerWords}
               videoEditChoices={videoEditChoices}
               videoEditValue={videoEditValue}
-              onVideoEditModelChange={(key) => changeMediaModel("videoEdit", key)}
               videoEditMainFallbacks={videoEditMainFallbacks}
               videoEditBackupFallbacks={videoEditBackupFallbacks}
               onAddVideoEditFallback={(pool, key) => addMediaPoolFallback("videoEdit", pool, key)}
@@ -1469,7 +1446,6 @@ export function BotSettings({
               onApplyVideoEditTestedModel={() => applyTestedMediaModel("videoEdit")}
               imageEditChoices={imageEditChoices}
               imageEditValue={imageEditValue}
-              onImageEditModelChange={(key) => changeMediaModel("imageEdit", key)}
               imageEditMainFallbacks={imageEditMainFallbacks}
               imageEditBackupFallbacks={imageEditBackupFallbacks}
               onAddImageEditFallback={(pool, key) => addMediaPoolFallback("imageEdit", pool, key)}
@@ -1492,7 +1468,6 @@ export function BotSettings({
               locateKind={locateKindForSections}
               choices={translationModelChoices}
               value={selectedTranslationModelKey}
-              onModelChange={changeTranslationModel}
               mainFallbacks={translationMainFallbacks}
               backupFallbacks={translationBackupFallbacks}
               onAddMainFallback={(key) => addTranslationPoolFallback("main", key)}

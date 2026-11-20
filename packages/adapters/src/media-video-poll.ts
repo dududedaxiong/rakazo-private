@@ -589,10 +589,12 @@ async function loadMediaReferences(
   if (!artifactId || !deps.artifacts) return undefined;
   const artifact = await deps.prisma.artifact.findFirst({
     where: { id: artifactId, spaceId: run.spaceId, userId: run.userId },
-    select: { id: true, mimeType: true },
+    select: { id: true, storageKey: true, mimeType: true },
   });
   if (!artifact) return undefined;
-  const bytes = await deps.artifacts.get(artifact.id, context).catch(() => undefined);
+  // The row id is a cuid; the bytes live under the storage key the put
+  // returned, which is never the same string.
+  const bytes = await deps.artifacts.get(artifact.storageKey, context).catch(() => undefined);
   if (!bytes) return undefined;
   return [{ bytes, mimeType: artifact.mimeType, role: "first" }];
 }

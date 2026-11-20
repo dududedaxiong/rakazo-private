@@ -165,7 +165,7 @@ describe("ChatModelPicker", () => {
     expect(document.body.textContent).toContain("No matching models");
   });
 
-  it("tags the located row and opens on it for a timeline tap", () => {
+  it("tags the located row only after it is opened, never on a timeline tap", () => {
     const list = choices(11);
     act(() =>
       root.render(
@@ -175,11 +175,12 @@ describe("ChatModelPicker", () => {
           value="openrouter::vendor/model-2"
           onChange={onChange}
           locatedKey="openrouter::vendor/model-7"
-          autoOpen
         />,
       ),
     );
-    // The list opens on the located row without a click.
+    // A timeline tap alone never opens the list over the settings panel.
+    expect(options()).toHaveLength(0);
+    act(() => container.querySelector<HTMLButtonElement>("button#model")!.click());
     expect(options()).toHaveLength(12);
     const located = options().filter((option) => option.textContent?.includes("Located here"));
     expect(located.map((option) => option.getAttribute("aria-label"))).toEqual([

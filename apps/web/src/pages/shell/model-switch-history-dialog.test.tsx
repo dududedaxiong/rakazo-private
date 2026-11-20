@@ -430,4 +430,35 @@ describe("ModelSwitchMarkButton", () => {
     });
     expect(document.querySelector('[data-testid="model-locate-popup"]')).toBeNull();
   });
+
+  it("shows the provider in the popup when the mark names the bot's current model", async () => {
+    const onLocateModel = vi.fn();
+    act(() =>
+      root.render(
+        <ModelSwitchMarkButton
+          model="deepseek-v4.1-flash"
+          provider="Main"
+          kind="chat"
+          botId="bot-1"
+          onLocateModel={onLocateModel}
+        />,
+      ),
+    );
+    const mark = container.querySelector('[data-testid="model-switch-mark-entry"]');
+    await act(async () => {
+      (mark as HTMLButtonElement | null)?.click();
+    });
+    const popup = document.querySelector('[data-testid="model-locate-popup"]');
+    expect(popup?.textContent).toContain("deepseek-v4.1-flash（Main）");
+    const confirm = document.querySelector('[data-testid="model-locate-confirm"]');
+    await act(async () => {
+      (confirm as HTMLButtonElement | null)?.click();
+    });
+    expect(onLocateModel).toHaveBeenCalledExactlyOnceWith({
+      kind: "chat",
+      botId: "bot-1",
+      model: "deepseek-v4.1-flash",
+      provider: "Main",
+    });
+  });
 });

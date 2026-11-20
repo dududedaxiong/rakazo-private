@@ -20,6 +20,7 @@ import {
   isPeerReceiptBlocks,
   isToolActivityBlock,
   otherAuthor,
+  sameModelId,
 } from "@rakazo_mickvvw/core";
 import { BotAvatar, Button, cn, resolvePersonaColorDef } from "@rakazo_mickvvw/ui-web";
 import { UserRound } from "lucide-react";
@@ -200,6 +201,10 @@ export const MessageView = memo(function MessageView({
         status?: string;
         avatarSet?: BotAvatarSet;
         voiceId?: string | null;
+        /** The bot's current chat model, for a mark's provider label. */
+        modelProvider?: string | null;
+        modelId?: string | null;
+        modelProviderLabel?: string | null;
         translationModels?: readonly BotModelEntry[] | null;
         translationSourceLanguage?: string;
         translationTargetLanguage?: string | null;
@@ -405,6 +410,13 @@ export const MessageView = memo(function MessageView({
   const author = message.role === "user" ? otherAuthor(message.author, meId) : undefined;
   const replyAuthor = otherAuthor(message.replyPreview?.author ?? replyParent?.author, meId);
   const speakerBot = message.botId ? peerBot?.(message.botId) : undefined;
+  /** The connection display name for a chat mark, only when the mark
+   * names the bot's current model; anything else is a guess across
+   * connections, so it stays blank instead. */
+  const markProvider = (modelId: string): string | undefined =>
+    speakerBot?.modelId && sameModelId(speakerBot.modelId, modelId)
+      ? (speakerBot.modelProviderLabel ?? undefined)
+      : undefined;
   const speakerColorDef = useMemo(
     () => resolvePersonaColorDef(message.botId ?? "bot", speakerBot?.color),
     [message.botId, speakerBot?.color],
@@ -566,6 +578,7 @@ export const MessageView = memo(function MessageView({
                               <ModelSwitchMarkButton
                                 model={trailingMark.mark.modelId}
                                 presetName={trailingMark.mark.presetName}
+                                provider={markProvider(trailingMark.mark.modelId)}
                                 kind="chat"
                                 botId={message.botId}
                                 onLocateModel={onLocateModel}
@@ -995,6 +1008,7 @@ export const MessageView = memo(function MessageView({
                   key="model-switch-bar"
                   model={trailingMark.mark.modelId}
                   presetName={trailingMark.mark.presetName}
+                  provider={markProvider(trailingMark.mark.modelId)}
                   kind="chat"
                   botId={message.botId}
                   onLocateModel={onLocateModel}

@@ -895,9 +895,19 @@ describe("BotSettings translation settings", () => {
     },
   ];
 
-  function translationModelSelect() {
-    const select = container.querySelector<HTMLSelectElement>('[id$="-translation-model"]');
-    if (!select) throw new Error("Missing translation model select");
+  function translationSection() {
+    const section = [...container.querySelectorAll("section")].find((node) =>
+      node.querySelector("h3")?.textContent?.includes("Translation"),
+    );
+    if (!section) throw new Error("Missing Translation section");
+    return section;
+  }
+
+  function translationAddSelect() {
+    const select = translationSection().querySelector<HTMLSelectElement>(
+      'select[aria-label="Add main pool model"]',
+    );
+    if (!select) throw new Error("Missing translation add select");
     return select;
   }
 
@@ -918,7 +928,7 @@ describe("BotSettings translation settings", () => {
     await render();
     const advanced = container.querySelector('[data-testid="bot-settings-advanced"]')!;
     expect(advanced.textContent).toContain("Translation");
-    expect(translationModelSelect().value).toBe("");
+    expect(translationSection().querySelector("[data-model-row]")).toBeNull();
     expect(translationTargetSelect().value).toBe("zh");
     expect(
       container.querySelector('button[id$="-auto-translate"]')?.getAttribute("aria-checked"),
@@ -937,7 +947,9 @@ describe("BotSettings translation settings", () => {
       translationTargetLanguage: "en",
       autoTranslate: true,
     } as Partial<Bot>);
-    expect(translationModelSelect().value).toBe("deepseek::deepseek-flash");
+    expect(
+      translationSection().querySelector('[data-model-row="deepseek::deepseek-flash"]'),
+    ).not.toBeNull();
     expect(translationTargetSelect().value).toBe("en");
     expect(
       container.querySelector('button[id$="-auto-translate"]')?.getAttribute("aria-checked"),
@@ -955,10 +967,10 @@ describe("BotSettings translation settings", () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect([...translationModelSelect().options].map((option) => option.value)).toContain(
+    expect([...translationAddSelect().options].map((option) => option.value)).toContain(
       "deepseek::deepseek-flash",
     );
-    await setSelect(translationModelSelect(), "deepseek::deepseek-flash");
+    await setSelect(translationAddSelect(), "deepseek::deepseek-flash");
     await setSelect(translationTargetSelect(), "ja");
     const sourceButton = [...container.querySelectorAll("button")].find(
       (button) => button.textContent === "English",
@@ -979,11 +991,14 @@ describe("BotSettings translation settings", () => {
     });
   });
 
-  it("clears the translation model pair together when the model is unset", async () => {
+  it("clears the translation model pair together when the model is removed", async () => {
     await render("Billing", {
       translationModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
     } as Partial<Bot>);
-    await setSelect(translationModelSelect(), "");
+    const row = translationSection().querySelector('[data-model-row="deepseek::deepseek-flash"]');
+    await act(async () => {
+      row?.querySelector<HTMLButtonElement>('[aria-label="Remove fallback model"]')?.click();
+    });
     await clickSave();
     expect(onSave.mock.lastCall?.[0]).toMatchObject({
       translationModelProvider: null,
@@ -1015,16 +1030,21 @@ describe("BotSettings media model settings", () => {
     { name: "赛博", prompt: "赛博朋克风格" },
   ];
 
-  function videoModelSelect() {
-    const select = container.querySelector<HTMLSelectElement>('[id$="-video-model"]');
-    if (!select) throw new Error("Missing video model select");
-    return select;
+  function mediaSection() {
+    const section = [...container.querySelectorAll("section")].find((node) =>
+      node.querySelector("h3")?.textContent?.includes("Media model"),
+    );
+    if (!section) throw new Error("Missing Media model section");
+    return section;
   }
 
-  function imageModelSelect() {
-    const select = container.querySelector<HTMLSelectElement>('[id$="-image-model"]');
-    if (!select) throw new Error("Missing image model select");
-    return select;
+  // Media families render in order: video, image, video edit, image edit.
+  function mediaAddSelects() {
+    return [
+      ...mediaSection().querySelectorAll<HTMLSelectElement>(
+        'select[aria-label="Add main pool model"]',
+      ),
+    ];
   }
 
   function presetRowButton(name: string) {
@@ -1049,8 +1069,7 @@ describe("BotSettings media model settings", () => {
     expect(advanced.textContent!.indexOf("Media model")).toBeLessThan(
       advanced.textContent!.indexOf("Translation"),
     );
-    expect(videoModelSelect().value).toBe("");
-    expect(imageModelSelect().value).toBe("");
+    expect(mediaSection().querySelector("[data-model-row]")).toBeNull();
     expect(container.querySelector('[id$="-video-preset"]')).toBeNull();
     expect(container.querySelector('[id$="-image-preset"]')).toBeNull();
   });
@@ -1064,8 +1083,10 @@ describe("BotSettings media model settings", () => {
       imagePromptPresets: videoPresets,
       activeImagePromptPreset: "赛博",
     } as Partial<Bot>);
-    expect(videoModelSelect().value).toBe("deepseek::deepseek-flash");
-    expect(imageModelSelect().value).toBe("deepseek::deepseek-flash");
+    const storedRows = [
+      ...container.querySelectorAll('[data-model-row="deepseek::deepseek-flash"]'),
+    ];
+    expect(storedRows).toHaveLength(2);
     expect(container.textContent).toContain("✓ 水彩");
     expect(container.textContent).toContain("✓ 赛博");
   });
@@ -1081,10 +1102,15 @@ describe("BotSettings media model settings", () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect([...videoModelSelect().options].map((option) => option.value)).toContain(
+    expect([...mediaAddSelects()[0]!.options].map((option) => option.value)).toContain(
       "deepseek::deepseek-flash",
     );
-    await setSelect(videoModelSelect(), "deepseek::deepseek-flash");
+    await setSelect(mediaAddSelects()[0]!, "deepseek::deepseek-flash");
+    // The add lands at the end of the main pool; move it up to the front.
+    const addedRow = container.querySelector('[data-model-row="deepseek::deepseek-flash"]')!;
+    await act(async () => {
+      addedRow.querySelector<HTMLButtonElement>('[aria-label="Move fallback model up"]')!.click();
+    });
     await act(async () => {
       presetRowButton("赛博").click();
     });
@@ -1135,11 +1161,14 @@ describe("BotSettings media model settings", () => {
     });
   });
 
-  it("clears the video model list when the model is unset", async () => {
+  it("clears the video model list when the model is removed", async () => {
     await render("Billing", {
       videoModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
     } as Partial<Bot>);
-    await setSelect(videoModelSelect(), "");
+    const row = container.querySelector('[data-model-row="deepseek::deepseek-flash"]')!;
+    await act(async () => {
+      row.querySelector<HTMLButtonElement>('[aria-label="Remove fallback model"]')!.click();
+    });
     await clickSave();
     expect(onSave.mock.lastCall?.[0]).toMatchObject({ videoModels: [] });
   });
@@ -1153,8 +1182,11 @@ describe("BotSettings media model settings", () => {
     } as Partial<Bot>);
     expect(container.textContent).toContain("Fallback models");
     expect(container.textContent).toContain("other-model");
+    const otherRow = [...container.querySelectorAll("[data-model-row]")].find((node) =>
+      node.textContent?.includes("other-model"),
+    );
     await act(async () => {
-      container.querySelector<HTMLButtonElement>('[aria-label="Remove fallback model"]')!.click();
+      otherRow?.querySelector<HTMLButtonElement>('[aria-label="Remove fallback model"]')?.click();
     });
     expect(container.textContent).not.toContain("other-model");
     await clickSave();
