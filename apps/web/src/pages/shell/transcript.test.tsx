@@ -313,6 +313,46 @@ it("shows the stuck recovery row under a message whose run went quiet", () => {
   expect(container.querySelector('[data-testid="stuck-run-actions"]')).not.toBeNull();
 });
 
+it("clears a stuck run's frozen progress line while its recovery row stays", () => {
+  const startedAt = new Date(Date.now() - 200_000).toISOString();
+  const userMessage = { ...textMessage("m1", "user", "Shanghai weather"), runId: "run-1" };
+  const frozen: ThreadMessage = {
+    id: "progress:run-1",
+    threadId: "thread",
+    seq: 9999,
+    role: "bot",
+    runId: "run-1",
+    botId: "bot",
+    createdAt: at(120),
+    blocks: [{ kind: "progress", text: "Still thinking…", activity: true }],
+  };
+  render({
+    ...baseProps([userMessage, frozen]),
+    runs: [
+      {
+        id: "run-1",
+        botId: "bot",
+        threadId: "thread",
+        taskId: "task",
+        status: "running",
+        trigger: "user",
+        routineId: null,
+        routineName: null,
+        modelProvider: "p1",
+        modelId: "model-a",
+        error: null,
+        startedAt,
+        completedAt: null,
+        createdAt: startedAt,
+      },
+    ],
+    onStopRun: vi.fn(),
+    onRetryStuckRun: vi.fn(),
+  });
+  expect(container.querySelector('[data-testid="stuck-run-actions"]')).not.toBeNull();
+  expect(container.textContent).not.toContain("Still thinking");
+});
+
 it("hides the stuck recovery row while the run is still young", () => {
   const startedAt = new Date(Date.now() - 60_000).toISOString();
   const userMessage = { ...textMessage("m1", "user", "Shanghai weather"), runId: "run-1" };

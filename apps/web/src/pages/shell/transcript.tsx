@@ -8,13 +8,21 @@ import type {
   Run,
   ThreadMessage,
 } from "@rakazo_mickvvw/contracts";
-import type { ChildBotBlock, FoldedTranscript, ShareCardTextOverride } from "@rakazo_mickvvw/core";
+import type {
+  ChildBotBlock,
+  FoldedTranscript,
+  ReplyWatchdog,
+  ShareCardTextOverride,
+  StuckRunClock,
+} from "@rakazo_mickvvw/core";
 import {
   expandPeerReplies,
   groupVoiceChats,
   isPeerReceiptBlocks,
+  isRunWorking,
   liveActivityLine,
   liveMessageComposing,
+  liveRunIsBusy,
   peerExchangeLines,
   projectBotMentions,
   projectMessageReactions,
@@ -93,6 +101,7 @@ export const Transcript = memo(function Transcript({
   dismissableAskIds,
   running,
   runs,
+  replyWatchdog,
   workingBots,
   workingRoutine,
   userBubble,
@@ -151,6 +160,8 @@ export const Transcript = memo(function Transcript({
   running: boolean;
   /** The thread's active runs, so a run gone quiet can hang its recovery row on its message. */
   runs: readonly Run[];
+  /** Last live event per bot; without it a quiet run is judged on its start time alone. */
+  replyWatchdog?: ReplyWatchdog;
   workingBots: GroupAvatarMember[];
   workingRoutine?: string;
   /** Your bubbles take the bot's color in its own chat. */
@@ -312,16 +323,39 @@ export const Transcript = memo(function Transcript({
   // A stuck run shows nothing until the threshold passes, and silence emits no
   // events, so the clock ticks while a run is working.
   const now = useNow(running, 15_000);
+  /** The watchdog's clock: a run still emitting live events is never stuck. */
+  const stuckRunClock = useMemo<StuckRunClock | undefined>(() => {
+    if (!replyWatchdog) return undefined;
+    return {
+      lastEventAt: (botId) => replyWatchdog.lastEventAt(botId),
+      isBusy: (botId) =>
+        liveRunIsBusy(
+          messages
+            .filter((message) => message.id.startsWith("progress:") && message.botId === botId)
+            .flatMap((message) => message.blocks),
+        ),
+    };
+  }, [replyWatchdog, messages]);
   const stuckByMessageId = useMemo(
     () =>
       new Map(
-        stuckWorkingRuns(reactionView.visibleMessages, runs, now).map((stuck) => [
+        stuckWorkingRuns(reactionView.visibleMessages, runs, now, stuckRunClock).map((stuck) => [
           stuck.messageId,
           stuck,
         ]),
       ),
-    [reactionView.visibleMessages, runs, now],
+    [reactionView.visibleMessages, runs, now, stuckRunClock],
   );
+  /** The runs behind the stuck rows; their frozen progress lines clear with them. */
+  const stuckRunIds = useMemo(
+    () => new Set([...stuckByMessageId.values()].map((stuck) => stuck.runId)),
+    [stuckByMessageId],
+  );
+  /** Every working run is stuck, so the generating indicator has nothing live to show. */
+  const allWorkingRunsStuck = useMemo(() => {
+    const working = runs.filter((run) => isRunWorking(run.status));
+    return working.length > 0 && working.every((run) => stuckRunIds.has(run.id));
+  }, [runs, stuckRunIds]);
   // The newest rendered message; only it auto-translates when its bot has
   // auto-translate on, so opening history does not translate every reply.
   const lastVisibleMessageId = [...reactionView.visibleMessages]
@@ -332,12 +366,19 @@ export const Transcript = memo(function Transcript({
   );
   const exchanges = peerExchangeLines({ ...transcript, messages: visibleReceipts });
   const shownMessages = visibleReceipts.filter(
-    (message) => !exchanges.lineOf.has(message.id) || exchanges.lines.has(message.id),
+    (message) =>
+      (!exchanges.lineOf.has(message.id) || exchanges.lines.has(message.id)) &&
+      !(message.id.startsWith("progress:") && message.runId && stuckRunIds.has(message.runId)),
   );
   const separatorIds = timeSeparatorIds(shownMessages);
   const unreadDividerId = unreadDividerMessageId(shownMessages, unreadAfterSeq, olderCursor);
   const workingLabel =
-    liveActivityLine(messages) ?? (workingRoutine ? t`Running ${workingRoutine}…` : t`Working…`);
+    liveActivityLine(
+      messages.filter(
+        (message) =>
+          !(message.id.startsWith("progress:") && message.runId && stuckRunIds.has(message.runId)),
+      ),
+    ) ?? (workingRoutine ? t`Running ${workingRoutine}…` : t`Working…`);
   const [quoteDraft, setQuoteDraft] = useState<{
     message: ThreadMessage;
     text: string;
@@ -788,8 +829,12 @@ export const Transcript = memo(function Transcript({
           );
         })}
         {running &&
+        !allWorkingRunsStuck &&
         !messages.some(
-          (message) => message.id.startsWith("progress:") && liveMessageComposing(message.blocks),
+          (message) =>
+            message.id.startsWith("progress:") &&
+            (!message.runId || !stuckRunIds.has(message.runId)) &&
+            liveMessageComposing(message.blocks),
         ) ? (
           <ActiveBotGlyph bots={workingBots} label={workingLabel} />
         ) : null}

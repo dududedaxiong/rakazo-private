@@ -3870,6 +3870,10 @@ msgstr "डिलीट किया जा रहा है…"
 msgid "Deletion code"
 msgstr "हटाने का कोड"
 
+#: src/pages/shell/composer-error.tsx
+msgid "Delivered, but no reply came back."
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Denied"
 msgstr "अस्वीकृत"
@@ -8348,6 +8352,10 @@ msgstr "इसे भेजें"
 #: src/pages/Auth.tsx
 msgid "Send reset link"
 msgstr "रीसेट लिंक भेजें"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Send timed out. It may already have been delivered — check the thread before resending."
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"

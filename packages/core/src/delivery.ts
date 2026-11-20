@@ -35,8 +35,7 @@ export function deliveryAfterError(
   if (accepted)
     return {
       delivery: "no-reply",
-      error:
-        kind === "timeout" ? acceptedThenFailed : `${acceptedThenFailed} (${detail})`,
+      error: kind === "timeout" ? acceptedThenFailed : `${acceptedThenFailed} (${detail})`,
     };
   return { delivery: "failed", error: detail };
 }
@@ -87,7 +86,9 @@ export function withTimeout<T>(
       timedOut = true;
       reject(new SendTimeoutError(timeoutMessage));
     }, ms);
-    promise.then(
+    // Normalize: a caller passing a plain value (or an unmocked stub in tests)
+    // must resolve it, not crash on `.then`.
+    Promise.resolve(promise).then(
       (value) => {
         if (timedOut) return onLate?.({ ok: true, value });
         clearTimeout(timer);

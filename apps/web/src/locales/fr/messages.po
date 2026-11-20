@@ -3870,6 +3870,10 @@ msgstr "Suppression en cours…"
 msgid "Deletion code"
 msgstr "Code de suppression"
 
+#: src/pages/shell/composer-error.tsx
+msgid "Delivered, but no reply came back."
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Denied"
 msgstr "Refusé"
@@ -8348,6 +8352,10 @@ msgstr "L'envoyer"
 #: src/pages/Auth.tsx
 msgid "Send reset link"
 msgstr "Envoyer le lien de réinitialisation"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Send timed out. It may already have been delivered — check the thread before resending."
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"

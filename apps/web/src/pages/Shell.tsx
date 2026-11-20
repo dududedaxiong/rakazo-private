@@ -1414,6 +1414,7 @@ function SpaceShell() {
               dismissableAskIds={dismissableAskIds}
               running={transcriptRunning}
               runs={currentRuns}
+              replyWatchdog={thread.replyWatchdog}
               workingBots={workingBots}
               workingRoutine={workingRoutineName(workingRuns)}
               regenerateDisabled={sending || transcriptRunning}
@@ -1512,6 +1513,7 @@ function SpaceShell() {
                 onCheckKey={checkFailedKey}
                 runError={composer.displayedRunError}
                 runErrorId={composer.displayedRunErrorId}
+                runNoReply={composer.runNoReply}
                 onRunErrorPresented={composer.handleRunErrorPresented}
                 onDismissError={composer.dismissComposerError}
                 sending={sending}

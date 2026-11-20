@@ -83,6 +83,7 @@ const ComposerBody = memo(function Composer({
   onCheckKey,
   runError,
   runErrorId,
+  runNoReply,
   onRunErrorPresented,
   onDismissError,
   sending,
@@ -121,6 +122,8 @@ const ComposerBody = memo(function Composer({
   onCheckKey?: () => Promise<KeyHealthStatus | undefined>;
   runError: string | null;
   runErrorId: string | null;
+  /** The failed run's message was delivered but never answered. */
+  runNoReply?: boolean;
   onRunErrorPresented: (runId: string) => void;
   onDismissError: () => void;
   sending: boolean;
@@ -559,6 +562,7 @@ const ComposerBody = memo(function Composer({
         onSendAsFile={imageConfirmation && !sending ? () => void send("file") : undefined}
         runError={runError}
         runErrorId={runErrorId}
+        runNoReply={runNoReply}
         onRunErrorPresented={onRunErrorPresented}
         onOpenModels={onOpenModels}
         onOpenConnections={onOpenConnections}

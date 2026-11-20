@@ -13,6 +13,7 @@ export function ComposerError({
   onSendAsFile,
   runError,
   runErrorId,
+  runNoReply = false,
   onRunErrorPresented,
   onOpenModels,
   onOpenConnections,
@@ -26,6 +27,8 @@ export function ComposerError({
   onSendAsFile?: () => void;
   runError: string | null;
   runErrorId: string | null;
+  /** The failed run's message was delivered but never answered. */
+  runNoReply?: boolean;
   onRunErrorPresented: (runId: string) => void;
   onOpenModels: () => void;
   onOpenConnections: () => void;
@@ -136,14 +139,17 @@ export function ComposerError({
         ) : sendError ? (
           sendError
         ) : runError ? (
-          <ModelErrorActions
-            error={runError}
-            onOpenModels={onOpenModels}
-            onOpenConnections={onOpenConnections}
-            onCheckKey={onCheckKey}
-            onDismiss={onDismissError}
-            actionTestId="composer-error-action"
-          />
+          <>
+            {runNoReply ? <p className="mb-1">{t`Delivered, but no reply came back.`}</p> : null}
+            <ModelErrorActions
+              error={runError}
+              onOpenModels={onOpenModels}
+              onOpenConnections={onOpenConnections}
+              onCheckKey={onCheckKey}
+              onDismiss={onDismissError}
+              actionTestId="composer-error-action"
+            />
+          </>
         ) : null}
         {warning && onSendAsFile ? (
           <div className="mt-2 flex flex-wrap gap-2">

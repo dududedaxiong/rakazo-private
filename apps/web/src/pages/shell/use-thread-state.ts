@@ -4,7 +4,7 @@ import type {
   ThreadMessage,
   ThreadSnapshot,
 } from "@rakazo_mickvvw/contracts";
-import { withLiveStreamingProgress } from "@rakazo_mickvvw/core";
+import { ReplyWatchdog, withLiveStreamingProgress } from "@rakazo_mickvvw/core";
 import { useEffect, useRef, useState } from "react";
 import { responseStreamingPreference } from "../../lib/response-streaming";
 
@@ -21,6 +21,8 @@ export type PinnedAround = {
 export function useThreadState() {
   const [snapshot, setSnapshot] = useState<ThreadSnapshot | null>(null);
   const snapshotRef = useRef<ThreadSnapshot | null>(null);
+  /** Last live event per bot, so a run still emitting events is never called stuck. */
+  const replyWatchdog = useRef(new ReplyWatchdog()).current;
   const streamResponses = responseStreamingPreference.use();
   const streamResponsesRef = useRef(streamResponses);
   streamResponsesRef.current = streamResponses;
@@ -59,6 +61,7 @@ export function useThreadState() {
     snapshotRef,
     commitSnapshot,
     updateSnapshot,
+    replyWatchdog,
     routines,
     setRoutines,
     routinesBotId,

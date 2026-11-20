@@ -3870,6 +3870,10 @@ msgstr "삭제 중…"
 msgid "Deletion code"
 msgstr "삭제 코드"
 
+#: src/pages/shell/composer-error.tsx
+msgid "Delivered, but no reply came back."
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Denied"
 msgstr "거부됨"
@@ -8348,6 +8352,10 @@ msgstr "보내기"
 #: src/pages/Auth.tsx
 msgid "Send reset link"
 msgstr "재설정 링크 보내기"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Send timed out. It may already have been delivered — check the thread before resending."
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"
