@@ -540,16 +540,13 @@ export function botsRoutes(ctx: RouterContext) {
           backup: readonly BotModelEntry[] | null | undefined,
           legacy: readonly BotModelEntry[] | null | undefined,
         ): { mainPool: BotModelEntry[]; backupPool: BotModelEntry[] } | undefined => {
-          if (main === undefined && backup === undefined && legacy === undefined)
-            return undefined;
+          if (main === undefined && backup === undefined && legacy === undefined) return undefined;
           const mainPool = [...(main !== undefined ? (main ?? []) : (legacy?.slice(0, 1) ?? []))];
           const backupPool = [
             ...(backup !== undefined ? (backup ?? []) : (legacy?.slice(1) ?? [])),
           ];
           // A model cannot sit in both pools; the main pool wins.
-          const mainKeys = new Set(
-            mainPool.map((entry) => `${entry.provider}\0${entry.model}`),
-          );
+          const mainKeys = new Set(mainPool.map((entry) => `${entry.provider}\0${entry.model}`));
           return {
             mainPool,
             backupPool: backupPool.filter(
@@ -593,17 +590,9 @@ export function botsRoutes(ctx: RouterContext) {
           "Translation model",
         );
         await validateModelListChange(videoPools?.mainPool, existingVideoModels, "Video model");
-        await validateModelListChange(
-          videoPools?.backupPool,
-          existingVideoModels,
-          "Video model",
-        );
+        await validateModelListChange(videoPools?.backupPool, existingVideoModels, "Video model");
         await validateModelListChange(imagePools?.mainPool, existingImageModels, "Image model");
-        await validateModelListChange(
-          imagePools?.backupPool,
-          existingImageModels,
-          "Image model",
-        );
+        await validateModelListChange(imagePools?.backupPool, existingImageModels, "Image model");
         await validateModelListChange(
           imageEditPools?.mainPool,
           existingImageEditModels,
@@ -976,6 +965,36 @@ export function botsRoutes(ctx: RouterContext) {
           compatibleEndpointPreset(parsed.baseUrl) ? deps.modelConnectionFetch : undefined,
           context.signal,
           { allowPrivate: mayUsePrivateEndpoint(deps) },
+        );
+      }),
+      testTranslationModel: authed.bots.testTranslationModel.handler(async ({ context, input }) => {
+        const bot = await repos.getBot(context.actor, input.botId);
+        // Rows the migration has not backfilled yet still carry the single
+        // model instead of the two pools.
+        const pools = splitBotModelPools(bot.translationModels, bot.translationBackupModels);
+        const primary =
+          pools.mainPool?.[0] ??
+          (bot.translationModelProvider && bot.translationModelId
+            ? { provider: bot.translationModelProvider, model: bot.translationModelId }
+            : null);
+        const current = {
+          provider: primary?.provider ?? null,
+          model: primary?.model ?? null,
+        };
+        const validated = await validateBotModelChange(botModelValidation(context.actor), {
+          userId: context.actor.userId,
+          spaceId: context.actor.spaceId,
+          provider: input.provider,
+          model: input.modelId,
+          current,
+        });
+        if (!validated.ok) throw new ORPCError("BAD_REQUEST", { message: validated.error });
+        return deps.translationProber(
+          context.actor,
+          input.botId,
+          input.provider,
+          input.modelId,
+          context.signal,
         );
       }),
       restoreInstructions: authed.bots.restoreInstructions.handler(async ({ context, input }) => {

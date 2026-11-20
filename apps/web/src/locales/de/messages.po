@@ -630,12 +630,23 @@ msgstr ""
 #. placeholder {0}: test.modelId
 #. placeholder {1}: test.seconds
 #: src/pages/shell/bot-settings-sections.tsx
+msgid "✓ {0} supports translation · {1}s"
+msgstr ""
+
+#. placeholder {0}: test.modelId
+#. placeholder {1}: test.seconds
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "✓ {0} supports video generation · {1}s"
 msgstr ""
 
 #. placeholder {0}: test.detail
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "✗ Does not support image generation · {0}"
+msgstr ""
+
+#. placeholder {0}: test.detail
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✗ Does not support translation · {0}"
 msgstr ""
 
 #. placeholder {0}: test.detail

@@ -343,6 +343,7 @@ export function BotSettings({
   const [imageTest, setImageTest] = useState<MediaModelTestState>({ status: "idle" });
   const [videoEditTest, setVideoEditTest] = useState<MediaModelTestState>({ status: "idle" });
   const [imageEditTest, setImageEditTest] = useState<MediaModelTestState>({ status: "idle" });
+  const [translationTest, setTranslationTest] = useState<MediaModelTestState>({ status: "idle" });
   const [disabledBuiltinTools, setDisabledBuiltinTools] = useState<string[]>(
     bot.disabledBuiltinTools ?? [],
   );
@@ -824,6 +825,53 @@ export function BotSettings({
         modelId: parsed.modelId,
       });
     }
+  }
+
+  /** Probes one translation model with a fixed short sentence, so the test reflects that row alone — not the whole fallback chain. */
+  async function testTranslationModel(key: string) {
+    const parsed = parseModelOptionKey(key);
+    if (!parsed) return;
+    const started = Date.now();
+    const seconds = () => Math.round(((Date.now() - started) / 1000) * 10) / 10;
+    setTranslationTest({ status: "testing", modelKey: key });
+    try {
+      const result = await rpc.bots.testTranslationModel({
+        botId: bot.id,
+        provider: parsed.provider,
+        modelId: resolveSelectableModelId(catalog, parsed.provider, parsed.modelId),
+      });
+      recordModelStatus(key, modelStatusFromProbe(result));
+      setTranslationTest({
+        status: "done",
+        supported: result.supported,
+        seconds: result.seconds,
+        detail: result.detail,
+        modelKey: key,
+        modelId: parsed.modelId,
+      });
+    } catch (err) {
+      recordModelStatus(key, { state: "unavailable", seconds: seconds() });
+      setTranslationTest({
+        status: "done",
+        supported: false,
+        seconds: seconds(),
+        detail: errorText(err, t`Could not test this model`),
+        modelKey: key,
+        modelId: parsed.modelId,
+      });
+    }
+  }
+
+  /** Applies a tested translation model in one tap: it moves to primary, the rest stay as fallbacks. */
+  function applyTestedTranslationModel() {
+    if (translationTest.status !== "done" || !translationTest.supported) return;
+    const parsed = parseModelOptionKey(translationTest.modelKey);
+    if (!parsed) return;
+    const entry: BotModelEntry = { provider: parsed.provider, model: parsed.modelId };
+    setTranslationMainModels(moveBotModelToFront(translationMainModels, entry));
+    setTranslationBackupModels(
+      translationBackupModels.filter((item) => !sameBotModel(item, entry)),
+    );
   }
 
   /** Applies a tested model in one tap: it moves to primary, the rest stay as fallbacks. */
@@ -1481,6 +1529,9 @@ export function BotSettings({
               onReplaceBackupFallback={(oldKey, newKey) =>
                 replaceTranslationPoolFallback("backup", oldKey, newKey)
               }
+              translationTest={translationTest}
+              onTestTranslationModel={(key) => void testTranslationModel(key)}
+              onApplyTranslationTestedModel={applyTestedTranslationModel}
               sourceLanguage={translationSourceLanguage}
               onSourceLanguageChange={setTranslationSourceLanguage}
               targetLanguage={translationTargetLanguage}

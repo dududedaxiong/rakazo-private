@@ -630,6 +630,12 @@ msgstr "✓ {0} 支持图片生成 · {1} 秒"
 #. placeholder {0}: test.modelId
 #. placeholder {1}: test.seconds
 #: src/pages/shell/bot-settings-sections.tsx
+msgid "✓ {0} supports translation · {1}s"
+msgstr "✓ {0} 支持翻译 · {1} 秒"
+
+#. placeholder {0}: test.modelId
+#. placeholder {1}: test.seconds
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "✓ {0} supports video generation · {1}s"
 msgstr "✓ {0} 支持视频生成 · {1} 秒"
 
@@ -637,6 +643,11 @@ msgstr "✓ {0} 支持视频生成 · {1} 秒"
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "✗ Does not support image generation · {0}"
 msgstr "✗ 不支持图片生成 · {0}"
+
+#. placeholder {0}: test.detail
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "✗ Does not support translation · {0}"
+msgstr "✗ 不支持翻译 · {0}"
 
 #. placeholder {0}: test.detail
 #: src/pages/shell/bot-settings-sections.tsx

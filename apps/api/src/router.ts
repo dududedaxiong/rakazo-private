@@ -64,7 +64,7 @@ import { sharesRoutes } from "./routes/shares.js";
 import { spacesRoutes } from "./routes/spaces.js";
 import { spendingLimitRoutes } from "./routes/spending-limit.js";
 import { threadsRoutes } from "./routes/threads.js";
-import type { Translator } from "./translate.js";
+import type { TranslationProber, Translator } from "./translate.js";
 import type { VoiceDeps } from "./voice.js";
 
 export { nextConnectionLabel } from "./model-credentials.js";
@@ -136,6 +136,8 @@ export interface RouterDeps {
   speechSummary?: VoiceDeps["speechSummary"];
   /** Translates with a bot's translation model; every router needs one. */
   translator: Translator;
+  /** Probes one translation model; every router needs one. */
+  translationProber: TranslationProber;
   env: {
     /** Domain of bots' email addresses; unset when this server receives no email. */
     inboundEmailDomain?: string;

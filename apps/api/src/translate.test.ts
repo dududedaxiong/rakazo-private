@@ -4,6 +4,7 @@ import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { describe, expect, it, vi } from "vitest";
 import type { Translator } from "./translate.js";
 import {
+  createTranslationProber,
   createTranslator,
   TranslationFailedError,
   TranslationModelNotConfiguredError,
@@ -359,5 +360,75 @@ describe("createTranslator", () => {
       "test-provider",
       "model-1",
     );
+  });
+});
+
+function probeHarness(options: {
+  runs: Array<() => AsyncIterable<unknown>>;
+  resolve?: () => Promise<AgentRunRequest["model"]>;
+  timeoutMs?: number;
+}) {
+  const resolveConnectedModel = vi.fn(
+    options.resolve ??
+      (async () => ({
+        provider: "test-provider",
+        id: "model-1",
+        connectionLabel: "Test Connection",
+      })),
+  );
+  const run = vi.fn();
+  for (const next of options.runs) run.mockImplementationOnce(next);
+  const runtime = { run };
+  const prober = createTranslationProber({
+    prisma: {} as unknown as PrismaClient,
+    runtime: runtime as unknown as AgentRuntime,
+    resolveConnectedModel: resolveConnectedModel as unknown as (
+      scope: { userId: string; spaceId: string },
+      provider: string,
+      modelId: string,
+    ) => Promise<AgentRunRequest["model"]>,
+    ...(options.timeoutMs ? { timeoutMs: options.timeoutMs } : {}),
+  });
+  return { prober, run, resolveConnectedModel };
+}
+
+describe("createTranslationProber", () => {
+  it("probes with the fixed sentence and returns the translated text", async () => {
+    const { prober, run } = probeHarness({
+      runs: [doneRun('{"detected": "en", "text": "你好"}')],
+    });
+    const result = await prober(actor, "bot-1", "test-provider", "model-1");
+    expect(result.supported).toBe(true);
+    expect(result.detail).toBe("你好");
+    expect(typeof result.seconds).toBe("number");
+    const request = run.mock.calls[0]?.[0] as { prompt: string; model: { id: string } };
+    expect(request.prompt).toContain('"""\nHello\n"""');
+    expect(request.model.id).toBe("model-1");
+  });
+
+  it("reports an unconnected model without running", async () => {
+    const { prober, run } = probeHarness({
+      runs: [],
+      resolve: async () => {
+        throw new Error("no credential");
+      },
+    });
+    const result = await prober(actor, "bot-1", "test-provider", "model-1");
+    expect(result).toEqual({
+      supported: false,
+      seconds: expect.any(Number),
+      detail: "该模型未连接",
+    });
+    expect(run).not.toHaveBeenCalled();
+  });
+
+  it("reports a model that answers instead of translating", async () => {
+    const { prober, run } = probeHarness({
+      runs: [doneRun("Hello there, happy to help!")],
+    });
+    const result = await prober(actor, "bot-1", "test-provider", "model-1");
+    expect(result.supported).toBe(false);
+    expect(result.detail).toContain("Translation did not return JSON");
+    expect(run).toHaveBeenCalledTimes(1);
   });
 });

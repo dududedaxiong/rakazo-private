@@ -78,6 +78,7 @@ const BOTS_PROCEDURES = [
   "setComputer",
   "templates",
   "testMediaModel",
+  "testTranslationModel",
   "translate",
   "update",
 ] as const;
@@ -129,6 +130,11 @@ function setup() {
       env: { defaultProvider: "hosted", mcpAllowPrivateEndpoint: false },
       billing: undefined,
       events: { notify: vi.fn(async () => undefined) },
+      translationProber: vi.fn(async () => ({
+        supported: true,
+        seconds: 1.5,
+        detail: "你好",
+      })),
     },
     repos: { getBot, listBots },
     botModelValidation: () => ({}) as never,
@@ -234,6 +240,57 @@ describe("bots testMediaModel", () => {
   });
 });
 
+describe("bots testTranslationModel", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("probes the requested model and returns its verdict", async () => {
+    const { routes, ctx } = setup();
+    const result = await (routes.bots.testTranslationModel as unknown as Handler)({
+      context: { actor },
+      input: { botId: "bot-1", provider: "provider-a", modelId: "model-a" },
+    });
+    expect(result).toEqual({ supported: true, seconds: 1.5, detail: "你好" });
+    expect(ctx.deps.translationProber).toHaveBeenCalledWith(
+      actor,
+      "bot-1",
+      "provider-a",
+      "model-a",
+      undefined,
+    );
+  });
+
+  it("reports a probe that found no translation", async () => {
+    const { routes, ctx } = setup();
+    vi.mocked(ctx.deps.translationProber).mockResolvedValueOnce({
+      supported: false,
+      seconds: 2,
+      detail: "只回了原文，没有译文",
+    });
+    const result = await (routes.bots.testTranslationModel as unknown as Handler)({
+      context: { actor },
+      input: { botId: "bot-1", provider: "provider-a", modelId: "model-a" },
+    });
+    expect(result).toEqual({ supported: false, seconds: 2, detail: "只回了原文，没有译文" });
+  });
+
+  it("refuses a model the validation rejects", async () => {
+    const { routes, ctx } = setup();
+    mockedAdapters.validateBotModelChange.mockResolvedValueOnce({
+      ok: false,
+      error: "模型未连接",
+    });
+    await expect(
+      (routes.bots.testTranslationModel as unknown as Handler)({
+        context: { actor },
+        input: { botId: "bot-1", provider: "provider-a", modelId: "model-a" },
+      }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(ctx.deps.translationProber).not.toHaveBeenCalled();
+  });
+});
+
 describe("bots update with media models", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -261,11 +318,12 @@ describe("bots update with media models", () => {
       expect.objectContaining({
         botId: "bot-1",
         data: expect.objectContaining({
-          videoModels: [
-            { provider: "provider-a", model: "video-a" },
-            { provider: "provider-a", model: "video-b" },
-          ],
+          // A legacy single list splits: the first model leads the main
+          // pool, the rest go to the backup pool.
+          videoModels: [{ provider: "provider-a", model: "video-a" }],
+          videoBackupModels: [{ provider: "provider-a", model: "video-b" }],
           imageModels: [{ provider: "provider-a", model: "image-a" }],
+          imageBackupModels: [],
           videoPromptPresets: [{ name: "水彩", prompt: "用水彩风格画" }],
           activeVideoPromptPreset: "水彩",
         }),
@@ -296,10 +354,8 @@ describe("bots update with media models", () => {
         botId: "bot-1",
         data: expect.objectContaining({
           // The new primary moves to the front; the old primary stays as fallback.
-          translationModels: [
-            { provider: "provider-a", model: "new-model" },
-            { provider: "provider-a", model: "old-model" },
-          ],
+          translationModels: [{ provider: "provider-a", model: "new-model" }],
+          translationBackupModels: [{ provider: "provider-a", model: "old-model" }],
           translationModelProvider: "provider-a",
           translationModelId: "new-model",
         }),

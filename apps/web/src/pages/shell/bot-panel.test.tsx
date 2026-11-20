@@ -16,6 +16,7 @@ vi.mock("../../lib/rpc", () => {
       get: vi.fn(),
       update: vi.fn(),
       restoreInstructions: vi.fn(),
+      testTranslationModel: vi.fn(),
       // This server receives no email, so the panel offers no address.
       emailAddress: vi.fn(async () => null),
     },
@@ -307,6 +308,7 @@ beforeEach(() => {
   onExport.mockReset().mockResolvedValue(undefined);
   vi.mocked(rpc.bots.update).mockReset();
   vi.mocked(rpc.bots.get).mockReset();
+  vi.mocked(rpc.bots.testTranslationModel).mockReset();
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -958,6 +960,33 @@ describe("BotSettings translation settings", () => {
       (button) => button.textContent === "日语",
     );
     expect(sourceButtons[0]?.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  it("shows a Test button on the translation row and probes that model alone", async () => {
+    vi.mocked(rpc.bots.testTranslationModel).mockResolvedValueOnce({
+      supported: true,
+      seconds: 1.2,
+      detail: "你好",
+    });
+    await render("Billing", {
+      translationModels: [{ provider: "deepseek", model: "deepseek-v4.1-flash" }],
+    } as Partial<Bot>);
+    const row = translationSection().querySelector('[data-model-row="deepseek::deepseek-flash"]');
+    expect(row).not.toBeNull();
+    const testButton = [...row!.querySelectorAll("button")].find(
+      (button) => button.textContent === "Test",
+    );
+    expect(testButton).not.toBeUndefined();
+    await act(async () => {
+      testButton!.click();
+    });
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(rpc.bots.testTranslationModel).toHaveBeenCalledWith({
+      botId: "bot-1",
+      provider: "deepseek",
+      modelId: "deepseek-flash",
+    });
+    expect(translationSection().textContent).toContain("supports translation");
   });
 
   it("saves the chosen translation model, languages and auto-translate", async () => {

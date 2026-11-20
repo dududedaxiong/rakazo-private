@@ -767,6 +767,27 @@ export const appContract = {
           detail: z.string(),
         }),
       ),
+    /** Probes one translation model with a fixed short sentence, through the
+     * same runtime the real translation uses, so every protocol it serves
+     * can be tested — including ones a direct fetch cannot speak. */
+    testTranslationModel: oc
+      .input(
+        z.object({
+          botId: Id,
+          provider: z.string().trim().min(1).max(80),
+          modelId: z.string().trim().min(1).max(200),
+        }),
+      )
+      .output(
+        z.object({
+          /** True when the probe reply actually carried a translation. */
+          supported: z.boolean(),
+          /** Seconds the probe took, one decimal. */
+          seconds: z.number(),
+          /** Short reason: what was found, or why it did not count as supported. */
+          detail: z.string(),
+        }),
+      ),
     restoreInstructions: oc
       .input(
         z.object({

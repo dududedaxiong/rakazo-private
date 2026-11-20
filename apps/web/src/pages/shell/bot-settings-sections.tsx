@@ -372,6 +372,9 @@ export function TranslationGroup({
   onMoveBackupFallback,
   onRemoveBackupFallback,
   onReplaceBackupFallback,
+  translationTest,
+  onTestTranslationModel,
+  onApplyTranslationTestedModel,
   sourceLanguage,
   onSourceLanguageChange,
   targetLanguage,
@@ -400,6 +403,10 @@ export function TranslationGroup({
   onMoveBackupFallback: (key: string, delta: -1 | 1) => void;
   onRemoveBackupFallback: (key: string) => void;
   onReplaceBackupFallback: (oldKey: string, newKey: string) => void;
+  /** One translation probe: idle until tested, then the inline result. */
+  translationTest?: MediaModelTestState;
+  onTestTranslationModel?: (key: string) => void;
+  onApplyTranslationTestedModel?: () => void;
   sourceLanguage: TranslationSourceLanguage;
   onSourceLanguageChange: (language: TranslationSourceLanguage) => void;
   targetLanguage: TranslationTargetLanguage;
@@ -464,6 +471,9 @@ export function TranslationGroup({
           onRemove={onRemoveMainFallback}
           onReplace={onReplaceMainFallback}
           kind="translation"
+          test={translationTest}
+          onTest={onTestTranslationModel}
+          onApplyTestedModel={onApplyTranslationTestedModel}
         />
       ) : null}
       {backupFallbacks.length > 0 || canAddBackup ? (
@@ -481,6 +491,9 @@ export function TranslationGroup({
           onRemove={onRemoveBackupFallback}
           onReplace={onReplaceBackupFallback}
           kind="translation"
+          test={translationTest}
+          onTest={onTestTranslationModel}
+          onApplyTestedModel={onApplyTranslationTestedModel}
         />
       ) : null}
       <div className="flex min-h-11 items-center justify-between gap-3">
@@ -1072,7 +1085,7 @@ function MediaModelTestResult({
   onApplyPrimary,
 }: {
   test: Extract<MediaModelTestState, { status: "done" }>;
-  kind: "video" | "image";
+  kind: "video" | "image" | "translation";
   /** Shown when the tested model supports the kind and is not already primary. */
   onApplyPrimary?: () => void;
 }) {
@@ -1083,10 +1096,14 @@ function MediaModelTestResult({
         {test.supported
           ? kind === "video"
             ? t`✓ ${test.modelId} supports video generation · ${test.seconds}s`
-            : t`✓ ${test.modelId} supports image generation · ${test.seconds}s`
+            : kind === "image"
+              ? t`✓ ${test.modelId} supports image generation · ${test.seconds}s`
+              : t`✓ ${test.modelId} supports translation · ${test.seconds}s`
           : kind === "video"
             ? t`✗ Does not support video generation · ${test.detail}`
-            : t`✗ Does not support image generation · ${test.detail}`}
+            : kind === "image"
+              ? t`✗ Does not support image generation · ${test.detail}`
+              : t`✗ Does not support translation · ${test.detail}`}
       </p>
       {test.supported && onApplyPrimary ? (
         <Button variant="link" size="sm" className="px-0" onClick={onApplyPrimary}>
@@ -1134,7 +1151,7 @@ function MediaModelFallbackList({
   /** Swap one row for another model, in place; the rest of the pool is untouched. */
   onReplace: (oldKey: string, newKey: string) => void;
   kind: "video" | "image" | "translation";
-  /** Absent for translation: there is no capability probe, so no Test button. */
+  /** One capability probe: idle until tested, then the inline result. */
   test?: MediaModelTestState;
   onTest?: (key: string) => void;
   onApplyTestedModel?: () => void;
@@ -1287,7 +1304,7 @@ function MediaModelFallbackList({
                 ) : null}
                 <div className="mt-1.5 flex flex-wrap items-center gap-2">{buttons}</div>
               </div>
-              {tested && kind !== "translation" ? (
+              {tested ? (
                 <MediaModelTestResult
                   test={tested}
                   kind={kind}

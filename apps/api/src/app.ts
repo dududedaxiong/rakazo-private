@@ -164,7 +164,7 @@ import { mountSharedPages } from "./shared-pages.js";
 import { afterSpaceDeparture } from "./space-departure.js";
 import { createSpeechSummarizer } from "./speech-summary.js";
 import { settleWithTimeout } from "./team-chat-startup.js";
-import { createTranslator } from "./translate.js";
+import { createTranslationProber, createTranslator } from "./translate.js";
 import { endUserDeviceSession, mountUserDeviceRoutes } from "./user-devices.js";
 import { mountVoiceHttpRoutes } from "./voice.js";
 import { mountWebdavBackupRoutes } from "./webdav-backup.js";
@@ -704,6 +704,11 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
 
   const router = createRouter({
     translator: createTranslator({
+      prisma,
+      runtime,
+      resolveConnectedModel: executor.resolveConnectedModel,
+    }),
+    translationProber: createTranslationProber({
       prisma,
       runtime,
       resolveConnectedModel: executor.resolveConnectedModel,
