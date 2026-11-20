@@ -18,9 +18,11 @@ import {
   messageBlockForArtifact,
   promptTextForAttachments,
   validateAttachmentMimeType,
+  validateUploadFile,
 } from "@rakazo_mickvvw/core";
 import type { PrismaClient } from "@rakazo_mickvvw/db";
 import {
+  getStoredUploadExtensions,
   IsolationError,
   isRecordNotFound,
   Prisma,
@@ -51,7 +53,8 @@ export async function createOwnedArtifact(
     inferredType && (inferredType === "application/zip" || isAttachmentAudioMimeType(inferredType))
       ? inferredType
       : input.mimeType;
-  validateAttachmentMimeType(mimeType);
+  const allowedExtensions = await getStoredUploadExtensions(deps.prisma, actor.spaceId);
+  validateUploadFile(input.name, mimeType, allowedExtensions);
   const bytes = decodeAttachmentBase64(input.contentBase64, deps.maxUploadSizeBytes);
   return storeOwnedArtifact(deps, actor, { ...input, mimeType, bytes });
 }

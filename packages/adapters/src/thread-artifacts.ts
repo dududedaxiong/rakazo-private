@@ -20,10 +20,11 @@ import {
   attachmentComputerPath,
   inferAttachmentMimeType,
   messageBlockForArtifact,
-  validateAttachmentMimeType,
+  validateUploadFile,
 } from "@rakazo_mickvvw/core";
 import type { Artifact, Prisma, PrismaClient } from "@rakazo_mickvvw/db";
 import {
+  getStoredUploadExtensions,
   THREAD_LOCK_TRANSACTION_OPTIONS,
   withResolvedArtifactVersion,
   withTransactionRetry,
@@ -65,7 +66,8 @@ export async function attachWorkspaceFileToThread(
     throw new Error(`Unsupported attachment type for ${fileName}`);
   }
   const name = (input.name?.trim() || fileName).slice(0, ARTIFACT_NAME_MAX_LENGTH);
-  validateAttachmentMimeType(mimeType);
+  const allowedExtensions = await getStoredUploadExtensions(deps.prisma, input.spaceId);
+  validateUploadFile(name, mimeType, allowedExtensions);
   if (input.bytes.byteLength > (deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES)) {
     throw new Error(
       `file exceeds the ${attachmentSizeLabel(deps.maxUploadSizeBytes ?? ATTACHMENT_MAX_BYTES)} attachment limit`,

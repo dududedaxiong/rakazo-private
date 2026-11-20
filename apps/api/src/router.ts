@@ -53,6 +53,7 @@ import { mcpRoutes } from "./routes/mcp.js";
 import { mediaRoutes } from "./routes/media.js";
 import { memoryRoutes } from "./routes/memory.js";
 import { messagingRoutes } from "./routes/messaging.js";
+import { miscSettingsRoutes } from "./routes/misc-settings.js";
 import { modelsRoutes } from "./routes/models.js";
 import { onboardingRoutes } from "./routes/onboarding.js";
 import { organizationsRoutes } from "./routes/organizations.js";
@@ -209,6 +210,7 @@ export function createRouter(deps: RouterDeps) {
     ...availabilityRoutes(ctx),
     ...connectionsRoutes(ctx),
     ...messagingRoutes(ctx),
+    ...miscSettingsRoutes(ctx),
     ...contentRoutes(ctx),
     ...pagesRoutes(ctx),
     ...sharesRoutes(ctx),
