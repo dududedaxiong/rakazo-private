@@ -181,6 +181,7 @@ export * from "./remote-mcp.js";
 export * from "./resend-email.js";
 export { finishRoutineHandover } from "./routine-handover.js";
 export * from "./routine-watch.js";
+export * from "./run-messages.js";
 export * from "./run-runtime.js";
 export * from "./run-secret.js";
 export * from "./run-wakeup.js";

@@ -19,6 +19,7 @@ import {
   MODEL_REQUIRED_SEND_ERROR,
   modelFallbackFailure,
   normalizeRunError,
+  summarizeMediaRunError,
   userRunError,
   VERBATIM_TOOL_RESULT_TOO_LARGE_ERROR,
 } from "./run-error.js";
@@ -724,6 +725,86 @@ it("does not expose malformed fallback metadata as user-facing copy", () => {
       }),
     ).summary,
   ).toBe("The model provider returned an error.");
+});
+
+describe("summarizeMediaRunError", () => {
+  it("names the edit model and says image-to-image is unsupported", () => {
+    expect(
+      summarizeMediaRunError("Media generation: provider_failure — cogview-3-flash (unsupported)", {
+        kind: "image",
+        mode: "edit",
+      }),
+    ).toBe("图片编辑失败：cogview-3-flash 不支持图生图");
+  });
+
+  it("lists every failed model with its own reason", () => {
+    expect(
+      summarizeMediaRunError(
+        "Media generation: provider_failure — gemini-3.6-flash (rate limited), cogview-3-flash (unsupported)",
+        { kind: "image", mode: "generate" },
+      ),
+    ).toBe("图片生成失败：gemini-3.6-flash 限流；cogview-3-flash 不支持生成图片");
+  });
+
+  it("phrases video failures for video, and degrades without a kind", () => {
+    expect(
+      summarizeMediaRunError(
+        "Media generation: provider_failure — cogvideox-flash (rate limited)",
+        {
+          kind: "video",
+          mode: "generate",
+        },
+      ),
+    ).toBe("视频生成失败：cogvideox-flash 限流");
+    expect(
+      summarizeMediaRunError("Media generation: provider_failure — cogview-3-flash (unsupported)"),
+    ).toBe("生成失败：cogview-3-flash 不支持该操作");
+  });
+
+  it("summarizes the generic media strings without echoing them", () => {
+    expect(summarizeMediaRunError("Media generation failed.", { kind: "image" })).toBe(
+      "图片生成失败",
+    );
+    expect(summarizeMediaRunError("Media generation is unavailable.", { kind: "video" })).toBe(
+      "视频生成失败：服务不可用",
+    );
+    expect(
+      summarizeMediaRunError("The image to edit is unavailable.", { kind: "image", mode: "edit" }),
+    ).toBe("图片编辑失败：要编辑的图片不可用");
+  });
+
+  it("drops provider text and unknown reasons instead of echoing them", () => {
+    expect(
+      summarizeMediaRunError(
+        "Media generation: provider_failure — cogview-3-flash (unsupported), evil model (sk-abc123 leaked key)",
+        { kind: "image", mode: "edit" },
+      ),
+    ).toBe("图片编辑失败：cogview-3-flash 不支持图生图");
+    expect(
+      summarizeMediaRunError("Media generation: provider_failure — some provider (unsupported)", {
+        kind: "image",
+        mode: "edit",
+      }),
+    ).toBe("图片编辑失败：服务异常");
+    expect(
+      summarizeMediaRunError("Media generation: provider_failure — gotcha (unsupported)", {
+        kind: "image",
+        mode: "edit",
+      }),
+    ).toBe("图片编辑失败：gotcha 不支持图生图");
+    expect(
+      summarizeMediaRunError("Media generation: provider_failure — some provider blew up", {
+        kind: "image",
+      }),
+    ).toBe("图片生成失败：服务异常");
+  });
+
+  it("returns null for anything that is not a media error", () => {
+    expect(summarizeMediaRunError("Internal server error")).toBeNull();
+    expect(
+      summarizeMediaRunError("The model returned an unusable response. Try again."),
+    ).toBeNull();
+  });
 });
 
 describe("userRunError", () => {

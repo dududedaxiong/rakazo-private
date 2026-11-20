@@ -15,6 +15,11 @@ vi.mock("@rakazo_mickvvw/adapters", async (original) => {
       publish: vi.fn(),
       onSettled: undefined,
     })),
+    persistMessageInTransaction: vi.fn(async () => ({
+      message: { id: "message-1" },
+      eventSeq: 42,
+      firstResponseRunId: undefined,
+    })),
     scheduleMediaPoll: vi.fn(async () => undefined),
   };
 });
@@ -505,7 +510,44 @@ describe("media regenerate", () => {
     ]);
     expect(append.mock.calls[2]?.[0]).toMatchObject({
       runId: "run-2",
-      payload: { error: "provider refused" },
+      payload: { error: "provider refused", mediaKind: "image", mediaMode: "generate" },
     });
+  });
+
+  it("posts the failure reason in the thread when an edit submission fails", async () => {
+    const { routes, ctx } = setup();
+    mockedAdapters.resolveBotMediaGenerationProvider.mockResolvedValueOnce({
+      id: "bot-media",
+      capabilities: { images: true, video: false, offline: false },
+      editCapabilities: { images: true, video: false },
+    } as never);
+    mockedAdapters.generateMediaFromTool.mockResolvedValueOnce({
+      error: "Media generation: provider_failure — cogview-3-flash (unsupported)",
+    });
+    await expect(
+      (routes.media.regenerate as unknown as Handler)({
+        context: { actor },
+        input: { artifactId: "artifact-1", mode: "edit" },
+      }),
+    ).rejects.toMatchObject({ code: "INTERNAL_SERVER_ERROR" });
+    expect(mockedAdapters.persistMessageInTransaction).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ id: "run-2", threadId: "thread-1" }),
+      "bot",
+      [{ kind: "text", text: "图片编辑失败：cogview-3-flash 不支持图生图" }],
+      undefined,
+      undefined,
+      true,
+    );
+    const append = vi.mocked(ctx.deps.events.append);
+    expect(append.mock.calls[2]?.[0]).toMatchObject({
+      runId: "run-2",
+      payload: {
+        error: "Media generation: provider_failure — cogview-3-flash (unsupported)",
+        mediaKind: "image",
+        mediaMode: "edit",
+      },
+    });
+    expect(ctx.deps.events.notify).toHaveBeenCalledWith("thread-1", 42);
   });
 });

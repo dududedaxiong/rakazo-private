@@ -7,11 +7,13 @@ import {
   MEDIA_JOB_KIND,
   mediaDelivery,
   mediaJobRequest,
+  persistMessageInTransaction,
   resolveBotMediaGenerationProvider,
   savedJob,
   scheduleMediaPoll,
 } from "@rakazo_mickvvw/adapters";
 import type { Actor } from "@rakazo_mickvvw/contracts";
+import { summarizeMediaRunError } from "@rakazo_mickvvw/core";
 import type { Prisma, PrismaClient } from "@rakazo_mickvvw/db";
 import type { RouterContext } from "./context.js";
 
@@ -275,7 +277,18 @@ export function mediaRoutes(ctx: RouterContext) {
           // Nothing was submitted; close the run honestly instead of
           // leaving it working, and close any reservation this run made.
           const error = result && "error" in result && result.error ? result.error : "重新生成失败";
-          await deps.prisma
+          const mediaKind = isImage ? "image" : "video";
+          const mediaMode = mode === "edit" ? "edit" : "generate";
+          const summary =
+            summarizeMediaRunError(error, { kind: mediaKind, mode: mediaMode }) ??
+            (mediaMode === "edit"
+              ? mediaKind === "image"
+                ? "图片编辑失败"
+                : "视频编辑失败"
+              : mediaKind === "image"
+                ? "图片生成失败"
+                : "视频生成失败");
+          const failureEventSeq = await deps.prisma
             .$transaction(async (tx) => {
               await tx.externalEffect.updateMany({
                 where: { runId: created.run.id, kind: MEDIA_JOB_KIND },
@@ -289,6 +302,18 @@ export function mediaRoutes(ctx: RouterContext) {
                 where: { id: created.task.id },
                 data: { status: "failed" },
               });
+              // The failure row in the thread: the run's error as one Chinese
+              // line, committed with the failure so it cannot be lost.
+              const committed = await persistMessageInTransaction(
+                tx,
+                run,
+                "bot",
+                [{ kind: "text", text: summary }],
+                undefined,
+                undefined,
+                true,
+              );
+              return committed.eventSeq;
             })
             .catch(() => undefined);
           // The run already announced itself above; close it the same way so
@@ -300,9 +325,11 @@ export function mediaRoutes(ctx: RouterContext) {
               botId: bot.id,
               type: "run.failed",
               runId: created.run.id,
-              payload: { error },
+              payload: { error, mediaKind, mediaMode },
             })
             .catch(() => undefined);
+          if (failureEventSeq !== undefined)
+            await deps.events.notify(thread.id, failureEventSeq).catch(() => undefined);
           throw new ORPCError("INTERNAL_SERVER_ERROR", { message: error });
         }
         if ("jobId" in result && result.jobId) {

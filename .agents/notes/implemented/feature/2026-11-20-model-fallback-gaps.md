@@ -146,7 +146,7 @@ Status: implemented
 - 根因：regenerate 路的 bot 来自 `repos.getBot` 的原始 Prisma 行，行里有 `imageEditBackupModels` 列（null）、没有 `imageEditMainModels` 视图字段；`botModelPoolEntries` 的 `mainView in bot || backupView in bot` 检查误走视图分支，主池从不存在的字段读出空，编辑列表被读成空；`editCapabilities.images` 为 false，media.ts 的 regenerate 预检直接抛“还没有配置编辑模型”，根本没到 cogview 守卫。生成路径走 `mapBot`（视图字段齐全）所以不受影响。
 - 修法：逐池回退——视图字段缺失或 null 时读存储拆分，显式空数组（客户端清空的池）解析为空、保持为空，绝不回退到旧列表拆分。`botModelPoolEntries` 里 `mainPool: mainRaw == null ? stored.mainPool : parseBotModelList(mainRaw)`，备用池同理。
 - 单测：原始行（存储列表有 cogview、备用列 null）→ 编辑 entries 为主池 [cogview]，编辑走到守卫、报 unsupported 且零请求；视图字段显式空主池 → 保持为空；原始行生图列表同样读回。
-- 全失败时客户端文案（只记不改）：修完后编辑链全失败，存下的 run 错误是 `Media generation: provider_failure — cogview-3-flash (unsupported)`（模型名 + unsupported，内容诚实）；但线程 UI 不渲染失败 run 的行，浏览器通知只说通用的 “Failed.”，wake 跟进提示词（`Image job … failed. Do not resubmit unless the user asks.`）不带原因——所以用户在界面上仍然看不到一句“不支持图生图”式提示，原因只存在 run 错误与 `run.failed` 事件载荷里。要可见需另做失败 run 行 + 原因展示，不在本批。
+- 全失败时客户端文案（只记不改）：修完后编辑链全失败，存下的 run 错误是 `Media generation: provider_failure — cogview-3-flash (unsupported)`（模型名 + unsupported，内容诚实）；但线程 UI 不渲染失败 run 的行，浏览器通知只说通用的 “Failed.”，wake 跟进提示词（`Image job … failed. Do not resubmit unless the user asks.`）不带原因——所以用户在界面上仍然看不到一句“不支持图生图”式提示，原因只存在 run 错误与 `run.failed` 事件载荷里。要可见需另做失败 run 行 + 原因展示，不在本批。**已做，见[失败原因进对话](./2026-11-20-failed-run-reason-display.md)。**
 
 ### 14. 被定位行显示完整模型名（2026-11-20 用户截图）
 

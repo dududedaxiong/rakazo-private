@@ -9,6 +9,7 @@ import type {
 } from "@rakazo_mickvvw/adapter-kit";
 import { mediaPollJob, runContinueJob } from "@rakazo_mickvvw/adapter-kit";
 import type { ModelSwitches } from "@rakazo_mickvvw/contracts";
+import { summarizeMediaRunError } from "@rakazo_mickvvw/core";
 import type { Prisma, PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
 import { getLogger } from "@rakazo_mickvvw/logging";
 import { resolveBotMediaGenerationProvider } from "./bot-media-generation.js";
@@ -334,6 +335,16 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
       return;
     }
     if (isRegenerate) await settleRegenerateRun(tx, run.id, status);
+    if (status === "failed") {
+      // A video poll returns no reason, so the row only says it failed; the
+      // wake follow-up carries the same. Never invent a reason.
+      const summary =
+        summarizeMediaRunError("Media generation failed.", {
+          kind: "video",
+          mode: isEdit ? "edit" : "generate",
+        }) ?? (isEdit ? "视频编辑失败" : "视频生成失败");
+      await postMediaFailureMessage(tx, run, summary);
+    }
     wakeRunId = await queueWake(tx, job.id, run, status === "completed");
   };
   const operationId = `media.poll:${job.id}`;
@@ -398,8 +409,15 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
                     "failed",
                     "The reference image is unavailable.",
                   );
-                  if (await recipientRemains(tx, run, threadGeneration))
+                  if (await recipientRemains(tx, run, threadGeneration)) {
+                    const summary =
+                      summarizeMediaRunError("The reference image is unavailable.", {
+                        kind: "video",
+                        mode: "edit",
+                      }) ?? "视频编辑失败";
+                    await postMediaFailureMessage(tx, run, summary);
                     wakeRunId = await queueWake(tx, job.id, run, false);
+                  }
                 }
               });
               return { status: "failed" as const };
@@ -473,6 +491,7 @@ async function queueWake(
   run: MediaRun,
   completed: boolean,
   label = "Video",
+  reason?: string,
 ): Promise<string | null> {
   const clientNonce = `media-wake:${jobId}`;
   const prior = await tx.run.findFirst({
@@ -488,7 +507,9 @@ async function queueWake(
       userId: run.userId,
       prompt: completed
         ? `${label} job ${jobId} finished and is attached to the chat.`
-        : `${label} job ${jobId} failed. Do not resubmit unless the user asks.`,
+        : reason
+          ? `${label} job ${jobId} failed: ${reason}. Do not resubmit unless the user asks.`
+          : `${label} job ${jobId} failed. Do not resubmit unless the user asks.`,
       status: "queued",
     },
   });
@@ -505,6 +526,30 @@ async function queueWake(
     },
   });
   return wake.id;
+}
+
+/**
+ * The failure row in the thread: one plain bot message with the Chinese
+ * summary, committed with the failure so it cannot post twice or be lost to
+ * a crash. It only displays; it never re-triggers the bot or a retry. The
+ * caller notifies after its transaction commits (or relies on the wake
+ * follow-up, when this runs inside someone else's transaction).
+ */
+async function postMediaFailureMessage(
+  tx: Prisma.TransactionClient,
+  run: MediaRun,
+  summary: string,
+): Promise<number> {
+  const committed = await persistMessageInTransaction(
+    tx,
+    run,
+    "bot",
+    [{ kind: "text", text: summary }],
+    undefined,
+    undefined,
+    true,
+  );
+  return committed.eventSeq;
 }
 
 /**
@@ -594,16 +639,25 @@ export async function pollMediaImage(deps: MediaVideoDeps, payload: { jobId: str
   const threadGeneration = request.data.threadGeneration;
   const expired = Date.now() - job.createdAt.getTime() >= MEDIA_POLL_DEADLINE_MS;
   const fail = async (error: string) => {
-    await deps.prisma.$transaction(async (tx) => {
+    const mode = request.data.mode === "edit" ? "edit" : "generate";
+    const summary =
+      summarizeMediaRunError(error, { kind: "image", mode }) ??
+      (mode === "edit" ? "图片编辑失败" : "图片生成失败");
+    const eventSeq = await deps.prisma.$transaction(async (tx) => {
       const failed = await tx.externalEffect.updateMany({
         where: { id: job.id, status: { in: ["media_submitting", "media_polling"] } },
         data: { status: "media_failed" },
       });
-      if (!failed.count) return;
+      if (!failed.count) return null;
       if (request.data.mode) await settleRegenerateRun(tx, run.id, "failed", error);
-      if (await recipientRemains(tx, run, threadGeneration))
-        await queueWake(tx, job.id, run, false, "Image");
+      if (await recipientRemains(tx, run, threadGeneration)) {
+        const seq = await postMediaFailureMessage(tx, run, summary);
+        await queueWake(tx, job.id, run, false, "Image", summary);
+        return seq;
+      }
+      return null;
     });
+    if (eventSeq !== null) await deps.events.notify(run.threadId, eventSeq).catch(() => undefined);
   };
   if (expired || !(await recipientRemains(deps.prisma, run, threadGeneration))) {
     await fail("Media generation failed.");
@@ -775,6 +829,10 @@ export async function reconcileMediaImages(deps: Pick<MediaVideoDeps, "prisma" |
     for (const job of page) {
       const request = mediaJobRequest.safeParse(job.request);
       const threadGeneration = request.success ? request.data.threadGeneration : undefined;
+      const mode = request.success && request.data.mode === "edit" ? "edit" : "generate";
+      const summary =
+        summarizeMediaRunError("Media generation failed.", { kind: "image", mode }) ??
+        (mode === "edit" ? "图片编辑失败" : "图片生成失败");
       await deps.prisma
         .$transaction(async (tx) => {
           const failed = await tx.externalEffect.updateMany({
@@ -788,7 +846,8 @@ export async function reconcileMediaImages(deps: Pick<MediaVideoDeps, "prisma" |
           if (request.success && request.data.mode)
             await settleRegenerateRun(tx, job.run.id, "failed", "Media generation failed.");
           if (!(await recipientRemains(tx, job.run, threadGeneration))) return null;
-          return queueWake(tx, job.id, job.run, false, "Image");
+          await postMediaFailureMessage(tx, job.run, summary);
+          return queueWake(tx, job.id, job.run, false, "Image", summary);
         })
         .then(async (wakeRunId) => {
           if (wakeRunId)

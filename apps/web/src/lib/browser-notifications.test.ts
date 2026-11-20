@@ -110,6 +110,36 @@ describe("browser notifications", () => {
       title: "Chief failed",
       body: "Failed.",
     });
+    expect(
+      browserNotificationMessage(
+        event({
+          type: "run.failed",
+          payload: {
+            error: "Media generation: provider_failure — cogview-3-flash (unsupported)",
+            mediaKind: "image",
+            mediaMode: "edit",
+          },
+        }),
+        "Chief",
+      ),
+    ).toEqual({
+      title: "Chief failed",
+      body: "图片编辑失败：cogview-3-flash 不支持图生图",
+    });
+    expect(
+      browserNotificationMessage(
+        event({
+          type: "run.failed",
+          payload: {
+            error: "Media generation: provider_failure — cogview-3-flash (unsupported)",
+          },
+        }),
+        "Chief",
+      ),
+    ).toEqual({
+      title: "Chief failed",
+      body: "生成失败：cogview-3-flash 不支持该操作",
+    });
     expect(browserNotificationMessage(event({ type: "run.cancelled" }), "Chief")).toEqual({
       title: "Chief stopped",
       body: "Stopped.",

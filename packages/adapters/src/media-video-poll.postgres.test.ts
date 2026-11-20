@@ -263,7 +263,10 @@ describePostgres("background video delivery (PostgreSQL)", () => {
     await h.poll(jobId);
     await h.poll(jobId);
     expect((await h.job(jobId)).status).toBe("media_failed");
-    expect(await h.messages()).toHaveLength(0);
+    const posted = await h.messages();
+    expect(posted).toHaveLength(1);
+    expect(posted[0]).toMatchObject({ role: "bot", botId: h.user.bot.id });
+    expect(posted[0]!.blocks).toEqual([{ kind: "text", text: "视频生成失败" }]);
     const wakes = await h.wakes();
     expect(wakes).toHaveLength(1);
     expect(wakes[0]!.task.prompt).toContain("failed");

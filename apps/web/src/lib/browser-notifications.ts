@@ -1,5 +1,5 @@
 import type { ProductEvent } from "@rakazo_mickvvw/contracts";
-import { displayName, plainTextFromMarkdown } from "@rakazo_mickvvw/core";
+import { displayName, plainTextFromMarkdown, summarizeMediaRunError } from "@rakazo_mickvvw/core";
 import { i18n } from "./i18n";
 
 export type BrowserNotificationPermission = "default" | "denied" | "granted";
@@ -84,9 +84,25 @@ export function browserNotificationMessage(
     return { title: name, body: body || i18n._({ id: "Message", message: "Message" }) };
   }
   if (event.type === "run.failed") {
+    // A failed media run names its reason; anything else keeps the generic line.
+    const payload = event.payload as {
+      error?: unknown;
+      mediaKind?: unknown;
+      mediaMode?: unknown;
+    };
+    const error = typeof payload.error === "string" ? payload.error : "";
+    const kind =
+      payload.mediaKind === "image" || payload.mediaKind === "video"
+        ? payload.mediaKind
+        : undefined;
+    const mode =
+      payload.mediaMode === "edit" || payload.mediaMode === "generate"
+        ? payload.mediaMode
+        : undefined;
+    const summary = error ? summarizeMediaRunError(error, { kind, mode }) : null;
     return {
       title: i18n._({ id: "{name} failed", message: "{name} failed", values: { name } }),
-      body: i18n._({ id: "Failed.", message: "Failed." }),
+      body: summary ?? i18n._({ id: "Failed.", message: "Failed." }),
     };
   }
   if (event.type === "run.cancelled") {

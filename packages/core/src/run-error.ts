@@ -621,6 +621,133 @@ export function describeModelError(details: string): {
   return result("unknown");
 }
 
+export type MediaRunKind = "image" | "video";
+export type MediaRunMode = "generate" | "edit";
+
+/**
+ * A media run failure in one Chinese line: what failed, which models, and why —
+ * for the failure row in the thread, the run.failed notification, and the wake
+ * follow-up. Only model ids and our own short reason words are ever echoed;
+ * anything the provider wrote beyond them is dropped, so no upstream text or
+ * key material can leak into the visible copy. Returns null for anything that
+ * is not a media generation error.
+ */
+export function summarizeMediaRunError(
+  error: string,
+  options?: { kind?: MediaRunKind; mode?: MediaRunMode },
+): string | null {
+  const trimmed = error.trim();
+  const prefix = mediaRunFailurePrefix(options?.kind, options?.mode);
+  // The generic strings the media paths throw when there is no provider detail.
+  if (trimmed === "Media generation failed.") return prefix;
+  if (trimmed === "Media generation is unavailable.") return `${prefix}：服务不可用`;
+  if (
+    trimmed === "The reference image is unavailable." ||
+    trimmed === "The image to edit is unavailable."
+  )
+    return `${prefix}：要编辑的图片不可用`;
+  const match = trimmed.match(/^Media generation: ([a-z_]+)(?: — (.*))?$/s);
+  if (!match) return null;
+  const code = match[1];
+  const detail = match[2];
+  if (!code) return null;
+  const reasons = detail ? parseMediaFailureDetail(detail, options?.kind, options?.mode) : [];
+  if (reasons.length === 0) {
+    const generic = mediaFailureCodeReason(code, options?.kind, options?.mode);
+    return generic ? `${prefix}：${generic}` : prefix;
+  }
+  return `${prefix}：${reasons.map(({ modelId, reason }) => `${modelId} ${reason}`).join("；")}`;
+}
+
+function mediaRunFailurePrefix(kind?: MediaRunKind, mode?: MediaRunMode): string {
+  if (kind === "image") return mode === "edit" ? "图片编辑失败" : "图片生成失败";
+  if (kind === "video") return mode === "edit" ? "视频编辑失败" : "视频生成失败";
+  return "生成失败";
+}
+
+/** The short reason words our own media chain writes; anything else is dropped. */
+function mediaFailurePhraseReason(
+  phrase: string,
+  kind?: MediaRunKind,
+  mode?: MediaRunMode,
+): string | undefined {
+  switch (phrase) {
+    case "unsupported":
+      if (mode === "edit") return kind === "video" ? "不支持视频编辑" : "不支持图生图";
+      if (kind === "video") return "不支持生成视频";
+      if (kind === "image") return "不支持生成图片";
+      return "不支持该操作";
+    case "rate limited":
+      return "限流";
+    case "authentication failed":
+      return "密钥无效";
+    case "timed out":
+      return "请求超时";
+    case "provider error":
+      return "服务异常";
+    case "invalid input":
+      return "输入无效";
+    case "output too large":
+      return "输出过大";
+    case "needs async submission":
+      return "需要异步提交";
+    default:
+      return undefined;
+  }
+}
+
+function mediaFailureCodeReason(
+  code: string,
+  kind?: MediaRunKind,
+  mode?: MediaRunMode,
+): string | undefined {
+  switch (code) {
+    case "unsupported":
+      return mediaFailurePhraseReason("unsupported", kind, mode);
+    case "rate_limit":
+      return "限流";
+    case "authentication":
+      return "密钥无效";
+    case "timeout":
+      return "请求超时";
+    case "provider_failure":
+      return "服务异常";
+    case "invalid_input":
+      return "输入无效";
+    case "output_limit":
+      return "输出过大";
+    case "async_required":
+      return "需要异步提交";
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Parse the `model (reason), …` detail of an all-models-failed error. A model
+ * id never holds a space or a parenthesis, so a part that does is provider
+ * text, not a model, and is skipped instead of echoed.
+ */
+function parseMediaFailureDetail(
+  detail: string,
+  kind?: MediaRunKind,
+  mode?: MediaRunMode,
+): { modelId: string; reason: string }[] {
+  const out: { modelId: string; reason: string }[] = [];
+  for (const part of detail.split(", ")) {
+    const item = part.match(/^(.+) \(([^)]+)\)$/);
+    if (!item) continue;
+    const modelId = item[1];
+    const phrase = item[2];
+    if (!modelId || !phrase) continue;
+    if (!/^[A-Za-z0-9][A-Za-z0-9:./_-]{0,127}$/.test(modelId)) continue;
+    const reason = mediaFailurePhraseReason(phrase, kind, mode);
+    if (!reason) continue;
+    out.push({ modelId, reason });
+  }
+  return out;
+}
+
 function parseJson(text: string): unknown {
   try {
     return JSON.parse(text);
