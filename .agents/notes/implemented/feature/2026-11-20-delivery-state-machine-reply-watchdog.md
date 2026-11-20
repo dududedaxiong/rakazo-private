@@ -54,6 +54,12 @@ BotArk（`src/renderer/src/store/delivery.ts`、`replyWatchdog.ts`）已经把�
 
 BotArk 的第三条（原子写 JSON + 读失败抛错）不立项，只记一笔：App 本地存储（草稿、收藏缓存、设置）是“读－改－写”，存在同一类丢数据风险，下次碰 App 本地存储时按此审查；同时给 [durable-execution-recovery-records](../../proposed/feature/2026-11-16-durable-execution-recovery-records.md) 那份长任务落库笔记补一个实现细节——落库的每一步必须是崩溃安全的，否则恢复点本身就是坏的。
 
+### 6. Rebase 到产物页修复头（r2）与 zip 标题措辞
+
+本批原分支 `feature/delivery-state-machine` 建在旧部署头 `80deae38` 上；产物页手机修复（`feature/artifacts-mobile-fix`，`3c44d1b9`）先部署上线，直接部署原分支会把产物页修复盖回去，所以另开 `feature/delivery-state-machine-r2`，以本地 `6680c82`（tree 与远端 `3c44d1b9` 完全一致，`3ef1a721…`）为基点，把 6 个提交按顺序 cherry-pick 过去，零冲突；两边都动过的 Lingui `.po` 由 git 自动合并，两边新串都在（delivery 的 2 条 + 移动修复的 8 条），事后用 `git diff` 核对过 zh-CN。
+
+同批顺带修了一个标题措辞：zip 预览头部的计数是整包文件总数（`files = entries.filter(e => !e.isDirectory)`），列表只显示当前目录的直接子项，根目录 5 个文件夹装着 7 个文件时，标题“7 个文件”看着像少了文件。改成“共 # 个文件”（`t`共 ${plural(...)} · ${formatFileSize(totalSize)}``），只改措辞、不改计数口径；Lingui `extract --clean` + zh-CN/zh-TW 补译 + `compile`，单测断言标题显示总数（测试 zip 含 2 个文件，断言 `共 2 files`）。
+
 ## Alternatives considered
 
 - **服务端存送达状态（Postgres 里给每条消息记 delivery）**：最强的理由是单一事实源头，换设备、重装都还在。不用：接受（receipt 已应用）、已送达（echo 已出现）、没回（终态 run 无回复）这三个事实服务端 run 记录里已经全有，缺的只是客户端的呈现与超时；为呈现问题做一次迁移不合算。App outbox 本来就是有意的客户端本地物。
@@ -71,3 +77,4 @@ BotArk 的第三条（原子写 JSON + 读失败抛错）不立项，只记一�
 - 顺手修了一个既有缺口：杂项设置批次的 16 条 App 文案（分类名与设置页文案）只在 zh 目录有译文，其余 7 个目录缺失，i18n 齐全性测试在基线提交上就是红的；本次给 7 个目录补了译文（zh 本来就有，不动），测试转绿。7 个非中文语种的新译文是我写的，未经母语者审过；错译只影响这几条新文案的显示，不影响功能。
 - 基线红项（与本批无关，在基线提交 `4fade75` 上核对过，数字一致）：移动端全量套件另有 27 例失败（voice-settings 的 mock 缺 `serverProviderOf` 导出、bot-profile 分页、account-screen、model-settings、settings-sheet、inbox-archived 集合错误）；App tsc 另有 7 处错（见上）。本批新增 0 失败、0 新错。
 - 未验证：没有真机/模拟器，App 的改动只在 jsdom 单测里验过；网页端也没有在浏览器里点过（本批只做代码 + 测试 + 推送）。只推代码、不部署、不打 App 包。
+- r2（rebase 到 `3c44d1b9` + zip 标题措辞）验证：cherry-pick 零冲突；scoped 单测全过——web + core 79 例（delivery 16、reply-watchdog 13、run-stuck 7、use-composer-actions 26、transcript 7、zip-entry 4、Artifacts 6，含新增“共 2 files”断言），App 端 121 例（与原批数字一致）；core 与 web tsc 干净；Biome 在改动文件上干净（顺手修了 `Artifacts.test.tsx` 第 28 行一个基线就有的格式问题，`6680c82` 上的原文件同样不过 Biome format）；`pnpm verify-notes` 全过。

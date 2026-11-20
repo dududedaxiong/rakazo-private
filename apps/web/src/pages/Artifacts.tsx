@@ -1299,7 +1299,7 @@ function ZipPreview({ artifact, bytes }: { artifact: Artifact; bytes: Uint8Array
   return (
     <div className="h-full overflow-y-auto bg-background">
       <p className="px-6 pt-4 text-body-sm text-muted-foreground">
-        {t`${plural(files.length, { one: "# file", other: "# files" })} · ${formatFileSize(totalSize)}`}
+        {t`共 ${plural(files.length, { one: "# file", other: "# files" })} · ${formatFileSize(totalSize)}`}
       </p>
       <div className="flex flex-col divide-y divide-border px-6">
         {path ? (

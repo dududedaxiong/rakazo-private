@@ -48,12 +48,6 @@ msgstr "{0, plural, other {커넥터 #개}}"
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {파일 #개}}"
 
-#. placeholder {0}: files.length
-#. placeholder {1}: formatFileSize(totalSize)
-#: src/pages/Artifacts.tsx
-msgid "{0, plural, one {# file} other {# files}} · {1}"
-msgstr ""
-
 #. placeholder {0}: referral.rewards
 #: src/components/InviteDialog.tsx
 msgid "{0, plural, one {# free month earned} other {# free months earned}}"
@@ -10600,3 +10594,9 @@ msgstr "음성 서비스에서 키를 거부했습니다."
 #: src/components/vault/VaultItemEditor.tsx
 msgid "ZIP or postal code"
 msgstr "우편번호"
+
+#. placeholder {0}: files.length
+#. placeholder {1}: formatFileSize(totalSize)
+#: src/pages/Artifacts.tsx
+msgid "共 {0, plural, one {# file} other {# files}} · {1}"
+msgstr ""

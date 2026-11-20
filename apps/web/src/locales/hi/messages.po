@@ -48,12 +48,6 @@ msgstr "{0, plural, one {# कनेक्टर} other {# कनेक्टर
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, one {# फ़ाइल} other {# फ़ाइलें}}"
 
-#. placeholder {0}: files.length
-#. placeholder {1}: formatFileSize(totalSize)
-#: src/pages/Artifacts.tsx
-msgid "{0, plural, one {# file} other {# files}} · {1}"
-msgstr ""
-
 #. placeholder {0}: referral.rewards
 #: src/components/InviteDialog.tsx
 msgid "{0, plural, one {# free month earned} other {# free months earned}}"
@@ -10600,3 +10594,9 @@ msgstr "आपके आवाज़ प्रोवाइडर ने कु�
 #: src/components/vault/VaultItemEditor.tsx
 msgid "ZIP or postal code"
 msgstr "ZIP या पिन कोड"
+
+#. placeholder {0}: files.length
+#. placeholder {1}: formatFileSize(totalSize)
+#: src/pages/Artifacts.tsx
+msgid "共 {0, plural, one {# file} other {# files}} · {1}"
+msgstr ""

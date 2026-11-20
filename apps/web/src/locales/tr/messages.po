@@ -48,12 +48,6 @@ msgstr "{0, plural, one {# bağlayıcı} other {# bağlayıcı}}"
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, one {# dosya} other {# dosya}}"
 
-#. placeholder {0}: files.length
-#. placeholder {1}: formatFileSize(totalSize)
-#: src/pages/Artifacts.tsx
-msgid "{0, plural, one {# file} other {# files}} · {1}"
-msgstr ""
-
 #. placeholder {0}: referral.rewards
 #: src/components/InviteDialog.tsx
 msgid "{0, plural, one {# free month earned} other {# free months earned}}"
@@ -10600,3 +10594,9 @@ msgstr "Ses sağlayıcınız anahtarı reddetti."
 #: src/components/vault/VaultItemEditor.tsx
 msgid "ZIP or postal code"
 msgstr "Posta kodu"
+
+#. placeholder {0}: files.length
+#. placeholder {1}: formatFileSize(totalSize)
+#: src/pages/Artifacts.tsx
+msgid "共 {0, plural, one {# file} other {# files}} · {1}"
+msgstr ""

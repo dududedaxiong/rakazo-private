@@ -25,7 +25,10 @@ vi.mock("../lib/artifact-open", () => ({
 }));
 vi.mock("../lib/relative-time", () => ({ formatRelativeTime: () => "just now" }));
 vi.mock("@lingui/react/macro", () => {
-  return { useLingui: () => ({ t: String.raw }), Trans: ({ children }: { children: ReactNode }) => children };
+  return {
+    useLingui: () => ({ t: String.raw }),
+    Trans: ({ children }: { children: ReactNode }) => children,
+  };
 });
 vi.mock("@lingui/core/macro", () => ({
   t: (strings: TemplateStringsArray, ...values: unknown[]) =>
@@ -418,6 +421,9 @@ it("lists a zip archive's contents and opens a text entry inside it", async () =
     await act(async () => {
       await vi.waitFor(() => expect(page.container.textContent).toContain("hello.txt"));
     });
+    // The header counts every file in the archive (2 here), not just the
+    // rows visible at the current folder (hello.txt + docs).
+    expect(page.container.textContent).toContain("共 2 files");
     expect(page.container.textContent).toContain("docs");
     await act(async () => {
       page.container
