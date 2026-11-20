@@ -1,16 +1,20 @@
 import { describe, expect, it } from "vitest";
+import type { ArtifactCategoryMapping } from "./attachments.js";
 import {
   AttachmentValidationError,
+  artifactCategoryForFile,
   artifactTypeLabel,
   attachmentExtensionForMimeType,
   attachmentsForBot,
   blocksToAgentHistoryText,
+  DEFAULT_ARTIFACT_CATEGORY_MAPPING,
   decodeAttachmentBase64,
   inferAttachmentMimeType,
   normalizeVoiceTranscript,
   promptTextForAttachments,
   userTurnMessageForRun,
   validateAttachmentMimeType,
+  validateUploadFile,
 } from "./attachments.js";
 
 describe("attachment helpers", () => {
@@ -462,5 +466,144 @@ describe("artifactTypeLabel", () => {
 
   it("falls back to the subtype for a type without a known extension", () => {
     expect(artifactTypeLabel("application/x-custom")).toBe("X-CUST");
+  });
+});
+
+describe("artifactCategoryForFile", () => {
+  it("classifies every category by extension", () => {
+    const cases: [string, string, string][] = [
+      ["photo.png", "image/png", "image"],
+      ["clip.mp4", "video/mp4", "video"],
+      ["backup.zip", "application/zip", "archive"],
+      ["hello.py", "text/x-python", "script"],
+      ["notes.md", "text/markdown", "document"],
+      ["setup.exe", "application/octet-stream", "software"],
+    ];
+    for (const [name, mimeType, category] of cases) {
+      expect(artifactCategoryForFile({ name, mimeType }).category).toBe(category);
+    }
+  });
+
+  it("splits software into desktop, apple, android and other", () => {
+    expect(artifactCategoryForFile({ name: "setup.exe", mimeType: "" })).toEqual({
+      category: "software",
+      softwareKind: "desktop",
+    });
+    expect(artifactCategoryForFile({ name: "tool.dmg", mimeType: "" })).toEqual({
+      category: "software",
+      softwareKind: "apple",
+    });
+    expect(artifactCategoryForFile({ name: "app.apk", mimeType: "" })).toEqual({
+      category: "software",
+      softwareKind: "android",
+    });
+    expect(artifactCategoryForFile({ name: "firmware.iso", mimeType: "" })).toEqual({
+      category: "software",
+      softwareKind: "other",
+    });
+  });
+
+  it("matches extensions case-insensitively and reads the last suffix", () => {
+    expect(artifactCategoryForFile({ name: "HELLO.PY", mimeType: "" }).category).toBe("script");
+    expect(artifactCategoryForFile({ name: "Photo.JPG", mimeType: "" }).category).toBe("image");
+    expect(artifactCategoryForFile({ name: "backup.tar.gz", mimeType: "" }).category).toBe(
+      "archive",
+    );
+  });
+
+  it("falls back to the MIME type only for files with no extension", () => {
+    expect(artifactCategoryForFile({ name: "screenshot", mimeType: "image/png" }).category).toBe(
+      "image",
+    );
+    expect(artifactCategoryForFile({ name: "clip", mimeType: "video/mp4" }).category).toBe("video");
+    expect(
+      artifactCategoryForFile({ name: "blob", mimeType: "application/octet-stream" }).category,
+    ).toBe("other");
+  });
+
+  it("treats the mapping as the source of truth over the MIME type", () => {
+    expect(artifactCategoryForFile({ name: "photo.png", mimeType: "image/png" }).category).toBe(
+      "image",
+    );
+    const withoutPng: ArtifactCategoryMapping = {
+      ...DEFAULT_ARTIFACT_CATEGORY_MAPPING,
+      image: DEFAULT_ARTIFACT_CATEGORY_MAPPING.image.filter((ext) => ext !== "png"),
+    };
+    expect(
+      artifactCategoryForFile({ name: "photo.png", mimeType: "image/png" }, withoutPng).category,
+    ).toBe("other");
+    const apkAsDocument: ArtifactCategoryMapping = {
+      ...DEFAULT_ARTIFACT_CATEGORY_MAPPING,
+      document: [...DEFAULT_ARTIFACT_CATEGORY_MAPPING.document, "apk"],
+    };
+    expect(artifactCategoryForFile({ name: "app.apk", mimeType: "" }, apkAsDocument).category).toBe(
+      "document",
+    );
+  });
+});
+
+describe("office and container mime types", () => {
+  it.each([
+    ["slides.pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"],
+    ["deck.ppt", "application/vnd.ms-powerpoint"],
+    ["report.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+    ["letter.doc", "application/msword"],
+    ["photo.bmp", "image/bmp"],
+    ["logo.svg", "image/svg+xml"],
+    ["clip.mov", "video/quicktime"],
+    ["clip.webm", "video/webm"],
+  ])("infers and round-trips %s", (name, mimeType) => {
+    expect(inferAttachmentMimeType(name)).toBe(mimeType);
+    expect(attachmentExtensionForMimeType(mimeType)).toBe(
+      `.${name.slice(name.lastIndexOf(".") + 1)}`,
+    );
+    expect(() => validateAttachmentMimeType(mimeType)).not.toThrow();
+  });
+});
+
+describe("validateUploadFile", () => {
+  it("falls back to the built-in type list without a saved list", () => {
+    expect(() => validateUploadFile("hello.py", "text/x-python")).not.toThrow();
+    expect(() =>
+      validateUploadFile(
+        "report.docx",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      ),
+    ).not.toThrow();
+    expect(() => validateUploadFile("setup.exe", "application/octet-stream")).toThrow(
+      AttachmentValidationError,
+    );
+  });
+
+  it("checks the extension against a saved list", () => {
+    const allowed = ["png", "py"];
+    expect(() => validateUploadFile("photo.png", "image/png", allowed)).not.toThrow();
+    expect(() => validateUploadFile("Photo.PNG", "image/png", allowed)).not.toThrow();
+    expect(() => validateUploadFile("hello.py", "text/x-python", allowed)).not.toThrow();
+    expect(() => validateUploadFile("notes.md", "text/markdown", allowed)).toThrow(
+      "Unsupported attachment type: .md",
+    );
+  });
+
+  it("resolves an extensionless file from its mime type", () => {
+    expect(() => validateUploadFile("README", "text/plain", ["txt"])).not.toThrow();
+    expect(() => validateUploadFile("README", "text/plain", ["md"])).toThrow(
+      "Unsupported attachment type: .txt",
+    );
+    expect(() => validateUploadFile("README", "text/plain")).not.toThrow();
+  });
+
+  it("never allows .env files, even when the list says so", () => {
+    const allowed = ["env", "png"];
+    expect(() => validateUploadFile(".env", "text/plain", allowed)).toThrow(
+      "Unsupported attachment type: .env",
+    );
+    expect(() => validateUploadFile(".env.local", "text/plain", allowed)).toThrow(
+      "Unsupported attachment type: .env",
+    );
+    expect(() => validateUploadFile("config.env", "text/plain", allowed)).toThrow(
+      "Unsupported attachment type: .env",
+    );
+    expect(() => validateUploadFile("photo.png", "image/png", allowed)).not.toThrow();
   });
 });

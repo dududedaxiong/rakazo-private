@@ -37,6 +37,16 @@ export const ATTACHMENT_FILE_MIME_TYPES = [
   "text/html",
   "application/json",
   "application/zip",
+  // Office documents and other image/video containers: uploadable and
+  // downloadable, but they preview as plain files (no vision, no player).
+  "image/bmp",
+  "image/svg+xml",
+  "video/quicktime",
+  "video/webm",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   // Code files: the bot writes these with write_file and sends them with
   // attach_file, and users upload them the same way. All preview as text
   // (text/* directly, the application/* ones via TEXT_APPLICATION_MIME_TYPES).

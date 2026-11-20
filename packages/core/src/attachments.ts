@@ -100,6 +100,38 @@ export function validateAttachmentMimeType(mimeType: string): void {
   }
 }
 
+/**
+ * Upload gate for a file by name. When the space saved its own upload list,
+ * the extension must be on it; without one the built-in type list decides.
+ * `.env` files never upload, whatever the list says.
+ */
+export function validateUploadFile(
+  name: string,
+  mimeType: string,
+  allowedExtensions?: readonly string[],
+): void {
+  const base = name.split("/").pop()?.split("\\").pop() ?? name;
+  if (base === ".env" || base.startsWith(".env.")) {
+    throw new AttachmentValidationError("Unsupported attachment type: .env");
+  }
+  const dot = base.lastIndexOf(".");
+  let extension = dot > 0 ? base.slice(dot + 1).toLowerCase() : "";
+  if (!extension) {
+    const fromMime = attachmentExtensionForMimeType(mimeType);
+    extension = fromMime ? fromMime.slice(1) : "";
+  }
+  if (extension === "env") {
+    throw new AttachmentValidationError("Unsupported attachment type: .env");
+  }
+  if (allowedExtensions === undefined || !extension) {
+    validateAttachmentMimeType(mimeType);
+    return;
+  }
+  if (!allowedExtensions.includes(extension)) {
+    throw new AttachmentValidationError(`Unsupported attachment type: .${extension}`);
+  }
+}
+
 export function attachmentKindForMimeType(mimeType: string): "image" | "file" {
   return isAttachmentImageMimeType(mimeType) ? "image" : "file";
 }
@@ -242,6 +274,15 @@ const EXTENSION_MIME_TYPES: Record<string, AttachmentMimeType> = {
   ".htm": "text/html",
   ".json": "application/json",
   ".zip": "application/zip",
+  // Office documents and other image/video containers (see contracts).
+  ".bmp": "image/bmp",
+  ".svg": "image/svg+xml",
+  ".mov": "video/quicktime",
+  ".webm": "video/webm",
+  ".doc": "application/msword",
+  ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ".ppt": "application/vnd.ms-powerpoint",
+  ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
   // Code files. The bot writes these with write_file and sends them with
   // attach_file; users upload them the same way. Every MIME below previews
   // as text (text/* directly, the application/* ones via
@@ -303,6 +344,14 @@ const MIME_TYPE_EXTENSIONS: Record<AttachmentMimeType, string> = {
   "text/html": ".html",
   "application/json": ".json",
   "application/zip": ".zip",
+  "image/bmp": ".bmp",
+  "image/svg+xml": ".svg",
+  "video/quicktime": ".mov",
+  "video/webm": ".webm",
+  "application/msword": ".doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+  "application/vnd.ms-powerpoint": ".ppt",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
   "text/x-python": ".py",
   "text/javascript": ".js",
   "application/javascript": ".js",
@@ -335,6 +384,152 @@ export function artifactTypeLabel(mimeType: string): string {
   if (extension) return extension.slice(1).toUpperCase();
   const slash = mimeType.indexOf("/");
   return (slash === -1 ? mimeType : mimeType.slice(slash + 1)).toUpperCase().slice(0, 6);
+}
+
+export type ArtifactCategory =
+  | "image"
+  | "video"
+  | "archive"
+  | "script"
+  | "document"
+  | "software"
+  | "other";
+export type ArtifactSoftwareKind = "desktop" | "apple" | "android" | "other";
+
+/**
+ * Which extensions belong to each artifact category. The user edits this in the
+ * App's category settings; the server stores their copy per space. Extensions are
+ * lowercase without the dot.
+ */
+export type ArtifactCategoryMapping = {
+  image: string[];
+  video: string[];
+  archive: string[];
+  script: string[];
+  document: string[];
+  software: {
+    desktop: string[];
+    apple: string[];
+    android: string[];
+    other: string[];
+  };
+};
+
+/** Built-in mapping, used until the user saves their own. */
+export const DEFAULT_ARTIFACT_CATEGORY_MAPPING: ArtifactCategoryMapping = {
+  image: [
+    "png",
+    "jpg",
+    "jpeg",
+    "gif",
+    "webp",
+    "bmp",
+    "svg",
+    "heic",
+    "heif",
+    "avif",
+    "tif",
+    "tiff",
+    "ico",
+  ],
+  video: ["mp4", "mov", "webm", "mkv", "avi", "wmv", "mpg", "mpeg", "3gp", "flv", "m4v", "ts"],
+  archive: ["zip", "rar", "7z", "tar", "gz", "tgz", "bz2", "xz", "zst", "cab", "jar", "war"],
+  script: [
+    "py",
+    "js",
+    "mjs",
+    "cjs",
+    "ts",
+    "tsx",
+    "jsx",
+    "sh",
+    "bash",
+    "zsh",
+    "go",
+    "rs",
+    "java",
+    "c",
+    "h",
+    "cpp",
+    "rb",
+    "php",
+    "swift",
+    "kt",
+    "lua",
+    "pl",
+    "sql",
+    "css",
+    "scss",
+    "vue",
+  ],
+  document: [
+    "txt",
+    "md",
+    "pdf",
+    "doc",
+    "docx",
+    "xls",
+    "xlsx",
+    "ppt",
+    "pptx",
+    "csv",
+    "json",
+    "xml",
+    "yaml",
+    "yml",
+    "toml",
+    "html",
+    "rtf",
+    "epub",
+    "log",
+  ],
+  software: {
+    desktop: ["exe", "msi", "deb", "rpm", "appimage", "run"],
+    apple: ["dmg", "pkg", "ipa"],
+    android: ["apk", "aab", "xapk"],
+    other: ["iso", "img", "vhd", "vhdx"],
+  },
+};
+
+/**
+ * Classifies an artifact for the gallery-style category filter. The extension
+ * decides first, so the user's mapping is the source of truth: an extension
+ * they removed from every list lands in "other" even when its MIME type looks
+ * like an image or a video. The MIME type only fills in for files with no
+ * extension at all.
+ */
+export function artifactCategoryForFile(
+  input: { name: string; mimeType: string },
+  mapping: ArtifactCategoryMapping = DEFAULT_ARTIFACT_CATEGORY_MAPPING,
+): { category: ArtifactCategory; softwareKind?: ArtifactSoftwareKind } {
+  const dot = input.name.lastIndexOf(".");
+  const extension = dot < 0 ? "" : input.name.slice(dot + 1).toLowerCase();
+  if (extension) {
+    const lists: [ArtifactCategory, string[]][] = [
+      ["image", mapping.image],
+      ["video", mapping.video],
+      ["archive", mapping.archive],
+      ["script", mapping.script],
+      ["document", mapping.document],
+    ];
+    for (const [category, extensions] of lists) {
+      if (extensions.includes(extension)) return { category };
+    }
+    const softwareLists: [ArtifactSoftwareKind, string[]][] = [
+      ["desktop", mapping.software.desktop],
+      ["apple", mapping.software.apple],
+      ["android", mapping.software.android],
+      ["other", mapping.software.other],
+    ];
+    for (const [softwareKind, extensions] of softwareLists) {
+      if (extensions.includes(extension)) return { category: "software", softwareKind };
+    }
+    return { category: "other" };
+  }
+  const type = input.mimeType.split(";")[0]?.trim().toLowerCase() ?? "";
+  if (type.startsWith("image/")) return { category: "image" };
+  if (type.startsWith("video/")) return { category: "video" };
+  return { category: "other" };
 }
 
 export function inferAttachmentMimeType(
