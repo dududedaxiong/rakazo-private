@@ -128,4 +128,5 @@ export * from "./unread-divider.js";
 export * from "./user-error.js";
 export * from "./voice-chat-groups.js";
 export * from "./voice-response.js";
+export * from "./zip.js";
 export * from "./zip-files.js";
