@@ -1,12 +1,15 @@
-import { t } from "@lingui/core/macro";
+import { plural, t } from "@lingui/core/macro";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { ChatMarkdown } from "@rakazo_mickvvw/chat-ui/web";
 import type { Artifact, Bot } from "@rakazo_mickvvw/contracts";
 import { artifactPreviewKind } from "@rakazo_mickvvw/contracts";
-import type { ArtifactCategory, ArtifactSoftwareKind } from "@rakazo_mickvvw/core";
+import type { ArtifactCategory, ArtifactSoftwareKind, ZipEntry } from "@rakazo_mickvvw/core";
 import {
   artifactTypeLabel,
   DEFAULT_ARTIFACT_CATEGORY_MAPPING,
+  formatFileSize,
+  inferAttachmentMimeType,
+  listZipEntries,
   matchesArtifactCategory,
 } from "@rakazo_mickvvw/core";
 import { writeSaved } from "@rakazo_mickvvw/core/query";
@@ -40,9 +43,11 @@ import {
   Archive,
   Box,
   ChevronLeft,
+  ChevronRight,
   Download,
   FileCode2,
   FileText,
+  Folder,
   ImageIcon,
   LayoutGrid,
   List,
@@ -73,6 +78,11 @@ import { rpc } from "../lib/rpc";
 import { createStoredPreference } from "../lib/stored-preference";
 import { useObjectUrl } from "../lib/use-object-url";
 import { errorText } from "../lib/user-error";
+import {
+  readZipEntryText,
+  ZipEntryTooLargeError,
+  ZipEntryUnsupportedError,
+} from "../lib/zip-entry";
 import { WindowChrome } from "./WindowChrome";
 
 type ViewMode = "grid" | "list";
@@ -1127,6 +1137,8 @@ function ArtifactPreview({ artifact, bytes }: { artifact: Artifact; bytes: Uint8
       return <VideoPreview bytes={bytes} name={artifact.name} />;
     case "image":
       return <ImagePreview bytes={bytes} mimeType={artifact.mimeType} name={artifact.name} />;
+    case "zip":
+      return <ZipPreview artifact={artifact} bytes={bytes} />;
     case "none":
       return (
         <div className="grid h-full place-items-center px-6 text-center text-body text-muted-foreground/80">
@@ -1134,6 +1146,210 @@ function ArtifactPreview({ artifact, bytes }: { artifact: Artifact; bytes: Uint8
         </div>
       );
   }
+}
+
+type ZipChild = { name: string; isDirectory: boolean; entry: ZipEntry | null };
+
+/** The direct children of one folder inside an archive. */
+function zipChildren(entries: ZipEntry[], path: string): ZipChild[] {
+  const children = new Map<string, ZipChild>();
+  for (const entry of entries) {
+    if (!entry.name.startsWith(path)) continue;
+    const rest = entry.name.slice(path.length);
+    if (!rest) continue;
+    const slash = rest.indexOf("/");
+    if (slash === -1) {
+      children.set(rest, { name: rest, isDirectory: false, entry });
+    } else {
+      const dir = rest.slice(0, slash);
+      if (!children.has(dir)) children.set(dir, { name: dir, isDirectory: true, entry: null });
+    }
+  }
+  return [...children.values()].sort(
+    (a, b) => Number(b.isDirectory) - Number(a.isDirectory) || a.name.localeCompare(b.name),
+  );
+}
+
+/** Text or markdown entries preview inline; anything else is download-only. */
+function zipTextKind(entry: ZipEntry): "markdown" | "text" | null {
+  const mime = inferAttachmentMimeType(entry.name);
+  if (!mime) return null;
+  const kind = artifactPreviewKind(mime);
+  return kind === "markdown" || kind === "text" ? kind : null;
+}
+
+function ZipPreview({ artifact, bytes }: { artifact: Artifact; bytes: Uint8Array }) {
+  const { t } = useLingui();
+  const entries = useMemo(() => {
+    try {
+      return listZipEntries(bytes);
+    } catch {
+      return null;
+    }
+  }, [bytes]);
+  const [path, setPath] = useState("");
+  const [openFile, setOpenFile] = useState<ZipEntry | null>(null);
+  const [fileText, setFileText] = useState<
+    | { status: "idle" }
+    | { status: "loading" }
+    | { status: "ready"; text: string; kind: "markdown" | "text" }
+    | { status: "error"; message: string }
+  >({ status: "idle" });
+
+  useEffect(() => {
+    setPath("");
+    setOpenFile(null);
+    setFileText({ status: "idle" });
+  }, [artifact.id]);
+
+  useEffect(() => {
+    if (!openFile) return;
+    let cancelled = false;
+    setFileText({ status: "loading" });
+    readZipEntryText(bytes, openFile).then(
+      (text) => {
+        if (!cancelled) {
+          setFileText({ status: "ready", text, kind: zipTextKind(openFile) ?? "text" });
+        }
+      },
+      (error: unknown) => {
+        if (cancelled) return;
+        const message =
+          error instanceof ZipEntryTooLargeError
+            ? t`This file is too large to preview.`
+            : error instanceof ZipEntryUnsupportedError
+              ? t`This file can't be previewed.`
+              : t`Could not read this file.`;
+        setFileText({ status: "error", message });
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [openFile, bytes, t]);
+
+  const files = useMemo(() => entries?.filter((entry) => !entry.isDirectory) ?? [], [entries]);
+  const totalSize = useMemo(
+    () => files.reduce((sum, entry) => sum + entry.uncompressedSize, 0),
+    [files],
+  );
+  const children = useMemo(() => zipChildren(entries ?? [], path), [entries, path]);
+
+  if (!entries) {
+    return (
+      <div className="grid h-full place-items-center px-6 text-center text-body text-muted-foreground/80">
+        <Trans>Could not read this archive.</Trans>
+      </div>
+    );
+  }
+
+  if (openFile) {
+    return (
+      <div className="flex h-full flex-col bg-background">
+        <div className="flex items-center border-b border-border px-2 py-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setOpenFile(null)}
+            aria-label={t`Back to file list`}
+            className="min-w-0 text-muted-foreground"
+          >
+            <ChevronLeft size={15} strokeWidth={1.9} />
+            <span className="min-w-0 truncate">{openFile.name}</span>
+          </Button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {fileText.status === "loading" ? (
+            <div className="grid h-full place-items-center text-body text-muted-foreground/80">
+              <Spinner aria-label={t`Loading…`} />
+            </div>
+          ) : fileText.status === "error" ? (
+            <div className="px-6 py-4">
+              <div className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-destructive">
+                {fileText.message}
+              </div>
+            </div>
+          ) : fileText.status === "ready" && fileText.kind === "markdown" ? (
+            <article className="mx-auto w-full max-w-[760px] px-8 py-10 text-body-lg leading-7 text-foreground">
+              <ChatMarkdown>{fileText.text}</ChatMarkdown>
+            </article>
+          ) : fileText.status === "ready" ? (
+            <pre className="px-8 py-10 font-mono text-body-sm leading-6 whitespace-pre-wrap break-words text-foreground">
+              {fileText.text}
+            </pre>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full overflow-y-auto bg-background">
+      <p className="px-6 pt-4 text-body-sm text-muted-foreground">
+        {t`${plural(files.length, { one: "# file", other: "# files" })} · ${formatFileSize(totalSize)}`}
+      </p>
+      <div className="flex flex-col divide-y divide-border px-6">
+        {path ? (
+          <button
+            type="button"
+            onClick={() => setPath(path.slice(0, path.slice(0, -1).lastIndexOf("/") + 1))}
+            aria-label={t`Back to parent folder`}
+            className="flex items-center gap-1 py-3 text-left text-body-sm text-muted-foreground hover:text-foreground"
+          >
+            <ChevronLeft className="size-4 shrink-0" />
+            <span className="min-w-0 truncate">{path.replace(/\/$/, "")}</span>
+          </button>
+        ) : null}
+        {children.map((child) => {
+          const kind = child.entry ? zipTextKind(child.entry) : null;
+          const clickable = child.isDirectory || kind !== null;
+          const mime = child.entry
+            ? (inferAttachmentMimeType(child.entry.name) ?? "application/octet-stream")
+            : "application/octet-stream";
+          const row = (
+            <>
+              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[7px] bg-accent text-accent-foreground">
+                {child.isDirectory ? (
+                  <Folder size={12} strokeWidth={1.75} />
+                ) : (
+                  <ArtifactMimeIcon mimeType={mime} small />
+                )}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-body font-medium">{child.name}</span>
+              {!child.isDirectory && child.entry ? (
+                <span className="shrink-0 text-body-sm text-muted-foreground">
+                  {formatFileSize(child.entry.uncompressedSize)}
+                </span>
+              ) : null}
+              {clickable ? (
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              ) : null}
+            </>
+          );
+          return clickable ? (
+            <button
+              key={child.name}
+              type="button"
+              onClick={() => {
+                if (child.isDirectory) setPath(`${path}${child.name}/`);
+                else if (child.entry) setOpenFile(child.entry);
+              }}
+              aria-label={
+                child.isDirectory ? t`Open folder ${child.name}` : t`Preview ${child.name}`
+              }
+              className="flex items-center gap-2 py-3 text-left hover:bg-accent/40"
+            >
+              {row}
+            </button>
+          ) : (
+            <div key={child.name} className="flex items-center gap-2 py-3">
+              {row}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 function ImagePreview({

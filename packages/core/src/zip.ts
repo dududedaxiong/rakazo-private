@@ -37,11 +37,12 @@ function readU16(bytes: Uint8Array, offset: number): number {
 
 function readU32(bytes: Uint8Array, offset: number): number {
   return (
-    bytes[offset]! |
-    (bytes[offset + 1]! << 8) |
-    (bytes[offset + 2]! << 16) |
-    (bytes[offset + 3]! << 24)
-  ) >>> 0;
+    (bytes[offset]! |
+      (bytes[offset + 1]! << 8) |
+      (bytes[offset + 2]! << 16) |
+      (bytes[offset + 3]! << 24)) >>>
+    0
+  );
 }
 
 function readSignature(bytes: Uint8Array, offset: number): number {
@@ -65,7 +66,11 @@ export function listZipEntries(bytes: Uint8Array): ZipEntry[] {
   if (disk !== 0 || centralDisk !== 0 || entriesOnDisk !== totalEntries) {
     throw new ZipArchiveError("Multi-disk zip archives are not supported.");
   }
-  if (totalEntries === MAX_COMMENT_LENGTH || centralSize === 0xffff_ffff || centralOffset === 0xffff_ffff) {
+  if (
+    totalEntries === MAX_COMMENT_LENGTH ||
+    centralSize === 0xffff_ffff ||
+    centralOffset === 0xffff_ffff
+  ) {
     throw new ZipArchiveError("Zip64 archives are not supported.");
   }
   if (centralOffset + centralSize > bytes.length) {

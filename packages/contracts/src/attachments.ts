@@ -87,7 +87,15 @@ export function isAttachmentImageMimeType(mimeType: string): boolean {
   return (ATTACHMENT_IMAGE_MIME_TYPES as readonly string[]).includes(mimeType);
 }
 
-export type ArtifactPreviewKind = "html" | "markdown" | "pdf" | "image" | "video" | "text" | "none";
+export type ArtifactPreviewKind =
+  | "html"
+  | "markdown"
+  | "pdf"
+  | "image"
+  | "video"
+  | "text"
+  | "zip"
+  | "none";
 
 const TEXT_APPLICATION_MIME_TYPES = new Set([
   "application/json",
@@ -107,6 +115,14 @@ export function artifactPreviewKind(mimeType: string): ArtifactPreviewKind {
   if (type === "application/pdf") return "pdf";
   if (isAttachmentImageMimeType(type)) return "image";
   if (type === "video/mp4") return "video";
+  if (
+    type === "application/zip" ||
+    type === "application/x-zip-compressed" ||
+    type === "application/x-zip" ||
+    type === "multipart/x-zip"
+  ) {
+    return "zip";
+  }
   if (type.startsWith("text/") || TEXT_APPLICATION_MIME_TYPES.has(type)) return "text";
   return "none";
 }

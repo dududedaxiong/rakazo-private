@@ -151,7 +151,7 @@ describe("listZipEntries", () => {
   });
 
   it("finds the real end record past an archive comment and a fake signature in file data", () => {
-    const fakeSignature = String.fromCharCode(0x50, 0x4b, 0x05, 0x06) + "junk";
+    const fakeSignature = `${String.fromCharCode(0x50, 0x4b, 0x05, 0x06)}junk`;
     const zip = buildZip([{ name: "trap.txt", data: fakeSignature }], "archive comment");
     expect(listZipEntries(zip).map((entry) => entry.name)).toEqual(["trap.txt"]);
   });

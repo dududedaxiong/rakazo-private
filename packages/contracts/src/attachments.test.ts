@@ -63,7 +63,8 @@ describe("attachment contracts", () => {
     expect(artifactPreviewKind("video/mp4")).toBe("video");
     expect(artifactPreviewKind("application/pdf")).toBe("pdf");
     expect(artifactPreviewKind("image/png")).toBe("image");
-    expect(artifactPreviewKind("application/zip")).toBe("none");
+    expect(artifactPreviewKind("application/zip")).toBe("zip");
+    expect(artifactPreviewKind("application/x-zip-compressed")).toBe("zip");
   });
 
   it("allows code files as attachments and previews them as text", () => {
