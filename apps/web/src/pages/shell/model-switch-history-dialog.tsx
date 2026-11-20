@@ -3,7 +3,7 @@ import type { ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
 import { displayName } from "@rakazo_mickvvw/core";
 import { Dialog, DialogContent, DialogTitle } from "@rakazo_mickvvw/ui-web";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ModelLocateKind, ModelLocateTarget } from "../../lib/model-locate";
 
 /** The provider of the attempt that finally produced the message, if known. */
@@ -35,13 +35,26 @@ export function ModelLocatePopup({
   onConfirm: (target: ModelLocateTarget) => void;
 }) {
   const { t } = useLingui();
+  /** Set on the confirm tap, before the popup closes: that close is a
+   * navigation, so the dialog must not return focus to the thread — its
+   * unmount cleanup schedules the return in a microtask, which runs after
+   * the panel's focus effect and would steal it back. A dismiss (Esc, X,
+   * outside) keeps the default return focus. */
+  const confirmedRef = useRef(false);
+  useEffect(() => {
+    if (open) confirmedRef.current = false;
+  }, [open]);
   if (!open || !target) return null;
   const label = target.provider
     ? `${displayName(target.model, t`Model`)}（${target.provider}）`
     : displayName(target.model, t`Model`);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-testid="model-locate-popup" className="gap-0 p-0">
+      <DialogContent
+        data-testid="model-locate-popup"
+        className="gap-0 p-0"
+        finalFocus={() => (confirmedRef.current ? false : null)}
+      >
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-4">
           <DialogTitle className="text-body-lg font-semibold">
             <Trans>Locate</Trans>
@@ -51,7 +64,10 @@ export function ModelLocatePopup({
           <button
             type="button"
             data-testid="model-locate-confirm"
-            onClick={() => onConfirm(target)}
+            onClick={() => {
+              confirmedRef.current = true;
+              onConfirm(target);
+            }}
             className="w-full rounded-lg px-1 py-0.5 text-left text-body font-semibold text-link break-words"
           >
             {label}
@@ -92,6 +108,15 @@ export function ModelSwitchHistoryDialog({
   const [expandedError, setExpandedError] = useState<number | null>(null);
   /** The model waiting for its confirm popup; the history closes behind it. */
   const [pendingLocate, setPendingLocate] = useState<ModelLocateTarget | null>(null);
+  /** Set when a model name is tapped, before the history closes: that
+   * close opens the confirm popup, so the dialog must not return focus to
+   * the thread — its unmount cleanup schedules the return in a microtask,
+   * which would run after the popup's initial focus and strand focus
+   * outside the popup. A dismiss keeps the default return focus. */
+  const locateRef = useRef(false);
+  useEffect(() => {
+    if (open) locateRef.current = false;
+  }, [open]);
   /** The pool a try belonged to; old records carry no pool and show none. */
   const poolTag = (attempt: ModelSwitchAttempt) =>
     attempt.pool ? (
@@ -124,6 +149,7 @@ export function ModelSwitchHistoryDialog({
   if (attempts.length === 0) return null;
   const locate = (attempt: ModelSwitchAttempt) => {
     if (!onLocateModel) return;
+    locateRef.current = true;
     onOpenChange(false);
     setPendingLocate({ kind, botId, model: attempt.model, provider: attempt.provider });
   };
@@ -149,7 +175,12 @@ export function ModelSwitchHistoryDialog({
     <>
       {open ? (
         <Dialog open={open} onOpenChange={onOpenChange}>
-          <DialogContent data-testid="model-switch-history" size="md" className="gap-0 p-0">
+          <DialogContent
+            data-testid="model-switch-history"
+            size="md"
+            className="gap-0 p-0"
+            finalFocus={() => (locateRef.current ? false : null)}
+          >
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-5 py-4">
               <DialogTitle className="text-body-lg font-semibold">
                 <Trans>Switch history</Trans>

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
 import type { ReactNode } from "react";
-import { act } from "react";
+import { act, useEffect, useRef, useState } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -385,6 +385,107 @@ describe("ModelSwitchHistoryEntry", () => {
       model: "deepseek-v4.1-flash",
       provider: "Main",
     });
+  });
+});
+
+describe("ModelLocatePopup focus", () => {
+  /** A located row beside the real mark button, wired like the panel:
+   * confirming closes the popup and focuses the row in the same commit's
+   * effect — the move the dialog's return focus used to steal. Rendering
+   * only the section never caught it: the popup was never mounted, so its
+   * unmount cleanup never ran. */
+  function Harness() {
+    const [located, setLocated] = useState(false);
+    const rowRef = useRef<HTMLButtonElement | null>(null);
+    useEffect(() => {
+      if (located) rowRef.current?.focus();
+    }, [located]);
+    return (
+      <div>
+        <button type="button" data-testid="located-row" ref={rowRef}>
+          Row
+        </button>
+        <ModelSwitchMarkButton
+          model="deepseek-v4.1-flash"
+          provider="Main"
+          kind="chat"
+          botId="bot-1"
+          onLocateModel={() => setLocated(true)}
+        />
+      </div>
+    );
+  }
+
+  function mark() {
+    const button = container.querySelector<HTMLButtonElement>(
+      '[data-testid="model-switch-mark-entry"]',
+    );
+    if (!button) throw new Error("Missing mark entry");
+    return button;
+  }
+
+  function row() {
+    const button = container.querySelector<HTMLButtonElement>('[data-testid="located-row"]');
+    if (!button) throw new Error("Missing located row");
+    return button;
+  }
+
+  function confirmButton() {
+    const button = document.querySelector<HTMLButtonElement>(
+      '[data-testid="model-locate-confirm"]',
+    );
+    if (!button) throw new Error("Missing locate confirm");
+    return button;
+  }
+
+  /** Lets the exit transition finish and the return-focus microtask run. */
+  async function flush() {
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+  }
+
+  /** Opens the popup from the focused mark entry, as a real tap does. */
+  async function openPopup() {
+    if (!Element.prototype.getAnimations) {
+      Element.prototype.getAnimations = () => [];
+    }
+    await act(async () => {
+      mark().focus();
+    });
+    expect(document.activeElement).toBe(mark());
+    await act(async () => {
+      mark().click();
+    });
+    expect(document.querySelector('[data-testid="model-locate-popup"]')).not.toBeNull();
+    // The dialog's initial focus may land a tick after the open commit;
+    // what matters for the race is that the mark was focused at open time,
+    // so it is the element a return would land on.
+    await flush();
+  }
+
+  it("keeps focus on the located row after confirming the locate", async () => {
+    act(() => root.render(<Harness />));
+    await openPopup();
+    await act(async () => {
+      confirmButton().click();
+    });
+    await flush();
+    expect(document.activeElement).toBe(row());
+  });
+
+  it("returns focus to the mark entry when the popup is dismissed", async () => {
+    act(() => root.render(<Harness />));
+    await openPopup();
+    const close = document
+      .querySelector('[data-testid="model-locate-popup"]')
+      ?.querySelector<HTMLButtonElement>('[data-slot="dialog-close"]');
+    if (!close) throw new Error("Missing dialog close");
+    await act(async () => {
+      close.click();
+    });
+    await flush();
+    expect(document.activeElement).toBe(mark());
   });
 });
 

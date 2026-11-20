@@ -179,10 +179,13 @@ export function ModelSection({
   // The section itself is the locate target when the model is no longer
   // listed: the timeline pointed here, so the section still carries the tag.
   const located = locateKind === "chat" && (locatedKey == null || locatedKey === value);
-  // Focus lands on the located row itself, one commit after the panel
-  // records the key: the locate popup's dialog returns focus to the thread
-  // in the commit where it closes, so focusing in the panel's effect loses
-  // to it. The pool lists focus their own rows the same way.
+  // Focus lands on the located row itself. The locate popup's dialog used
+  // to return focus to the thread after this effect ran: its unmount
+  // cleanup schedules the return in a microtask, which runs after the
+  // whole commit — so "one commit later" never dodged it, however many
+  // commits the panel took. The popup now skips the return on a confirm
+  // tap (see ModelLocatePopup), so this focus is the last move. The pool
+  // lists focus their own rows the same way.
   useEffect(() => {
     if (locateKind !== "chat") return;
     if (locatedKey == null) {
