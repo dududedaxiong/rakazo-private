@@ -1345,6 +1345,10 @@ msgstr "फ़ाइल संलग्न करें"
 msgid "Attachment"
 msgstr "अटैचमेंट"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Audio & video"
+msgstr ""
+
 #: src/pages/AdminPage.tsx
 msgid "Audit log"
 msgstr ""
@@ -4881,6 +4885,10 @@ msgstr "अगर आपने वह सुना, तो आवाज़ त�
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "अनदेखा करें"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image edit model"
@@ -9053,6 +9061,7 @@ msgid "Testing…"
 msgstr "परीक्षण हो रहा है…"
 
 #: src/components/ShareCardDialog.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Text"
 msgstr ""
 

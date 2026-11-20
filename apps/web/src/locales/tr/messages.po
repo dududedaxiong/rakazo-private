@@ -1345,6 +1345,10 @@ msgstr "Dosya ekle"
 msgid "Attachment"
 msgstr "Ek"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Audio & video"
+msgstr ""
+
 #: src/pages/AdminPage.tsx
 msgid "Audit log"
 msgstr ""
@@ -4881,6 +4885,10 @@ msgstr "Bunu duyduysan ses hazır."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "Yoksay"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image edit model"
@@ -9053,6 +9061,7 @@ msgid "Testing…"
 msgstr "Test ediliyor…"
 
 #: src/components/ShareCardDialog.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Text"
 msgstr ""
 

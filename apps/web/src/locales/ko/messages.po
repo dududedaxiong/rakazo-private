@@ -1345,6 +1345,10 @@ msgstr "파일 첨부"
 msgid "Attachment"
 msgstr "첨부 파일"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Audio & video"
+msgstr ""
+
 #: src/pages/AdminPage.tsx
 msgid "Audit log"
 msgstr ""
@@ -4881,6 +4885,10 @@ msgstr "샘플이 들렸다면 음성 설정이 완료되었습니다."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "무시"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image edit model"
@@ -9053,6 +9061,7 @@ msgid "Testing…"
 msgstr "테스트 중…"
 
 #: src/components/ShareCardDialog.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Text"
 msgstr ""
 

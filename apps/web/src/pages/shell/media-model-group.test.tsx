@@ -42,6 +42,7 @@ const videoChoices: ChatModelChoice[] = [
     label: "Video D",
     provider: "provider-a",
     modelId: "video-d",
+    images: false,
   },
 ];
 const imageChoices: ChatModelChoice[] = [
@@ -347,6 +348,38 @@ describe("MediaModelGroup", () => {
     expect(videoRow?.children[0]?.textContent).toBe("Video A");
     const imageRow = container.querySelector('[data-model-row="provider-a::image-a"]');
     expect(imageRow?.children[0]?.textContent).toBe("Image A");
+  });
+
+  it("shows capability badges only for what the catalog knows", async () => {
+    await renderGroup({
+      videoValue: "provider-a::video-d",
+      videoMainFallbacks: [
+        { key: "provider-a::video-c", label: "Video C" },
+        { key: "provider-a::video-b", label: "Video B" },
+      ],
+    });
+    // Text-only input: the Text badge, no Image badge.
+    const textOnlyRow = container.querySelector('[data-model-row="provider-a::video-d"]');
+    expect(textOnlyRow?.textContent).toContain("Text");
+    expect(textOnlyRow?.textContent).not.toContain("Image");
+    // Image input known: both badges.
+    const imageRow = container.querySelector('[data-model-row="provider-a::video-c"]');
+    expect(imageRow?.textContent).toContain("Text");
+    expect(imageRow?.textContent).toContain("Image");
+    // Unknown capability: no badge at all, nothing guessed.
+    const unknownRow = container.querySelector('[data-model-row="provider-a::video-b"]');
+    expect(unknownRow?.textContent).not.toContain("Text");
+    expect(unknownRow?.textContent).not.toContain("Image");
+    // Badges sit after the action buttons, never before them.
+    const remove = imageRow?.querySelector('[aria-label="Remove fallback model"]');
+    const badge = [...(imageRow?.querySelectorAll("span") ?? [])].find(
+      (node) => node.textContent === "Image",
+    );
+    expect(remove).not.toBeNull();
+    expect(badge).not.toBeNull();
+    expect(remove!.compareDocumentPosition(badge!) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
   });
 
   it("activates a preset on tap and clears it on a second tap", async () => {

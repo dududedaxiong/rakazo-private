@@ -1345,6 +1345,10 @@ msgstr "Bestand bijvoegen"
 msgid "Attachment"
 msgstr "Bijlage"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Audio & video"
+msgstr ""
+
 #: src/pages/AdminPage.tsx
 msgid "Audit log"
 msgstr ""
@@ -4881,6 +4885,10 @@ msgstr "Als je dat hoorde, is de stem klaar."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "Negeren"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image edit model"
@@ -9053,6 +9061,7 @@ msgid "Testing…"
 msgstr "Bezig met testen…"
 
 #: src/components/ShareCardDialog.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Text"
 msgstr ""
 

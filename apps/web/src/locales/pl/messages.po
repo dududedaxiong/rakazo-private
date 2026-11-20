@@ -1345,6 +1345,10 @@ msgstr "Załącz plik"
 msgid "Attachment"
 msgstr "Załącznik"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Audio & video"
+msgstr ""
+
 #: src/pages/AdminPage.tsx
 msgid "Audit log"
 msgstr "Dziennik audytu"
@@ -4881,6 +4885,10 @@ msgstr "Jeśli było słychać próbkę, głos jest gotowy."
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "Ignoruj"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image edit model"
@@ -9053,6 +9061,7 @@ msgid "Testing…"
 msgstr "Testowanie…"
 
 #: src/components/ShareCardDialog.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Text"
 msgstr ""
 

@@ -1346,6 +1346,10 @@ msgstr "附加檔案"
 msgid "Attachment"
 msgstr "附件"
 
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Audio & video"
+msgstr "影音"
+
 #: src/pages/AdminPage.tsx
 msgid "Audit log"
 msgstr "稽核日誌"
@@ -4882,6 +4886,10 @@ msgstr "如果聽到了，說明語音已就緒。"
 #: src/pages/ExternalConversationSettings.tsx
 msgid "Ignore"
 msgstr "忽略"
+
+#: src/pages/shell/bot-settings-sections.tsx
+msgid "Image"
+msgstr "圖片"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image edit model"
@@ -9054,8 +9062,9 @@ msgid "Testing…"
 msgstr "正在測試…"
 
 #: src/components/ShareCardDialog.tsx
+#: src/pages/shell/bot-settings-sections.tsx
 msgid "Text"
-msgstr ""
+msgstr "文字"
 
 #: src/components/ShareCardDialog.tsx
 msgid "Text color"

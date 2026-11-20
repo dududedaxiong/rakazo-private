@@ -575,6 +575,19 @@ export type MediaModelFallback = {
   label: string;
 };
 
+/** The input modalities a card's model is known to support, from the
+ * catalog data the card already looks up: text is always in a catalog
+ * model's input, image only when the catalog says it reads images. A
+ * free-form id carries no capability data, so no badge at all — never a
+ * guess. Audio and video have no capability field anywhere yet, so that
+ * tier stays unwired; see the decision note. */
+export type ModelCapability = "text" | "image" | "audioVideo";
+
+function modelCapabilities(choice: ChatModelChoice | undefined): ModelCapability[] {
+  if (choice?.images === undefined) return [];
+  return choice.images ? ["text", "image"] : ["text"];
+}
+
 /**
  * A fallback card's expanded details. Only real data, taken from the
  * fallback's key and the connected choices: the provider, the raw model
@@ -1204,6 +1217,11 @@ function MediaModelFallbackList({
             locatedKey !== null &&
             locatedKey !== undefined &&
             locatedKey === fallback.key;
+          // Capability badges, from the same catalog lookup as the details:
+          // only what the catalog knows, nothing guessed.
+          const capabilities = modelCapabilities(
+            choices.find((candidate) => candidate.key === fallback.key),
+          );
           // Every row is a banner card: the full name (with its provider)
           // is the banner header on its own line, the buttons sit below
           // it. A located card adds the colored border on top of that.
@@ -1302,7 +1320,21 @@ function MediaModelFallbackList({
                     choices={choices}
                   />
                 ) : null}
-                <div className="mt-1.5 flex flex-wrap items-center gap-2">{buttons}</div>
+                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                  {buttons}
+                  {capabilities.map((capability) => (
+                    <span
+                      key={capability}
+                      className="shrink-0 rounded-full border border-border px-2 py-0.5 text-body-sm text-muted-foreground"
+                    >
+                      {capability === "text"
+                        ? t`Text`
+                        : capability === "image"
+                          ? t`Image`
+                          : t`Audio & video`}
+                    </span>
+                  ))}
+                </div>
               </div>
               {tested ? (
                 <MediaModelTestResult
