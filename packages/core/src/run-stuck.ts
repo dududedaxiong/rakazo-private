@@ -65,7 +65,7 @@ export function stuckWorkingRuns(
       (message) => message.role === "user" && message.runId === run.id,
     );
     if (originIndex === -1) continue;
-    if (hasBotReply(messages, originIndex)) continue;
+    if (hasBotTextReplyAfter(messages, originIndex)) continue;
     const startedAt = Date.parse(run.startedAt ?? run.createdAt ?? "");
     if (Number.isNaN(startedAt) || now - startedAt <= STUCK_RUN_NO_OUTPUT_MS) continue;
     stuck.push({
@@ -79,7 +79,16 @@ export function stuckWorkingRuns(
   return stuck;
 }
 
-function hasBotReply(messages: readonly StuckRunMessage[], originIndex: number): boolean {
+/**
+ * True once a bot message with text follows the message at `originIndex`. A
+ * bot message with text counts as a reply even if the run keeps working
+ * afterwards; progress and tool-only messages do not. A later user message
+ * ends the search: the reply belongs to the newer turn.
+ */
+export function hasBotTextReplyAfter(
+  messages: readonly StuckRunMessage[],
+  originIndex: number,
+): boolean {
   for (let i = originIndex + 1; i < messages.length; i++) {
     const next = messages[i]!;
     if (next.role === "user") return false;
