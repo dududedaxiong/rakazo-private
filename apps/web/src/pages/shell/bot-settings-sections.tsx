@@ -576,11 +576,12 @@ export type MediaModelFallback = {
 };
 
 /** The input modalities a card's model is known to support, from the
- * catalog data the card already looks up: text is always in a catalog
- * model's input, image only when the catalog says it reads images. A
- * free-form id carries no capability data, so no badge at all — never a
- * guess. Audio and video have no capability field anywhere yet, so that
- * tier stays unwired; see the decision note. */
+ * capability data the card already looks up: the catalog, or the
+ * connection's own vision list where the catalog is silent. Text is
+ * always in a model's input, image only when one of those says it reads
+ * images. A free-form id carries no capability data, so no
+ * badge at all — never a guess. Audio and video have no capability field
+ * anywhere yet, so that tier stays unwired; see the decision note. */
 export type ModelCapability = "text" | "image" | "audioVideo";
 
 function modelCapabilities(choice: ChatModelChoice | undefined): ModelCapability[] {

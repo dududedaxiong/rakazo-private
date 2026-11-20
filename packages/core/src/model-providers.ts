@@ -160,7 +160,7 @@ export type ConnectedModelChoice = {
   label: string;
   providerLabel?: string;
   modelLabel?: string;
-  /** The catalog says whether the model reads images; unknown for free-form ids. */
+  /** Whether the model reads images: the catalog's answer, else the connection's vision list; unknown for free-form ids neither knows. */
   images?: boolean;
 };
 
@@ -179,9 +179,27 @@ type CredentialModelRef = {
   label: string;
   modelId?: string | null;
   enabledModelIds?: readonly string[] | null;
+  /** The connection's enabled models that accept images, where it declares them per model. */
+  visionModelIds?: readonly string[] | null;
   isDefault?: boolean;
   preferenceRank?: number;
 };
+
+/**
+ * Whether the choice reads images: the catalog's answer when it has one,
+ * else the connection's own vision list. Absence from that list is unknown,
+ * never text-only — a custom endpoint is never known to be text-only.
+ */
+function choiceImages(
+  credential: CredentialModelRef,
+  providerModels: readonly CatalogModelRef[],
+  modelId: string,
+): boolean | undefined {
+  return (
+    providerModels.find((entry) => entry.id === modelId)?.images ??
+    (credential.visionModelIds?.includes(modelId) ? true : undefined)
+  );
+}
 
 function modelToken(value: string): string {
   return value
@@ -353,10 +371,15 @@ export function connectedModelChoices(
       enabled.length > 0
         ? enabled.map((id) => ({
             ...freeFormChoice(credential, id),
-            images: providerModels.find((entry) => entry.id === id)?.images,
+            images: choiceImages(credential, providerModels, id),
           }))
         : raw && !resolvedInCatalog
-          ? [freeFormChoice(credential, resolved || raw)]
+          ? [
+              {
+                ...freeFormChoice(credential, resolved || raw),
+                images: choiceImages(credential, providerModels, resolved || raw),
+              },
+            ]
           : catalogChoices(providerModels);
     choices.push(...next);
   }

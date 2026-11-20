@@ -210,6 +210,55 @@ describe("connected model choices", () => {
     ]);
   });
 
+  it("fills images from the connection's vision list when the catalog is silent", () => {
+    const choices = connectedModelChoices(
+      [
+        {
+          provider: "openai-compatible",
+          label: "Relay",
+          enabledModelIds: ["custom-a", "custom-b"],
+          visionModelIds: ["custom-a"],
+        },
+      ],
+      [],
+    );
+    expect(choices.map((choice) => choice.images)).toEqual([true, undefined]);
+  });
+
+  it("lets the catalog win over the vision list, including an explicit false", () => {
+    const catalog = [
+      { provider: "openrouter", id: "text-only", label: "Text Only", images: false },
+      { provider: "openrouter", id: "sees", label: "Sees", images: true },
+    ];
+    const choices = connectedModelChoices(
+      [
+        {
+          provider: "openrouter",
+          label: "OpenRouter",
+          enabledModelIds: ["text-only", "sees", "other"],
+          visionModelIds: ["text-only", "other"],
+        },
+      ],
+      catalog,
+    );
+    expect(choices.map((choice) => choice.images)).toEqual([false, true, true]);
+  });
+
+  it("fills images for a single free-form default model from the vision list", () => {
+    const choices = connectedModelChoices(
+      [
+        {
+          provider: "openai-compatible",
+          label: "Relay",
+          modelId: "custom-a",
+          visionModelIds: ["custom-a"],
+        },
+      ],
+      [],
+    );
+    expect(choices.map((choice) => choice.images)).toEqual([true]);
+  });
+
   it("rewrites a catalog id that is only a display label", () => {
     const choices = connectedModelChoices(
       [{ provider: "deepseek", label: "DeepSeek", modelId: "deepseek-flash" }],
