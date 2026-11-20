@@ -1,5 +1,6 @@
 import type { MessageBlock } from "@rakazo_mickvvw/contracts";
 import { copyableMessageText } from "./message-text.js";
+import { isReplyStalled } from "./reply-watchdog.js";
 import { isRunWorking } from "./run-state.js";
 
 /**
@@ -43,6 +44,12 @@ export type StuckRun = {
   modelId: string | null;
 };
 
+/** The client-side event clock, from the reply watchdog: the last live event per bot. */
+export type StuckRunClock = {
+  lastEventAt: (botId: string) => number | undefined;
+  isBusy: (botId: string) => boolean;
+};
+
 /**
  * Finds working runs that have gone quiet: their originating user message
  * (linked by message.runId) still has no bot reply with text, and the run
@@ -50,11 +57,17 @@ export type StuckRun = {
  * message (routines, webhooks) are skipped — there is no message to hang the
  * recovery actions under. A bot message with text counts as a reply even if
  * the run keeps working afterwards; progress and tool-only messages do not.
+ *
+ * With a watchdog clock, a run with a recent live event is never stuck: a
+ * long run still emitting tool calls or progress is working, not stuck, and
+ * the busy limit (15 minutes) applies while it reports tool activity. A run
+ * the clock never saw falls back to the start-time rule.
  */
 export function stuckWorkingRuns(
   messages: readonly StuckRunMessage[],
   runs: readonly StuckRunCandidate[],
   now: number,
+  clock?: StuckRunClock,
 ): StuckRun[] {
   const stuck: StuckRun[] = [];
   for (const run of runs) {
@@ -66,6 +79,10 @@ export function stuckWorkingRuns(
     );
     if (originIndex === -1) continue;
     if (hasBotTextReplyAfter(messages, originIndex)) continue;
+    if (clock) {
+      const last = clock.lastEventAt(run.botId);
+      if (last !== undefined && !isReplyStalled(last, now, clock.isBusy(run.botId))) continue;
+    }
     const startedAt = Date.parse(run.startedAt ?? run.createdAt ?? "");
     if (Number.isNaN(startedAt) || now - startedAt <= STUCK_RUN_NO_OUTPUT_MS) continue;
     stuck.push({
