@@ -6,6 +6,7 @@ import {
   MODEL_REQUIRED_SEND_ERROR,
   reduceThreadSnapshot,
   resolveComposerSendPlan,
+  SendTimeoutError,
 } from "@rakazo_mickvvw/core";
 import { router } from "expo-router";
 import type { ReactNode } from "react";
@@ -227,7 +228,14 @@ describe("scoped mobile outbox", () => {
       await act(async () => {
         expect(await feedback.send(attempt)).toBe(true);
       });
-      expect(request).toHaveBeenCalledWith("threads/send", expect.anything(), undefined, "space-a");
+      expect(request).toHaveBeenCalledWith(
+        "threads/send",
+        expect.anything(),
+        {
+          timeoutMs: 120_000,
+        },
+        "space-a",
+      );
       expect(attempt.payload.attachments[0]?.contentBase64).toBe("fake");
       disk.save.mockImplementation(() => undefined);
       act(() => confirmEchoes("bot-1", [42]));
@@ -841,6 +849,7 @@ describe("scoped mobile outbox", () => {
       [
         "threads/sendWithRoutines",
         { botId: "bot-1", clientNonce: attempt.clientNonce, routineIds: ["routine-1"] },
+        { timeoutMs: 120_000 },
       ],
     ]);
   });
@@ -869,6 +878,44 @@ describe("scoped mobile outbox", () => {
     const sends = request.mock.calls.filter(([proc]) => proc === "threads/send");
     expect(sends).toHaveLength(2);
     expect(sends[1]?.[1]).toEqual(sends[0]?.[1]);
+  });
+  it("turns a send timeout into a failed send that says it may already be delivered", async () => {
+    const timeoutError = Object.assign(new Error("Request timed out"), { name: "TimeoutError" });
+    request.mockImplementation(async (proc) =>
+      proc === "artifacts/create" ? { id: "artifact-a" } : Promise.reject(timeoutError),
+    );
+    const attempt = feedback.sendAttempt(payload());
+    const error = await deliverSend(payload(), attempt, request as unknown as typeof rpc).catch(
+      (caught: unknown) => caught,
+    );
+    expect(error).toBeInstanceOf(SendTimeoutError);
+    expect((error as Error).message).toBe(
+      "Send timed out. It may already have been delivered — check the thread before resending.",
+    );
+    expect(request).toHaveBeenCalledWith("threads/send", expect.anything(), {
+      timeoutMs: 120_000,
+    });
+  });
+  it("keeps a timed-out send failed for a manual retry instead of re-queuing it", async () => {
+    const timeoutError = Object.assign(new Error("Request timed out"), { name: "TimeoutError" });
+    request.mockImplementation(async (proc) =>
+      proc === "artifacts/create" ? { id: "artifact-a" } : Promise.reject(timeoutError),
+    );
+    const attempt = feedback.sendAttempt(payload());
+    await act(async () => {
+      await feedback.send(attempt);
+    });
+    expect(attempt.state).toBe("failed");
+    expect(attempt.error).toBe(
+      "Send timed out. It may already have been delivered — check the thread before resending.",
+    );
+    expect(container.textContent).toContain("Not sent. Tap to retry");
+    expect(request).toHaveBeenCalledWith(
+      "threads/send",
+      expect.anything(),
+      { timeoutMs: 120_000 },
+      "space-a",
+    );
   });
   it.each(["ios", "android"])(
     "offers explicit file confirmation on %s and reuses the original upload",

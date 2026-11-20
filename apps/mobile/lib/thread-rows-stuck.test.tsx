@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 
+import { ReplyWatchdog } from "@rakazo_mickvvw/core";
 import type { ReactElement, ReactNode } from "react";
 import { act, createElement } from "react";
 import type { Root } from "react-dom/client";
@@ -70,6 +71,18 @@ function botMessage(id: string, text: string): MobileMessage {
     author: { id: "b1", name: "Bot" },
     createdAt: Date.now(),
     blocks: [{ kind: "text", text }],
+  } as unknown as MobileMessage;
+}
+
+function progressMessage(runId: string, blocks: MobileMessage["blocks"]): MobileMessage {
+  return {
+    id: `progress:${runId}`,
+    role: "bot",
+    author: { id: "b1", name: "Bot" },
+    createdAt: Date.now(),
+    botId: "b1",
+    runId,
+    blocks,
   } as unknown as MobileMessage;
 }
 
@@ -188,5 +201,35 @@ describe("useThreadRows stuck runs", () => {
     render(baseProps([stuckMessage, otherMessage], runningRun(200_000)));
     expect(stuckOf(stuckMessage)).toBe(true);
     expect(stuckOf(otherMessage)).toBe(false);
+  });
+
+  it("does not mark a message stuck when the watchdog saw a recent event", () => {
+    const watchdog = new ReplyWatchdog(() => Date.now());
+    watchdog.touch("b1");
+    const message = userMessage("m1", "run-1");
+    render({ ...baseProps([message], runningRun(200_000)), replyWatchdog: watchdog });
+    expect(stuckOf(message)).toBe(false);
+  });
+
+  it("still marks a message stuck when the watchdog's last event is old", () => {
+    const watchdog = new ReplyWatchdog(() => Date.now() - 200_000);
+    watchdog.touch("b1");
+    const message = userMessage("m1", "run-1");
+    render({ ...baseProps([message], runningRun(200_000)), replyWatchdog: watchdog });
+    expect(stuckOf(message)).toBe(true);
+  });
+
+  it("does not mark a message stuck while its run reports tool steps", () => {
+    const watchdog = new ReplyWatchdog(() => Date.now() - 200_000);
+    watchdog.touch("b1");
+    const message = userMessage("m1", "run-1");
+    const progress = progressMessage("run-1", [
+      { kind: "steps", steps: [{ label: "Shell", count: 1 }] },
+    ]);
+    render({
+      ...baseProps([message, progress], runningRun(200_000)),
+      replyWatchdog: watchdog,
+    });
+    expect(stuckOf(message)).toBe(false);
   });
 });

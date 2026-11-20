@@ -1,8 +1,10 @@
+import type { ReplyWatchdog } from "@rakazo_mickvvw/core";
 import {
   abortableDelay,
   createRefreshCoalescer,
   isRetryableError,
   isRunTerminalEvent,
+  isWatchdogEvent,
   reduceThreadSnapshot,
   rememberTerminalRun,
   retryDelayMs,
@@ -53,6 +55,7 @@ export function useThreadLiveSubscription({
   setError,
   refreshMentionBots,
   markReadIfVisible,
+  replyWatchdog,
 }: {
   botId?: string;
   groupId?: string;
@@ -76,6 +79,8 @@ export function useThreadLiveSubscription({
   setError: (error: string | null) => void;
   refreshMentionBots: () => Promise<unknown>;
   markReadIfVisible: () => void;
+  /** Last-activity clock per bot; without it, stalled runs use start time only. */
+  replyWatchdog?: ReplyWatchdog;
 }): RefObject<boolean> {
   const liveSubscribed = useRef(false);
   const liveCursor = useRef<number | null>(null);
@@ -220,6 +225,13 @@ export function useThreadLiveSubscription({
               retryMs = 250;
               liveCursor.current = cursor;
               rememberTerminalRun(terminalRunIds.current, event);
+              // The reply watchdog keeps the last activity per bot; a run whose
+              // events stopped arriving is treated as stalled by the rows below.
+              const watchdogBotId = event.botId ?? (groupId ? undefined : botId);
+              if (watchdogBotId && replyWatchdog) {
+                if (isRunTerminalEvent(event)) replyWatchdog.forget(watchdogBotId);
+                else if (isWatchdogEvent(event.type)) replyWatchdog.touch(watchdogBotId);
+              }
               if (
                 event.type === "run.completed" &&
                 event.runId &&

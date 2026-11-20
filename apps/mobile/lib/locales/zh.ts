@@ -728,6 +728,9 @@ export const ZH_MESSAGES: Record<string, string> = {
   Failed: "失败",
   "Failed to refresh": "刷新失败",
   "Failed to send message": "发送消息失败",
+  "Delivered, but no reply came back.": "已送达，但没有收到回复。",
+  "Send timed out. It may already have been delivered — check the thread before resending.":
+    "发送超时，可能已经送达；重试前先确认。",
   "Failed to stop work": "停止工作失败",
   File: "文件",
   "Did you mean {email}?": "你是不是想输入 {email}？",

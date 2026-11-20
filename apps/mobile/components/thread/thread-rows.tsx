@@ -1,10 +1,11 @@
-import type { ThreadItem } from "@rakazo_mickvvw/core";
+import type { ReplyWatchdog, StuckRunClock, ThreadItem } from "@rakazo_mickvvw/core";
 import {
   activeThreadRuns,
   answerableAskMessageIds,
   dismissableAskMessageIds,
   groupVoiceChats,
   isRunWorking,
+  liveRunIsBusy,
   memberName,
   otherAuthor,
   stuckWorkingRuns,
@@ -115,6 +116,7 @@ export function useThreadRows({
   favoriteIds,
   searchHitIds,
   searchCurrentId,
+  replyWatchdog,
 }: {
   snap: MobileSnapshot | null;
   userId: string;
@@ -153,6 +155,8 @@ export function useThreadRows({
   searchHitIds?: ReadonlySet<string>;
   /** The current search hit. */
   searchCurrentId?: string | null;
+  /** Last-activity clock per bot; a run with a recent event is never stuck. */
+  replyWatchdog?: ReplyWatchdog;
 }) {
   const { t, locale } = useI18n();
   const { showBotSenderName, reactionView, exchanges, visibleMessages } = transcript;
@@ -165,20 +169,60 @@ export function useThreadRows({
     runs.some((run) => isRunWorking(run.status)),
     15_000,
   );
+  const stuckRunClock = useMemo<StuckRunClock | undefined>(() => {
+    if (!replyWatchdog) return undefined;
+    return {
+      lastEventAt: (watchBotId) => replyWatchdog.lastEventAt(watchBotId),
+      isBusy: (watchBotId) =>
+        liveRunIsBusy(
+          (snap?.messages ?? [])
+            .filter(
+              (message) =>
+                message.id.startsWith("progress:") && (message.botId ?? botId) === watchBotId,
+            )
+            .flatMap((message) => message.blocks),
+        ),
+    };
+  }, [replyWatchdog, snap?.messages, botId]);
   const stuckByMessageId = useMemo(
     () =>
       new Map(
-        stuckWorkingRuns(visibleMessages, runs, now).map((stuck) => [stuck.messageId, stuck]),
+        stuckWorkingRuns(visibleMessages, runs, now, stuckRunClock).map((stuck) => [
+          stuck.messageId,
+          stuck,
+        ]),
       ),
-    [visibleMessages, runs, now],
+    [visibleMessages, runs, now, stuckRunClock],
+  );
+  const stuckRunIds = useMemo(
+    () => new Set([...stuckByMessageId.values()].map((stuck) => stuck.runId)),
+    [stuckByMessageId],
+  );
+  const stuckBotIds = useMemo(
+    () => new Set([...stuckByMessageId.values()].map((stuck) => stuck.botId)),
+    [stuckByMessageId],
   );
   const separatorIds = useMemo(() => timeSeparatorIds(visibleMessages), [visibleMessages]);
   const unreadDividerId = useMemo(
     () => unreadDividerMessageId(visibleMessages, readSeq, snap?.olderCursor ?? null),
     [visibleMessages, readSeq, snap?.olderCursor],
   );
-  // Group calls in reading order, then reverse for the inverted list.
-  const liveItems = useMemo(() => groupVoiceChats(visibleMessages).reverse(), [visibleMessages]);
+  // Group calls in reading order, then reverse for the inverted list. A
+  // stuck run's frozen progress line is dropped so the indicator clears.
+  const liveItems = useMemo(
+    () =>
+      groupVoiceChats(
+        visibleMessages.filter(
+          (message) =>
+            !(
+              message.id.startsWith("progress:") &&
+              message.runId &&
+              stuckRunIds.has(message.runId)
+            ),
+        ),
+      ).reverse(),
+    [visibleMessages, stuckRunIds],
+  );
   const messagesById = useMemo(
     () => new Map((snap?.messages ?? []).map((message) => [message.id, message])),
     [snap?.messages],
@@ -341,5 +385,5 @@ export function useThreadRows({
     [renderMessageRow, separatorIds, unreadDividerId, visibleMessages[0]?.id],
   );
 
-  return { liveItems, renderMessageRow, renderItem };
+  return { liveItems, renderMessageRow, renderItem, stuckRunIds, stuckBotIds };
 }
