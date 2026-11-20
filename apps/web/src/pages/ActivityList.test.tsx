@@ -101,6 +101,56 @@ it("reopens with cached runs and refreshes them in the background", async () => 
   }
 });
 
+it("shows an empty state when there are no runs and no unread chats", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  runs.list.mockImplementation(async () => ({ runs: [] }));
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  try {
+    await act(async () =>
+      root.render(
+        <QueryClientProvider client={client}>
+          <ActivityList {...listProps} />
+        </QueryClientProvider>,
+      ),
+    );
+    await vi.waitFor(() =>
+      expect(container.querySelector('[role="status"]')?.textContent).toBe("No runs yet"),
+    );
+    expect(container.querySelector('[aria-label="Loading activity…"]')).toBeNull();
+  } finally {
+    await act(async () => root.unmount());
+    client.clear();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("hides the empty state once runs arrive", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  runs.list.mockImplementation(async ({ filter }: { filter: string }) => ({
+    runs: filter === "recent" ? [run] : [],
+  }));
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const container = document.createElement("div");
+  const root = createRoot(container);
+  try {
+    await act(async () =>
+      root.render(
+        <QueryClientProvider client={client}>
+          <ActivityList {...listProps} />
+        </QueryClientProvider>,
+      ),
+    );
+    await vi.waitFor(() => expect(container.textContent).toContain("Scout"));
+    expect(container.textContent).not.toContain("No runs yet");
+  } finally {
+    await act(async () => root.unmount());
+    client.clear();
+    vi.unstubAllGlobals();
+  }
+});
+
 it("groups attention, work and unread chats under folding headers", async () => {
   vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
   runs.list.mockImplementation(async ({ filter }: { filter: string }) => ({

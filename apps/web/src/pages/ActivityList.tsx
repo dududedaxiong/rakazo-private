@@ -132,11 +132,13 @@ export function ActivityList({
   const unreadCount = filtersOn ? 0 : sections.unreadGroups.length + sections.unreadBots.length;
   const hasAnyRuns = activeRuns.length > 0 || recentRuns.length > 0;
   const hasVisibleRuns = filteredActive.length > 0 || filteredRecent.length > 0;
+  // An empty feed renders nothing at all without this: the toggle looks dead.
+  const showEmpty = !loading && !error && !hasAnyRuns && unreadCount === 0;
 
   return (
     <div
       className={
-        hasAnyRuns || unreadCount > 0 || filtersOn || filtersExpanded
+        hasAnyRuns || unreadCount > 0 || filtersOn || filtersExpanded || showEmpty
           ? "mb-2 border-b border-border pb-2"
           : undefined
       }
@@ -162,6 +164,12 @@ export function ActivityList({
       ) : !error && filtersOn && hasAnyRuns && !hasVisibleRuns ? (
         <p className="px-2.5 py-2 text-body-sm text-muted-foreground/80" role="status">
           <Trans>No runs match these filters.</Trans>
+        </p>
+      ) : null}
+
+      {showEmpty ? (
+        <p className="px-2.5 py-2 text-body-sm text-muted-foreground/80" role="status">
+          <Trans>No runs yet</Trans>
         </p>
       ) : null}
 
