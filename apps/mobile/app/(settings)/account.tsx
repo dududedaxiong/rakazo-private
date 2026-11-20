@@ -888,6 +888,7 @@ export default function Account() {
               { title: t("Memory"), href: "/memory" },
               ...(messagingEnabled ? [{ title: t("Messaging"), href: "/messaging" } as const] : []),
               { title: t("AI data sharing"), href: "/ai-data-sharing" },
+              { title: t("Miscellaneous settings"), href: "/misc-settings" },
             ] as const
           ).map(settingsLink)}
         </SettingsGroup>

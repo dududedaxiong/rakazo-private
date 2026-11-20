@@ -2115,6 +2115,22 @@ export const ZH_MESSAGES: Record<string, string> = {
   Days: "天数",
   "Custom expiry in days": "自定义有效期（天）",
   "Enlarge picture": "放大图片",
+  "Miscellaneous settings": "杂项设置",
+  "Film and video": "影视",
+  Archives: "压缩包",
+  Scripts: "脚本",
+  Documents: "文档",
+  Software: "软件",
+  "All software": "全部软件",
+  "Desktop software": "电脑软件",
+  "Apple software": "苹果软件",
+  "Android software": "安卓软件",
+  "Other software": "其他软件",
+  "Upload formats": "上传格式",
+  "Add extension": "添加后缀",
+  'Remove "{extension}"': "移除“{extension}”",
+  "Could not load settings": "无法加载设置",
+  "Could not save settings": "无法保存设置",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

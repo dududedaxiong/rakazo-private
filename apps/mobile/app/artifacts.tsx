@@ -1,4 +1,9 @@
-import { artifactTypeLabel } from "@rakazo_mickvvw/core";
+import type {
+  ArtifactCategory,
+  ArtifactCategoryMapping,
+  ArtifactSoftwareKind,
+} from "@rakazo_mickvvw/core";
+import { artifactTypeLabel, DEFAULT_ARTIFACT_CATEGORY_MAPPING } from "@rakazo_mickvvw/core";
 import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -22,14 +27,38 @@ import { formatActivityRelativeTime } from "../lib/activity";
 import { rpc } from "../lib/api";
 import { mobileTokens } from "../lib/appearance";
 import type { MobileArtifactSummary } from "../lib/artifacts";
-import { listSpaceArtifacts, matchesArtifactQuery, removeArtifact } from "../lib/artifacts";
+import {
+  listSpaceArtifacts,
+  matchesArtifactCategory,
+  matchesArtifactQuery,
+  removeArtifact,
+} from "../lib/artifacts";
 import { useI18n } from "../lib/i18n";
+import { getMiscSettings } from "../lib/misc-settings";
 import type { MobileBot } from "../lib/mobile-types";
-import { native, useThemedStyles } from "../lib/native";
+import { native, useMobileTokens, useThemedStyles } from "../lib/native";
 import { useSideInsets } from "../lib/side-insets";
 import { errorText } from "../lib/user-error";
 
 const PAGE_SIZE = 30;
+
+type CategoryIcon = Pick<Parameters<typeof NativeSymbol>[0], "ios" | "android">;
+
+const CATEGORY_ICONS: Record<Exclude<ArtifactCategory, "other">, CategoryIcon> = {
+  image: { ios: "photo", android: "image-outline" },
+  video: { ios: "video", android: "videocam-outline" },
+  archive: { ios: "archivebox", android: "archive-outline" },
+  script: { ios: "chevron.left.forwardslash.chevron.right", android: "code-slash-outline" },
+  document: { ios: "doc.text", android: "document-text-outline" },
+  software: { ios: "square.grid.2x2", android: "apps-outline" },
+};
+
+const SOFTWARE_ICONS: Record<ArtifactSoftwareKind, CategoryIcon> = {
+  desktop: { ios: "desktopcomputer", android: "desktop-outline" },
+  apple: { ios: "apple.logo", android: "logo-apple" },
+  android: { ios: "phone", android: "logo-android" },
+  other: { ios: "cube", android: "cube-outline" },
+};
 
 export default function ArtifactsScreen() {
   const sideInsets = useSideInsets();
@@ -37,12 +66,18 @@ export default function ArtifactsScreen() {
   const router = useRouter();
   const { t } = useI18n();
   const styles = useThemedStyles(createStyles);
+  const tokens = useMobileTokens();
   const insets = useSafeAreaInsets();
 
   const [bots, setBots] = useState<MobileBot[]>([]);
   const { botId } = useLocalSearchParams<{ botId?: string }>();
   const [activeBotId, setActiveBotId] = useState<string | null>(botId || null);
   const [madeByBots, setMadeByBots] = useState(false);
+  const [category, setCategory] = useState<ArtifactCategory | "all">("all");
+  const [softwareKind, setSoftwareKind] = useState<ArtifactSoftwareKind | "all">("all");
+  const [mapping, setMapping] = useState<ArtifactCategoryMapping>(
+    DEFAULT_ARTIFACT_CATEGORY_MAPPING,
+  );
   const chipsScrollRef = useRef<ScrollView>(null);
   const initialChipLayout = useRef({
     viewportWidth: 0,
@@ -103,6 +138,9 @@ export default function ArtifactsScreen() {
     useCallback(() => {
       rpc("bots/list")
         .then(setBots)
+        .catch(() => undefined);
+      getMiscSettings()
+        .then((settings) => setMapping(settings.categories))
         .catch(() => undefined);
     }, []),
   );
@@ -210,29 +248,62 @@ export default function ArtifactsScreen() {
   }
 
   const queryActive = query.trim().length > 0;
+  const categoryActive = category !== "all";
+  const filterActive = queryActive || categoryActive;
   const filtered = useMemo(() => {
     if (!items) return null;
-    if (!queryActive) return items;
-    return items.filter((item) => matchesArtifactQuery(item, query));
-  }, [items, query, queryActive]);
+    return items.filter(
+      (item) =>
+        matchesArtifactQuery(item, query) &&
+        matchesArtifactCategory(item, category, softwareKind, mapping),
+    );
+  }, [items, query, category, softwareKind, mapping]);
   const botsById = useMemo(() => new Map(bots.map((bot) => [bot.id, bot])), [bots]);
 
   useEffect(() => {
     autoFetchedCursorRef.current = null;
     setSearchPageFailed(false);
-  }, [query, activeBotId, madeByBots]);
+  }, [query, activeBotId, madeByBots, category, softwareKind]);
 
   useEffect(() => {
-    if (searchPageFailed || !queryActive || !nextCursor || loadingMore || items === null) return;
+    if (searchPageFailed || !filterActive || !nextCursor || loadingMore || items === null) return;
     if (filtered && filtered.length > 0) return;
     if (autoFetchedCursorRef.current === nextCursor) return;
     autoFetchedCursorRef.current = nextCursor;
     void loadMore();
-  }, [filtered, items, loadMore, loadingMore, nextCursor, queryActive, searchPageFailed]);
+  }, [filtered, items, loadMore, loadingMore, nextCursor, filterActive, searchPageFailed]);
 
   useEffect(() => {
     void load(activeBotId, madeByBots, "replace");
   }, [activeBotId, madeByBots, load]);
+
+  const categoryOptions: { key: Exclude<ArtifactCategory, "other"> | "all"; label: string }[] = [
+    { key: "all", label: t("All") },
+    { key: "image", label: t("Images") },
+    { key: "video", label: t("Film and video") },
+    { key: "archive", label: t("Archives") },
+    { key: "script", label: t("Scripts") },
+    { key: "document", label: t("Documents") },
+    { key: "software", label: t("Software") },
+  ];
+  const softwareOptions: { key: ArtifactSoftwareKind | "all"; label: string }[] = [
+    { key: "all", label: t("All software") },
+    { key: "desktop", label: t("Desktop software") },
+    { key: "apple", label: t("Apple software") },
+    { key: "android", label: t("Android software") },
+    { key: "other", label: t("Other software") },
+  ];
+
+  function categoryAvatar(icon: CategoryIcon, active: boolean) {
+    return (
+      <NativeSymbol
+        ios={icon.ios}
+        android={icon.android}
+        size={13}
+        color={active ? tokens.primaryForeground : native.label}
+      />
+    );
+  }
 
   return (
     <View style={[styles.screen, { paddingBottom: insets.bottom }]}>
@@ -296,6 +367,59 @@ export default function ArtifactsScreen() {
                 />
               ))}
             </ScrollView>
+            <ScrollView
+              horizontal
+              contentInsetAdjustmentBehavior="never"
+              showsHorizontalScrollIndicator={false}
+              style={styles.chipsScroll}
+              contentContainerStyle={styles.chipsRow}
+            >
+              {categoryOptions.map((option) => {
+                const active = category === option.key;
+                return (
+                  <Chip
+                    key={option.key}
+                    label={option.label}
+                    active={active}
+                    onPress={() => {
+                      setCategory(option.key);
+                      setSoftwareKind("all");
+                    }}
+                    avatar={
+                      option.key === "all"
+                        ? undefined
+                        : categoryAvatar(CATEGORY_ICONS[option.key], active)
+                    }
+                  />
+                );
+              })}
+            </ScrollView>
+            {category === "software" ? (
+              <ScrollView
+                horizontal
+                contentInsetAdjustmentBehavior="never"
+                showsHorizontalScrollIndicator={false}
+                style={styles.chipsScroll}
+                contentContainerStyle={styles.chipsRow}
+              >
+                {softwareOptions.map((option) => {
+                  const active = softwareKind === option.key;
+                  return (
+                    <Chip
+                      key={option.key}
+                      label={option.label}
+                      active={active}
+                      onPress={() => setSoftwareKind(option.key)}
+                      avatar={
+                        option.key === "all"
+                          ? undefined
+                          : categoryAvatar(SOFTWARE_ICONS[option.key], active)
+                      }
+                    />
+                  );
+                })}
+              </ScrollView>
+            ) : null}
           </View>
         }
         style={[styles.listView, sideInsets]}
@@ -322,7 +446,7 @@ export default function ArtifactsScreen() {
                 <ActivityIndicator color={native.secondaryLabel} />
               )}
             </View>
-          ) : queryActive && filtered?.length === 0 && nextCursor && searchPageFailed ? (
+          ) : filterActive && filtered?.length === 0 && nextCursor && searchPageFailed ? (
             <Pressable
               accessibilityRole="button"
               onPress={() => {
@@ -334,7 +458,7 @@ export default function ArtifactsScreen() {
               <Text style={styles.empty}>{t("Could not load artifacts.")}</Text>
               <Text style={styles.empty}>{t("Try again.")}</Text>
             </Pressable>
-          ) : queryActive &&
+          ) : filterActive &&
             filtered?.length === 0 &&
             nextCursor &&
             (loadingMore || autoFetchedCursorRef.current !== nextCursor) ? (
@@ -343,7 +467,7 @@ export default function ArtifactsScreen() {
             </View>
           ) : (
             <Text style={styles.empty}>
-              {queryActive || madeByBots ? t("No matching artifacts") : t("No artifacts yet")}
+              {filterActive || madeByBots ? t("No matching artifacts") : t("No artifacts yet")}
             </Text>
           )
         }

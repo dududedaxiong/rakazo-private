@@ -1,4 +1,10 @@
 import type { Artifact, RpcInput, RpcOutput } from "@rakazo_mickvvw/contracts";
+import type {
+  ArtifactCategory,
+  ArtifactCategoryMapping,
+  ArtifactSoftwareKind,
+} from "@rakazo_mickvvw/core";
+import { artifactCategoryForFile, DEFAULT_ARTIFACT_CATEGORY_MAPPING } from "@rakazo_mickvvw/core";
 import { rpc } from "./api";
 import type { MobileArtifactTarget } from "./artifact-open";
 
@@ -53,4 +59,20 @@ export function matchesArtifactQuery(
     item.name.toLowerCase().includes(needle) ||
     (item.description?.toLowerCase().includes(needle) ?? false)
   );
+}
+
+/** Client-side category filter over an already-loaded page. */
+export function matchesArtifactCategory(
+  item: Pick<Artifact, "name" | "mimeType">,
+  category: ArtifactCategory | "all",
+  softwareKind: ArtifactSoftwareKind | "all",
+  mapping: ArtifactCategoryMapping = DEFAULT_ARTIFACT_CATEGORY_MAPPING,
+): boolean {
+  if (category === "all") return true;
+  const result = artifactCategoryForFile(item, mapping);
+  if (result.category !== category) return false;
+  if (category === "software" && softwareKind !== "all") {
+    return result.softwareKind === softwareKind;
+  }
+  return true;
 }
