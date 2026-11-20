@@ -65,4 +65,37 @@ describe("attachment contracts", () => {
     expect(artifactPreviewKind("image/png")).toBe("image");
     expect(artifactPreviewKind("application/zip")).toBe("none");
   });
+
+  it("allows code files as attachments and previews them as text", () => {
+    for (const mimeType of [
+      "text/x-python",
+      "text/javascript",
+      "application/javascript",
+      "text/x-typescript",
+      "application/x-sh",
+      "text/css",
+      "application/xml",
+      "application/yaml",
+      "application/x-yaml",
+      "application/sql",
+      "text/x-toml",
+      "text/x-go",
+      "text/x-rustsrc",
+      "text/x-java-source",
+      "text/x-csrc",
+      "text/x-c++src",
+      "text/x-ruby",
+      "text/x-php",
+      "text/x-swift",
+      "text/x-kotlin",
+      "text/x-lua",
+      "text/x-perl",
+    ]) {
+      expect(isAllowedAttachmentMimeType(mimeType)).toBe(true);
+      expect(artifactPreviewKind(mimeType)).toBe("text");
+      expect(
+        MessageBlock.parse({ kind: "file", artifactId: "code-1", mimeType, name: "x", size: 42 }),
+      ).toMatchObject({ kind: "file", mimeType });
+    }
+  });
 });

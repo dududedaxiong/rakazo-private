@@ -37,6 +37,33 @@ export const ATTACHMENT_FILE_MIME_TYPES = [
   "text/html",
   "application/json",
   "application/zip",
+  // Code files: the bot writes these with write_file and sends them with
+  // attach_file, and users upload them the same way. All preview as text
+  // (text/* directly, the application/* ones via TEXT_APPLICATION_MIME_TYPES).
+  "text/x-python",
+  "text/javascript",
+  "application/javascript",
+  "text/x-typescript",
+  "application/x-sh",
+  "text/css",
+  "application/xml",
+  "application/yaml",
+  "application/x-yaml",
+  "application/sql",
+  "text/x-toml",
+  "text/x-go",
+  "text/x-rustsrc",
+  "text/x-java-source",
+  "text/x-csrc",
+  "text/x-chdr",
+  "text/x-c++src",
+  "text/x-c++hdr",
+  "text/x-ruby",
+  "text/x-php",
+  "text/x-swift",
+  "text/x-kotlin",
+  "text/x-lua",
+  "text/x-perl",
 ] as const;
 
 export const ATTACHMENT_ALLOWED_MIME_TYPES = [

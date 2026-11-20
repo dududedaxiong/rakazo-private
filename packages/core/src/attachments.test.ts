@@ -150,6 +150,21 @@ describe("attachment helpers", () => {
     expect(inferAttachmentMimeType("notes.md", "application/pdf")).toBe("application/pdf");
   });
 
+  it("infers code file attachments from extensions", () => {
+    expect(inferAttachmentMimeType("script.py", "")).toBe("text/x-python");
+    expect(inferAttachmentMimeType("app.JS", "")).toBe("text/javascript");
+    expect(inferAttachmentMimeType("app.ts", "")).toBe("text/x-typescript");
+    expect(inferAttachmentMimeType("run.sh", "")).toBe("application/x-sh");
+    expect(inferAttachmentMimeType("style.css", "")).toBe("text/css");
+    expect(inferAttachmentMimeType("config.yaml", "")).toBe("application/yaml");
+    expect(inferAttachmentMimeType("query.sql", "")).toBe("application/sql");
+    expect(inferAttachmentMimeType("main.go", "")).toBe("text/x-go");
+    expect(inferAttachmentMimeType("notes.ini", "")).toBe("text/plain");
+    expect(attachmentExtensionForMimeType("text/x-python")).toBe(".py");
+    expect(attachmentExtensionForMimeType("text/javascript")).toBe(".js");
+    expect(attachmentExtensionForMimeType("application/javascript")).toBe(".js");
+  });
+
   it("keeps a CSV a CSV when Windows reports it as an Excel file", () => {
     expect(inferAttachmentMimeType("sales.csv", "application/vnd.ms-excel")).toBe("text/csv");
     expect(inferAttachmentMimeType("SALES.CSV", "application/vnd.ms-excel")).toBe("text/csv");
