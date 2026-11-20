@@ -3,9 +3,9 @@ import {
   createInFlightSet,
   deliveryAfterError,
   noReplyMessageIds,
-  sanitizeDeliveryStates,
   SEND_HARD_TIMEOUT_MS,
   SendTimeoutError,
+  sanitizeDeliveryStates,
   withTimeout,
 } from "./delivery.js";
 
@@ -58,6 +58,10 @@ describe("withTimeout", () => {
 
   it("resolves when the promise wins", async () => {
     await expect(withTimeout(Promise.resolve(7), 1000)).resolves.toBe(7);
+  });
+
+  it("resolves a plain value instead of crashing on .then", async () => {
+    await expect(withTimeout(7 as unknown as Promise<number>, 1000)).resolves.toBe(7);
   });
 
   it("rejects with SendTimeoutError and reports a late result", async () => {
@@ -145,12 +149,12 @@ describe("noReplyMessageIds", () => {
   });
 
   it("flags a cancelled run the same way, but not a completed one", () => {
-    expect(
-      [...noReplyMessageIds([user("u1", "run-1")], [{ id: "run-1", status: "cancelled" }])],
-    ).toEqual(["u1"]);
-    expect(
-      [...noReplyMessageIds([user("u1", "run-1")], [{ id: "run-1", status: "completed" }])],
-    ).toEqual([]);
+    expect([
+      ...noReplyMessageIds([user("u1", "run-1")], [{ id: "run-1", status: "cancelled" }]),
+    ]).toEqual(["u1"]);
+    expect([
+      ...noReplyMessageIds([user("u1", "run-1")], [{ id: "run-1", status: "completed" }]),
+    ]).toEqual([]);
   });
 
   it("clears the flag once a bot reply with text lands", () => {

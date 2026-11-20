@@ -15,12 +15,17 @@ import {
 } from "@rakazo_mickvvw/contracts";
 import type { ComposerMention } from "@rakazo_mickvvw/core";
 import {
+  activeThreadRuns,
   applyThreadSendReceipt,
   attachmentsForThread,
+  createInFlightSet,
   inferAttachmentMimeType,
   isImageInputConfirmation,
   newClientId,
+  noReplyMessageIds,
   resolveComposerSendPlan,
+  SEND_HARD_TIMEOUT_MS,
+  withTimeout,
 } from "@rakazo_mickvvw/core";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -42,6 +47,9 @@ import type { PendingAttachment } from "./chat-shared";
 import type { useShellNavigation } from "./use-shell-navigation";
 
 type ThreadRefresh = RefObject<(id: string) => Promise<ThreadSnapshot>>;
+
+/** One delivery per nonce at a time: a double-clicked send must not send twice. */
+const inFlightSends = createInFlightSet();
 
 /**
  * What the composer sends and the chat actions beside it: attachments, replies, send, stop,
@@ -153,6 +161,16 @@ export function useComposerActions({
   const runError = threadRunError(activeSnapshot, dismissedRunErrorIds);
   const displayedRunError = !sendError ? runError : null;
   const displayedRunErrorId = displayedRunError ? (activeSnapshot?.run?.id ?? null) : null;
+  /** The failed run's message was delivered but never answered: check before resending. */
+  const runNoReply = useMemo(() => {
+    const snapshot = activeSnapshot;
+    if (snapshot?.run?.status !== "failed" || !displayedRunError) return false;
+    const run = snapshot.run;
+    const ids = noReplyMessageIds(snapshot.messages, activeThreadRuns(snapshot));
+    return snapshot.messages.some(
+      (message) => message.role === "user" && message.runId === run.id && ids.has(message.id),
+    );
+  }, [activeSnapshot, displayedRunError]);
   const handleRunErrorPresented = useCallback((runId: string) => {
     rememberSeenRunErrorId(runId);
   }, []);
@@ -376,6 +394,11 @@ export function useComposerActions({
           : { text: plan.trimmed, replyToMessageId: undefined };
       const trimmed = fromPage.text.trim();
       const replyToMessageId = fromPage.replyToMessageId;
+      if (!inFlightSends.enter(clientNonce)) {
+        // The same send is already running: report not accepted, so the
+        // caller keeps the words instead of clearing them on a duplicate.
+        return false;
+      }
       sendingRef.current = true;
       setSending(true);
       setSendError(null);
@@ -389,14 +412,58 @@ export function useComposerActions({
       };
       // Keep the draft cleared once the submission is confirmed accepted.
       let accepted = false;
+      const sendTimeoutMessage = t`Send timed out. It may already have been delivered — check the thread before resending.`;
+      // A result that arrives after the timeout already showed: a late
+      // acceptance lands the message, a late failure shows the real error.
+      // The draft the timeout restored stays put — the words are safer kept
+      // than cleared on a send the user may already have retried.
+      const applyLateSend = (
+        outcome: { ok: true; value: unknown } | { ok: false; error: unknown },
+      ) => {
+        if (!outcome.ok) {
+          setSendError(errorText(outcome.error, t`Failed to send message`));
+          return;
+        }
+        const value = outcome.value;
+        // The routines call wraps the receipt in `{ send }`; the plain call returns it bare.
+        const candidate =
+          value && typeof value === "object" ? ((value as { send?: unknown }).send ?? value) : null;
+        const runId = (candidate as { runId?: unknown } | null)?.runId;
+        const taskId = (candidate as { taskId?: unknown } | null)?.taskId;
+        if (
+          typeof runId === "string" &&
+          typeof taskId === "string" &&
+          botTarget &&
+          activeBotId.current === botTarget
+        ) {
+          updateSnapshot((current) =>
+            applyThreadSendReceipt(
+              current,
+              { botId: botTarget, runId, taskId },
+              terminalRunReceipts.current,
+            ),
+          );
+        }
+        if (botTarget && activeBotId.current === botTarget) {
+          void refreshThreadRef.current(botTarget).catch(() => undefined);
+        } else if (groupTarget && activeGroupId.current === groupTarget) {
+          void refreshGroupThreadRef.current(groupTarget).catch(() => undefined);
+        }
+        setSendError(null);
+      };
       try {
         if (!plan.shouldSend) {
           if (plan.shouldRunRoutines) {
-            await rpc.threads.sendWithRoutines({
-              ...(groupTarget ? { groupId: groupTarget } : { botId: botTarget! }),
-              clientNonce,
-              routineIds: plan.routineIds,
-            });
+            await withTimeout(
+              rpc.threads.sendWithRoutines({
+                ...(groupTarget ? { groupId: groupTarget } : { botId: botTarget! }),
+                clientNonce,
+                routineIds: plan.routineIds,
+              }),
+              SEND_HARD_TIMEOUT_MS,
+              applyLateSend,
+              sendTimeoutMessage,
+            );
             accepted = true;
           }
           dropDelayedSetup();
@@ -473,8 +540,20 @@ export function useComposerActions({
         } as const;
         // The routines run in the same server operation as the message: both or neither.
         const sent = plan.shouldRunRoutines
-          ? (await rpc.threads.sendWithRoutines({ ...payload, routineIds: plan.routineIds })).send
-          : await rpc.threads.send(payload);
+          ? (
+              await withTimeout(
+                rpc.threads.sendWithRoutines({ ...payload, routineIds: plan.routineIds }),
+                SEND_HARD_TIMEOUT_MS,
+                applyLateSend,
+                sendTimeoutMessage,
+              )
+            ).send
+          : await withTimeout(
+              rpc.threads.send(payload),
+              SEND_HARD_TIMEOUT_MS,
+              applyLateSend,
+              sendTimeoutMessage,
+            );
         accepted = true;
         if (sent && botTarget && activeBotId.current === botTarget) {
           updateSnapshot((current) =>
@@ -530,6 +609,7 @@ export function useComposerActions({
         }
         return isConfirmation ? false : accepted;
       } finally {
+        inFlightSends.leave(clientNonce);
         sendingRef.current = false;
         setSending(false);
       }
@@ -636,6 +716,7 @@ export function useComposerActions({
     dismissedRunErrorIds,
     displayedRunError,
     displayedRunErrorId,
+    runNoReply,
     handleRunErrorPresented,
     dismissComposerError,
     startFocusPrompt,

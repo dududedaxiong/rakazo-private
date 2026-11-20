@@ -337,6 +337,73 @@ it("counts a routines-only send as sent when its follow-up refresh fails", async
   expect(latest.sendError).toBeNull();
 });
 
+it("times out a hung send and reports it may already have been delivered", async () => {
+  vi.useFakeTimers();
+  try {
+    rpc.threads.send.mockReturnValue(new Promise(() => {}));
+    let sent!: Promise<boolean>;
+    act(() => {
+      sent = latest.sendMessage("hello", [], "nonce-timeout");
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(120_000);
+    });
+    await expect(sent).resolves.toBe(false);
+    expect(latest.sendError).toContain("timed out");
+    expect(latest.sendError).toContain("already have been delivered");
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("clears the timeout error when a late send result arrives", async () => {
+  vi.useFakeTimers();
+  try {
+    let finishSend!: (receipt: { runId: string; taskId: string }) => void;
+    rpc.threads.send.mockReturnValue(
+      new Promise((resolve) => {
+        finishSend = resolve;
+      }),
+    );
+    let sent!: Promise<boolean>;
+    act(() => {
+      sent = latest.sendMessage("hello", [], "nonce-late");
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(120_000);
+    });
+    await expect(sent).resolves.toBe(false);
+    expect(latest.sendError).toContain("timed out");
+    await act(async () => {
+      finishSend({ runId: "run-1", taskId: "task-1" });
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+    });
+    expect(latest.sendError).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+it("does not send the same nonce twice while the first send is in flight", async () => {
+  let finishSend!: () => void;
+  rpc.threads.send.mockReturnValue(
+    new Promise((resolve) => {
+      finishSend = () => resolve({ runId: "run-1", taskId: "task-1" });
+    }),
+  );
+  let first!: Promise<boolean>;
+  let second!: Promise<boolean>;
+  act(() => {
+    first = latest.sendMessage("hello", [], "nonce-dup");
+    second = latest.sendMessage("hello", [], "nonce-dup");
+  });
+  await expect(second).resolves.toBe(false);
+  expect(rpc.threads.send).toHaveBeenCalledTimes(1);
+  finishSend();
+  await act(async () => void (await first));
+  expect(rpc.threads.send).toHaveBeenCalledTimes(1);
+});
+
 it("opens a mentioned group without running anything", async () => {
   const team = { kind: "group" as const, id: "group-2", name: "Team" };
   let accepted!: boolean;

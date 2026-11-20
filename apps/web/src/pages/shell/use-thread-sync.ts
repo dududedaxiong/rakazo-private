@@ -7,6 +7,7 @@ import type {
   RoutineHistory,
   ThreadSnapshot,
 } from "@rakazo_mickvvw/contracts";
+import type { ReplyWatchdog } from "@rakazo_mickvvw/core";
 import {
   activeThreadRuns,
   anySignal,
@@ -14,6 +15,7 @@ import {
   isRunTerminalEvent,
   isRunWorking,
   isThreadSnapshotEvent,
+  isWatchdogEvent,
   reconcileRefreshedThread,
   reduceThreadSnapshot,
   rememberTerminalRun,
@@ -48,6 +50,25 @@ import type { ComputerState } from "./use-computer";
 import type { ThreadState } from "./use-thread-state";
 
 const THREAD_SNAPSHOT_TIMEOUT_MS = 2_000;
+
+/**
+ * The reply watchdog's clock: every live event from a bot proves its reply is
+ * still moving, so the stuck row only fires on real silence. A terminal event
+ * ends the run, so its clock goes away with it.
+ */
+function touchReplyWatchdog(
+  watchdog: ReplyWatchdog,
+  event: ProductEvent,
+  fallbackBotId?: string,
+): void {
+  const botId = event.botId ?? fallbackBotId;
+  if (!botId) return;
+  if (isRunTerminalEvent(event)) {
+    watchdog.forget(botId);
+    return;
+  }
+  if (isWatchdogEvent(event.type)) watchdog.touch(botId);
+}
 
 function threadSnapshotSignal(parent: AbortSignal): AbortSignal {
   return anySignal([parent, AbortSignal.timeout(THREAD_SNAPSHOT_TIMEOUT_MS)]);
@@ -140,6 +161,7 @@ export function useThreadSync({
     snapshotRef,
     commitSnapshot,
     updateSnapshot,
+    replyWatchdog,
     setRoutines,
     setRoutinesBotId,
     setTaughtSkills,
@@ -392,6 +414,7 @@ export function useThreadSync({
       beforeEvent: (event) => {
         webLogoAvatarActivity.apply(avatarSource, event);
         rememberTerminalRun(terminalRunReceipts.current, event);
+        touchReplyWatchdog(replyWatchdog, event, active.id);
       },
       applyEvent: (event) =>
         applyThreadEvent(event, commitSnapshot, commitComputer, snapshotRef, computerRef),
@@ -494,7 +517,10 @@ export function useThreadSync({
         openLogoAvatarActivityFeed(avatarSource, snapshotRef.current, cursor, signal, () =>
           rpc.threads.subscribe({ groupId, cursor }, { signal }),
         ),
-      beforeEvent: (event) => webLogoAvatarActivity.apply(avatarSource, event),
+      beforeEvent: (event) => {
+        webLogoAvatarActivity.apply(avatarSource, event);
+        touchReplyWatchdog(replyWatchdog, event);
+      },
       applyEvent: (event) =>
         applyThreadEvent(
           event,

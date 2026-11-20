@@ -3892,6 +3892,10 @@ msgstr "正在删除…"
 msgid "Deletion code"
 msgstr "删除验证码"
 
+#: src/pages/shell/composer-error.tsx
+msgid "Delivered, but no reply came back."
+msgstr "已送达，但没有收到回复。"
+
 #: src/components/AskCard.tsx
 msgid "Denied"
 msgstr "已拒绝"
@@ -8377,6 +8381,10 @@ msgstr "发送"
 #: src/pages/Auth.tsx
 msgid "Send reset link"
 msgstr "发送重置链接"
+
+#: src/pages/shell/use-composer-actions.ts
+msgid "Send timed out. It may already have been delivered — check the thread before resending."
+msgstr "发送超时，可能已经送达；重试前先确认。"
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Send with Enter"
