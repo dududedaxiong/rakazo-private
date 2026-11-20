@@ -208,6 +208,7 @@ import {
   McpServerSchema,
   McpSourcePresetSchema,
 } from "./mcp.js";
+import { MiscSettingsSchema } from "./misc-settings.js";
 import {
   ModelApiProtocolSchema,
   ModelAuthModeSchema,
@@ -1684,6 +1685,11 @@ export const appContract = {
         }),
       )
       .output(z.object({ ok: z.literal(true), name: z.string() })),
+  },
+  /** Per-space misc settings: artifact category mapping and chat upload formats. */
+  miscSettings: {
+    get: oc.output(MiscSettingsSchema),
+    set: oc.input(MiscSettingsSchema).output(MiscSettingsSchema),
   },
   /** Pages bots built for the caller in this Space. */
   pages: {
