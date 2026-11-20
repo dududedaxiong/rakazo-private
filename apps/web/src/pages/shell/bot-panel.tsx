@@ -949,16 +949,12 @@ export function BotSettings({
     const root = document.querySelector<HTMLElement>('[data-testid="bot-settings-advanced"]');
     const sectionEl = root?.querySelector<HTMLElement>(`[data-model-section="${section}"]`);
     sectionEl?.scrollIntoView?.({ block: "nearest" });
-    // Focus lands on the located row: the chat row's picker trigger here,
-    // a pool row's banner button in its list once it unfolds, or the
-    // section itself when the model is no longer listed. The picker never
-    // opens on a locate, so it cannot steal the focus.
-    if (key == null) {
+    // A section with no matching row focuses itself here. The chat row
+    // focuses itself in ModelSection, one commit later: the locate popup's
+    // dialog returns focus to the thread in this commit, so focusing the
+    // row here would lose to it. The pool rows focus themselves the same way.
+    if (key == null && section !== "chat") {
       sectionEl?.focus();
-    } else if (section === "chat") {
-      sectionEl
-        ?.querySelector<HTMLElement>("[data-model-row] button, [data-model-row] select")
-        ?.focus();
     }
   }, [
     locateModel,
@@ -1357,6 +1353,7 @@ export function BotSettings({
               value={selectedModelKey}
               locatedKey={locatedKey}
               locateKind={locateKindForSections}
+              locateRequestId={locateModel?.requestId}
               onModelChange={(key) => {
                 setModelKey(key);
                 setThinkingLevel("");

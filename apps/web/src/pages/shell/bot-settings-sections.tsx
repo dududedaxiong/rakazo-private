@@ -150,6 +150,7 @@ export function ModelSection({
   value,
   locatedKey,
   locateKind,
+  locateRequestId,
   onModelChange,
   thinkingOptions,
   thinkingLevel,
@@ -165,6 +166,8 @@ export function ModelSection({
   locatedKey?: string | null;
   /** Which list a timeline name pointed at; that row is tagged. */
   locateKind?: ModelLocateKind | null;
+  /** Fresh id of the locate request, so locating the same model twice refocuses. */
+  locateRequestId?: number;
   onModelChange: (key: string) => void;
   thinkingOptions: ThinkingLevel[];
   thinkingLevel: string;
@@ -175,6 +178,21 @@ export function ModelSection({
   // The section itself is the locate target when the model is no longer
   // listed: the timeline pointed here, so the section still carries the tag.
   const located = locateKind === "chat" && (locatedKey == null || locatedKey === value);
+  // Focus lands on the located row itself, one commit after the panel
+  // records the key: the locate popup's dialog returns focus to the thread
+  // in the commit where it closes, so focusing in the panel's effect loses
+  // to it. The pool lists focus their own rows the same way.
+  useEffect(() => {
+    if (locateKind !== "chat") return;
+    if (locatedKey == null) {
+      containerRef.current?.focus();
+      return;
+    }
+    if (locatedKey !== value) return;
+    containerRef.current
+      ?.querySelector<HTMLElement>("[data-model-row] button, [data-model-row] select")
+      ?.focus();
+  }, [locateKind, locatedKey, locateRequestId, value, containerRef]);
   return (
     <div ref={containerRef} data-model-section="chat" tabIndex={-1} className="outline-none">
       <div className="mb-2 flex items-center justify-between text-label font-medium text-muted-foreground pe-1">
