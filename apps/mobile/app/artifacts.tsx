@@ -26,6 +26,7 @@ import { NativeSymbol } from "../components/native-symbol";
 import { formatActivityRelativeTime } from "../lib/activity";
 import { rpc } from "../lib/api";
 import { mobileTokens } from "../lib/appearance";
+import { downloadMobileArtifact } from "../lib/artifact-open";
 import type { MobileArtifactSummary } from "../lib/artifacts";
 import {
   listSpaceArtifacts,
@@ -246,6 +247,19 @@ export default function ArtifactsScreen() {
       ],
     );
   }
+
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const downloadItem = useCallback(async (item: MobileArtifactSummary) => {
+    setDownloadingId(item.id);
+    try {
+      const saved = await downloadMobileArtifact(item.id);
+      Alert.alert(t("Saved {name} locally", { name: saved.name }));
+    } catch {
+      Alert.alert(t("Could not save {name}. Try again.", { name: item.name }));
+    } finally {
+      setDownloadingId((current) => (current === item.id ? null : current));
+    }
+  }, []);
 
   const queryActive = query.trim().length > 0;
   const categoryActive = category !== "all";
@@ -484,6 +498,8 @@ export default function ArtifactsScreen() {
             bot={activeBotId === null && item.botId ? botsById.get(item.botId) : undefined}
             onPress={() => router.push({ pathname: "/artifact", params: { artifactId: item.id } })}
             onLongPress={() => confirmDelete(item)}
+            onDownload={() => void downloadItem(item)}
+            downloading={downloadingId === item.id}
           />
         )}
       />
@@ -526,57 +542,78 @@ function ArtifactRow({
   bot,
   onPress,
   onLongPress,
+  onDownload,
+  downloading,
 }: {
   item: MobileArtifactSummary;
   bot?: MobileBot;
   onPress: () => void;
   onLongPress: () => void;
+  onDownload: () => void;
+  downloading: boolean;
 }) {
   const styles = useThemedStyles(createStyles);
   const { t } = useI18n();
   const isCode = item.mimeType === "text/html";
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={bot ? `${item.name}, ${bot.name}` : item.name}
-      accessibilityHint={t("Long press to delete")}
-      onPress={onPress}
-      onLongPress={onLongPress}
-      style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
-    >
-      <View style={styles.rowIcon}>
-        <NativeSymbol
-          ios={isCode ? "chevron.left.forwardslash.chevron.right" : "doc.text"}
-          android={isCode ? "code-slash-outline" : "document-text-outline"}
-          size={16}
-        />
-      </View>
-      <View style={styles.rowBody}>
-        <View style={styles.rowTop}>
-          <Text style={styles.rowName} numberOfLines={1}>
-            {item.name}
-          </Text>
-          {item.versionCount > 1 ? <Text style={styles.badge}>{`v${item.version}`}</Text> : null}
-          <Text style={styles.badge}>{artifactTypeLabel(item.mimeType)}</Text>
+    <View style={styles.rowWrap}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={bot ? `${item.name}, ${bot.name}` : item.name}
+        accessibilityHint={t("Long press to delete")}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+      >
+        <View style={styles.rowIcon}>
+          <NativeSymbol
+            ios={isCode ? "chevron.left.forwardslash.chevron.right" : "doc.text"}
+            android={isCode ? "code-slash-outline" : "document-text-outline"}
+            size={16}
+          />
         </View>
-        {item.description ? (
-          <Text style={styles.rowDescription} numberOfLines={1}>
-            {item.description}
-          </Text>
-        ) : null}
-        <View style={styles.rowFooter}>
-          {bot ? (
-            <>
-              <BotAvatar color={bot.color} avatarSet={bot.avatarSet} identity={bot.id} size={14} />
-              <Text style={styles.rowBotName} numberOfLines={1}>
-                {bot.name}
-              </Text>
-            </>
+        <View style={styles.rowBody}>
+          <View style={styles.rowTop}>
+            <Text style={styles.rowName} numberOfLines={1}>
+              {item.name}
+            </Text>
+            {item.versionCount > 1 ? <Text style={styles.badge}>{`v${item.version}`}</Text> : null}
+            <Text style={styles.badge}>{artifactTypeLabel(item.mimeType)}</Text>
+          </View>
+          {item.description ? (
+            <Text style={styles.rowDescription} numberOfLines={1}>
+              {item.description}
+            </Text>
           ) : null}
-          <Text style={styles.rowMeta}>{formatActivityRelativeTime(item.createdAt)}</Text>
+          <View style={styles.rowFooter}>
+            {bot ? (
+              <>
+                <BotAvatar
+                  color={bot.color}
+                  avatarSet={bot.avatarSet}
+                  identity={bot.id}
+                  size={14}
+                />
+                <Text style={styles.rowBotName} numberOfLines={1}>
+                  {bot.name}
+                </Text>
+              </>
+            ) : null}
+            <Text style={styles.rowMeta}>{formatActivityRelativeTime(item.createdAt)}</Text>
+          </View>
         </View>
-      </View>
-    </Pressable>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t("Download")}
+        disabled={downloading}
+        onPress={onDownload}
+        hitSlop={8}
+        style={styles.rowDownload}
+      >
+        <NativeSymbol ios="square.and.arrow.down" android="download-outline" size={19} />
+      </Pressable>
+    </View>
   );
 }
 
@@ -619,8 +656,16 @@ function createStyles() {
       paddingTop: 8,
     },
     footer: { paddingVertical: 20 },
-    row: { flexDirection: "row", gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
+    rowWrap: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    row: { flex: 1, flexDirection: "row", gap: 12, minWidth: 0 },
     rowPressed: { opacity: 0.6 },
+    rowDownload: { padding: 8 },
     rowIcon: {
       width: 36,
       height: 36,

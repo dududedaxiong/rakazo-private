@@ -138,6 +138,8 @@ export function GalleryPage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [saveBusy, setSaveBusy] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const selectMode = selectedIds.size > 0;
@@ -344,8 +346,25 @@ export function GalleryPage() {
         onPreview={() => setPreviewId(item.id)}
         onToggleSelect={() => toggleSelected(item.id)}
         onLongPress={() => handleLongPress(item.id)}
+        onDownload={() => void downloadTile(item)}
+        downloading={downloadingId === item.id}
       />
     );
+  }
+
+  async function downloadTile(item: GalleryArtifact) {
+    if (downloadingId) return;
+    const target = artifactTarget(item);
+    if (!target) return;
+    setDownloadingId(item.id);
+    setDownloadError(null);
+    try {
+      await downloadArtifact(target, item.id, item.name, item.mimeType);
+    } catch {
+      setDownloadError(t`Could not download ${item.name}. Try again.`);
+    } finally {
+      setDownloadingId(null);
+    }
   }
 
   return (
@@ -409,6 +428,11 @@ export function GalleryPage() {
         </Button>
       </div>
 
+      {downloadError ? (
+        <p role="alert" className="shrink-0 px-6 pt-2 text-body-sm text-destructive">
+          {downloadError}
+        </p>
+      ) : null}
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
         {listing.isPending || visible === null ? (
           <div className="grid flex-1 place-items-center text-body text-muted-foreground/80">
@@ -545,6 +569,8 @@ function GalleryTile({
   onPreview,
   onToggleSelect,
   onLongPress,
+  onDownload,
+  downloading,
 }: {
   artifact: GalleryArtifact;
   bot: Bot | undefined;
@@ -555,6 +581,8 @@ function GalleryTile({
   onPreview: () => void;
   onToggleSelect: () => void;
   onLongPress: () => void;
+  onDownload: () => void;
+  downloading: boolean;
 }) {
   const target = useMemo(() => artifactTarget(artifact), [artifact.botId, artifact.groupId]);
   const isImage = artifact.mimeType.startsWith("image/");
@@ -715,6 +743,17 @@ function GalleryTile({
           <span className="block text-white/80">{subtitle}</span>
         </span>
       </button>
+      {selectMode ? null : (
+        <button
+          type="button"
+          aria-label={t`Download ${artifact.name}`}
+          disabled={downloading}
+          onClick={() => onDownload()}
+          className="absolute top-2 end-2 grid size-8 place-items-center rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100"
+        >
+          <Download className="size-4" strokeWidth={2} />
+        </button>
+      )}
       {selected ? (
         <span
           aria-hidden="true"

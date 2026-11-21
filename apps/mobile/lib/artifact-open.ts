@@ -5,10 +5,11 @@ import type { ApiRequestContext } from "./api";
 import { captureApiRequestContext, currentApiBase, rpc, selectedSpaceId } from "./api";
 import { artifactCacheSession } from "./artifact-cache-session";
 import { artifactCacheFileName, artifactShareFileName } from "./artifact-file";
-import { ARTIFACT_DOWNLOAD_TIMEOUT_MS } from "./artifacts";
+import { ARTIFACT_DOWNLOAD_TIMEOUT_MS, getArtifactById } from "./artifacts";
 import { t } from "./i18n";
 import type { ImageSize } from "./inline-image";
 import { createKeyedPromiseCache } from "./inline-image";
+import { saveGeneratedMedia } from "./media-folders";
 import { currentSessionGeneration, loadSessionToken } from "./session";
 
 export type MobileArtifactTarget = { botId: string } | { groupId: string };
@@ -172,6 +173,22 @@ export async function openMobileArtifact(
 ): Promise<void> {
   const file = await cacheMobileArtifact(target, artifactId, mimeType);
   await shareNamedFile(file, mimeType, name);
+}
+
+/**
+ * Download one artifact into the app's local folder (images, videos and other
+ * files each land in their own folder); returns the saved file's name. Unlike
+ * openMobileArtifact this never opens the share sheet.
+ */
+export async function downloadMobileArtifact(
+  artifactId: string,
+): Promise<{ name: string; uri: string }> {
+  const artifact = await getArtifactById(artifactId);
+  const file = writeArtifactCacheFile(artifact.id, artifact.mimeType, artifact.contentBase64);
+  return {
+    name: artifact.name,
+    uri: saveGeneratedMedia(file.uri, artifact.mimeType, artifact.name),
+  };
 }
 
 const imageArtifactUris = createKeyedPromiseCache<string>(async (key) => {

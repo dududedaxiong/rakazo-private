@@ -44,7 +44,11 @@ vi.mock("expo-file-system", () => {
     copySync() {}
   }
   class Directory extends Node {}
-  return { File, Directory, Paths: { cache: { uri: "file:///cache" } } };
+  return {
+    File,
+    Directory,
+    Paths: { cache: { uri: "file:///cache" }, document: { uri: "file:///document" } },
+  };
 });
 vi.mock("expo-secure-store", () => ({
   getItemAsync: vi.fn(async (key: string) => state.secure.get(key) ?? null),
@@ -259,5 +263,56 @@ describe("artifact preview caches", () => {
     await expect(api.imageArtifactUri(target, "art-2", "image/png")).rejects.toThrow("offline");
     await api.imageArtifactUri(target, "art-2", "image/png");
     expect(artifactFetches()).toBe(3);
+  });
+});
+
+describe("artifact downloads", () => {
+  it("saves any file type into its category folder without the share sheet", async () => {
+    const api = await load();
+    state.rpc.mockImplementation(async (proc: string) => {
+      if (proc === "me") return { userId: state.userId };
+      if (proc === "artifacts/getById")
+        return {
+          id: "art-9",
+          name: "report.pdf",
+          mimeType: "application/pdf",
+          contentBase64: "aGk=",
+        };
+      throw new Error(`unexpected rpc ${proc}`);
+    });
+    // The share mock is shared across this file and never reset in beforeEach,
+    // so clear the earlier share test's call before asserting this path shares nothing.
+    vi.mocked(Sharing.shareAsync).mockClear();
+    const saved = await api.downloadMobileArtifact("art-9");
+    expect(saved).toEqual({
+      name: "report.pdf",
+      uri: "file:///document/Rakazo/文件/report.pdf",
+    });
+    expect(state.rpc).toHaveBeenCalledWith(
+      "artifacts/getById",
+      { artifactId: "art-9" },
+      { timeoutMs: 120_000 },
+    );
+    expect(Sharing.shareAsync).not.toHaveBeenCalled();
+  });
+
+  it("saves images into the image folder", async () => {
+    const api = await load();
+    state.rpc.mockImplementation(async (proc: string) => {
+      if (proc === "me") return { userId: state.userId };
+      if (proc === "artifacts/getById")
+        return {
+          id: "art-10",
+          name: "generated-shot.png",
+          mimeType: "image/png",
+          contentBase64: "aGk=",
+        };
+      throw new Error(`unexpected rpc ${proc}`);
+    });
+    // See the note above: clear the earlier share test's call first.
+    vi.mocked(Sharing.shareAsync).mockClear();
+    const saved = await api.downloadMobileArtifact("art-10");
+    expect(saved.uri).toBe("file:///document/Rakazo/图片/generated-shot.png");
+    expect(Sharing.shareAsync).not.toHaveBeenCalled();
   });
 });

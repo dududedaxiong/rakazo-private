@@ -176,8 +176,11 @@ function mapBot(
   // Each family reads as two pools; the legacy single list is the two pools
   // merged, so older clients keep seeing the full ordered list.
   const translationPools = splitBotModelPools(bot.translationModels, bot.translationBackupModels);
-  if (!translationPools.mainPool) {
+  if (!translationPools.mainPool && !translationPools.backupPool) {
     // The single model older rows still carry, when no list was ever written.
+    // A backup pool means a two-pool list was written, so a cleared main pool
+    // stays cleared: the legacy columns mirror the merged list's first entry,
+    // which is the backup's first model once the main pool is empty.
     translationPools.mainPool = resolveTranslationModels(bot);
   }
   const videoPools = splitBotModelPools(bot.videoModels, bot.videoBackupModels);

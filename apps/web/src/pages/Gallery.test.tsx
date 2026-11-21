@@ -8,6 +8,7 @@ import { act } from "react";
 import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { downloadArtifact } from "../lib/artifact-open";
 import { GalleryPage } from "./Gallery";
 
 const BOT = { id: "bot-1", name: "New Bot" } as unknown as Bot;
@@ -432,6 +433,36 @@ describe("GalleryPage", () => {
     expect(container.textContent).toContain(
       "Selected files are over 500 MB. Save them in smaller batches.",
     );
+  });
+
+  it("downloads one tile without opening the preview", async () => {
+    const download = vi.mocked(downloadArtifact).mockReset().mockResolvedValue(undefined);
+    await renderGallery();
+    const button = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Download generated-img-1.png"]',
+    );
+    expect(button).not.toBeNull();
+    await act(async () => button?.click());
+    await flush();
+    expect(download).toHaveBeenCalledWith(
+      { botId: "bot-1" },
+      "family-img-1",
+      "generated-img-1.png",
+      "image/png",
+    );
+    expect(document.querySelector('button[aria-label="Rename generated-img-1.png"]')).toBeNull();
+  });
+
+  it("reports a tile download that failed", async () => {
+    vi.mocked(downloadArtifact).mockReset().mockRejectedValueOnce(new Error("offline"));
+    await renderGallery();
+    await act(async () => {
+      container
+        .querySelector<HTMLButtonElement>('button[aria-label="Download generated-vid-1.mp4"]')
+        ?.click();
+    });
+    await flush();
+    expect(container.textContent).toContain("Could not download generated-vid-1.mp4. Try again.");
   });
 
   it("renames from the preview and the list uses the new name", async () => {

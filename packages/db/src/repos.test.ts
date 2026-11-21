@@ -601,3 +601,38 @@ it("finds incoming calls independently of the sidebar message window", async () 
   expect((await createRepos(prisma).listBots(actor))[0]?.incomingCall).toBeNull();
   expect(messageQuery).not.toHaveBeenCalled();
 });
+
+describe("createRepos.listBots translation pools", () => {
+  function translationRepos(row: Record<string, unknown>) {
+    const prisma = {
+      bot: { findMany: vi.fn(async () => [{ ...baseBot, ...row }]) },
+      run: { findMany: vi.fn(async () => []) },
+      $queryRaw: vi.fn(async () => []),
+    };
+    return createRepos(prisma as unknown as PrismaClient);
+  }
+
+  it("keeps a cleared main pool cleared when the backup pool still has models", async () => {
+    const bots = await translationRepos({
+      translationModels: null,
+      translationBackupModels: [{ provider: "p1", model: "b" }],
+      // The update route mirrors the merged list's first entry into the
+      // legacy columns, so the backup's first model sits there too.
+      translationModelProvider: "p1",
+      translationModelId: "b",
+    }).listBots(actor);
+    expect(bots[0]?.translationMainModels).toBeNull();
+    expect(bots[0]?.translationBackupModels).toEqual([{ provider: "p1", model: "b" }]);
+  });
+
+  it("still falls back to the legacy single model when no list was ever written", async () => {
+    const bots = await translationRepos({
+      translationModels: null,
+      translationBackupModels: null,
+      translationModelProvider: "p1",
+      translationModelId: "a",
+    }).listBots(actor);
+    expect(bots[0]?.translationMainModels).toEqual([{ provider: "p1", model: "a" }]);
+    expect(bots[0]?.translationBackupModels).toBeNull();
+  });
+});

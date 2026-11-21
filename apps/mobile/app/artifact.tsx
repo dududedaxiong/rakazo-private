@@ -246,8 +246,8 @@ export default function ArtifactDetailScreen() {
         videoSaveDirectory: videoSaveDirectory ?? null,
       });
       Alert.alert(t("Saved {name} locally", { name: content.artifact.name }));
-    } catch (error) {
-      Alert.alert(t("Could not save media"), errorText(error, t("Try again.")));
+    } catch {
+      Alert.alert(t("Could not save {name}. Try again.", { name: content.artifact.name }));
     }
   }, [content, t, imageSaveDirectory, videoSaveDirectory]);
 
@@ -267,14 +267,15 @@ export default function ArtifactDetailScreen() {
     onNewArtifact: setSelectedVersionId,
   });
 
-  // The media toggles gate only image and video artifacts; documents and
-  // other files always keep Share, and never show Download.
+  // Download is available for every file type (images and videos land in
+  // their own folders, everything else in the files folder); the toggles
+  // only switch it off. Documents and other files always keep Share.
   const isMedia =
     content.status === "ready" &&
     (content.artifact.mimeType.startsWith("image/") ||
       content.artifact.mimeType.startsWith("video/"));
   const showShareButton = !isMedia || showShare !== "0";
-  const showDownloadButton = isMedia && showDownload !== "0";
+  const showDownloadButton = content.status === "ready" && showDownload !== "0";
 
   useLayoutEffect(() => {
     navigation.setOptions({

@@ -19,7 +19,7 @@ import { NativeSymbol } from "../components/native-symbol";
 import { rpc } from "../lib/api";
 import { mobileTokens } from "../lib/appearance";
 import { base64ToBytes } from "../lib/artifact-file";
-import { imageArtifactUri } from "../lib/artifact-open";
+import { downloadMobileArtifact, imageArtifactUri } from "../lib/artifact-open";
 import type { MobileArtifactSummary } from "../lib/artifacts";
 import {
   artifactThreadTarget,
@@ -212,6 +212,19 @@ export default function GalleryScreen() {
     setSelectedIds((current) => toggleGallerySelection(current, item.id));
   }, []);
 
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const downloadItem = useCallback(async (item: MobileArtifactSummary) => {
+    setDownloadingId(item.id);
+    try {
+      const saved = await downloadMobileArtifact(item.id);
+      Alert.alert(t("Saved {name} locally", { name: saved.name }));
+    } catch {
+      Alert.alert(t("Could not save {name}. Try again.", { name: item.name }));
+    } finally {
+      setDownloadingId((current) => (current === item.id ? null : current));
+    }
+  }, []);
+
   async function saveSelected() {
     if (selectedItems.length === 0 || saveBusy || deleteBusy) return;
     if (isGallerySaveOverLimit(galleryTotalBytes(selectedItems))) {
@@ -351,6 +364,8 @@ export default function GalleryScreen() {
                 selectMode={selectMode}
                 onPress={() => openItem(entry)}
                 onLongPress={() => longPressItem(entry)}
+                onDownload={() => void downloadItem(entry)}
+                downloading={downloadingId === entry.id}
               />
             ))}
             {Array.from({ length: 3 - row.length }, (_, index) => (
@@ -429,6 +444,8 @@ function GalleryTile({
   selectMode,
   onPress,
   onLongPress,
+  onDownload,
+  downloading,
 }: {
   item: MobileArtifactSummary;
   botName: string | undefined;
@@ -437,6 +454,8 @@ function GalleryTile({
   selectMode: boolean;
   onPress: () => void;
   onLongPress: () => void;
+  onDownload: () => void;
+  downloading: boolean;
 }) {
   const styles = useThemedStyles(makeStyles);
   const tokens = useMobileTokens();
@@ -493,6 +512,23 @@ function GalleryTile({
           </View>
         ) : null}
       </Pressable>
+      {selectMode ? null : (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t("Download")}
+          disabled={downloading}
+          onPress={onDownload}
+          hitSlop={8}
+          style={styles.tileDownload}
+        >
+          <NativeSymbol
+            ios="square.and.arrow.down"
+            android="download-outline"
+            size={16}
+            color="#ffffff"
+          />
+        </Pressable>
+      )}
       <Text numberOfLines={1} style={styles.tileName}>
         {item.name}
       </Text>
@@ -539,6 +575,17 @@ function makeStyles() {
       borderRadius: 12,
       alignItems: "center",
       justifyContent: "center",
+    },
+    tileDownload: {
+      position: "absolute",
+      top: 8,
+      right: 8,
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      alignItems: "center",
+      justifyContent: "center",
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
     },
     checkOn: { backgroundColor: tokens.primary },
     checkOff: { borderWidth: 2, borderColor: tokens.background },

@@ -47,4 +47,13 @@ describe("botFamilyPools", () => {
       ),
     ).toEqual({ main: [], backup: [a] });
   });
+
+  it("shows the backup pool when the server sends a null main pool with models in backup", () => {
+    expect(
+      botFamilyPools(
+        botWith({ imageMainModels: null, imageBackupModels: [a, b], imageModels: null }),
+        "image",
+      ),
+    ).toEqual({ main: [], backup: [a, b] });
+  });
 });

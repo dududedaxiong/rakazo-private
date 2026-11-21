@@ -49,6 +49,22 @@ describe("splitBotModelPools", () => {
   it("returns empty pools when nothing was ever stored", () => {
     expect(splitBotModelPools(null, null)).toEqual({ mainPool: null, backupPool: null });
   });
+
+  it("keeps the backup pool when the main pool was cleared", () => {
+    expect(splitBotModelPools([], [{ provider: "b", model: "m2" }])).toEqual({
+      mainPool: null,
+      backupPool: [{ provider: "b", model: "m2" }],
+    });
+    expect(splitBotModelPools(null, [{ provider: "b", model: "m2" }])).toEqual({
+      mainPool: null,
+      backupPool: [{ provider: "b", model: "m2" }],
+    });
+  });
+
+  it("keeps both pools empty when both were cleared", () => {
+    expect(splitBotModelPools([], [])).toEqual({ mainPool: null, backupPool: null });
+    expect(splitBotModelPools(null, [])).toEqual({ mainPool: null, backupPool: null });
+  });
 });
 
 describe("mergeBotModelPools", () => {

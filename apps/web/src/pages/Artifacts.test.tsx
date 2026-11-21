@@ -87,10 +87,11 @@ vi.mock("@rakazo_mickvvw/ui-web", () => {
   };
 });
 
-import { decodeArtifactBase64 } from "../lib/artifact-open";
+import { decodeArtifactBase64, downloadArtifactBytes } from "../lib/artifact-open";
 import { ArtifactsPage } from "./Artifacts";
 
 const mockedDecode = vi.mocked(decodeArtifactBase64);
+const mockedDownloadBytes = vi.mocked(downloadArtifactBytes);
 
 function artifact(name: string, id: string, createdAt = new Date().toISOString()) {
   return {
@@ -473,6 +474,110 @@ it("returns to the artifact list from the preview's back button", async () => {
     });
     expect(page.container.textContent).toContain("bundle.zip");
     expect(page.container.textContent).not.toContain("Download");
+  } finally {
+    await page.cleanup();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("downloads a card without opening the detail", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  api.listSpace.mockResolvedValue({
+    items: [artifact("Q3 Content Calendar", "artifact-1")],
+    nextCursor: null,
+  });
+  api.getById.mockResolvedValue({
+    ...artifact("Q3 Content Calendar", "artifact-1"),
+    contentBase64: "AAAA",
+  });
+  mockedDecode.mockReturnValue(new Uint8Array([1, 2, 3]));
+  mockedDownloadBytes.mockClear();
+  const page = await renderArtifacts();
+  try {
+    // The api mocks are shared across this file and not reset per test;
+    // clear the earlier detail tests' getById calls before counting this one.
+    api.getById.mockClear();
+    const button = page.container.querySelector<HTMLButtonElement>(
+      "button[aria-label='Download Q3 Content Calendar']",
+    );
+    expect(button).not.toBeNull();
+    await act(async () => {
+      button?.click();
+    });
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(mockedDownloadBytes).toHaveBeenCalledWith(
+          "Q3 Content Calendar",
+          "text/markdown",
+          new Uint8Array([1, 2, 3]),
+        ),
+      );
+    });
+    expect(api.getById).toHaveBeenCalledTimes(1);
+    expect(api.getById).toHaveBeenCalledWith({ artifactId: "artifact-1" });
+    // Still the list: no detail header.
+    expect(page.container.textContent).not.toContain("Download");
+  } finally {
+    await page.cleanup();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("downloads a row from the index pane without leaving the detail", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  mockZipArtifact();
+  const page = await renderArtifactDetail();
+  try {
+    await act(async () => {
+      await vi.waitFor(() => expect(page.container.textContent).toContain("hello.txt"));
+    });
+    api.getById.mockClear();
+    mockedDownloadBytes.mockClear();
+    const button = page.container.querySelector<HTMLButtonElement>(
+      "button[aria-label='Download bundle.zip']",
+    );
+    expect(button).not.toBeNull();
+    await act(async () => {
+      button?.click();
+    });
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(mockedDownloadBytes).toHaveBeenCalledWith(
+          "bundle.zip",
+          "application/zip",
+          expect.any(Uint8Array),
+        ),
+      );
+    });
+    expect(api.getById).toHaveBeenCalledTimes(1);
+    expect(api.getById).toHaveBeenCalledWith({ artifactId: "artifact-zip" });
+  } finally {
+    await page.cleanup();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("reports a list download that failed", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  api.listSpace.mockResolvedValue({
+    items: [artifact("Q3 Content Calendar", "artifact-1")],
+    nextCursor: null,
+  });
+  api.getById.mockRejectedValueOnce(new Error("offline"));
+  const page = await renderArtifacts();
+  try {
+    await act(async () => {
+      page.container
+        .querySelector<HTMLButtonElement>("button[aria-label='Download Q3 Content Calendar']")
+        ?.click();
+    });
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(page.container.textContent).toContain(
+          "Could not download Q3 Content Calendar. Try again.",
+        ),
+      );
+    });
   } finally {
     await page.cleanup();
     vi.unstubAllGlobals();

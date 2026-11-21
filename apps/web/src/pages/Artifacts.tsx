@@ -131,6 +131,8 @@ export function ArtifactsPage() {
   const [pendingDelete, setPendingDelete] = useState<ArtifactSummary | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const queries = useSpaceQueries();
   const queryClient = useQueryClient();
@@ -233,6 +235,20 @@ export function ArtifactsPage() {
       setDeleteError(errorText(error, t`Could not delete this artifact.`));
     } finally {
       setDeleteBusy(false);
+    }
+  }
+
+  async function downloadArtifactItem(artifact: ArtifactSummary) {
+    if (downloadingId) return;
+    setDownloadingId(artifact.id);
+    setDownloadError(null);
+    try {
+      const data = await rpc.artifacts.getById({ artifactId: artifact.id });
+      downloadArtifactBytes(data.name, data.mimeType, decodeArtifactBase64(data.contentBase64));
+    } catch {
+      setDownloadError(t`Could not download ${artifact.name}. Try again.`);
+    } finally {
+      setDownloadingId(null);
     }
   }
 
@@ -423,6 +439,11 @@ export function ArtifactsPage() {
           {refreshError}
         </p>
       ) : null}
+      {downloadError ? (
+        <p role="alert" className="px-6 py-2 text-body text-destructive">
+          {downloadError}
+        </p>
+      ) : null}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {artifactId ? (
           <>
@@ -433,6 +454,8 @@ export function ArtifactsPage() {
                 botsById={botsById}
                 selectedId={artifactId}
                 onRequestDelete={setPendingDelete}
+                onRequestDownload={downloadArtifactItem}
+                downloadingId={downloadingId}
                 nextCursor={nextCursor}
                 loadingMore={loadingMore}
                 onLoadMore={loadMore}
@@ -453,6 +476,8 @@ export function ArtifactsPage() {
             viewMode={viewMode}
             botsById={botsById}
             onRequestDelete={setPendingDelete}
+            onRequestDownload={downloadArtifactItem}
+            downloadingId={downloadingId}
             nextCursor={nextCursor}
             loadingMore={loadingMore}
             onLoadMore={loadMore}
@@ -491,6 +516,8 @@ function BrowsingPane({
   viewMode,
   botsById,
   onRequestDelete,
+  onRequestDownload,
+  downloadingId,
   nextCursor,
   loadingMore,
   onLoadMore,
@@ -501,6 +528,8 @@ function BrowsingPane({
   viewMode: ViewMode;
   botsById: Map<string, Bot>;
   onRequestDelete: (artifact: ArtifactSummary) => void;
+  onRequestDownload: (artifact: ArtifactSummary) => void;
+  downloadingId: string | null;
   nextCursor: string | null;
   loadingMore: boolean;
   onLoadMore: () => void;
@@ -524,6 +553,8 @@ function BrowsingPane({
               artifact={item}
               bot={item.botId ? botsById.get(item.botId) : undefined}
               onRequestDelete={onRequestDelete}
+              onRequestDownload={onRequestDownload}
+              downloading={downloadingId === item.id}
             />
           ))}
         </div>
@@ -535,6 +566,8 @@ function BrowsingPane({
               artifact={item}
               bot={item.botId ? botsById.get(item.botId) : undefined}
               onRequestDelete={onRequestDelete}
+              onRequestDownload={onRequestDownload}
+              downloading={downloadingId === item.id}
             />
           ))}
         </div>
@@ -766,6 +799,8 @@ function IndexPane({
   botsById,
   selectedId,
   onRequestDelete,
+  onRequestDownload,
+  downloadingId,
   nextCursor,
   loadingMore,
   onLoadMore,
@@ -776,6 +811,8 @@ function IndexPane({
   botsById: Map<string, Bot>;
   selectedId: string;
   onRequestDelete: (artifact: ArtifactSummary) => void;
+  onRequestDownload: (artifact: ArtifactSummary) => void;
+  downloadingId: string | null;
   nextCursor: string | null;
   loadingMore: boolean;
   onLoadMore: () => void;
@@ -798,6 +835,8 @@ function IndexPane({
               bot={item.botId ? botsById.get(item.botId) : undefined}
               active={item.id === selectedId}
               onRequestDelete={onRequestDelete}
+              onRequestDownload={onRequestDownload}
+              downloading={downloadingId === item.id}
             />
           ))}
           {nextCursor ? (
@@ -815,10 +854,14 @@ function ArtifactCard({
   artifact,
   bot,
   onRequestDelete,
+  onRequestDownload,
+  downloading,
 }: {
   artifact: ArtifactSummary;
   bot: Bot | undefined;
   onRequestDelete: (artifact: ArtifactSummary) => void;
+  onRequestDownload: (artifact: ArtifactSummary) => void;
+  downloading: boolean;
 }) {
   const { t } = useLingui();
   return (
@@ -850,7 +893,7 @@ function ArtifactCard({
             </div>
           ) : null}
         </div>
-        <div className="mt-auto flex items-center gap-2 text-label text-muted-foreground">
+        <div className="mt-auto flex items-center gap-2 text-label text-muted-foreground max-md:pe-20">
           {bot ? (
             <>
               <BotAvatar
@@ -868,6 +911,22 @@ function ArtifactCard({
           <span className="shrink-0">{formatRelativeTime(artifact.createdAt)}</span>
         </div>
       </Link>
+      <IconTooltip label={t`Download ${artifact.name}`}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t`Download ${artifact.name}`}
+          disabled={downloading}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onRequestDownload(artifact);
+          }}
+          className="absolute bottom-3 end-11 bg-card text-muted-foreground opacity-0 hover:bg-accent hover:text-accent-foreground group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100"
+        >
+          <Download strokeWidth={1.9} />
+        </Button>
+      </IconTooltip>
       <IconTooltip label={t`Delete ${artifact.name}`}>
         <Button
           variant="ghost"
@@ -892,16 +951,20 @@ function ArtifactRow({
   bot,
   active,
   onRequestDelete,
+  onRequestDownload,
+  downloading,
 }: {
   artifact: ArtifactSummary;
   bot: Bot | undefined;
   active?: boolean;
   onRequestDelete: (artifact: ArtifactSummary) => void;
+  onRequestDownload: (artifact: ArtifactSummary) => void;
+  downloading: boolean;
 }) {
   const { t } = useLingui();
   return (
     <div className={`group relative ${active ? "bg-accent/60" : "hover:bg-accent/40"}`}>
-      <Link to={`/app/artifacts/${artifact.id}`} className="flex flex-col gap-1 px-4 py-3 pe-10">
+      <Link to={`/app/artifacts/${artifact.id}`} className="flex flex-col gap-1 px-4 py-3 pe-20">
         <div className="flex items-center gap-2">
           <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[7px] bg-accent text-accent-foreground">
             <ArtifactMimeIcon mimeType={artifact.mimeType} small />
@@ -934,6 +997,22 @@ function ArtifactRow({
           <span>{formatRelativeTime(artifact.createdAt)}</span>
         </div>
       </Link>
+      <IconTooltip label={t`Download ${artifact.name}`}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t`Download ${artifact.name}`}
+          disabled={downloading}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onRequestDownload(artifact);
+          }}
+          className="absolute inset-y-0 end-11 my-auto text-muted-foreground opacity-0 hover:bg-accent hover:text-accent-foreground group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100"
+        >
+          <Download strokeWidth={1.9} />
+        </Button>
+      </IconTooltip>
       <IconTooltip label={t`Delete ${artifact.name}`}>
         <Button
           variant="ghost"
