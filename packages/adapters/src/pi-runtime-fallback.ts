@@ -10,11 +10,7 @@ import type {
 import { getSupportedThinkingLevels } from "@earendil-works/pi-ai";
 import { AssistantMessageEventStream } from "@earendil-works/pi-ai/utils/event-stream";
 import type { AgentRunRequest, ConnectorTool } from "@rakazo_mickvvw/adapter-kit";
-import {
-  isModelCredentialRejected,
-  isRetryableProviderUnavailable,
-  isTransientModelError,
-} from "@rakazo_mickvvw/adapter-kit";
+import { isTransientModelError } from "@rakazo_mickvvw/adapter-kit";
 import type { ModelSwitchAttempt } from "@rakazo_mickvvw/contracts";
 import type { ModelBackupOutcome } from "@rakazo_mickvvw/core";
 import {
@@ -716,15 +712,15 @@ export function fallbackAwareModelStream(
               restart = true;
               break;
             }
+            // Any provider error before visible output switches: the chain
+            // is walked in order, and a per-request error may burn the whole
+            // pool instead of ending the run unanswered.
             if (
               !sawVisibleOutput &&
               !hasTerminalVisibleOutput &&
               event.reason === "error" &&
               !signalAborted() &&
-              state.isProviderFailure(event.error) &&
-              (requestLimitTooSmall ||
-                isRetryableProviderUnavailable(event.error) ||
-                isModelCredentialRejected(event.error))
+              state.isProviderFailure(event.error)
             ) {
               state.primaryFailure ??= sanitizeProviderError(
                 target.config.provider,

@@ -398,14 +398,24 @@ describe("Pi runtime transient model retries", () => {
     "permission denied; terminated",
     "context_length_exceeded; 503 overloaded",
     "bad request; terminated",
-  ])("does not retry or switch on %s", async (error) => {
+  ])("switches to the backup on %s", async (error) => {
     providerState.stream.mockImplementation(() =>
       stream(primary, message(primary, [], "error", error)),
     );
-    await expect(
-      run(request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }])),
-    ).rejects.toThrow(error);
-    expect(providerState.stream).toHaveBeenCalledTimes(1);
+    const thrown = await run(
+      request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]),
+    ).catch((error: Error) => error);
+    const diagnostic = JSON.parse(thrown.message);
+    expect(diagnostic.primaryError).toBe(error);
+    expect(diagnostic.backups).toEqual([
+      {
+        provider: backupA.provider,
+        modelId: backupA.id,
+        status: "failed",
+        reason: error,
+      },
+    ]);
+    expect(providerState.stream).toHaveBeenCalledTimes(2);
     expect(providerState.delay).not.toHaveBeenCalled();
   });
 
@@ -976,20 +986,26 @@ describe("Pi runtime ordered model fallback", () => {
     expect(providerState.delay).not.toHaveBeenCalled();
   });
 
-  it.each(["400 invalid_request_error: Invalid parameter: credits must be a positive integer."])(
-    "does not switch to the backup on a non-exhaustion 4xx: %s",
-    async (error) => {
-      providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
-        stream(target, message(target, [], "error", error)),
-      );
-      await expect(
-        run(request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }])),
-      ).rejects.toThrow();
-      expect(providerState.stream.mock.calls.map(([target]) => target.provider)).toEqual([
-        primary.provider,
-      ]);
-    },
-  );
+  it.each([
+    "400 invalid_request_error: Invalid parameter: credits must be a positive integer.",
+    '400 {"error":{"type":"invalid_request_error","message":"Model not found"}}',
+    "403 Forbidden",
+  ])("switches to the backup on a non-exhaustion 4xx: %s", async (error) => {
+    providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
+      target.provider === primary.provider
+        ? stream(target, message(target, [], "error", error))
+        : stream(target, message(target, [{ type: "text", text: "backup answer" }], "stop")),
+    );
+    const events = await run(
+      request([{ provider: backupA.provider, id: backupA.id, apiKey: "backup-key" }]),
+    );
+    expect(events.at(-1)).toEqual({ type: "done", text: "backup answer" });
+    expect(providerState.stream.mock.calls.map(([target]) => target.provider)).toEqual([
+      primary.provider,
+      backupA.provider,
+    ]);
+    expect(providerState.delay).not.toHaveBeenCalled();
+  });
 
   it("retries a short usage window on the same model without a backup", async () => {
     providerState.stream
@@ -2037,7 +2053,20 @@ describe("Pi runtime ordered model fallback", () => {
           );
         return stream(target, message(target, [], "error", "400 Invalid request"));
       });
-      await expect(run(input)).rejects.toThrow(/^400 Invalid request$/);
+      const thrown = await run(input).catch((error: Error) => error);
+      const diagnostic = JSON.parse(thrown.message);
+      expect(diagnostic.primaryError).toBe("400 Invalid request");
+      expect(diagnostic.backups).toEqual([
+        {
+          provider: backupA.provider,
+          modelId: backupA.id,
+          status: recovered === "backup" ? "failed" : "skipped",
+          reason:
+            recovered === "backup"
+              ? "400 Invalid request"
+              : "No credential is available for the backup model.",
+        },
+      ]);
       expect(calls).toBe(3);
       expect(input.executeTool).toHaveBeenCalledTimes(1);
     },
@@ -2093,7 +2122,7 @@ describe("Pi runtime ordered model fallback", () => {
     });
   });
 
-  it("does not claim exhaustion when an error leaves an untried backup", async () => {
+  it("walks the whole chain after a 400 and reports each attempt", async () => {
     providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
       stream(
         target,
@@ -2111,8 +2140,23 @@ describe("Pi runtime ordered model fallback", () => {
         { provider: backupB.provider, id: backupB.id, apiKey: "fake-backup-b" },
       ]),
     ).catch((error: Error) => error);
-    expect((error as Error).message).toBe("400 Invalid request");
-    expect(providerState.stream).toHaveBeenCalledTimes(2);
+    const diagnostic = JSON.parse((error as Error).message);
+    expect(diagnostic.primaryError).toBe("429 quota exhausted");
+    expect(diagnostic.backups).toEqual([
+      {
+        provider: backupA.provider,
+        modelId: backupA.id,
+        status: "failed",
+        reason: "400 Invalid request",
+      },
+      {
+        provider: backupB.provider,
+        modelId: backupB.id,
+        status: "failed",
+        reason: "400 Invalid request",
+      },
+    ]);
+    expect(providerState.stream).toHaveBeenCalledTimes(3);
   });
 
   it("tries each backup once in order, then retries the last before surfacing exhaustion", async () => {
@@ -3234,7 +3278,7 @@ describe("Pi runtime fallback error classes and mid-run switches", () => {
   });
 
   it.each([["403 forbidden", "403 Forbidden"]])(
-    "does not switch to the backup on %s",
+    "switches to the backup on %s",
     async (_name, error) => {
       providerState.stream.mockImplementation((target: Model<"openai-completions">) =>
         stream(target, message(target, [], "error", error)),
@@ -3242,7 +3286,7 @@ describe("Pi runtime fallback error classes and mid-run switches", () => {
 
       await expect(run(request(backups()))).rejects.toThrow();
 
-      expect(providers()).toEqual([primary.provider]);
+      expect(providers()).toEqual([primary.provider, backupA.provider]);
     },
   );
 
