@@ -1,4 +1,8 @@
-import type { AgentSkillCatalogEntry, ModelRoleChoice } from "@rakazo_mickvvw/contracts";
+import type {
+  AgentSkillCatalogEntry,
+  BotModelEntry,
+  ModelRoleChoice,
+} from "@rakazo_mickvvw/contracts";
 import { primaryBotModel } from "@rakazo_mickvvw/contracts";
 import type { ShareCardTextOverride } from "@rakazo_mickvvw/core";
 import {
@@ -115,6 +119,7 @@ import { ThreadCustomSettingsSheet } from "./thread-custom-settings-sheet";
 import { ThreadFavoritesSheet } from "./thread-favorites-sheet";
 import { useThreadHeader } from "./thread-header";
 import { LoadEarlierButton, ThreadWorkingFooter } from "./thread-list-controls";
+import type { MediaModelListKey } from "./thread-media-model-sheet";
 import { ThreadMediaModelSheet } from "./thread-media-model-sheet";
 import { ThreadMessageList } from "./thread-message-list";
 import type { ThreadModelPickerRole, ThreadModelSave } from "./thread-model-picker-sheet";
@@ -368,6 +373,42 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
     [groupId, inGroup, locale, mentionBots, mentionConnectors, mentionGroups, mentionRoutines],
   );
   const currentBot = botId ? mentionBots.find((bot) => bot.id === botId) : undefined;
+  /**
+   * Drops one fallback from one of the media sheet's ordered lists; the
+   * connection keeps the model, so it stays pickable elsewhere.
+   */
+  const removeBotModel = (list: MediaModelListKey, entry: BotModelEntry) => {
+    if (!botId) return;
+    const field =
+      list === "video"
+        ? "videoModels"
+        : list === "image"
+          ? "imageModels"
+          : list === "videoEdit"
+            ? "videoEditModels"
+            : list === "imageEdit"
+              ? "imageEditModels"
+              : "translationModels";
+    const current = currentBot?.[field] ?? [];
+    const next = current.filter(
+      (item) => !(item.provider === entry.provider && item.model === entry.model),
+    );
+    if (next.length === current.length) return;
+    void rpc("bots/update", {
+      botId,
+      ...(list === "video"
+        ? { videoModels: next }
+        : list === "image"
+          ? { imageModels: next }
+          : list === "videoEdit"
+            ? { videoEditModels: next }
+            : list === "imageEdit"
+              ? { imageEditModels: next }
+              : { translationModels: next }),
+    })
+      .then(() => refreshMentionBots())
+      .catch(() => undefined);
+  };
   const templatesQuery = usePromptTemplates();
   const personaName = currentPersonaName(currentBot, templatesQuery.data);
   useEffect(() => {
@@ -1480,6 +1521,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
               setMediaOpen(false);
               setSheetRole("translation");
             }}
+            onRemoveModel={removeBotModel}
             onTranslationSourceChange={(source) => {
               if (!botId) return;
               void rpc("bots/update", { botId, translationSourceLanguage: source })
