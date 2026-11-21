@@ -116,6 +116,20 @@ describe("transient model errors", () => {
     ["400 out of credits", { status: 400, message: "Your account is out of credits." }],
     ["403 quota exceeded", { status: 403, message: "Quota exceeded for this account." }],
     ["402 credits exhausted", { status: 402, message: "Your credits have been exhausted." }],
+    [
+      "Chinese content-filter balance failure",
+      {
+        status: 400,
+        type: "content_filter",
+        message: "内容审核未能完成（余额不足，请充值后再试）",
+      },
+    ],
+    [
+      "Chinese content-filter balance failure as text",
+      '400 {"error":{"type":"content_filter","message":"内容审核未能完成（余额不足，请充值后再试） (request id: 202611210057235977132398268d9d6f5EoHYyO)"},"type":"error"}',
+    ],
+    ["Chinese quota exhausted 402", { status: 402, message: "额度已用完，请充值后重试" }],
+    ["Chinese arrears 403", { status: 403, message: "账户欠费，请充值" }],
   ])("does not retry the same model on exhaustion: %s", (_label, error) => {
     expect(isRetryableProviderUnavailable(error)).toBe(true);
     expect(isTransientModelError(error)).toBe(false);
@@ -337,6 +351,19 @@ describe("provider availability classification", () => {
       { status: 400, message: "Your credit balance is too low." },
       true,
     ],
+    ["Chinese balance 400", { status: 400, message: "余额不足，请充值后再试" }, true],
+    [
+      "Chinese content rejection without balance wording",
+      { status: 400, type: "content_filter", message: "内容违规，请求被拒绝" },
+      false,
+    ],
+    ["Chinese balance lookup failure", { status: 400, message: "无法查询余额" }, false],
+    [
+      "Chinese validation mentioning balance",
+      { status: 400, message: "参数错误：余额字段必须是正整数" },
+      false,
+    ],
+    ["Chinese balance 401", { status: 401, message: "余额不足，请充值" }, false],
     [
       "403 insufficient balance",
       { status: 403, message: "Insufficient balance. Please top up." },
