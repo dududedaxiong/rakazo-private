@@ -19,7 +19,7 @@ Status: implemented
 
 1. 网页产物页行与卡片：每行/每卡加一个下载图标按钮，放删除按钮旁边。下载走详情页同一条路——`rpc.artifacts.getById` 取内容、`decodeArtifactBase64`、`downloadArtifactBytes`（不用 `downloadArtifact(target, …)`：列表项的 target 要拼 bot/group，拼错会在服务端吃 `IsolationError`；`getById` 是空间级读取，不用 target）。桌面沿用悬停显示，窄屏（`max-md`）下载按钮常显——触屏没有悬停，只做悬停才显示等于没有。失败时在页面的错误行显示 `Could not download {name}. Try again.`（画廊已有的文案）。
 2. 网页画廊格子：每格右上角加下载图标按钮，与选中勾同一位置、选中模式下隐藏。下载走画廊已有的 `downloadArtifact(target, …)`（格子已算好 `target`，与预览弹窗同一条路）。按钮是格子按钮的兄弟节点，不是嵌套——点下载不触发打开预览。桌面悬停显示，窄屏常显。
-3. App 制品页列表行：每行末尾加下载图标按钮（`NativeSymbol` 的 `square.and.arrow.down` / `download-outline`，与详情页同一图标）。点它直接下载，不进详情；嵌套在行 `Pressable` 里的内层 `Pressable` 只触发自己，不会冒泡进详情。
+3. App 制品页列表行：每行末尾加下载图标按钮（`NativeSymbol` 的 `square.and.arrow.down` / `download-outline`，与详情页同一图标）。点它直接下载，不进详情；嵌套在行 `Pressable` 里的内层 `Pressable` 只触发自己，不会冒泡进详情。`downloadMobileArtifact` 在制品页是点按时才动态 `import("../lib/artifact-open")`，不在屏挂载时静态引入——`artifact-open` 会拉进原生文件系统模块，而 `bot-profile.test.tsx`（唯一引入制品屏的测试）不 mock 它，静态引入会让整个测试文件在 jsdom 里以 `__DEV__ is not defined` 载入失败。画廊屏本来就静态引入 `artifact-open`（图片预览要用），不用改。
 4. App 详情页：下载按钮扩展到所有类型。`saveGeneratedMedia` 本来就按 mime 分流（非图片/视频进“文件”文件夹），`download` 回调不用改；只改门：`showDownloadButton = isMedia && showDownload !== "0"` 改成内容就绪且 `showDownload !== "0"`。机器人设置 `showDownload: "0"` 关掉时仍不显示（从聊天打开的媒体详情开关语义不变）。失败提示从 `Could not save media` 换成已有的 `Could not save {name}. Try again.`——前者对非媒体类型是错文案，后者画廊已在用，不新增文案。
 5. App 画廊格子：每格右上角加下载图标按钮，选中模式下隐藏（勾占那个角）。点它直接下载该项，不进详情。
 
@@ -47,6 +47,7 @@ Status: implemented
 - `apps/web/src/pages/Gallery.test.tsx`：新增 2 个测试——格子下载（点下载调 `downloadArtifact`，不打开预览）、格子下载失败显示错误。
 - `apps/mobile/lib/artifact-open.test.ts`：新增 2 个测试——`downloadMobileArtifact` 把 pdf 存进 `Rakazo/文件`、图片存进 `Rakazo/图片`，均不调分享面板。
 - 六个相关测试文件共 66 个测试全过（`bot-model-pools` 三处见下、Artifacts、Gallery、`artifact-open`）。Biome 干净。
+- 全量 `apps/mobile/lib` 套件：4135 通过 / 22 失败，失败集中在 6 个未动的文件（voice-settings、settings-sheet、model-settings、account-screen、bot-profile、inbox-archived），与基线一致。其中 bot-profile 有两段历史：①本批最初的静态引入曾让它整文件载入失败（`__DEV__ is not defined`），已改成动态引入修好；②它另有 5 个失败是旧问题——测试的 `./artifacts` mock 缺 `matchesArtifactCategory` 导出，而制品屏自产物分类功能起就调它，已用改动前代码复核：同一 5 个失败，不由本批引起。
 - 未在真机上点过下载按钮；未跑桌面 Playwright（按仓库规矩，e2e 走 CI）；三个改动的 App 页面（`artifacts.tsx`、`artifact.tsx`、`gallery.tsx`）没有现成的测试文件，下载路径由 `artifact-open.test.ts` 覆盖。
 
 ## Follow-ups in the same batch

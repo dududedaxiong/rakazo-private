@@ -26,7 +26,6 @@ import { NativeSymbol } from "../components/native-symbol";
 import { formatActivityRelativeTime } from "../lib/activity";
 import { rpc } from "../lib/api";
 import { mobileTokens } from "../lib/appearance";
-import { downloadMobileArtifact } from "../lib/artifact-open";
 import type { MobileArtifactSummary } from "../lib/artifacts";
 import {
   listSpaceArtifacts,
@@ -252,6 +251,9 @@ export default function ArtifactsScreen() {
   const downloadItem = useCallback(async (item: MobileArtifactSummary) => {
     setDownloadingId(item.id);
     try {
+      // Loaded on tap, not at screen mount: artifact-open pulls in the
+      // native file-system modules, which the bot-profile tests do not mock.
+      const { downloadMobileArtifact } = await import("../lib/artifact-open");
       const saved = await downloadMobileArtifact(item.id);
       Alert.alert(t("Saved {name} locally", { name: saved.name }));
     } catch {
