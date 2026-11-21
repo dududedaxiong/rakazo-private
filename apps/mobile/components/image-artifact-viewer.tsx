@@ -13,12 +13,16 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { scheduleOnRN } from "react-native-worklets";
 import { mobileTokens } from "../lib/appearance";
 import type { MobileArtifactTarget } from "../lib/artifact-open";
-import { imageArtifactPreview, imageArtifactUri, shareLocalFile } from "../lib/artifact-open";
+import {
+  imageArtifactPreview,
+  imageArtifactUri,
+  saveDownloadedFile,
+  shareLocalFile,
+} from "../lib/artifact-open";
 import { useI18n } from "../lib/i18n";
 import { imageDismissBackdropOpacity, shouldDismissImage } from "../lib/image-dismiss";
 import type { ImageSize } from "../lib/inline-image";
 import { fitImageSize } from "../lib/inline-image";
-import { saveGeneratedMedia } from "../lib/media-folders";
 import { iosAtLeast } from "../lib/native-controls";
 import { useMediaRegenerate } from "../lib/use-media-regenerate";
 import { errorText } from "../lib/user-error";
@@ -313,15 +317,17 @@ export function ImageArtifactViewer({
       .then((uri) => shareLocalFile(uri, target.mimeType, target.name))
       .catch((error) => Alert.alert(t("Could not share image"), errorText(error, t("Try again."))));
 
-  // Download saves the image into the App's local folder, under the bot's
-  // image directory, instead of only keeping it in the cache.
+  // Download saves the image where the user can find it on the device
+  // (Android: the shared Download folder; iOS: the app's own folder),
+  // instead of only keeping it in the cache.
   const download = () =>
     void imageArtifactUri(requestTarget(), activeArtifactId, target.mimeType)
-      .then((uri) => {
-        saveGeneratedMedia(uri, target.mimeType, target.name, {
+      .then(async (uri) => {
+        const saved = await saveDownloadedFile(uri, target.mimeType, target.name, {
           imageSaveDirectory: saveDirectory ?? null,
         });
-        Alert.alert(t("Saved {name} locally", { name: target.name }));
+        if (!saved) return;
+        Alert.alert(t("Saved {name} locally", { name: saved.name }));
       })
       .catch((error) => Alert.alert(t("Could not save image"), errorText(error, t("Try again."))));
 

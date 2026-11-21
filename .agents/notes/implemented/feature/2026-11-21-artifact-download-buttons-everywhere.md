@@ -76,3 +76,38 @@ Status: implemented
 
 要做就得动接口：`MediaVideoJob` failed 变体加原因字段、各提供方 `pollVideo` 把上游任务状态里的失败信息带回来（须先确认智谱等上游任务查询接口到底返回什么失败信息，目前未核实）、`generateMediaFromTool` 的 settle/`onSettled` 签名改成能传原因、`pollMediaVideo` 的失败消息改用它，再加各层测试；上游原始错误文本还要过 `summarizeMediaRunError` 那套“不回显 key 片段”的处理。属于轮询接口/响应结构改动，工作量留给单独一批评估，本批不做、不拖下载按钮这批。
 
+
+### 下载落到设备共享目录（2026-11-21 跟进，本批的后续）
+
+用户要求：下载要落到电脑/手机上。网页端已经是真的浏览器下载（blob + `a[download]`，进浏览器下载目录，不用动）；App 端之前是存进 App 自己的私有文件夹（`Paths.document` 下的 `Rakazo/图片|视频|文件`），手机文件管理器里看不到。
+
+改法（App-only，服务端无变化）：
+
+- 新增 `apps/mobile/lib/gallery-export.ts` 的 `exportSingleFile(bytes, fileName, mimeType)`：安卓走 SAF，复用画廊打 zip 同一个授权目录（`GALLERY_EXPORT_DIR_KEY`，第一次下载还没授权时走同一套授权流程，只问一次），单文件与 zip 平放在 `Download/Rakazo/`，不再分图片/视频/文件子目录；同名文件加 ` (2)`、` (3)` 后缀去重（与 `saveGeneratedMedia` 同一套命名规则），不像 zip 那样替换已有文件。失败映射沿用 `GalleryExportError`（`cancelled`/`write_failed`）。
+- 新增 `apps/mobile/lib/artifact-open.ts` 的 `saveDownloadedFile(sourceUri, mimeType, name, settings?)`：安卓走 `exportSingleFile`（动态引入 `gallery-export`，不污染静态模块图），返回去重后的真名与显示路径；用户在文件夹选择器里点返回时返回 null（不弹错）；iOS 没有共享 Download 目录，保持现状（`saveGeneratedMedia` 进 App 的 Documents，文件 App 里可见）。
+- 三处用户下载动作都改走它：`downloadMobileArtifact`（列表行与画廊格子）、详情页 `download`（`app/artifact.tsx`）、图片全屏查看器 `download`（`image-artifact-viewer.tsx`）。四个调用点在取消时直接返回，不弹“保存失败”。
+- 不动的：`share-card-media.ts` 调 `saveGeneratedMedia` 是生成分享卡图片，不是用户下载；网页端不动；视频播放器本身无下载按钮。
+
+测试：`artifact-open.test.ts` 新增 3 个（安卓走共享目录且不调分享面板、去重后名字原样返回、取消返回 null；既有 2 个 iOS 路径测试保留，默认平台改为 iOS）；新增 `gallery-export.test.ts` 6 个（单文件写盘、两次去重、取消、`write_failed` 映射、zip 同名仍替换）。相关三文件 38/38 过；Biome 干净。
+
+### 保存目录改成设置项（2026-11-21 再跟进，取代上节的写死目录）
+
+用户改主意：不要写死 Download/Rakazo，杂项设置里加一行「保存目录」，默认 Download/Rakazo，用户能改。网页端不做——不是另起一批，是浏览器控制保存位置，App 不用管（用户 2026-11-21 13:18 亲口：电脑端是浏览器控制，不用管）。
+
+改法（App-only，服务端无变化；上节的下载落点逻辑不动，只把“写死目录”换成“设置里的目录”）：
+
+- 设置入口：杂项设置页（账户页 AI 数据共享后面那个入口）最下面加一行「保存目录」，显示当前目录，点它用 SAF 文件夹选择器改目录（复用画廊导出那套授权机制，但能选任意目录，不只 Download/Rakazo）。复用已有文案 `Save directory`（中文「保存目录」），不新增翻译。行只在安卓显示：iOS 没有共享 Download 目录，设置项不适用。
+- 存哪：不进服务端同步的杂项设置。SAF 授权是跟设备的，同步到别的手机会失效；存的就是授权本身——画廊导出已有的 SecureStore key（`GALLERY_EXPORT_DIR_KEY`），改目录就是换授权。设置页只负责显示与改，不另建存储。
+- 生效范围：下载动作与画廊 zip 本来就读同一个 key，改完设置下一次下载/打 zip 就进新目录，不用另写生效逻辑。默认仍是 Download/Rakazo：没选过时行显示默认，第一次下载走原有授权流程。
+- 显示诚实：行上显示的是所选目录的设备路径；所选目录不在主存储时（例如 SD 卡），`safDisplayPath` 取不到路径，新增 `safFolderLabel` 取文件夹名兜底——行绝不能把已选的目录显示成默认。
+- `prompt-template-files.ts` 新增 `storedExportDirectory`（读已存授权）与 `pickExportDirectory`（改目录专用、每次都弹选择器，取消返回 null 不报错）；`safExportDirectory` 的读授权改走前者。`gallery-export.ts` 新增 `downloadDirectoryDisplay`（行显示用）与 `pickDownloadDirectory`（行点选用）及默认常量 `DOWNLOAD_DIRECTORY_DEFAULT`。
+
+否掉的：
+
+- 另建一个 key 只给单文件下载、zip 留在原目录：否掉。用户说的“同一个地方”就是同一个目录；两个 key 会让设置行与 zip 落点各说各话，改设置改不到 zip。
+- 把目录选择存进服务端同步的杂项设置：否掉。SAF 授权跟设备，换手机后存的 URI 在新设备上无效，同步过去是坏数据。
+- iOS 也显示一行、点开走文件夹选择器：否掉。iOS 没有共享 Download 目录，选了也写不进去；保持现状（Documents，文件 App 里可见）。
+
+测试：`prompt-template-files.test.ts` 新增 6 个（`safFolderLabel` 主存储路径、SD 卡文件夹名、不可解 URI；`storedExportDirectory`/`pickExportDirectory` 记住授权、取消不改旧目录）；`gallery-export.test.ts` 新增 4 个（没选过显示默认、已选显示所选、改目录返回新标签、取消返回 null）。相关三文件 48/48 过；Biome 干净。
+- 全量 `apps/mobile/lib` 套件：4202 通过 / 27 失败，失败集中在 6 个未动的文件（voice-settings 17、settings-sheet 1、model-settings 1、account-screen 2、bot-profile 5、inbox-archived 1），与基线一致——本批改动前先跑过同一套件复核：其余 5 个文件 22 个失败 + bot-profile 5 个失败，数字对得上，无新增回归。
+- 未在真机上点过设置行（无安卓真机/模拟器）；杂项设置页本身没有测试文件，行由 lib 层测试覆盖。

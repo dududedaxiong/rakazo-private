@@ -217,6 +217,7 @@ export default function GalleryScreen() {
     setDownloadingId(item.id);
     try {
       const saved = await downloadMobileArtifact(item.id);
+      if (!saved) return;
       Alert.alert(t("Saved {name} locally", { name: saved.name }));
     } catch {
       Alert.alert(t("Could not save {name}. Try again.", { name: item.name }));

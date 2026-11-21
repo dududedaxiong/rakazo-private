@@ -91,8 +91,11 @@ import type { PromptTemplate } from "@rakazo_mickvvw/contracts";
 import {
   exportPromptTemplates,
   PromptTemplateFileError,
+  pickExportDirectory,
   pickPromptTemplateFile,
   safDisplayPath,
+  safFolderLabel,
+  storedExportDirectory,
 } from "./prompt-template-files";
 
 const template = (overrides: Partial<PromptTemplate> = {}): PromptTemplate => ({
@@ -118,6 +121,58 @@ describe("safDisplayPath", () => {
   it("returns null when the folder is not on primary storage", () => {
     expect(safDisplayPath("content://com.example/tree/1234%3ADownload")).toBeNull();
     expect(safDisplayPath("not a uri %")).toBeNull();
+  });
+});
+
+describe("safFolderLabel", () => {
+  it("prefers the device path on primary storage", () => {
+    expect(
+      safFolderLabel(
+        "content://com.android.externalstorage.documents/tree/primary%3ADownload%2FRakazo",
+      ),
+    ).toBe("Download/Rakazo");
+  });
+
+  it("falls back to the folder name off primary storage", () => {
+    expect(safFolderLabel("content://com.example/tree/1234%3AMusic")).toBe("Music");
+  });
+
+  it("never falls back to a folder it did not pick", () => {
+    expect(safFolderLabel("not a uri %")).toBe("…");
+  });
+});
+
+describe("storedExportDirectory and pickExportDirectory", () => {
+  beforeEach(() => {
+    io.storedDir = null;
+    io.pickerGranted = true;
+  });
+
+  it("returns the remembered folder, or null before the first pick", async () => {
+    await expect(storedExportDirectory("rakazo.test_dir")).resolves.toBeNull();
+    io.storedDir = io.pickerDir;
+    await expect(storedExportDirectory("rakazo.test_dir")).resolves.toBe(io.pickerDir);
+  });
+
+  it("asks at Download and remembers the new grant", async () => {
+    const { StorageAccessFramework } = await import("expo-file-system/legacy");
+    await expect(pickExportDirectory(StorageAccessFramework, "rakazo.test_dir")).resolves.toBe(
+      io.pickerDir,
+    );
+    expect(StorageAccessFramework.requestDirectoryPermissionsAsync).toHaveBeenCalledWith(
+      "content://root/Download",
+    );
+    expect(io.storedDir).toBe(io.pickerDir);
+  });
+
+  it("returns null when the user backs out and keeps the old folder", async () => {
+    io.storedDir = io.pickerDir;
+    io.pickerGranted = false;
+    const { StorageAccessFramework } = await import("expo-file-system/legacy");
+    await expect(
+      pickExportDirectory(StorageAccessFramework, "rakazo.test_dir"),
+    ).resolves.toBeNull();
+    expect(io.storedDir).toBe(io.pickerDir);
   });
 });
 

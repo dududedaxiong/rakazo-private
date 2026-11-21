@@ -4,6 +4,7 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -88,6 +89,10 @@ export default function MiscSettingsScreen() {
   const [settings, setSettings] = useState<MiscSettings | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Device-local only: the SAF grant is per device, so this never goes
+  // through the synced misc settings above.
+  const [downloadDir, setDownloadDir] = useState("Download/Rakazo");
+  const [dirBusy, setDirBusy] = useState(false);
   const saveQueue = useRef<ReturnType<typeof createQueuedSave<MiscSettings>> | null>(null);
 
   const load = useCallback(async () => {
@@ -105,6 +110,35 @@ export default function MiscSettingsScreen() {
       void load();
     }, [load]),
   );
+
+  const loadDownloadDir = useCallback(async () => {
+    if (Platform.OS !== "android") return;
+    try {
+      const { downloadDirectoryDisplay } = await import("../../lib/gallery-export");
+      setDownloadDir(await downloadDirectoryDisplay());
+    } catch {
+      // Keeps the default label; the next download asks for the folder.
+    }
+  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      void loadDownloadDir();
+    }, [loadDownloadDir]),
+  );
+
+  async function pickDirectory() {
+    if (dirBusy) return;
+    setDirBusy(true);
+    try {
+      const { pickDownloadDirectory } = await import("../../lib/gallery-export");
+      const picked = await pickDownloadDirectory();
+      if (picked) setDownloadDir(picked);
+    } catch (cause) {
+      setSaveError(errorText(cause, t("Could not save settings")));
+    } finally {
+      setDirBusy(false);
+    }
+  }
 
   function updateSettings(next: MiscSettings) {
     if (!settings) return;
@@ -286,6 +320,18 @@ export default function MiscSettingsScreen() {
           }
         />
       </SettingsGroup>
+      {Platform.OS === "android" ? (
+        <SettingsGroup>
+          <SettingsRow
+            title={t("Save directory")}
+            value={downloadDir}
+            chevron="right"
+            leading={<NativeSymbol ios="folder" android="folder-outline" size={20} />}
+            onPress={() => void pickDirectory()}
+            dimmed={dirBusy}
+          />
+        </SettingsGroup>
+      ) : null}
       {saveError ? (
         <Text accessibilityRole="alert" style={styles.error}>
           {saveError}

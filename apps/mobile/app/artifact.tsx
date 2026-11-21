@@ -24,7 +24,7 @@ import { SandboxedHtmlPreview } from "../components/sandboxed-html-preview";
 import { VideoPreview } from "../components/video-preview";
 import { formatActivityRelativeTime } from "../lib/activity";
 import { mobileTokens } from "../lib/appearance";
-import { shareLocalFile, writeArtifactCacheFile } from "../lib/artifact-open";
+import { saveDownloadedFile, shareLocalFile, writeArtifactCacheFile } from "../lib/artifact-open";
 import {
   artifactThreadTarget,
   getArtifactById,
@@ -34,7 +34,6 @@ import {
 } from "../lib/artifacts";
 import { useFloatingHeaderInset } from "../lib/floating-header";
 import { t, useI18n } from "../lib/i18n";
-import { saveGeneratedMedia } from "../lib/media-folders";
 import { presentMessageActionSheet } from "../lib/message-action-sheet";
 import { native, useResolvedAppearance, useThemedStyles } from "../lib/native";
 import { iosAtLeast } from "../lib/native-controls";
@@ -241,11 +240,17 @@ export default function ArtifactDetailScreen() {
   const download = useCallback(async () => {
     if (content.status !== "ready") return;
     try {
-      saveGeneratedMedia(content.file.uri, content.artifact.mimeType, content.artifact.name, {
-        imageSaveDirectory: imageSaveDirectory ?? null,
-        videoSaveDirectory: videoSaveDirectory ?? null,
-      });
-      Alert.alert(t("Saved {name} locally", { name: content.artifact.name }));
+      const saved = await saveDownloadedFile(
+        content.file.uri,
+        content.artifact.mimeType,
+        content.artifact.name,
+        {
+          imageSaveDirectory: imageSaveDirectory ?? null,
+          videoSaveDirectory: videoSaveDirectory ?? null,
+        },
+      );
+      if (!saved) return;
+      Alert.alert(t("Saved {name} locally", { name: saved.name }));
     } catch {
       Alert.alert(t("Could not save {name}. Try again.", { name: content.artifact.name }));
     }
@@ -267,8 +272,8 @@ export default function ArtifactDetailScreen() {
     onNewArtifact: setSelectedVersionId,
   });
 
-  // Download is available for every file type (images and videos land in
-  // their own folders, everything else in the files folder); the toggles
+  // Download is available for every file type; Android saves into the
+  // shared Download folder, iOS into the app's own folder. The toggles
   // only switch it off. Documents and other files always keep Share.
   const isMedia =
     content.status === "ready" &&

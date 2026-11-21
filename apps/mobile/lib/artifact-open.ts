@@ -1,6 +1,6 @@
 import { Directory, File, Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
-import { Image } from "react-native";
+import { Image, Platform } from "react-native";
 import type { ApiRequestContext } from "./api";
 import { captureApiRequestContext, currentApiBase, rpc, selectedSpaceId } from "./api";
 import { artifactCacheSession } from "./artifact-cache-session";
@@ -9,6 +9,7 @@ import { ARTIFACT_DOWNLOAD_TIMEOUT_MS, getArtifactById } from "./artifacts";
 import { t } from "./i18n";
 import type { ImageSize } from "./inline-image";
 import { createKeyedPromiseCache } from "./inline-image";
+import type { MediaSaveSettings } from "./media-folders";
 import { saveGeneratedMedia } from "./media-folders";
 import { currentSessionGeneration, loadSessionToken } from "./session";
 
@@ -176,19 +177,47 @@ export async function openMobileArtifact(
 }
 
 /**
- * Download one artifact into the app's local folder (images, videos and other
- * files each land in their own folder); returns the saved file's name. Unlike
+ * Saves a downloaded artifact where the user can find it on the device.
+ * Android writes into the shared Download folder gallery zips use (asking
+ * once for the folder); iOS has no shared Download folder, so the file
+ * stays in the app's Documents folder as before. Returns the saved name
+ * (a clash gets a number suffix) and a display path (Android) or URI
+ * (iOS), or null when the user backs out of the folder picker. Unlike
+ * openMobileArtifact this never opens the share sheet.
+ */
+export async function saveDownloadedFile(
+  sourceUri: string,
+  mimeType: string,
+  name: string,
+  settings?: MediaSaveSettings | null,
+): Promise<{ name: string; uri: string } | null> {
+  if (Platform.OS === "android") {
+    // Loaded on demand: gallery-export pulls in the SAF and share modules.
+    const { exportSingleFile, GalleryExportError } = await import("./gallery-export");
+    try {
+      const file = new File(sourceUri);
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const saved = await exportSingleFile(bytes, name, mimeType);
+      return { name: saved.fileName, uri: saved.path };
+    } catch (error) {
+      if (error instanceof GalleryExportError && error.code === "cancelled") return null;
+      throw error;
+    }
+  }
+  return { name, uri: saveGeneratedMedia(sourceUri, mimeType, name, settings) };
+}
+
+/**
+ * Download one artifact to the device; returns the saved file's name and
+ * location, or null when the user backs out of the folder picker. Unlike
  * openMobileArtifact this never opens the share sheet.
  */
 export async function downloadMobileArtifact(
   artifactId: string,
-): Promise<{ name: string; uri: string }> {
+): Promise<{ name: string; uri: string } | null> {
   const artifact = await getArtifactById(artifactId);
   const file = writeArtifactCacheFile(artifact.id, artifact.mimeType, artifact.contentBase64);
-  return {
-    name: artifact.name,
-    uri: saveGeneratedMedia(file.uri, artifact.mimeType, artifact.name),
-  };
+  return saveDownloadedFile(file.uri, artifact.mimeType, artifact.name);
 }
 
 const imageArtifactUris = createKeyedPromiseCache<string>(async (key) => {

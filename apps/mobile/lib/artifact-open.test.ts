@@ -9,8 +9,10 @@ const state = vi.hoisted(() => ({
   apiBase: "https://api.example.test",
   userId: "user-a",
   token: "fake-token-a",
+  platform: "ios",
   getSize: vi.fn(),
   rpc: vi.fn(),
+  exportSingleFile: vi.fn(),
 }));
 vi.mock("expo-file-system", () => {
   class Node {
@@ -41,6 +43,9 @@ vi.mock("expo-file-system", () => {
     text() {
       return Promise.resolve(this.textSync());
     }
+    arrayBuffer() {
+      return Promise.resolve(new TextEncoder().encode(this.textSync()).buffer as ArrayBuffer);
+    }
     copySync() {}
   }
   class Directory extends Node {}
@@ -59,8 +64,24 @@ vi.mock("expo-secure-store", () => ({
     state.secure.set(key, value);
   }),
 }));
-vi.mock("react-native", () => ({ Image: { getSize: state.getSize } }));
+vi.mock("react-native", () => ({
+  Image: { getSize: state.getSize },
+  get Platform() {
+    return { OS: state.platform };
+  },
+}));
 vi.mock("expo-sharing", () => ({ isAvailableAsync: vi.fn(), shareAsync: vi.fn() }));
+vi.mock("./gallery-export", () => {
+  class GalleryExportError extends Error {
+    code: string;
+    constructor(code: string) {
+      super(code);
+      this.name = "GalleryExportError";
+      this.code = code;
+    }
+  }
+  return { exportSingleFile: state.exportSingleFile, GalleryExportError };
+});
 vi.mock("./i18n", () => ({ t: (value: string) => value }));
 vi.mock("./session", () => ({
   currentSessionGeneration: () => state.generation,
@@ -92,6 +113,8 @@ beforeEach(() => {
   state.apiBase = "https://api.example.test";
   state.userId = "user-a";
   state.token = "fake-token-a";
+  state.platform = "ios";
+  state.exportSingleFile.mockReset();
   state.rpc
     .mockReset()
     .mockImplementation(async (proc: string) =>
@@ -314,5 +337,75 @@ describe("artifact downloads", () => {
     const saved = await api.downloadMobileArtifact("art-10");
     expect(saved.uri).toBe("file:///document/Rakazo/图片/generated-shot.png");
     expect(Sharing.shareAsync).not.toHaveBeenCalled();
+  });
+
+  it("saves into the shared Download folder on Android", async () => {
+    state.platform = "android";
+    const api = await load();
+    state.rpc.mockImplementation(async (proc: string) => {
+      if (proc === "me") return { userId: state.userId };
+      if (proc === "artifacts/getById")
+        return {
+          id: "art-9",
+          name: "report.pdf",
+          mimeType: "application/pdf",
+          contentBase64: "aGk=",
+        };
+      throw new Error(`unexpected rpc ${proc}`);
+    });
+    state.exportSingleFile.mockResolvedValue({
+      path: "Download/Rakazo/report.pdf",
+      fileName: "report.pdf",
+    });
+    vi.mocked(Sharing.shareAsync).mockClear();
+    const saved = await api.downloadMobileArtifact("art-9");
+    expect(state.exportSingleFile).toHaveBeenCalledWith(
+      new TextEncoder().encode("aGk="),
+      "report.pdf",
+      "application/pdf",
+    );
+    expect(saved).toEqual({ name: "report.pdf", uri: "Download/Rakazo/report.pdf" });
+    expect(Sharing.shareAsync).not.toHaveBeenCalled();
+  });
+
+  it("keeps the de-duplicated name the Download folder returns", async () => {
+    state.platform = "android";
+    const api = await load();
+    state.rpc.mockImplementation(async (proc: string) => {
+      if (proc === "me") return { userId: state.userId };
+      if (proc === "artifacts/getById")
+        return {
+          id: "art-9",
+          name: "report.pdf",
+          mimeType: "application/pdf",
+          contentBase64: "aGk=",
+        };
+      throw new Error(`unexpected rpc ${proc}`);
+    });
+    state.exportSingleFile.mockResolvedValue({
+      path: "Download/Rakazo/report (2).pdf",
+      fileName: "report (2).pdf",
+    });
+    const saved = await api.downloadMobileArtifact("art-9");
+    expect(saved).toEqual({ name: "report (2).pdf", uri: "Download/Rakazo/report (2).pdf" });
+  });
+
+  it("returns null when the user backs out of the folder picker", async () => {
+    state.platform = "android";
+    const api = await load();
+    state.rpc.mockImplementation(async (proc: string) => {
+      if (proc === "me") return { userId: state.userId };
+      if (proc === "artifacts/getById")
+        return {
+          id: "art-9",
+          name: "report.pdf",
+          mimeType: "application/pdf",
+          contentBase64: "aGk=",
+        };
+      throw new Error(`unexpected rpc ${proc}`);
+    });
+    const { GalleryExportError } = await import("./gallery-export");
+    state.exportSingleFile.mockRejectedValue(new GalleryExportError("cancelled"));
+    await expect(api.downloadMobileArtifact("art-9")).resolves.toBeNull();
   });
 });

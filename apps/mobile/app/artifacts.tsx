@@ -255,6 +255,7 @@ export default function ArtifactsScreen() {
       // native file-system modules, which the bot-profile tests do not mock.
       const { downloadMobileArtifact } = await import("../lib/artifact-open");
       const saved = await downloadMobileArtifact(item.id);
+      if (!saved) return;
       Alert.alert(t("Saved {name} locally", { name: saved.name }));
     } catch {
       Alert.alert(t("Could not save {name}. Try again.", { name: item.name }));

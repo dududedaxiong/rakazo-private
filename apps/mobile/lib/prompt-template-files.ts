@@ -71,6 +71,26 @@ export function safDisplayPath(directoryUri: string): string | null {
   }
 }
 
+/**
+ * A short label for a granted SAF folder: its device path when it is on
+ * primary storage, otherwise the folder's own name (an SD-card folder's
+ * URI carries no primary path). Always a real label, never the default:
+ * a row showing this must not claim the default folder for one the user
+ * actually picked elsewhere.
+ */
+export function safFolderLabel(directoryUri: string): string {
+  const path = safDisplayPath(directoryUri);
+  if (path) return path;
+  try {
+    const tail = decodeURIComponent(directoryUri).split("/").filter(Boolean).pop() ?? "";
+    const leaf = tail.split(":").pop() ?? "";
+    if (leaf) return leaf;
+  } catch {
+    // Falls through to the placeholder below.
+  }
+  return "…";
+}
+
 export type Saf = typeof import("expo-file-system/legacy").StorageAccessFramework;
 
 export function loadSaf(): Promise<Saf> {
@@ -84,12 +104,7 @@ export function loadSaf(): Promise<Saf> {
  * picker is a cancel, not an error.
  */
 export async function safExportDirectory(saf: Saf, key: string): Promise<string> {
-  let stored: string | null = null;
-  try {
-    stored = await SecureStore.getItemAsync(key);
-  } catch {
-    stored = null;
-  }
+  const stored = await storedExportDirectory(key);
   if (stored) return stored;
   const initial = saf.getUriForDirectoryInRoot("Download");
   const permission = await saf.requestDirectoryPermissionsAsync(initial);
@@ -98,6 +113,37 @@ export async function safExportDirectory(saf: Saf, key: string): Promise<string>
     await SecureStore.setItemAsync(key, permission.directoryUri);
   } catch {
     // The export still lands; only the remember-me step failed.
+  }
+  return permission.directoryUri;
+}
+
+/**
+ * The folder remembered under `key`, if the user already picked one. The
+ * stored URI is the grant itself, so it lives on this device only and is
+ * never synced anywhere.
+ */
+export async function storedExportDirectory(key: string): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(key);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Always asks for the export folder, starting at Download, and remembers
+ * the new grant under `key`. Returns the picked folder URI, or null when
+ * the user backs out. Unlike safExportDirectory this never reuses the
+ * stored folder: it is the "change folder" path.
+ */
+export async function pickExportDirectory(saf: Saf, key: string): Promise<string | null> {
+  const initial = saf.getUriForDirectoryInRoot("Download");
+  const permission = await saf.requestDirectoryPermissionsAsync(initial);
+  if (!permission.granted) return null;
+  try {
+    await SecureStore.setItemAsync(key, permission.directoryUri);
+  } catch {
+    // The pick still stands; only the remember-me step failed.
   }
   return permission.directoryUri;
 }
