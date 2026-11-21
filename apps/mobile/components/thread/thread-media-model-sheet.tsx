@@ -2,6 +2,7 @@ import type { BotModelEntry, BotPromptPreset } from "@rakazo_mickvvw/contracts";
 import { BOT_MODEL_LIST_MAX } from "@rakazo_mickvvw/contracts";
 import { useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
 import { mobileTokens } from "../../lib/appearance";
 import { useI18n } from "../../lib/i18n";
 import type { MobileModel } from "../../lib/mobile-types";
@@ -23,6 +24,9 @@ import { PromptPresetSection } from "./prompt-preset-section";
 import type { ThreadModelSave } from "./thread-model-picker-sheet";
 
 export type MediaModelRole = "video" | "image";
+
+/** The five ordered model lists in the sheet; a removal names its list. */
+export type MediaModelListKey = "video" | "image" | "videoEdit" | "imageEdit" | "translation";
 
 /** Which generated-media action a display toggle controls. */
 export type MediaActionKind = "favorite" | "share" | "preview" | "download";
@@ -67,6 +71,7 @@ export function ThreadMediaModelSheet({
   onPickRole,
   onPickEditRole,
   onPickTranslation,
+  onRemoveModel,
   onTranslationSourceChange,
   onTranslationTargetChange,
   onToggleAutoTranslate,
@@ -119,6 +124,8 @@ export function ThreadMediaModelSheet({
   onPickRole: (role: MediaModelRole) => void;
   onPickEditRole: (role: MediaModelRole) => void;
   onPickTranslation: () => void;
+  /** Drops one fallback from its ordered list; the primary is never swiped. */
+  onRemoveModel: (list: MediaModelListKey, entry: BotModelEntry) => void;
   onTranslationSourceChange: (source: TranslationSourceLanguage) => void;
   onTranslationTargetChange: (target: TranslationTargetLanguage) => void;
   onToggleAutoTranslate: (value: boolean) => void;
@@ -158,12 +165,14 @@ export function ThreadMediaModelSheet({
    * any of them opens the model picker sheet for that list.
    */
   const modelList = ({
+    listKey,
     primary,
     models,
     modelLabel,
     addBackupLabel,
     onPick,
   }: {
+    listKey: MediaModelListKey;
     primary: ThreadModelSave;
     models: readonly BotModelEntry[] | null;
     modelLabel: string;
@@ -200,30 +209,64 @@ export function ThreadMediaModelSheet({
           <Chevron />
         </Pressable>
         {fallbacks.map(({ entry, number }) => (
-          <Pressable
+          <Swipeable
             key={`${entry.provider}:${entry.model}`}
-            accessibilityRole="button"
-            accessibilityLabel={`${t("Fallback")} ${number}: ${labelForEntry(entry)}`}
-            onPress={onPick}
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 12,
-              paddingHorizontal: 20,
-              paddingLeft: 36,
-              paddingVertical: 10,
-            }}
+            renderRightActions={() => (
+              <View
+                style={{
+                  width: 88,
+                  justifyContent: "center",
+                  backgroundColor: tokens.destructiveFill,
+                }}
+              >
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("Remove")}
+                  onPress={() => onRemoveModel(listKey, entry)}
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    paddingHorizontal: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: tokens.destructiveForeground,
+                      fontSize: 15,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {t("Remove")}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
           >
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: tokens.foreground, fontSize: 15 }}>
-                {number}. {labelForEntry(entry)}
-              </Text>
-              <Text style={{ color: tokens.mutedForeground, fontSize: 13, marginTop: 2 }}>
-                {t("Fallback")}
-              </Text>
-            </View>
-            <Chevron />
-          </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${t("Fallback")} ${number}: ${labelForEntry(entry)}`}
+              onPress={onPick}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                paddingHorizontal: 20,
+                paddingLeft: 36,
+                paddingVertical: 10,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: tokens.foreground, fontSize: 15 }}>
+                  {number}. {labelForEntry(entry)}
+                </Text>
+                <Text style={{ color: tokens.mutedForeground, fontSize: 13, marginTop: 2 }}>
+                  {t("Fallback")}
+                </Text>
+              </View>
+              <Chevron />
+            </Pressable>
+          </Swipeable>
         ))}
         {(models ?? []).length < BOT_MODEL_LIST_MAX ? (
           <Pressable
@@ -261,6 +304,7 @@ export function ThreadMediaModelSheet({
           </Text>
         </View>
         {modelList({
+          listKey: isVideo ? "video" : "image",
           primary: isVideo ? video : image,
           models: isVideo ? videoModels : imageModels,
           modelLabel: isVideo ? t("Video generation model") : t("Image generation model"),
@@ -268,6 +312,7 @@ export function ThreadMediaModelSheet({
           onPick: () => onPickRole(role),
         })}
         {modelList({
+          listKey: isVideo ? "videoEdit" : "imageEdit",
           primary: isVideo ? videoEdit : imageEdit,
           models: isVideo ? videoEditModels : imageEditModels,
           modelLabel: isVideo ? t("Video edit model") : t("Image edit model"),
@@ -327,6 +372,7 @@ export function ThreadMediaModelSheet({
         </Text>
       </View>
       {modelList({
+        listKey: "translation",
         primary: translation,
         models: translationModels,
         modelLabel: t("Translation model"),

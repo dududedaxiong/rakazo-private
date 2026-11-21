@@ -17,6 +17,7 @@ const picked = vi.hoisted(() => ({
   translationTarget: null as string | null,
   autoTranslate: null as boolean | null,
   translationActions: null as boolean | null,
+  removed: null as { list: string; entry: { provider: string; model: string } } | null,
 }));
 
 vi.mock("./appearance", () => ({
@@ -25,11 +26,24 @@ vi.mock("./appearance", () => ({
     mutedForeground: "#666666",
     border: "#dddddd",
     link: "#2f6bff",
+    destructiveFill: "#ff0000",
+    destructiveForeground: "#ffffff",
   }),
 }));
 // The sheet reads translation helpers, which import the API client; the
 // client pulls expo-secure-store, which needs the native __DEV__ global.
 vi.mock("./api", () => ({ rpc: vi.fn() }));
+// react-native-gesture-handler ships syntax the jsdom runner cannot parse; the
+// swipe action renders inline here so its button stays clickable in tests.
+vi.mock("react-native-gesture-handler", () => ({
+  Swipeable: ({
+    children,
+    renderRightActions,
+  }: {
+    children?: ReactNode;
+    renderRightActions?: () => ReactNode;
+  }) => createElement("div", null, children, renderRightActions?.()),
+}));
 vi.mock("./i18n", () => ({
   useI18n: () => ({
     t: (key: string, values?: Record<string, string | number>) =>
@@ -267,6 +281,9 @@ async function mountSheet(
         onPickTranslation={() => {
           picked.role = "translation";
         }}
+        onRemoveModel={(list, entry) => {
+          picked.removed = { list, entry };
+        }}
         onTranslationSourceChange={(source) => {
           picked.translationSource = source;
         }}
@@ -308,6 +325,7 @@ beforeEach(() => {
   picked.translationTarget = null;
   picked.autoTranslate = null;
   picked.translationActions = null;
+  picked.removed = null;
   node = document.createElement("div");
   document.body.append(node);
   root = createRoot(node);
@@ -428,6 +446,7 @@ describe("ThreadMediaModelSheet", () => {
           onPickRole={() => {}}
           onPickEditRole={() => {}}
           onPickTranslation={() => {}}
+          onRemoveModel={() => {}}
           onTranslationSourceChange={() => {}}
           onTranslationTargetChange={() => {}}
           onToggleAutoTranslate={() => {}}
@@ -458,6 +477,44 @@ describe("ThreadMediaModelSheet", () => {
     expect(fallbackRow).not.toBeNull();
     await act(async () => fallbackRow!.click());
     expect(picked.role).toBe("video");
+  });
+
+  it("reveals a Remove action on fallback rows and removes the tapped one", async () => {
+    await mountSheet({
+      videoModels: [
+        { provider: "provider-a", model: "video-a" },
+        { provider: "provider-a", model: "video-b" },
+        { provider: "provider-a", model: "video-c" },
+      ],
+    });
+    const removeButtons = [...node.querySelectorAll<HTMLButtonElement>('[aria-label="Remove"]')];
+    expect(removeButtons).toHaveLength(2);
+    await act(async () => removeButtons[0]!.click());
+    expect(picked.removed).toEqual({
+      list: "video",
+      entry: { provider: "provider-a", model: "video-b" },
+    });
+  });
+
+  it("offers no Remove action when a list has no fallbacks", async () => {
+    await mountSheet();
+    expect(node.querySelector('[aria-label="Remove"]')).toBeNull();
+  });
+
+  it("removes a translation fallback from its own list", async () => {
+    await mountSheet({
+      translationModels: [
+        { provider: "provider-a", model: "translation-a" },
+        { provider: "provider-a", model: "translation-b" },
+      ],
+    });
+    const removeButtons = [...node.querySelectorAll<HTMLButtonElement>('[aria-label="Remove"]')];
+    expect(removeButtons).toHaveLength(1);
+    await act(async () => removeButtons[0]!.click());
+    expect(picked.removed).toEqual({
+      list: "translation",
+      entry: { provider: "provider-a", model: "translation-b" },
+    });
   });
 
   it("shows the active preset and picks another on tap", async () => {
