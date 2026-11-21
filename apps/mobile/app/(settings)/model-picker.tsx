@@ -38,7 +38,7 @@ export default function SettingsModelPickerScreen() {
     setRemoveError(null);
     setRemovedKeys((prev) => new Set(prev).add(choice.key));
     try {
-      await removeModelFromConnection(target);
+      await removeModelFromConnection(target, t);
     } catch (err) {
       setRemovedKeys((prev) => {
         const next = new Set(prev);

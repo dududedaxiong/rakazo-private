@@ -45,6 +45,7 @@ import {
   runProviderTransaction,
 } from "@rakazo_mickvvw/db";
 import { createLogger, createTestSink, installLogger } from "@rakazo_mickvvw/logging";
+import type { Mock } from "vitest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { mainRole, withModelRoles } from "../../../packages/adapters/src/testing/model-roles.js";
 import { providerScopeKey } from "./connection-flows.js";
@@ -8279,6 +8280,9 @@ describe("openai-compatible enabled models", () => {
     userId?: string;
     role?: string;
     position?: number;
+    id?: string;
+    pool?: string | null;
+    credentialId?: string | null;
   };
   type PinWhere = {
     spaceId?: string;
@@ -8314,12 +8318,15 @@ describe("openai-compatible enabled models", () => {
             ? pin.modelId === where.modelId
             : !where.modelId?.notIn?.includes(pin.modelId)),
       )
-      .map(({ name, spaceId, modelId, role, position }) => ({
+      .map(({ name, spaceId, modelId, role, position, id, pool, credentialId }) => ({
         name,
         spaceId,
         modelId,
         role,
         position,
+        id,
+        pool,
+        credentialId,
       }));
   }
 
@@ -8329,6 +8336,7 @@ describe("openai-compatible enabled models", () => {
     backups?: string[];
     roleChoices?: string[];
     mainPrimary?: string;
+    spaceBackups?: string[];
   }) {
     // The main model and its fallbacks are role choices too.
     const roleChoices = [
@@ -8359,7 +8367,22 @@ describe("openai-compatible enabled models", () => {
       userModelRoleChoice: {
         findMany: vi.fn(async ({ where }: { where: PinWhere }) => matching(roleChoices, where)),
       },
-      spaceModelRoleChoice: { findMany: vi.fn(async () => []) },
+      // A Space that overrides the account's models; its rows live in their own table.
+      spaceModelRoleChoice: {
+        findMany: vi.fn(async ({ where }: { where: PinWhere }) =>
+          matching(
+            (options.spaceBackups ?? []).map((modelId) => ({
+              name: "",
+              modelId,
+              role: "main",
+              position: 1,
+              spaceId: "space-2",
+            })),
+            where,
+          ),
+        ),
+        deleteMany: vi.fn(async () => ({ count: 0 })),
+      },
     };
   }
 
@@ -8445,6 +8468,7 @@ describe("openai-compatible enabled models", () => {
     backups?: string[];
     roleChoices?: string[];
     mainPrimary?: string;
+    spaceBackups?: string[];
   }) {
     const state = {
       credential: {
@@ -8490,6 +8514,7 @@ describe("openai-compatible enabled models", () => {
             Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)),
           ),
         ),
+        updateMany: vi.fn(async () => ({ count: 0 })),
       },
       userModelPreference: preferenceStore(state),
       userModelCredential: {
@@ -8579,8 +8604,10 @@ describe("openai-compatible enabled models", () => {
         }),
         { prefix: "/rpc", context: { actor } },
       );
-      const payload = (await response.json()) as { json: { message?: string } };
-      return { status: response.status, message: payload.json.message };
+      const payload = (await response.json()) as {
+        json: { message?: string; data?: unknown };
+      };
+      return { status: response.status, message: payload.json.message, data: payload.json.data };
     };
     const enabledInDto = () =>
       modelCredentialDto(
@@ -8590,18 +8617,15 @@ describe("openai-compatible enabled models", () => {
     return { state, initialCredential, prisma, secrets, call, enabledInDto };
   }
 
-  const refusal = (names: string) => `In use by ${names}. Pick another model for them first.`;
+  const refusal = (names: string[]) =>
+    `正被${names.join("、")}使用，请先给${names.length === 1 ? "它" : "它们"}换个模型。`;
+  const lastModelHint = "这是该提供商最后一个模型，移除后将没有可用模型，请手动补一个。";
 
-  it.each([
-    ["bot", { bots: [{ name: "Ada", modelId: "m-b" }] }, "Ada"],
-    ["routine", { routines: [{ name: "Nightly digest", modelId: "m-b" }] }, "Nightly digest"],
-    ["backup", { backups: ["m-b"] }, "backup models"],
-    ["approval model", { roleChoices: ["m-b"] }, "backup models"],
-  ])("refuses a shrunk list while a %s pins the removed id", async (_kind, pins, names) => {
+  it("refuses a shrunk list while a routine pins the removed id", async () => {
     const { call, secrets, state, initialCredential, prisma } = fixture({
       plaintext: secretText(["m-a", "m-b"]),
       defaultModel: "m-a",
-      ...pins,
+      routines: [{ name: "Nightly digest", modelId: "m-b" }],
     });
 
     const result = await call("models/connect", {
@@ -8611,11 +8635,198 @@ describe("openai-compatible enabled models", () => {
       enabledModelIds: ["m-a"],
     });
 
-    expect(result).toEqual({ status: 400, message: refusal(names) });
+    expect(result).toEqual({ status: 400, message: refusal(["例行任务 Nightly digest"]) });
     expect(secrets.put).not.toHaveBeenCalled();
     expect(prisma.userModelCredential.update).not.toHaveBeenCalled();
     expect(prisma.userModelCredential.create).not.toHaveBeenCalled();
     expect(state.credential).toEqual(initialCredential);
+  });
+
+  it("refuses a routine pin even with confirmation", async () => {
+    const { call, secrets } = fixture({
+      plaintext: secretText(["m-a", "m-b"]),
+      defaultModel: "m-a",
+      routines: [{ name: "Nightly digest", modelId: "m-b" }],
+    });
+
+    const result = await call("models/connect", {
+      provider: compatible,
+      baseUrl,
+      modelId: "m-a",
+      enabledModelIds: ["m-a"],
+      confirmRemovePins: true,
+    });
+
+    expect(result).toEqual({ status: 400, message: refusal(["例行任务 Nightly digest"]) });
+    expect(secrets.put).not.toHaveBeenCalled();
+  });
+
+  it("returns a conflict naming the bot and main-pool role without confirmation", async () => {
+    const { call, secrets } = fixture({
+      plaintext: secretText(["m-a", "m-b"]),
+      defaultModel: "m-a",
+      bots: [{ id: "bot-ada", name: "Ada", modelId: "m-b" }],
+      roleChoices: ["m-b"],
+    });
+
+    const result = await call("models/connect", {
+      provider: compatible,
+      baseUrl,
+      modelId: "m-a",
+      enabledModelIds: ["m-a"],
+    });
+
+    // Removing m-b also empties the explicit list, so both lines apply.
+    expect(result.status).toBe(409);
+    expect(result.message).toBe(
+      `正被机器人 Ada、审批主模型使用。确认保存将移除这些占用，之后请手动重新设定对应模型。${lastModelHint}`,
+    );
+    expect(result.data).toEqual({
+      reason: "confirm_model_removal",
+      occupancies: [
+        { kind: "bot", name: "Ada" },
+        { kind: "role", role: "approval", pool: "main" },
+      ],
+      removesLastEnabledModel: true,
+    });
+    expect(secrets.put).not.toHaveBeenCalled();
+  });
+
+  it("returns a conflict with only the last-model hint when the list empties", async () => {
+    const { call, secrets } = fixture({
+      plaintext: secretText(["m-a", "m-b"]),
+      defaultModel: "m-a",
+    });
+
+    const result = await call("models/connect", {
+      provider: compatible,
+      baseUrl,
+      modelId: "m-a",
+      enabledModelIds: ["m-a"],
+    });
+
+    expect(result.status).toBe(409);
+    expect(result.message).toBe(lastModelHint);
+    expect(result.data).toEqual({
+      reason: "confirm_model_removal",
+      occupancies: [],
+      removesLastEnabledModel: true,
+    });
+    expect(secrets.put).not.toHaveBeenCalled();
+  });
+
+  it("saves with confirmation when the list empties", async () => {
+    const { call, secrets } = fixture({
+      plaintext: secretText(["m-a", "m-b"]),
+      defaultModel: "m-a",
+    });
+
+    const result = await call("models/connect", {
+      provider: compatible,
+      baseUrl,
+      modelId: "m-a",
+      enabledModelIds: ["m-a"],
+      confirmRemovePins: true,
+    });
+
+    expect(result.status).toBe(200);
+    expect(secrets.put).toHaveBeenCalledOnce();
+  });
+
+  it("drops an account backup-pool row for a removed id and saves", async () => {
+    const { call, secrets, prisma } = fixture({
+      plaintext: secretText(["m-a", "m-b", "m-c"]),
+      defaultModel: "m-a",
+      backups: ["m-b"],
+    });
+
+    const result = await call("models/connect", {
+      provider: compatible,
+      baseUrl,
+      modelId: "m-a",
+      enabledModelIds: ["m-a", "m-c"],
+    });
+
+    expect(result.status).toBe(200);
+    expect(secrets.put).toHaveBeenCalledOnce();
+    // The fixture's role table is attached at run time, so the cast mirrors lines 248/316.
+    const roleDeleteMany = (prisma.userModelRoleChoice as unknown as { deleteMany: Mock })
+      .deleteMany;
+    expect(roleDeleteMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: actor.userId,
+          role: "main",
+          modelId: "m-b",
+          credentialId: null,
+        }),
+      }),
+    );
+  });
+
+  it("drops a Space backup-pool row for a removed id and saves", async () => {
+    const { call, prisma } = fixture({
+      plaintext: secretText(["m-a", "m-b", "m-c"]),
+      defaultModel: "m-a",
+      spaceBackups: ["m-b"],
+    });
+
+    const result = await call("models/connect", {
+      provider: compatible,
+      baseUrl,
+      modelId: "m-a",
+      enabledModelIds: ["m-a", "m-c"],
+    });
+
+    expect(result.status).toBe(200);
+    expect(prisma.spaceModelRoleChoice.deleteMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          spaceId: "space-2",
+          userId: actor.userId,
+          role: "main",
+          modelId: "m-b",
+        }),
+      }),
+    );
+  });
+
+  it("drops main-pool rows and clears the bot model with confirmation and saves", async () => {
+    const { call, secrets, prisma } = fixture({
+      plaintext: secretText(["m-a", "m-b", "m-c"]),
+      defaultModel: "m-a",
+      bots: [{ id: "bot-ada", name: "Ada", modelId: "m-b" }],
+      roleChoices: ["m-b"],
+    });
+
+    const result = await call("models/connect", {
+      provider: compatible,
+      baseUrl,
+      modelId: "m-a",
+      enabledModelIds: ["m-a", "m-c"],
+      confirmRemovePins: true,
+    });
+
+    expect(result.status).toBe(200);
+    expect(secrets.put).toHaveBeenCalledOnce();
+    const roleDeleteMany = (prisma.userModelRoleChoice as unknown as { deleteMany: Mock })
+      .deleteMany;
+    expect(roleDeleteMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: actor.userId,
+          role: "approval",
+          modelId: "m-b",
+          credentialId: null,
+        }),
+      }),
+    );
+    expect(prisma.bot.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: { in: ["bot-ada"] } },
+        data: { modelId: null, modelProvider: null },
+      }),
+    );
   });
 
   it.each(["bot", "routine", "backup"])(
@@ -8644,7 +8855,7 @@ describe("openai-compatible enabled models", () => {
 
   it("does not let an archived bot pinned on a removed id block the save", async () => {
     const { call, secrets } = fixture({
-      plaintext: secretText(["m-a", "m-b"]),
+      plaintext: secretText(["m-a", "m-b", "m-c"]),
       defaultModel: "m-a",
       bots: [{ name: "Ada", modelId: "m-b", archived: true }],
     });
@@ -8653,7 +8864,7 @@ describe("openai-compatible enabled models", () => {
       provider: compatible,
       baseUrl,
       modelId: "m-a",
-      enabledModelIds: ["m-a"],
+      enabledModelIds: ["m-a", "m-c"],
     });
 
     expect(result.status).toBe(200);
@@ -8664,7 +8875,7 @@ describe("openai-compatible enabled models", () => {
     "ignores pins from routines on archived bots in %s",
     async (route) => {
       const { call } = fixture({
-        plaintext: route === "models/setDefault" ? secretText() : secretText(["m-a", "m-b"]),
+        plaintext: route === "models/setDefault" ? secretText() : secretText(["m-a", "m-b", "m-c"]),
         defaultModel: "m-a",
         routines: [{ name: "Paused routine", modelId: "m-a", archived: true }],
       });
@@ -8672,7 +8883,7 @@ describe("openai-compatible enabled models", () => {
         provider: compatible,
         baseUrl,
         modelId: "m-b",
-        enabledModelIds: ["m-b"],
+        enabledModelIds: route === "models/connect" ? ["m-b", "m-c"] : ["m-b"],
       });
       expect(result.status).toBe(200);
     },
@@ -8680,7 +8891,7 @@ describe("openai-compatible enabled models", () => {
 
   it("ignores another user's bot in the same space", async () => {
     const { call } = fixture({
-      plaintext: secretText(["m-a", "m-b"]),
+      plaintext: secretText(["m-a", "m-b", "m-c"]),
       defaultModel: "m-a",
       bots: [{ name: "Teammate bot", modelId: "m-b", userId: "user-2" }],
     });
@@ -8689,13 +8900,13 @@ describe("openai-compatible enabled models", () => {
       provider: compatible,
       baseUrl,
       modelId: "m-a",
-      enabledModelIds: ["m-a"],
+      enabledModelIds: ["m-a", "m-c"],
     });
 
     expect(result.status).toBe(200);
   });
 
-  it("refuses when the actor's bot in another space pins a removed id", async () => {
+  it("returns a conflict when the actor's bot in another space pins a removed id", async () => {
     const { call, secrets } = fixture({
       plaintext: secretText(["m-a", "m-b"]),
       defaultModel: "m-a",
@@ -8709,7 +8920,15 @@ describe("openai-compatible enabled models", () => {
       enabledModelIds: ["m-a"],
     });
 
-    expect(result).toEqual({ status: 400, message: refusal("Elsewhere") });
+    expect(result.status).toBe(409);
+    expect(result.message).toBe(
+      `正被机器人 Elsewhere使用。确认保存将移除这些占用，之后请手动重新设定对应模型。${lastModelHint}`,
+    );
+    expect(result.data).toEqual({
+      reason: "confirm_model_removal",
+      occupancies: [{ kind: "bot", name: "Elsewhere" }],
+      removesLastEnabledModel: true,
+    });
     expect(secrets.put).not.toHaveBeenCalled();
   });
 
@@ -8738,7 +8957,7 @@ describe("openai-compatible enabled models", () => {
     );
   });
 
-  it("refuses an old client's key replacement over an unreadable secret that would drop a pin", async () => {
+  it("returns a conflict for an old client's key replacement over an unreadable secret that would drop a pin", async () => {
     const { call, secrets, state, initialCredential } = fixture({
       plaintext: null,
       defaultModel: "m-a",
@@ -8752,7 +8971,15 @@ describe("openai-compatible enabled models", () => {
       modelId: "m-a",
     });
 
-    expect(result).toEqual({ status: 400, message: refusal("Ada") });
+    expect(result.status).toBe(409);
+    expect(result.message).toBe(
+      "正被机器人 Ada使用。确认保存将移除这些占用，之后请手动重新设定对应模型。",
+    );
+    expect(result.data).toEqual({
+      reason: "confirm_model_removal",
+      occupancies: [{ kind: "bot", name: "Ada" }],
+      removesLastEnabledModel: false,
+    });
     expect(secrets.put).not.toHaveBeenCalled();
     expect(state.credential).toEqual(initialCredential);
   });
@@ -8776,7 +9003,7 @@ describe("openai-compatible enabled models", () => {
     expect(secrets.put).toHaveBeenCalledOnce();
   });
 
-  it("refuses disabling a catalog placeholder that a bot pins", async () => {
+  it("returns a conflict when disabling a catalog placeholder that a bot pins", async () => {
     const { call } = fixture({
       plaintext: secretText(["m-a"]),
       defaultModel: "m-a",
@@ -8790,10 +9017,18 @@ describe("openai-compatible enabled models", () => {
       enabledModelIds: ["m-a"],
     });
 
-    expect(result).toEqual({ status: 400, message: refusal("Ada") });
+    expect(result.status).toBe(409);
+    expect(result.message).toBe(
+      "正被机器人 Ada使用。确认保存将移除这些占用，之后请手动重新设定对应模型。",
+    );
+    expect(result.data).toEqual({
+      reason: "confirm_model_removal",
+      occupancies: [{ kind: "bot", name: "Ada" }],
+      removesLastEnabledModel: false,
+    });
   });
 
-  it("refuses an old client's default change while a bot pins the old default", async () => {
+  it("returns a conflict for an old client's default change while a bot pins the old default", async () => {
     const { call, secrets } = fixture({
       plaintext: secretText(),
       defaultModel: "m-a",
@@ -8802,7 +9037,15 @@ describe("openai-compatible enabled models", () => {
 
     const result = await call("models/connect", { provider: compatible, baseUrl, modelId: "m-c" });
 
-    expect(result).toEqual({ status: 400, message: refusal("Ada") });
+    expect(result.status).toBe(409);
+    expect(result.message).toBe(
+      "正被机器人 Ada使用。确认保存将移除这些占用，之后请手动重新设定对应模型。",
+    );
+    expect(result.data).toEqual({
+      reason: "confirm_model_removal",
+      occupancies: [{ kind: "bot", name: "Ada" }],
+      removesLastEnabledModel: false,
+    });
     expect(secrets.put).not.toHaveBeenCalled();
   });
 
@@ -8876,7 +9119,7 @@ describe("openai-compatible enabled models", () => {
     });
     expect(await call("models/setDefault", { provider: compatible, modelId: "m-b" })).toEqual({
       status: 400,
-      message: refusal("backup models"),
+      message: refusal(["备用模型"]),
     });
   });
 
@@ -8936,7 +9179,7 @@ describe("openai-compatible enabled models", () => {
 
     const result = await call("models/setDefault", { provider: compatible, modelId: "m-x" });
 
-    expect(result).toEqual({ status: 400, message: refusal("Far") });
+    expect(result).toEqual({ status: 400, message: refusal(["机器人 Far"]) });
     expect(state.preference.modelId).toBe("m-a");
   });
 
@@ -8962,7 +9205,7 @@ describe("openai-compatible enabled models", () => {
 
     const result = await call("models/setDefault", { provider: compatible, modelId: "m-b" });
 
-    expect(result).toEqual({ status: 400, message: refusal("Ada") });
+    expect(result).toEqual({ status: 400, message: refusal(["机器人 Ada"]) });
     expect(prisma.userModelPreference.upsert).not.toHaveBeenCalled();
   });
 
@@ -8975,7 +9218,7 @@ describe("openai-compatible enabled models", () => {
 
     const result = await call("models/setDefault", { provider: compatible, modelId: "m-x" });
 
-    expect(result).toEqual({ status: 400, message: refusal("Ada") });
+    expect(result).toEqual({ status: 400, message: refusal(["机器人 Ada"]) });
   });
 
   it("re-activates a union-only compatible default while another provider is the space default", async () => {

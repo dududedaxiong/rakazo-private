@@ -2,7 +2,9 @@ import { OPENAI_COMPATIBLE_PROVIDER_ID } from "@rakazo_mickvvw/contracts";
 import type { ChatModelChoice } from "@rakazo_mickvvw/core";
 
 import { rpc } from "./api";
+import type { t as translate } from "./i18n";
 import type { MobileModelCredential } from "./mobile-types";
+import { saveWithModelRemovalConfirmation } from "./model-connect-confirm";
 import { MODEL_CONNECT_TIMEOUT_MS } from "./model-connection-request";
 
 export interface RemovableModel {
@@ -79,11 +81,15 @@ export function removableModel(
 /**
  * Removes a model from its connection by saving the remaining list, the same
  * `models/connect` call the "keep usable models" flow uses. The saved key is
- * inherited, so no key is sent.
+ * inherited, so no key is sent. When the save would drop a model a main pool
+ * or a bot still uses, the server asks first and the user confirms in a
+ * dialog; declining leaves the row in place.
  */
-export async function removeModelFromConnection(removable: RemovableModel): Promise<void> {
-  await rpc(
-    "models/connect",
+export async function removeModelFromConnection(
+  removable: RemovableModel,
+  t: typeof translate,
+): Promise<void> {
+  await saveWithModelRemovalConfirmation(
     {
       provider: removable.credential.provider,
       credentialId: removable.credential.id,
@@ -92,6 +98,7 @@ export async function removeModelFromConnection(removable: RemovableModel): Prom
       enabledModelIds: removable.remainingModelIds,
       makeDefault: false,
     },
-    { timeoutMs: MODEL_CONNECT_TIMEOUT_MS },
+    (input) => rpc("models/connect", input, { timeoutMs: MODEL_CONNECT_TIMEOUT_MS }),
+    t,
   );
 }

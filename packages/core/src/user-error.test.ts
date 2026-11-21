@@ -5,6 +5,7 @@ import {
   errorHelpUrl,
   isAbandonedRequest,
   isConnectionFailure,
+  isModelRemovalConflict,
   isNetworkFailure,
   isServerUnreachable,
   isTechnicalErrorMessage,
@@ -217,5 +218,43 @@ describe("errorHelpUrl", () => {
     { code: "UNKNOWN", helpUrl: "https://untrusted.example.test" },
   ])("does not invent a guide or accept an external link: %j", (error) => {
     expect(errorHelpUrl(error)).toBeUndefined();
+  });
+});
+
+describe("isModelRemovalConflict", () => {
+  it("matches a conflict carrying the model-removal reason", () => {
+    expect(
+      isModelRemovalConflict(
+        Object.assign(new Error("正被聊天主模型使用。"), {
+          code: "CONFLICT",
+          data: {
+            reason: "confirm_model_removal",
+            occupancies: [],
+            removesLastEnabledModel: false,
+          },
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("ignores other codes, reasons, and shapes", () => {
+    expect(isModelRemovalConflict(new Error("No"))).toBe(false);
+    expect(
+      isModelRemovalConflict(
+        Object.assign(new Error("No"), {
+          code: "BAD_REQUEST",
+          data: { reason: "confirm_model_removal" },
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      isModelRemovalConflict(
+        Object.assign(new Error("No"), { code: "CONFLICT", data: { reason: "other" } }),
+      ),
+    ).toBe(false);
+    expect(isModelRemovalConflict(Object.assign(new Error("No"), { code: "CONFLICT" }))).toBe(
+      false,
+    );
+    expect(isModelRemovalConflict(null)).toBe(false);
   });
 });

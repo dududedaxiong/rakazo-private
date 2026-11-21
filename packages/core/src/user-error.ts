@@ -1,4 +1,7 @@
-import { MCP_OAUTH_REDIRECT_MISMATCH } from "@rakazo_mickvvw/contracts";
+import {
+  CONFIRM_MODEL_REMOVAL_REASON,
+  MCP_OAUTH_REDIRECT_MISMATCH,
+} from "@rakazo_mickvvw/contracts";
 
 /** Only reviewed, public documentation links belong here; never use URLs from an error body. */
 const ERROR_GUIDES: Readonly<Record<string, string>> = {
@@ -12,6 +15,23 @@ export function errorHelpUrl(error: unknown): string | undefined {
   return typeof code === "string" && Object.hasOwn(ERROR_GUIDES, code)
     ? ERROR_GUIDES[code]
     : undefined;
+}
+
+/**
+ * True when a model-connection save was refused because it would drop a model
+ * a main pool or a bot still uses. The caller asks the user and retries the
+ * same save with `confirmRemovePins`; the server's message already names the
+ * occupancies. Backup-pool rows never produce this error.
+ */
+export function isModelRemovalConflict(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const { code, data } = error as { code?: unknown; data?: unknown };
+  if (code !== "CONFLICT") return false;
+  return (
+    !!data &&
+    typeof data === "object" &&
+    (data as { reason?: unknown }).reason === CONFIRM_MODEL_REMOVAL_REASON
+  );
 }
 
 /** Copy each client supplies in its own language. */

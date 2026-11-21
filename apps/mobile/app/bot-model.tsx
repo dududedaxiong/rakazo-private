@@ -44,7 +44,7 @@ export default function BotModelScreen() {
     setError(null);
     setChoices((prev) => prev?.filter((item) => item.key !== choice.key) ?? null);
     try {
-      await removeModelFromConnection(target);
+      await removeModelFromConnection(target, t);
       if (choice.key === value) {
         await rpc("bots/update", { botId, modelProvider: null, modelId: null });
       }

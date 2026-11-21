@@ -21,6 +21,7 @@ import {
   connectionFormFields,
   connectionFormModelId,
   connectionMaxTokensField,
+  isModelRemovalConflict,
   modelConnectRequest,
   popularModelProvidersFirst,
   savedCompatibleModelIds,
@@ -137,6 +138,10 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
   );
   const [pending, setPending] = useState<"connect" | "settings" | "disconnect" | null>(null);
   const [confirmDisconnect, setConfirmDisconnect] = useState(false);
+  const [confirmRemoveModels, setConfirmRemoveModels] = useState<{
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
   const [healthTesting, setHealthTesting] = useState(false);
   const [healthResult, setHealthResult] = useState<ModelHealthReport | null>(null);
   const [healthKeeping, setHealthKeeping] = useState(false);
@@ -381,7 +386,15 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
 
   // settingsOnly saves a connected catalog provider's limits and gateway ids
   // without touching the key field; key replacement stays on its own button.
-  async function connectKey({ settingsOnly = false }: { settingsOnly?: boolean } = {}) {
+  // confirmed retries a save the server refused because it would drop a model
+  // a main pool or a bot still uses, with the occupancies removed.
+  async function connectKey({
+    settingsOnly = false,
+    confirmed = false,
+  }: {
+    settingsOnly?: boolean;
+    confirmed?: boolean;
+  } = {}) {
     if (!selected) return;
     // Closing the dialog mid-save must not drop the slot this connection is for.
     const intent = intentRef.current;
@@ -430,7 +443,9 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     const form = formRevisionRef.current;
     const stillSelected = () => form === formRevisionRef.current;
     try {
-      const saved = await rpc.models.connect(input);
+      const saved = await rpc.models.connect(
+        confirmed ? { ...input, confirmRemovePins: true } : input,
+      );
       if (!stillSelected()) {
         await refresh({ keepForm: true });
         return;
@@ -449,6 +464,20 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
       // A fresh connection speaks for itself through the Active model row.
       if (isOpenAiCompatible || savingLimitOnly) setNotice(t`Saved.`);
     } catch (err) {
+      if (!confirmed && isModelRemovalConflict(err) && stillSelected()) {
+        // The server's message names the occupancies; it stays in the error
+        // row when the dialog is dismissed, and confirming retries the save.
+        const message = errorText(err, t`Could not connect this provider`);
+        setError(message);
+        setConfirmRemoveModels({
+          message,
+          onConfirm: () => {
+            setConfirmRemoveModels(null);
+            void connectKey({ settingsOnly, confirmed: true });
+          },
+        });
+        return;
+      }
       if (stillSelected()) setError(errorText(err, t`Could not connect this provider`));
     } finally {
       setPending(null);
@@ -492,9 +521,10 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
   /**
    * Keeps only the models that answered, on the saved connection. The test ran
    * against the saved endpoint, so the save uses its base URL and model, not
-   * the form's unsaved edits.
+   * the form's unsaved edits. confirmed retries a save the server refused
+   * because it would drop a model a main pool or a bot still uses.
    */
-  async function keepUsableModels() {
+  async function keepUsableModels(confirmed = false) {
     if (!credential || !healthResult || healthKeeping) return;
     const usable = healthResult.ok;
     setHealthKeeping(true);
@@ -507,12 +537,25 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
         modelId: credential.modelId ?? modelId,
         enabledModelIds: usable,
         makeDefault: false,
+        ...(confirmed ? { confirmRemovePins: true } : {}),
       });
       setEnabledModelIds(saved.enabledModelIds ?? usable);
       setHealthResult(null);
       await refresh({ keepForm: true });
       setNotice(t`Saved.`);
     } catch (err) {
+      if (!confirmed && isModelRemovalConflict(err)) {
+        const message = errorText(err, t`Could not save models`);
+        setError(message);
+        setConfirmRemoveModels({
+          message,
+          onConfirm: () => {
+            setConfirmRemoveModels(null);
+            void keepUsableModels(true);
+          },
+        });
+        return;
+      }
       setError(errorText(err, t`Could not save models`));
     } finally {
       setHealthKeeping(false);
@@ -565,6 +608,7 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     codeCopied,
     compatibleRows,
     confirmDisconnect,
+    confirmRemoveModels,
     connectKey,
     copyOAuthCode,
     credential,
@@ -596,6 +640,7 @@ export function useModelSettings(onClose: () => void, scope: SettingsScope) {
     selectedProviderName,
     selectionRevisionRef,
     setConfirmDisconnect,
+    setConfirmRemoveModels,
     setPasteCode,
     settingsDirty,
     submitOAuthCode,

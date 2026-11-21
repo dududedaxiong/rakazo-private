@@ -60,6 +60,7 @@ export function ModelSettingsOverlay({
     catalog,
     cancelOAuthAttempt,
     confirmDisconnect,
+    confirmRemoveModels,
     connectKey,
     credential,
     credentialByProvider,
@@ -84,6 +85,7 @@ export function ModelSettingsOverlay({
     selectedConnectionName,
     selectedProviderName,
     setConfirmDisconnect,
+    setConfirmRemoveModels,
     setMaxTokens,
     setNotice,
     settingsDirty,
@@ -448,6 +450,17 @@ export function ModelSettingsOverlay({
         }}
         confirmLabel={<Trans>Disconnect</Trans>}
       />
+      {confirmRemoveModels ? (
+        <ConfirmDialog
+          open
+          onCancel={() => setConfirmRemoveModels(null)}
+          title={<Trans>Save</Trans>}
+          description={confirmRemoveModels.message}
+          onConfirm={confirmRemoveModels.onConfirm}
+          confirmLabel={<Trans>Save</Trans>}
+          variant="default"
+        />
+      ) : null}
     </>
   );
 

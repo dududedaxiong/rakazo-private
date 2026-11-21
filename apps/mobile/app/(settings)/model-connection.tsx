@@ -54,6 +54,7 @@ import { ModelHealthDialog } from "../../components/model-health-dialog";
 import { NativeActionButton } from "../../components/native-action-button";
 import { useI18n } from "../../lib/i18n";
 import type { MobileMe, MobileModel, MobileModelCredential } from "../../lib/mobile-types";
+import { saveWithModelRemovalConfirmation } from "../../lib/model-connect-confirm";
 import {
   MODEL_CONNECT_TIMEOUT_MS,
   modelConnectionRequest,
@@ -518,9 +519,11 @@ export default function ModelConnection() {
     const { savingLimitOnly, activeModelId } = connect;
     setPending("connect");
     try {
-      const saved = await rpc("models/connect", connect.input, {
-        timeoutMs: MODEL_CONNECT_TIMEOUT_MS,
-      });
+      const saved = await saveWithModelRemovalConfirmation(
+        connect.input,
+        (input) => rpc("models/connect", input, { timeoutMs: MODEL_CONNECT_TIMEOUT_MS }),
+        t,
+      );
       credentialIdRef.current = saved.id;
       setCredentialId(saved.id);
       if (!limitsOnly) setApiKey("");

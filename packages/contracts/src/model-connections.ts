@@ -307,6 +307,11 @@ export const ModelConnectInputSchema = z
     authMode: ModelAuthModeSchema.optional(),
     label: z.string().optional(),
     /**
+     * Confirm removing the model pins this save strands (main-pool roles and bot models).
+     * Without it, a save that strands one fails with a `confirm_model_removal` conflict.
+     */
+    confirmRemovePins: z.boolean().optional(),
+    /**
      * The connection this save updates; null adds another connection for the provider.
      * Older apps omit it and update the provider's newest connection.
      */
@@ -376,6 +381,14 @@ export const ModelConnectInputSchema = z
     }
   });
 export type ModelConnectInput = z.infer<typeof ModelConnectInputSchema>;
+
+/**
+ * Error data reason for a `models/connect` save that strands main-pool roles or bot models
+ * (or empties the provider's explicit model list): the client confirms, then retries the
+ * same save with `confirmRemovePins`. Backup-pool rows never carry this reason; the save
+ * drops them silently.
+ */
+export const CONFIRM_MODEL_REMOVAL_REASON = "confirm_model_removal";
 
 export const ModelOAuthSignInModeSchema = z.enum(["device-code", "auth-url"]);
 export type ModelOAuthSignInMode = z.infer<typeof ModelOAuthSignInModeSchema>;

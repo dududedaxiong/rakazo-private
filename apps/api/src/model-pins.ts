@@ -5,7 +5,11 @@ import {
   validateConnectedModelChoice,
 } from "@rakazo_mickvvw/adapters";
 import type { Actor } from "@rakazo_mickvvw/contracts";
-import { OPENAI_COMPATIBLE_PROVIDER_ID, usableModelId } from "@rakazo_mickvvw/contracts";
+import {
+  CONFIRM_MODEL_REMOVAL_REASON,
+  OPENAI_COMPATIBLE_PROVIDER_ID,
+  usableModelId,
+} from "@rakazo_mickvvw/contracts";
 import { modelRoleTarget, runAsSystem } from "@rakazo_mickvvw/db";
 import type { RouterDeps } from "./router.js";
 
@@ -21,7 +25,13 @@ async function compatibleModelPins(
   const provider = OPENAI_COMPATIBLE_PROVIDER_ID;
   const where = { userId: actor.userId, modelId };
   const pin = { spaceId: true, modelId: true } as const;
-  const role = { modelId: true, role: true, position: true, credentialId: true } as const;
+  const role = {
+    modelId: true,
+    role: true,
+    position: true,
+    credentialId: true,
+    pool: true,
+  } as const;
   // A connection is the account's, so its pins are checked in every Space it is used in.
   const [bots, routines, accountRoles, spaceRoles] = await runAsSystem(
     "model pins across the account's Spaces",
@@ -29,7 +39,7 @@ async function compatibleModelPins(
       Promise.all([
         deps.prisma.bot.findMany({
           where: { ...where, archivedAt: null, modelProvider: provider },
-          select: { ...pin, name: true },
+          select: { ...pin, name: true, id: true },
         }),
         deps.prisma.routine.findMany({
           where: { ...where, modelProvider: provider, bot: { archivedAt: null } },
@@ -47,34 +57,119 @@ async function compatibleModelPins(
       ]),
   );
   return {
-    named: [...bots, ...routines],
+    named: [
+      ...bots.map((row) => ({ ...row, kind: "bot" as const })),
+      ...routines.map((row) => ({ ...row, kind: "routine" as const, id: null as string | null })),
+    ],
     backups: [...accountRoles.map((row) => ({ ...row, spaceId: null })), ...spaceRoles],
   };
 }
 
 type ModelPinRow = { spaceId: string | null; modelId: string | null; credentialId?: string | null };
+type NamedPinRow = ModelPinRow & {
+  name: string;
+  kind: "bot" | "routine";
+  /** The bot to clear on a confirmed save; routines are never cleared, so null. */
+  id: string | null;
+};
+type RolePinRow = ModelPinRow & { role: string; position: number; pool?: string | null };
 
-/** Refusal naming the bots and routines (plus "backup models") left on a dropped model. */
+/** Which pool a stored role row belongs to; the same rule as `rowPool` in model-roles. */
+function isBackupPoolRow(row: RolePinRow): boolean {
+  if (row.pool === "backup") return true;
+  if (row.pool === "main") return false;
+  return row.position !== 0;
+}
+
+/** The rows a confirmed connection save may drop, in the same transaction as the save. */
+export type PrunableModelPin =
+  | {
+      kind: "role";
+      scope: "account" | "space";
+      spaceId: string | null;
+      role: string;
+      pool: "main" | "backup";
+      modelId: string;
+      credentialId: string | null;
+    }
+  | { kind: "bot"; botId: string };
+
+/** Refusal naming the bots and routines (plus "备用模型") left on a dropped model. */
 function refuseModelPins(
-  pins: { named: Array<ModelPinRow & { name: string }>; backups: ModelPinRow[] },
+  pins: { named: NamedPinRow[]; backups: ModelPinRow[] },
   dangling: (row: ModelPinRow) => boolean,
 ) {
-  const names = pins.named.filter(dangling).map((row) => row.name);
-  if (pins.backups.some(dangling)) names.push("backup models");
+  const names = [
+    ...pins.named
+      .filter(dangling)
+      .map((row) => (row.kind === "bot" ? `机器人 ${row.name}` : `例行任务 ${row.name}`)),
+    ...(pins.backups.some(dangling) ? ["备用模型"] : []),
+  ];
   if (names.length === 0) return;
   throw new ORPCError("BAD_REQUEST", {
-    message: `In use by ${[...new Set(names)].join(", ")}. Pick another model for them first.`,
+    message: `正被${[...new Set(names)].join("、")}使用，请先给${names.length === 1 ? "它" : "它们"}换个模型。`,
   });
 }
 
-/** Refuse only pins that runtime selection cannot serve after this connection save. */
+/** The Chinese name a role pool reads as in the removal confirmation. */
+function roleFamilyLabel(role: string): string {
+  if (role === "approval") return "审批";
+  if (role === "computer") return "电脑操作";
+  if (role !== "main") return role;
+  return "聊天";
+}
+
+/**
+ * A save that strands main-pool rows or bot models: the client confirms, then retries with
+ * `confirmRemovePins`. The message names only the lines that apply: the occupancies, the
+ * last-enabled-model hint, or both.
+ */
+function confirmModelRemovalError(
+  bots: NamedPinRow[],
+  mainPoolRows: RolePinRow[],
+  removesLastEnabledModel: boolean,
+) {
+  const labels = [
+    ...bots.map((row) => `机器人 ${row.name}`),
+    ...mainPoolRows.map((row) => `${roleFamilyLabel(row.role)}主模型`),
+  ];
+  const parts: string[] = [];
+  if (labels.length > 0)
+    parts.push(
+      `正被${[...new Set(labels)].join("、")}使用。确认保存将移除这些占用，之后请手动重新设定对应模型。`,
+    );
+  if (removesLastEnabledModel)
+    parts.push("这是该提供商最后一个模型，移除后将没有可用模型，请手动补一个。");
+  return new ORPCError("CONFLICT", {
+    message: parts.join(""),
+    data: {
+      reason: CONFIRM_MODEL_REMOVAL_REASON,
+      occupancies: [
+        ...bots.map((row) => ({ kind: "bot" as const, name: row.name })),
+        ...mainPoolRows.map((row) => ({
+          kind: "role" as const,
+          role: row.role,
+          pool: "main" as const,
+        })),
+      ],
+      removesLastEnabledModel,
+    },
+  });
+}
+
+/**
+ * Refuse only pins that runtime selection cannot serve after this connection save. A
+ * routine pin always blocks; a backup-pool row is dropped silently; a main-pool row or a
+ * bot model blocks until the client confirms, then joins the returned prune list.
+ */
 export async function assertNoDanglingModelPins(
   deps: RouterDeps,
   actor: Actor,
   connection: { id: string },
   secret: ReturnType<typeof parseModelSecret>,
   actorDefault: string,
-) {
+  options?: { confirmRemovePins?: boolean; removesLastEnabledModel?: boolean },
+): Promise<PrunableModelPin[]> {
   const stored = secret.kind === "openai_compatible" ? (secret.enabledModelIds ?? []) : [];
   const pins = await compatibleModelPins(deps, actor, { notIn: stored });
   // The connection's own model is the account's, so it stays enabled in every Space.
@@ -98,7 +193,56 @@ export async function assertNoDanglingModelPins(
     );
     if (selected?.id === connection.id || !selected) dangling.add(row);
   }
-  refuseModelPins(pins, (row) => dangling.has(row));
+  // A routine has no member pool to fall back to, so it blocks even a confirmed save.
+  refuseModelPins(
+    { named: pins.named.filter((row) => row.kind === "routine"), backups: [] },
+    (row) => dangling.has(row),
+  );
+  const confirmed = options?.confirmRemovePins === true;
+  const botPins = pins.named.filter((row) => row.kind === "bot" && dangling.has(row));
+  const mainPoolRows: RolePinRow[] = [];
+  const backupPoolRows: RolePinRow[] = [];
+  for (const row of pins.backups) {
+    if (!dangling.has(row)) continue;
+    (isBackupPoolRow(row) ? backupPoolRows : mainPoolRows).push(row);
+  }
+  const prunable: PrunableModelPin[] = backupPoolRows
+    .filter((row) => row.modelId !== null)
+    .map((row) => ({
+      kind: "role" as const,
+      scope: row.spaceId === null ? ("account" as const) : ("space" as const),
+      spaceId: row.spaceId,
+      role: row.role,
+      pool: "backup" as const,
+      modelId: row.modelId as string,
+      credentialId: row.credentialId ?? null,
+    }));
+  if (confirmed) {
+    for (const row of mainPoolRows) {
+      if (row.modelId === null) continue;
+      prunable.push({
+        kind: "role",
+        scope: row.spaceId === null ? "account" : "space",
+        spaceId: row.spaceId,
+        role: row.role,
+        pool: "main",
+        modelId: row.modelId,
+        credentialId: row.credentialId ?? null,
+      });
+    }
+    for (const row of botPins) {
+      if (row.id !== null) prunable.push({ kind: "bot", botId: row.id });
+    }
+    return prunable;
+  }
+  if (botPins.length > 0 || mainPoolRows.length > 0 || options?.removesLastEnabledModel === true) {
+    throw confirmModelRemovalError(
+      botPins,
+      mainPoolRows,
+      options?.removesLastEnabledModel ?? false,
+    );
+  }
+  return prunable;
 }
 
 /**

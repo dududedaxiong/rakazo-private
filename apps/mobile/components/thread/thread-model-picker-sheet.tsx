@@ -278,7 +278,7 @@ export function ThreadModelPickerSheet({
     setError(null);
     setChoices((prev) => prev?.filter((item) => item.key !== choice.key) ?? null);
     try {
-      await removeModelFromConnection(target);
+      await removeModelFromConnection(target, t);
       const removed =
         choice.provider && choice.modelId
           ? { provider: choice.provider, model: choice.modelId }

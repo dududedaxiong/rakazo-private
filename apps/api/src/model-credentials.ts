@@ -40,6 +40,7 @@ import {
   writeModelRole,
 } from "@rakazo_mickvvw/db";
 import { mayUsePrivateEndpoint } from "./mcp-servers.js";
+import type { PrunableModelPin } from "./model-pins.js";
 import { assertNoDanglingModelPins } from "./model-pins.js";
 import type { RouterDeps } from "./router.js";
 
@@ -114,6 +115,8 @@ type ModelCredentialInput = {
   signal?: AbortSignal;
   /** Becomes the main model only while there is none. */
   keepExistingDefault?: boolean;
+  /** Pins this save may drop in its transaction; empty means none. */
+  pruneModelPins?: PrunableModelPin[];
 };
 
 export async function prepareModelCredential(
@@ -285,6 +288,39 @@ async function writeModelCredential(
     });
     throwIfAborted(input.signal);
   }
+  // A confirmed save drops the pins it stranded, in the same transaction as the save. The
+  // pool guard keeps a row that moved pools, or to another connection, in between; a bot
+  // with no model of its own falls back to the member main model, so clearing it is safe.
+  const botIds = (input.pruneModelPins ?? [])
+    .filter((pin) => pin.kind === "bot")
+    .map((pin) => pin.botId);
+  if (botIds.length > 0) {
+    await tx.bot.updateMany({
+      where: { id: { in: botIds } },
+      data: { modelId: null, modelProvider: null },
+    });
+    throwIfAborted(input.signal);
+  }
+  for (const pin of input.pruneModelPins ?? []) {
+    if (pin.kind !== "role") continue;
+    const where = {
+      userId: actor.userId,
+      role: pin.role,
+      provider: OPENAI_COMPATIBLE_PROVIDER_ID,
+      modelId: pin.modelId,
+      credentialId: pin.credentialId,
+      OR:
+        pin.pool === "main"
+          ? [{ pool: "main" }, { pool: null, position: 0 }]
+          : [{ pool: "backup" }, { pool: null, position: { gt: 0 } }],
+    };
+    if (pin.scope === "space" && pin.spaceId) {
+      await tx.spaceModelRoleChoice.deleteMany({ where: { ...where, spaceId: pin.spaceId } });
+    } else {
+      await tx.userModelRoleChoice.deleteMany({ where });
+    }
+    throwIfAborted(input.signal);
+  }
   return { ...credential, isDefault: becomesMain || runsMain, defaultModel };
 }
 
@@ -317,8 +353,8 @@ export function createModelConnector(deps: RouterDeps, codexCatalog: CodexLiveCa
   ) => {
     const credential = await modelConnectionTarget(deps, actor, input.provider, input.credentialId);
     let plaintext: string;
+    let previousPlaintext: string | undefined;
     try {
-      let previousPlaintext: string | undefined;
       let omitVisionModelIds = false;
       if (credential) {
         const secret = await deps.prisma.secret.findFirst({
@@ -377,22 +413,55 @@ export function createModelConnector(deps: RouterDeps, codexCatalog: CodexLiveCa
         message: error instanceof Error ? error.message : "Invalid model connection",
       });
     }
+    let pruneModelPins: PrunableModelPin[] = [];
     if (input.provider === OPENAI_COMPATIBLE_PROVIDER_ID) {
       // Known race: this runs before persistModelCredential's transaction, so a pin saved in
       // between can fall outside the stored list and fail at run time. Concurrent saves of
       // the same connection are last-write-wins.
       const saved = parseModelSecret(plaintext);
-      if (credential)
-        await assertNoDanglingModelPins(deps, actor, credential, saved, input.modelId ?? "");
+      if (credential) {
+        // The last-model hint reads the explicit list the user manages: the stored list
+        // minus the connection's own model, which the server always unions back in. The
+        // old list is read against the new model; a save that only swaps the default can
+        // read the old default as explicit, which only adds the hint, never blocks.
+        let previousSecret: ReturnType<typeof parseModelSecret> | undefined;
+        if (previousPlaintext !== undefined) {
+          try {
+            previousSecret = parseModelSecret(previousPlaintext);
+          } catch {
+            previousSecret = undefined;
+          }
+        }
+        const modelId = usableModelId(input.modelId);
+        const storedIds = (secret: ReturnType<typeof parseModelSecret> | undefined) =>
+          secret?.kind === "openai_compatible" ? (secret.enabledModelIds ?? []) : [];
+        const newExplicit = storedIds(saved).filter((id) => id !== modelId);
+        const oldExplicit = storedIds(previousSecret).filter((id) => id !== modelId);
+        pruneModelPins = await assertNoDanglingModelPins(
+          deps,
+          actor,
+          credential,
+          saved,
+          input.modelId ?? "",
+          {
+            confirmRemovePins: input.confirmRemovePins,
+            removesLastEnabledModel: newExplicit.length === 0 && oldExplicit.length > 0,
+          },
+        );
+      }
     }
-    return { plaintext, credential };
+    return { plaintext, credential, pruneModelPins };
   };
   const connectModelCredential = async (
     actor: Actor,
     input: ModelConnectInput,
     signal: AbortSignal | undefined,
   ) => {
-    const { plaintext, credential } = await verifyModelConnection(actor, input, signal);
+    const { plaintext, credential, pruneModelPins } = await verifyModelConnection(
+      actor,
+      input,
+      signal,
+    );
     return persistModelCredential(
       deps,
       actor,
@@ -410,6 +479,7 @@ export function createModelConnector(deps: RouterDeps, codexCatalog: CodexLiveCa
         scope: input.scope,
         supportsImages: input.supportsImages,
         signal,
+        pruneModelPins,
       },
       codexCatalog,
     );

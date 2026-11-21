@@ -1,9 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
+import { t } from "./i18n";
 import type { MobileModelCredential } from "./mobile-types";
 import { removableModel, removeModelFromConnection } from "./model-removal";
 
 vi.mock("./api", () => ({
   rpc: vi.fn(),
+}));
+
+vi.mock("react-native", () => ({
+  Alert: { alert: vi.fn() },
 }));
 
 import { rpc } from "./api";
@@ -193,7 +198,7 @@ describe("removeModelFromConnection", () => {
     mockedRpc.mockResolvedValueOnce({ id: "credential-1" } as never);
     const target = removableModel([credential()], choice());
     expect(target).not.toBeNull();
-    await removeModelFromConnection(target!);
+    await removeModelFromConnection(target!, t);
     expect(mockedRpc).toHaveBeenCalledWith(
       "models/connect",
       {
@@ -247,7 +252,7 @@ describe("removeModelFromConnection", () => {
       ],
     );
     expect(target).not.toBeNull();
-    await removeModelFromConnection(target!);
+    await removeModelFromConnection(target!, t);
     expect(mockedRpc).toHaveBeenCalledWith(
       "models/connect",
       {
