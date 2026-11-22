@@ -2282,7 +2282,10 @@ describe("async video generation", () => {
       undefined,
       OWNER,
     );
-    expect(failed).toEqual({ status: "failed" });
+    expect(failed).toEqual({
+      status: "failed",
+      error: "Media generation: provider_failure — video-model (provider error)",
+    });
     const shapeless = await mediaError(
       pollAsyncVideo({ ...connection, taskId: "task-1" }, fetchImpl, undefined, OWNER),
     );

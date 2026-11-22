@@ -92,7 +92,12 @@ export function mediaDelivery(
     /** Background delivery outlives the turn that asked, even one that was stopped. */
     afterRun?: boolean;
     /** Commits with the job's final state, so what follows it cannot be lost to a crash. */
-    onSettled?: (tx: Prisma.TransactionClient, status: Settled) => Promise<void>;
+    onSettled?: (
+      tx: Prisma.TransactionClient,
+      status: Settled,
+      /** Our own error text for the failure row; absent when unknown. */
+      error?: string,
+    ) => Promise<void>;
   },
 ) {
   return {
@@ -328,24 +333,26 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
     return;
   }
   let wakeRunId: string | null = null;
-  const onSettled = async (tx: Prisma.TransactionClient, status: Settled) => {
+  const onSettled = async (tx: Prisma.TransactionClient, status: Settled, error?: string) => {
     if (!(await recipientRemains(tx, run, threadGeneration))) {
       // Undo the post; the next check finds the recipient gone and closes the job.
       if (status === "completed") throw new MediaRecipientGone();
       return;
     }
     if (isRegenerate) await settleRegenerateRun(tx, run.id, status);
+    let reason: string | undefined;
     if (status === "failed") {
-      // A video poll returns no reason, so the row only says it failed; the
-      // wake follow-up carries the same. Never invent a reason.
+      // The poll carries the provider's reason when it has one; without it
+      // the summary is just the failure line. Never invent a reason.
       const summary =
-        summarizeMediaRunError("Media generation failed.", {
+        summarizeMediaRunError(error ?? "Media generation failed.", {
           kind: "video",
           mode: isEdit ? "edit" : "generate",
         }) ?? (isEdit ? "视频编辑失败" : "视频生成失败");
       await postMediaFailureMessage(tx, run, summary);
+      reason = summary;
     }
-    wakeRunId = await queueWake(tx, job.id, run, status === "completed");
+    wakeRunId = await queueWake(tx, job.id, run, status === "completed", "Video", reason);
   };
   const operationId = `media.poll:${job.id}`;
   const context: AdapterContext = {
@@ -416,7 +423,7 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
                         mode: "edit",
                       }) ?? "视频编辑失败";
                     await postMediaFailureMessage(tx, run, summary);
-                    wakeRunId = await queueWake(tx, job.id, run, false);
+                    wakeRunId = await queueWake(tx, job.id, run, false, "Video", summary);
                   }
                 }
               });
@@ -466,7 +473,7 @@ export async function pollMediaVideo(deps: MediaVideoDeps, payload: { jobId: str
       if (failed.count) {
         if (isRegenerate)
           await settleRegenerateRun(tx, run.id, "failed", "Media generation failed.");
-        await onSettled(tx, "failed");
+        await onSettled(tx, "failed", "Media generation: timeout");
       }
       return failed.count > 0;
     });

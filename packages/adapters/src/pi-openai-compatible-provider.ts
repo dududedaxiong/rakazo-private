@@ -1552,15 +1552,17 @@ export async function submitAsyncVideo(
 /**
  * Checks one submitted async video task. A task still working reports running;
  * a finished one reports completed with the video URL to download; a failed
- * one reports failed. An unexpected result shape is a provider failure, not a
- * status to keep polling.
+ * one reports failed with an error string in our own format (the model plus
+ * a provider failure; the documented async-result fields carry no failure
+ * reason). An unexpected result shape is a provider failure, not a status
+ * to keep polling.
  */
 export async function pollAsyncVideo(
   input: AsyncVideoConnection & { taskId: string },
   fetchImpl?: typeof fetch,
   signal?: AbortSignal,
   opts?: OpenAiCompatibleUrlPolicy,
-): Promise<{ status: AsyncVideoPollStatus; url?: string }> {
+): Promise<{ status: AsyncVideoPollStatus; url?: string; error?: string }> {
   const { status, parsed } = await requestAsyncVideo(
     input,
     `async-result/${encodeURIComponent(input.taskId)}`,
@@ -1584,7 +1586,17 @@ export async function pollAsyncVideo(
     if (!url) throw new MediaGenerationError("provider_failure");
     return { status: "completed", url };
   }
-  if (taskStatus === "FAIL" || taskStatus === "FAILED") return { status: "failed" };
+  if (taskStatus === "FAIL" || taskStatus === "FAILED") {
+    // The documented async-result fields carry no failure reason (only
+    // task_status / video_result), so the reason is the model plus a
+    // provider failure; the summary renders "<model> 服务异常". If a real
+    // FAIL body ever shows a reason field, map it here and nowhere else.
+    return {
+      status: "failed",
+      error: new MediaGenerationError("provider_failure", `${input.model} (provider error)`)
+        .message,
+    };
+  }
   if (taskStatus) return { status: "running" };
   throw new MediaGenerationError("provider_failure");
 }

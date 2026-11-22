@@ -30,6 +30,8 @@ const describePostgres =
 class ScriptedVideoProvider extends FakeMediaGenerationProvider {
   readonly editCapabilities = { images: true, video: true };
   remote: "running" | "completed" | "failed" | "error" = "running";
+  /** Error text carried by a failed poll, in our own format. */
+  remoteError?: string;
   submissions = 0;
   polls = 0;
   /** Runs while a check is in flight, to race it. */
@@ -43,6 +45,8 @@ class ScriptedVideoProvider extends FakeMediaGenerationProvider {
     await this.duringPoll?.();
     if (this.remote === "error") throw new MediaGenerationError("provider_failure");
     if (this.remote === "completed") return super.pollVideo(id, context);
+    if (this.remote === "failed" && this.remoteError)
+      return { id, status: "failed", error: this.remoteError };
     return { id, status: this.remote };
   }
 }
@@ -278,6 +282,24 @@ describePostgres("background video delivery (PostgreSQL)", () => {
     expect(h.media.submissions).toBe(1);
   });
 
+  it("reports why a video failed, in the chat and in the follow-up", async () => {
+    const h = await setup();
+    const jobId = await h.submit();
+    h.media.remote = "failed";
+    h.media.remoteError = "Media generation: provider_failure — cogvideox-flash (provider error)";
+    await h.poll(jobId);
+    expect((await h.job(jobId)).status).toBe("media_failed");
+    const posted = await h.messages();
+    expect(posted).toHaveLength(1);
+    expect(posted[0]!.blocks).toEqual([
+      { kind: "text", text: "视频生成失败：cogvideox-flash 服务异常" },
+    ]);
+    const wakes = await h.wakes();
+    expect(wakes).toHaveLength(1);
+    expect(wakes[0]!.task.prompt).toContain("视频生成失败：cogvideox-flash 服务异常");
+    expect(h.media.submissions).toBe(1);
+  });
+
   it("keeps checking through provider errors without resubmitting", async () => {
     const h = await setup();
     const jobId = await h.submit();
@@ -301,6 +323,9 @@ describePostgres("background video delivery (PostgreSQL)", () => {
     expect(h.media.polls).toBe(1);
     expect((await h.job(late)).status).toBe("media_failed");
     expect(await h.wakes()).toHaveLength(1);
+    const posted = await h.messages();
+    expect(posted).toHaveLength(1);
+    expect(posted[0]!.blocks).toEqual([{ kind: "text", text: "视频生成失败：请求超时" }]);
 
     // A video that finished just before the deadline is still delivered.
     const h2 = await setup();

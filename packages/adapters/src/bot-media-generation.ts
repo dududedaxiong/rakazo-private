@@ -185,7 +185,11 @@ async function resolveBotMediaKind(
                     output: await downloadAsyncVideoUrl(polled.url, signal),
                   };
                 }
-                if (polled.status === "failed") return { status: "failed" as const };
+                if (polled.status === "failed")
+                  return {
+                    status: "failed" as const,
+                    ...(polled.error ? { error: polled.error } : {}),
+                  };
                 if (polled.status === "queued") return { status: "queued" as const };
                 return { status: "running" as const };
               },

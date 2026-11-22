@@ -118,7 +118,12 @@ export async function generateMediaFromTool(options: {
     meta?: { modelSwitches?: ModelSwitches; supplementaryPrompt?: string },
   ) => Promise<unknown>;
   /** Commits with a video's provider failure, so whatever follows it cannot be lost. */
-  onSettled?: (tx: Prisma.TransactionClient, status: "failed") => Promise<void>;
+  onSettled?: (
+    tx: Prisma.TransactionClient,
+    status: "failed",
+    /** Our own error text for the failure row; absent when unknown. */
+    error?: string,
+  ) => Promise<void>;
 }) {
   const { provider, prisma, context, run, args } = options;
   const video = options.name === "generate_video";
@@ -393,7 +398,8 @@ export async function generateMediaFromTool(options: {
             },
           },
         });
-        if (updated.count && output.status === "failed") await options.onSettled?.(tx, "failed");
+        if (updated.count && output.status === "failed")
+          await options.onSettled?.(tx, "failed", "error" in output ? output.error : undefined);
       };
       if (output.status === "failed" && options.onSettled) await prisma.$transaction(settle);
       else await settle(prisma);
@@ -403,6 +409,7 @@ export async function generateMediaFromTool(options: {
         jobId: reservation.id,
         status: output.status,
         ...("progress" in output ? { progress: output.progress } : {}),
+        ...("error" in output && output.error ? { error: output.error } : {}),
       };
     // The output's own timeline when it has one; otherwise the submit-time
     // timeline, so a poll-completed video still shows its switch history.

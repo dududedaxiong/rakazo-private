@@ -31,7 +31,7 @@ export type GeneratedMedia = {
 export type MediaVideoJob =
   | { id: string; status: "queued" | "running"; progress?: number; modelSwitches?: ModelSwitches }
   | { id: string; status: "completed"; output: GeneratedMedia }
-  | { id: string; status: "failed"; modelSwitches?: ModelSwitches };
+  | { id: string; status: "failed"; modelSwitches?: ModelSwitches; error?: string };
 export interface MediaGenerationProvider {
   readonly id: string;
   readonly capabilities: { images: boolean; video: boolean; offline: boolean };

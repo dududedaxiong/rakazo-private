@@ -333,7 +333,7 @@ export type BotMediaCallEntry = {
   ) => Promise<
     | { status: "queued" | "running" }
     | { status: "completed"; output: GeneratedMedia }
-    | { status: "failed" }
+    | { status: "failed"; error?: string }
   >;
 };
 
@@ -646,7 +646,11 @@ export class BotMediaGenerationProvider implements MediaGenerationProvider {
         },
       };
     }
-    return { id, status: polled.status };
+    return {
+      id,
+      status: polled.status,
+      ...(polled.status === "failed" && polled.error ? { error: polled.error } : {}),
+    };
   }
   /**
    * After a submitted video task failed in polling, continue the same chain
