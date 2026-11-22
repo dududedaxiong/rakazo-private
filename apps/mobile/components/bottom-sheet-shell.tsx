@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Modal, Platform, ScrollView, Text, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { mobileTokens } from "../lib/appearance";
 import { NativeSheet, useNativeSheet } from "./native-sheet";
 import { SheetCloseButton } from "./sheet-close-button";
@@ -36,17 +37,21 @@ export function BottomSheetShell({
       </NativeSheet>
     );
   }
+  // The sheet lives in a Modal, outside the app root's gesture handler:
+  // without its own root here, swipeable rows inside never receive a gesture.
   const body = (
-    <ScrollView
-      keyboardShouldPersistTaps="handled"
-      contentContainerStyle={{
-        backgroundColor: tokens.card,
-        paddingHorizontal: 20,
-        paddingBottom: 24,
-      }}
-    >
-      {children}
-    </ScrollView>
+    <GestureHandlerRootView>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          backgroundColor: tokens.card,
+          paddingHorizontal: 20,
+          paddingBottom: 24,
+        }}
+      >
+        {children}
+      </ScrollView>
+    </GestureHandlerRootView>
   );
   if (Platform.OS === "ios") {
     return (

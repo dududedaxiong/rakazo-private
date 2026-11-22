@@ -2,6 +2,7 @@ import type { BottomSheetProps } from "@expo/ui/community/bottom-sheet";
 import type { ComponentType, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Keyboard, Platform, ScrollView, useWindowDimensions, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { isComposeViewAvailable } from "../lib/compose-available";
 import { useMobileTokens } from "../lib/native";
 
@@ -94,9 +95,16 @@ export function NativeSheet({
         accessibilityLabel={label}
         style={{ maxHeight, height: expanded ? maxHeight : undefined }}
       >
-        <ScrollView style={{ flexGrow: 0 }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
-          {children}
-        </ScrollView>
+        {/* The native sheet is a separate dialog, outside the app root's gesture handler. */}
+        <GestureHandlerRootView>
+          <ScrollView
+            style={{ flexGrow: 0 }}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled
+          >
+            {children}
+          </ScrollView>
+        </GestureHandlerRootView>
       </View>
     </Sheet>
   );
