@@ -78,6 +78,10 @@ async function computePreview(mimeType: string, file: File): Promise<PreviewCont
       return { kind: "image", uri: file.uri };
     case "video":
       return { kind: "video", uri: file.uri };
+    case "zip":
+      // A zip has no inline preview; the page still shows the file with its
+      // download, share, rename, and delete actions.
+      return { kind: "unsupported" };
     case "none":
       return { kind: "unsupported" };
   }

@@ -116,6 +116,8 @@ vi.mock("./media-display", () => ({
   }),
   messageHasGeneratedImage: () => mocks.hasGeneratedImage,
   messageHasGeneratedMedia: () => mocks.hasGeneratedMedia,
+  // This file's messages carry no artifact ids, so no row applies here.
+  artifactActionAttachments: () => null,
 }));
 
 vi.mock("./translation", () => ({

@@ -20,26 +20,18 @@ import {
   selectableMessageText,
 } from "@rakazo_mickvvw/core";
 import * as Clipboard from "expo-clipboard";
-import type { ComponentProps, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Fragment, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GestureResponderEvent, LayoutChangeEvent } from "react-native";
 import { Platform, Pressable, Text, View } from "react-native";
-import Animated, {
-  cancelAnimation,
-  useAnimatedStyle,
-  useReducedMotion,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-  ZoomIn,
-} from "react-native-reanimated";
+import Animated, { useReducedMotion, ZoomIn } from "react-native-reanimated";
 import type { MobileArtifactTarget } from "../../lib/artifact-open";
 import type { MessageActionId } from "../../lib/custom-settings";
 import { useCustomSettings, visibleMessageActions } from "../../lib/custom-settings";
 import { canDoubleTapReact } from "../../lib/double-tap";
 import { useI18n } from "../../lib/i18n";
 import {
+  artifactActionAttachments,
   mediaDisplaySettingsFromBot,
   messageHasGeneratedImage,
   messageHasGeneratedMedia,
@@ -72,10 +64,10 @@ import type { ImageArtifactPreviewTarget } from "../image-artifact-viewer";
 import { presentMessageMenu } from "../message-action-menu";
 import { MessageContextMenu } from "../message-context-menu";
 import { ModelSwitchBar, ModelSwitchTimelineSheet } from "../model-switch-timeline-sheet";
-import { NativeSymbol } from "../native-symbol";
 import { ReplyLine } from "../reply-line";
 import { TimeSeparator } from "../time-separator";
 import { UnreadDivider } from "../unread-divider";
+import { ActionTile, useActionTileColors } from "./message-action-tiles";
 import type { MessageActionProps } from "./message-bubble";
 import { MessageBubble } from "./message-bubble";
 import { MessageSelectCheckbox } from "./message-selection-bar";
@@ -104,6 +96,8 @@ export type MessageRowActions = {
   react: (message: MobileMessage, reaction: MessageReaction) => Promise<boolean>;
   /** Toggles this bot reply in the thread's favorites. Absent where unsupported. */
   favorite?: (message: MobileMessage) => void;
+  /** Reloads the thread. Absent where the row never needs a refresh. */
+  refresh?: () => void;
   /** Toggles a translation of this bot reply in the thread's favorites. */
   favoriteTranslation?: (message: MobileMessage, translatedText: string) => void;
   /** Resends the user message this bot reply answers. Absent where unsupported. */
@@ -285,6 +279,9 @@ export const MessageRow = memo(function MessageRow({
   const mediaDisplay = mediaDisplaySettingsFromBot(messageBot ?? null);
   const hasGeneratedImage = messageHasGeneratedImage(message);
   const hasGeneratedMedia = messageHasGeneratedMedia(message);
+  // A robot message with no body text gets the artifact row under each
+  // attachment instead of the generic row; anything else keeps the old row.
+  const artifactAttachments = artifactActionAttachments(message);
   // Above the menu memo: the "Share card" entry carries the shown translation.
   const translation = useMessageTranslation({
     botId: messageBot?.id,
@@ -629,6 +626,7 @@ export const MessageRow = memo(function MessageRow({
   const canTranslate =
     message.role === "bot" &&
     !message.id.startsWith("progress:") &&
+    !artifactAttachments &&
     Boolean(blockText(message).trim());
   // A finished translation that is only folded away reopens instead of
   // spending another translation call; anything else translates as before.
@@ -740,6 +738,18 @@ export const MessageRow = memo(function MessageRow({
         peerExchange={peerExchange}
         onOpenPeerChat={actions.openPeerChat}
         actionProps={actionProps}
+        artifactActions={
+          artifactAttachments
+            ? {
+                attachments: artifactAttachments,
+                favorite: actions.favorite ? () => actions.favorite!(message) : undefined,
+                favorited: favorited ?? false,
+                refresh: actions.refresh,
+                readOnly,
+                settings: mediaDisplay,
+              }
+            : undefined
+        }
         doubleTapSurface={Boolean(likeMessage)}
         onHelperToggle={actions.helperToggle}
         userBubble={userBubble}
@@ -875,6 +885,7 @@ export const MessageRow = memo(function MessageRow({
           {message.role === "bot" &&
           !selecting &&
           !message.id.startsWith("progress:") &&
+          !artifactAttachments &&
           blockText(message).trim() ? (
             <MessageActionRow
               userId={userId}
@@ -1113,8 +1124,7 @@ export function MessageActionRow({
   /** Absent where this reply cannot be translated. */
   onTranslate?: () => void;
 }) {
-  const tokens = useMobileTokens();
-  const colorScheme = useResolvedAppearance();
+  const { tile, plain, favoriteTile } = useActionTileColors(favorited);
   const customSettings = useCustomSettings(userId ?? "");
   // The user's order and hidden tiles, intersected with what this message can do.
   const visible = visibleMessageActions(customSettings, {
@@ -1124,17 +1134,6 @@ export function MessageActionRow({
     favorite: onFavorite !== undefined,
     regenerate: onRegenerate !== undefined,
   });
-  const tile =
-    colorScheme === "dark"
-      ? { background: tokens.accent, icon: tokens.link }
-      : { background: "#e8efff", icon: "#2f6bff" };
-  const plain =
-    colorScheme === "dark"
-      ? { background: tokens.muted, icon: tokens.mutedForeground }
-      : { background: "#f4f5f7", icon: "#5b6470" };
-  const favoriteTile = favorited
-    ? { background: colorScheme === "dark" ? tokens.link : "#2f6bff", icon: "#fff" }
-    : tile;
   // The translate action is a wide blue pill, not a 36px tile: it sits next
   // to the favorite tile, or before regenerate when favorite is hidden.
   const translatePill =
@@ -1219,65 +1218,5 @@ export function MessageActionRow({
         ? translatePill
         : null}
     </View>
-  );
-}
-
-function ActionTile({
-  label,
-  ios,
-  android,
-  background,
-  color,
-  onPress,
-  pulse = false,
-  reducedMotion = false,
-}: {
-  label: string;
-  ios: string;
-  android: ComponentProps<typeof NativeSymbol>["android"];
-  background: string;
-  color: string;
-  onPress: () => void;
-  /** Loop the icon's opacity while this tile's action is live; static otherwise. */
-  pulse?: boolean;
-  reducedMotion?: boolean;
-}) {
-  // The loop starts and stops with the pulse, and always cleans up: ending,
-  // switching messages, and unmounting all restore the static icon.
-  const opacity = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
-  useEffect(() => {
-    if (!pulse || reducedMotion) {
-      opacity.value = 1;
-      return;
-    }
-    opacity.value = withRepeat(
-      withSequence(withTiming(0.5, { duration: 450 }), withTiming(1, { duration: 450 })),
-      -1,
-      true,
-    );
-    return () => {
-      cancelAnimation(opacity);
-      opacity.value = 1;
-    };
-  }, [pulse, reducedMotion, opacity]);
-  const icon = <NativeSymbol ios={ios} android={android} size={19} color={color} />;
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
-      style={({ pressed }) => ({
-        width: 36,
-        height: 36,
-        borderRadius: 10,
-        backgroundColor: background,
-        alignItems: "center",
-        justifyContent: "center",
-        ...(pressed ? { transform: [{ scale: 0.94 }] } : null),
-      })}
-    >
-      {pulse && !reducedMotion ? <Animated.View style={animatedStyle}>{icon}</Animated.View> : icon}
-    </Pressable>
   );
 }

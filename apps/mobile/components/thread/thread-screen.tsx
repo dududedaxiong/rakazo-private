@@ -821,6 +821,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
         createdAt: Date.now(),
       });
     },
+    refresh: () => void refresh(),
     favoriteTranslation: (message, translatedText) => {
       if (!threadKey) return;
       toggleThreadFavorite(threadKey, {

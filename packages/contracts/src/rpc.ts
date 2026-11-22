@@ -1027,6 +1027,14 @@ export const appContract = {
     deleteMessage: oc
       .input(threadTarget.safeExtend({ messageId: Id }))
       .output(z.object({ ok: z.literal(true) })),
+    /**
+     * Remove one attachment from a message; the caller must own the thread. The
+     * attachment's artifact itself is removed separately. When no blocks remain
+     * the message goes with it, exactly like deleting the message outright.
+     */
+    deleteMessageAttachment: oc
+      .input(threadTarget.safeExtend({ messageId: Id, artifactId: Id }))
+      .output(z.object({ ok: z.literal(true), messageDeleted: z.boolean() })),
     answer: oc
       .input(
         threadTarget

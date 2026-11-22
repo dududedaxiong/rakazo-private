@@ -399,6 +399,57 @@ export async function deleteThreadMessage(
   }, THREAD_LOCK_TRANSACTION_OPTIONS);
 }
 
+export interface DeleteThreadMessageAttachmentInput {
+  spaceId: string;
+  threadId: string;
+  messageId: string;
+  artifactId: string;
+}
+
+/**
+ * Remove one attachment from a message. Only image/file blocks carrying this
+ * artifact id go; every other block stays as it is. When nothing remains the
+ * message goes with it (favorites included), so a stale snapshot or a racing
+ * delete can never leave an empty message behind. The artifact itself is
+ * removed separately by the caller, after the message no longer points at it.
+ */
+export async function deleteThreadMessageAttachment(
+  prisma: PrismaClient,
+  input: DeleteThreadMessageAttachmentInput,
+): Promise<{ removed: boolean; messageDeleted: boolean }> {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+    const message = await tx.message.findFirst({
+      where: { id: input.messageId, threadId: input.threadId },
+      select: { id: true, blocks: true },
+    });
+    if (!message) return { removed: false, messageDeleted: false };
+    const blocks = Array.isArray(message.blocks) ? message.blocks : [];
+    const isTargetAttachment = (block: unknown): boolean =>
+      !!block &&
+      typeof block === "object" &&
+      ((block as { kind?: unknown }).kind === "image" ||
+        (block as { kind?: unknown }).kind === "file") &&
+      (block as { artifactId?: unknown }).artifactId === input.artifactId;
+    const remaining = blocks.filter((block) => !isTargetAttachment(block));
+    if (remaining.length === blocks.length) return { removed: false, messageDeleted: false };
+    if (remaining.length === 0) {
+      await tx.messageFavorite.deleteMany({
+        where: {
+          spaceId: input.spaceId,
+          messageId: { in: [input.messageId, `${input.messageId}:translation`] },
+        },
+      });
+      await tx.message.delete({ where: { id: input.messageId } });
+      return { removed: true, messageDeleted: true };
+    }
+    await tx.message.update({
+      where: { id: input.messageId },
+      data: { blocks: remaining as Prisma.InputJsonValue },
+    });
+    return { removed: true, messageDeleted: false };
+  }, THREAD_LOCK_TRANSACTION_OPTIONS);
+}
+
 export async function sendUserMessage(
   prisma: PrismaClient,
   input: SendUserMessageInput,

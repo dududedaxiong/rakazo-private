@@ -57,6 +57,8 @@ import { MessageCaption, useMessageChatFont } from "../message-caption";
 import { NativeSymbol } from "../native-symbol";
 import { PageCard } from "../pages/page-card";
 import { PeerReceiptLine } from "../peer-receipt-line";
+import type { ArtifactActions } from "./artifact-action-row";
+import { ArtifactActionRow } from "./artifact-action-row";
 import { AskBlock } from "./ask-block";
 import { McpAppCard } from "./mcp-app-card";
 import type { MessageRowActions } from "./message-row";
@@ -226,6 +228,7 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   peerExchange,
   onOpenPeerChat,
   actionProps,
+  artifactActions,
   doubleTapSurface = false,
   userBubble,
   userId,
@@ -258,6 +261,8 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
   peerExchange?: PeerExchange;
   onOpenPeerChat: (peer: { peerBotId: string; peerBotName: string }) => void;
   actionProps: MessageActionProps;
+  /** Per-attachment action rows; absent when the generic row stays. */
+  artifactActions?: ArtifactActions;
   doubleTapSurface?: boolean;
   userBubble?: UserBubble;
   /** The account whose interface settings style this message's text. */
@@ -583,42 +588,88 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
             ) : null}
           </View>
         ) : null}
-        {attachments.map((attachment, index) => (
-          <View
-            key={`${attachment.artifactId ?? attachment.name ?? attachment.kind}-${index}`}
-            style={hasInlineImages && !isInlineImageBlock(attachment) ? bubbleStyle : undefined}
-          >
-            {attachment.kind === "image" ? (
-              isInlineImageBlock(attachment) ? (
-                <InlineImageAttachment
-                  threadTarget={artifactTarget}
-                  artifactId={attachment.artifactId}
-                  name={attachment.name ?? t("Image")}
-                  mimeType={attachment.mimeType ?? "image/png"}
-                  labelColor={outgoing ? tokens.chatUserForeground : tokens.foreground}
-                  collapsible={!outgoing}
+        {attachments.map((attachment, index) => {
+          // The row under this card, when this attachment is one of the
+          // message's artifact actions; the card and its row share the
+          // wrapper so the row sits right under its own card.
+          const actionAttachment = artifactActions?.attachments.find(
+            (candidate) => candidate.artifactId === attachment.artifactId,
+          );
+          const wrapperStyle =
+            hasInlineImages && !isInlineImageBlock(attachment) ? bubbleStyle : undefined;
+          return (
+            <View
+              key={`${attachment.artifactId ?? attachment.name ?? attachment.kind}-${index}`}
+              style={actionAttachment ? { ...wrapperStyle, gap: 8 } : wrapperStyle}
+            >
+              {attachment.kind === "image" ? (
+                isInlineImageBlock(attachment) ? (
+                  <InlineImageAttachment
+                    threadTarget={artifactTarget}
+                    artifactId={attachment.artifactId}
+                    name={attachment.name ?? t("Image")}
+                    mimeType={attachment.mimeType ?? "image/png"}
+                    labelColor={outgoing ? tokens.chatUserForeground : tokens.foreground}
+                    collapsible={!outgoing}
+                    pressableProps={actionProps}
+                    onOpen={() =>
+                      onPreviewImage({
+                        artifactId: attachment.artifactId!,
+                        name: attachment.name ?? t("Image"),
+                        mimeType: attachment.mimeType ?? "image/png",
+                      })
+                    }
+                  />
+                ) : (
+                  <Pressable
+                    {...actionProps}
+                    onPress={() =>
+                      attachment.artifactId
+                        ? void openMobileArtifact(
+                            artifactTarget,
+                            attachment.artifactId,
+                            attachment.name ?? t("Image"),
+                            attachment.mimeType ?? "image/png",
+                          ).catch((err) =>
+                            Alert.alert(t("Could not open image"), errorText(err, t("Try again."))),
+                          )
+                        : undefined
+                    }
+                  >
+                    <Text
+                      style={{
+                        color: outgoing ? tokens.chatUserForeground : tokens.foreground,
+                        fontSize: 15,
+                      }}
+                    >
+                      🖼 {attachment.name ?? t("Image")}
+                    </Text>
+                  </Pressable>
+                )
+              ) : attachment.artifactId && isAttachmentAudioMimeType(attachment.mimeType ?? "") ? (
+                <AudioAttachment
                   pressableProps={actionProps}
-                  onOpen={() =>
-                    onPreviewImage({
-                      artifactId: attachment.artifactId!,
-                      name: attachment.name ?? t("Image"),
-                      mimeType: attachment.mimeType ?? "image/png",
-                    })
-                  }
+                  target={artifactTarget}
+                  artifactId={attachment.artifactId}
+                  name={attachment.name ?? t("File")}
+                  mimeType={attachment.mimeType!}
+                  labelColor={outgoing ? tokens.chatUserForeground : undefined}
                 />
               ) : (
                 <Pressable
                   {...actionProps}
                   onPress={() =>
                     attachment.artifactId
-                      ? void openMobileArtifact(
-                          artifactTarget,
-                          attachment.artifactId,
-                          attachment.name ?? t("Image"),
-                          attachment.mimeType ?? "image/png",
-                        ).catch((err) =>
-                          Alert.alert(t("Could not open image"), errorText(err, t("Try again."))),
-                        )
+                      ? artifactPreviewKind(attachment.mimeType ?? "") !== "none"
+                        ? onPreviewFile(attachment.artifactId)
+                        : void openMobileArtifact(
+                            artifactTarget,
+                            attachment.artifactId,
+                            attachment.name ?? t("File"),
+                            attachment.mimeType ?? "text/plain",
+                          ).catch((err) =>
+                            Alert.alert(t("Could not open file"), errorText(err, t("Try again."))),
+                          )
                       : undefined
                   }
                 >
@@ -628,60 +679,35 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                       fontSize: 15,
                     }}
                   >
-                    🖼 {attachment.name ?? t("Image")}
+                    📎 {attachment.name ?? t("File")}
                   </Text>
+                  {formatFileSize(attachment.size) ? (
+                    <Text
+                      style={{
+                        color: outgoing ? tokens.chatUserForeground : tokens.mutedForeground,
+                        marginTop: 4,
+                        fontSize: 13,
+                      }}
+                    >
+                      {formatFileSize(attachment.size)}
+                    </Text>
+                  ) : null}
                 </Pressable>
-              )
-            ) : attachment.artifactId && isAttachmentAudioMimeType(attachment.mimeType ?? "") ? (
-              <AudioAttachment
-                pressableProps={actionProps}
-                target={artifactTarget}
-                artifactId={attachment.artifactId}
-                name={attachment.name ?? t("File")}
-                mimeType={attachment.mimeType!}
-                labelColor={outgoing ? tokens.chatUserForeground : undefined}
-              />
-            ) : (
-              <Pressable
-                {...actionProps}
-                onPress={() =>
-                  attachment.artifactId
-                    ? artifactPreviewKind(attachment.mimeType ?? "") !== "none"
-                      ? onPreviewFile(attachment.artifactId)
-                      : void openMobileArtifact(
-                          artifactTarget,
-                          attachment.artifactId,
-                          attachment.name ?? t("File"),
-                          attachment.mimeType ?? "text/plain",
-                        ).catch((err) =>
-                          Alert.alert(t("Could not open file"), errorText(err, t("Try again."))),
-                        )
-                    : undefined
-                }
-              >
-                <Text
-                  style={{
-                    color: outgoing ? tokens.chatUserForeground : tokens.foreground,
-                    fontSize: 15,
-                  }}
-                >
-                  📎 {attachment.name ?? t("File")}
-                </Text>
-                {formatFileSize(attachment.size) ? (
-                  <Text
-                    style={{
-                      color: outgoing ? tokens.chatUserForeground : tokens.mutedForeground,
-                      marginTop: 4,
-                      fontSize: 13,
-                    }}
-                  >
-                    {formatFileSize(attachment.size)}
-                  </Text>
-                ) : null}
-              </Pressable>
-            )}
-          </View>
-        ))}
+              )}
+              {actionAttachment && artifactActions ? (
+                <ArtifactActionRow
+                  attachment={actionAttachment}
+                  messageId={message.id}
+                  target={artifactTarget}
+                  actions={artifactActions}
+                  isLast={artifactActions.attachments.length === 1}
+                  onPreviewFile={onPreviewFile}
+                  onPreviewImage={onPreviewImage}
+                />
+              ) : null}
+            </View>
+          );
+        })}
         {appConnectBlocks.map((block, index) => (
           <AppConnectCard
             key={`${block.provider}-${index}`}

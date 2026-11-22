@@ -17,6 +17,7 @@ import {
   createExternalConversationRepos,
   createThreadMessageInTransaction,
   deleteThreadMessage,
+  deleteThreadMessageAttachment,
   IsolationError,
   isUniqueViolation,
   loadMessageAuthor,
@@ -395,6 +396,19 @@ export function threadsRoutes(ctx: RouterContext) {
         if (!deleted) throw new ORPCError("NOT_FOUND", { message: "Message not found" });
         return { ok: true as const };
       }),
+      deleteMessageAttachment: authed.threads.deleteMessageAttachment.handler(
+        async ({ context, input }) => {
+          const target = await resolveThreadTarget(deps.prisma, context.actor, input);
+          const { removed, messageDeleted } = await deleteThreadMessageAttachment(deps.prisma, {
+            spaceId: context.actor.spaceId,
+            threadId: target.threadId,
+            messageId: input.messageId,
+            artifactId: input.artifactId,
+          });
+          if (!removed) throw new ORPCError("NOT_FOUND", { message: "Attachment not found" });
+          return { ok: true as const, messageDeleted };
+        },
+      ),
       followUp: authed.threads.followUp.handler(async ({ context, input }) => {
         const target = await resolveThreadTarget(deps.prisma, context.actor, input);
         if (target.kind === "bot") {
