@@ -51,6 +51,7 @@ import { ChangeUndo, isUndoableChange } from "../change-undo";
 import { ImportSetupCard } from "../ImportSetupCard";
 import type { ImageArtifactPreviewTarget } from "../image-artifact-viewer";
 import { InlineImageAttachment } from "../inline-image-attachment";
+import { InlineVideoAttachment } from "../inline-video-attachment";
 import { McpApprovalCard } from "../McpApprovalCard";
 import type { MessageChatFont } from "../message-caption";
 import { MessageCaption, useMessageChatFont } from "../message-caption";
@@ -654,6 +655,16 @@ const MessageBubbleContent = memo(function MessageBubbleContent({
                   name={attachment.name ?? t("File")}
                   mimeType={attachment.mimeType!}
                   labelColor={outgoing ? tokens.chatUserForeground : undefined}
+                />
+              ) : attachment.artifactId && (attachment.mimeType ?? "").startsWith("video/") ? (
+                <InlineVideoAttachment
+                  threadTarget={artifactTarget}
+                  artifactId={attachment.artifactId}
+                  name={attachment.name ?? t("File")}
+                  mimeType={attachment.mimeType!}
+                  labelColor={outgoing ? tokens.chatUserForeground : tokens.foreground}
+                  pressableProps={actionProps}
+                  onOpen={() => onPreviewFile(attachment.artifactId!)}
                 />
               ) : (
                 <Pressable
