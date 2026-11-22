@@ -10,8 +10,66 @@ import {
   OPENAI_COMPATIBLE_PROVIDER_ID,
   usableModelId,
 } from "@rakazo_mickvvw/contracts";
+import { splitBotModelPools } from "@rakazo_mickvvw/core";
 import { modelRoleTarget, runAsSystem } from "@rakazo_mickvvw/db";
 import type { RouterDeps } from "./router.js";
+
+/**
+ * A bot's media-pool entries on models leaving the enabled list. Media pools live on the
+ * bot row as JSON, not in the role tables, so the role query never sees them. Only the
+ * "models leaving the list" query needs them: a default change leaves the outgoing model
+ * enabled, so media entries on it stay usable.
+ */
+async function compatibleMediaPins(
+  deps: RouterDeps,
+  actor: Actor,
+  modelId: string | { notIn: string[] },
+): Promise<MediaPinRow[]> {
+  if (typeof modelId === "string") return [];
+  // `notIn` holds the list being kept: collect entries on models outside it.
+  const stored = new Set(modelId.notIn);
+  const bots = await deps.prisma.bot.findMany({
+    where: { userId: actor.userId, archivedAt: null },
+    select: {
+      id: true,
+      name: true,
+      imageModels: true,
+      imageBackupModels: true,
+      videoModels: true,
+      videoBackupModels: true,
+      imageEditModels: true,
+      imageEditBackupModels: true,
+      videoEditModels: true,
+      videoEditBackupModels: true,
+      translationModels: true,
+      translationBackupModels: true,
+    },
+  });
+  const pins: MediaPinRow[] = [];
+  for (const bot of bots) {
+    for (const { family, main, backup } of BOT_MEDIA_FAMILIES) {
+      const pools = splitBotModelPools(bot[main], bot[backup]);
+      for (const [pool, entries] of [
+        ["main", pools.mainPool],
+        ["backup", pools.backupPool],
+      ] as const) {
+        for (const entry of entries ?? []) {
+          if (stored.has(entry.model)) continue;
+          pins.push({
+            botId: bot.id,
+            name: bot.name,
+            family,
+            pool,
+            field: (pool === "main" ? main : backup) as MediaField,
+            provider: entry.provider,
+            model: entry.model,
+          });
+        }
+      }
+    }
+  }
+  return pins;
+}
 
 /**
  * The actor's active compatible bot, routine and role pins on `modelId`. Role rows come from the
@@ -33,7 +91,7 @@ async function compatibleModelPins(
     pool: true,
   } as const;
   // A connection is the account's, so its pins are checked in every Space it is used in.
-  const [bots, routines, accountRoles, spaceRoles] = await runAsSystem(
+  const [bots, routines, accountRoles, spaceRoles, media] = await runAsSystem(
     "model pins across the account's Spaces",
     () =>
       Promise.all([
@@ -54,6 +112,7 @@ async function compatibleModelPins(
           },
           select: { ...role, spaceId: true },
         }),
+        compatibleMediaPins(deps, actor, modelId),
       ]),
   );
   return {
@@ -62,6 +121,7 @@ async function compatibleModelPins(
       ...routines.map((row) => ({ ...row, kind: "routine" as const, id: null as string | null })),
     ],
     backups: [...accountRoles.map((row) => ({ ...row, spaceId: null })), ...spaceRoles],
+    media,
   };
 }
 
@@ -73,6 +133,40 @@ type NamedPinRow = ModelPinRow & {
   id: string | null;
 };
 type RolePinRow = ModelPinRow & { role: string; position: number; pool?: string | null };
+
+/** One bot media family and the two stored JSON columns holding its pools. */
+const BOT_MEDIA_FAMILIES = [
+  { family: "image", main: "imageModels", backup: "imageBackupModels" },
+  { family: "video", main: "videoModels", backup: "videoBackupModels" },
+  { family: "imageEdit", main: "imageEditModels", backup: "imageEditBackupModels" },
+  { family: "videoEdit", main: "videoEditModels", backup: "videoEditBackupModels" },
+  { family: "translation", main: "translationModels", backup: "translationBackupModels" },
+] as const;
+
+type MediaField =
+  | "imageModels"
+  | "imageBackupModels"
+  | "videoModels"
+  | "videoBackupModels"
+  | "imageEditModels"
+  | "imageEditBackupModels"
+  | "videoEditModels"
+  | "videoEditBackupModels"
+  | "translationModels"
+  | "translationBackupModels";
+
+export type { MediaField };
+
+/** One entry of a bot's media pool that a save may strand. */
+type MediaPinRow = {
+  botId: string;
+  name: string;
+  family: string;
+  pool: "main" | "backup";
+  field: MediaField;
+  provider: string;
+  model: string;
+};
 
 /** Which pool a stored role row belongs to; the same rule as `rowPool` in model-roles. */
 function isBackupPoolRow(row: RolePinRow): boolean {
@@ -92,7 +186,8 @@ export type PrunableModelPin =
       modelId: string;
       credentialId: string | null;
     }
-  | { kind: "bot"; botId: string };
+  | { kind: "bot"; botId: string }
+  | { kind: "media"; botId: string; field: MediaField; provider: string; model: string };
 
 /** Refusal naming the bots and routines (plus "备用模型") left on a dropped model. */
 function refuseModelPins(
@@ -119,6 +214,16 @@ function roleFamilyLabel(role: string): string {
   return "聊天";
 }
 
+/** The Chinese name a bot media family reads as in the removal confirmation. */
+function mediaFamilyLabel(family: string): string {
+  if (family === "image") return "图片生成";
+  if (family === "video") return "视频生成";
+  if (family === "imageEdit") return "图片编辑";
+  if (family === "videoEdit") return "视频编辑";
+  if (family === "translation") return "翻译";
+  return family;
+}
+
 /**
  * A save that strands main-pool rows or bot models: the client confirms, then retries with
  * `confirmRemovePins`. The message names only the lines that apply: the occupancies, the
@@ -128,10 +233,12 @@ function confirmModelRemovalError(
   bots: NamedPinRow[],
   mainPoolRows: RolePinRow[],
   removesLastEnabledModel: boolean,
+  mediaMainRows: MediaPinRow[] = [],
 ) {
   const labels = [
     ...bots.map((row) => `机器人 ${row.name}`),
     ...mainPoolRows.map((row) => `${roleFamilyLabel(row.role)}主模型`),
+    ...mediaMainRows.map((row) => `${mediaFamilyLabel(row.family)}主模型`),
   ];
   const parts: string[] = [];
   if (labels.length > 0)
@@ -149,6 +256,11 @@ function confirmModelRemovalError(
         ...mainPoolRows.map((row) => ({
           kind: "role" as const,
           role: row.role,
+          pool: "main" as const,
+        })),
+        ...mediaMainRows.map((row) => ({
+          kind: "role" as const,
+          role: row.family,
           pool: "main" as const,
         })),
       ],
@@ -198,6 +310,25 @@ export async function assertNoDanglingModelPins(
     { named: pins.named.filter((row) => row.kind === "routine"), backups: [] },
     (row) => dangling.has(row),
   );
+  // A media entry dangles only when no connection still serves its model after this save;
+  // entries on other providers are untouched by this save.
+  const mediaDangling = new Set<MediaPinRow>();
+  for (const row of pins.media) {
+    if (row.provider !== OPENAI_COMPATIBLE_PROVIDER_ID) continue;
+    const selected = await findConnectedModelCredential(
+      deps.prisma,
+      deps.secrets,
+      actor,
+      OPENAI_COMPATIBLE_PROVIDER_ID,
+      row.model,
+      { replacement: { credentialId: connection.id, secret, defaultModel } },
+    );
+    if (selected?.id === connection.id || !selected) mediaDangling.add(row);
+  }
+  const mediaMainRows = pins.media.filter((row) => mediaDangling.has(row) && row.pool === "main");
+  const mediaBackupRows = pins.media.filter(
+    (row) => mediaDangling.has(row) && row.pool === "backup",
+  );
   const confirmed = options?.confirmRemovePins === true;
   const botPins = pins.named.filter((row) => row.kind === "bot" && dangling.has(row));
   const mainPoolRows: RolePinRow[] = [];
@@ -206,17 +337,26 @@ export async function assertNoDanglingModelPins(
     if (!dangling.has(row)) continue;
     (isBackupPoolRow(row) ? backupPoolRows : mainPoolRows).push(row);
   }
-  const prunable: PrunableModelPin[] = backupPoolRows
-    .filter((row) => row.modelId !== null)
-    .map((row) => ({
-      kind: "role" as const,
-      scope: row.spaceId === null ? ("account" as const) : ("space" as const),
-      spaceId: row.spaceId,
-      role: row.role,
-      pool: "backup" as const,
-      modelId: row.modelId as string,
-      credentialId: row.credentialId ?? null,
-    }));
+  const prunable: PrunableModelPin[] = [
+    ...backupPoolRows
+      .filter((row) => row.modelId !== null)
+      .map((row) => ({
+        kind: "role" as const,
+        scope: row.spaceId === null ? ("account" as const) : ("space" as const),
+        spaceId: row.spaceId,
+        role: row.role,
+        pool: "backup" as const,
+        modelId: row.modelId as string,
+        credentialId: row.credentialId ?? null,
+      })),
+    ...mediaBackupRows.map((row) => ({
+      kind: "media" as const,
+      botId: row.botId,
+      field: row.field,
+      provider: row.provider,
+      model: row.model,
+    })),
+  ];
   if (confirmed) {
     for (const row of mainPoolRows) {
       if (row.modelId === null) continue;
@@ -233,13 +373,28 @@ export async function assertNoDanglingModelPins(
     for (const row of botPins) {
       if (row.id !== null) prunable.push({ kind: "bot", botId: row.id });
     }
+    for (const row of mediaMainRows) {
+      prunable.push({
+        kind: "media",
+        botId: row.botId,
+        field: row.field,
+        provider: row.provider,
+        model: row.model,
+      });
+    }
     return prunable;
   }
-  if (botPins.length > 0 || mainPoolRows.length > 0 || options?.removesLastEnabledModel === true) {
+  if (
+    botPins.length > 0 ||
+    mainPoolRows.length > 0 ||
+    mediaMainRows.length > 0 ||
+    options?.removesLastEnabledModel === true
+  ) {
     throw confirmModelRemovalError(
       botPins,
       mainPoolRows,
       options?.removesLastEnabledModel ?? false,
+      mediaMainRows,
     );
   }
   return prunable;

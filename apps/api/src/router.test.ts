@@ -8469,6 +8469,8 @@ describe("openai-compatible enabled models", () => {
     roleChoices?: string[];
     mainPrimary?: string;
     spaceBackups?: string[];
+    /** Media-pool entries seeded on the fixture bot, keyed by stored JSON column. */
+    media?: Record<string, { provider: string; model: string }[]>;
   }) {
     const state = {
       credential: {
@@ -8500,6 +8502,7 @@ describe("openai-compatible enabled models", () => {
     }
     const pins = pinStores(options);
     const bot = botRow(options.botModelId ?? options.defaultModel);
+    if (options.media) Object.assign(bot, options.media);
     const prisma = {
       ...pins,
       $queryRaw: vi.fn(async () => []),
@@ -8789,6 +8792,114 @@ describe("openai-compatible enabled models", () => {
         }),
       }),
     );
+  });
+
+  it("drops a backup media-pool entry for a removed id and saves", async () => {
+    const { call, secrets, prisma } = fixture({
+      plaintext: secretText(["m-a", "m-b", "m-c"]),
+      defaultModel: "m-a",
+      media: {
+        imageBackupModels: [{ provider: compatible, model: "m-b" }],
+      },
+    });
+
+    const result = await call("models/connect", {
+      provider: compatible,
+      baseUrl,
+      modelId: "m-a",
+      enabledModelIds: ["m-a", "m-c"],
+    });
+
+    expect(result.status).toBe(200);
+    expect(secrets.put).toHaveBeenCalledOnce();
+    expect(prisma.bot.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "bot-1" },
+        data: expect.objectContaining({ imageBackupModels: [] }),
+      }),
+    );
+  });
+
+  it("returns a conflict naming the image main model without confirmation", async () => {
+    const { call, secrets } = fixture({
+      plaintext: secretText(["m-a", "m-b", "m-c"]),
+      defaultModel: "m-a",
+      media: {
+        imageModels: [{ provider: compatible, model: "m-b" }],
+      },
+    });
+
+    const result = await call("models/connect", {
+      provider: compatible,
+      baseUrl,
+      modelId: "m-a",
+      enabledModelIds: ["m-a", "m-c"],
+    });
+
+    expect(result.status).toBe(409);
+    expect(result.message).toBe(
+      "正被图片生成主模型使用。确认保存将移除这些占用，之后请手动重新设定对应模型。",
+    );
+    expect(result.data).toEqual({
+      reason: "confirm_model_removal",
+      occupancies: [{ kind: "role", role: "image", pool: "main" }],
+      removesLastEnabledModel: false,
+    });
+    expect(secrets.put).not.toHaveBeenCalled();
+  });
+
+  it("drops a main media-pool entry with confirmation and saves", async () => {
+    const { call, secrets, prisma } = fixture({
+      plaintext: secretText(["m-a", "m-b", "m-c"]),
+      defaultModel: "m-a",
+      media: {
+        imageModels: [
+          { provider: compatible, model: "m-b" },
+          { provider: compatible, model: "m-c" },
+        ],
+      },
+    });
+
+    const result = await call("models/connect", {
+      provider: compatible,
+      baseUrl,
+      modelId: "m-a",
+      enabledModelIds: ["m-a", "m-c"],
+      confirmRemovePins: true,
+    });
+
+    expect(result.status).toBe(200);
+    expect(secrets.put).toHaveBeenCalledOnce();
+    expect(prisma.bot.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "bot-1" },
+        data: expect.objectContaining({
+          imageModels: [{ provider: compatible, model: "m-c" }],
+        }),
+      }),
+    );
+  });
+
+  it("keeps a media-pool entry another connection still serves", async () => {
+    const { call, secrets, prisma } = fixture({
+      plaintext: secretText(["m-a", "m-b", "m-c"]),
+      alternatePlaintext: secretText(["m-a", "m-b", "m-c"]),
+      defaultModel: "m-a",
+      media: {
+        imageBackupModels: [{ provider: compatible, model: "m-b" }],
+      },
+    });
+
+    const result = await call("models/connect", {
+      provider: compatible,
+      baseUrl,
+      modelId: "m-a",
+      enabledModelIds: ["m-a", "m-c"],
+    });
+
+    expect(result.status).toBe(200);
+    expect(secrets.put).toHaveBeenCalledOnce();
+    expect(prisma.bot.update).not.toHaveBeenCalled();
   });
 
   it("drops main-pool rows and clears the bot model with confirmation and saves", async () => {

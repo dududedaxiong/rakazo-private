@@ -37,7 +37,7 @@ RNGH 的手势只在 `GestureHandlerRootView` 子树内生效；Modal / 对话�
 
 修法（服务端，与 2026-11-21 那批同一套规则）：
 
-- `compatibleModelPins` 在 `{ notIn }` 查询（即“哪些模型正离开启用列表”，只在提供商保存时用）里多取机器人影音池：读该用户未归档机器人的十个 JSON 列，用 `splitBotModelPools` 分主备，每条生成一个 media pin（机器人、家族、池、provider、model）。只取 `{ notIn }` 形式——`models/setDefault` 那条单模型查询里，出局的默认模型仍在启用列表里，影音池指向它依然可用，不该拦。
+- `compatibleModelPins` 在 `{ notIn }` 查询（即“哪些模型正离开启用列表”，只在提供商保存时用）里多取机器人影音池：读该用户未归档机器人的十个 JSON 列，用 `splitBotModelPools` 分主备，每条生成一个 media pin（机器人、家族、池、provider、model）。只取 `{ notIn }` 形式——`models/setDefault` 那条单模型查询里，出局的默认模型仍在启用列表里，影音池指向它依然可用，不该拦。实现上是 `compatibleModelPins` 内新增的 `compatibleMediaPins` 查询；注意 `{ notIn }` 装的是保留列表，收集的是列表之外的条目，别写反。
 - `assertNoDanglingModelPins` 里 media pin 与 role 池同规则：备池静默进待删列表；主池（主列里的条目）没带确认标志时抛 409，确认后进待删列表。409 文案的类名新增映射：`image`→图片生成、`video`→视频生成、`imageEdit`→图片编辑、`videoEdit`→视频编辑、`translation`→翻译（沿用 `roleFamilyLabel` 的“{类}主模型”拼法）；occupancies 仍是 `{ kind: "role", role, pool: "main" }`，两端只认 `reason`（`packages/core/src/user-error.ts:26`），不新增客户端判断。
 - 待删列表新增 `{ kind: "media", botId, field, provider, model }`；`model-credentials.ts` 的清理循环里按 `field`（十个 JSON 列之一）在同一事务内重读该机器人该列、滤掉该条写回：主列清空写 `DbNull`、备列清空写 `[]`，与 `routes/bots.ts:726-730` 的写入规矩一致。事务内重读即池守卫——检查与写之间条目被挪走时不会误删。
 - `bots/update` 的校验（`routes/bots.ts:484-505`）本来就放过“已在列表里的条目”，所以旧残留不会在编辑机器人时被顺带清掉；本批修的是“提供商保存时清”，不改那条校验。

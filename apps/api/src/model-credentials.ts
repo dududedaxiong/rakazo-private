@@ -17,6 +17,7 @@ import {
 } from "@rakazo_mickvvw/adapters";
 import type {
   Actor,
+  BotModelEntry,
   ModelConnectInput,
   SettingsScope,
   ThinkingLevel,
@@ -24,6 +25,7 @@ import type {
 import {
   canonicalPiProviderId,
   OPENAI_COMPATIBLE_PROVIDER_ID,
+  parseBotModelList,
   storedPiProviderIds,
   usableModelId,
 } from "@rakazo_mickvvw/contracts";
@@ -40,7 +42,7 @@ import {
   writeModelRole,
 } from "@rakazo_mickvvw/db";
 import { mayUsePrivateEndpoint } from "./mcp-servers.js";
-import type { PrunableModelPin } from "./model-pins.js";
+import type { MediaField, PrunableModelPin } from "./model-pins.js";
 import { assertNoDanglingModelPins } from "./model-pins.js";
 import type { RouterDeps } from "./router.js";
 
@@ -189,6 +191,37 @@ export async function createImportedModelCredential(
   return writeModelCredential(tx, actor, input, prepared);
 }
 
+/**
+ * The stored value for one media JSON column after pruning one entry: an empty main pool
+ * stores null, an empty backup pool stays an empty array (the two-pool marker), matching
+ * the bot update path's write rule.
+ */
+function mediaFieldUpdate(field: MediaField, next: BotModelEntry[]): Prisma.BotUpdateInput {
+  const value = next.length > 0 ? next : field.endsWith("BackupModels") ? [] : Prisma.DbNull;
+  switch (field) {
+    case "imageModels":
+      return { imageModels: value };
+    case "imageBackupModels":
+      return { imageBackupModels: value };
+    case "videoModels":
+      return { videoModels: value };
+    case "videoBackupModels":
+      return { videoBackupModels: value };
+    case "imageEditModels":
+      return { imageEditModels: value };
+    case "imageEditBackupModels":
+      return { imageEditBackupModels: value };
+    case "videoEditModels":
+      return { videoEditModels: value };
+    case "videoEditBackupModels":
+      return { videoEditBackupModels: value };
+    case "translationModels":
+      return { translationModels: value };
+    case "translationBackupModels":
+      return { translationBackupModels: value };
+  }
+}
+
 async function writeModelCredential(
   tx: Prisma.TransactionClient,
   actor: Actor,
@@ -320,6 +353,39 @@ async function writeModelCredential(
       await tx.userModelRoleChoice.deleteMany({ where });
     }
     throwIfAborted(input.signal);
+  }
+  // A media pin drops one entry from a bot's stored JSON pool. The column is re-read inside
+  // the transaction, so an entry that moved pools in between is simply not there to remove.
+  const mediaPins = (input.pruneModelPins ?? []).filter((pin) => pin.kind === "media");
+  if (mediaPins.length > 0) {
+    const mediaBotIds = [...new Set(mediaPins.map((pin) => pin.botId))];
+    const mediaRows = await tx.bot.findMany({
+      where: { id: { in: mediaBotIds } },
+      select: {
+        id: true,
+        imageModels: true,
+        imageBackupModels: true,
+        videoModels: true,
+        videoBackupModels: true,
+        imageEditModels: true,
+        imageEditBackupModels: true,
+        videoEditModels: true,
+        videoEditBackupModels: true,
+        translationModels: true,
+        translationBackupModels: true,
+      },
+    });
+    for (const row of mediaRows) {
+      for (const pin of mediaPins.filter((candidate) => candidate.botId === row.id)) {
+        const current = parseBotModelList(row[pin.field]);
+        const next = (current ?? []).filter(
+          (entry) => !(entry.provider === pin.provider && entry.model === pin.model),
+        );
+        if (next.length === (current ?? []).length) continue;
+        await tx.bot.update({ where: { id: row.id }, data: mediaFieldUpdate(pin.field, next) });
+        throwIfAborted(input.signal);
+      }
+    }
   }
   return { ...credential, isDefault: becomesMain || runsMain, defaultModel };
 }
