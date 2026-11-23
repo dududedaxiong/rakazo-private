@@ -33,6 +33,7 @@ import {
   userComputerObserve,
   userComputerShell,
 } from "./run-tools-user-computer.js";
+import { xiaomajiangTools } from "./run-tools-xiaomajiang.js";
 import { strategicInitiativeToolAllowed } from "./strategic-initiative.js";
 import { argumentGiven } from "./update-bot-patch.js";
 
@@ -46,6 +47,7 @@ const TOOL_HANDLERS = new Map<string, ToolHandler>([
   ...Object.entries(messagingTools),
   ...Object.entries(secretTools),
   ...Object.entries(fleetTools),
+  ...Object.entries(xiaomajiangTools),
   [USER_COMPUTER_SHELL_TOOL, userComputerShell],
   [USER_COMPUTER_OBSERVE_TOOL, userComputerObserve],
   [USER_COMPUTER_ACT_TOOL, userComputerAct],

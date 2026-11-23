@@ -1608,6 +1608,15 @@ export const builtinAgentTools: ConnectorTool[] = [
     },
   },
   {
+    name: "xiaomajiang_setup",
+    description:
+      "Install 小码酱 (Xiao Ma Jiang) when the user sends /p666: decrypt the bundled installer with the server passphrase and create the 小码酱助手 template, the 小码酱 space, the 小码酱 bot, and its 23 skills, all scoped to that space only. Only call this for /p666. Reply with the returned summary as the whole reply, nothing else.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
     name: "update_bot",
     description:
       "Read or change your own settings. Call with no fields to read them and the models and thinking levels you can pick. Long instructions come in pages; follow instructionsNextOffset before replacing them. If a read comes back with contextTruncated, it was shortened: say so, do not rewrite. Pass fields to change them, only when the user asks; setting your name, description and first instructions when you have none is fine. Never claim a change without calling this.",

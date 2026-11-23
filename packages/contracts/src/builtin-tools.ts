@@ -94,6 +94,7 @@ export const BUILTIN_TOOL_NAMES = [
   "run_subagent",
   "create_space",
   "spawn_bot",
+  "xiaomajiang_setup",
   "update_bot",
   ...FLEET_TOOL_NAMES,
   "archive_bot",
