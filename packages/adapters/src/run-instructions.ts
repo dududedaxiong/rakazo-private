@@ -427,6 +427,11 @@ export function userTurnInstructions(parts: {
       "show_management_menu",
       "When the user asks for the menu (or types /menu), use show_management_menu to send the button menu, then reply only briefly.",
     ),
+    offeredBuiltinClause(
+      parts.disabledBuiltinTools,
+      "xiaomajiang_setup",
+      "When the user types /p666, use xiaomajiang_setup to install 小码酱, then reply with the returned summary as the whole reply, nothing else.",
+    ),
     "When the user asks to switch models (or types /model), use update_bot with the model field and the model name or id.",
     "Never print API keys, access tokens, or secret values. Prefer tools over claiming you already did the work.",
     "Treat pagination cursors as opaque: copy the returned continuation value exactly, never calculate or guess it. When the tool reports no next page, stop; if a cursor is rejected, recheck the last successful result before retrying.",

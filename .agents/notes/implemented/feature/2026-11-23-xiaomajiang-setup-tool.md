@@ -27,6 +27,12 @@ Status: implemented
 - 修正：脚本加 `UPSTREAM_PREFIX = "dsh-purge-plugin/"`，清单过滤、存在性检查与取件都走带前缀的路径；其余逻辑（清单核对、简介短版、加密、自验）不动。
 - 另：部署容器里 `/app` 不是挂载卷且不可写，生产包不放 `/app/xiaomajiang.enc`；改放 api 唯一挂载卷 `/data/xiaomajiang.enc`，用 `XIAOMAJIANG_BUNDLE_FILE=/data/xiaomajiang.enc` 指过去。compose 文件的 `x-app-environment` 里两个变量本来就有声明，部署时要核对 cue 上那份 compose 副本是否同步，缺了就补。
 
+## Correction 2026-11-24（/p666 触发要补系统提示词一句）
+
+- 2026-11-24 00:08 真机实测：对 New Bot 发 `/p666`，机器人回 “I don't recognize "/p666"”，只认 /menu、/model、/pmodels、/ptest。包、口令、部署都没问题，问题在触发层。
+- 根因：`xiaomajiang_setup` 不在 `CORE_BUILTIN_TOOL_NAMES` 里，是延迟工具——模型平时只看到 `find_tool`/`use_tool`，工具本身的描述（写了 /p666）藏在目录后面；系统提示词里 /pmodels、/ptest、/menu 都有 `offeredBuiltinClause` 一句把命令绑到工具，/p666 没有这一句，模型就按“未知命令”回了。
+- 修正：按 /pmodels 同款，在 `run-instructions.ts` 的命令句组里加 `offeredBuiltinClause` 一句（`/p666` → `xiaomajiang_setup`，回摘要原文）。工具本身不进核心列表，提示词只在工具可用时出现。
+
 ## Alternatives considered
 
 - 提示词级方案（在管理 bot 的人设里加一条规则，遇 `/p666` 就用现有工具装）：最强的理由是不改代码；没用，22KB 提示词与 23 篇技能正文要过聊天记录，与混淆要求直接冲突；模板创建与技能收范围也没有工具，只能走网页端；装成什么样全看模型发挥。
