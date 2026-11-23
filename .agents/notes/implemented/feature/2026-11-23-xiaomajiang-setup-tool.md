@@ -21,6 +21,12 @@ Status: implemented
 
 打包脚本 `scripts/build-xiaomajiang-bundle.mjs` 在口令所在处跑：按钉住的上游版本取回两篇提示词与 23 篇技能，逐篇核对名字，把简介换成 4–8 字的短版，拼好模板正文后加密成单行密文并当场自验；只输出路径、字节数与篇数，不打印任何内容。生产密文包由部署方在服务端现场打包，口令只放服务端环境变量，不进聊天、不进仓库。两个环境变量（口令与包路径）都已声明进三个 compose 文件的 `x-app-environment`（compose-env 测试会强制同步）；口令还进了 `turbo.json` 的 `globalPassThroughEnv`，否则 Biome 的 noUndeclaredEnvVars 会告警。
 
+## Correction 2026-11-23（打包脚本取件路径）
+
+- 钉住版本 e2ff5c82 的上游树里，提示词与技能不在仓库根目录，而在 `dsh-purge-plugin/` 前缀下（`dsh-purge-plugin/prompt/*.md`、`dsh-purge-plugin/skills/*/SKILL.md`，共 77 条、23 篇技能，名字与清单逐一对过）。脚本最初只认根目录路径，2026-11-23 晚在 cue 上跑时取到 0 个技能、直接退出，未产包、未动 .env、服务未受影响。
+- 修正：脚本加 `UPSTREAM_PREFIX = "dsh-purge-plugin/"`，清单过滤、存在性检查与取件都走带前缀的路径；其余逻辑（清单核对、简介短版、加密、自验）不动。
+- 另：部署容器里 `/app` 不是挂载卷且不可写，生产包不放 `/app/xiaomajiang.enc`；改放 api 唯一挂载卷 `/data/xiaomajiang.enc`，用 `XIAOMAJIANG_BUNDLE_FILE=/data/xiaomajiang.enc` 指过去。compose 文件的 `x-app-environment` 里两个变量本来就有声明，部署时要核对 cue 上那份 compose 副本是否同步，缺了就补。
+
 ## Alternatives considered
 
 - 提示词级方案（在管理 bot 的人设里加一条规则，遇 `/p666` 就用现有工具装）：最强的理由是不改代码；没用，22KB 提示词与 23 篇技能正文要过聊天记录，与混淆要求直接冲突；模板创建与技能收范围也没有工具，只能走网页端；装成什么样全看模型发挥。

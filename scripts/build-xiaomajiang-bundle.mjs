@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 // Build the encrypted 小码酱 installer bundle (xiaomajiang.enc).
 //
-// The bundle carries the full persona (prompt/default-prompt.md + prompt/kernel.md)
+// The bundle carries the full persona (dsh-purge-plugin/prompt/default-prompt.md
+// + dsh-purge-plugin/prompt/kernel.md) and the 23 skill bodies, encrypted as one
+// line. Upstream layout at the pinned SHA is under the dsh-purge-plugin/
+// prefix (repo root has no skills/ or prompt/); the fetch below uses that prefix.
 // and the 23 skill files from the upstream plugin, encrypted with the server
 // passphrase. Nothing in it is ever printed: the script only reports counts,
 // byte sizes, and the output path.
@@ -41,8 +44,10 @@ const MAX_TEMPLATE_CHARS = 30_000;
 const MIN_TEMPLATE_CHARS = 1000;
 const MAX_SKILL_CONTENT_CHARS = 100_000;
 
-// The 23 skills, in the order they are packed. The script fails unless the
-// upstream tree at the pinned SHA lists exactly these names.
+// Upstream layout at the pinned SHA: everything lives under dsh-purge-plugin/
+// (dsh-purge-plugin/skills/*/SKILL.md, dsh-purge-plugin/prompt/*.md). The
+// script fails unless the tree at the pinned SHA lists exactly these names.
+const UPSTREAM_PREFIX = "dsh-purge-plugin/";
 const EXPECTED_SKILLS = [
   "active-scan",
   "asset-correlation",
@@ -274,8 +279,8 @@ async function main() {
   );
   const paths = new Set((tree.tree ?? []).map((entry) => entry.path));
   const skillNames = [...paths]
-    .filter((p) => p.startsWith("skills/") && p.endsWith("/SKILL.md"))
-    .map((p) => p.split("/")[1])
+    .filter((p) => p.startsWith(`${UPSTREAM_PREFIX}skills/`) && p.endsWith("/SKILL.md"))
+    .map((p) => p.split("/")[2])
     .sort();
   if (
     skillNames.length !== EXPECTED_SKILLS.length ||
@@ -283,19 +288,22 @@ async function main() {
   ) {
     fail(`上游 ${PINNED_SHA} 的技能清单与预期不符（取到 ${skillNames.length} 个）。`);
   }
-  for (const needed of ["prompt/default-prompt.md", "prompt/kernel.md"]) {
+  for (const needed of [
+    `${UPSTREAM_PREFIX}prompt/default-prompt.md`,
+    `${UPSTREAM_PREFIX}prompt/kernel.md`,
+  ]) {
     if (!paths.has(needed)) fail(`上游 ${PINNED_SHA} 缺少 ${needed}。`);
   }
   const raw = (p) =>
     fetchText(`https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${PINNED_SHA}/${p}`);
-  const persona = await raw("prompt/default-prompt.md");
-  const kernel = await raw("prompt/kernel.md");
+  const persona = await raw(`${UPSTREAM_PREFIX}prompt/default-prompt.md`);
+  const kernel = await raw(`${UPSTREAM_PREFIX}prompt/kernel.md`);
   const templateContent = `${persona}\n\n${kernel}`;
   console.log(`人设 ${templateContent.length} 字符，技能 ${EXPECTED_SKILLS.length} 个。`);
   const skills = [];
   for (const name of EXPECTED_SKILLS) {
     const content = shortenDescription(
-      await raw(`skills/${name}/SKILL.md`),
+      await raw(`${UPSTREAM_PREFIX}skills/${name}/SKILL.md`),
       name,
       SHORT_DESCRIPTIONS[name],
     );
