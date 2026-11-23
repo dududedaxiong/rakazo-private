@@ -607,7 +607,7 @@ export type SpaceNavigation = z.infer<typeof SpaceNavigationSchema>;
 
 export const BOT_NAME_MAX_LENGTH = 80;
 export const BOT_DESCRIPTION_MAX_LENGTH = 4000;
-export const BOT_INSTRUCTIONS_MAX_LENGTH = 20000;
+export const BOT_INSTRUCTIONS_MAX_LENGTH = 30000;
 
 export const CreateBotInput = z.object({
   /** Optional reserved identity so a creation preview uses the final bot seed. */
