@@ -18,7 +18,6 @@ export function RunErrorSheetContainer({
 }) {
   const tokens = useMobileTokens();
   const Sheet = useNativeSheet();
-  if (Sheet === undefined) return null;
   if (Sheet) {
     return (
       <NativeSheet Sheet={Sheet} onClose={onClose} expanded={expanded} label={label}>
@@ -33,6 +32,8 @@ export function RunErrorSheetContainer({
       </NativeSheet>
     );
   }
+  // The native sheet is still loading, or this build does not have it: the
+  // modal shows the same details instead of leaving the tap with nothing.
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: tokens.background }}>{children}</View>
