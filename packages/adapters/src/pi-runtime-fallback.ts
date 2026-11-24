@@ -714,13 +714,18 @@ export function fallbackAwareModelStream(
             }
             // Any provider error before visible output switches: the chain
             // is walked in order, and a per-request error may burn the whole
-            // pool instead of ending the run unanswered.
+            // pool instead of ending the run unanswered. A transient error is
+            // a provider-side failure too, so it switches as well when the
+            // observer never marked it as one; the idle timeout is excluded
+            // because it renews the same model's idle bound instead.
             if (
               !sawVisibleOutput &&
               !hasTerminalVisibleOutput &&
               event.reason === "error" &&
               !signalAborted() &&
-              state.isProviderFailure(event.error)
+              (state.isProviderFailure(event.error) ||
+                (isTransientModelError(event.error) &&
+                  event.error.errorMessage !== MODEL_STREAM_IDLE_TIMEOUT_MESSAGE))
             ) {
               state.primaryFailure ??= sanitizeProviderError(
                 target.config.provider,

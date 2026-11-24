@@ -38,6 +38,7 @@ describe("transient model errors", () => {
     ["service unavailable", { status: 503, message: "service unavailable" }],
     ["bad gateway", new Error("502 Bad Gateway")],
     ["empty truncated stream", new Error("Stream ended without finish_reason")],
+    ["dropped Anthropic stream", new Error("Anthropic stream ended before message_stop")],
     ["dropped fetch body", new TypeError("terminated")],
     ["provider network stop", new Error("Provider finish_reason: network_error")],
     ["fetch failure", new TypeError("fetch failed")],
