@@ -16,13 +16,19 @@ function chat(id: string, name: string) {
 function space(
   id: string,
   name: string,
-  options: { canRename?: boolean; canDelete?: boolean; bots?: ReturnType<typeof chat>[] } = {},
+  options: {
+    canRename?: boolean;
+    canDelete?: boolean;
+    bots?: ReturnType<typeof chat>[];
+    createdAt?: string;
+  } = {},
 ) {
   return {
     id,
     name,
     canRename: options.canRename ?? false,
     canDelete: options.canDelete ?? false,
+    createdAt: options.createdAt,
     bots: options.bots ?? [chat(`${id}-bot`, "Chief")],
     groups: [],
     botSections: [],
@@ -107,6 +113,23 @@ describe("sidebarGroupsForSpaces", () => {
       canDeleteSpace: true,
       emptySpaceId: "space-2",
     });
+  });
+
+  it("tells same-named spaces apart by creation date, and leaves unique names alone", () => {
+    const groups = sidebarGroupsForSpaces(
+      [
+        space("space-1", "Personal", { createdAt: "2026-11-07T12:00:00.000Z" }),
+        space("space-2", "Personal", { createdAt: "2026-11-09T12:00:00.000Z" }),
+        space("space-3", "Work"),
+      ],
+      "",
+    );
+
+    expect(groups.map((group) => group.title)).toEqual([
+      "Personal · 11-07",
+      "Personal · 11-09",
+      "Work",
+    ]);
   });
 
   it("keeps the space menu for a member who cannot rename or delete, for Settings", () => {

@@ -404,6 +404,7 @@ async function memberSpaceNavigation(
           name: true,
           isDefault: true,
           deletingAt: true,
+          createdAt: true,
           _count: { select: { memberships: true } },
         },
       },
@@ -477,6 +478,7 @@ async function memberSpaceNavigation(
         name: membership.space.name,
         // Another person's default Space is not this member's default.
         isDefault: membership.space.isDefault && owner,
+        createdAt: membership.space.createdAt.toISOString(),
         hasContent: spacesWithContent.has(membership.spaceId),
         shared: membership.space._count.memberships > 1,
         botCount: botCounts.get(membership.spaceId) ?? 0,

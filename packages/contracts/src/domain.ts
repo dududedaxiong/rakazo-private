@@ -546,6 +546,8 @@ export const SpaceSchema = z.object({
   canDelete: z.boolean().optional(),
   /** True when more than one person belongs to the space. */
   shared: z.boolean().optional(),
+  /** ISO creation time; shown only when another visible space shares the name. */
+  createdAt: z.string().optional(),
   /** Every bot deleting the space removes, archived and other members' included. */
   botCount: z.number().int().nonnegative().optional(),
   bots: z.array(SpaceBotSchema),
