@@ -132,6 +132,17 @@ describe("spaceInboxItems", () => {
     ]);
   });
 
+  it("tells same-named spaces apart by creation date", () => {
+    const first = space({ id: "space-1", name: "Personal", createdAt: "2026-11-07T12:00:00.000Z" });
+    const second = space({
+      id: "space-2",
+      name: "Personal",
+      createdAt: "2026-11-09T12:00:00.000Z",
+    });
+    const headings = spaceInboxItems([first, second]).filter((item) => item.type === "heading");
+    expect(headings.map((item) => item.title)).toEqual(["Personal · 11-07", "Personal · 11-09"]);
+  });
+
   it("keeps the only empty default space visible without offering deletion", () => {
     const personal = space({ isDefault: true, canDelete: true });
     const items = spaceInboxItems([personal]);

@@ -10,7 +10,7 @@ Two spaces can share the name "Personal" (one created 2026-11-07, another 2026-1
 
 - `SpaceSchema` gains an optional `createdAt` (ISO string), and the spaces list endpoint returns each space's creation time.
 - In the web sidebar, when more than one visible space shares a name, the header shows the creation date after it ("Personal · 11-07", "Personal · 11-09"). Names that do not collide show no date, so the sidebar does not get noisier for everyone else.
-- The mobile list is not changed in this round; it will use the same `createdAt` field when its turn comes in the next App build, so no extra App package is spent on this alone.
+- The same rule applies to the App inbox headings, using the same shared helper (`spaceDisplayName` in `@rakazo_mickvvw/core`), so web and App cannot drift apart. The App change rides the next App build; it needs the server to return `createdAt`, which this same release already does.
 
 ## Alternatives considered
 

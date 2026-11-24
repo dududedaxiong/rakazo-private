@@ -1,4 +1,4 @@
-import { groupBotsForSidebar } from "@rakazo_mickvvw/core";
+import { groupBotsForSidebar, spaceDisplayName } from "@rakazo_mickvvw/core";
 
 type SidebarChat = {
   id: string;
@@ -19,16 +19,6 @@ type SidebarSpace<TBot extends SidebarChat, TGroup extends SidebarChat> = {
   groups: readonly TGroup[];
   botSections: readonly { id: string; name: string }[];
 };
-
-/** Short creation date (MM-DD) used only to tell same-named spaces apart. */
-function shortCreatedDate(iso: string | undefined): string | undefined {
-  if (!iso) return undefined;
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return undefined;
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${month}-${day}`;
-}
 
 function spaceHeaderMenu(space: { canRename?: boolean; canDelete?: boolean }, hostsMenu: boolean) {
   return {
@@ -56,17 +46,6 @@ export function sidebarGroupsForSpaces<TBot extends SidebarChat, TGroup extends 
 ) {
   const needle = query.toLowerCase();
   const showSpaceNames = spaces.length > 1;
-  // Same-named spaces are indistinguishable by name alone, so only the
-  // colliding ones carry their creation date in the sidebar header.
-  const nameCounts = new Map<string, number>();
-  for (const space of spaces) {
-    nameCounts.set(space.name, (nameCounts.get(space.name) ?? 0) + 1);
-  }
-  const displayName = (space: SidebarSpace<TBot, TGroup>) => {
-    if ((nameCounts.get(space.name) ?? 0) <= 1) return space.name;
-    const stamp = shortCreatedDate(space.createdAt);
-    return stamp ? `${space.name} · ${stamp}` : space.name;
-  };
   return spaces.flatMap((space) => {
     const visibleBots = space.bots.filter((bot) =>
       `${bot.name} ${bot.preview ?? ""}`.toLowerCase().includes(needle),
@@ -112,9 +91,9 @@ export function sidebarGroupsForSpaces<TBot extends SidebarChat, TGroup extends 
       key: showSpaceNames ? `space:${space.id}:${group.key}` : group.key,
       // A header holding the space menu is never blank, even for the only space.
       title: showSpaceNames
-        ? displayName(space)
+        ? spaceDisplayName(space, spaces)
         : index === 0 && !group.title
-          ? displayName(space)
+          ? spaceDisplayName(space, spaces)
           : group.title,
       subtitle: showSpaceNames && group.title ? group.title : undefined,
       showLock: showSpaceNames,
@@ -133,7 +112,7 @@ export function sidebarGroupsForSpaces<TBot extends SidebarChat, TGroup extends 
       ? []
       : space.botSections.map((section) => ({
           key: showSpaceNames ? `space:${space.id}:section:${section.id}` : `section:${section.id}`,
-          title: showSpaceNames ? displayName(space) : section.name,
+          title: showSpaceNames ? spaceDisplayName(space, spaces) : section.name,
           subtitle: showSpaceNames ? section.name : undefined,
           bots: [] as (typeof sections)[number]["bots"],
           sectionId: section.id as string | null,
@@ -152,7 +131,7 @@ export function sidebarGroupsForSpaces<TBot extends SidebarChat, TGroup extends 
     return [
       {
         key: showSpaceNames ? `space:${space.id}:empty` : `space:${space.id}:actions`,
-        title: displayName(space),
+        title: spaceDisplayName(space, spaces),
         subtitle: undefined,
         bots: [],
         sectionId: null,

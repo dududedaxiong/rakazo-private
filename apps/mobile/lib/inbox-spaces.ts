@@ -3,6 +3,7 @@ import {
   botAvatarActivity,
   groupBotsForSidebar,
   logoAvatarNeedsAttention,
+  spaceDisplayName,
 } from "@rakazo_mickvvw/core";
 import { rpc, selectedSpaceId } from "./api";
 import { adoptDeletedSpaceFallback, selectSpace } from "./api-server";
@@ -13,7 +14,14 @@ import type { InboxSignal } from "./offscreen-unreads";
 
 export type InboxSpace = Pick<
   MobileSpace,
-  "id" | "name" | "isDefault" | "hasContent" | "canDelete" | "botCount" | "botSections"
+  | "id"
+  | "name"
+  | "isDefault"
+  | "hasContent"
+  | "canDelete"
+  | "botCount"
+  | "botSections"
+  | "createdAt"
 > & {
   bots: (MobileBot | SpaceBot)[];
   groups: (MobileGroup | SpaceGroup)[];
@@ -125,7 +133,12 @@ export function spaceInboxItems(
     ];
     const items: InboxSpaceItem[] = [];
     if (spaces.length > 1 || !space.isDefault || chats.length === 0) {
-      items.push({ type: "heading", key: space.id, title: space.name, space });
+      items.push({
+        type: "heading",
+        key: space.id,
+        title: spaceDisplayName(space, spaces),
+        space,
+      });
     }
     for (const group of groupBotsForSidebar(chats, space.botSections, {
       includeEmptySections: true,

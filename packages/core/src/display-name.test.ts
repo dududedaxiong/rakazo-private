@@ -3,6 +3,7 @@ import {
   accountDisplay,
   displayMessageBlock,
   displayName,
+  spaceDisplayName,
   stripLeadingOpaqueCodeLine,
 } from "./display-name.js";
 
@@ -120,5 +121,25 @@ describe("stripLeadingOpaqueCodeLine", () => {
     expect(stripLeadingOpaqueCodeLine("Ff1dE9")).toBe("Ff1dE9");
     expect(stripLeadingOpaqueCodeLine("Ff1dE9\n")).toBe("Ff1dE9\n");
     expect(stripLeadingOpaqueCodeLine("Ff1dE9\n\n")).toBe("Ff1dE9\n\n");
+  });
+});
+
+describe("spaceDisplayName", () => {
+  it("adds the creation date only when the name collides", () => {
+    const first = { name: "Personal", createdAt: "2026-11-07T12:00:00.000Z" };
+    const second = { name: "Personal", createdAt: "2026-11-09T12:00:00.000Z" };
+    const work = { name: "Work", createdAt: "2026-11-08T12:00:00.000Z" };
+    const spaces = [first, second, work];
+    expect(spaceDisplayName(first, spaces)).toBe("Personal · 11-07");
+    expect(spaceDisplayName(second, spaces)).toBe("Personal · 11-09");
+    expect(spaceDisplayName(work, spaces)).toBe("Work");
+  });
+
+  it("falls back to the bare name without a usable creation time", () => {
+    const bare = { name: "Personal" };
+    const broken = { name: "Personal", createdAt: "not-a-date" };
+    const spaces = [bare, broken];
+    expect(spaceDisplayName(bare, spaces)).toBe("Personal");
+    expect(spaceDisplayName(broken, spaces)).toBe("Personal");
   });
 });

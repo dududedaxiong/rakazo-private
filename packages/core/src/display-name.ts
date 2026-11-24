@@ -28,6 +28,25 @@ export function displayName(name: string | null | undefined, fallback: string): 
 }
 
 /**
+ * Same-named spaces are indistinguishable by name alone, so only the
+ * colliding ones carry their short creation date (MM-DD) after the name.
+ * Names that do not collide, and spaces without a usable creation time,
+ * show the bare name.
+ */
+export function spaceDisplayName(
+  space: { name: string; createdAt?: string | null },
+  spaces: readonly { name: string }[],
+): string {
+  if (spaces.filter((other) => other.name === space.name).length <= 1) return space.name;
+  if (!space.createdAt) return space.name;
+  const date = new Date(space.createdAt);
+  if (Number.isNaN(date.getTime())) return space.name;
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${space.name} · ${month}-${day}`;
+}
+
+/**
  * A model sometimes echoes its own short id as a lone first line of a
  * translation; that line is not content. Drop it only when it is an isolated
  * opaque code and real text follows — a lone code with nothing after it, or a
