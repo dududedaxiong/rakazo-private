@@ -9,12 +9,29 @@ import {
   skillUpdateFromTool,
 } from "./skill-tools.js";
 
-type Scope = { spaceId?: string; userId?: string; OR?: Array<{ spaceId?: string }> };
-/** The owner's rows here: added in this space (no fixture is available beyond one). */
+type Scope = {
+  spaceId?: string;
+  userId?: string;
+  OR?: Array<{
+    spaceId?: string;
+    allSpaces?: boolean;
+    availableIn?: { some?: { spaceId?: string } };
+  }>;
+};
+/** The owner's rows here: added in this space, or shared across spaces. */
 function inScope(row: Record<string, unknown>, where: Scope): boolean {
   if (where.userId && row.userId !== where.userId) return false;
   if (where.spaceId && row.spaceId !== where.spaceId) return false;
-  if (where.OR && !where.OR.some((branch) => branch.spaceId === row.spaceId)) return false;
+  if (
+    where.OR &&
+    !where.OR.some(
+      (branch) =>
+        (branch.spaceId !== undefined && branch.spaceId === row.spaceId) ||
+        (branch.allSpaces === true && row.allSpaces === true) ||
+        branch.availableIn?.some?.spaceId === row.spaceId,
+    )
+  )
+    return false;
   return true;
 }
 
@@ -127,6 +144,38 @@ describe("skill tools", () => {
     expect(deleted).toEqual({ ok: true, name: "Daily standup" });
     expect(await skillReadFromTool(prisma as never, owner, { name: "Daily standup" })).toEqual({
       error: "Skill not found.",
+    });
+  });
+
+  it("shares newly created skills across spaces, but only the home space can change them", async () => {
+    const created = await skillCreateFromTool(prisma as never, owner, {
+      name: "Shared skill",
+      description: "Used everywhere",
+      body: "Do the thing.",
+    });
+    expect(created).toMatchObject({ ok: true, name: "Shared skill" });
+    expect(prisma._store[0]).toMatchObject({ allSpaces: true });
+
+    const elsewhere = await listAgentSkillRecords(prisma as never, {
+      spaceId: "ws-2",
+      userId: "user-1",
+    });
+    expect(elsewhere.map((skill) => skill.name)).toContain("Shared skill");
+
+    const updated = await skillUpdateFromTool(prisma as never, owner, {
+      name: "Shared skill",
+      description: "Used everywhere, updated",
+    });
+    expect(updated).toMatchObject({ ok: true });
+
+    const foreign = await skillUpdateFromTool(
+      prisma as never,
+      { spaceId: "ws-2", userId: "user-1" },
+      { name: "Shared skill", description: "Hijack" },
+    );
+    expect(foreign).toEqual({
+      error:
+        "Could not change this skill. A skill available in other spaces can only be changed by the user.",
     });
   });
 

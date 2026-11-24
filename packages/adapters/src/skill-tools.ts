@@ -83,15 +83,15 @@ function rejectInvalidSkillFields(name: string, description: string): string | u
 }
 
 /**
- * A bot changes only skills that live in its own space alone: writing this space's details into
- * a skill other spaces read would carry them across the boundary.
+ * A bot changes only skills homed in its own space: the home space owns the
+ * skill even when it is shared everywhere, so writing this space's details
+ * into it is the owner's choice. A skill homed in another space cannot be
+ * changed here, shared or not.
  */
-function onlyInSpace(owner: SkillOwner) {
+function homedInSpace(owner: SkillOwner) {
   return {
     spaceId: owner.spaceId,
     userId: owner.userId,
-    allSpaces: false,
-    availableIn: { none: {} },
   };
 }
 
@@ -209,6 +209,9 @@ export async function skillCreateFromTool(
         description,
         content,
         source: "user",
+        // Skills are shared across spaces from now on, matching the web
+        // creation path and the tool description ("shared across assistants").
+        allSpaces: true,
       },
     });
     return {
@@ -287,7 +290,7 @@ export async function skillUpdateFromTool(
   try {
     // Re-scope mutate to owner + user source so a stale id cannot cross tenants.
     const updated = await prisma.agentSkill.updateMany({
-      where: { id: existing.id, ...onlyInSpace(owner), source: "user" },
+      where: { id: existing.id, ...homedInSpace(owner), source: "user" },
       data: {
         name: nextName,
         description: nextDescription,
@@ -312,7 +315,7 @@ export async function skillDeleteFromTool(
     return { error: "Builtin and plugin skills are read-only." };
   }
   const deleted = await prisma.agentSkill.deleteMany({
-    where: { id: existing.id, ...onlyInSpace(owner), source: "user" },
+    where: { id: existing.id, ...homedInSpace(owner), source: "user" },
   });
   if (deleted.count !== 1) return { error: SHARED_SKILL_ERROR };
   return { ok: true, name: existing.name };
