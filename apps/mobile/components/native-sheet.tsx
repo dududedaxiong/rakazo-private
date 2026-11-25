@@ -96,7 +96,12 @@ export function NativeSheet({
         style={{ maxHeight, height: expanded ? maxHeight : undefined }}
       >
         {/* The native sheet is a separate dialog, outside the app root's gesture handler. */}
-        <GestureHandlerRootView>
+        {/* flexGrow: 0 replaces the root's default flex: 1 (flexBasis 0%):
+            with the parent height unmeasured, a 0%-basis child measures 0
+            high, the ScrollView contributes nothing in its scroll axis, and
+            enableDynamicSizing pins the sheet at handle height. flexBasis
+            must stay auto; never use flex: 0 here (it sets flexBasis 0%). */}
+        <GestureHandlerRootView style={{ flexGrow: 0 }}>
           <ScrollView
             style={{ flexGrow: 0 }}
             keyboardShouldPersistTaps="handled"

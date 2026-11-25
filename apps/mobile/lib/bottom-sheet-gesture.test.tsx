@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { act, createElement } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
@@ -11,8 +11,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // separate native window (a Modal or a native bottom-sheet dialog), so each
 // sheet path must provide its own root around its content.
 vi.mock("react-native-gesture-handler", () => ({
-  GestureHandlerRootView: ({ children }: { children?: ReactNode }) =>
-    createElement("div", { "data-testid": "gesture-handler-root-view" }, children),
+  GestureHandlerRootView: ({ children, style }: { children?: ReactNode; style?: CSSProperties }) =>
+    createElement("div", { "data-testid": "gesture-handler-root-view", style }, children),
 }));
 vi.mock("react-native", () => ({
   View: ({ children }: { children?: ReactNode }) => createElement("div", null, children),
@@ -93,5 +93,26 @@ describe("bottom sheet gesture root", () => {
     const root = rendered.container.querySelector('[data-testid="gesture-handler-root-view"]');
     expect(root).not.toBeNull();
     expect(root?.querySelector('[data-testid="sheet-content"]')).not.toBeNull();
+  });
+
+  it("sizes the native sheet gesture root by content, not by flex: 1", () => {
+    const FakeSheet = ({ children }: { children?: ReactNode }) =>
+      createElement("div", { "data-testid": "fake-sheet" }, children);
+    rendered = render(
+      <NativeSheet Sheet={FakeSheet} onClose={() => undefined} label="Other models">
+        <div data-testid="sheet-content">content</div>
+      </NativeSheet>,
+    );
+    const root = rendered.container.querySelector(
+      '[data-testid="gesture-handler-root-view"]',
+    ) as HTMLElement | null;
+    expect(root).not.toBeNull();
+    // The root's default flex: 1 means flexBasis 0%; inside a parent whose
+    // height is unmeasured, the content measures 0 high and
+    // enableDynamicSizing pins the sheet at handle height. flexGrow: 0
+    // replaces the default, leaving flexBasis at auto so the sheet sizes by
+    // content. flex: 0 would set flexBasis 0% again and break the same way.
+    expect(root?.style.flexGrow).toBe("0");
+    expect(root?.style.flexBasis).toBe("");
   });
 });

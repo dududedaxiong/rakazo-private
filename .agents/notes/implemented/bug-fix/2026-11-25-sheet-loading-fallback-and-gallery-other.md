@@ -6,7 +6,7 @@ Status: implemented
 
 用户 2026-11-25 在手机上（1.0.41/vc39）报了两个问题。
 
-1. 对话页底部快捷栏四个入口点下去没反应：其他模型、收藏、背景、备份。主模型能开，只是慢；例行任务、画廊能开。根因与 2026-11-24 修过的报错详情是同一款：五个底表都在 `useNativeSheet()` 还是 `undefined`（Android 原生底表 `@expo/ui/community/bottom-sheet` 还在动态加载）时直接返回 null，点下去什么都不出现。11-24 那次只修了 `RunErrorSheetContainer`，笔记里明确写着 `BottomSheetShell` 同款 pattern「left alone here because no failure was reported on its sheets」——现在用户报的正是这些 sheet。
+1. 对话页底部快捷栏四个入口点下去没反应：其他模型、收藏、背景、备份。主模型能开，只是慢；例行任务、画廊能开。根因与 2026-11-24 修过的报错详情是同一款：五个底表都在 `useNativeSheet()` 还是 `undefined`（Android 原生底表 `@expo/ui/community/bottom-sheet` 还在动态加载）时直接返回 null，点下去什么都不出现。11-24 那次只修了 `RunErrorSheetContainer`，笔记里明确写着 `BottomSheetShell` 同款 pattern「left alone here because no failure was reported on its sheets」——现在用户报的正是这些 sheet。后续：真机录屏证实这个诊断是错的——渲染走的是原生底表、卡在约 50dp，见[原生底表只弹出一点点就卡住：手势根的 flexBasis 0% 压垮动态量高](./2026-11-26-native-sheet-gesture-root-flex-basis.md)。
 2. 画廊只认 `generated-` 开头的文件名（`lib/gallery.ts` 的 `isGeneratedMedia`），助手用代码出的图（如 `01_fullbody.jpg`）进不来，画廊显示「还没有生成的图片或视频」。用户先建议按后缀收纳、图片视频分开；得知后缀分不出「生成的」和截图/附件后，定版为：画廊加「其他」分类收没有 `generated-` 开头的图片/视频文件；「其他」里的文件可以转移到图片或视频；「其他」里一定要有一键清理。
 
 ## Decision
@@ -59,4 +59,4 @@ Status: implemented
 - `pnpm verify-notes`：59 篇笔记校验通过。
 - 未验证：真机上的底表打开手感与画廊转移/清理（本次不打包，等用户点头打新包后手机验收）。
 
-相关：[报错详情在原生底表还在加载时也能打开](../feature/2026-11-24-run-error-details-sheet-fallback.md)（同款根因，本次把剩余五处补齐）、[画廊管理——分类、排序、按天分组、长按多选、保存到本地、删除、重命名](../feature/2026-11-19-gallery-manage.md)（画廊分类与删除/重命名机制的来源）、[其他模型底表左滑失效与已移除模型残留备选池](../feature/2026-11-23-app-model-sheet-fixes.md)（`BottomSheetShell` 的手势容器背景）。
+相关：[报错详情在原生底表还在加载时也能打开](../feature/2026-11-24-run-error-details-sheet-fallback.md)（同款根因，本次把剩余五处补齐）、[画廊管理——分类、排序、按天分组、长按多选、保存到本地、删除、重命名](../feature/2026-11-19-gallery-manage.md)（画廊分类与删除/重命名机制的来源）、[其他模型底表左滑失效与已移除模型残留备选池](../feature/2026-11-23-app-model-sheet-fixes.md)（`BottomSheetShell` 的手势容器背景）、[原生底表只弹出一点点就卡住：手势根的 flexBasis 0% 压垮动态量高](./2026-11-26-native-sheet-gesture-root-flex-basis.md)（推翻本篇的底表根因；画廊部分不受影响）。
