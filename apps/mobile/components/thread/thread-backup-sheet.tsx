@@ -126,7 +126,7 @@ export function ThreadBackupSheet({
     })();
   }, [visible, userId]);
 
-  if (!visible || Sheet === undefined) return null;
+  if (!visible) return null;
 
   function messageForCode(code: string): string {
     switch (code) {

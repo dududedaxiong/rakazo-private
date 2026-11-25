@@ -26,7 +26,7 @@ export function BottomSheetShell({
   const tokens = mobileTokens();
   const Sheet = useNativeSheet();
 
-  if (!visible || Sheet === undefined) return null;
+  if (!visible) return null;
 
   if (Sheet) {
     return (

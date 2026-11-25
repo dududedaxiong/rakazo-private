@@ -11,7 +11,7 @@ export type GalleryItem = {
   groupId: string | null;
 };
 
-export type GalleryCategory = "all" | "image" | "video";
+export type GalleryCategory = "all" | "image" | "video" | "other";
 export type GallerySort = ArtifactListSort;
 
 export type GalleryTranslate = (
@@ -56,10 +56,53 @@ export function isGeneratedMedia(item: Pick<GalleryItem, "name" | "mimeType">): 
   );
 }
 
+/**
+ * Bot-made images and videos without the `generated-` name: files the bot
+ * produced by code (image generators, screenshots) or received as
+ * attachments. They live in the gallery's "Other" category until moved.
+ */
+export function isOtherMedia(item: Pick<GalleryItem, "name" | "mimeType">): boolean {
+  return (
+    !item.name.startsWith("generated-") &&
+    (item.mimeType.startsWith("image/") || item.mimeType.startsWith("video/"))
+  );
+}
+
+/** Prefix a file name so it counts as generated media; already-prefixed names pass through. */
+export function galleryRenameToGenerated(name: string): string {
+  return name.startsWith("generated-") ? name : `generated-${name}`;
+}
+
+export type GalleryCategoryCounts = {
+  all: number;
+  image: number;
+  video: number;
+  other: number;
+};
+
+/** Per-category counts over the loaded items; unloaded pages are not counted. */
+export function countGalleryCategories(
+  items: readonly Pick<GalleryItem, "name" | "mimeType">[],
+): GalleryCategoryCounts {
+  const counts: GalleryCategoryCounts = { all: 0, image: 0, video: 0, other: 0 };
+  for (const item of items) {
+    if (isGeneratedMedia(item)) {
+      counts.all += 1;
+      if (item.mimeType.startsWith("image/")) counts.image += 1;
+      else if (item.mimeType.startsWith("video/")) counts.video += 1;
+    } else if (isOtherMedia(item)) {
+      counts.other += 1;
+    }
+  }
+  return counts;
+}
+
 export function matchesGalleryCategory(
-  item: Pick<GalleryItem, "mimeType">,
+  item: Pick<GalleryItem, "name" | "mimeType">,
   category: GalleryCategory,
 ): boolean {
+  if (category === "other") return isOtherMedia(item);
+  if (!isGeneratedMedia(item)) return false;
   if (category === "all") return true;
   return category === "image"
     ? item.mimeType.startsWith("image/")

@@ -1,13 +1,16 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { GalleryItem } from "./gallery";
 import {
+  countGalleryCategories,
   formatGalleryDayLabel,
+  galleryRenameToGenerated,
   gallerySortLabelKey,
   galleryTotalBytes,
   galleryZipFileName,
   groupGalleryItemsByDay,
   isGallerySaveOverLimit,
   isGeneratedMedia,
+  isOtherMedia,
   matchesGalleryCategory,
   nextGallerySort,
   toggleGallerySelection,
@@ -56,6 +59,36 @@ describe("isGeneratedMedia", () => {
   });
 });
 
+describe("isOtherMedia", () => {
+  it("accepts bot images and videos without the generated- name", () => {
+    expect(isOtherMedia(item({ name: "01_fullbody.jpg", mimeType: "image/jpeg" }))).toBe(true);
+    expect(isOtherMedia(item({ name: "clip.mp4", mimeType: "video/mp4" }))).toBe(true);
+    expect(isOtherMedia(item({ name: "generated-a.png", mimeType: "image/png" }))).toBe(false);
+    expect(isOtherMedia(item({ name: "notes.txt", mimeType: "text/plain" }))).toBe(false);
+  });
+});
+
+describe("galleryRenameToGenerated", () => {
+  it("prefixes a plain name and passes an already-prefixed name through", () => {
+    expect(galleryRenameToGenerated("01_fullbody.jpg")).toBe("generated-01_fullbody.jpg");
+    expect(galleryRenameToGenerated("generated-a.png")).toBe("generated-a.png");
+  });
+});
+
+describe("countGalleryCategories", () => {
+  it("counts generated images, generated videos, and other media separately", () => {
+    expect(
+      countGalleryCategories([
+        item({ id: "1", name: "generated-a.png", mimeType: "image/png" }),
+        item({ id: "2", name: "generated-b.mp4", mimeType: "video/mp4" }),
+        item({ id: "3", name: "01_fullbody.jpg", mimeType: "image/jpeg" }),
+        item({ id: "4", name: "clip.mp4", mimeType: "video/mp4" }),
+        item({ id: "5", name: "notes.txt", mimeType: "text/plain" }),
+      ]),
+    ).toEqual({ all: 2, image: 1, video: 1, other: 2 });
+  });
+});
+
 describe("matchesGalleryCategory", () => {
   it("filters by mime type", () => {
     const image = item({ id: "1", mimeType: "image/png" });
@@ -66,6 +99,19 @@ describe("matchesGalleryCategory", () => {
     expect(matchesGalleryCategory(video, "image")).toBe(false);
     expect(matchesGalleryCategory(image, "video")).toBe(false);
     expect(matchesGalleryCategory(video, "video")).toBe(true);
+  });
+
+  it("puts non-generated media in other and keeps generated media out of it", () => {
+    const generated = item({ id: "1", name: "generated-a.png", mimeType: "image/png" });
+    const otherImage = item({ id: "2", name: "photo.jpg", mimeType: "image/jpeg" });
+    const otherVideo = item({ id: "3", name: "clip.mp4", mimeType: "video/mp4" });
+    const text = item({ id: "4", name: "notes.txt", mimeType: "text/plain" });
+    expect(matchesGalleryCategory(generated, "other")).toBe(false);
+    expect(matchesGalleryCategory(otherImage, "other")).toBe(true);
+    expect(matchesGalleryCategory(otherVideo, "other")).toBe(true);
+    expect(matchesGalleryCategory(text, "other")).toBe(false);
+    expect(matchesGalleryCategory(otherImage, "all")).toBe(false);
+    expect(matchesGalleryCategory(otherImage, "image")).toBe(false);
   });
 });
 

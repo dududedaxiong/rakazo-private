@@ -41,7 +41,7 @@ export function ThreadFavoritesSheet({
   const Sheet = useNativeSheet();
   const favorites = useThreadFavorites(threadKey);
 
-  if (!visible || Sheet === undefined) return null;
+  if (!visible) return null;
 
   const content = (
     <View style={{ backgroundColor: tokens.card, paddingBottom: 12 }}>

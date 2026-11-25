@@ -375,7 +375,7 @@ export function ThreadModelPickerSheet({
     await testRun.retestOne(item);
   }
 
-  if (!visible || Sheet === undefined) return null;
+  if (!visible) return null;
 
   const runStatus =
     testSnapshot.status === "interrupted" && testSnapshot.done >= testSnapshot.total

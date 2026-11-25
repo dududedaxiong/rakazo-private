@@ -26,17 +26,20 @@ import {
   getArtifactById,
   listSpaceArtifacts,
   removeArtifact,
+  renameArtifact,
 } from "../lib/artifacts";
 import type { GalleryCategory, GallerySort } from "../lib/gallery";
 import {
+  countGalleryCategories,
   formatGalleryDayLabel,
+  galleryRenameToGenerated,
   gallerySortLabelKey,
   galleryTileTime,
   galleryTotalBytes,
   galleryZipFileName,
   groupGalleryItemsByDay,
   isGallerySaveOverLimit,
-  isGeneratedMedia,
+  isOtherMedia,
   matchesGalleryCategory,
   nextGallerySort,
   toggleGallerySelection,
@@ -80,6 +83,10 @@ export default function GalleryScreen() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [moveBusy, setMoveBusy] = useState(false);
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const [clearBusy, setClearBusy] = useState(false);
+  const [clearError, setClearError] = useState<string | null>(null);
   const generationRef = useRef(0);
   const autoFetchedCursorRef = useRef<string | null>(null);
   const didFocusRef = useRef(false);
@@ -154,13 +161,12 @@ export default function GalleryScreen() {
 
   const visible = useMemo(
     () =>
-      items === null
-        ? null
-        : items.filter(
-            (entry) => isGeneratedMedia(entry) && matchesGalleryCategory(entry, category),
-          ),
+      items === null ? null : items.filter((entry) => matchesGalleryCategory(entry, category)),
     [items, category],
   );
+
+  // Counts over the loaded pages only; the server returns no total.
+  const counts = useMemo(() => (items === null ? null : countGalleryCategories(items)), [items]);
 
   // The list is server-paged, but a page can hold only non-generated bot files;
   // keep paging while the filtered view is empty.
@@ -185,6 +191,14 @@ export default function GalleryScreen() {
   const selectedItems = useMemo(
     () => (items === null ? [] : items.filter((entry) => selectedIds.has(entry.id))),
     [items, selectedIds],
+  );
+  const selectedImages = useMemo(
+    () => selectedItems.filter((entry) => entry.mimeType.startsWith("image/")),
+    [selectedItems],
+  );
+  const selectedVideos = useMemo(
+    () => selectedItems.filter((entry) => entry.mimeType.startsWith("video/")),
+    [selectedItems],
   );
 
   const changeCategory = useCallback((next: GalleryCategory) => {
@@ -317,7 +331,117 @@ export default function GalleryScreen() {
       ? t("No generated images yet")
       : category === "video"
         ? t("No generated videos yet")
-        : t("No generated images or videos yet");
+        : category === "other"
+          ? t("No other images or videos yet")
+          : t("No generated images or videos yet");
+
+  /**
+   * Moves the selected "Other" files of one kind into the matching generated
+   * category: renaming with the `generated-` prefix is what promotes them.
+   * The other kind stays selected in "Other".
+   */
+  async function moveSelected(kind: "image" | "video") {
+    if (moveBusy || saveBusy || deleteBusy) return;
+    const targets = selectedItems.filter((entry) =>
+      kind === "image" ? entry.mimeType.startsWith("image/") : entry.mimeType.startsWith("video/"),
+    );
+    if (targets.length === 0) return;
+    setMoveBusy(true);
+    setMoveError(null);
+    const failed: MobileArtifactSummary[] = [];
+    const movedIds = new Set<string>();
+    for (const entry of targets) {
+      try {
+        await renameArtifact(entry.id, galleryRenameToGenerated(entry.name));
+        movedIds.add(entry.id);
+      } catch {
+        failed.push(entry);
+      }
+    }
+    if (movedIds.size > 0) {
+      setItems((current) =>
+        current === null
+          ? null
+          : current.map((row) =>
+              movedIds.has(row.id) ? { ...row, name: galleryRenameToGenerated(row.name) } : row,
+            ),
+      );
+      setSelectedIds((current) => {
+        const next = new Set(current);
+        for (const id of movedIds) next.delete(id);
+        return next;
+      });
+    }
+    setMoveBusy(false);
+    if (failed.length > 0) {
+      setMoveError(
+        t("Could not move {names}. Try again.", {
+          names: failed.map((entry) => entry.name).join("、"),
+        }),
+      );
+    }
+  }
+
+  /** Every "Other" file across all pages, not just the loaded ones. */
+  async function loadAllOther(): Promise<MobileArtifactSummary[]> {
+    let all = items ?? [];
+    let cursor = nextCursor;
+    while (cursor) {
+      const page = await listSpaceArtifacts({
+        madeByBots: true,
+        sort: cursor.sort,
+        limit: PAGE_SIZE,
+        cursor: cursor.cursor,
+      });
+      all = [...all, ...page.items];
+      cursor = page.nextCursor ? { cursor: page.nextCursor, sort: cursor.sort } : null;
+    }
+    return all.filter((entry) => isOtherMedia(entry));
+  }
+
+  async function askClearOther() {
+    if (clearBusy || deleteBusy || saveBusy) return;
+    setClearError(null);
+    let targets: MobileArtifactSummary[];
+    try {
+      targets = await loadAllOther();
+    } catch {
+      setClearError(t("Could not load gallery."));
+      return;
+    }
+    if (targets.length === 0) return;
+    Alert.alert(
+      t("Delete {count} items?", { count: targets.length }),
+      t("Deleted files can't be recovered. Save them to your device first."),
+      [
+        { text: t("Cancel"), style: "cancel" },
+        { text: t("Delete"), style: "destructive", onPress: () => void confirmClearOther(targets) },
+      ],
+    );
+  }
+
+  async function confirmClearOther(targets: MobileArtifactSummary[]) {
+    if (clearBusy) return;
+    setClearBusy(true);
+    setClearError(null);
+    const failed: MobileArtifactSummary[] = [];
+    for (const entry of targets) {
+      try {
+        await removeArtifact(entry.id);
+      } catch {
+        failed.push(entry);
+      }
+    }
+    await load(sort, "refresh");
+    setClearBusy(false);
+    if (failed.length > 0) {
+      setClearError(
+        t("Could not delete {names}. Try again.", {
+          names: failed.map((entry) => entry.name).join("、"),
+        }),
+      );
+    }
+  }
 
   return (
     <View style={[styles.root, { paddingBottom: selectMode ? insets.bottom : 0 }]}>
@@ -333,20 +457,51 @@ export default function GalleryScreen() {
           },
         ]}
         ListHeaderComponent={
-          <View style={styles.header}>
-            <NativeSegmentedControl<GalleryCategory>
-              accessibilityLabel={t("Filter by type")}
-              value={category}
-              onChange={changeCategory}
-              options={[
-                { value: "all", label: t("All") },
-                { value: "image", label: t("Images") },
-                { value: "video", label: t("Videos") },
-              ]}
-            />
-            <Pressable accessibilityRole="button" onPress={cycleSort} style={styles.sortButton}>
-              <Text style={styles.sortLabel}>{t(gallerySortLabelKey(sort))}</Text>
-            </Pressable>
+          <View>
+            <View style={styles.header}>
+              <NativeSegmentedControl<GalleryCategory>
+                accessibilityLabel={t("Filter by type")}
+                value={category}
+                onChange={changeCategory}
+                options={[
+                  { value: "all", label: t("All") },
+                  {
+                    value: "image",
+                    label: counts === null ? t("Images") : `${t("Images")} (${counts.image})`,
+                  },
+                  {
+                    value: "video",
+                    label: counts === null ? t("Videos") : `${t("Videos")} (${counts.video})`,
+                  },
+                  {
+                    value: "other",
+                    label: counts === null ? t("Other") : `${t("Other")} (${counts.other})`,
+                  },
+                ]}
+              />
+              <Pressable accessibilityRole="button" onPress={cycleSort} style={styles.sortButton}>
+                <Text style={styles.sortLabel}>{t(gallerySortLabelKey(sort))}</Text>
+              </Pressable>
+            </View>
+            {category === "other" && (counts?.other ?? 0) > 0 ? (
+              <View style={styles.clearRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  disabled={clearBusy || deleteBusy || saveBusy}
+                  onPress={() => void askClearOther()}
+                  style={styles.clearAllButton}
+                >
+                  <Text style={styles.clearAllLabel}>
+                    {clearBusy ? t("Clearing…") : t("Clear all")}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
+            {clearError ? (
+              <Text role="alert" style={styles.inlineError}>
+                {clearError}
+              </Text>
+            ) : null}
           </View>
         }
         renderSectionHeader={({ section }) =>
@@ -398,16 +553,40 @@ export default function GalleryScreen() {
       />
       {selectMode ? (
         <View style={[styles.bottomBar, { paddingBottom: insets.bottom }]}>
-          {saveError || deleteError ? (
+          {saveError || deleteError || moveError ? (
             <Text role="alert" style={styles.inlineError}>
-              {saveError ?? deleteError}
+              {saveError ?? deleteError ?? moveError}
             </Text>
+          ) : null}
+          {category === "other" ? (
+            <View style={styles.bottomRow}>
+              <Pressable
+                accessibilityRole="button"
+                disabled={moveBusy || saveBusy || deleteBusy || selectedImages.length === 0}
+                onPress={() => void moveSelected("image")}
+                style={styles.actionButton}
+              >
+                <Text style={styles.moveLabel}>
+                  {moveBusy ? t("Moving…") : t("Move to Images")}
+                </Text>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                disabled={moveBusy || saveBusy || deleteBusy || selectedVideos.length === 0}
+                onPress={() => void moveSelected("video")}
+                style={styles.actionButton}
+              >
+                <Text style={styles.moveLabel}>
+                  {moveBusy ? t("Moving…") : t("Move to Videos")}
+                </Text>
+              </Pressable>
+            </View>
           ) : null}
           <View style={styles.bottomRow}>
             <Text style={styles.count}>{t("{count} selected", { count: selectedIds.size })}</Text>
             <Pressable
               accessibilityRole="button"
-              disabled={saveBusy || deleteBusy}
+              disabled={saveBusy || deleteBusy || moveBusy}
               onPress={() => void saveSelected()}
               style={styles.saveButton}
             >
@@ -415,7 +594,7 @@ export default function GalleryScreen() {
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              disabled={saveBusy || deleteBusy}
+              disabled={saveBusy || deleteBusy || moveBusy}
               onPress={askDelete}
               style={styles.actionButton}
             >
@@ -423,7 +602,7 @@ export default function GalleryScreen() {
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              disabled={saveBusy || deleteBusy}
+              disabled={saveBusy || deleteBusy || moveBusy}
               onPress={() => setSelectedIds(new Set())}
               style={styles.actionButton}
             >
@@ -553,6 +732,10 @@ function makeStyles() {
       borderColor: tokens.border,
     },
     sortLabel: { color: tokens.foreground, fontSize: 14 },
+    clearRow: { flexDirection: "row", justifyContent: "flex-end", paddingTop: 12 },
+    clearAllButton: { paddingHorizontal: 4, paddingVertical: 4 },
+    clearAllLabel: { color: tokens.destructive, fontSize: 14 },
+    moveLabel: { color: tokens.foreground, fontSize: 14 },
     groupTitle: { fontSize: 15, fontWeight: "600", color: tokens.foreground, marginTop: 8 },
     row: { flexDirection: "row", gap: 12 },
     tile: { flex: 1, gap: 4 },
