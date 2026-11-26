@@ -228,6 +228,9 @@ export function CompatibleModelFields({
             <NativeSelectOption value="anthropic-messages">
               <Trans>Anthropic Messages</Trans>
             </NativeSelectOption>
+            <NativeSelectOption value="anthropic-messages-via-chat-completions">
+              <Trans>Anthropic Messages（经 chat-completions 转译）</Trans>
+            </NativeSelectOption>
           </NativeSelect>
         </label>
       </div>

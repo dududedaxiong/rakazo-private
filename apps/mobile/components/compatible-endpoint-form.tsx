@@ -137,6 +137,10 @@ export function CompatibleEndpointForm({
     { key: "chat-completions", label: t("Chat Completions") },
     { key: "responses", label: t("Responses") },
     { key: "anthropic-messages", label: t("Anthropic Messages") },
+    {
+      key: "anthropic-messages-via-chat-completions",
+      label: t("Anthropic Messages（经 chat-completions 转译）"),
+    },
   ];
   const apiProtocolLabel = protocolChoices.find((choice) => choice.key === apiProtocol)?.label;
   const authModeChoices: { key: ModelAuthMode; label: string }[] = [

@@ -97,6 +97,11 @@ export function openAiCompatibleModel(
   return {
     id,
     name: id,
+    // "chat-completions" and "anthropic-messages-via-chat-completions" both
+    // speak OpenAI chat completions on the wire; the translated protocol only
+    // differs in what the operator picked in the form, so it takes the same
+    // branch and never the Anthropic API, its /v1 stripping, or its
+    // catalog thinking settings.
     api:
       apiProtocol === "responses"
         ? "openai-responses"

@@ -1388,6 +1388,55 @@ const anthropicTextResponse = () =>
     headers: { "content-type": "text/event-stream" },
   });
 
+/** Minimal OpenAI chat-completions SSE, as `data:` lines ending with `[DONE]`. */
+const openAiSse = (chunks: ReadonlyArray<Record<string, unknown>>) =>
+  `${chunks.map((chunk) => `data: ${JSON.stringify(chunk)}\n\n`).join("")}data: [DONE]\n\n`;
+
+/** GB-style reply: a reasoning delta, then text, then `finish_reason: stop`. */
+const OPENAI_TEXT_CHUNKS: ReadonlyArray<Record<string, unknown>> = [
+  {
+    id: "chatcmpl-fixture",
+    object: "chat.completion.chunk",
+    created: 1,
+    model: "fixture-model",
+    choices: [{ index: 0, delta: { role: "assistant", content: "" }, finish_reason: null }],
+  },
+  {
+    id: "chatcmpl-fixture",
+    object: "chat.completion.chunk",
+    created: 1,
+    model: "fixture-model",
+    choices: [{ index: 0, delta: { reasoning_content: "let me think" }, finish_reason: null }],
+  },
+  {
+    id: "chatcmpl-fixture",
+    object: "chat.completion.chunk",
+    created: 1,
+    model: "fixture-model",
+    choices: [{ index: 0, delta: { content: "Bonjour" }, finish_reason: null }],
+  },
+  {
+    id: "chatcmpl-fixture",
+    object: "chat.completion.chunk",
+    created: 1,
+    model: "fixture-model",
+    choices: [
+      {
+        index: 0,
+        delta: {},
+        finish_reason: "stop",
+        usage: { prompt_tokens: 3, completion_tokens: 5, total_tokens: 8 },
+      },
+    ],
+  },
+];
+
+const openAiTextResponse = () =>
+  new Response(openAiSse(OPENAI_TEXT_CHUNKS), {
+    headers: { "content-type": "text/event-stream" },
+  });
+
+
 describe("anthropic-messages wire protocol", () => {
   const input = {
     provider: OPENAI_COMPATIBLE_PROVIDER_ID,
@@ -1566,6 +1615,117 @@ describe("anthropic-messages wire protocol", () => {
       ),
     ).resolves.toEqual(["claude-fixture"]);
     expect(new Headers(fetchImpl.mock.calls[0]?.[1]?.headers).get("x-api-key")).toBeNull();
+  });
+});
+
+describe("anthropic-messages-via-chat-completions wire protocol", () => {
+  const input = {
+    provider: OPENAI_COMPATIBLE_PROVIDER_ID,
+    baseUrl: "http://127.0.0.1:8000/v1",
+    modelId: "fixture-model",
+  };
+
+  function registerTranslated(options?: { reasoning?: boolean }) {
+    const models = registerOpenAiCompatibleRuntime(createModels(), {
+      ...input,
+      apiProtocol: "anthropic-messages-via-chat-completions",
+      allowPrivate: true,
+      ...options,
+    });
+    const provider = models.getProvider(OPENAI_COMPATIBLE_PROVIDER_ID)!;
+    const model = models.getModel(OPENAI_COMPATIBLE_PROVIDER_ID, input.modelId)!;
+    return { provider, model };
+  }
+
+  it("registers the model on the OpenAI API with the /v1 base URL", () => {
+    const { model } = registerTranslated({ reasoning: true });
+    expect(model.api).toBe("openai-completions");
+    // The endpoint the chat-completions client posts to keeps /v1.
+    expect(model.baseUrl).toBe("http://127.0.0.1:8000/v1");
+    if (model.api === "openai-completions") {
+      const compat = model.compat as { thinkingFormat?: string } | undefined;
+      expect(compat?.thinkingFormat).toBe("openai");
+    }
+    expect(model.thinkingLevelMap).toMatchObject({ off: "none", xhigh: "xhigh", max: "max" });
+  });
+
+  it.each(["stream", "streamSimple"] as const)(
+    "streams text and thinking from /v1/chat/completions with Bearer auth through %s",
+    async (method) => {
+      const { provider, model } = registerTranslated();
+      let requestUrl = "";
+      let headers: Headers | undefined;
+      let body: Record<string, unknown> = {};
+      const result = await provider[method](
+        model,
+        normalizeContext({
+          messages: [{ role: "user" as const, content: "Salut", timestamp: 1 }],
+        }),
+        {
+          apiKey: "fake-api-key",
+          fetch: async (url, init) => {
+            requestUrl = String(url);
+            headers = new Headers(init?.headers);
+            body = JSON.parse(String(init?.body));
+            expect(init?.redirect).toBe("error");
+            return openAiTextResponse();
+          },
+        },
+      ).result();
+      expect(requestUrl).toBe("http://127.0.0.1:8000/v1/chat/completions");
+      expect(headers?.get("authorization")).toBe("Bearer fake-api-key");
+      expect(headers?.get("x-api-key")).toBeNull();
+      expect(headers?.get("anthropic-version")).toBeNull();
+      expect(body).toMatchObject({ model: input.modelId, stream: true });
+      expect(result.stopReason, JSON.stringify(result)).toBe("stop");
+      expect(JSON.stringify(result.content)).toContain("Bonjour");
+      expect(
+        (result.content as unknown as Array<Record<string, unknown>>).some(
+          (block) => block.type === "thinking",
+        ),
+      ).toBe(true);
+      expect(JSON.stringify(result.content)).toContain("let me think");
+    },
+  );
+
+  it("probes /v1/models with Bearer auth and no Anthropic headers", async () => {
+    let seenHeaders: Headers | undefined;
+    let seenUrl = "";
+    const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      seenUrl = String(input);
+      seenHeaders = new Headers(init?.headers);
+      return Response.json({ data: [{ id: "fixture-model" }] });
+    });
+    await expect(
+      probeOpenAiCompatibleModels(
+        {
+          baseUrl: input.baseUrl,
+          apiKey: "fake-api-key",
+          apiProtocol: "anthropic-messages-via-chat-completions",
+        },
+        fetchImpl,
+        undefined,
+        OWNER,
+      ),
+    ).resolves.toEqual(["fixture-model"]);
+    expect(seenUrl).toBe("http://127.0.0.1:8000/v1/models");
+    expect(seenHeaders?.get("authorization")).toBe("Bearer fake-api-key");
+    expect(seenHeaders?.get("x-api-key")).toBeNull();
+    expect(seenHeaders?.get("anthropic-version")).toBeNull();
+  });
+
+  it("stores and round-trips the translated protocol as a connection protocol", () => {
+    const saved = connectAsOwner({
+      ...input,
+      apiProtocol: "anthropic-messages-via-chat-completions",
+    });
+    expect(parseModelSecret(saved)).toMatchObject({
+      apiProtocol: "anthropic-messages-via-chat-completions",
+    });
+    expect(parseModelSecret(connectAsOwner(input, saved))).toMatchObject({
+      apiProtocol: "anthropic-messages-via-chat-completions",
+    });
+    expect(ModelConnectInputSchema.safeParse(input).success).toBe(true);
   });
 });
 

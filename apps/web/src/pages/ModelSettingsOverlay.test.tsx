@@ -1152,7 +1152,7 @@ function effortField(container: HTMLElement) {
   return select;
 }
 
-it("offers the three wire protocols only on a custom endpoint, keeping the saved choice", async () => {
+it("offers the four wire protocols only on a custom endpoint, keeping the saved choice", async () => {
   const view = await renderCompatible({
     ...compatibleCredential,
     apiProtocol: "anthropic-messages",
@@ -1163,12 +1163,13 @@ it("offers the three wire protocols only on a custom endpoint, keeping the saved
       "chat-completions",
       "responses",
       "anthropic-messages",
+      "anthropic-messages-via-chat-completions",
     ]);
     expect(select.value).toBe("anthropic-messages");
-    await chooseProtocol(view.container, "responses");
+    await chooseProtocol(view.container, "anthropic-messages-via-chat-completions");
     await click(buttons(view.container, "Save")[0]);
     expect(models.connect).toHaveBeenLastCalledWith(
-      expect.objectContaining({ apiProtocol: "responses" }),
+      expect.objectContaining({ apiProtocol: "anthropic-messages-via-chat-completions" }),
     );
   } finally {
     await view.unmount();

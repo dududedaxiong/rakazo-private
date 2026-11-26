@@ -76,11 +76,18 @@ export function modelOutputLeavesInputRoom(
   return typeof maxTokens !== "number" || contextWindow === undefined || maxTokens < contextWindow;
 }
 
-/** Wire protocol selected for one OpenAI-compatible connection. */
+/**
+ * Wire protocol selected for one OpenAI-compatible connection.
+ * `anthropic-messages-via-chat-completions` keeps the Anthropic entry
+ * semantics but speaks OpenAI chat completions on the wire: it is for
+ * relays whose Anthropic stream ends before `message_stop` while their
+ * chat-completions stream ends cleanly with `finish_reason: stop`.
+ */
 export const ModelApiProtocolSchema = z.enum([
   "chat-completions",
   "responses",
   "anthropic-messages",
+  "anthropic-messages-via-chat-completions",
 ]);
 export type ModelApiProtocol = z.infer<typeof ModelApiProtocolSchema>;
 
