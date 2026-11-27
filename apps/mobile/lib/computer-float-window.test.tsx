@@ -42,6 +42,7 @@ const avatarState = vi.hoisted(() => ({
 }));
 const screens = vi.hoisted(() => ({
   source: "",
+  injectedJavaScript: "",
   onError: undefined as (() => void) | undefined,
   onHttpError: undefined as (() => void) | undefined,
   onLoad: undefined as (() => void) | undefined,
@@ -227,11 +228,13 @@ vi.mock("./voice", () => ({
 vi.mock("react-native-webview", () => ({
   WebView: (props: {
     source?: { uri: string };
+    injectedJavaScript?: string;
     onError?: () => void;
     onHttpError?: () => void;
     onLoad?: () => void;
   }) => {
     screens.source = props.source?.uri ?? "";
+    screens.injectedJavaScript = props.injectedJavaScript ?? "";
     screens.onError = props.onError;
     screens.onHttpError = props.onHttpError;
     screens.onLoad = props.onLoad;
@@ -568,6 +571,15 @@ describe("computer float window", () => {
     });
     expect(opened.querySelector('iframe[title="screen"]')).toBeNull();
     expect(opened.textContent).toBe("");
+  });
+
+  it("hides the in-page control panels in the small window", async () => {
+    respond(runningStatus, "https://screen.example.test/embed");
+    renderFloat({ open: true });
+    await settle();
+    expect(screens.injectedJavaScript).toContain("rakazo-screen-chrome");
+    expect(screens.injectedJavaScript).toContain("#mobile-key-bar");
+    expect(screens.injectedJavaScript).toContain("#mobile-view-controls");
   });
 
   it("shows the offline state when the screen fails to load, without throwing", async () => {

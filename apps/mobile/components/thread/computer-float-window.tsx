@@ -23,6 +23,7 @@ import {
   screenStreamKey,
 } from "../../lib/computer";
 import { createComputerRefresh } from "../../lib/computer-refresh";
+import { computerScreenChromeScript } from "../../lib/computer-screen-chrome";
 import { useI18n } from "../../lib/i18n";
 import { useThemedStyles } from "../../lib/native";
 import {
@@ -36,6 +37,8 @@ import {
   updateSystemFloatWindowUrl,
 } from "../../lib/system-float";
 import { isComputerRunning } from "../../lib/use-computer-running";
+import { ComputerLocalTrafficFloat } from "../computer-local-traffic-float";
+import { ComputerPointerMarker } from "../computer-pointer-marker";
 import { NativeSymbol } from "../native-symbol";
 
 /** The float's default width; its screen keeps a 16:10 frame under a 36pt title bar. */
@@ -722,6 +725,9 @@ export function ComputerFloatWindow({
             style={styles.screen}
             source={{ uri: loadedScreenUrl }}
             scrollEnabled={false}
+            // The small window is for watching: hide every in-page control
+            // panel the screen page draws (+/-, Esc/Tab/Ctrl, arrow keys).
+            injectedJavaScript={computerScreenChromeScript("float")}
             onLoad={() => {
               // A refused page finishes loading too; only a different URL means the
               // desktop is back.
@@ -768,6 +774,8 @@ export function ComputerFloatWindow({
             </Pressable>
           </View>
         ) : null}
+        {screenVisible ? <ComputerLocalTrafficFloat /> : null}
+        {screenVisible && botId ? <ComputerPointerMarker botId={botId} /> : null}
       </View>
       <View
         accessible

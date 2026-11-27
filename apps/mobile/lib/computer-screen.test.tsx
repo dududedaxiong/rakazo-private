@@ -24,6 +24,7 @@ const screens = vi.hoisted(() => ({
     | ((event: { nativeEvent: { data: string; url?: string } }) => void)
     | undefined,
   source: "",
+  injectedJavaScript: "",
   onLoadStart: undefined as ((event?: { nativeEvent: { url: string } }) => void) | undefined,
 }));
 const picker = vi.hoisted(() => ({
@@ -32,6 +33,17 @@ const picker = vi.hoisted(() => ({
     | { value?: string; disabled?: boolean; onChange: (mode: string) => void }
     | undefined,
 }));
+const secureStoreBox = vi.hoisted(() => ({
+  items: new Map<string, string>(),
+}));
+
+vi.mock("expo-secure-store", () => {
+  const getItemAsync = async (key: string) => secureStoreBox.items.get(key) ?? null;
+  const setItemAsync = async (key: string, value: string) => {
+    secureStoreBox.items.set(key, value);
+  };
+  return { default: { getItemAsync, setItemAsync }, getItemAsync, setItemAsync };
+});
 
 vi.mock("./side-insets", () => ({ useSideInsets: () => ({}) }));
 vi.mock("react-native", () => {
@@ -91,6 +103,19 @@ vi.mock("react-native", () => {
   return {
     ActivityIndicator: (props: { size?: string }) =>
       createElement("progress", { "data-size": props.size }),
+    Animated: {
+      View: MockView,
+      Value: class {
+        _value: number;
+        constructor(value: number) {
+          this._value = value;
+        }
+        setValue(value: number) {
+          this._value = value;
+        }
+      },
+      timing: () => ({ start: () => undefined, stop: () => undefined }),
+    },
     AppState: {
       addEventListener: (_type: string, listener: (state: string) => void) => {
         appState.listeners.add(listener);
@@ -98,6 +123,7 @@ vi.mock("react-native", () => {
       },
     },
     Modal: MockModal,
+    PanResponder: { create: () => ({ panHandlers: {} }) },
     StyleSheet: { create: <T,>(styles: T) => styles },
     Pressable: MockPressable,
     ScrollView: MockView,
@@ -124,6 +150,7 @@ vi.mock("react-native-webview", () => {
     WebView: (props: {
       accessibilityElementsHidden?: boolean;
       importantForAccessibility?: string;
+      injectedJavaScript?: string;
       onMessage?: (event: { nativeEvent: { data: string; url?: string } }) => void;
       onError?: () => void;
       source?: { uri: string };
@@ -132,6 +159,7 @@ vi.mock("react-native-webview", () => {
       screens.onMessage = props.onMessage;
       screens.error = props.onError;
       screens.source = props.source?.uri ?? "";
+      screens.injectedJavaScript = props.injectedJavaScript ?? "";
       screens.onLoadStart = props.onLoadStart;
       useEffect(() => {
         screens.mounts += 1;
@@ -225,6 +253,30 @@ vi.mock("./api-auth", () => ({}));
 vi.mock("./api-live", () => ({}));
 vi.mock("./api", () => ({ currentApiBase: () => apiBase.current, rpc }));
 
+vi.mock("./appearance", () => ({
+  mobileTokens: () => ({
+    background: "background",
+    border: "border",
+    card: "card",
+    foreground: "foreground",
+    mutedForeground: "muted-foreground",
+    primary: "primary",
+    primaryForeground: "primary-foreground",
+    secondary: "secondary",
+    success: "success",
+  }),
+}));
+
+vi.mock("../components/native-symbol", () => ({
+  NativeSymbol: (props: { ios: string; android: string; size?: number; color?: string }) =>
+    createElement("span", {
+      "data-symbol-ios": props.ios,
+      "data-symbol-android": props.android,
+      "data-size": props.size,
+      "data-color": props.color,
+    }),
+}));
+
 vi.mock("./i18n", () => {
   const t = (text: string, values?: Record<string, string>) =>
     text.replace(/\{(\w+)\}/g, (_, key: string) => values?.[key] ?? key);
@@ -243,6 +295,7 @@ vi.mock("./native", () => ({
     destructive: "destructive",
     success: "success",
   }),
+  useThemedStyles: (factory: () => unknown) => factory(),
 }));
 
 vi.mock("./native-controls", () => ({ iosAtLeast: () => false }));
@@ -678,6 +731,15 @@ describe("computer screen", () => {
     const view = await render();
 
     expect(preview(view).getAttribute("role")).toBe("button");
+  });
+
+  it("hides the in-page control panels in the preview", async () => {
+    respond(botWorking);
+    await render();
+
+    expect(screens.injectedJavaScript).toContain("rakazo-screen-chrome");
+    expect(screens.injectedJavaScript).toContain("#mobile-key-bar");
+    expect(screens.injectedJavaScript).toContain("#mobile-view-controls");
   });
 
   it("keeps the view-only screen out of the accessibility tree", async () => {

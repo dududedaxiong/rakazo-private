@@ -71,6 +71,23 @@ export function toolCompletionAuditPayload(
   if (typeof record.height === "number" && Number.isFinite(record.height)) {
     payload.height = record.height;
   }
+  // The pointer the observation saw, in the same desktop pixels as
+  // width/height: the app draws the AI's click marker from this, so the
+  // marker lands where the pointer actually is instead of where the call
+  // asked it to go. Only the position travels; nothing else from the
+  // observation is copied.
+  const cursor = record.cursor;
+  if (cursor && typeof cursor === "object" && !Array.isArray(cursor)) {
+    const { x, y } = cursor as { x?: unknown; y?: unknown };
+    if (
+      typeof x === "number" &&
+      typeof y === "number" &&
+      Number.isFinite(x) &&
+      Number.isFinite(y)
+    ) {
+      payload.cursor = { x, y };
+    }
+  }
   return payload;
 }
 

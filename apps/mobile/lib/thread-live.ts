@@ -13,6 +13,7 @@ import type { RefObject } from "react";
 import { useEffect, useRef } from "react";
 import { rpc } from "./api";
 import { subscribeThread } from "./api-live";
+import { extractComputerPointer, setComputerPointer } from "./computer-pointer";
 import { getHapticsEnabled, hapticSuccess } from "./haptics";
 import type { MobileSnapshot } from "./mobile-types";
 import { currentSessionGeneration } from "./session";
@@ -224,6 +225,14 @@ export function useThreadLiveSubscription({
               cursor = Math.max(cursor, event.seq ?? -1);
               retryMs = 250;
               liveCursor.current = cursor;
+              // A computer action's completion carries the pointer the server
+              // observed; the computer screen marks it so the user sees where
+              // the AI clicked. Only fresh events feed it, so a resumed
+              // stream never resurrects a stale pointer.
+              if (newEvent) {
+                const pointer = extractComputerPointer(event);
+                if (pointer) setComputerPointer(pointer);
+              }
               rememberTerminalRun(terminalRunIds.current, event);
               // The reply watchdog keeps the last activity per bot; a run whose
               // events stopped arriving is treated as stalled by the rows below.

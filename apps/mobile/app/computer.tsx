@@ -30,8 +30,10 @@ import {
 } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { ComputerKeyboardBar } from "../components/computer-keyboard-bar";
+import { ComputerLocalTrafficFloat } from "../components/computer-local-traffic-float";
 import { ComputerMaintenanceActions } from "../components/computer-maintenance-actions";
 import { ComputerModePicker } from "../components/computer-mode-picker";
+import { ComputerPointerMarker } from "../components/computer-pointer-marker";
 import { GlassIconButton } from "../components/glass-icon-button";
 import { NativeActionButton } from "../components/native-action-button";
 import { currentApiBase, rpc } from "../lib/api";
@@ -59,6 +61,8 @@ import {
   isComputerKeyboardReadyMessage,
   NATIVE_COMPUTER_KEYBOARD_BOOT,
 } from "../lib/computer-keyboard";
+import type { ComputerScreenChromeMode } from "../lib/computer-screen-chrome";
+import { computerScreenChromeScript } from "../lib/computer-screen-chrome";
 import { tabletopLayout } from "../lib/fold-layout";
 import { useFoldRegions } from "../lib/fold-regions";
 import { useI18n } from "../lib/i18n";
@@ -512,21 +516,26 @@ export default function Computer() {
             <Text style={{ color: tokens.mutedForeground }}>{t("Open in full window")}</Text>
           </View>
         ) : foreground && computer?.state === "running" && embeddedScreenUrl && !screenError ? (
-          <ScreenWebView
-            key={screenReload}
-            url={embeddedScreenUrl}
-            interactive={false}
-            onScreenState={onScreenState}
-            onLoadStart={onScreenLoadStart}
-            onRendererLost={() => void reloadScreen()}
-            onError={() => {
-              refreshController.invalidateScreen();
-              setScreenOriginError(true);
-              setScreenError(
-                t("Could not load the desktop. This device cannot reach the screen URL."),
-              );
-            }}
-          />
+          <>
+            <ScreenWebView
+              key={screenReload}
+              url={embeddedScreenUrl}
+              interactive={false}
+              chromeMode="float"
+              onScreenState={onScreenState}
+              onLoadStart={onScreenLoadStart}
+              onRendererLost={() => void reloadScreen()}
+              onError={() => {
+                refreshController.invalidateScreen();
+                setScreenOriginError(true);
+                setScreenError(
+                  t("Could not load the desktop. This device cannot reach the screen URL."),
+                );
+              }}
+            />
+            <ComputerLocalTrafficFloat />
+            {botId ? <ComputerPointerMarker botId={botId} /> : null}
+          </>
         ) : (
           <View
             style={{
@@ -726,29 +735,34 @@ export default function Computer() {
             ) : null}
             <View style={{ flex: 1, backgroundColor: tokens.card }}>
               {foreground && loadedScreenUrl ? (
-                <ScreenWebView
-                  key={screenReload}
-                  url={loadedScreenUrl}
-                  interactive={hasControl}
-                  nativeKeyboard={hasControl}
-                  keyboardSession={keyboardSession}
-                  webViewRef={screenWebViewRef}
-                  onKeyboardMessage={(data) => {
-                    const gate = keyboardGate.current;
-                    if (!isComputerKeyboardReadyMessage(data, String(gate.session))) return;
-                    injectKeyboardCommands(gate.bridge.ready());
-                  }}
-                  onScreenState={onScreenState}
-                  onLoadStart={onScreenLoadStart}
-                  onRendererLost={() => void reloadScreen()}
-                  onError={() => {
-                    refreshController.invalidateScreen();
-                    setScreenOriginError(true);
-                    setScreenError(
-                      t("Could not load the desktop. This device cannot reach the screen URL."),
-                    );
-                  }}
-                />
+                <>
+                  <ScreenWebView
+                    key={screenReload}
+                    url={loadedScreenUrl}
+                    interactive={hasControl}
+                    chromeMode={hasControl ? "takeover" : "float"}
+                    nativeKeyboard={hasControl}
+                    keyboardSession={keyboardSession}
+                    webViewRef={screenWebViewRef}
+                    onKeyboardMessage={(data) => {
+                      const gate = keyboardGate.current;
+                      if (!isComputerKeyboardReadyMessage(data, String(gate.session))) return;
+                      injectKeyboardCommands(gate.bridge.ready());
+                    }}
+                    onScreenState={onScreenState}
+                    onLoadStart={onScreenLoadStart}
+                    onRendererLost={() => void reloadScreen()}
+                    onError={() => {
+                      refreshController.invalidateScreen();
+                      setScreenOriginError(true);
+                      setScreenError(
+                        t("Could not load the desktop. This device cannot reach the screen URL."),
+                      );
+                    }}
+                  />
+                  <ComputerLocalTrafficFloat />
+                  {botId ? <ComputerPointerMarker botId={botId} /> : null}
+                </>
               ) : (
                 <View
                   style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 16 }}
@@ -814,6 +828,7 @@ function ComputerReleaseActions({
 function ScreenWebView({
   url,
   interactive,
+  chromeMode,
   nativeKeyboard = false,
   keyboardSession,
   webViewRef,
@@ -825,6 +840,8 @@ function ScreenWebView({
 }: {
   url: string;
   interactive: boolean;
+  /** Which in-page controls the screen page may show; see computer-screen-chrome. */
+  chromeMode: ComputerScreenChromeMode;
   nativeKeyboard?: boolean;
   keyboardSession?: string;
   webViewRef?: RefObject<WebView | null>;
@@ -861,9 +878,12 @@ function ScreenWebView({
       injectedJavaScriptBeforeContentLoaded={
         nativeKeyboard ? NATIVE_COMPUTER_KEYBOARD_BOOT : undefined
       }
-      injectedJavaScript={
-        nativeKeyboard && keyboardSession ? computerKeyboardReadyProbe(keyboardSession) : undefined
-      }
+      injectedJavaScript={[
+        computerScreenChromeScript(chromeMode),
+        nativeKeyboard && keyboardSession ? computerKeyboardReadyProbe(keyboardSession) : "",
+      ]
+        .filter(Boolean)
+        .join("\n")}
       onMessage={(event) => {
         const state = fromScreenPage(
           event.nativeEvent.url,

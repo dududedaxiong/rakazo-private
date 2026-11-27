@@ -153,6 +153,53 @@ describe("tool completion audit", () => {
     expect(payload).not.toHaveProperty("activeWindow");
   });
 
+  it("carries the observed pointer so the app can mark where the AI clicked", () => {
+    const payload = toolCompletionAuditPayload({
+      name: "computer_act",
+      executionId: "call-2",
+      durationMs: 40,
+      result: {
+        kind: "agent_tool_result",
+        content: [{ type: "text", text: "computer observed" }],
+        details: {
+          frameId: "frame-2",
+          capturedAt: "2026-09-07T00:00:01.000Z",
+          width: 1280,
+          height: 720,
+          cursor: { x: 640, y: 360 },
+        },
+      },
+    });
+    expect(payload).toMatchObject({
+      name: "computer_act",
+      outcome: "succeeded",
+      width: 1280,
+      height: 720,
+      cursor: { x: 640, y: 360 },
+    });
+  });
+
+  it("drops a malformed pointer instead of passing it on", () => {
+    const payload = toolCompletionAuditPayload({
+      name: "computer_act",
+      executionId: "call-3",
+      durationMs: 40,
+      result: {
+        kind: "agent_tool_result",
+        content: [{ type: "text", text: "computer observed" }],
+        details: {
+          frameId: "frame-3",
+          capturedAt: "2026-09-07T00:00:02.000Z",
+          width: 1280,
+          height: 720,
+          cursor: { x: "640", y: Number.NaN },
+        },
+      },
+    });
+    expect(payload).not.toHaveProperty("cursor");
+    expect(payload).toMatchObject({ width: 1280, height: 720 });
+  });
+
   it("does not fail the run when the audit append fails", async () => {
     const append = vi.fn().mockRejectedValue(new Error("database unavailable"));
     const sink = createTestSink();
