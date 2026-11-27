@@ -9,6 +9,7 @@ import {
   filterCookiesForNavigation,
   importBrowserCookies,
   parseCookieExport,
+  parseRawHeaderExport,
 } from "./browser-cookies.js";
 
 /** Every value below is fake: example.com and "test-value" only, never a real cookie. */
@@ -165,6 +166,52 @@ describe("parseCookieExport (Netscape)", () => {
   });
 });
 
+describe("parseRawHeaderExport", () => {
+  it("parses name=value pairs split on semicolons", () => {
+    const parsed = parseRawHeaderExport("a=1; b=2", "example.com", NOW);
+    expect(parsed.cookies).toEqual([
+      { name: "a", value: "1", domain: "example.com", path: "/", secure: false, httpOnly: false },
+      { name: "b", value: "2", domain: "example.com", path: "/", secure: false, httpOnly: false },
+    ]);
+    expect(parsed.skipped).toEqual([]);
+  });
+
+  it("splits on the first = and keeps the value exactly as pasted", () => {
+    const parsed = parseRawHeaderExport(
+      "token=abc=def; pct=hello%20world; flag=undefined; empty=",
+      "example.com",
+      NOW,
+    );
+    expect(parsed.cookies.map((cookie) => [cookie.name, cookie.value])).toEqual([
+      ["token", "abc=def"],
+      ["pct", "hello%20world"],
+      ["flag", "undefined"],
+      ["empty", ""],
+    ]);
+    expect(parsed.skipped).toEqual([]);
+  });
+
+  it("skips segments with no = or an invalid name, and trims whitespace", () => {
+    const parsed = parseRawHeaderExport(
+      "  a = 1 ; junk ; =noval ; bad name=2 ; good=3 ; ",
+      "example.com",
+      NOW,
+    );
+    expect(parsed.cookies.map((cookie) => cookie.name)).toEqual(["a", "good"]);
+    expect(parsed.skipped).toEqual(["格式不对", "格式不对", "格式不对"]);
+  });
+
+  it("caps the count and reports the rest", () => {
+    const content = Array.from(
+      { length: BROWSER_COOKIE_MAX_COUNT + 1 },
+      (_, index) => `c${index}=v`,
+    ).join("; ");
+    const parsed = parseRawHeaderExport(content, "example.com", NOW);
+    expect(parsed.cookies).toHaveLength(BROWSER_COOKIE_MAX_COUNT);
+    expect(parsed.skipped).toEqual(["数量上限"]);
+  });
+});
+
 describe("domain and path matching", () => {
   it("matches a parent domain and its subdomains, never a look-alike", () => {
     expect(cookieDomainMatches(".example.com", "example.com")).toBe(true);
@@ -258,6 +305,99 @@ describe("importBrowserCookies", () => {
     expect(
       importBrowserCookies({ content: "[]", origin: "https://example.com", nowSeconds: NOW }),
     ).toEqual({ ok: false, error: "没有找到 Cookie" });
+  });
+
+  it("accepts a raw header paste and binds it to the origin host", () => {
+    const result = importBrowserCookies({
+      content: "sessionid=test-value; other=test-value",
+      origin: "https://example.com",
+      nowSeconds: NOW,
+    });
+    expect(result).toEqual({
+      ok: true,
+      cookies: [
+        {
+          name: "sessionid",
+          value: "test-value",
+          domain: "example.com",
+          path: "/",
+          secure: false,
+          httpOnly: false,
+        },
+        {
+          name: "other",
+          value: "test-value",
+          domain: "example.com",
+          path: "/",
+          secure: false,
+          httpOnly: false,
+        },
+      ],
+      imported: 2,
+      skipped: [],
+      earliestExpiry: null,
+    });
+  });
+
+  it("binds a raw header to a subdomain origin host", () => {
+    const result = importBrowserCookies({
+      content: "sessionid=test-value",
+      origin: "https://www.example.com",
+      nowSeconds: NOW,
+    });
+    if (!result.ok) throw new Error("unexpected import error");
+    expect(result.cookies[0]?.domain).toBe("www.example.com");
+  });
+
+  it("still parses a raw header with seven or more pairs (Netscape misreads it first)", () => {
+    const content = ["a=1", "b=2", "c=3", "d=4", "e=5", "f=6", "g=7"].join("; ");
+    const result = importBrowserCookies({
+      content,
+      origin: "https://example.com",
+      nowSeconds: NOW,
+    });
+    if (!result.ok) throw new Error("unexpected import error");
+    expect(result.cookies.map((cookie) => cookie.name)).toEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "g",
+    ]);
+    expect(result.imported).toBe(7);
+  });
+
+  it("does not fall back to raw for JSON with all domain-mismatched cookies", () => {
+    const result = importBrowserCookies({
+      content: JSON.stringify([jsonCookie({ name: "theirs", domain: "other.com" })]),
+      origin: "https://example.com",
+      nowSeconds: NOW,
+    });
+    expect(result).toEqual({
+      ok: true,
+      cookies: [],
+      imported: 0,
+      skipped: [{ reason: "域名不符", count: 1 }],
+      earliestExpiry: null,
+    });
+  });
+
+  it("does not fall back to raw for a Netscape file with all domain-mismatched cookies", () => {
+    const content = ".other.com\tTRUE\t/\tTRUE\t1900000000\tsessionid\ttest-value";
+    const result = importBrowserCookies({
+      content,
+      origin: "https://example.com",
+      nowSeconds: NOW,
+    });
+    expect(result).toEqual({
+      ok: true,
+      cookies: [],
+      imported: 0,
+      skipped: [{ reason: "域名不符", count: 1 }],
+      earliestExpiry: null,
+    });
   });
 });
 

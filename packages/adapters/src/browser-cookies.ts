@@ -269,6 +269,50 @@ function parseNetscapeExport(
   return { cookies, skipped };
 }
 
+/** A cookie name is an RFC 6265 token; anything else in a pasted segment is not a cookie. */
+const COOKIE_NAME_TOKEN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
+
+/**
+ * Parse a raw `Cookie:` header value (`name=value; name=value; ...`) as copied straight from
+ * a browser. The header carries no domain, so every cookie belongs to `originHost` (the site
+ * being imported for). Values are kept exactly as pasted, including percent-encoded values
+ * and the literal string "undefined"; a value may itself contain `=`.
+ */
+export function parseRawHeaderExport(
+  content: string,
+  originHost: string,
+  nowSeconds: number,
+): { cookies: BrowserCookie[]; skipped: BrowserCookieSkipReason[] } {
+  const cookies: BrowserCookie[] = [];
+  const skipped: BrowserCookieSkipReason[] = [];
+  for (const segment of content.split(";")) {
+    const trimmed = segment.trim();
+    if (!trimmed) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) {
+      skipped.push("格式不对");
+      continue;
+    }
+    const name = trimmed.slice(0, eq).trim();
+    const value = trimmed.slice(eq + 1).trim();
+    if (!name || !COOKIE_NAME_TOKEN.test(name)) {
+      skipped.push("格式不对");
+      continue;
+    }
+    if (cookies.length >= BROWSER_COOKIE_MAX_COUNT) {
+      skipped.push("数量上限");
+      continue;
+    }
+    const normalized = normalizeCookie(
+      { name, value, domain: originHost, path: "/", secure: false, httpOnly: false },
+      nowSeconds,
+    );
+    if ("skip" in normalized) skipped.push(normalized.skip);
+    else cookies.push(normalized.cookie);
+  }
+  return { cookies, skipped };
+}
+
 /**
  * Parse a pasted cookie export (JSON array or Netscape cookies.txt) into normalized cookies.
  * Bad entries are skipped one by one with a reason; a malformed whole file is an error.
@@ -307,14 +351,28 @@ export function importBrowserCookies(input: {
   }
   const parsed = parseCookieExport(input.content, nowSeconds);
   if ("error" in parsed) return { ok: false, error: parsed.error };
-  const cookies: BrowserCookie[] = [];
-  const skipped: BrowserCookieSkipReason[] = [...parsed.skipped];
+  let cookies: BrowserCookie[] = [];
+  let skipped: BrowserCookieSkipReason[] = [...parsed.skipped];
   for (const cookie of parsed.cookies) {
     if (!cookieDomainMatches(cookie.domain, originHost)) {
       skipped.push("域名不符");
       continue;
     }
     cookies.push(cookie);
+  }
+  // Raw Cookie-header fallback: a pasted `name=value; ...` string is not JSON, and the
+  // Netscape parser misreads it (its fields land in the wrong slots, then fail the domain
+  // check above). Only when nothing survived and the content is not JSON, try the raw
+  // header; when it yields cookies, those replace the (meaningless) Netscape result.
+  if (cookies.length === 0) {
+    const trimmed = input.content.trimStart();
+    if (!trimmed.startsWith("[") && !trimmed.startsWith("{")) {
+      const raw = parseRawHeaderExport(input.content, originHost, nowSeconds);
+      if (raw.cookies.length > 0) {
+        cookies = raw.cookies;
+        skipped = raw.skipped;
+      }
+    }
   }
   if (cookies.length === 0 && skipped.length === 0) {
     return { ok: false, error: "没有找到 Cookie" };
