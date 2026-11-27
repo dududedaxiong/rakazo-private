@@ -1578,6 +1578,213 @@ class RunTest(unittest.TestCase):
                 page(browser).navigate("https://next.example.test/")
 
 
+class FakeCdp:
+    """A stand-in CDP client: records its calls and answers the cookie ones."""
+
+    def __init__(self, ws_url=None, fail_cookies=(), fail_methods=(), log=None):
+        self.calls = []
+        self.fail_cookies = set(fail_cookies)
+        self.fail_methods = set(fail_methods)
+        self.log = log
+
+    def connect(self):
+        pass
+
+    def close(self):
+        pass
+
+    def call(self, method, params=None, *, session_id=None, timeout_s=10.0):
+        self.calls.append((method, params or {}, session_id))
+        if self.log is not None:
+            self.log.append(("cdp", method))
+        if method in self.fail_methods:
+            raise RuntimeError(f"{method} failed: refused")
+        if method == "Target.attachToTarget":
+            return {"sessionId": "session-1"}
+        if method == "Network.setCookie":
+            if (params or {}).get("name") in self.fail_cookies:
+                raise RuntimeError("Network.setCookie failed: Invalid cookie")
+            return {"success": True}
+        if method == "Network.deleteCookies":
+            if (params or {}).get("name") in self.fail_cookies:
+                raise RuntimeError("Network.deleteCookies failed: No such cookie")
+            return {}
+        return {}
+
+
+class BrowserCookieTest(unittest.TestCase):
+    COOKIES = [
+        {"name": "session", "value": "test-value", "domain": "example.com", "path": "/",
+         "secure": True, "httpOnly": True, "sameSite": "Lax", "expires": 1790000000},
+        {"name": "prefs", "value": "test-value", "domain": ".example.com", "path": "/a",
+         "secure": False, "httpOnly": False},
+    ]
+    USER_AGENT = "TestAgent/1.0"
+
+    def fake_cdp(self, fail_cookies=(), fail_methods=(), log=None):
+        created = []
+
+        def factory(ws_url):
+            client = FakeCdp(ws_url, fail_cookies=fail_cookies, fail_methods=fail_methods, log=log)
+            created.append(client)
+            return client
+
+        return factory, created
+
+    def run_browser(self, command, args, browser=None, chromium=None, cdp=None, order=None):
+        """Run the helper against the fake browser, returning the printed result and the fakes."""
+        browser = browser or FakeAgentBrowser()
+        chromium = chromium or FakeTabs("own")
+        home = tempfile.TemporaryDirectory()
+        self.addCleanup(home.cleanup)
+        browser.home = home.name
+        factory, created = self.fake_cdp(log=order) if cdp is None else (lambda ws_url: cdp, [cdp])
+        original_batch = browser.batch
+
+        def batch(commands, *, timeout=20.0, bail=True):
+            if order is not None:
+                order.append(("ab", commands))
+            return original_batch(commands, timeout=timeout, bail=bail)
+
+        browser.batch = batch
+        with patch.dict(os.environ, {"RAKAZO_CDP_PORT": "9222"}), \
+                patch.object(helper, "wait_for_cdp", return_value={"webSocketDebuggerUrl": "ws://b/1"}), \
+                patch.object(helper, "page_tabs", chromium.list), \
+                patch.object(helper.urllib.request, "urlopen", chromium.urlopen), \
+                patch.object(helper, "AgentBrowser", return_value=browser), \
+                patch.object(browser, "use_tab", create=True), \
+                patch.object(helper, "CdpClient", factory), \
+                patch.object(helper, "discover_ws_url", return_value="ws://127.0.0.1:9222/devtools/browser/1"), \
+                patch.object(helper.page_secrets, "payment_frame_hints", return_value=(False, None)), \
+                patch.object(helper.time, "sleep"), patch("builtins.print") as printed:
+            self.assertEqual(helper.run(["rakazo-page-browser", command, json.dumps(args)]), 0)
+        return json.loads(printed.call_args.args[0]), browser, created
+
+    def test_user_agent_goes_first_then_each_cookie_with_cdp_fields(self):
+        client = FakeCdp()
+        set_count = helper.inject_browser_state(client, "session-1", self.COOKIES, self.USER_AGENT)
+        self.assertEqual(set_count, 2)
+        self.assertEqual([call[0] for call in client.calls],
+                         ["Emulation.setUserAgentOverride", "Network.setCookie", "Network.setCookie"])
+        self.assertEqual(client.calls[0], ("Emulation.setUserAgentOverride", {"userAgent": self.USER_AGENT},
+                                           "session-1"))
+        self.assertEqual(client.calls[1][1], {
+            "name": "session", "value": "test-value", "domain": "example.com", "path": "/",
+            "secure": True, "httpOnly": True, "sameSite": "Lax", "expires": 1790000000})
+        # CDP's own name for the expiry is `expires`; the extensions API's `expirationDate` is ignored.
+        self.assertNotIn("expirationDate", client.calls[1][1])
+        self.assertEqual(client.calls[2][1], {
+            "name": "prefs", "value": "test-value", "domain": ".example.com", "path": "/a",
+            "secure": False, "httpOnly": False})
+
+    def test_a_cookie_chromium_refuses_does_not_block_the_others(self):
+        client = FakeCdp(fail_cookies=("session",))
+        set_count = helper.inject_browser_state(client, "session-1", self.COOKIES, self.USER_AGENT)
+        self.assertEqual(set_count, 1)
+        self.assertEqual([call[0] for call in client.calls].count("Network.setCookie"), 2)
+
+    def test_a_user_agent_the_browser_will_not_take_still_sets_the_cookies(self):
+        client = FakeCdp(fail_methods=("Emulation.setUserAgentOverride",))
+        self.assertEqual(helper.inject_browser_state(client, "session-1", self.COOKIES, self.USER_AGENT), 2)
+
+    def test_a_malformed_cookie_is_skipped_not_counted(self):
+        client = FakeCdp()
+        cookies = [self.COOKIES[0], {"value": "test-value", "domain": "example.com"}]
+        self.assertEqual(helper.inject_browser_state(client, "session-1", cookies, None), 1)
+
+    def test_nothing_is_sent_without_cookies_or_a_user_agent(self):
+        client = FakeCdp()
+        self.assertEqual(helper.inject_browser_state(client, "session-1", [], None), 0)
+        self.assertEqual(client.calls, [])
+
+    def test_clear_cookies_deletes_each_entry_by_name_domain_and_path(self):
+        client = FakeCdp()
+        entries = [{"name": "session", "domain": "example.com", "path": "/a"},
+                   {"name": "prefs", "domain": ".example.com"}]
+        self.assertEqual(helper.clear_browser_cookies(client, "session-1", entries), 2)
+        self.assertEqual(client.calls, [
+            ("Network.deleteCookies", {"name": "session", "domain": "example.com", "path": "/a"}, "session-1"),
+            ("Network.deleteCookies", {"name": "prefs", "domain": ".example.com", "path": "/"}, "session-1"),
+        ])
+
+    def test_a_deletion_that_fails_does_not_block_the_others(self):
+        client = FakeCdp(fail_cookies=("session",))
+        entries = [{"name": "session", "domain": "example.com", "path": "/a"},
+                   {"name": "prefs", "domain": ".example.com"}]
+        self.assertEqual(helper.clear_browser_cookies(client, "session-1", entries), 1)
+        self.assertEqual(len(client.calls), 2)
+
+    def test_malformed_entries_are_skipped_not_counted(self):
+        client = FakeCdp()
+        entries = [{"domain": "example.com"}, "not-a-cookie",
+                   {"name": "prefs", "domain": ".example.com"}]
+        self.assertEqual(helper.clear_browser_cookies(client, "session-1", entries), 1)
+        self.assertEqual(len(client.calls), 1)
+
+    def test_navigate_with_cookies_sets_the_user_agent_and_cookies_before_navigating(self):
+        order = []
+        result, browser, created = self.run_browser(
+            "navigate", {"url": "https://next.example.test/a?b=1", "cookies": self.COOKIES,
+                         "userAgent": self.USER_AGENT}, order=order)
+        self.assertEqual(result["ok"], True)
+        self.assertEqual(result["cookiesSet"], 2)
+        # A cookie's value never goes through agent-browser: it travels over CDP only.
+        self.assertNotIn("test-value", json.dumps(browser.sent))
+        self.assertEqual(len(created), 1)
+        methods = [call[0] for call in created[0].calls]
+        self.assertEqual(methods, ["Target.attachToTarget", "Emulation.setUserAgentOverride",
+                                   "Network.setCookie", "Network.setCookie"])
+        navigated = next(index for index, (kind, commands) in enumerate(order)
+                         if kind == "ab" and any("location.assign(" in str(command) for command in commands))
+        user_agent = order.index(("cdp", "Emulation.setUserAgentOverride"))
+        first_cookie = order.index(("cdp", "Network.setCookie"))
+        self.assertLess(user_agent, first_cookie)
+        self.assertLess(first_cookie, navigated)
+
+    def test_navigate_without_cookies_sends_no_browser_state_and_reports_no_count(self):
+        result, _, created = self.run_browser("navigate", {"url": "https://next.example.test/a?b=1"})
+        self.assertEqual(result["ok"], True)
+        self.assertNotIn("cookiesSet", result)
+        self.assertEqual(created, [])
+
+    def test_clear_cookies_deletes_its_entries_and_reports_the_count(self):
+        entries = [{"name": "session", "domain": "example.com", "path": "/a"},
+                   {"name": "prefs", "domain": ".example.com"}]
+        result, _, created = self.run_browser("clear_cookies", {"cookies": entries})
+        self.assertEqual(result, {"ok": True, "cleared": 2})
+        self.assertEqual(created[0].calls, [
+            ("Target.attachToTarget", {"targetId": "own", "flatten": True}, None),
+            ("Network.deleteCookies", {"name": "session", "domain": "example.com", "path": "/a"}, "session-1"),
+            ("Network.deleteCookies", {"name": "prefs", "domain": ".example.com", "path": "/"}, "session-1"),
+        ])
+
+    def test_navigating_from_a_browser_page_with_cookies_opens_a_blank_tab_first(self):
+        listing = [{"type": "page", "id": "newtab", "url": "chrome://newtab/"}]
+        opened = [{"type": "page", "id": "site", "url": "https://portal.example.test/"}]
+        # The default request log, unlike requests=[], lets the navigation settle: this tab is
+        # navigated for real, not only read as opened.
+        browser = FakeAgentBrowser()
+        factory, created = self.fake_cdp()
+        args = {"url": "https://portal.example.test/", "cookies": self.COOKIES, "userAgent": self.USER_AGENT}
+        with patch.dict(os.environ, {"RAKAZO_CDP_PORT": "1"}), patch.object(helper, "wait_for_cdp"), \
+                patch.object(helper, "http_get_json", side_effect=[listing, opened]), \
+                patch.object(helper.urllib.request, "urlopen"), \
+                patch.object(helper, "AgentBrowser", return_value=browser), \
+                patch.object(browser, "use_tab", create=True) as use_tab, \
+                patch.object(helper, "CdpClient", factory), \
+                patch.object(helper, "discover_ws_url", return_value="ws://127.0.0.1:9222/devtools/browser/1"), \
+                patch.object(helper.page_secrets, "payment_frame_hints", return_value=(False, None)), \
+                patch.object(helper.time, "sleep"), patch("builtins.print") as printed:
+            self.assertEqual(helper.run(["rakazo-page-browser", "navigate", json.dumps(args)]), 0)
+        result = json.loads(printed.call_args.args[0])
+        self.assertEqual(result["ok"], True)
+        self.assertEqual(result["cookiesSet"], 2)
+        # The blank tab loads nothing, so the cookies land before the site's first request.
+        self.assertEqual(browser.sent[0], ["tab", "new", "about:blank"])
+        self.assertTrue(any("location.assign(" in " ".join(command) for command in browser.sent))
+        use_tab.assert_called_once_with("site")
+
+
 class CardBrowser:
     """A stand-in Chromium: a merchant page with one card frame in its own CDP session."""
 

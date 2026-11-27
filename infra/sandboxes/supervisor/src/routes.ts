@@ -487,6 +487,27 @@ app.post("/computers/:id/exec", async (c) => {
 // The bot's folder in the computer's home that files its page downloads, and PDFs its tabs show, are saved to.
 const downloadFolder = z.string().min(1).max(1024).optional();
 
+// One cookie of a site, as the vault stores it: the value cap matches the import's own (see
+// browser-cookies.ts), the array cap the import's count. A cookie's value is a saved login, so a
+// validation failure here must never echo it: the route below answers with a fixed error.
+const browserCookieSchema = z.object({
+  name: z.string().min(1).max(1024),
+  value: z.string().max(8192),
+  domain: z.string().min(1).max(253),
+  path: z.string().min(1).max(1024),
+  secure: z.boolean(),
+  httpOnly: z.boolean(),
+  sameSite: z.enum(["None", "Lax", "Strict"]).optional(),
+  expires: z.number().finite().optional(),
+});
+
+// One cookie to clear from the browser profile: no value, matched by name + domain + path.
+const browserClearCookieSchema = z.object({
+  name: z.string().min(1).max(1024),
+  domain: z.string().min(1).max(253),
+  path: z.string().min(1).max(1024).optional(),
+});
+
 app.post("/computers/:id/browser", async (c) => {
   const headers = identityHeaders(c);
   // Read eagerly so the Node HTTP adapter observes disconnects during screen setup too.
@@ -506,6 +527,13 @@ app.post("/computers/:id/browser", async (c) => {
             return /^https?:$/.test(url.protocol) && !url.username && !url.password;
           }),
         downloads: downloadFolder,
+        // Cookies to inject before loading the page, and the User-Agent to use for it.
+        cookies: z.array(browserCookieSchema).max(200).optional(),
+        userAgent: z.string().max(512).optional(),
+      }),
+      z.object({
+        command: z.literal("clear_cookies"),
+        cookies: z.array(browserClearCookieSchema).max(200),
       }),
       z.object({
         command: z.literal("snapshot"),
@@ -603,6 +631,10 @@ app.post("/computers/:id/browser", async (c) => {
   const body = parsed.data;
   const carriesSavedLogin =
     body.command === "act" && body.actions.some((step) => "origin" in step && step.origin);
+  // A cookie's value is a saved login too: it must not reach the computer in argv, which any
+  // process in the computer can read. The helper reads the same command from stdin instead.
+  const carriesCookieValues =
+    body.command === "navigate" && Boolean(body.cookies?.length);
   const screen = (reuseRecent: boolean) =>
     managedScreen(
       c.req.param("id"),
@@ -616,14 +648,14 @@ app.post("/computers/:id/browser", async (c) => {
   const runHelper = ({ container, layout }: Awaited<ReturnType<typeof screen>>) =>
     runContainerCommand(
       container,
-      // Arguments go over stdin: origin-bound fills carry saved logins and cards, and argv is
-      // readable by any process in the computer, including the bot's own shell. Other commands
-      // also keep the argv copy so a computer still on an older image keeps working until it is
-      // replaced.
+      // Arguments go over stdin: origin-bound fills carry saved logins and cards, and a navigation
+      // can carry cookie values, and argv is readable by any process in the computer, including the
+      // bot's own shell. Other commands also keep the argv copy so a computer still on an older
+      // image keeps working until it is replaced.
       [
         "/usr/local/bin/rakazo-page-browser",
         body.command,
-        ...(carriesSavedLogin ? [] : [JSON.stringify(body)]),
+        ...(carriesSavedLogin || carriesCookieValues ? [] : [JSON.stringify(body)]),
       ],
       {
         env: [

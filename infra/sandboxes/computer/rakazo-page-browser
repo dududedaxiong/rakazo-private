@@ -2490,6 +2490,71 @@ def tab_deadline() -> float:
     return min(time.monotonic() + TAB_WORK_SECONDS, STARTED + TABS_DONE_BY)
 
 
+# Cookies a saved login holds, injected before a navigation, and cleared again when the vault row
+# is deleted: the browser profile is persistent, so deleting the row alone leaves them signed in.
+# agent-browser 0.41.0 has a `cookies set` command too, but its `clear` wipes every cookie in the
+# profile, it has no User-Agent override, and it reports no per-cookie result; direct CDP does all
+# three, through the same client the saved-login steps already use.
+
+
+def cookie_params(cookie: dict[str, Any]) -> dict[str, Any]:
+    """A vault cookie as CDP's Network.setCookie takes it. `expires` is CDP's own name for the
+    expiry (Unix seconds); `expirationDate` is the extensions API's name, which Chromium ignores
+    here. A cookie without an expiry is a session cookie."""
+    params: dict[str, Any] = {
+        "name": cookie["name"],
+        "value": cookie["value"],
+        "domain": cookie["domain"],
+        "path": cookie.get("path") or "/",
+        "secure": bool(cookie.get("secure")),
+        "httpOnly": bool(cookie.get("httpOnly")),
+    }
+    if cookie.get("sameSite") in ("None", "Lax", "Strict"):
+        params["sameSite"] = cookie["sameSite"]
+    if isinstance(cookie.get("expires"), (int, float)) and not isinstance(cookie.get("expires"), bool):
+        params["expires"] = cookie["expires"]
+    return params
+
+
+def set_browser_cookie(client: CdpClient, session_id: str, cookie: Any) -> bool:
+    """One cookie into the browser: True when Chromium kept it. A cookie Chromium refuses is False,
+    never a value in an error: only the count of kept cookies ever leaves this module."""
+    try:
+        result = client.call("Network.setCookie", cookie_params(cookie), session_id=session_id)
+    except Exception:  # noqa: BLE001
+        return False
+    return result.get("success") is True
+
+
+def inject_browser_state(client: CdpClient, session_id: str, cookies: Any, user_agent: Any) -> int:
+    """The User-Agent, then each cookie, before the navigation that uses them. A User-Agent the
+    browser will not take and a cookie it refuses are skipped, and the navigation still runs:
+    only how many cookies were set is returned, never a value."""
+    if isinstance(user_agent, str) and user_agent:
+        with contextlib.suppress(Exception):
+            client.call("Emulation.setUserAgentOverride", {"userAgent": user_agent}, session_id=session_id)
+    if not isinstance(cookies, list):
+        return 0
+    return sum(set_browser_cookie(client, session_id, cookie) for cookie in cookies)
+
+
+def clear_browser_cookies(client: CdpClient, session_id: str, cookies: Any) -> int:
+    """Each vault cookie out of the browser profile, by name + domain + path (a path left out is
+    "/"). A deletion that fails is skipped: only how many were cleared is returned."""
+    if not isinstance(cookies, list):
+        return 0
+    cleared = 0
+    for cookie in cookies:
+        try:
+            client.call("Network.deleteCookies",
+                        {"name": cookie["name"], "domain": cookie["domain"], "path": cookie.get("path") or "/"},
+                        session_id=session_id)
+        except Exception:  # noqa: BLE001
+            continue
+        cleared += 1
+    return cleared
+
+
 def run(argv: list[str]) -> int:
     stdin_args = read_stdin_line() if os.environ.get("RAKAZO_BROWSER_ARGS_STDIN") == "1" else None
     if os.environ.get("RAKAZO_BROWSER_WATCH_STDIN") == "1":
@@ -2499,7 +2564,7 @@ def run(argv: list[str]) -> int:
                           "fallback": "computer_act"}))
         return 2
     command = argv[1]
-    if command not in ("navigate", "snapshot", "act", "finish", "purchase_check"):
+    if command not in ("navigate", "snapshot", "act", "finish", "purchase_check", "clear_cookies"):
         print(json.dumps({"ok": False, "error": f"unknown command: {command}", "fallback": "computer_act"}))
         return 2
     raw_args = stdin_args if stdin_args is not None else (argv[2] if len(argv) >= 3 else "")
@@ -2518,6 +2583,8 @@ def run(argv: list[str]) -> int:
     # Set once the browser answers: before that, no action can have reached the page.
     connected = False
     opened = False
+    # A tab this call opened itself, so the tabs it leaves behind are not counted as the page's.
+    own_tab = False
     page: PageBrowser | None = None
     try:
         if command == "purchase_check":
@@ -2565,14 +2632,19 @@ def run(argv: list[str]) -> int:
             # in front, and an empty new tab page it replaces is closed.
             url = str(args.get("url") or "")
             check_url(url)
-            (tab,) = browser.batch([["tab", "new", url]], timeout=NAVIGATE_SECONDS)
+            # Cookies (and the User-Agent) go in before the navigation, so a tab opened straight
+            # onto the site would load without them: open a blank tab instead, and navigate it below
+            # once they are in. A navigation without them keeps opening the site at once.
+            blank = bool(args.get("cookies") or args.get("userAgent"))
+            (tab,) = browser.batch([["tab", "new", "about:blank" if blank else url]], timeout=NAVIGATE_SECONDS)
             if urlsplit(address).netloc in ("newtab", "new-tab-page"):
                 urllib.request.urlopen(f"http://127.0.0.1:{port}/json/close/{target}", timeout=5.0).close()
             # The tab it opened, by its id: a pop-up the site opens as it loads may already be in front.
             target = str(tab.get("targetId") or "") or front_tab(port)[0]
             # The new tab is already on the site: navigating it again would go unseen by the request log
             # it has only just started.
-            opened = True
+            opened = not blank
+            own_tab = True
         browser.use_tab(target)
         page = PageBrowser(port, target, browser)
         if downloads:
@@ -2581,8 +2653,28 @@ def run(argv: list[str]) -> int:
             client.download_frame = frame["id"]
             client.call("Network.enable", {"maxPostDataSize": 1}, session_id=session)
             page.downloads = downloads
+        # A navigation carrying cookies or a User-Agent injects them on this tab first, and a
+        # clear_cookies deletes its entries: both need a CDP session of their own when the call
+        # carries no downloads, which is what otherwise opens one.
+        injected: int | None = None
+        cleared: int | None = None
+        needs_browser_state = command == "clear_cookies" or (
+            command == "navigate" and (args.get("cookies") or args.get("userAgent")))
+        if needs_browser_state:
+            if client is None:
+                client = CdpClient(discover_ws_url(port))
+                client.connect()
+            session = client.call("Target.attachToTarget", {"targetId": target, "flatten": True})["sessionId"]
+            if command == "navigate":
+                injected = inject_browser_state(client, session, args.get("cookies"), args.get("userAgent"))
+            else:
+                cleared = clear_browser_cookies(client, session, args.get("cookies"))
         if command == "navigate":
             result = page.navigate(str(args.get("url") or ""), opened=opened)
+            if injected is not None:
+                result["cookiesSet"] = injected
+        elif command == "clear_cookies":
+            result = {"ok": True, "cleared": cleared if cleared is not None else 0}
         elif command == "purchase_check":
             result = page.purchase_check(args)
         elif command == "snapshot":
@@ -2600,7 +2692,7 @@ def run(argv: list[str]) -> int:
             new: list[dict[str, Any]] = []
             browser.deadline = tabs.deadline = tab_deadline()
             try:
-                now, new, _ = tabs.end(target, ours=target if opened else None)
+                now, new, _ = tabs.end(target, ours=target if own_tab else None)
             except Exception:  # noqa: BLE001
                 pass  # The tabs it closed before failing are still counted below.
             try:
