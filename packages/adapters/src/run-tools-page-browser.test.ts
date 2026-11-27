@@ -1,8 +1,10 @@
 import type { AdapterContext, ComputerRef, PageBrowserCommand } from "@rakazo_mickvvw/adapter-kit";
+import { encodeLoginSecret } from "@rakazo_mickvvw/contracts";
 import { createStreamingRedactor } from "@rakazo_mickvvw/core";
 import { describe, expect, it, vi } from "vitest";
 import { encodeRunCode, storeBotSecret } from "./bot-secrets.js";
 import { fakeDatabase } from "./bot-secrets.test-support.js";
+import { encodeBrowserCookieSet } from "./browser-cookies.js";
 import { ComputerBrowserProvider } from "./computer-browser.js";
 import { resolveBotWorkspacePath } from "./computer-support.js";
 import { FakeBrowserProvider } from "./fake-browser.js";
@@ -509,5 +511,193 @@ describe("browser_act fill_code", () => {
     expect(result).toContain("isn't HTTPS");
     expect(result).not.toContain(code);
     expect(rows).toHaveLength(1);
+  });
+});
+
+describe("browser_navigate injects saved cookies", () => {
+  // Every value below is fake: example.com and "test-value" only, never a real cookie.
+  const scope = { userId: "u", spaceId: "space" };
+  const secretStore = new EncryptedSecretStore("test-only-encryption-key");
+  const testCookies = [
+    {
+      name: "sessionid",
+      value: "test-value",
+      domain: "example.com",
+      path: "/",
+      secure: true,
+      httpOnly: true,
+      expires: 1_900_000_000,
+    },
+  ];
+
+  async function saveCookies(db: ReturnType<typeof fakeDatabase>) {
+    await storeBotSecret({
+      prisma: db.prisma,
+      secretStore,
+      scope,
+      destination: {
+        name: "example-cookies",
+        origin: "https://example.com",
+        auth: {
+          type: "browser_cookies",
+          cookieCount: 1,
+          earliestExpiry: 1_900_000_000,
+          userAgent: "TestBrowser/1.0",
+        },
+      },
+      plaintext: encodeBrowserCookieSet(testCookies),
+    });
+  }
+
+  async function saveLogin(db: ReturnType<typeof fakeDatabase>) {
+    await storeBotSecret({
+      prisma: db.prisma,
+      secretStore,
+      scope,
+      destination: {
+        name: "example-login",
+        origin: "https://example.com",
+        auth: { type: "login" },
+      },
+      plaintext: encodeLoginSecret({
+        fields: [
+          { label: "Email", value: "user@example.com", hidden: false },
+          { label: "Password", value: "fake-password-1", hidden: true },
+        ],
+      }),
+    });
+  }
+
+  async function navigate(
+    url: string,
+    live: (request: PageBrowserCommand) => Record<string, unknown>,
+    setup: (db: ReturnType<typeof fakeDatabase>) => Promise<void> = async () => {},
+  ) {
+    const db = fakeDatabase();
+    await setup(db);
+    const requests: PageBrowserCommand[] = [];
+    const secrets: string[] = [];
+    const browser = new ComputerBrowserProvider({
+      liveDriver: async (_computer, request) => {
+        requests.push(request);
+        return live(request);
+      },
+    });
+    const ctx = {
+      deps: {
+        prisma: { ...db.prisma, taughtSkill: { findFirst: async () => null } },
+        secretStore,
+      },
+      run: { ...scope, id: "run-1", botId: "b1" },
+      bot: { id: "b1" },
+      context,
+      computer: {
+        heldForTakeover: false,
+        graphicalToolsAllowed: false,
+        mode: "private",
+        checkpoint: { markDirty: () => {} },
+        get: async () => ({ ...computer, kind: "docker" }),
+      },
+      tools: { disabled: new Set<string>() },
+      providers: { browser },
+      secrets,
+      state: {
+        screen: { unchangedVisualStreak: { count: 0 } },
+        reply: { pendingProgress: "", redactor: createStreamingRedactor([]) },
+      },
+    };
+    const call = {
+      name: "browser_navigate",
+      args: { url },
+      finish: async (result: unknown) => result,
+    };
+    const result = (await pageBrowserTool(ctx as never, call as never)) as {
+      content?: Array<{ text: string }>;
+      details?: unknown;
+    };
+    const text =
+      result.content?.map((part) => part.text).join("") ?? JSON.stringify(result.details ?? result);
+    return { requests, secrets, text, parsed: JSON.parse(text) as Record<string, unknown> };
+  }
+
+  const homePage = () => ({
+    ok: true,
+    url: "https://example.com/",
+    title: "Example",
+    tree: '- link "Home" [e1]',
+    elements: [{ ref: "e1", role: "link", name: "Home" }],
+  });
+
+  it("attaches saved cookies and UA, and registers their values for redaction", async () => {
+    const { requests, secrets } = await navigate("https://example.com/", homePage, saveCookies);
+    expect(requests).toEqual([
+      {
+        command: "navigate",
+        url: "https://example.com/",
+        downloads: expect.any(String),
+        cookies: testCookies,
+        userAgent: "TestBrowser/1.0",
+      },
+    ]);
+    expect(secrets).toContain("test-value");
+  });
+
+  it("navigates unchanged when no cookies are saved", async () => {
+    const { requests, secrets } = await navigate("https://example.com/", homePage);
+    expect(requests[0]).not.toHaveProperty("cookies");
+    expect(requests[0]).not.toHaveProperty("userAgent");
+    expect(secrets).not.toContain("test-value");
+  });
+
+  it("scrubs a cookie value the page echoes", async () => {
+    const { text } = await navigate(
+      "https://example.com/",
+      () => ({
+        ok: true,
+        url: "https://example.com/",
+        title: "Welcome test-value",
+        tree: '- textbox "Session" [e1] value="test-value"',
+        elements: [{ ref: "e1", role: "textbox", name: "Session", value: "test-value" }],
+      }),
+      saveCookies,
+    );
+    expect(text).not.toContain("test-value");
+    expect(text).toContain("[redacted]");
+  });
+
+  it("names the saved login when cookies land on a sign-in page", async () => {
+    const { parsed, text } = await navigate(
+      "https://example.com/",
+      () => ({
+        ok: true,
+        url: "https://example.com/login",
+        title: "Sign in",
+        tree: '- textbox "Password" [e1]',
+        elements: [{ ref: "e1", role: "textbox", name: "Password" }],
+      }),
+      async (db) => {
+        await saveCookies(db);
+        await saveLogin(db);
+      },
+    );
+    expect(String(parsed.note)).toContain('saved account login named "example-login"');
+    expect(String(parsed.note)).toContain("fill_secret");
+    expect(text).not.toContain("test-value");
+  });
+
+  it("says so when cookies land on a sign-in page and no login is saved", async () => {
+    const { parsed, text } = await navigate(
+      "https://example.com/",
+      () => ({
+        ok: true,
+        url: "https://example.com/login",
+        title: "Sign in",
+        tree: '- textbox "Password" [e1]',
+        elements: [{ ref: "e1", role: "textbox", name: "Password" }],
+      }),
+      saveCookies,
+    );
+    expect(String(parsed.note)).toContain("No saved account login exists for this site");
+    expect(text).not.toContain("test-value");
   });
 });

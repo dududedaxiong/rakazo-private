@@ -1,4 +1,4 @@
-import type { AdapterContext, ComputerRef } from "@rakazo_mickvvw/adapter-kit";
+import type { AdapterContext, BrowserProvider, ComputerRef } from "@rakazo_mickvvw/adapter-kit";
 import { SandboxRequestRejectedError } from "@rakazo_mickvvw/adapter-kit";
 import * as Logging from "@rakazo_mickvvw/logging";
 import { describe, expect, it, vi } from "vitest";
@@ -7,6 +7,7 @@ import {
   browserNavigateFromTool,
   browserResultForModel,
   browserSnapshotFromTool,
+  isLoginPage,
   parseBrowserActions,
   redactBrowserResult,
 } from "./browser-tools.js";
@@ -1495,5 +1496,197 @@ describe("browser_act fill_code", () => {
     });
     expect(JSON.stringify(broken)).not.toContain("canary");
     expect(act).not.toHaveBeenCalled();
+  });
+});
+
+describe("browser_navigate with saved cookies", () => {
+  // Every value below is fake: example.com and "test-value" only, never a real cookie.
+  const testCookies = [
+    {
+      name: "sessionid",
+      value: "test-value",
+      domain: "example.com",
+      path: "/",
+      secure: true,
+      httpOnly: true,
+      expires: 1_900_000_000,
+    },
+  ];
+  const loginPage = {
+    url: "https://example.com/login",
+    title: "Sign in",
+    tree: '- textbox "Password" [e1]',
+    elements: [{ ref: "e1", role: "textbox", name: "Password" }],
+  };
+
+  function stubNavigate(result: unknown) {
+    const seen: unknown[] = [];
+    const navigate = vi.fn(async (_computer: unknown, request: unknown) => {
+      seen.push(request);
+      return result as never;
+    });
+    return { seen, browser: { navigate } as unknown as BrowserProvider };
+  }
+
+  describe("isLoginPage", () => {
+    it("is true when the page redirected to a login URL", () => {
+      expect(isLoginPage({ url: "https://example.com/login" }, "https://example.com/")).toBe(true);
+      expect(
+        isLoginPage({ url: "https://example.com/login?next=%2F" }, "https://example.com/"),
+      ).toBe(true);
+      expect(
+        isLoginPage({ url: "https://example.com/account/login" }, "https://example.com/"),
+      ).toBe(true);
+      expect(
+        isLoginPage({ url: "https://example.com/users/sign_in" }, "https://example.com/"),
+      ).toBe(true);
+      expect(isLoginPage({ url: "https://example.com/auth" }, "https://example.com/")).toBe(true);
+      expect(isLoginPage({ url: "https://example.com/LOGIN" }, "https://example.com/")).toBe(true);
+    });
+
+    it("is true when the snapshot has a password field", () => {
+      expect(
+        isLoginPage(
+          {
+            url: "https://example.com/",
+            tree: '- textbox "Password" [e1]',
+            elements: [{ ref: "e1", role: "textbox", name: "Password" }],
+          },
+          "https://example.com/",
+        ),
+      ).toBe(true);
+      // The tree alone carries the signal; the elements are not required.
+      expect(
+        isLoginPage(
+          { url: "https://example.com/", tree: '- textbox "密码" [e1]' },
+          "https://example.com/",
+        ),
+      ).toBe(true);
+      expect(
+        isLoginPage(
+          {
+            url: "https://example.com/",
+            elements: [{ ref: "e1", role: "textbox", name: "Passwd" }],
+          },
+          "https://example.com/",
+        ),
+      ).toBe(true);
+    });
+
+    it("is false for an ordinary page, and for a page that only mentions a password", () => {
+      expect(
+        isLoginPage(
+          {
+            url: "https://example.com/",
+            tree: '- textbox "Email" [e1]\n- button "Forgot password" [e2]',
+            elements: [
+              { ref: "e1", role: "textbox", name: "Email" },
+              { ref: "e2", role: "button", name: "Forgot password" },
+            ],
+          },
+          "https://example.com/",
+        ),
+      ).toBe(false);
+      expect(isLoginPage({ url: "https://example.com/" }, "https://example.com/")).toBe(false);
+    });
+
+    it("is false when the requested URL was itself a login page", () => {
+      expect(
+        isLoginPage(
+          { url: "https://example.com/login", tree: '- textbox "Password" [e1]' },
+          "https://example.com/login",
+        ),
+      ).toBe(false);
+    });
+  });
+
+  it("passes saved cookies and UA to the browser, and nothing when there are none", async () => {
+    const { seen, browser } = stubNavigate({ url: "https://example.com/", title: "Example" });
+    await browserNavigateFromTool(
+      browser,
+      computer,
+      context,
+      { url: "https://example.com/" },
+      { cookies: testCookies, userAgent: "TestBrowser/1.0" },
+    );
+    expect(seen[0]).toMatchObject({
+      url: "https://example.com/",
+      cookies: testCookies,
+      userAgent: "TestBrowser/1.0",
+    });
+    await browserNavigateFromTool(browser, computer, context, { url: "https://example.com/" });
+    expect(seen[1]).not.toHaveProperty("cookies");
+    expect(seen[1]).not.toHaveProperty("userAgent");
+  });
+
+  it("names the saved account login when cookies did not sign in", async () => {
+    const { browser } = stubNavigate(loginPage);
+    const result = await browserNavigateFromTool(
+      browser,
+      computer,
+      context,
+      { url: "https://example.com/" },
+      {
+        cookies: testCookies,
+        findSiteLogin: async () => ({ name: "example-login" }),
+      },
+    );
+    expect(result).toMatchObject({
+      note: expect.stringContaining('saved account login named "example-login"'),
+    });
+    expect(String((result as { note?: string }).note)).toContain("fill_secret");
+    expect(String((result as { note?: string }).note)).toContain("Do not retry");
+    expect(JSON.stringify(result)).not.toContain("test-value");
+  });
+
+  it("says so when cookies did not sign in and no account login is saved", async () => {
+    const { browser } = stubNavigate(loginPage);
+    const result = await browserNavigateFromTool(
+      browser,
+      computer,
+      context,
+      { url: "https://example.com/" },
+      { cookies: testCookies, findSiteLogin: async () => null },
+    );
+    expect(String((result as { note?: string }).note)).toContain(
+      "No saved account login exists for this site",
+    );
+    expect(JSON.stringify(result)).not.toContain("test-value");
+  });
+
+  it("keeps a pre-existing live note after the fallback message", async () => {
+    const { browser } = stubNavigate({
+      ...loginPage,
+      note: 'The page showed an alert, now closed: "Saved".',
+    });
+    const result = await browserNavigateFromTool(
+      browser,
+      computer,
+      context,
+      { url: "https://example.com/" },
+      { cookies: testCookies, findSiteLogin: async () => null },
+    );
+    const note = String((result as { note?: string }).note);
+    expect(note).toContain("did not sign in");
+    expect(note).toContain('The page showed an alert, now closed: "Saved".');
+    expect(note.indexOf("did not sign in")).toBeLessThan(note.indexOf("The page showed"));
+  });
+
+  it("adds no fallback note when the cookies signed in, or when none were carried", async () => {
+    const ordinary = { url: "https://example.com/", title: "Example", tree: "", elements: [] };
+    const { browser } = stubNavigate(ordinary);
+    const signedIn = await browserNavigateFromTool(
+      browser,
+      computer,
+      context,
+      { url: "https://example.com/" },
+      { cookies: testCookies, findSiteLogin: async () => ({ name: "example-login" }) },
+    );
+    expect(signedIn).not.toHaveProperty("note");
+    const { browser: plain } = stubNavigate(loginPage);
+    const noCookies = await browserNavigateFromTool(plain, computer, context, {
+      url: "https://example.com/",
+    });
+    expect(noCookies).not.toHaveProperty("note");
   });
 });

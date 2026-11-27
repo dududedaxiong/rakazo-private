@@ -86,6 +86,9 @@ export class ClientBrowserProvider implements BrowserProvider {
     }
     context.signal.throwIfAborted();
     try {
+      // Cookies are for the container browser only: the phone has its own browser session, so
+      // they never go in the task envelope, which carries only the URL. A navigation the phone
+      // cannot serve falls back to the server browser below, with the request unchanged.
       const result = await awaitWithAbort(
         this.dispatcher.fetchPage({
           userId: context.userId,

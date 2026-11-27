@@ -571,3 +571,117 @@ describe("page browser safety", () => {
     expect(driver).not.toHaveBeenCalled();
   });
 });
+
+describe("navigate with saved cookies on an older computer image", () => {
+  // Every value below is fake: example.com and "test-value" only, never a real cookie.
+  const computer: ComputerRef = { id: "c", botId: "b", kind: "docker", providerRef: "c" };
+  const cookies = [
+    {
+      name: "sessionid",
+      value: "test-value",
+      domain: "example.com",
+      path: "/",
+      secure: true,
+      httpOnly: true,
+      expires: 1_900_000_000,
+    },
+  ];
+  const page = { ok: true, url: "https://example.com/", title: "Example" };
+
+  it("retries without cookies when the image does not know the command", async () => {
+    const liveDriver = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        error: "unknown command: navigate",
+        fallback: "computer_act" as const,
+      })
+      .mockResolvedValueOnce(page);
+    const provider = new ComputerBrowserProvider({ liveDriver });
+    const result = await provider.navigate(
+      computer,
+      { url: "https://example.com/", cookies, userAgent: "TestBrowser/1.0" },
+      baseContext,
+    );
+    expect(result).toEqual({ url: "https://example.com/", title: "Example" });
+    expect(liveDriver).toHaveBeenCalledTimes(2);
+    expect(liveDriver.mock.calls[0]?.[1]).toEqual({
+      command: "navigate",
+      url: "https://example.com/",
+      cookies,
+      userAgent: "TestBrowser/1.0",
+    });
+    expect(liveDriver.mock.calls[1]?.[1]).toEqual({
+      command: "navigate",
+      url: "https://example.com/",
+    });
+  });
+
+  it("retries when the supervisor refuses the body before running anything", async () => {
+    const liveDriver = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        error: "page browser failed: 400",
+        fallback: "computer_act" as const,
+      })
+      .mockResolvedValueOnce(page);
+    const provider = new ComputerBrowserProvider({ liveDriver });
+    expect(
+      await provider.navigate(
+        computer,
+        { url: "https://example.com/", cookies, userAgent: "TestBrowser/1.0" },
+        baseContext,
+      ),
+    ).toEqual({ url: "https://example.com/", title: "Example" });
+    expect(liveDriver).toHaveBeenCalledTimes(2);
+    expect(liveDriver.mock.calls[1]?.[1]).not.toHaveProperty("cookies");
+    expect(liveDriver.mock.calls[1]?.[1]).not.toHaveProperty("userAgent");
+  });
+
+  it("does not retry a failure that is not about the command", async () => {
+    const liveDriver = vi.fn(async () => ({
+      ok: false,
+      error: "chrome not listening",
+      fallback: "computer_act" as const,
+    }));
+    const provider = new ComputerBrowserProvider({ liveDriver });
+    const result = await provider.navigate(
+      computer,
+      { url: "https://example.com/", cookies, userAgent: "TestBrowser/1.0" },
+      baseContext,
+    );
+    expect(result).toMatchObject({ fallback: "computer_act", error: "chrome not listening" });
+    expect(liveDriver).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry a plain navigation the supervisor refuses", async () => {
+    const liveDriver = vi.fn(async () => ({
+      ok: false,
+      error: "page browser failed: 400",
+      fallback: "computer_act" as const,
+    }));
+    const provider = new ComputerBrowserProvider({ liveDriver });
+    await provider.navigate(computer, { url: "https://example.com/" }, baseContext);
+    expect(liveDriver).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends cookies on the first call when the image accepts them", async () => {
+    const liveDriver = vi.fn(async (_computer: unknown, _request: unknown) => page);
+    const provider = new ComputerBrowserProvider({ liveDriver });
+    expect(
+      await provider.navigate(
+        computer,
+        { url: "https://example.com/", cookies, userAgent: "TestBrowser/1.0" },
+        baseContext,
+      ),
+    ).toEqual({ url: "https://example.com/", title: "Example" });
+    expect(liveDriver).toHaveBeenCalledTimes(1);
+    expect(liveDriver.mock.calls[0]?.[1]).toEqual({
+      command: "navigate",
+      url: "https://example.com/",
+      cookies,
+      userAgent: "TestBrowser/1.0",
+    });
+  });
+});

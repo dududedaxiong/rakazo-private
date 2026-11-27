@@ -51,6 +51,21 @@ function cannotCheck(error: unknown): boolean {
   );
 }
 
+/**
+ * Whether a failed navigation means the computer image predates the command's fields, rather
+ * than that the navigation failed: the supervisor's exit-2 path for an unknown command, or an
+ * older supervisor refusing the body before running anything. A 500 is not one: only an
+ * unhandled error answers that. Only a navigation that carried cookies retries, and only once.
+ */
+function isUnrecognizedCommand(error: unknown): boolean {
+  return (
+    typeof error === "string" &&
+    (error.startsWith("unknown command:") ||
+      // An older supervisor rejects the unknown fields' body before running anything.
+      /^page browser failed: (400|404|422)$/.test(error))
+  );
+}
+
 type LivePayload = Partial<PageBrowserResult>;
 
 export type LivePageBrowserDriver = (
@@ -108,11 +123,28 @@ export class ComputerBrowserProvider implements BrowserProvider {
     if (this.canUseInProcess(computer)) {
       return this.fake.navigate(computer, request, context);
     }
-    const live = await this.runLive(
+    const carriesCookies = Boolean(request.cookies?.length || request.userAgent);
+    let live = await this.runLive(
       computer,
-      { command: "navigate", url: request.url, downloads: request.downloads },
+      {
+        command: "navigate",
+        url: request.url,
+        downloads: request.downloads,
+        ...(request.cookies?.length ? { cookies: request.cookies } : {}),
+        ...(request.userAgent ? { userAgent: request.userAgent } : {}),
+      },
       context,
     );
+    if (carriesCookies && live?.ok !== true && isUnrecognizedCommand(live?.error)) {
+      // An older computer image does not know the cookies fields: its supervisor refused the
+      // command before anything ran, so the same navigation without them is safe to retry once.
+      // The cookies are a bonus, never a gate.
+      live = await this.runLive(
+        computer,
+        { command: "navigate", url: request.url, downloads: request.downloads },
+        context,
+      );
+    }
     if (live?.ok !== true || live.fallback === "computer_act") {
       return {
         url: request.url,

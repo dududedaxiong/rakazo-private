@@ -2,7 +2,9 @@ import type {
   AdapterContext,
   AgentToolExecutionResult,
   BrowserActStep,
+  BrowserCookie,
   BrowserDownload,
+  BrowserNavigateResult,
   BrowserProvider,
   ComputerRef,
 } from "@rakazo_mickvvw/adapter-kit";
@@ -29,6 +31,97 @@ export const BROWSER_ACT_KINDS = [
 ] as const;
 const MAX_QUERY = 200;
 const NAVIGATE_URL_REQUIRED = "An HTTP(S) URL without embedded credentials is required";
+
+/** Paths that are a site's sign-in page, matched against a URL's path. */
+const LOGIN_PATHS = new Set([
+  "/login",
+  "/signin",
+  "/sign-in",
+  "/auth",
+  "/account/login",
+  "/users/sign_in",
+]);
+/** A path segment that marks a sign-in page, such as /account/login or /users/sign_in. */
+const LOGIN_PATH_SEGMENTS = new Set(["login", "signin", "sign_in", "sign-in"]);
+
+function isLoginPath(url: string): boolean {
+  let pathname: string;
+  try {
+    pathname = new URL(url).pathname;
+  } catch {
+    return false;
+  }
+  const path = pathname.toLowerCase();
+  if (LOGIN_PATHS.has(path)) return true;
+  return path.split("/").some((segment) => LOGIN_PATH_SEGMENTS.has(segment));
+}
+
+const PASSWORD_FIELD_NAME = /(password|passwd|密码)/i;
+
+/**
+ * Whether a navigation landed on a sign-in page instead of the signed-in page it asked for.
+ * A snapshot tree never carries a password input's type — agent-browser lists only role, name
+ * and ref, e.g. `- textbox "Password" [e2]` — so a password field is told by its name, in the
+ * tree lines and in the elements, with a `type=password` attribute still accepted if one ever
+ * appears. Asking for a sign-in page and finding its form is expected, not a cookie failure.
+ */
+export function isLoginPage(
+  result: Pick<BrowserNavigateResult, "url" | "tree" | "elements">,
+  requestedUrl: string,
+): boolean {
+  if (isLoginPath(requestedUrl)) return false;
+  if (result.url && isLoginPath(result.url)) return true;
+  const tree = result.tree ?? "";
+  if (/type=password/i.test(tree)) return true;
+  if (
+    result.elements?.some(
+      (element) => element.role === "textbox" && PASSWORD_FIELD_NAME.test(element.name),
+    )
+  )
+    return true;
+  for (const line of tree.split("\n")) {
+    const match = /^\s*-\s+textbox\s+"((?:[^"\\]|\\.)*)"/.exec(line);
+    if (match?.[1] && PASSWORD_FIELD_NAME.test(match[1])) return true;
+  }
+  return false;
+}
+
+const COOKIE_SIGNIN_FAILED =
+  "The saved cookies for this site did not sign in (they may have expired). Do not retry them.";
+
+/**
+ * What the bot is told when saved cookies did not sign in: the failure, and either the saved
+ * account login to sign in with or that there is none. The note names only the login item;
+ * a cookie value never appears in it.
+ */
+async function cookieFallbackNote(
+  findSiteLogin: PageToolOptions["findSiteLogin"],
+  finalUrl: string,
+): Promise<string> {
+  if (!findSiteLogin) return COOKIE_SIGNIN_FAILED;
+  let origin = "";
+  try {
+    const parsed = new URL(finalUrl);
+    if (parsed.protocol === "https:") origin = parsed.origin;
+  } catch {
+    return COOKIE_SIGNIN_FAILED;
+  }
+  if (!origin) return COOKIE_SIGNIN_FAILED;
+  let login: { name: string } | null;
+  try {
+    login = await findSiteLogin(origin);
+  } catch (error) {
+    // A lookup that cannot be read says nothing about whether a login exists.
+    getLogger().warn("saved login could not be looked up after cookies failed", {
+      errorName: error instanceof Error ? error.name : typeof error,
+    });
+    return COOKIE_SIGNIN_FAILED;
+  }
+  if (login) {
+    return `${COOKIE_SIGNIN_FAILED} A saved account login named "${login.name}" exists for this site — sign in with it using browser_act fill_secret.`;
+  }
+  return `${COOKIE_SIGNIN_FAILED} No saved account login exists for this site.`;
+}
 
 /** Fills a saved website login's field by its label; the model never supplies or sees the value. */
 export type SecretFillStep = {
@@ -60,10 +153,15 @@ export type BrowserActInput =
  * desktopTools: the run also has computer_act, so a page-tool failure can fall back to it.
  * downloads: the folder in the computer's home that the page's file downloads are saved to, and the
  * path the bot's own tools use for a file there.
+ * cookies/userAgent: resolved by the caller for this URL and injected before the page loads.
+ * findSiteLogin: the one login saved for a site, for the cookie-first/account-fallback note.
  */
 export type PageToolOptions = {
   desktopTools?: boolean;
   downloads?: { folder: string; botPath: (path: string) => string };
+  cookies?: BrowserCookie[];
+  userAgent?: string;
+  findSiteLogin?: (origin: string) => Promise<{ name: string } | null>;
 };
 export type ResolveSecretFill = (
   step: SecretFillStep,
@@ -114,10 +212,28 @@ export async function browserNavigateFromTool(
   try {
     const result = await browser.navigate(
       computer,
-      { url, downloads: options.downloads?.folder, signal: context.signal },
+      {
+        url,
+        downloads: options.downloads?.folder,
+        ...(options.cookies?.length ? { cookies: options.cookies } : {}),
+        ...(options.userAgent ? { userAgent: options.userAgent } : {}),
+        signal: context.signal,
+      },
       context,
     );
-    return formatBrowserResult(withBotPaths(result, options), options);
+    const formatted = formatBrowserResult(withBotPaths(result, options), options);
+    // Cookie-first, account-fallback: a navigation that carried cookies and still landed on a
+    // sign-in page means the cookies did not sign in. The note says so and points at the saved
+    // account login when there is one; the cookies are never retried.
+    if (options.cookies?.length && isLoginPage(formatted, url)) {
+      const note = await cookieFallbackNote(options.findSiteLogin, formatted.url || url);
+      context.signal.throwIfAborted();
+      return {
+        ...formatted,
+        note: formatted.note ? `${note}\n${formatted.note}` : note,
+      };
+    }
+    return formatted;
   } catch (error) {
     context.signal.throwIfAborted();
     return formatBrowserResult(

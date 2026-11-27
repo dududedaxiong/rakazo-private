@@ -1,4 +1,3 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type {
   AdapterContext,
   BrowserActResult,
@@ -7,6 +6,7 @@ import type {
   BrowserSnapshotResult,
   ComputerRef,
 } from "@rakazo_mickvvw/adapter-kit";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ClientBrowserProvider, createClientBrowserProvider } from "./client-browser-provider.js";
 import { ClientTaskFallbackError } from "./client-task-dispatcher.js";
 import { FakeBrowserProvider } from "./fake-browser.js";
@@ -345,5 +345,80 @@ describe("createClientBrowserProvider", () => {
       prisma: {} as never,
     });
     expect(provider.describe().id).toBe("client");
+  });
+});
+
+describe("ClientBrowserProvider with saved cookies", () => {
+  // Every value below is fake: example.com and "test-value" only, never a real cookie.
+  const testCookies = [
+    {
+      name: "sessionid",
+      value: "test-value",
+      domain: "example.com",
+      path: "/",
+      secure: true,
+      httpOnly: true,
+      expires: 1_900_000_000,
+    },
+  ];
+
+  it("never sends cookies to the phone: the task envelope carries only the URL", async () => {
+    const fallback = stubFallback();
+    const dispatcher = stubDispatcher();
+    const provider = new ClientBrowserProvider({ fallback, dispatcher });
+    const result = await provider.navigate(
+      COMPUTER,
+      { url: "https://phone.example/page", cookies: testCookies, userAgent: "TestBrowser/1.0" },
+      context(),
+    );
+    expect(dispatcher.fetchPage).toHaveBeenCalledWith({
+      userId: "user-1",
+      spaceId: "space-1",
+      botId: "bot-1",
+      runId: "run-1",
+      url: "https://phone.example/page",
+    });
+    expect(JSON.stringify(vi.mocked(dispatcher.fetchPage).mock.calls)).not.toContain("test-value");
+    expect(fallback.navigate).not.toHaveBeenCalled();
+    expect(result.note).toContain("user's phone");
+  });
+
+  it("keeps cookies and UA for the server browser when the phone cannot serve the page", async () => {
+    const fallback = stubFallback();
+    const dispatcher = stubDispatcher(async () => {
+      throw new ClientTaskFallbackError("offline");
+    });
+    const provider = new ClientBrowserProvider({ fallback, dispatcher });
+    await provider.navigate(
+      COMPUTER,
+      { url: "https://phone.example/page", cookies: testCookies, userAgent: "TestBrowser/1.0" },
+      context(),
+    );
+    expect(fallback.navigate).toHaveBeenCalledWith(
+      COMPUTER,
+      {
+        url: "https://phone.example/page",
+        cookies: testCookies,
+        userAgent: "TestBrowser/1.0",
+      },
+      expect.anything(),
+    );
+  });
+
+  it("keeps cookies and UA when there is no bot or run to dispatch for", async () => {
+    const fallback = stubFallback();
+    const dispatcher = stubDispatcher();
+    const provider = new ClientBrowserProvider({ fallback, dispatcher });
+    await provider.navigate(
+      COMPUTER,
+      { url: "https://x.example/", cookies: testCookies, userAgent: "TestBrowser/1.0" },
+      context({ botId: undefined }),
+    );
+    expect(dispatcher.fetchPage).not.toHaveBeenCalled();
+    expect(fallback.navigate).toHaveBeenCalledWith(
+      COMPUTER,
+      { url: "https://x.example/", cookies: testCookies, userAgent: "TestBrowser/1.0" },
+      expect.anything(),
+    );
   });
 });

@@ -7,11 +7,14 @@ import { RunHistoryWriteError, releasePayment } from "@rakazo_mickvvw/db";
 import { getLogger } from "@rakazo_mickvvw/logging";
 import { redactShellStreams } from "./agent-environment.js";
 import {
+  findSiteLogin,
   resolveCodeFill,
+  resolveCookieInjection,
   resolveLoginFill,
   resolveVaultCardFill,
   shellCommandEnvironment,
 } from "./bot-secrets.js";
+import type { PageToolOptions } from "./browser-tools.js";
 import {
   browserActFromTool,
   browserNavigateFromTool,
@@ -179,6 +182,54 @@ function releaseUnpressedPayment(ctx: RunContext, call: ToolCall): Promise<void>
     : Promise.resolve();
 }
 
+type NavigateCookieOptions = Pick<PageToolOptions, "cookies" | "userAgent" | "findSiteLogin">;
+
+/**
+ * The saved cookies for a navigation, resolved just before it runs. Their values are registered
+ * for redaction the way a filled login's are, so a page echoing one is scrubbed from the result.
+ * Only a navigation injects cookies; a snapshot or act never does.
+ */
+async function resolveNavigateCookieOptions(
+  ctx: RunContext,
+  url: string,
+): Promise<NavigateCookieOptions> {
+  const { deps, run } = ctx;
+  let origin = "";
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "https:") origin = parsed.origin;
+  } catch {
+    // An invalid URL is refused by the navigate tool below; no cookies to resolve.
+  }
+  if (!origin) return {};
+  try {
+    const resolved = await resolveCookieInjection({
+      prisma: deps.prisma,
+      secretStore: deps.secretStore,
+      scope: run,
+      origin,
+      url,
+    });
+    if (!resolved) return {};
+    addRunSecrets(ctx, resolved.redactions);
+    return {
+      cookies: resolved.cookies,
+      ...(resolved.userAgent ? { userAgent: resolved.userAgent } : {}),
+      findSiteLogin: async (siteOrigin: string) => {
+        const login = await findSiteLogin(deps.prisma, run, siteOrigin);
+        return login ? { name: login.name } : null;
+      },
+    };
+  } catch (error) {
+    ctx.context.signal.throwIfAborted();
+    // Cookies are a bonus, never a gate: a vault that cannot be read must not stop the navigation.
+    getLogger().warn("saved cookies could not be loaded for a navigation", {
+      errorName: error instanceof Error ? error.name : typeof error,
+    });
+    return {};
+  }
+}
+
 export async function pageBrowserTool(ctx: RunContext, call: ToolCall) {
   const { deps, run, bot, context } = ctx;
   const { name, args } = call;
@@ -205,11 +256,16 @@ export async function pageBrowserTool(ctx: RunContext, call: ToolCall) {
   return computerScreenToolResult(async () => {
     // A call that presses an approved purchase spends it: a card it types leaves no pass for the next one.
     const paying = purchaseApprovalOf(args.purchaseApproval);
+    const cookieOptions =
+      name === "browser_navigate"
+        ? await resolveNavigateCookieOptions(ctx, String(args.url ?? ""))
+        : {};
     const result = tool
       ? redactBrowserResult(
           await tool(ctx.providers.browser, await ctx.computer.get("tool", name), context, args, {
             desktopTools,
             downloads,
+            ...cookieOptions,
           }),
           redactions(),
         )
