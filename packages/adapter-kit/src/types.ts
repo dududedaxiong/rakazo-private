@@ -1184,10 +1184,29 @@ export interface BrowserCapabilities {
   keyless?: boolean;
 }
 
+/**
+ * One cookie of a site, as a browser stores it. `expires` is a Unix timestamp in seconds;
+ * absent means a session cookie. `sameSite` is already normalized to CDP's spelling.
+ */
+export interface BrowserCookie {
+  name: string;
+  value: string;
+  domain: string;
+  path: string;
+  secure: boolean;
+  httpOnly: boolean;
+  sameSite?: "None" | "Lax" | "Strict";
+  expires?: number;
+}
+
 export interface BrowserNavigateRequest {
   url: string;
   /** Folder in the computer's home that a file download is saved to; without it, none is saved. */
   downloads?: string;
+  /** Cookies to inject before loading the page; only for the page's own site. */
+  cookies?: BrowserCookie[];
+  /** User-Agent to use for this navigation, set before the cookies are injected. */
+  userAgent?: string;
   signal?: AbortSignal;
 }
 
@@ -1379,9 +1398,19 @@ export interface BrowserPurchaseCheckResult {
 
 /** A sandbox must route these commands through its owned screen, never generic host execution. */
 export type PageBrowserCommand =
-  | { command: "navigate"; url: string; downloads?: string }
+  | {
+      command: "navigate";
+      url: string;
+      downloads?: string;
+      /** Cookies to inject before loading the page; only for the page's own site. */
+      cookies?: BrowserCookie[];
+      /** User-Agent to use for this navigation, set before the cookies are injected. */
+      userAgent?: string;
+    }
   | { command: "snapshot"; query?: string; downloads?: string }
   | { command: "act"; actions: BrowserActStep[]; downloads?: string }
+  /** Clear cookies from the browser profile: one entry per cookie, matched by name + domain + path. */
+  | { command: "clear_cookies"; cookies: Array<Pick<BrowserCookie, "name" | "domain" | "path">> }
   | {
       command: "purchase_check";
       actions?: BrowserPurchaseCheckRequest["actions"];

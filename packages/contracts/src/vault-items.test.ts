@@ -140,6 +140,26 @@ describe("the vault list's subtitle, shared by web and mobile", () => {
     expect(
       vaultItemSubtitle(item({ name: "deploy-token", auth: { type: "command" } }), words),
     ).toBe("$DEPLOY_TOKEN");
+    expect(
+      vaultItemSubtitle(
+        item({
+          origin: "https://www.example.com",
+          auth: { type: "browser_cookies", cookieCount: 3, earliestExpiry: 1_900_000_000 },
+          title: "example.com",
+        }),
+        { ...words, cookies: (count) => `${count} cookies` },
+      ),
+    ).toBe("3 cookies · Expires 2030-03-17");
+    expect(
+      vaultItemSubtitle(
+        item({
+          origin: "https://www.example.com",
+          auth: { type: "browser_cookies", cookieCount: 1, earliestExpiry: null },
+          title: "example.com",
+        }),
+        words,
+      ),
+    ).toBe("");
     expect(vaultItemSubtitle(item({ auth: null }), words)).toBe("");
   });
 });

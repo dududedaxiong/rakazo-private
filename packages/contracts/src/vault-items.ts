@@ -5,17 +5,19 @@ import { cardExpiry, commandVariableName } from "./bot-secrets.js";
  * What people add and filter by in the vault, on every surface. API credentials of every auth type
  * are one "API key"; a command variable is a "variable".
  */
-export type VaultKind = "login" | "card" | "contact" | "api_key" | "variable";
+export type VaultKind = "login" | "card" | "contact" | "api_key" | "variable" | "browser_cookies";
 export const VAULT_KINDS: readonly VaultKind[] = [
   "login",
   "card",
   "contact",
   "api_key",
   "variable",
+  "browser_cookies",
 ];
 
 export function vaultKind(type: BotSecretAuthType): VaultKind {
-  if (type === "login" || type === "card" || type === "contact") return type;
+  if (type === "login" || type === "card" || type === "contact" || type === "browser_cookies")
+    return type;
   return type === "command" ? "variable" : "api_key";
 }
 
@@ -29,7 +31,12 @@ function host(origin: string): string {
  */
 export function vaultItemSubtitle(
   item: Pick<BotSecretMetadata, "name" | "origin" | "auth" | "title" | "note" | "preview">,
-  words: { apiKey: string; expires: (date: string) => string },
+  words: {
+    apiKey: string;
+    expires: (date: string) => string;
+    /** Renders a cookie count, such as "12 cookies"; when absent the count is not shown. */
+    cookies?: (count: number) => string;
+  },
 ): string {
   if (!item.auth) return "";
   const { preview } = item;
@@ -38,6 +45,15 @@ export function vaultItemSubtitle(
   const ownSite = item.title === site ? undefined : site;
   const line = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(" · ");
   switch (vaultKind(item.auth.type)) {
+    case "browser_cookies": {
+      const auth = item.auth;
+      if (auth.type !== "browser_cookies") return "";
+      const expiry =
+        auth.earliestExpiry === null
+          ? undefined
+          : words.expires(new Date(auth.earliestExpiry * 1000).toISOString().slice(0, 10));
+      return line(words.cookies?.(auth.cookieCount), expiry, ownSite);
+    }
     case "login":
       return line(preview?.username, ownSite);
     case "card":

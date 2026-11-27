@@ -1,3 +1,4 @@
+import type { BrowserCookie } from "@rakazo_mickvvw/adapter-kit";
 import type { BotSecretDestination } from "@rakazo_mickvvw/contracts";
 import { BOT_SECRET_ORIGIN_MISSING_MESSAGE, encodeLoginSecret } from "@rakazo_mickvvw/contracts";
 import { redactSecrets } from "@rakazo_mickvvw/core";
@@ -10,6 +11,7 @@ import {
   encodeRunLogin,
   forgetBotSecret,
   listBotSecrets,
+  listVaultItems,
   loadLoginPasswordRedactions,
   loadRunCodeRedactions,
   loadRunLoginRedactions,
@@ -19,12 +21,15 @@ import {
   prepareBotSecret,
   requestWithBotSecret,
   resolveCodeFill,
+  resolveCookieInjection,
   resolveLoginFill,
   resolveRequestSecretDestination,
+  revealBotSecret,
   sameSecretDestination,
   storeBotSecret,
 } from "./bot-secrets.js";
 import { fakeDatabase } from "./bot-secrets.test-support.js";
+import { encodeBrowserCookieSet } from "./browser-cookies.js";
 import { EncryptedSecretStore } from "./secrets.js";
 
 afterEach(() => {
@@ -1563,5 +1568,200 @@ describe("replacing a saved login's site", () => {
     const [row] = db.rows();
     expect(row).toMatchObject({ id: before.id, origin: "https://other.example.test" });
     expect(await secretStore.load(row!.ciphertext, row!.id)).toBe(typed("fake-password-other"));
+  });
+});
+
+describe("saved browser cookies", () => {
+  const origin = "https://example.com";
+  const cookies: BrowserCookie[] = [
+    {
+      name: "sessionid",
+      value: "test-value",
+      domain: "example.com",
+      path: "/",
+      secure: true,
+      httpOnly: true,
+      expires: 1_900_000_000,
+    },
+    {
+      name: "prefs",
+      value: "test-value",
+      domain: ".example.com",
+      path: "/",
+      secure: false,
+      httpOnly: false,
+    },
+  ];
+  const destination: BotSecretDestination = {
+    name: "example-cookies",
+    origin,
+    auth: {
+      type: "browser_cookies",
+      cookieCount: 2,
+      earliestExpiry: 1_900_000_000,
+      userAgent: "TestBrowser/1.0",
+    },
+  };
+
+  async function save(
+    db: ReturnType<typeof fakeDatabase>,
+    dest: BotSecretDestination = destination,
+    stored: BrowserCookie[] = cookies,
+  ) {
+    await storeBotSecret({
+      prisma: db.prisma,
+      secretStore,
+      scope,
+      destination: dest,
+      plaintext: encodeBrowserCookieSet(stored),
+    });
+    return db.rows().find((row) => row.name === dest.name)!;
+  }
+
+  it("injects the usable cookies and UA for the saved site, and redacts their values", async () => {
+    const db = fakeDatabase();
+    await save(db);
+    const injected = await resolveCookieInjection({
+      prisma: db.prisma,
+      secretStore,
+      scope,
+      origin,
+      url: "https://example.com/",
+    });
+    expect(injected?.cookies).toEqual(cookies);
+    expect(injected?.userAgent).toBe("TestBrowser/1.0");
+    expect(injected?.redactions).toContain("test-value");
+    const redacted = redactSecrets(`page says test-value`, injected?.redactions ?? []);
+    expect(redacted).not.toContain("test-value");
+  });
+
+  it("returns nothing for another site, a plain-HTTP origin, or nothing usable left", async () => {
+    const db = fakeDatabase();
+    await save(db);
+    expect(
+      await resolveCookieInjection({
+        prisma: db.prisma,
+        secretStore,
+        scope,
+        origin: "https://other.example.test",
+        url: "https://other.example.test/",
+      }),
+    ).toBeNull();
+    expect(
+      await resolveCookieInjection({
+        prisma: db.prisma,
+        secretStore,
+        scope,
+        origin: "http://example.com",
+        url: "http://example.com/",
+      }),
+    ).toBeNull();
+    // Every stored cookie expired since the import: nothing to inject.
+    const expired: BrowserCookie[] = [{ ...cookies[0]!, expires: 1 }];
+    const db2 = fakeDatabase();
+    await save(db2, destination, expired);
+    expect(
+      await resolveCookieInjection({
+        prisma: db2.prisma,
+        secretStore,
+        scope,
+        origin,
+        url: "https://example.com/",
+      }),
+    ).toBeNull();
+  });
+
+  it("returns nothing when two cookie items are saved for one site", async () => {
+    const db = fakeDatabase();
+    await save(db);
+    await save(db, { ...destination, name: "example-cookies-2" });
+    expect(
+      await resolveCookieInjection({
+        prisma: db.prisma,
+        secretStore,
+        scope,
+        origin,
+        url: "https://example.com/",
+      }),
+    ).toBeNull();
+  });
+
+  it("re-importing refreshes the cookies and their metadata instead of refusing", async () => {
+    const db = fakeDatabase();
+    const before = await save(db);
+    const refreshed: BrowserCookie[] = [
+      {
+        name: "sessionid",
+        value: "test-value",
+        domain: "example.com",
+        path: "/",
+        secure: true,
+        httpOnly: true,
+        expires: 1_950_000_000,
+      },
+    ];
+    await storeBotSecret({
+      prisma: db.prisma,
+      secretStore,
+      scope,
+      destination: {
+        ...destination,
+        auth: {
+          type: "browser_cookies",
+          cookieCount: 1,
+          earliestExpiry: 1_950_000_000,
+          userAgent: "TestBrowser/2.0",
+        },
+      },
+      plaintext: encodeBrowserCookieSet(refreshed),
+    });
+    expect(db.rows()).toHaveLength(1);
+    const [row] = db.rows();
+    expect(row).toMatchObject({ id: before.id, name: "example-cookies", origin });
+    expect(row!.auth).toEqual({
+      type: "browser_cookies",
+      cookieCount: 1,
+      earliestExpiry: 1_950_000_000,
+      userAgent: "TestBrowser/2.0",
+    });
+    const injected = await resolveCookieInjection({
+      prisma: db.prisma,
+      secretStore,
+      scope,
+      origin,
+      url: "https://example.com/",
+    });
+    expect(injected?.cookies).toEqual(refreshed);
+    expect(injected?.userAgent).toBe("TestBrowser/2.0");
+  });
+
+  it("treats a cookie item's changing metadata as the same destination", () => {
+    expect(
+      sameSecretDestination(destination, {
+        ...destination,
+        auth: { type: "browser_cookies", cookieCount: 9, earliestExpiry: null },
+      }),
+    ).toBe(true);
+    expect(
+      sameSecretDestination(destination, { ...destination, origin: "https://other.example.test" }),
+    ).toBe(false);
+  });
+
+  it("lists a cookie item as metadata only and never reveals its values", async () => {
+    const db = fakeDatabase();
+    await save(db);
+    const items = await listVaultItems(db.prisma, secretStore, scope);
+    expect(items).toEqual([
+      expect.objectContaining({
+        name: "example-cookies",
+        origin,
+        title: "example.com",
+        preview: undefined,
+      }),
+    ]);
+    expect(JSON.stringify(items)).not.toContain("test-value");
+    expect(
+      await revealBotSecret({ prisma: db.prisma, secretStore, scope, name: "example-cookies" }),
+    ).toBeNull();
   });
 });

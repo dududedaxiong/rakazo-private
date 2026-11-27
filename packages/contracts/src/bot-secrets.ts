@@ -38,6 +38,14 @@ export const BotSecretAuth = z.discriminatedUnion("type", [
   // A website sign-in. Its fields are all protected; the backend only types them into pages on
   // the saved origin and never sends them as HTTP credentials.
   z.object({ type: z.literal("login") }),
+  // A browser's saved cookies for one site, injected before navigating there. The metadata is
+  // what a list shows; the cookie values themselves are the encrypted value, never in `auth`.
+  z.object({
+    type: z.literal("browser_cookies"),
+    cookieCount: z.number().int().min(0),
+    earliestExpiry: z.number().int().nullable(),
+    userAgent: z.string().max(512).optional(),
+  }),
   // A value exported to this bot's shell commands as an environment variable. It has no site.
   z.object({ type: z.literal("command") }),
   // A payment card. Typed only into a checkout the person approves each time; the bot sees only
@@ -233,8 +241,9 @@ export function botSecretDestinationSchema(options?: { allowPrivateHttpOrigin?: 
         }
         return;
       }
-      // Private-LAN plain HTTP is for API credentials only. A website login is typed into a page.
-      if (destination.auth.type !== "login") return;
+      // Private-LAN plain HTTP is for API credentials only. A website login or a site's cookies
+      // are typed into a page.
+      if (destination.auth.type !== "login" && destination.auth.type !== "browser_cookies") return;
       try {
         if (new URL(destination.origin).protocol === "https:") return;
       } catch {
@@ -243,7 +252,10 @@ export function botSecretDestinationSchema(options?: { allowPrivateHttpOrigin?: 
       ctx.addIssue({
         code: "custom",
         path: ["origin"],
-        message: "Website logins require an HTTPS origin",
+        message:
+          destination.auth.type === "login"
+            ? "Website logins require an HTTPS origin"
+            : "Browser cookies require an HTTPS origin",
       });
     });
 }

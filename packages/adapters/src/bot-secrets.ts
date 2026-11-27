@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import type { SecretStore } from "@rakazo_mickvvw/adapter-kit";
+import type { BrowserCookie, SecretStore } from "@rakazo_mickvvw/adapter-kit";
 import type {
   BotSecretDestination,
   CardSecretValue,
@@ -48,6 +48,12 @@ import {
 } from "@rakazo_mickvvw/db";
 import { getLogger } from "@rakazo_mickvvw/logging";
 import { z } from "zod";
+import {
+  browserCookieRedactions,
+  decodeBrowserCookieSet,
+  encodeBrowserCookieSet,
+  filterCookiesForNavigation,
+} from "./browser-cookies.js";
 import { combineSignals, redactConnectorPayload } from "./connector-safety.js";
 import type { RemoteTransportDependencies } from "./remote-mcp.js";
 import { createPrivateNetworkFetch, createSafeRemoteFetch } from "./remote-mcp.js";
@@ -482,6 +488,16 @@ function parsedCredentialObject(value: unknown): unknown {
   return {};
 }
 
+/**
+ * What identifies a credential's destination. A cookie item's count, earliest expiry and UA
+ * change on every re-import, so they are not identity: re-importing a site's cookies updates
+ * the item instead of demanding the old one be removed first.
+ */
+function authIdentity(auth: z.infer<typeof BotSecretAuth>): unknown {
+  if (auth.type !== "browser_cookies") return auth;
+  return { type: auth.type };
+}
+
 export function sameSecretDestination(
   left: BotSecretDestination,
   right: BotSecretDestination,
@@ -489,7 +505,7 @@ export function sameSecretDestination(
   return (
     left.name === right.name &&
     left.origin === right.origin &&
-    JSON.stringify(left.auth) === JSON.stringify(right.auth)
+    JSON.stringify(authIdentity(left.auth)) === JSON.stringify(authIdentity(right.auth))
   );
 }
 
@@ -543,6 +559,8 @@ export async function findSiteLogin(prisma: PrismaClient, scope: BotSecretScope,
 export function canonicalSecretValue(destination: BotSecretDestination, plaintext: string): string {
   // Saved in its current shape, also when an older app sends a username and password.
   if (destination.auth.type === "login") return encodeLoginSecret(decodeLoginSecret(plaintext));
+  if (destination.auth.type === "browser_cookies")
+    return encodeBrowserCookieSet(decodeBrowserCookieSet(plaintext));
   try {
     if (destination.auth.type === "card") return encodeCardSecret(JSON.parse(plaintext));
     if (destination.auth.type === "contact") return encodeContactSecret(JSON.parse(plaintext));
@@ -551,6 +569,47 @@ export function canonicalSecretValue(destination: BotSecretDestination, plaintex
     throw new Error(`Invalid ${destination.auth.type}`);
   }
   return plaintext;
+}
+
+/**
+ * The cookies to inject before navigating to `url`: the one cookie item saved for exactly this
+ * HTTPS origin, decrypted and filtered to what this page may receive, with its per-site UA.
+ * Null when there is none, when more than one is saved, or when nothing usable remains.
+ * The values never leave this call except inside the navigation command and the redactions.
+ */
+export async function resolveCookieInjection(input: {
+  prisma: PrismaClient;
+  secretStore: SecretStore;
+  scope: BotSecretScope;
+  origin: string;
+  url: string;
+}): Promise<{ cookies: BrowserCookie[]; userAgent?: string; redactions: string[] } | null> {
+  if (!input.origin.startsWith("https://")) return null;
+  const rows = await input.prisma.vaultCredential.findMany({
+    where: { ...(await vaultFields(input.prisma, input.scope)), origin: input.origin },
+    select: { id: true, ciphertext: true, auth: true },
+  });
+  const items = rows.flatMap((row) => {
+    const auth = BotSecretAuth.safeParse(row.auth).data;
+    return auth?.type === "browser_cookies" ? [{ row, auth }] : [];
+  });
+  if (items.length !== 1) return null;
+  const item = items[0];
+  if (!item) return null;
+  const { row, auth } = item;
+  let cookies: BrowserCookie[];
+  try {
+    cookies = decodeBrowserCookieSet(await input.secretStore.load(row.ciphertext, row.id));
+  } catch {
+    return null;
+  }
+  const usable = filterCookiesForNavigation(cookies, input.url);
+  if (usable.length === 0) return null;
+  return {
+    cookies: usable,
+    ...(auth.userAgent ? { userAgent: auth.userAgent } : {}),
+    redactions: browserCookieRedactions(usable),
+  };
 }
 
 export async function prepareBotSecret(input: {
@@ -572,12 +631,16 @@ export async function prepareBotSecret(input: {
 }) {
   const { prisma, secretStore, scope } = input;
   let { plaintext } = input;
-  if (!plaintext || plaintext.length > 16_384) throw new Error("Invalid credential length");
   const destination = normalizeSecretDestination(input.destination);
+  // A cookie set is a list, not one value: its canonical JSON may run past the single-value
+  // limit, while the pasted export that produced it was already capped at 64 KB.
+  const maxLength = destination.auth.type === "browser_cookies" ? 131_072 : 16_384;
+  if (!plaintext || plaintext.length > maxLength) throw new Error("Invalid credential length");
   if (
     destination.auth.type === "login" ||
     destination.auth.type === "card" ||
-    destination.auth.type === "contact"
+    destination.auth.type === "contact" ||
+    destination.auth.type === "browser_cookies"
   ) {
     plaintext = canonicalSecretValue(destination, plaintext);
   } else if (destination.auth.type === "command") {
@@ -642,10 +705,16 @@ export async function prepareBotSecret(input: {
         ...(input.note !== undefined ? { note: input.note } : {}),
       };
       // The site and the value change together; validate allowed another site only when replacing.
+      // A cookie re-import also refreshes its metadata (count, earliest expiry, UA).
       if (current)
         await tx.vaultCredential.update({
           where: { id },
-          data: { origin: destination.origin, ciphertext: stored.ciphertext, ...labelled },
+          data: {
+            origin: destination.origin,
+            ciphertext: stored.ciphertext,
+            ...(destination.auth.type === "browser_cookies" ? { auth: destination.auth } : {}),
+            ...labelled,
+          },
         });
       else
         await tx.vaultCredential.create({
@@ -967,8 +1036,10 @@ export async function revealBotSecret(input: {
     where: { ...(await vaultFields(input.prisma, input.scope)), name: input.name },
   });
   if (!row) return null;
-  const plaintext = await input.secretStore.load(row.ciphertext, row.id);
   const type = BotSecretAuth.safeParse(row.auth).data?.type;
+  // Cookie values are directly usable session credentials: never shown, only deleted.
+  if (type === "browser_cookies") return null;
+  const plaintext = await input.secretStore.load(row.ciphertext, row.id);
   if (type === "login") return decodeLoginSecret(plaintext);
   if (type === "card") return { card: decodeCardSecret(plaintext) };
   return { value: plaintext };
