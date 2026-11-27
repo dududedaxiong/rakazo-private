@@ -36,3 +36,11 @@ Status: implemented
 
 - 重新生成 Prisma 客户端后，`adapters` 与 `apps/web` 的 vitest 全过（仓库根配置）。
 - 部署后查 api 日志，`threads.unread does not exist` 不再出现；网页端机器人与对话列表正常加载；发一条测试消息确认聊天通。
+
+## Follow-up（2026-11-27）：`threads.lastReadSeq` 列在库里根本不存在
+
+部署 47b41abe 后，`threads.unread` 的报错归零，但冒出同类错误：Prisma P2022 `The column threads.lastReadSeq does not exist in the current database`，堆栈在 `listGroups`（`packages/db/src/groups.ts:370`）→ `memberSpaceNavigation`（`spaces.ts:425`），自 09:28 部署以来 ColumnNotFound 386 次、HTTP 500 从 345 升到 436 次。App 的 "Internal server error" 与网页刷新失败都是同一批 500（发消息/刷新时调用了同样失败的 spaces/threads RPC）。
+
+根因不是代码缺东西：`Thread.lastReadSeq`（`Int @default(-1)`）早在 schema 里，加列的迁移 `20261023000000_thread_read_cursor` 也早在仓库里（基点 270c6060 就带了），内容就是 `ALTER TABLE "threads" ADD COLUMN "lastReadSeq" INTEGER NOT NULL DEFAULT -1;` 外加一条回填（`UPDATE "threads" SET "lastReadSeq" = "nextMessageSeq" - 1 WHERE "nextMessageSeq" > 0;`）。问题是这条迁移从来没在 cue 的数据库上执行过——库里没有这列。代码比数据库新，数据库比迁移历史旧。
+
+修复：不需要新迁移文件（再建一个会跟已有的 `20261023000000_thread_read_cursor` 重复加同一列，之后 `prisma migrate deploy` 会撞上），也不需要改代码、重建镜像。直接在 cue 上执行这条迁移里的两条 SQL（加列 + 回填），再用 `prisma migrate resolve --applied 20261023000000_thread_read_cursor` 把这条迁移标记为已执行，让库里的迁移记录与仓库对齐。执行完查 api 日志确认 ColumnNotFound 归零、HTTP 500 停止上升。
