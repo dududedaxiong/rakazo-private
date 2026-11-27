@@ -193,6 +193,12 @@ msgstr "{0} 次请求"
 msgid "{0} rollup hours"
 msgstr "{0} 的合并间隔（小时）"
 
+#. placeholder {0}: entry.count
+#. placeholder {1}: entry.reason
+#: src/components/vault/VaultItemEditor.tsx
+msgid "{0} skipped: {1}"
+msgstr "已跳过 {0} 条：{1}"
+
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} TB"
@@ -243,6 +249,10 @@ msgstr "{count, plural, one {# 行} other {# 行}}"
 #: src/pages/shell/dialogs.tsx
 msgid "{count, plural, one {Delete # message?} other {Delete # messages?}}"
 msgstr "{count, plural, one {删除 # 条消息？} other {删除 # 条消息？}}"
+
+#: src/components/vault/kinds.tsx
+msgid "{count} cookies"
+msgstr "{count} 条 Cookie"
 
 #: src/lib/billing.ts
 msgid "{count} days"
@@ -780,6 +790,10 @@ msgstr "访问令牌（可选）"
 msgid "Account"
 msgstr "账户"
 
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Account and password"
+msgstr "账号密码"
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Account default"
 msgstr "账户默认"
@@ -1217,6 +1231,10 @@ msgstr "Anthropic API"
 #: src/pages/onboarding/model-step.tsx
 msgid "Anthropic Messages"
 msgstr "Anthropic Messages"
+
+#: src/pages/model-settings/compatible-model-fields.tsx
+msgid "Anthropic Messages（经 chat-completions 转译）"
+msgstr "Anthropic Messages（经 chat-completions 转译）"
 
 #: src/pages/Paywall.tsx
 msgid "Any model, with your own key"
@@ -1719,6 +1737,10 @@ msgstr "浏览"
 #: src/pages/PluginsOverlay.tsx
 msgid "Browse MCP servers"
 msgstr "浏览 MCP 服务器"
+
+#: src/components/vault/kinds.tsx
+msgid "Browser cookies"
+msgstr "浏览器 Cookie"
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
@@ -2572,6 +2594,16 @@ msgstr "通过 {0} 继续"
 msgid "Conversations"
 msgstr "对话"
 
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Cookie / UA"
+msgstr "Cookie/UA"
+
+#: src/components/vault/kinds.tsx
+#: src/components/vault/VaultItemDetail.tsx
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Cookies"
+msgstr "Cookie"
+
 #: src/components/admin/AdminTwoFactor.tsx
 #: src/components/BotEmailAddressField.tsx
 #: src/components/InviteDialog.tsx
@@ -2870,8 +2902,10 @@ msgid "Could not dismiss this server"
 msgstr "无法忽略此服务器"
 
 #. placeholder {0}: artifact.name
+#. placeholder {0}: item.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
 msgid "Could not download {0}. Try again."
 msgstr "无法下载 {0}。请重试。"
@@ -3588,6 +3622,10 @@ msgstr "正在创建…"
 msgid "Credential"
 msgstr "凭据"
 
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Credential type"
+msgstr "凭据类型"
+
 #: src/pages/plugins/source-form.tsx
 msgid "Credentials are encrypted and never sent to the model."
 msgstr "凭据已加密，不会发送给模型。"
@@ -4054,6 +4092,7 @@ msgstr "还没有账户？"
 
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
+#: src/components/vault/VaultItemEditor.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -4075,6 +4114,7 @@ msgstr "下载"
 #. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
 msgid "Download {0}"
 msgstr "下载 {0}"
@@ -4230,6 +4270,10 @@ msgstr "已启用"
 #: src/components/BotPackageSkillsView.tsx
 msgid "Enabling a skill shares it with your bots in this space."
 msgstr "启用技能会将其共享给此空间中的机器人。"
+
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Encrypted on the server."
+msgstr "在服务器上加密保存。"
 
 #: src/components/ComputerProviderSettings.tsx
 msgid "End user ID"
@@ -5075,6 +5119,11 @@ msgstr "导入需要注意。"
 #: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 msgid "Import templates"
 msgstr "导入模板"
+
+#. placeholder {0}: importSummary.imported
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Imported {0} cookies"
+msgstr "已导入 {0} 条 Cookie"
 
 #: src/components/BotPackageImport.tsx
 msgid "Imported bot name"
@@ -6202,6 +6251,10 @@ msgid "New bot"
 msgstr "新建 Bot"
 
 #: src/components/VaultSettings.tsx
+msgid "New browser cookies"
+msgstr "新建浏览器 Cookie"
+
+#: src/components/VaultSettings.tsx
 msgid "New card"
 msgstr "新建银行卡"
 
@@ -6690,6 +6743,10 @@ msgstr "只有供应商密钥会被加密；备份文件本身不会加密。如
 msgid "Only the first 50 models were tested."
 msgstr "只测了前 50 个。"
 
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Only used on this site."
+msgstr "仅用于本站。"
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "仅自己"
@@ -6974,6 +7031,10 @@ msgstr "粘贴替换密钥"
 #: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 msgid "Paste text"
 msgstr "粘贴文本"
+
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Paste the exported cookies"
+msgstr "粘贴导出的 Cookie"
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Paste the OpenAI-compatible address from your server. Rakazo mickvvw adds /v1 if needed."
@@ -9260,6 +9321,10 @@ msgstr "链接打开只读回放，无需登录。分享前已去掉密钥与本
 msgid "The model hit its output limit before finishing its reply."
 msgstr "模型在完成回复前达到了输出上限。"
 
+#: src/components/vault/VaultItemEditor.tsx
+msgid "The model never sees the values."
+msgstr "模型看不到这些值。"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model provider returned an error."
@@ -10101,6 +10166,10 @@ msgstr "用户已取消拉黑"
 #: src/components/admin/admin-shared.tsx
 msgid "User restored"
 msgstr "用户已恢复"
+
+#: src/components/vault/VaultItemEditor.tsx
+msgid "User-Agent"
+msgstr "User-Agent"
 
 #: src/components/SecretAskCard.tsx
 #: src/components/vault/VaultItemDetail.tsx

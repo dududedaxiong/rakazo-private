@@ -193,6 +193,12 @@ msgstr ""
 msgid "{0} rollup hours"
 msgstr "{0}のまとめ間隔（時間）"
 
+#. placeholder {0}: entry.count
+#. placeholder {1}: entry.reason
+#: src/components/vault/VaultItemEditor.tsx
+msgid "{0} skipped: {1}"
+msgstr ""
+
 #. placeholder {0}: parts.amount
 #: src/components/ArtifactFileCard.tsx
 msgid "{0} TB"
@@ -242,6 +248,10 @@ msgstr "{count, plural, one {# 行} other {# 行}}"
 
 #: src/pages/shell/dialogs.tsx
 msgid "{count, plural, one {Delete # message?} other {Delete # messages?}}"
+msgstr ""
+
+#: src/components/vault/kinds.tsx
+msgid "{count} cookies"
 msgstr ""
 
 #: src/lib/billing.ts
@@ -780,6 +790,10 @@ msgstr "アクセストークン（任意）"
 msgid "Account"
 msgstr "アカウント"
 
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Account and password"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Account default"
 msgstr "アカウントのデフォルト"
@@ -1217,6 +1231,10 @@ msgstr "Anthropic API"
 #: src/pages/onboarding/model-step.tsx
 msgid "Anthropic Messages"
 msgstr "Anthropic Messages"
+
+#: src/pages/model-settings/compatible-model-fields.tsx
+msgid "Anthropic Messages（经 chat-completions 转译）"
+msgstr ""
 
 #: src/pages/Paywall.tsx
 msgid "Any model, with your own key"
@@ -1719,6 +1737,10 @@ msgstr "参照"
 #: src/pages/PluginsOverlay.tsx
 msgid "Browse MCP servers"
 msgstr "MCPサーバーを探す"
+
+#: src/components/vault/kinds.tsx
+msgid "Browser cookies"
+msgstr ""
 
 #: src/components/prompt-templates/BotPersonaSection.tsx
 #: src/components/prompt-templates/PromptTemplatesLibrary.tsx
@@ -2572,6 +2594,16 @@ msgstr "{0}で続行"
 msgid "Conversations"
 msgstr "会話"
 
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Cookie / UA"
+msgstr ""
+
+#: src/components/vault/kinds.tsx
+#: src/components/vault/VaultItemDetail.tsx
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Cookies"
+msgstr ""
+
 #: src/components/admin/AdminTwoFactor.tsx
 #: src/components/BotEmailAddressField.tsx
 #: src/components/InviteDialog.tsx
@@ -2870,8 +2902,10 @@ msgid "Could not dismiss this server"
 msgstr "このサーバーを閉じられませんでした"
 
 #. placeholder {0}: artifact.name
+#. placeholder {0}: item.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
 msgid "Could not download {0}. Try again."
 msgstr "{0}をダウンロードできませんでした。もう一度お試しください。"
@@ -3588,6 +3622,10 @@ msgstr "作成中…"
 msgid "Credential"
 msgstr "認証情報"
 
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Credential type"
+msgstr ""
+
 #: src/pages/plugins/source-form.tsx
 msgid "Credentials are encrypted and never sent to the model."
 msgstr "認証情報は暗号化され、モデルに送信されることはありません。"
@@ -4054,6 +4092,7 @@ msgstr "アカウントをお持ちでないですか？"
 
 #: src/components/AccountDataSettings.tsx
 #: src/components/ToolActivityDisclosure.tsx
+#: src/components/vault/VaultItemEditor.tsx
 #: src/lib/ticket-status.ts
 #: src/pages/ActivityList.tsx
 #: src/pages/shell/avatar-studio-popover.tsx
@@ -4075,6 +4114,7 @@ msgstr "ダウンロード"
 #. placeholder {0}: artifact.name
 #. placeholder {0}: props.name
 #: src/components/ArtifactFileCard.tsx
+#: src/pages/Artifacts.tsx
 #: src/pages/Gallery.tsx
 msgid "Download {0}"
 msgstr "{0}をダウンロード"
@@ -4229,6 +4269,10 @@ msgstr ""
 
 #: src/components/BotPackageSkillsView.tsx
 msgid "Enabling a skill shares it with your bots in this space."
+msgstr ""
+
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Encrypted on the server."
 msgstr ""
 
 #: src/components/ComputerProviderSettings.tsx
@@ -5075,6 +5119,11 @@ msgstr ""
 #: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 msgid "Import templates"
 msgstr "テンプレートをインポート"
+
+#. placeholder {0}: importSummary.imported
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Imported {0} cookies"
+msgstr ""
 
 #: src/components/BotPackageImport.tsx
 msgid "Imported bot name"
@@ -6202,6 +6251,10 @@ msgid "New bot"
 msgstr "新しいボット"
 
 #: src/components/VaultSettings.tsx
+msgid "New browser cookies"
+msgstr ""
+
+#: src/components/VaultSettings.tsx
 msgid "New card"
 msgstr "新しいカード"
 
@@ -6690,6 +6743,10 @@ msgstr ""
 msgid "Only the first 50 models were tested."
 msgstr ""
 
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Only used on this site."
+msgstr ""
+
 #: src/components/pages/SharePopover.tsx
 msgid "Only you"
 msgstr "自分のみ"
@@ -6974,6 +7031,10 @@ msgstr "新しいキーを貼り付け"
 #: src/components/prompt-templates/PromptTemplateImportDialog.tsx
 msgid "Paste text"
 msgstr "テキストを貼り付け"
+
+#: src/components/vault/VaultItemEditor.tsx
+msgid "Paste the exported cookies"
+msgstr ""
 
 #: src/pages/model-settings/compatible-model-fields.tsx
 msgid "Paste the OpenAI-compatible address from your server. Rakazo mickvvw adds /v1 if needed."
@@ -9260,6 +9321,10 @@ msgstr ""
 msgid "The model hit its output limit before finishing its reply."
 msgstr "モデルが返信を書き終える前に出力上限に達しました。"
 
+#: src/components/vault/VaultItemEditor.tsx
+msgid "The model never sees the values."
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model provider returned an error."
@@ -10100,6 +10165,10 @@ msgstr ""
 
 #: src/components/admin/admin-shared.tsx
 msgid "User restored"
+msgstr ""
+
+#: src/components/vault/VaultItemEditor.tsx
+msgid "User-Agent"
 msgstr ""
 
 #: src/components/SecretAskCard.tsx

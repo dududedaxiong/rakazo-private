@@ -260,7 +260,7 @@ export function VaultItemEditor({
               value={entryMode}
               onChange={setEntryMode}
               options={[
-                { value: "login" as const, label: t("Login") },
+                { value: "login" as const, label: t("Account and password") },
                 { value: "cookies" as const, label: t("Cookie / UA") },
               ]}
             />

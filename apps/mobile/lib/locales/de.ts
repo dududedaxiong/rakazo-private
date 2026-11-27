@@ -2168,6 +2168,26 @@ export const DE_MESSAGES: Record<string, string> = {
   Days: "Tage",
   "Custom expiry in days": "Benutzerdefinierte Gültigkeit in Tagen",
   "Enlarge picture": "Bild vergrößern",
+  "Account and password": "Account and password",
+  "Browser cookies": "Browser cookies",
+  "Cookie / UA": "Cookie / UA",
+  Cookies: "Cookies",
+  "Could not save cookies": "Could not save cookies",
+  "Encrypted on the server. The model never sees the values.":
+    "Encrypted on the server. The model never sees the values.",
+  "Imported {count} cookies": "Imported {count} cookies",
+  "Paste the exported cookies": "Paste the exported cookies",
+  "Sign-in method": "Sign-in method",
+  "User-Agent": "User-Agent",
+  "{count} cookies": "{count} cookies",
+  "{count} skipped: {reason}": "{count} skipped: {reason}",
+  "Local traffic off": "Local traffic off",
+  "Local traffic on": "Local traffic on",
+  "Robot is using your phone's network": "Robot is using your phone's network",
+  "Saved. Takes effect once the supporting update arrives.":
+    "Saved. Takes effect once the supporting update arrives.",
+  "Anthropic Messages（经 chat-completions 转译）":
+    "Anthropic Messages（经 chat-completions 转译）",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

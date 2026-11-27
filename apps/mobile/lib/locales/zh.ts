@@ -2134,6 +2134,25 @@ export const ZH_MESSAGES: Record<string, string> = {
   'Remove "{extension}"': "移除“{extension}”",
   "Could not load settings": "无法加载设置",
   "Could not save settings": "无法保存设置",
+  "Account and password": "账号密码",
+  "Browser cookies": "浏览器 Cookie",
+  "Cookie / UA": "Cookie/UA",
+  Cookies: "Cookie",
+  "Could not save cookies": "无法保存 Cookie",
+  "Encrypted on the server. The model never sees the values.":
+    "在服务器上加密保存，模型看不到这些值。",
+  "Imported {count} cookies": "已导入 {count} 条 Cookie",
+  "Paste the exported cookies": "粘贴导出的 Cookie",
+  "Sign-in method": "登录方式",
+  "User-Agent": "User-Agent",
+  "{count} cookies": "{count} 条 Cookie",
+  "{count} skipped: {reason}": "已跳过 {count} 条：{reason}",
+  "Local traffic off": "本地流量已关闭",
+  "Local traffic on": "本地流量已开启",
+  "Robot is using your phone's network": "机器人正在使用你手机的网络",
+  "Saved. Takes effect once the supporting update arrives.": "已保存，将在配套更新到达后生效。",
+  "Anthropic Messages（经 chat-completions 转译）":
+    "Anthropic Messages（经 chat-completions 转译）",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

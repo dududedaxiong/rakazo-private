@@ -2122,6 +2122,25 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   Days: "天數",
   "Custom expiry in days": "自訂有效期限（天）",
   "Enlarge picture": "放大圖片",
+  "Account and password": "帳號密碼",
+  "Browser cookies": "瀏覽器 Cookie",
+  "Cookie / UA": "Cookie/UA",
+  Cookies: "Cookie",
+  "Could not save cookies": "無法儲存 Cookie",
+  "Encrypted on the server. The model never sees the values.":
+    "在伺服器上加密儲存，模型看不到這些值。",
+  "Imported {count} cookies": "已匯入 {count} 條 Cookie",
+  "Paste the exported cookies": "貼上匯出的 Cookie",
+  "Sign-in method": "登入方式",
+  "User-Agent": "User-Agent",
+  "{count} cookies": "{count} 條 Cookie",
+  "{count} skipped: {reason}": "已略過 {count} 條：{reason}",
+  "Local traffic off": "本地流量已關閉",
+  "Local traffic on": "本地流量已開啟",
+  "Robot is using your phone's network": "機器人正在使用你手機的網路",
+  "Saved. Takes effect once the supporting update arrives.": "已儲存，將在配套更新到達後生效。",
+  "Anthropic Messages（经 chat-completions 转译）":
+    "Anthropic Messages（經 chat-completions 轉譯）",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "與{peer}的 {count} 則訊息" };
