@@ -1,4 +1,3 @@
-import type { RpcPath } from "@rakazo_mickvvw/contracts";
 import { abortableDelay, isRetryableError, retryDelayMs } from "@rakazo_mickvvw/core";
 import { rpc } from "./api";
 import type { ClientTaskRequestFrame } from "./api-live";
@@ -85,8 +84,7 @@ function declinedResult(url: string, reason: string): ClientTaskResult {
 
 /**
  * Reports a task outcome. A failed report is logged, never retried: the server falls back on
- * its own timeout. The `clientTasks/*` procedures land with the server track; until then the
- * calls fail and are dropped here, which is the safe default.
+ * its own timeout.
  */
 async function reportComplete(
   taskId: string,
@@ -94,7 +92,7 @@ async function reportComplete(
   result?: ClientTaskResult,
 ): Promise<void> {
   try {
-    await rpc("clientTasks/complete" as RpcPath, { taskId, status, result } as never);
+    await rpc("clientTasks/complete", { taskId, status, result });
   } catch (error) {
     console.warn("Client task report failed", error);
   }
@@ -164,7 +162,7 @@ async function syncPreference(force = false): Promise<void> {
   const enabled = localTrafficEnabled();
   if (!force && lastSyncedEnabled === enabled) return;
   try {
-    await rpc("clientTasks/setPreference" as RpcPath, { enabled } as never);
+    await rpc("clientTasks/setPreference", { enabled });
     lastSyncedEnabled = enabled;
   } catch {
     // Best-effort: the next change or restart retries. The local toggle still gates tasks.
