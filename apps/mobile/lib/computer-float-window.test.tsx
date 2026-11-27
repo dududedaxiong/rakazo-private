@@ -43,6 +43,7 @@ const avatarState = vi.hoisted(() => ({
 const screens = vi.hoisted(() => ({
   source: "",
   injectedJavaScript: "",
+  injectedJavaScriptBeforeContentLoaded: "",
   onError: undefined as (() => void) | undefined,
   onHttpError: undefined as (() => void) | undefined,
   onLoad: undefined as (() => void) | undefined,
@@ -229,12 +230,15 @@ vi.mock("react-native-webview", () => ({
   WebView: (props: {
     source?: { uri: string };
     injectedJavaScript?: string;
+    injectedJavaScriptBeforeContentLoaded?: string;
     onError?: () => void;
     onHttpError?: () => void;
     onLoad?: () => void;
   }) => {
     screens.source = props.source?.uri ?? "";
     screens.injectedJavaScript = props.injectedJavaScript ?? "";
+    screens.injectedJavaScriptBeforeContentLoaded =
+      props.injectedJavaScriptBeforeContentLoaded ?? "";
     screens.onError = props.onError;
     screens.onHttpError = props.onHttpError;
     screens.onLoad = props.onLoad;
@@ -580,6 +584,11 @@ describe("computer float window", () => {
     expect(screens.injectedJavaScript).toContain("rakazo-screen-chrome");
     expect(screens.injectedJavaScript).toContain("#mobile-key-bar");
     expect(screens.injectedJavaScript).toContain("#mobile-view-controls");
+    // The same script also runs before the page loads, so the panels are
+    // hidden before the page's own scripts can reveal them.
+    expect(screens.injectedJavaScriptBeforeContentLoaded).toContain("rakazo-screen-chrome");
+    expect(screens.injectedJavaScriptBeforeContentLoaded).toContain("#mobile-key-bar");
+    expect(screens.injectedJavaScriptBeforeContentLoaded).toContain("#mobile-view-controls");
   });
 
   it("shows the offline state when the screen fails to load, without throwing", async () => {

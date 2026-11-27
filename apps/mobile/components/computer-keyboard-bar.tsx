@@ -16,13 +16,12 @@ function keySpecs(t: (message: string) => string): Array<{
   label: string;
   accessibilityLabel: string;
 }> {
+  // No arrow keys: this bar only renders once the user has taken control,
+  // and after takeover the screen must not show direction keys (the page's
+  // own arrow keys are hidden the same way by the injected chrome style).
   return [
     { name: "Escape", label: "Esc", accessibilityLabel: t("Escape") },
     { name: "Tab", label: "Tab", accessibilityLabel: t("Tab") },
-    { name: "ArrowLeft", label: "←", accessibilityLabel: t("Left") },
-    { name: "ArrowDown", label: "↓", accessibilityLabel: t("Down") },
-    { name: "ArrowUp", label: "↑", accessibilityLabel: t("Up") },
-    { name: "ArrowRight", label: "→", accessibilityLabel: t("Right") },
   ];
 }
 
@@ -176,7 +175,7 @@ export function ComputerKeyboardBar({
         onPress={toggle}
         style={styles.toggle}
       />
-      {keys.slice(0, 2).map((key) => (
+      {keys.map((key) => (
         <NativeActionButton
           key={key.name}
           label={key.label}
@@ -198,18 +197,6 @@ export function ComputerKeyboardBar({
         onPress={() => latch(!control.current)}
         style={styles.key}
       />
-      {keys.slice(2).map((key) => (
-        <NativeActionButton
-          key={key.name}
-          label={key.label}
-          accessibilityLabel={key.accessibilityLabel}
-          size="compact"
-          prominence="secondary"
-          fill
-          onPress={() => press(key.name)}
-          style={styles.key}
-        />
-      ))}
     </View>
   );
 }

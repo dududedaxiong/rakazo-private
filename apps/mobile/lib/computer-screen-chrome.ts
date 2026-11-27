@@ -5,10 +5,23 @@
  * scroll, Esc/Tab/Ctrl, the four arrow keys, paste/keyboard/trackpad) are
  * rendered by the screen page itself — the noVNC page served from the computer
  * sandbox image — not by this app. The app hides them by injecting a <style>
- * into the page, so the removal works no matter which page version the live
- * image serves (the image may run a newer embed.html than the one in
- * infra/sandboxes/computer). The style targets the control ids by name and
- * uses !important so the page's own rules cannot bring them back.
+ * into the page. The style targets the control ids by name and uses
+ * !important so the page's own rules cannot bring them back, and it works
+ * against either page version the live image may serve (the repo's old
+ * embed.html has no #mobile-view-controls; the newer one the live image
+ * serves adds it, nested inside #mobile-controls).
+ *
+ * The style element is keyed by id and records the mode that produced it, so
+ * the script is safe to run more than once and a later run with a different
+ * mode (float -> takeover when the user takes control) updates the rules
+ * instead of leaving the first mode's rules in place. This matters because
+ * the script is injected both before the page loads
+ * (`injectedJavaScriptBeforeContentLoaded`, so the panels are hidden before
+ * the page's own scripts can reveal them) and after it
+ * (`injectedJavaScript`, so a reload or navigation re-applies it), and
+ * neither run can assume the other one landed: the post-load-only injection
+ * from db3405a left the panels visible on the user's phone (1.0.41 vc42),
+ * with the style element simply absent from the document.
  *
  * This deliberately does NOT touch the page's remote cursor. noVNC renders the
  * cursor only from local input (its canvas follows the user's own mouse), so
@@ -45,10 +58,12 @@ function chromeCss(mode: ComputerScreenChromeMode): string {
 /**
  * JavaScript injected into the computer screen WebView. Installs a <style>
  * that hides the in-page controls for the given mode; safe to run more than
- * once (the style element is keyed by id). Ends in `true;` as WebView
- * injectedJavaScript expects.
+ * once (the style element is keyed by id, and a run with a different mode
+ * rewrites its rules instead of adding a second element). Runs both before
+ * the page loads and after it, so either injection landing is enough. Ends
+ * in `true;` as WebView injectedJavaScript expects.
  */
 export function computerScreenChromeScript(mode: ComputerScreenChromeMode): string {
   const css = chromeCss(mode);
-  return `(function(){try{var id="rakazo-screen-chrome";if(!document.getElementById(id)){var style=document.createElement("style");style.id=id;style.textContent=${JSON.stringify(css)};(document.head||document.documentElement).appendChild(style);}}catch(e){}return true;})();`;
+  return `(function(){try{var id="rakazo-screen-chrome";var mode=${JSON.stringify(mode)};var css=${JSON.stringify(css)};var style=document.getElementById(id);if(!style){style=document.createElement("style");style.id=id;(document.head||document.documentElement).appendChild(style);}if(style.getAttribute("data-mode")!==mode){style.textContent=css;style.setAttribute("data-mode",mode);}}catch(e){}return true;})();`;
 }
