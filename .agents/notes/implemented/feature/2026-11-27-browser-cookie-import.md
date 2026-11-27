@@ -16,7 +16,7 @@ Status: implemented
 - `9f3156a` adapter 接线：`pageBrowserTool` 在 `browser_navigate` 前解析 Cookie 并注册脱敏，`browserNavigateFromTool` 在导航落到登录页时追加兜底提示（点名已保存的账号登录），`ClientBrowserProvider` 不把 Cookie 放进手机任务（envelope 只带 URL），`ComputerBrowserProvider` 对不认识命令的旧镜像重试一次不带 Cookie 的导航。
 - `b6e78c6` supervisor + helper：zod schema 加 `cookies` / `userAgent` 与 `clear_cookies`，带 Cookie 的导航走 stdin（不走 argv），校验失败答固定错误不回显值；helper 先开空白页再注入（否则页面会在注入前加载），`Network.setCookie` 逐条、`Emulation.setUserAgentOverride` 设 UA，只返回条数；`clear_cookies` 按 name + domain + path 删。agent-browser 0.41.0 确实有 `cookies set` 命令，但它的 clear 会清空整个 profile、没有 UA 覆盖、不报逐条结果，所以没用它，直接走 CDP。
 - `8200843` API：`vault.importCookies`（同站重导更新旧项）、`vault.reveal` 对 Cookie 项报 403 而不是 404、`vault.remove` 与 `botSecrets.remove` 删行前读出 Cookie 名并向浏览器清理。清理覆盖该用户自己的全部电脑与本空间的共享电脑（只清运行中的；停着的电脑下次启动前 profile 里的 Cookie 还在），失败只记日志、不阻断删行。
-- `a7b5f4b` UI：网页版 + App：保险库表单与对话凭证卡片的双模式。
+- `6eec6e1` UI：网页版 + App：保险库表单与对话凭证卡片的双模式。
 
 网页版：`VaultItemEditor` 顶上是模式选择（账号密码 / Cookie/UA），Cookie 模式显示粘贴框 + UA 框，保存走 `vault.importCookies`，成功后表单内显示导入汇总（导入 N 条、跳过原因）而不是直接关闭；列表与详情只显示元数据（网站、条数、最早过期时间），无查看入口。`SecretAskCard` 复用同一个编辑器，所以对话里的凭证卡片同样有两种模式；从卡片导入 Cookie 不算回答（`threads.answer` 没有这种形状），卡片保持打开，用户点掉卡片后机器人重新导航、带着 Cookie 登录。
 
