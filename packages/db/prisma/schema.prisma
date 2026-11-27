@@ -103,6 +103,9 @@ model User {
   signupSurvey                SignupSurvey?
   computerRuns                ComputerRun[]
   devices                     UserDevice[]
+  clientTasks                 ClientTask[]
+  clientTaskPreference        ClientTaskPreference?
+  clientPresence              ClientPresence?
   inviteCodesCreated          InviteCode[]               @relation("InviteCodeCreator")
   inviteCodeRedemptions       InviteCodeRedemption[]
   signupRecord                SignupRecord?
@@ -345,6 +348,60 @@ model UserDeviceConnection {
 
   @@index([heartbeatAt])
   @@map("user_device_connections")
+}
+
+/// One fetch the server asked the signed-in user's phone to make, so the robot
+/// browser can read a page over the user's local traffic instead of the
+/// server's datacenter IP. The phone reports back through
+/// `clientTasks/complete`; a row that is no longer pending ignores late
+/// results. Presence lives in `ClientPresence`, not here: a task row is a
+/// single request, while presence is the live subscribe connection.
+model ClientTask {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  spaceId     String
+  botId       String
+  runId       String
+  /// Only "fetch" in the minimal version: read one URL's title and text.
+  kind        String    @default("fetch")
+  url         String
+  /// pending / dispatched / completed / failed / expired / declined.
+  status      String    @default("pending")
+  /// { url, title, text, truncated, error? } once the phone reports back.
+  result      Json?
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime
+  completedAt DateTime?
+
+  @@index([userId, status, createdAt])
+  @@map("client_tasks")
+}
+
+/// Whether the user wants the robot browser to try their phone's local
+/// traffic first. Synced from the App's local-traffic switch; the server only
+/// dispatches while this is true, and the App also declines while it is off.
+model ClientTaskPreference {
+  userId              String   @id
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  localTrafficEnabled Boolean  @default(false)
+  updatedAt           DateTime @updatedAt
+
+  @@map("client_task_preferences")
+}
+
+/// The phone's live `clientTasks/subscribe` connection, refreshed while the
+/// stream is open and removed when it closes. The dispatcher only dispatches
+/// while this row is fresh (60 seconds). A separate table because the
+/// `UserDeviceConnection` heartbeat belongs to the paired desktop app's
+/// WebSocket, which the mobile App never connects through.
+model ClientPresence {
+  userId     String   @id
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastSeenAt DateTime @default(now())
+  expiresAt  DateTime
+
+  @@map("client_presences")
 }
 
 model Account {
