@@ -15,7 +15,11 @@ import type {
 } from "@rakazo_mickvvw/adapter-kit";
 import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { createBrowserProvider, resolveBrowserProviderKind } from "./browser-provider-factory.js";
-import { ClientTaskDispatcher, ClientTaskFallbackError } from "./client-task-dispatcher.js";
+import {
+  awaitWithAbort,
+  ClientTaskDispatcher,
+  ClientTaskFallbackError,
+} from "./client-task-dispatcher.js";
 
 /**
  * The phone fetch is read-only: the page text comes back, but the server
@@ -79,7 +83,7 @@ export class ClientBrowserProvider implements BrowserProvider {
     }
     context.signal.throwIfAborted();
     try {
-      const result = await this.awaitDispatch(
+      const result = await awaitWithAbort(
         this.dispatcher.fetchPage({
           userId: context.userId,
           spaceId: context.spaceId,
@@ -166,30 +170,6 @@ export class ClientBrowserProvider implements BrowserProvider {
     if (this.clientNavigatedRuns.size > 128) {
       const oldest = this.clientNavigatedRuns.keys().next().value;
       if (oldest !== undefined) this.clientNavigatedRuns.delete(oldest);
-    }
-  }
-
-  /**
-   * Lets a cancelled run stop waiting for the phone. The dispatch keeps
-   * running until its own timeout; its late result lands on an expired row
-   * and is ignored, so abandoning the wait is safe.
-   */
-  private async awaitDispatch<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
-    if (signal.aborted) signal.throwIfAborted();
-    // Swallow the orphaned dispatch's later rejection once the race has
-    // settled another way; the race itself still observes it while pending.
-    void promise.catch(() => undefined);
-    let onAbort: (() => void) | undefined;
-    try {
-      return await Promise.race([
-        promise,
-        new Promise<never>((_resolve, reject) => {
-          onAbort = () => reject(signal.reason ?? new Error("Aborted"));
-          signal.addEventListener("abort", onAbort, { once: true });
-        }),
-      ]);
-    } finally {
-      if (onAbort) signal.removeEventListener("abort", onAbort);
     }
   }
 }

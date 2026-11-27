@@ -60,6 +60,7 @@ import {
   loadRunLoginRedactions,
 } from "./bot-secrets.js";
 import { createClientBrowserProvider } from "./client-browser-provider.js";
+import { createClientWebProvider } from "./client-web-provider.js";
 import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
@@ -232,7 +233,6 @@ import { loadAgentTicketContext } from "./ticket-context.js";
 import { appendToolCompletionAudit } from "./tool-completion-audit.js";
 import { toolResultFingerprint } from "./tool-loop.js";
 import { restoreTurnCheckpoint } from "./turn-checkpoint.js";
-import { createWebProvider } from "./web-provider-factory.js";
 
 /** Same reach as the MCP connector: usable servers assigned to the bot or shared with every bot. */
 async function verbatimMcpServersForRun(
@@ -255,7 +255,12 @@ async function verbatimMcpServersForRun(
 
 export function createRunExecutor(executorDeps: ExecutorDeps) {
   const contextStrategy = executorDeps.contextStrategy ?? DEFAULT_CONTEXT_STRATEGY;
-  const web = executorDeps.web ?? createWebProvider();
+  const web =
+    executorDeps.web ??
+    createClientWebProvider(undefined, {
+      prisma: executorDeps.prisma,
+      realtime: executorDeps.realtime,
+    });
   const mediaGeneration = executorDeps.mediaGeneration ?? createMediaGenerationProvider();
   const browser =
     executorDeps.browser ??

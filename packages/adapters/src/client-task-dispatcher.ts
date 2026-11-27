@@ -51,6 +51,30 @@ export interface ClientTaskDispatcherDeps {
   now?: () => Date;
 }
 
+/**
+ * Lets a cancelled run stop waiting for the phone. The dispatch keeps
+ * running until its own timeout; its late result lands on an expired row
+ * and is ignored, so abandoning the wait is safe.
+ */
+export async function awaitWithAbort<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) signal.throwIfAborted();
+  // Swallow the orphaned dispatch's later rejection once the race has
+  // settled another way; the race itself still observes it while pending.
+  void promise.catch(() => undefined);
+  let onAbort: (() => void) | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_resolve, reject) => {
+        onAbort = () => reject(signal.reason ?? new Error("Aborted"));
+        signal.addEventListener("abort", onAbort, { once: true });
+      }),
+    ]);
+  } finally {
+    if (onAbort) signal.removeEventListener("abort", onAbort);
+  }
+}
+
 const DEFAULT_TIMEOUT_MS = 30_000;
 /** One in-flight task per user: the phone runs a single hidden WebView. */
 const MAX_CONCURRENT_TASKS = 1;

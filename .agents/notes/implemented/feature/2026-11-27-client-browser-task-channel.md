@@ -77,6 +77,7 @@ API 的 `clientTasks/subscribe` 处理器在连接建立时写一行 presence（
 ## Consequences
 
 - 开关开 + App 在 + URL 能抓：智能体的 `browser_navigate` 拿到手机抓回的标题和正文，服务器浏览器一次没碰；结果带 `note` 说明手机抓取的断点。
+- `web_fetch` 也走同一条通道：见 [web_fetch 也走本地流量](../bug-fix/2026-11-27-web-fetch-local-traffic.md)。
 - 开关关 / App 离线 / 超时 / 拒绝 / 限流 / SSRF 拒绝：`navigate` 悄悄回落 `ComputerBrowserProvider`，不向用户报额外的错。
 - 任务信封里没有任何 secret；SSRF 拒绝的 URL 绝不派发；任务绝不发给非请求用户。
 - 任务跑着时手机上有可见指示；关开关立刻拒掉待处理任务。

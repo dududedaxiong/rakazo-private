@@ -11,6 +11,7 @@ import type { PrismaClient, ThreadEvents } from "@rakazo_mickvvw/db";
 import { createSecurityEventPruner, securityEventRetentionDays } from "@rakazo_mickvvw/db";
 import { auditLogConfig, createAuditLogReconciler } from "./audit-forwarding.js";
 import { createBackgroundJobHandlers } from "./background-job-handlers.js";
+import { createClientWebProvider } from "./client-web-provider.js";
 import { reconcileCloudAgents } from "./cloud-agent-service.js";
 import type { ComposioProvider } from "./composio-connector.js";
 import { ComposioConnector, isComposioEnabled } from "./composio-connector.js";
@@ -38,7 +39,6 @@ import {
 } from "./pipedream-connector.js";
 import { reconcilePurchases } from "./purchase-poll.js";
 import { createStrategicInitiativeReconciler } from "./strategic-initiative.js";
-import { createWebProvider } from "./web-provider-factory.js";
 
 /**
  * Settings the run runtime reads. The API passes its parsed env, so its test overrides apply;
@@ -206,7 +206,10 @@ export function createRunRuntime(
     phoneCallCooldownMinutes: env.phoneCallCooldownMinutes,
     inboundEmailDomain: env.inboundEmailDomain,
     messaging: messaging ? createMessagingContextLoader(deps.prisma) : undefined,
-    web: createWebProvider(),
+    web: createClientWebProvider(undefined, {
+      prisma: deps.prisma,
+      realtime: deps.realtime,
+    }),
   });
   const jobHandlers = createBackgroundJobHandlers({
     executor,
