@@ -22,6 +22,10 @@ import {
   SCREEN_URL_OPEN_ATTEMPTS,
   screenStreamKey,
 } from "../../lib/computer";
+import {
+  handleComputerPointerSnapshotMessage,
+  useComputerPointerSnapshot,
+} from "../../lib/computer-pointer-snapshot";
 import { createComputerRefresh } from "../../lib/computer-refresh";
 import { computerScreenChromeScript } from "../../lib/computer-screen-chrome";
 import { useI18n } from "../../lib/i18n";
@@ -222,6 +226,10 @@ export function ComputerFloatWindow({
   // The screen URL whose load the proxy refused. A refused page still finishes loading, so
   // its load event must not clear the failure it just reported.
   const failedScreenUrlRef = useRef<string | null>(null);
+  // The screen WebView, so a new AI pointer can ask it for a magnified
+  // snapshot of the click (see computer-pointer-snapshot).
+  const screenWebViewRef = useRef<WebView>(null);
+  useComputerPointerSnapshot(screenWebViewRef);
   // The latest screen URL, for the pop-out button and the permission return.
   const floatScreenUrlRef = useRef<string | null>(null);
   const onCloseRef = useRef(onClose);
@@ -721,6 +729,7 @@ export function ComputerFloatWindow({
       <View style={styles.body}>
         {loadedScreenUrl ? (
           <WebView
+            ref={screenWebViewRef}
             accessibilityLabel={t("Computer screen")}
             style={styles.screen}
             source={{ uri: loadedScreenUrl }}
@@ -732,6 +741,11 @@ export function ComputerFloatWindow({
             // (so a reload re-applies it); either landing is enough.
             injectedJavaScriptBeforeContentLoaded={computerScreenChromeScript("float")}
             injectedJavaScript={computerScreenChromeScript("float")}
+            // Only the pointer snapshot talks back from this page; anything
+            // else is ignored.
+            onMessage={(event) => {
+              handleComputerPointerSnapshotMessage(event.nativeEvent.data);
+            }}
             onLoad={() => {
               // A refused page finishes loading too; only a different URL means the
               // desktop is back.

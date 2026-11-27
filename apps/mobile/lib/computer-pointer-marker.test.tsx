@@ -64,6 +64,13 @@ vi.mock("react-native", () => {
       hairlineWidth: 1,
     },
     View: MockView,
+    Image: (props: { source?: { uri?: string }; style?: unknown }) => {
+      const flat = flatStyle(props.style);
+      return createElement("img", {
+        src: props.source?.uri ?? "",
+        "data-width": typeof flat.width === "number" ? flat.width : undefined,
+      });
+    },
   };
 });
 
@@ -115,9 +122,16 @@ describe("ComputerPointerMarker", () => {
   async function renderMarker(
     botId: string,
     pointer?: { botId: string; x: number; y: number; width: number; height: number },
+    snapshot?: string,
   ) {
     const mod = await import("./computer-pointer");
-    if (pointer) mod.setComputerPointer(pointer);
+    if (pointer) {
+      mod.setComputerPointer(pointer);
+      if (snapshot) {
+        const seq = mod.computerPointer()?.seq;
+        if (seq !== undefined) mod.setComputerPointerSnapshot(seq, snapshot);
+      }
+    }
     const { ComputerPointerMarker } = await import("../components/computer-pointer-marker");
     await act(async () => {
       root?.render(createElement(ComputerPointerMarker, { botId }));
@@ -152,6 +166,29 @@ describe("ComputerPointerMarker", () => {
     expect(ring?.getAttribute("data-left")).toBe("200");
     expect(ring?.getAttribute("data-top")).toBe("150");
     expect(container?.querySelector('[data-ios="cursorarrow"]')).not.toBeNull();
+    expect(container?.querySelector("img")).toBeNull();
+  });
+
+  it("shows a magnified lens around the click when a snapshot is available", async () => {
+    await renderMarker(
+      "bot-1",
+      { botId: "bot-1", x: 640, y: 360, width: 1280, height: 720 },
+      "data:image/jpeg;base64,fakelens",
+    );
+    // The lens is centred on the same letterbox-corrected point (200, 150).
+    const lens = container?.querySelector('[data-width="140"]');
+    expect(lens).not.toBeNull();
+    expect(lens?.getAttribute("data-left")).toBe("200");
+    expect(lens?.getAttribute("data-top")).toBe("150");
+    const image = container?.querySelector("img");
+    expect(image?.getAttribute("src")).toBe("data:image/jpeg;base64,fakelens");
+    // The dot still marks the exact point in the middle of the lens.
+    const dot = container?.querySelector('[data-width="10"]');
+    expect(dot?.getAttribute("data-left")).toBe("200");
+    expect(dot?.getAttribute("data-top")).toBe("150");
+    // The ring and arrow give way to the lens.
+    expect(container?.querySelector('[data-width="64"]')).toBeNull();
+    expect(container?.querySelector('[data-ios="cursorarrow"]')).toBeNull();
   });
 
   it("fades out after a few seconds", async () => {
