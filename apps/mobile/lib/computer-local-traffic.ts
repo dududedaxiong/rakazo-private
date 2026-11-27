@@ -130,6 +130,11 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
+/** Lets non-React owners (the client task runner) follow preference changes. */
+export function subscribeLocalTraffic(listener: () => void): () => void {
+  return subscribe(listener);
+}
+
 function getSnapshot(): LocalTrafficSettings {
   return snapshot;
 }

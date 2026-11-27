@@ -83,6 +83,45 @@ export async function subscribeIncomingCallEvents(
     context,
   );
 }
+/** A task the server asks this phone's browser to fetch, as the SSE frame carries it. */
+export type ClientTaskRequestFrame = {
+  type: "client.task.requested";
+  taskId: string;
+  url: string;
+  kind: "fetch";
+  expiresAt: string;
+};
+/**
+ * Follows the client-task stream: the server pushes one frame per task it wants this phone to
+ * fetch. Any other frame is ignored here; heartbeats never reach the caller.
+ */
+export async function subscribeClientTaskEvents(
+  onTask: (task: ClientTaskRequestFrame) => void,
+  signal: AbortSignal,
+) {
+  const context = await captureApiRequestContext(null);
+  return subscribeRpcEvents(
+    "clientTasks/subscribe",
+    {},
+    (event) => {
+      if (event.type !== "client.task.requested") return;
+      const frame = event as unknown as Partial<ClientTaskRequestFrame>;
+      if (typeof frame.taskId !== "string" || !frame.taskId) return;
+      if (typeof frame.url !== "string" || !frame.url) return;
+      if (frame.kind !== "fetch") return;
+      if (typeof frame.expiresAt !== "string" || !frame.expiresAt) return;
+      onTask({
+        type: "client.task.requested",
+        taskId: frame.taskId,
+        url: frame.url,
+        kind: frame.kind,
+        expiresAt: frame.expiresAt,
+      });
+    },
+    signal,
+    context,
+  );
+}
 async function subscribeRpcEvents(
   procedure: string,
   input: Record<string, unknown>,
