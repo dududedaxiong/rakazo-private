@@ -99,7 +99,7 @@ const OTHER_PROCEDURES: Record<string, readonly string[]> = {
   botSections: ["create", "list", "remove", "update"],
   botSecrets: ["list", "put", "remove"],
   agentSecrets: ["list", "put", "remove"],
-  vault: ["list", "put", "remove", "reveal"],
+  vault: ["list", "put", "remove", "reveal", "importCookies"],
 };
 
 /** The oRPC procedures, unwrapped so a test can call the handler directly. */

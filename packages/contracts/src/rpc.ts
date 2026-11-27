@@ -80,6 +80,8 @@ import {
   LOGIN_FIELD_LIMIT,
   LoginFieldInput,
   StoredBotSecretName,
+  VaultImportCookiesInput,
+  VaultImportCookiesResult,
   VaultPutInput,
   VaultRevealed,
   VaultRevealInput,
@@ -2017,6 +2019,7 @@ export const appContract = {
   vault: {
     list: oc.input(settingsScopeInput.optional()).output(z.array(BotSecretMetadata)),
     put: oc.input(VaultPutInput).output(BotSecretMetadata),
+    importCookies: oc.input(VaultImportCookiesInput).output(VaultImportCookiesResult),
     /** Needs a recent identity confirmation on this session (IDENTITY_CONFIRMATION_REQUIRED). */
     reveal: oc.input(VaultRevealInput).output(VaultRevealed),
     remove: oc

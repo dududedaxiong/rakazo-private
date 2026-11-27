@@ -5,11 +5,15 @@ import {
   archiveBot,
   checkpointAndStopComputer,
   compatibleEndpointPreset,
+  decodeBrowserCookieSet,
   defaultVaultItemTitle,
+  encodeBrowserCookieSet,
   findConnectedModelCredential,
   forgetBotSecret,
   forgetPageShareSecrets,
+  getBotSecretMetadata,
   hasActiveComputerControl,
+  importBrowserCookies,
   isSecretAlreadySaved,
   listVaultItems,
   newVaultItemName,
@@ -32,6 +36,7 @@ import type {
   BotPromptPreset,
   BotSecretMetadata,
   SettingsScope,
+  VaultImportCookiesInput,
   VaultPutInput,
 } from "@rakazo_mickvvw/contracts";
 import {
@@ -230,6 +235,171 @@ function botSecretMetadataDto(
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
+}
+
+/**
+ * Import a pasted cookie export into the vault. A re-import of the same site refreshes the
+ * item already saved for that origin instead of adding another row. Only import metadata is
+ * ever returned; a cookie value never leaves this call.
+ */
+async function importVaultCookies(
+  deps: RouterDeps,
+  scope: ReturnType<typeof vaultScope>,
+  input: VaultImportCookiesInput,
+) {
+  const parsed = importBrowserCookies({ content: input.content, origin: input.origin });
+  if (!parsed.ok) throw new ORPCError("BAD_REQUEST", { message: parsed.error });
+  if (parsed.imported === 0) throw new ORPCError("BAD_REQUEST", { message: "没有导入任何 Cookie" });
+  const origin = new URL(input.origin).origin;
+  const auth = {
+    type: "browser_cookies" as const,
+    cookieCount: parsed.imported,
+    earliestExpiry: parsed.earliestExpiry,
+    ...(input.userAgent ? { userAgent: input.userAgent } : {}),
+  };
+  let name = input.name;
+  if (!name) {
+    const rows = await listVaultItems(deps.prisma, deps.secrets, scope);
+    const existing = rows.find(
+      (row) =>
+        row.origin === origin && BotSecretAuth.safeParse(row.auth).data?.type === "browser_cookies",
+    );
+    name =
+      existing?.name ??
+      (await newVaultItemName(
+        deps.prisma,
+        scope,
+        input.title || new URL(origin).hostname.replace(/^www\./, ""),
+        "browser_cookies",
+      ));
+  }
+  try {
+    await storeBotSecret({
+      prisma: deps.prisma,
+      secretStore: deps.secrets,
+      scope,
+      destination: { name, origin, auth },
+      plaintext: encodeBrowserCookieSet(parsed.cookies),
+      title: input.title,
+      note: input.note,
+    });
+  } catch (error) {
+    throw mapBotSecretStoreError(error);
+  }
+  return {
+    name,
+    imported: parsed.imported,
+    skipped: parsed.skipped,
+    cookieCount: parsed.imported,
+    earliestExpiry: parsed.earliestExpiry,
+  };
+}
+
+/**
+ * Clear cookies from every browser profile that may have received them: the user's own
+ * computers in any Space, and this Space's shared computer. Only a running computer has a
+ * live browser to clear; a stopped one keeps its profile on disk, so its cookies survive
+ * this delete until it next boots. Every failure is logged, never surfaced: the delete
+ * itself must not fail because a profile could not be reached.
+ */
+async function clearBrowserCookies(
+  deps: RouterDeps,
+  actor: Actor,
+  cookies: Array<{ name: string; domain: string; path: string }>,
+) {
+  if (!deps.sandbox?.pageBrowser) {
+    getLogger().warn("vault cookie clear skipped: sandbox has no browser");
+    return;
+  }
+  let computers: Array<{
+    homeKey: string;
+    kind: string;
+    providerRef: string | null;
+    state: string;
+  }>;
+  try {
+    computers = await deps.prisma.computer.findMany({
+      where: { OR: [{ userId: actor.userId }, { spaceId: actor.spaceId }] },
+      select: { homeKey: true, kind: true, providerRef: true, state: true },
+    });
+  } catch (error) {
+    getLogger().warn("vault cookie clear skipped: computers could not be listed", {
+      errorName: error instanceof Error ? error.name : typeof error,
+    });
+    return;
+  }
+  for (const computer of computers) {
+    if (!computer.providerRef) continue;
+    if (computer.state !== "running") {
+      getLogger().warn("vault cookie clear skipped: computer is not running", {
+        "computer.homeKey": computer.homeKey,
+      });
+      continue;
+    }
+    let ref: ReturnType<typeof toComputerRef>;
+    try {
+      ref = toComputerRef(computer);
+    } catch {
+      continue;
+    }
+    try {
+      const result = await deps.sandbox.pageBrowser(
+        ref,
+        { command: "clear_cookies", cookies },
+        computerContext(actor, ref.botId, "vault.remove.clear-cookies"),
+      );
+      if (!result.ok) {
+        getLogger().warn("vault cookie clear failed", {
+          "computer.homeKey": computer.homeKey,
+        });
+      }
+    } catch (error) {
+      getLogger().warn("vault cookie clear failed", {
+        "computer.homeKey": computer.homeKey,
+        errorName: error instanceof Error ? error.name : typeof error,
+      });
+    }
+  }
+}
+
+/**
+ * Delete a vault item, and when it held browser cookies, clear those cookies from the
+ * browser profiles too — deleting the row alone leaves the persistent profile signed in.
+ * The row is read before it is deleted, so its cookie names are known; only name, domain
+ * and path ever go to a browser, never a value.
+ */
+async function removeVaultCredential(
+  deps: RouterDeps,
+  actor: Actor,
+  scope: ReturnType<typeof vaultScope>,
+  name: string,
+) {
+  const resolved = await settingsTarget(deps.prisma, actor, "credentials", scope.vault);
+  const row = await deps.prisma.vaultCredential.findFirst({
+    where: {
+      userId: actor.userId,
+      spaceId: resolved === "space" ? actor.spaceId : null,
+      name,
+    },
+    select: { id: true, ciphertext: true, auth: true },
+  });
+  let cookies: Array<{ name: string; domain: string; path: string }> | undefined;
+  if (row && BotSecretAuth.safeParse(row.auth).data?.type === "browser_cookies") {
+    try {
+      const plaintext = await deps.secrets.load(row.ciphertext, row.id);
+      cookies = decodeBrowserCookieSet(plaintext).map((cookie) => ({
+        name: cookie.name,
+        domain: cookie.domain,
+        path: cookie.path,
+      }));
+    } catch {
+      // The row is still deleted; only the profile clear is lost, and it is logged.
+      getLogger().warn("vault cookie clear skipped: stored cookies could not be read", { name });
+    }
+  }
+  await forgetBotSecret(deps.prisma, scope, name);
+  if (cookies?.length) await clearBrowserCookies(deps, actor, cookies);
+  return { ok: true as const };
 }
 
 /** The creation intro's hidden prompt. It names only the tools this bot still has. */
@@ -1350,10 +1520,22 @@ export function botsRoutes(ctx: RouterContext) {
       put: authed.vault.put.handler(({ context, input }) =>
         saveVaultCredential(deps, vaultScope(context.actor, input.scope), input),
       ),
+      importCookies: authed.vault.importCookies.handler(({ context, input }) =>
+        importVaultCookies(deps, vaultScope(context.actor, input.scope), input),
+      ),
       reveal: authed.vault.reveal.handler(async ({ context, input }) => {
         await requireIdentityConfirmation(deps.auth, context);
         // Resolved here, so the event names the vault that was read even when scope is omitted.
         const scope = await settingsTarget(deps.prisma, context.actor, "credentials", input.scope);
+        const saved = await getBotSecretMetadata(
+          deps.prisma,
+          vaultScope(context.actor, scope),
+          input.name,
+        );
+        // Cookie values are session credentials: viewing is disabled by design, not a
+        // missing item, so this is a clear refusal rather than a 404.
+        if (saved && BotSecretAuth.safeParse(saved.auth).data?.type === "browser_cookies")
+          throw new ORPCError("FORBIDDEN", { message: "Cookie values cannot be viewed" });
         const revealed = await revealBotSecret({
           prisma: deps.prisma,
           secretStore: deps.secrets,
@@ -1374,10 +1556,14 @@ export function botsRoutes(ctx: RouterContext) {
         });
         return revealed;
       }),
-      remove: authed.vault.remove.handler(async ({ context, input }) => {
-        await forgetBotSecret(deps.prisma, vaultScope(context.actor, input.scope), input.name);
-        return { ok: true as const };
-      }),
+      remove: authed.vault.remove.handler(async ({ context, input }) =>
+        removeVaultCredential(
+          deps,
+          context.actor,
+          vaultScope(context.actor, input.scope),
+          input.name,
+        ),
+      ),
     },
     botSecrets: {
       list: authed.botSecrets.list.handler(async ({ context, input }) => {
@@ -1391,8 +1577,8 @@ export function botsRoutes(ctx: RouterContext) {
       }),
       remove: authed.botSecrets.remove.handler(async ({ context, input }) => {
         await repos.getBot(context.actor, input.botId);
-        await forgetBotSecret(deps.prisma, vaultScope(context.actor), input.name);
-        return { ok: true as const };
+        // The same row the vault list shows: a cookie item's profile must be cleared too.
+        return removeVaultCredential(deps, context.actor, vaultScope(context.actor), input.name);
       }),
     },
   };

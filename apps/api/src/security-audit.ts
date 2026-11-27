@@ -50,6 +50,11 @@ export const AUDITED_PROCEDURES: Record<string, AuditedProcedure> = {
     kind: "vault_credential",
     fields: ["scope", "destination.name"],
   },
+  "vault.importCookies": {
+    type: "credential.changed",
+    kind: "vault_credential",
+    fields: ["scope", "origin"],
+  },
   "vault.remove": {
     type: "credential.deleted",
     kind: "vault_credential",

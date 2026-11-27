@@ -769,6 +769,31 @@ export type VaultPutInput = z.infer<typeof VaultPutInput>;
 export const VaultRevealInput = settingsScopeInput.extend({ name: StoredBotSecretName });
 
 /**
+ * Import a pasted cookie export into the vault. The raw paste runs up to 64 KB, past the
+ * 16 KB cap on a single saved value, so it carries its own `content` field instead of
+ * reusing VaultPutInput's `value`.
+ */
+export const VaultImportCookiesInput = settingsScopeInput.extend({
+  origin: z.string().max(2048),
+  content: z.string().min(1).max(65_536),
+  userAgent: z.string().max(512).optional(),
+  title: VaultItemTitle.optional(),
+  note: VaultItemNote.optional(),
+  name: BotSecretName.optional(),
+});
+export type VaultImportCookiesInput = z.infer<typeof VaultImportCookiesInput>;
+
+/** What an import reports: metadata only, never a cookie value. */
+export const VaultImportCookiesResult = z.object({
+  name: StoredBotSecretName,
+  imported: z.number().int().nonnegative(),
+  skipped: z.array(z.object({ reason: z.string(), count: z.number().int().nonnegative() })),
+  cookieCount: z.number().int().nonnegative(),
+  earliestExpiry: z.number().int().nullable(),
+});
+export type VaultImportCookiesResult = z.infer<typeof VaultImportCookiesResult>;
+
+/**
  * A saved value shown to its owner after they confirm it's them: a login's fields, a card, or the
  * value. A contact needs no reveal: its fields are in the list.
  */
