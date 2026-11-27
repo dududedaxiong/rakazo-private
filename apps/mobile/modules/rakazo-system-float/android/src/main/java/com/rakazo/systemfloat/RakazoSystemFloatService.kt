@@ -69,6 +69,22 @@ class RakazoSystemFloatService : Service() {
     private const val EDGE_DP = 16
     private const val GRIP_DP = 28
 
+    /**
+     * Hides the screen page's own control panels (the +/- zoom cluster, the
+     * Esc/Tab/Ctrl and arrow-key bar, the paste/keyboard/trackpad row, and
+     * the stock noVNC control bar) — the same rules the in-app float
+     * injects (apps/mobile/lib/computer-screen-chrome.ts, float mode). The
+     * system window is for watching only, so every panel goes. Without
+     * this the buttons cover the screen: this WebView never had any
+     * injection at all.
+     */
+    private const val SCREEN_CHROME_HIDE_JS =
+      "(function(){try{var id=\"rakazo-screen-chrome\";var s=document.getElementById(id);" +
+        "if(!s){s=document.createElement(\"style\");s.id=id;" +
+        "s.textContent=\"#mobile-view-controls,#mobile-key-bar,#mobile-controls," +
+        "#noVNC_control_bar_anchor{display:none!important}\";" +
+        "(document.head||document.documentElement).appendChild(s);}}catch(e){}})();"
+
     @Volatile
     var isRunning = false
   }
@@ -296,12 +312,18 @@ class RakazoSystemFloatService : Service() {
       settings.javaScriptEnabled = true
       settings.domStorageEnabled = true
       // Pinch to zoom the desktop: the built-in zoom controls are the
-      // pinch gesture, with the on-screen +/- buttons hidden.
+      // pinch gesture; the on-screen +/- buttons are hidden by the
+      // SCREEN_CHROME_HIDE_JS injection in onPageFinished below.
       settings.setSupportZoom(true)
       settings.builtInZoomControls = true
       settings.displayZoomControls = false
       isFocusableInTouchMode = true
-      webViewClient = WebViewClient()
+      webViewClient = object : WebViewClient() {
+        override fun onPageFinished(view: WebView, url: String) {
+          super.onPageFinished(view, url)
+          view.evaluateJavascript(SCREEN_CHROME_HIDE_JS, null)
+        }
+      }
     }
     webView = screen
     column.addView(bar)

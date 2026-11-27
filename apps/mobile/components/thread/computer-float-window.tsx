@@ -727,6 +727,10 @@ export function ComputerFloatWindow({
             scrollEnabled={false}
             // The small window is for watching: hide every in-page control
             // panel the screen page draws (+/-, Esc/Tab/Ctrl, arrow keys).
+            // Injected both before the page loads (so the panels are hidden
+            // before the page's own scripts can reveal them) and after it
+            // (so a reload re-applies it); either landing is enough.
+            injectedJavaScriptBeforeContentLoaded={computerScreenChromeScript("float")}
             injectedJavaScript={computerScreenChromeScript("float")}
             onLoad={() => {
               // A refused page finishes loading too; only a different URL means the

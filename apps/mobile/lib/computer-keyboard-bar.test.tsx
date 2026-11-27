@@ -123,7 +123,7 @@ describe("computer keyboard accessory", () => {
   it("toggles focus and consumes Ctrl once for keys, typing and Return", async () => {
     const bar = await renderBar();
     try {
-      expect(bar.view.querySelectorAll('[data-size="compact"]')).toHaveLength(8);
+      expect(bar.view.querySelectorAll('[data-size="compact"]')).toHaveLength(4);
       expect(bar.button("Show keyboard")!.dataset.icon).toBe("keyboard");
       await bar.click("Show keyboard");
       expect(bar.button("Hide keyboard")!.getAttribute("aria-pressed")).toBe("true");
@@ -152,6 +152,24 @@ describe("computer keyboard accessory", () => {
         control: true,
       });
       expect(bar.button("Control")!.getAttribute("aria-pressed")).toBe("false");
+    } finally {
+      await bar.unmount();
+    }
+  });
+
+  it("has no arrow keys, only the keyboard toggle, Esc, Tab and Ctrl", async () => {
+    const bar = await renderBar();
+    try {
+      for (const name of ["Left", "Down", "Up", "Right"]) {
+        expect(bar.button(name)).toBeNull();
+      }
+      for (const name of ["Escape", "Tab", "Control"]) {
+        expect(bar.button(name)).not.toBeNull();
+      }
+      await bar.click("Escape");
+      expect(bar.onCommand).toHaveBeenLastCalledWith({ type: "key", name: "Escape" });
+      await bar.click("Tab");
+      expect(bar.onCommand).toHaveBeenLastCalledWith({ type: "key", name: "Tab" });
     } finally {
       await bar.unmount();
     }
@@ -365,7 +383,9 @@ describe("computer keyboard accessory", () => {
       await bar.type("a", "");
       await bar.key("Backspace");
       await act(async () => input.props.onSubmitEditing());
-      for (const key of ["Escape", "Tab", "Left", "Down", "Up", "Right"]) {
+      // Only Esc and Tab remain as key buttons; the arrow keys were removed
+      // (no direction keys after takeover).
+      for (const key of ["Escape", "Tab"]) {
         await bar.click(key);
       }
       expect(bar.onCommand).not.toHaveBeenCalled();

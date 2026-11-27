@@ -4,17 +4,20 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { computerScreenChromeScript } from "./computer-screen-chrome";
 
 /**
- * The screen page the script runs against. The old embed.html in this repo has
- * no #mobile-view-controls; the newer one the live image serves adds it (with
- * the +/- zoom and ^/v scroll buttons), so the fake page carries both shapes.
+ * The screen page the script runs against. It mirrors the live page the
+ * sandbox image serves (upstream's current embed.html), not the old one in
+ * this repo: the +/- zoom and ^/v scroll cluster lives *inside*
+ * #mobile-controls, and the key bar's buttons carry `data-key`. The old
+ * embed.html in this repo has no #mobile-view-controls at all; the live
+ * page has it, which is how the user's video proved the buttons were
+ * still showing.
+ *
+ * No `hidden` attributes: the page's own scripts remove them during setup,
+ * so the fixture is the revealed state the user actually sees — the state
+ * the script has to hide. (A `hidden` panel would already read as hidden
+ * without the script, which would make the test vacuous.)
  */
 const FAKE_PAGE = `
-  <div id="mobile-view-controls">
-    <button type="button">+</button>
-    <button type="button">-</button>
-    <button type="button">^</button>
-    <button type="button">v</button>
-  </div>
   <div id="mobile-key-bar">
     <button type="button" data-key="Escape">Esc</button>
     <button type="button" data-key="Tab">Tab</button>
@@ -25,6 +28,12 @@ const FAKE_PAGE = `
     <button type="button" data-key="ArrowRight">→</button>
   </div>
   <div id="mobile-controls">
+    <div id="mobile-view-controls">
+      <button type="button">+</button>
+      <button type="button">-</button>
+      <button type="button">^</button>
+      <button type="button">v</button>
+    </div>
     <button type="button">Paste</button>
     <button type="button">Keyboard</button>
     <button type="button">Trackpad</button>
@@ -82,6 +91,27 @@ describe("computerScreenChromeScript", () => {
     runScript(computerScreenChromeScript("float"));
     expect(document.querySelectorAll("#rakazo-screen-chrome")).toHaveLength(1);
     expect(displayOf("#mobile-key-bar")).toBe("none");
+  });
+
+  it("a later run with a different mode rewrites the rules instead of adding a style", () => {
+    // Float first: everything hidden, including the paste/keyboard/trackpad row.
+    runScript(computerScreenChromeScript("float"));
+    expect(displayOf("#mobile-controls")).toBe("none");
+    expect(displayOf("#mobile-key-bar")).toBe("none");
+    // Takeover without a reload: the zoom cluster stays hidden, the arrow
+    // keys stay hidden, but Esc/Tab/Ctrl and the paste/keyboard/trackpad
+    // row come back. The old float rules must not survive the switch.
+    runScript(computerScreenChromeScript("takeover"));
+    expect(document.querySelectorAll("#rakazo-screen-chrome")).toHaveLength(1);
+    expect(displayOf("#mobile-view-controls")).toBe("none");
+    expect(displayOf("#mobile-controls")).not.toBe("none");
+    expect(displayOf("#mobile-key-bar")).not.toBe("none");
+    for (const key of ["ArrowLeft", "ArrowDown", "ArrowUp", "ArrowRight"]) {
+      expect(displayOf(`#mobile-key-bar [data-key="${key}"]`)).toBe("none");
+    }
+    for (const key of ["Escape", "Tab", "Control"]) {
+      expect(displayOf(`#mobile-key-bar [data-key="${key}"]`)).not.toBe("none");
+    }
   });
 
   it("ends in true, as WebView injectedJavaScript expects", () => {

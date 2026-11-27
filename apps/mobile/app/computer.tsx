@@ -875,9 +875,16 @@ function ScreenWebView({
       // runs on load, and a view-only page never attaches the key bridge.
       key={`${nativeKeyboard ? "keys" : "view"}:${sourceUrl.current}`}
       source={{ uri: sourceUrl.current }}
-      injectedJavaScriptBeforeContentLoaded={
-        nativeKeyboard ? NATIVE_COMPUTER_KEYBOARD_BOOT : undefined
-      }
+      injectedJavaScriptBeforeContentLoaded={[
+        // Hide the page's control panels before its own scripts can reveal
+        // them; the keyboard boot below only runs when the native keyboard
+        // is on. The post-load injection repeats the same script, so either
+        // landing is enough.
+        computerScreenChromeScript(chromeMode),
+        nativeKeyboard ? NATIVE_COMPUTER_KEYBOARD_BOOT : "",
+      ]
+        .filter(Boolean)
+        .join("\n")}
       injectedJavaScript={[
         computerScreenChromeScript(chromeMode),
         nativeKeyboard && keyboardSession ? computerKeyboardReadyProbe(keyboardSession) : "",

@@ -25,6 +25,7 @@ const screens = vi.hoisted(() => ({
     | undefined,
   source: "",
   injectedJavaScript: "",
+  injectedJavaScriptBeforeContentLoaded: "",
   onLoadStart: undefined as ((event?: { nativeEvent: { url: string } }) => void) | undefined,
 }));
 const picker = vi.hoisted(() => ({
@@ -151,6 +152,7 @@ vi.mock("react-native-webview", () => {
       accessibilityElementsHidden?: boolean;
       importantForAccessibility?: string;
       injectedJavaScript?: string;
+      injectedJavaScriptBeforeContentLoaded?: string;
       onMessage?: (event: { nativeEvent: { data: string; url?: string } }) => void;
       onError?: () => void;
       source?: { uri: string };
@@ -160,6 +162,8 @@ vi.mock("react-native-webview", () => {
       screens.error = props.onError;
       screens.source = props.source?.uri ?? "";
       screens.injectedJavaScript = props.injectedJavaScript ?? "";
+      screens.injectedJavaScriptBeforeContentLoaded =
+        props.injectedJavaScriptBeforeContentLoaded ?? "";
       screens.onLoadStart = props.onLoadStart;
       useEffect(() => {
         screens.mounts += 1;
@@ -740,6 +744,11 @@ describe("computer screen", () => {
     expect(screens.injectedJavaScript).toContain("rakazo-screen-chrome");
     expect(screens.injectedJavaScript).toContain("#mobile-key-bar");
     expect(screens.injectedJavaScript).toContain("#mobile-view-controls");
+    // The same script also runs before the page loads, so the panels are
+    // hidden before the page's own scripts can reveal them.
+    expect(screens.injectedJavaScriptBeforeContentLoaded).toContain("rakazo-screen-chrome");
+    expect(screens.injectedJavaScriptBeforeContentLoaded).toContain("#mobile-key-bar");
+    expect(screens.injectedJavaScriptBeforeContentLoaded).toContain("#mobile-view-controls");
   });
 
   it("keeps the view-only screen out of the accessibility tree", async () => {
