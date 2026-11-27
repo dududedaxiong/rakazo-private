@@ -135,7 +135,7 @@ export async function* followIncomingCallSignals(
   }
 }
 
-class ChangeLatch {
+export class ChangeLatch {
   generation = 0;
   private wake: (() => void) | undefined;
 
