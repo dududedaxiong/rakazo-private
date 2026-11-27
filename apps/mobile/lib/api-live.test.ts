@@ -3,7 +3,12 @@ vi.mock("./ai-consent", () => ({ promptAiConsent: vi.fn() }));
 import * as SecureStore from "expo-secure-store";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_MOBILE_RPC_RESPONSE_BYTES } from "./api.js";
-import { IDLE_TIMEOUT_MS, subscribeIncomingCallEvents, subscribeThread } from "./api-live.js";
+import {
+  IDLE_TIMEOUT_MS,
+  subscribeClientTaskEvents,
+  subscribeIncomingCallEvents,
+  subscribeThread,
+} from "./api-live.js";
 
 vi.mock("expo-secure-store", () => ({
   getItemAsync: vi.fn(),
@@ -471,5 +476,37 @@ describe("mobile thread subscription", () => {
     expect(stream.locked).toBe(false);
     expect(vi.getTimerCount()).toBe(0);
     expect(removeListener).toHaveBeenCalledWith("abort", expect.any(Function));
+  });
+});
+
+describe("mobile client task subscription", () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    vi.mocked(SecureStore.getItemAsync).mockReset();
+    vi.mocked(SecureStore.getItemAsync).mockResolvedValue("");
+  });
+
+  it("delivers task frames and ignores other frames and malformed tasks", async () => {
+    const task = {
+      type: "client.task.requested",
+      taskId: "task-1",
+      url: "https://example.test/page",
+      kind: "fetch",
+      expiresAt: new Date(Date.now() + 60_000).toISOString(),
+    };
+    const frames = [
+      `data: ${JSON.stringify({ json: { type: "heartbeat" } })}\n\n`,
+      `data: ${JSON.stringify({ json: task })}\n\n`,
+      `data: ${JSON.stringify({ json: { type: "client.task.other", taskId: "task-2" } })}\n\n`,
+      `data: ${JSON.stringify({ json: { type: "client.task.requested", taskId: "task-3" } })}\n\n`,
+    ].join("");
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => new Response(frames, { status: 200 }));
+    vi.stubGlobal("fetch", fetch);
+    const onTask = vi.fn();
+    await subscribeClientTaskEvents(onTask, new AbortController().signal);
+    expect(onTask).toHaveBeenCalledTimes(1);
+    expect(onTask).toHaveBeenCalledWith(task);
+    expect(fetch.mock.calls[0]?.[0]).toContain("clientTasks/subscribe");
+    expect(fetch).toHaveBeenCalledOnce();
   });
 });
