@@ -10,8 +10,15 @@ import { useI18n } from "../lib/i18n";
 import { useThemedStyles } from "../lib/native";
 import { useSecretSheetClose } from "../lib/secret-sheet-close";
 import { errorText } from "../lib/user-error";
-import type { ApiAuthType, VaultDraft, VaultItem, VaultSave } from "../lib/vault";
+import type {
+  ApiAuthType,
+  CookieImportSummary,
+  VaultDraft,
+  VaultItem,
+  VaultSave,
+} from "../lib/vault";
 import {
+  draftCookieSave,
   draftSave,
   emptyDraft,
   itemDraft,
@@ -24,6 +31,7 @@ import type { LoginFieldRow } from "./login-fields-editor";
 import { LoginFieldsEditor } from "./login-fields-editor";
 import { MenuPicker } from "./menu-picker";
 import { NativeActionButton } from "./native-action-button";
+import { NativeSegmentedControl } from "./native-segmented-control";
 
 type ContactKey = keyof ContactFields;
 
@@ -53,8 +61,12 @@ export function VaultItemEditor({
   /** Saved contacts a card can be billed to. */
   contacts?: readonly { key: string; label: string }[];
   onClose: () => void;
-  /** Rejects when nothing was saved. */
-  onSave: (save: VaultSave) => Promise<void>;
+  /**
+   * Saves the draft; a cookie import resolves with its summary, which the sheet then shows
+   * instead of closing, and every other save resolves with nothing and closes. Rejects when
+   * nothing was saved.
+   */
+  onSave: (save: VaultSave) => Promise<CookieImportSummary | undefined>;
 }) {
   const { t } = useI18n();
   const styles = useThemedStyles(createStyles);
@@ -74,6 +86,14 @@ export function VaultItemEditor({
   });
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // A login or its cookies: the two ways to sign a bot into a site. An edit keeps the saved
+  // item's way; a new item can switch.
+  const [entryMode, setEntryMode] = useState<"login" | "cookies">(
+    kind === "browser_cookies" || item?.auth.type === "browser_cookies" ? "cookies" : "login",
+  );
+  const switchable = !item && (kind === "login" || kind === "browser_cookies") && !ask;
+  const inCookieMode = (kind === "login" || kind === "browser_cookies") && entryMode === "cookies";
+  const [importSummary, setImportSummary] = useState<CookieImportSummary | null>(null);
   const update = (change: Partial<VaultDraft>) => setDraft((prev) => ({ ...prev, ...change }));
   const clear = () =>
     setDraft((prev) => ({
@@ -81,10 +101,15 @@ export function VaultItemEditor({
       value: "",
       number: "",
       cvc: "",
+      cookies: "",
       fields: prev.fields.map((field) => ({ ...field, value: field.hidden ? "" : field.value })),
     }));
   const { close, closing, endEditing } = useSecretSheetClose(inputs, clear, onClose);
-  const save = draftSave(kind, draft, item);
+  // A browser_cookies item saved in login mode becomes a login item; a login saved in cookie
+  // mode becomes a cookie item. An edit never switches mode.
+  const save = inCookieMode
+    ? draftCookieSave(draft, item)
+    : draftSave(kind === "browser_cookies" ? "login" : kind, draft, item);
   const editable = !submitting && !closing;
   // A save in flight keeps the sheet open, so its failure is still shown here.
   const cancel = () => {
@@ -97,7 +122,12 @@ export function VaultItemEditor({
     setSubmitting(true);
     setError(null);
     try {
-      await onSave(save);
+      // A cookie import answers with its summary, shown here instead of closing.
+      const summary = await onSave(save);
+      if (summary) {
+        setImportSummary(summary);
+        return;
+      }
       close();
     } catch (err) {
       setError(ask ? t("Could not send answer") : errorText(err, t("Could not save")));
@@ -181,20 +211,26 @@ export function VaultItemEditor({
         ]}
       >
         <View style={styles.header}>
-          <NativeActionButton
-            disabled={submitting}
-            label={t("Cancel")}
-            onPress={cancel}
-            prominence="plain"
-          />
-          <NativeActionButton
-            disabled={!save}
-            busy={submitting}
-            fill={false}
-            label={t("Save")}
-            onPress={() => void submit()}
-            prominence={save ? "primary" : "plain"}
-          />
+          {importSummary ? (
+            <NativeActionButton label={t("Done")} onPress={close} prominence="primary" />
+          ) : (
+            <>
+              <NativeActionButton
+                disabled={submitting}
+                label={t("Cancel")}
+                onPress={cancel}
+                prominence="plain"
+              />
+              <NativeActionButton
+                disabled={!save}
+                busy={submitting}
+                fill={false}
+                label={t("Save")}
+                onPress={() => void submit()}
+                prominence={save ? "primary" : "plain"}
+              />
+            </>
+          )}
         </View>
         <ScrollView
           contentContainerStyle={styles.content}
@@ -205,7 +241,75 @@ export function VaultItemEditor({
             {heading}
           </Text>
 
-          {kind === "login" ? (
+          {importSummary ? (
+            <>
+              <Text style={styles.summary}>
+                {t("Imported {count} cookies", { count: importSummary.imported })}
+              </Text>
+              {importSummary.skipped.map((entry) => (
+                <Text key={entry.reason} style={styles.summaryDetail}>
+                  {t("{count} skipped: {reason}", { count: entry.count, reason: entry.reason })}
+                </Text>
+              ))}
+            </>
+          ) : null}
+
+          {!importSummary && switchable ? (
+            <NativeSegmentedControl
+              accessibilityLabel={t("Sign-in method")}
+              value={entryMode}
+              onChange={setEntryMode}
+              options={[
+                { value: "login" as const, label: t("Login") },
+                { value: "cookies" as const, label: t("Cookie / UA") },
+              ]}
+            />
+          ) : null}
+
+          {!importSummary && inCookieMode ? (
+            <View style={styles.group}>
+              {item ? null : (
+                <>
+                  {field(t("Site"), draft.origin, (origin) => update({ origin }), {
+                    placeholder: "https://example.com",
+                    keyboardType: "url",
+                    autoCapitalize: "none",
+                    textContentType: "URL",
+                  })}
+                  <View style={styles.separator} />
+                </>
+              )}
+              <View style={styles.row}>
+                <Text style={styles.label}>{t("Cookies")}</Text>
+                <TextInput
+                  accessibilityLabel={t("Cookies")}
+                  value={draft.cookies}
+                  onChangeText={(cookies) => update({ cookies })}
+                  placeholder={t("Paste the exported cookies")}
+                  placeholderTextColor={styles.placeholder.color}
+                  autoCorrect={false}
+                  autoCapitalize="none"
+                  autoComplete="off"
+                  multiline
+                  editable={editable}
+                  style={[styles.input, styles.cookiesInput]}
+                />
+              </View>
+              <View style={styles.separator} />
+              {field(t("User-Agent"), draft.userAgent, (userAgent) => update({ userAgent }), {
+                placeholder: "Mozilla/5.0 …",
+                autoCapitalize: "none",
+                autoComplete: "off",
+              })}
+            </View>
+          ) : null}
+          {!importSummary && inCookieMode ? (
+            <Text style={styles.note}>
+              {t("Encrypted on the server. The model never sees the values.")}
+            </Text>
+          ) : null}
+
+          {!importSummary && (kind === "login" || kind === "browser_cookies") && !inCookieMode ? (
             <>
               {item ? null : (
                 <View style={styles.group}>
@@ -399,7 +503,7 @@ export function VaultItemEditor({
             </Text>
           ) : null}
 
-          {ask ? null : (
+          {importSummary ? null : ask ? null : (
             <View style={styles.group}>
               {field(
                 kind === "contact" ? t("Label") : t("Title"),
@@ -457,6 +561,10 @@ function createStyles() {
     row: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, gap: 2 },
     label: { color: tokens.mutedForeground, fontSize: 13 },
     input: { color: tokens.foreground, fontSize: 17, paddingVertical: 4, minHeight: 28 },
+    cookiesInput: { minHeight: 120, textAlignVertical: "top", fontFamily: "monospace" },
+    summary: { color: tokens.foreground, fontSize: 17 },
+    summaryDetail: { color: tokens.mutedForeground, fontSize: 15 },
+    note: { color: tokens.mutedForeground, fontSize: 13 },
     brand: {
       position: "absolute",
       right: 16,

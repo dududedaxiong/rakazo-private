@@ -8,6 +8,20 @@ Status: implemented
 
 设计见 [2026-11-27-browser-cookie-import-design.md](../../proposed/feature/2026-11-27-browser-cookie-import-design.md)。
 
+## Built
+
+分支 `feature/browser-cookie-import`，自 `f27ac0ec` 起，五个提交：
+
+- `06748e0` 基础：contracts 的 `browser_cookies` auth 类型与 `VaultKind`、`vaultItemSubtitle` 的 `cookies` 词、adapter-kit 的 `BrowserCookie` 与导航命令字段、解析器与 `resolveCookieInjection`（含 200 条 / 64 KB 上限、RFC 6265 匹配、过期跳过、宽松逐条跳过）、`revealBotSecret` 对 Cookie 返回 null。
+- `9f3156a` adapter 接线：`pageBrowserTool` 在 `browser_navigate` 前解析 Cookie 并注册脱敏，`browserNavigateFromTool` 在导航落到登录页时追加兜底提示（点名已保存的账号登录），`ClientBrowserProvider` 不把 Cookie 放进手机任务（envelope 只带 URL），`ComputerBrowserProvider` 对不认识命令的旧镜像重试一次不带 Cookie 的导航。
+- `b6e78c6` supervisor + helper：zod schema 加 `cookies` / `userAgent` 与 `clear_cookies`，带 Cookie 的导航走 stdin（不走 argv），校验失败答固定错误不回显值；helper 先开空白页再注入（否则页面会在注入前加载），`Network.setCookie` 逐条、`Emulation.setUserAgentOverride` 设 UA，只返回条数；`clear_cookies` 按 name + domain + path 删。agent-browser 0.41.0 确实有 `cookies set` 命令，但它的 clear 会清空整个 profile、没有 UA 覆盖、不报逐条结果，所以没用它，直接走 CDP。
+- `8200843` API：`vault.importCookies`（同站重导更新旧项）、`vault.reveal` 对 Cookie 项报 403 而不是 404、`vault.remove` 与 `botSecrets.remove` 删行前读出 Cookie 名并向浏览器清理。清理覆盖该用户自己的全部电脑与本空间的共享电脑（只清运行中的；停着的电脑下次启动前 profile 里的 Cookie 还在），失败只记日志、不阻断删行。
+- `a7b5f4b` UI：网页版 + App：保险库表单与对话凭证卡片的双模式。
+
+网页版：`VaultItemEditor` 顶上是模式选择（账号密码 / Cookie/UA），Cookie 模式显示粘贴框 + UA 框，保存走 `vault.importCookies`，成功后表单内显示导入汇总（导入 N 条、跳过原因）而不是直接关闭；列表与详情只显示元数据（网站、条数、最早过期时间），无查看入口。`SecretAskCard` 复用同一个编辑器，所以对话里的凭证卡片同样有两种模式；从卡片导入 Cookie 不算回答（`threads.answer` 没有这种形状），卡片保持打开，用户点掉卡片后机器人重新导航、带着 Cookie 登录。
+
+App：`VaultItemEditor` 同样有模式选择，用原生分段控件；`lib/vault.ts` 的 `draftCookieSave` 拼导入保存，`vault.tsx` 的保存按 `cookieImport` 分流到 `vault/importCookies` 再重读列表；编辑 Cookie 项时跳过验证身份查看（本来就会 403），直接以 Cookie 模式打开、UA 预填；`VaultItemSheet` 只显示网站与条数。`SecretAskSheet`（登录提问的表单）也有模式选择，Cookie 模式走 `vault/importCookies`（以当前选中的空间为准，即卡片所在的空间），成功后显示汇总、卡片保持打开；`browser_cookies` 类型的提问直接以 Cookie 模式打开且不可切换。
+
 ## Decision
 
 Cookie 存在复用的保险库里，不另建表。`VaultCredential` 新增一种 auth 类型 `browser_cookies`，元数据只存条数、最早过期时间、可选 UA：`{ type: "browser_cookies", cookieCount, earliestExpiry, userAgent? }`。Cookie 列表本身以 `{"v":1,"cookies":[...]}` 的 JSON 形式进 `EncryptedSecretStore`（AES-256-GCM，`v2:` 格式，AAD 绑定记录 id），与网站登录凭据同一套加密。`auth` 是 Json 列，所以这个改动不需要 Prisma 迁移。

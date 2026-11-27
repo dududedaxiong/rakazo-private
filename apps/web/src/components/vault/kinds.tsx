@@ -3,7 +3,7 @@ import type { BotSecretMetadata, VaultKind } from "@rakazo_mickvvw/contracts";
 import { vaultItemSubtitle } from "@rakazo_mickvvw/contracts";
 import { cn } from "@rakazo_mickvvw/ui-web";
 import type { LucideIcon } from "lucide-react";
-import { Braces, CreditCard, KeyRound, MapPin, SquareTerminal } from "lucide-react";
+import { Braces, Cookie, CreditCard, KeyRound, MapPin, SquareTerminal } from "lucide-react";
 
 export type VaultAuth = NonNullable<BotSecretMetadata["auth"]>;
 
@@ -13,6 +13,7 @@ const KIND_ICONS: Record<VaultKind, LucideIcon> = {
   contact: MapPin,
   api_key: Braces,
   variable: SquareTerminal,
+  browser_cookies: Cookie,
 };
 
 export function useVaultKindLabels() {
@@ -23,6 +24,7 @@ export function useVaultKindLabels() {
     contact: t`Contact`,
     api_key: t`API key`,
     variable: t`Variable`,
+    browser_cookies: t`Browser cookies`,
   };
   const many: Record<VaultKind, string> = {
     login: t`Logins`,
@@ -30,6 +32,7 @@ export function useVaultKindLabels() {
     contact: t`Contacts`,
     api_key: t`Keys`,
     variable: t`Variables`,
+    browser_cookies: t`Cookies`,
   };
   return { one, many };
 }
@@ -72,5 +75,9 @@ export function useVaultSubtitle() {
   const { t } = useLingui();
   const { one } = useVaultKindLabels();
   return (item: BotSecretMetadata): string =>
-    vaultItemSubtitle(item, { apiKey: one.api_key, expires: (expiry) => t`Expires ${expiry}` });
+    vaultItemSubtitle(item, {
+      apiKey: one.api_key,
+      expires: (expiry) => t`Expires ${expiry}`,
+      cookies: (count) => t`${count} cookies`,
+    });
 }

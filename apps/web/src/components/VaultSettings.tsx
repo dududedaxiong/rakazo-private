@@ -26,7 +26,11 @@ import { useIdentityConfirmation } from "./ConfirmIdentityDialog";
 import { BotEmailAddresses } from "./vault/BotEmailAddresses";
 import { useVaultKindLabels, useVaultSubtitle, VaultTile } from "./vault/kinds";
 import { VaultItemDetail } from "./vault/VaultItemDetail";
-import type { VaultEditorInitial, VaultEditorResult } from "./vault/VaultItemEditor";
+import type {
+  CookieImportSummary,
+  VaultEditorInitial,
+  VaultEditorResult,
+} from "./vault/VaultItemEditor";
 import { VaultItemEditorPage } from "./vault/VaultItemEditor";
 
 export { REVEAL_MS } from "./vault/VaultItemDetail";
@@ -78,9 +82,23 @@ export function VaultSettings({
     }
   }
 
-  async function save(result: VaultEditorResult) {
+  async function save(result: VaultEditorResult): Promise<CookieImportSummary | undefined> {
     setBusy(true);
     try {
+      // A pasted export is parsed on the server, so it never goes through vault.put.
+      if (result.cookieImport) {
+        const summary = await rpc.vault.importCookies({
+          scope,
+          origin: result.destination.origin,
+          content: result.cookieImport.content,
+          ...(result.cookieImport.userAgent ? { userAgent: result.cookieImport.userAgent } : {}),
+          ...(result.destination.name ? { name: result.destination.name } : {}),
+          ...(result.title !== undefined ? { title: result.title } : {}),
+          ...(result.note !== undefined ? { note: result.note } : {}),
+        });
+        setError((await refresh()) ? null : t`Could not load credentials.`);
+        return summary;
+      }
       await rpc.vault.put({
         scope,
         destination: result.destination,
@@ -203,6 +221,7 @@ export function VaultSettings({
                   contact: t`New contact`,
                   api_key: t`New API key`,
                   variable: t`New variable`,
+                  browser_cookies: t`New browser cookies`,
                 }[editing.kind]
           }
           initial={editing.initial}

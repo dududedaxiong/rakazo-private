@@ -15,6 +15,7 @@ vi.mock("./i18n", () => ({
 import type { VaultDraft, VaultItem } from "./vault";
 import {
   billingChoices,
+  draftCookieSave,
   draftSave,
   emptyDraft,
   filterVaultItems,
@@ -23,6 +24,8 @@ import {
   typedCardBrand,
   variableProblem,
   vaultItemSubtitle,
+  vaultKindLabel,
+  vaultKindSymbol,
   vaultKindsPresent,
   withItem,
 } from "./vault";
@@ -62,6 +65,12 @@ const login = item({
   preview: { username: "octo@example.com" },
 });
 const variable = item({ name: "deploy_token", origin: "", auth: { type: "command" } });
+const cookies = item({
+  name: "example-cookies",
+  origin: "https://example.com",
+  auth: { type: "browser_cookies", cookieCount: 3, earliestExpiry: 1_790_000_000 },
+  title: "example.com",
+});
 const draft = (change: Partial<VaultDraft>): VaultDraft => ({ ...emptyDraft(), ...change });
 
 describe("vault list", () => {
@@ -80,6 +89,19 @@ describe("vault list", () => {
     expect(vaultItemSubtitle(item({ title: "GitHub" }))).toBe("API key · api.github.com");
     expect(vaultItemSubtitle(variable)).toBe("$DEPLOY_TOKEN");
     expect(vaultItemSubtitle(item({ auth: null }))).toBe("https://api.github.com");
+    expect(vaultItemSubtitle(cookies)).toBe("3 cookies · Expires 2026-09-21");
+  });
+
+  it("files browser cookies under their own kind, with their own label and symbol", () => {
+    expect(vaultKind("browser_cookies")).toBe("browser_cookies");
+    expect(vaultKindLabel("browser_cookies")).toBe("Browser cookies");
+    expect(vaultKindSymbol("browser_cookies")).toEqual({
+      ios: "globe",
+      android: "globe-outline",
+    });
+    expect(vaultKindsPresent([login, cookies])).toEqual(["login", "browser_cookies"]);
+    expect(filterVaultItems([login, cookies], "browser_cookies", "")).toEqual([cookies]);
+    expect(filterVaultItems([login, cookies], "all", "cookies")).toEqual([cookies]);
   });
 
   it("filters by kind and searches titles and subtitles", () => {
@@ -215,5 +237,53 @@ describe("saving from the editor", () => {
     const save = draftSave("contact", itemDraft(saved, []), saved);
     expect(save?.destination).toEqual({ name: "home", auth: { type: "contact" } });
     expect(decodeContactSecret(save!.value!)).toEqual(home.preview!.contact);
+  });
+
+  it("imports a pasted cookie export for a site, with its User-Agent, or nothing", () => {
+    const exported = '[{"name":"session","value":"test-value","domain":"example.com","path":"/"}]';
+    const save = draftCookieSave(
+      draft({ origin: "https://example.com", cookies: exported, userAgent: "TestBrowser/1.0" }),
+    );
+    expect(save?.destination).toEqual({
+      origin: "https://example.com",
+      auth: { type: "browser_cookies", cookieCount: 0, earliestExpiry: null },
+    });
+    expect(save?.cookieImport).toEqual({ content: exported, userAgent: "TestBrowser/1.0" });
+    expect(save?.value).toBeUndefined();
+    expect(
+      draftCookieSave(draft({ origin: "https://example.com", cookies: exported })),
+    ).toMatchObject({ cookieImport: { content: exported } });
+    expect(
+      draftCookieSave(draft({ origin: "https://example.com", cookies: "  " })),
+    ).toBeUndefined();
+    expect(draftCookieSave(draft({ cookies: exported }))).toBeUndefined();
+  });
+
+  it("refreshes a saved cookie item from a new paste, keeping its User-Agent", () => {
+    const saved = readableItem(cookies) as VaultItem;
+    const start = itemDraft(saved, []);
+    expect(start.userAgent).toBe("");
+    const withAgent = readableItem(
+      item({
+        ...cookies,
+        auth: {
+          type: "browser_cookies",
+          cookieCount: 3,
+          earliestExpiry: null,
+          userAgent: "TestBrowser/1.0",
+        },
+      }),
+    ) as VaultItem;
+    expect(itemDraft(withAgent, []).userAgent).toBe("TestBrowser/1.0");
+    const save = draftCookieSave(
+      { ...start, cookies: '[{"name":"session","value":"test-value"}]' },
+      saved,
+    );
+    expect(save?.destination).toEqual({
+      name: "example-cookies",
+      origin: "https://example.com",
+      auth: { type: "browser_cookies", cookieCount: 3, earliestExpiry: 1_790_000_000 },
+    });
+    expect(save?.cookieImport.content).toContain("test-value");
   });
 });

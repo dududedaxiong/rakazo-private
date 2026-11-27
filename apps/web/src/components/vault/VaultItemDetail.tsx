@@ -12,7 +12,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useCopyText } from "../../lib/copy-text";
 import type { VaultAuth } from "./kinds";
-import { siteHost, useVaultKindLabels, VaultTile } from "./kinds";
+import { siteHost, useVaultKindLabels, useVaultSubtitle, VaultTile } from "./kinds";
 import { VaultPageHeader } from "./VaultPageHeader";
 
 /** How long a shown value stays on screen. */
@@ -100,6 +100,7 @@ export function VaultItemDetail({
 }) {
   const { t } = useLingui();
   const { one } = useVaultKindLabels();
+  const subtitle = useVaultSubtitle();
   // An item saved under a name the current rules refuse can only be removed.
   const auth: VaultAuth | null =
     item.auth && BotSecretName.safeParse(item.name).success ? item.auth : null;
@@ -270,6 +271,21 @@ export function VaultItemDetail({
       rows.push(
         <DetailRow key="email" label={t`Email`} copy={contact.email}>
           {contact.email}
+        </DetailRow>,
+      );
+  }
+  if (auth && kind === "browser_cookies") {
+    // Cookie values are never shown: metadata and Remove are all there is.
+    rows.push(
+      <DetailRow key="site" label={t`Site`} copy={item.origin}>
+        {siteHost(item.origin)}
+      </DetailRow>,
+    );
+    const line = subtitle(item);
+    if (line)
+      rows.push(
+        <DetailRow key="cookies" label={t`Cookies`}>
+          {line}
         </DetailRow>,
       );
   }

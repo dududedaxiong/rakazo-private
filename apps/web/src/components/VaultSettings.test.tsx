@@ -14,6 +14,7 @@ const vault = vi.hoisted(() => ({
   put: vi.fn(),
   remove: vi.fn(),
   reveal: vi.fn(),
+  importCookies: vi.fn(),
 }));
 // No bot has an email address unless a test gives it one.
 const bots = vi.hoisted(() => ({ emailAddresses: vi.fn(async (): Promise<unknown> => null) }));
@@ -166,9 +167,16 @@ function field(label: string, within: HTMLElement | null = editor()) {
   return document.getElementById(labelled.htmlFor) as HTMLInputElement | HTMLSelectElement;
 }
 
-async function type(target: HTMLInputElement | HTMLSelectElement, value: string) {
+async function type(
+  target: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement,
+  value: string,
+) {
   const prototype =
-    target instanceof HTMLSelectElement ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
+    target instanceof HTMLSelectElement
+      ? HTMLSelectElement.prototype
+      : target instanceof HTMLTextAreaElement
+        ? HTMLTextAreaElement.prototype
+        : HTMLInputElement.prototype;
   await act(async () => {
     Object.getOwnPropertyDescriptor(prototype, "value")?.set?.call(target, value);
     target.dispatchEvent(
@@ -194,6 +202,13 @@ beforeEach(() => {
   vault.put.mockReset().mockResolvedValue(rows[0]);
   vault.remove.mockReset().mockResolvedValue({ ok: true });
   vault.reveal.mockReset();
+  vault.importCookies.mockReset().mockResolvedValue({
+    name: "example-cookies",
+    imported: 2,
+    skipped: [{ reason: "expired", count: 1 }],
+    cookieCount: 2,
+    earliestExpiry: null,
+  });
   container = document.createElement("div");
   document.body.append(container);
   root = createRoot(container);
@@ -383,6 +398,29 @@ describe("VaultSettings new items", () => {
     expect(editor()?.textContent).toContain("Credential limit reached");
     expect((field("Value") as HTMLInputElement).value).toBe("");
     expect(document.body.innerHTML).not.toContain(FAKE_VALUE);
+  });
+
+  it("imports a pasted cookie export through vault.importCookies, never vault.put", async () => {
+    await render();
+    await startNew("login");
+    await click("vault-editor-mode-cookies");
+    await type(field("Site"), "https://example.com");
+    const exported = '[{"name":"session","value":"test-value","domain":"example.com","path":"/"}]';
+    await type(field("Cookies") as HTMLTextAreaElement, exported);
+    await type(field("User-Agent"), "TestBrowser/1.0");
+    await click(buttonIn(editor(), "Save")!);
+    expect(vault.importCookies).toHaveBeenCalledWith({
+      scope: "account",
+      origin: "https://example.com",
+      content: exported,
+      userAgent: "TestBrowser/1.0",
+    });
+    expect(vault.put).not.toHaveBeenCalled();
+    expect(byTestId("vault-editor-import-summary").textContent).toContain("Imported 2 cookies");
+    expect(editor()?.textContent).toContain("1 skipped: expired");
+    expect(editor()).not.toBeNull();
+    await click("vault-editor-import-done");
+    expect(editor()).toBeNull();
   });
 
   it("names a variable as it is exported, and refuses a reserved one", async () => {

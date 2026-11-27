@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useI18n } from "../lib/i18n";
 import { native, useThemedStyles } from "../lib/native";
 import { siteHost } from "../lib/secret-destination";
-import { readableItem, vaultKindLabel, vaultKindSymbol } from "../lib/vault";
+import { readableItem, vaultItemSubtitle, vaultKindLabel, vaultKindSymbol } from "../lib/vault";
 import { NativeActionButton } from "./native-action-button";
 import { NativeSymbol } from "./native-symbol";
 import { SettingsGroup, SettingsRow } from "./settings-group";
@@ -55,6 +55,10 @@ export function VaultItemSheet({
       add(t("Site"), siteHost(entry.origin));
       add(t("Username"), preview?.username);
       list.push({ label: t("Password"), ...hidden });
+    } else if (entry.auth.type === "browser_cookies") {
+      // Cookie values are never shown: the site and the count are all there is.
+      add(t("Site"), siteHost(entry.origin));
+      add(t("Cookies"), vaultItemSubtitle(entry));
     } else if (entry.auth.type === "card") {
       const card = preview?.card;
       list.push({

@@ -633,8 +633,7 @@ app.post("/computers/:id/browser", async (c) => {
     body.command === "act" && body.actions.some((step) => "origin" in step && step.origin);
   // A cookie's value is a saved login too: it must not reach the computer in argv, which any
   // process in the computer can read. The helper reads the same command from stdin instead.
-  const carriesCookieValues =
-    body.command === "navigate" && Boolean(body.cookies?.length);
+  const carriesCookieValues = body.command === "navigate" && Boolean(body.cookies?.length);
   const screen = (reuseRecent: boolean) =>
     managedScreen(
       c.req.param("id"),

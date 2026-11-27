@@ -30,7 +30,7 @@ import { iosAtLeast } from "../../lib/native-controls";
 import { settingsRpc, settingsTarget } from "../../lib/settings-target";
 import { useSideInsets } from "../../lib/side-insets";
 import { errorText } from "../../lib/user-error";
-import type { VaultItem, VaultSave } from "../../lib/vault";
+import type { CookieImportSummary, VaultItem, VaultSave } from "../../lib/vault";
 import {
   billingChoices,
   filterVaultItems,
@@ -133,9 +133,23 @@ export default function Vault() {
     } satisfies NativeStackNavigationOptions);
   }, [navigation, startAdding, t]);
 
-  async function save(change: VaultSave) {
+  async function save(change: VaultSave): Promise<CookieImportSummary | undefined> {
     changes.current += 1;
     setError(null);
+    // A pasted export is parsed on the server, so it never goes through vault.put.
+    if (change.cookieImport) {
+      const summary = await rpc("vault/importCookies", {
+        scope,
+        origin: change.destination.origin ?? "",
+        content: change.cookieImport.content,
+        ...(change.cookieImport.userAgent ? { userAgent: change.cookieImport.userAgent } : {}),
+        ...(change.destination.name ? { name: change.destination.name } : {}),
+        ...(change.title !== undefined ? { title: change.title } : {}),
+        ...(change.note !== undefined ? { note: change.note } : {}),
+      });
+      setItems(await rpc("vault/list", { scope }));
+      return summary;
+    }
     const saved = await rpc("vault/put", { scope, ...change });
     setItems((current) => withItem(current ?? [], saved));
   }
@@ -217,7 +231,7 @@ export default function Vault() {
     ]);
   }
 
-  /** A login or card opens with its value, after the person confirms it's them, so Save keeps all of it. */
+  /** A login or card opens with its value, after the person confirms it's them, so Save keeps all of it. A cookie item has nothing to reveal: its values are never shown. */
   async function edit(item: BotSecretMetadata) {
     const readable = readableItem(item);
     if (!readable) return;
@@ -405,6 +419,7 @@ export default function Vault() {
     if (kind === "card") return t("Cards");
     if (kind === "contact") return t("Contacts");
     if (kind === "api_key") return t("Keys");
+    if (kind === "browser_cookies") return t("Cookies");
     return t("Variables");
   }
 }

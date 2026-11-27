@@ -10,18 +10,25 @@ import {
 import { Button, Input } from "@rakazo_mickvvw/ui-web";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
+import { rpc as selectedSpaceRpc } from "../lib/rpc";
 import type { AskBlock, AskCardProps } from "./AskCard";
 import { BuiCard } from "./ai/primitives";
 import { siteHost, VaultTile } from "./vault/kinds";
 import { useVaultContacts } from "./vault/use-vault-contacts";
-import type { VaultEditorResult } from "./vault/VaultItemEditor";
+import type { CookieImportSummary, VaultEditorResult } from "./vault/VaultItemEditor";
 import { VaultItemEditor } from "./vault/VaultItemEditor";
 
 type FormKind = "login" | "card" | "contact";
 
 function formKind(block: AskBlock): FormKind | undefined {
   const type = block.credential?.auth.type;
-  return type === "login" || type === "card" || type === "contact" ? type : undefined;
+  // A cookie request opens the login form in cookie mode; a login request opens it with the
+  // mode choice.
+  return type === "login" || type === "browser_cookies"
+    ? "login"
+    : type === "card" || type === "contact"
+      ? type
+      : undefined;
 }
 
 /** A card's editor with the saved contacts it can bill to, loaded only once it opens. */
@@ -35,7 +42,14 @@ function CardEditor(props: Parameters<typeof VaultItemEditor>[0]) {
  * vault's own form; a code, key or variable is one field, typed right in the card. The value lives
  * only in this card's state and is cleared as soon as it is sent.
  */
-export function SecretAskCard({ block, canAnswer, canDismiss, onAnswer, onDismiss }: AskCardProps) {
+export function SecretAskCard({
+  block,
+  canAnswer,
+  canDismiss,
+  onAnswer,
+  onDismiss,
+  rpc = selectedSpaceRpc,
+}: AskCardProps) {
   const { t } = useLingui();
   const [answer, setAnswer] = useState("");
   const [accepted, setAccepted] = useState(false);
@@ -125,7 +139,20 @@ export function SecretAskCard({ block, canAnswer, canDismiss, onAnswer, onDismis
     }
   }
 
-  async function saveForm(result: VaultEditorResult) {
+  async function saveForm(result: VaultEditorResult): Promise<CookieImportSummary | undefined> {
+    if (result.cookieImport) {
+      // No scope: the server saves into the vault this run uses. The ask itself stays open:
+      // threads.answer has no shape for "saved through the vault", so the run resumes once
+      // the card is dismissed and the bot navigates again with the cookies in place.
+      return rpc.vault.importCookies({
+        origin: result.destination.origin,
+        content: result.cookieImport.content,
+        ...(result.cookieImport.userAgent ? { userAgent: result.cookieImport.userAgent } : {}),
+        ...(result.destination.name ? { name: result.destination.name } : {}),
+        ...(result.title !== undefined ? { title: result.title } : {}),
+        ...(result.note !== undefined ? { note: result.note } : {}),
+      });
+    }
     if (form === "login") await send("", result.fields, result.remember);
     else await send(result.value ?? "");
   }
@@ -157,12 +184,17 @@ export function SecretAskCard({ block, canAnswer, canDismiss, onAnswer, onDismis
         heading: block.text,
         initial:
           form === "login"
-            ? {
-                origin: block.credential?.origin,
-                loginFields: loginCardFields(block.loginFields),
-                loginLabels: block.loginFields ?? [t`Username`, t`Password`],
-                replacedSite: block.replaces?.origin,
-              }
+            ? block.credential?.auth.type === "browser_cookies"
+              ? {
+                  origin: block.credential?.origin,
+                  auth: block.credential.auth,
+                }
+              : {
+                  origin: block.credential?.origin,
+                  loginFields: loginCardFields(block.loginFields),
+                  loginLabels: block.loginFields ?? [t`Username`, t`Password`],
+                  replacedSite: block.replaces?.origin,
+                }
             : undefined,
         onDismiss: canDismiss ? dismiss : undefined,
         onSave: saveForm,

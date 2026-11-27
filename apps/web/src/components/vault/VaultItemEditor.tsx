@@ -3,6 +3,7 @@ import type {
   CardSecretValue,
   ContactFields,
   LoginFieldInput,
+  VaultImportCookiesResult,
   VaultKind,
 } from "@rakazo_mickvvw/contracts";
 import {
@@ -29,12 +30,16 @@ import {
   NativeSelect,
   NativeSelectOption,
   Switch,
+  Textarea,
 } from "@rakazo_mickvvw/ui-web";
 import type { ComponentProps, ReactNode } from "react";
 import { useId, useRef, useState } from "react";
 import type { VaultAuth } from "./kinds";
 import { LoginFieldsInput } from "./LoginFieldsInput";
 import { VaultPageHeader } from "./VaultPageHeader";
+
+/** What a cookie import reports: metadata only, never a cookie value. */
+export type CookieImportSummary = VaultImportCookiesResult;
 
 /** What the editor hands back: a destination and the value to save, in the shape vault.put takes. */
 export type VaultEditorResult = {
@@ -47,6 +52,8 @@ export type VaultEditorResult = {
   remember?: false;
   title?: string;
   note?: string;
+  /** A pasted cookie export, saved through vault.importCookies instead of vault.put. */
+  cookieImport?: { content: string; userAgent?: string };
 };
 
 /** What the form starts with: a saved item being edited, or what a chat card asks for. */
@@ -182,7 +189,11 @@ type EditorFormProps = {
   contacts?: BillingContact[];
   /** Turns down a chat card instead of answering it. */
   onDismiss?: () => Promise<void>;
-  onSave: (result: VaultEditorResult) => Promise<void>;
+  /**
+   * Saves the result; a cookie import resolves with its summary, which the form then shows
+   * instead of closing, and every other save resolves with nothing and closes.
+   */
+  onSave: (result: VaultEditorResult) => Promise<CookieImportSummary | undefined>;
   /** The message for a failed save; a chat card's never quotes the server, which may echo a value. */
   failureText: (error: unknown) => string;
 };
@@ -247,6 +258,21 @@ function EditorForm({
   const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A login or its cookies: the two ways to sign a bot into a site. An edit keeps the saved
+  // item's way, and a card that asked for cookies has no login to switch to.
+  const [entryMode, setEntryMode] = useState<"login" | "cookies">(
+    kind === "browser_cookies" || initialAuth?.type === "browser_cookies" ? "cookies" : "login",
+  );
+  const switchable =
+    !editing &&
+    (kind === "login" || kind === "browser_cookies") &&
+    initialAuth?.type !== "browser_cookies";
+  const inCookieMode = (kind === "login" || kind === "browser_cookies") && entryMode === "cookies";
+  const [cookieContent, setCookieContent] = useState("");
+  const [userAgent, setUserAgent] = useState(
+    initialAuth?.type === "browser_cookies" ? (initialAuth.userAgent ?? "") : "",
+  );
+  const [importSummary, setImportSummary] = useState<CookieImportSummary | null>(null);
 
   const id = (field: string) => `${ids}-${field}`;
 
@@ -255,6 +281,7 @@ function EditorForm({
     setCardNumber("");
     setCvc("");
     setValue("");
+    setCookieContent("");
   }
 
   const cardDigits = digitsOf(cardNumber, 19);
@@ -277,8 +304,9 @@ function EditorForm({
   // An edit keeps the saved value of a key or variable when its field is left empty.
   const valueReady = value.length > 0 || editing;
 
-  const ready =
-    kind === "login"
+  const ready = inCookieMode
+    ? origin.trim().length > 0 && cookieContent.trim().length > 0
+    : kind === "login" || kind === "browser_cookies"
       ? origin.trim().length > 0 && LoginSecretValue.safeParse({ fields: login }).success
       : kind === "card"
         ? card.success
@@ -302,7 +330,21 @@ function EditorForm({
           ...(noteShown || editing ? { note: note.trim() } : {}),
         };
     const name = initial?.name;
-    if (kind === "login") {
+    if (inCookieMode) {
+      return {
+        destination: {
+          name,
+          origin: origin.trim(),
+          auth: { type: "browser_cookies", cookieCount: 0, earliestExpiry: null },
+        },
+        cookieImport: {
+          content: cookieContent,
+          ...(userAgent.trim() ? { userAgent: userAgent.trim() } : {}),
+        },
+        ...labels,
+      };
+    }
+    if (kind === "login" || kind === "browser_cookies") {
       return {
         destination: { name, origin: origin.trim(), auth: { type: "login" } },
         value: encodeLoginSecret({ fields: login }),
@@ -353,7 +395,12 @@ function EditorForm({
     setBusy(true);
     busyRef.current = true;
     try {
-      await onSave(saving);
+      // A cookie import answers with its summary, shown here instead of closing.
+      const summary = await onSave(saving);
+      if (summary) {
+        setImportSummary(summary);
+        return;
+      }
       onDone();
     } catch (err) {
       setError(failureText(err));
@@ -433,6 +480,29 @@ function EditorForm({
     </FormField>
   );
 
+  if (importSummary) {
+    return (
+      <div className="flex flex-col gap-4">
+        {header}
+        <p data-testid="vault-editor-import-summary" className="text-body">
+          {t`Imported ${importSummary.imported} cookies`}
+        </p>
+        {importSummary.skipped.length ? (
+          <ul className="list-none space-y-0.5 text-body-sm text-muted-foreground">
+            {importSummary.skipped.map((entry) => (
+              <li key={entry.reason}>{t`${entry.count} skipped: ${entry.reason}`}</li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="mt-1 flex justify-end">
+          <Button type="button" data-testid="vault-editor-import-done" onClick={onDone}>
+            <Trans>Done</Trans>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form
       className="flex flex-col gap-4"
@@ -442,12 +512,40 @@ function EditorForm({
       }}
     >
       {header}
+      {switchable ? (
+        <fieldset className="m-0 flex gap-1 border-0 p-0" aria-label={t`Credential type`}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-pressed={entryMode === "login"}
+            data-testid="vault-editor-mode-login"
+            className="rounded-full text-muted-foreground aria-pressed:bg-accent aria-pressed:text-foreground"
+            disabled={busy}
+            onClick={() => setEntryMode("login")}
+          >
+            <Trans>Account and password</Trans>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            aria-pressed={entryMode === "cookies"}
+            data-testid="vault-editor-mode-cookies"
+            className="rounded-full text-muted-foreground aria-pressed:bg-accent aria-pressed:text-foreground"
+            disabled={busy}
+            onClick={() => setEntryMode("cookies")}
+          >
+            <Trans>Cookie / UA</Trans>
+          </Button>
+        </fieldset>
+      ) : null}
       {kind === "contact" && !asking
         ? text("title", t`Label`, title, setTitle, { placeholder: t`Home` })
         : editing
           ? text("title", t`Name`, title, setTitle)
           : null}
-      {kind === "login" ? (
+      {(kind === "login" || kind === "browser_cookies") && !inCookieMode ? (
         <>
           {siteField("https://www.example.com")}
           {initial?.replacedSite ? (
@@ -462,6 +560,33 @@ function EditorForm({
             disabled={busy}
             onChange={setLogin}
           />
+        </>
+      ) : null}
+      {inCookieMode ? (
+        <>
+          {siteField("https://www.example.com")}
+          <FormField id={id("cookies")} label={t`Cookies`}>
+            <Textarea
+              id={id("cookies")}
+              data-testid="vault-editor-cookies"
+              value={cookieContent}
+              spellCheck={false}
+              autoComplete="off"
+              disabled={busy}
+              placeholder={t`Paste the exported cookies`}
+              onChange={(event) => setCookieContent(event.target.value)}
+              className="min-h-32 font-mono text-body-sm"
+            />
+          </FormField>
+          <ul className="-mt-2 list-none space-y-0.5 text-body-sm text-muted-foreground">
+            <li>{t`Encrypted on the server.`}</li>
+            <li>{t`Only used on this site.`}</li>
+            <li>{t`The model never sees the values.`}</li>
+          </ul>
+          {text("user-agent", t`User-Agent`, userAgent, setUserAgent, {
+            placeholder: "Mozilla/5.0 …",
+            "data-testid": "vault-editor-user-agent",
+          })}
         </>
       ) : null}
       {kind === "card" ? (
@@ -630,7 +755,7 @@ function EditorForm({
         </p>
       ) : null}
       <div className="mt-1 flex items-center gap-2">
-        {asking && kind === "login" ? (
+        {asking && entryMode === "login" ? (
           <div className="flex items-center gap-2">
             <Switch
               id={id("remember")}
@@ -654,7 +779,7 @@ function EditorForm({
           </Button>
         ) : null}
         <Button type="submit" data-testid="vault-editor-save" disabled={!ready || busy}>
-          {asking && kind === "login" && !remember ? (
+          {asking && entryMode === "login" && !remember ? (
             busy ? (
               <Trans>Sending…</Trans>
             ) : (

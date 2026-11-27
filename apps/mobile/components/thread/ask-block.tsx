@@ -4,6 +4,7 @@ import { isSecretAskBlock } from "@rakazo_mickvvw/core";
 import { fontWeight, typeScale } from "@rakazo_mickvvw/ui-tokens";
 import { useRef, useState } from "react";
 import { StyleSheet, Text, TextInput, View } from "react-native";
+import { captureApiRequestContext, rpc } from "../../lib/api";
 import { plainAskTitle } from "../../lib/ask-title";
 import { useI18n } from "../../lib/i18n";
 import type { MobileMessage } from "../../lib/mobile-types";
@@ -53,8 +54,12 @@ export function AskBlock({
   const secretInput = isSecretAskBlock(ask);
   const loginInput = secretInput && ask.credential?.auth.type === "login";
   const itemType = secretInput ? ask.credential?.auth.type : undefined;
-  // A login, card or contact is filled in a sheet; the card itself is one compact row.
-  const sheetInput = itemType === "login" || itemType === "card" || itemType === "contact";
+  // A login, card, contact or cookie set is filled in a sheet; the card itself is one compact row.
+  const sheetInput =
+    itemType === "login" ||
+    itemType === "card" ||
+    itemType === "contact" ||
+    itemType === "browser_cookies";
   // A login, credential or code is for the run's user, so only they can fill one in; others see
   // the card without fields or buttons.
   const ownerOnly = secretInput && Boolean(ask.credential || ask.oneTimeCode) && !canDismiss;
@@ -201,7 +206,7 @@ export function AskBlock({
         {error ? (
           <Text style={{ color: tokens.destructive, ...typeScale.caption }}>{error}</Text>
         ) : null}
-        {sheetOpen && loginInput ? (
+        {sheetOpen && (loginInput || itemType === "browser_cookies") ? (
           <SecretAskSheet
             title={title}
             destination={secretDestinationLabel(ask.credential)}
@@ -209,6 +214,7 @@ export function AskBlock({
             // Once any save is accepted, or the viewer is no longer the run's user, the open sheet
             // clears its own fields, then closes itself.
             pending={canAnswer && !answered && !ownerOnly}
+            cookieOnly={itemType === "browser_cookies"}
             onClose={closeSheet}
             loginFields={ask.loginFields}
             onSave={async (fields, remember) => {
@@ -217,6 +223,15 @@ export function AskBlock({
               setSentOnce(!remember);
               setSaved(true);
               closeSheet();
+            }}
+            onImportCookies={async (input) => {
+              // The card's Space is the selected one: the cookies land in the vault the run reads.
+              const context = await captureApiRequestContext();
+              return rpc(
+                "vault/importCookies",
+                { origin: ask.credential?.origin ?? "", ...input },
+                { requestContext: context },
+              );
             }}
           />
         ) : null}

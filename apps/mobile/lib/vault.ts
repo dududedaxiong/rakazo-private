@@ -3,6 +3,7 @@ import type {
   CardSummary,
   ContactFields,
   LoginFieldInput,
+  VaultImportCookiesResult,
   VaultKind,
   VaultRevealed,
 } from "@rakazo_mickvvw/contracts";
@@ -37,6 +38,7 @@ export function vaultKindLabel(kind: VaultKind): string {
   if (kind === "card") return t("Card");
   if (kind === "contact") return t("Contact");
   if (kind === "api_key") return t("API key");
+  if (kind === "browser_cookies") return t("Browser cookies");
   return t("Variable");
 }
 
@@ -47,6 +49,7 @@ export function vaultKindSymbol(kind: VaultKind): { ios: string; android: string
   if (kind === "contact") return { ios: "mappin.and.ellipse", android: "location-outline" };
   if (kind === "api_key")
     return { ios: "chevron.left.forwardslash.chevron.right", android: "code-slash" };
+  if (kind === "browser_cookies") return { ios: "globe", android: "globe-outline" };
   return { ios: "terminal", android: "terminal-outline" };
 }
 
@@ -63,6 +66,7 @@ export function vaultItemSubtitle(item: BotSecretMetadata): string {
   return sharedSubtitle(item, {
     apiKey: t("API key"),
     expires: (date) => t("Expires {date}", { date }),
+    cookies: (count) => t("{count} cookies", { count }),
   });
 }
 
@@ -121,6 +125,9 @@ export type VaultDraft = {
   cardName: string;
   billing: string;
   contact: Record<keyof ContactFields, string>;
+  /** A pasted cookie export, and the User-Agent saved with it. */
+  cookies: string;
+  userAgent: string;
 };
 
 const EMPTY_CONTACT = Object.fromEntries(CONTACT_FIELDS.map((field) => [field, ""])) as Record<
@@ -145,6 +152,8 @@ export function emptyDraft(fields: readonly LoginFieldInput[] = []): VaultDraft 
     cardName: "",
     billing: "",
     contact: EMPTY_CONTACT,
+    cookies: "",
+    userAgent: "",
   };
 }
 
@@ -166,6 +175,8 @@ export function itemDraft(
     note: item.note,
     origin: item.origin,
     variable: commandVariableName(item.name),
+    // A cookie item is refreshed by pasting a new export; its User-Agent carries over.
+    ...(item.auth.type === "browser_cookies" ? { userAgent: item.auth.userAgent ?? "" } : {}),
     ...(card
       ? {
           number: card.number,
@@ -265,6 +276,11 @@ export function valueStarted(kind: VaultKind, draft: VaultDraft): boolean {
 /** What a new item of a kind saves to: everything but its value. */
 export function draftDestination(kind: VaultKind, draft: VaultDraft): VaultDestination {
   if (kind === "login") return { origin: draft.origin.trim(), auth: { type: "login" } };
+  if (kind === "browser_cookies")
+    return {
+      origin: draft.origin.trim(),
+      auth: { type: "browser_cookies", cookieCount: 0, earliestExpiry: null },
+    };
   if (kind === "api_key") return { origin: draft.origin.trim(), auth: apiAuth(draft) };
   if (kind === "variable") return { name: variableName(draft), auth: { type: "command" } };
   return { auth: { type: kind } };
@@ -284,7 +300,39 @@ export type VaultSave = {
   value?: string;
   title?: string;
   note?: string;
+  /** A pasted cookie export, saved through vault.importCookies instead of vault.put. */
+  cookieImport?: { content: string; userAgent?: string };
 };
+
+/** What a cookie import reports: metadata only, never a cookie value. */
+export type CookieImportSummary = VaultImportCookiesResult;
+
+/** The title and note a save sends. A title only when it changed: a saved item shows one read
+ * from it when it has none of its own, and keeping that would freeze it when the card or contact
+ * changes later. */
+function draftLabels(draft: VaultDraft, saved?: VaultItem) {
+  const title = draft.title.trim();
+  return {
+    ...(title !== (saved?.title ?? "") ? { title } : {}),
+    note: draft.note.trim(),
+  };
+}
+
+/**
+ * What a cookie import sends, or undefined while nothing was pasted. The server parses the export
+ * and builds the item's metadata, so the destination's counts are placeholders. An edit refreshes
+ * the saved item; a new one is named from the site.
+ */
+export function draftCookieSave(draft: VaultDraft, saved?: VaultItem): VaultSave | undefined {
+  const content = draft.cookies.trim();
+  if (!content || !draft.origin.trim()) return undefined;
+  const userAgent = draft.userAgent.trim();
+  return {
+    destination: saved ? itemDestination(saved) : draftDestination("browser_cookies", draft),
+    cookieImport: { content, ...(userAgent ? { userAgent } : {}) },
+    ...draftLabels(draft, saved),
+  };
+}
 
 /** What Save sends, or undefined while the draft can't be saved. */
 export function draftSave(
@@ -292,13 +340,7 @@ export function draftSave(
   draft: VaultDraft,
   saved?: VaultItem,
 ): VaultSave | undefined {
-  // A title is sent only when it changed: a saved item shows one read from it when it has none of
-  // its own, and keeping that would freeze it when the card or contact changes later.
-  const title = draft.title.trim();
-  const labels = {
-    ...(title !== (saved?.title ?? "") ? { title } : {}),
-    note: draft.note.trim(),
-  };
+  const labels = draftLabels(draft, saved);
   if (saved) {
     if (!valueStarted(kind, draft)) return { destination: itemDestination(saved), ...labels };
     const value = draftValue(kind, draft);
