@@ -95,10 +95,7 @@ export async function createThreadMessageInTransaction(
 ) {
   const thread = await tx.thread.update({
     where: { id: input.threadId },
-    data: {
-      nextMessageSeq: { increment: 1 },
-      unread: (input.markUnread ?? input.role === "bot") ? true : undefined,
-    },
+    data: { nextMessageSeq: { increment: 1 } },
     select: { nextMessageSeq: true },
   });
   await assertRunCanWriteHistory(tx, input.runId, {

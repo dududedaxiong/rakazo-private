@@ -12,6 +12,7 @@ import { lockSpaceForContentCreation } from "./spaces.js";
 import {
   activeRunSelection,
   activeRunStatuses,
+  isThreadUnread,
   previewFromBlocks,
   primaryActiveRun,
 } from "./thread-listing.js";
@@ -29,7 +30,8 @@ type GroupRecord = {
   updatedAt: Date;
   thread: {
     id: string;
-    unread: boolean;
+    lastReadSeq: number;
+    nextMessageSeq: number;
     messages: Array<{ blocks: unknown }>;
   } | null;
   members: Array<{
@@ -48,7 +50,8 @@ type SpaceGroupRecord = Pick<
   "id" | "spaceId" | "name" | "pinned" | "sectionId" | "updatedAt" | "members"
 > & {
   thread: {
-    unread: boolean;
+    lastReadSeq: number;
+    nextMessageSeq: number;
     messages: Array<{ blocks: unknown }>;
   } | null;
 };
@@ -76,7 +79,7 @@ function mapGroup(group: GroupRecord): Group {
     members: mapGroupMembers(group.members),
     threadId: group.thread.id,
     preview,
-    unread: group.thread.unread,
+    unread: isThreadUnread(group.thread),
     updatedAt: group.updatedAt.toISOString(),
     createdAt: group.createdAt.toISOString(),
   };
@@ -92,7 +95,7 @@ function mapSpaceGroup(group: SpaceGroupRecord): SpaceGroup {
     sectionId: group.sectionId,
     members: mapGroupMembers(group.members),
     preview: previewFromBlocks(group.thread.messages[0]?.blocks),
-    unread: group.thread.unread,
+    unread: isThreadUnread(group.thread),
     updatedAt: group.updatedAt.toISOString(),
   };
 }
@@ -315,7 +318,8 @@ export function createGroupRepos(prisma: PrismaClient) {
           thread: {
             select: {
               id: true,
-              unread: true,
+              lastReadSeq: true,
+              nextMessageSeq: true,
             },
           },
           members: groupInclude.members,

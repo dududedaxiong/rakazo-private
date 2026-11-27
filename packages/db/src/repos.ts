@@ -38,6 +38,7 @@ import { BotSectionNameConflictError, IsolationError } from "./scope.js";
 import { lockSpaceForContentCreation } from "./spaces.js";
 import {
   activeRunSelection,
+  isThreadUnread,
   previewFromBlocks,
   primaryActiveRun,
   threadRunStatus,
@@ -119,7 +120,7 @@ function mapBot(
     memoryScope: string | null;
     createdAt: Date;
     updatedAt: Date;
-    thread: { id: string; unread: boolean } | null;
+    thread: { id: string; lastReadSeq: number; nextMessageSeq: number } | null;
     computer: { scope: string } | null;
     voiceId?: string | null;
     autoSpeak?: boolean;
@@ -202,7 +203,7 @@ function mapBot(
     pinned: bot.pinned,
     sectionId: bot.sectionId,
     archivedAt: bot.archivedAt?.toISOString() ?? null,
-    unread: bot.thread.unread,
+    unread: isThreadUnread(bot.thread),
     parentBotId: bot.parentBotId,
     memoryScope: bot.memoryScope as "isolated" | "shared" | null,
     threadId: bot.thread.id,
@@ -309,7 +310,8 @@ export function createRepos(
         thread: {
           select: {
             id: true,
-            unread: true,
+            lastReadSeq: true,
+            nextMessageSeq: true,
           },
         },
         runs: activeRunSelection,
@@ -330,7 +332,7 @@ export function createRepos(
         notifyOnFinish: bot.notifyOnFinish,
         pinned: bot.pinned,
         sectionId: bot.sectionId,
-        unread: bot.thread.unread,
+        unread: isThreadUnread(bot.thread),
         parentBotId: bot.parentBotId,
         preview: previewFromBlocks(bot.thread.messages[0]?.blocks),
         status: activeRun?.status ?? "idle",

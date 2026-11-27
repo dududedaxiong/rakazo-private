@@ -7310,7 +7310,7 @@ describe("bot model auth on save", () => {
       teamChatRules: "",
       webhookSecretId: null,
       spawnKey: null,
-      thread: { id: "thread-1", unread: false, messages: [], runs: [] },
+      thread: { id: "thread-1", lastReadSeq: -1, nextMessageSeq: 0, messages: [], runs: [] },
       computer: null,
       runs: [],
     };
@@ -8416,7 +8416,7 @@ describe("openai-compatible enabled models", () => {
       teamChatRules: "",
       webhookSecretId: null,
       spawnKey: null,
-      thread: { id: "thread-1", unread: false, messages: [], runs: [] },
+      thread: { id: "thread-1", lastReadSeq: -1, nextMessageSeq: 0, messages: [], runs: [] },
       computer: null,
       runs: [],
     };

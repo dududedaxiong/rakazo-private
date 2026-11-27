@@ -257,7 +257,9 @@ export async function clearThread(
         spaceId: input.spaceId,
         ...(input.groupId ? { groupId: input.groupId } : { botId: input.botId }),
       },
-      data: { unread: false },
+      // Clearing discards the compaction summary of the deleted history; the
+      // update also takes the thread row lock before the runs are cancelled.
+      data: { historyCompactionSummary: null },
       select: { nextMessageSeq: true, historyCompactionGeneration: true, userId: true },
     });
     const activeRuns = await tx.run.findMany({
@@ -298,9 +300,12 @@ export async function clearThread(
       // nextMessageSeq is not reset, so mark every deleted message as already compacted.
       // Leaving the cursor behind would let compaction re-summarize deleted history (or, reset
       // to null, immediately re-fire on the fresh conversation).
+      // The cleared thread is read: move the cursor to the latest message so no unread
+      // dot survives the deleted history.
       await tx.thread.update({
         where: { id: input.threadId },
         data: {
+          lastReadSeq: thread.nextMessageSeq - 1,
           historyCompactedUpToSeq: thread.nextMessageSeq - 1,
           historyCompactionSummary: null,
           historyCompactionGeneration: { increment: 1 },

@@ -73,6 +73,15 @@ export async function withLatestBotRuns<T extends { thread: { id: string } | nul
   });
 }
 
+/**
+ * A thread is unread when a message arrived after the last one the user read.
+ * The `threads.unread` column was dropped (migration 20261202120100), so the
+ * dot is derived from the read cursor instead of a stored flag.
+ */
+export function isThreadUnread(thread: { lastReadSeq: number; nextMessageSeq: number }): boolean {
+  return thread.lastReadSeq < thread.nextMessageSeq - 1;
+}
+
 export function previewFromBlocks(blocks: unknown): string {
   const rows = Array.isArray(blocks) ? blocks : [];
   for (const block of rows) {

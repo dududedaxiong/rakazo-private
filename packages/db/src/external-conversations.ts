@@ -8,7 +8,7 @@ import type { PrismaClient } from "./client.js";
 import { Prisma } from "./client.js";
 import { withNewestThreadMessages } from "./preview-messages.js";
 import { IsolationError } from "./scope.js";
-import { previewFromBlocks } from "./thread-listing.js";
+import { isThreadUnread, previewFromBlocks } from "./thread-listing.js";
 
 interface ExternalBotSenderRow {
   externalConversationId: string;
@@ -40,7 +40,8 @@ export function createExternalConversationRepos(prisma: PrismaClient) {
           thread: {
             select: {
               id: true,
-              unread: true,
+              lastReadSeq: true,
+              nextMessageSeq: true,
             },
           },
         },
@@ -103,7 +104,7 @@ export function createExternalConversationRepos(prisma: PrismaClient) {
           ],
           threadId: conversation.thread.id,
           preview: previewFromBlocks(conversation.thread.messages[0]?.blocks),
-          unread: conversation.thread.unread,
+          unread: isThreadUnread(conversation.thread),
           updatedAt: conversation.updatedAt.toISOString(),
         };
       });

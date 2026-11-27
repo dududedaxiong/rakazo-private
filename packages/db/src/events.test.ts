@@ -5322,6 +5322,7 @@ describe("clearThread", () => {
     expect(tx.thread.update).toHaveBeenCalledWith({
       where: { id: "thread-1" },
       data: {
+        lastReadSeq: 41,
         historyCompactedUpToSeq: 41,
         historyCompactionSummary: null,
         historyCompactionGeneration: { increment: 1 },

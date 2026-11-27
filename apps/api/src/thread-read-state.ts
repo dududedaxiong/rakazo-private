@@ -5,8 +5,15 @@ import { IsolationError, THREAD_LOCK_TRANSACTION_OPTIONS } from "@rakazo_mickvvw
 import type { ThreadTarget } from "./thread-target.js";
 
 /**
+ * A thread is unread when a message arrived after the last one the user read
+ * (`lastReadSeq < nextMessageSeq - 1`). The `threads.unread` column was dropped
+ * (migration 20261202120100), so the dot and the "New" divider are derived from
+ * the read cursor instead of a stored flag.
+ */
+
+/**
  * Marks the thread read up to its latest message. Returns the seq the user had read up
- * to before, or null when the chat wasn't unread or nothing new arrived; the first
+ * to before, or null when nothing new arrived since the last read; the first
  * answer of a visit places the "New" divider. A message landing mid-update makes the
  * conditional write miss, so it retries rather than marking that message read; a chat
  * that stays that busy is read under the thread's row lock instead.
@@ -20,14 +27,14 @@ export async function markThreadRead(
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const thread = await prisma.thread.findFirst({
       where,
-      select: { unread: true, lastReadSeq: true, nextMessageSeq: true },
+      select: { lastReadSeq: true, nextMessageSeq: true },
     });
     if (!thread) return null;
     const latestSeq = thread.nextMessageSeq - 1;
-    if (!thread.unread && thread.lastReadSeq >= latestSeq) return null;
+    if (thread.lastReadSeq >= latestSeq) return null;
     const result = await prisma.thread.updateMany({
       where: { ...where, lastReadSeq: thread.lastReadSeq, nextMessageSeq: thread.nextMessageSeq },
-      data: { unread: false, lastReadSeq: latestSeq },
+      data: { lastReadSeq: latestSeq },
     });
     if (result.count > 1) throw new IsolationError();
     if (result.count === 1) return dividerSeq(thread, latestSeq);
@@ -37,23 +44,23 @@ export async function markThreadRead(
     await tx.$queryRaw`SELECT id FROM threads WHERE id = ${target.threadId} FOR UPDATE`;
     const thread = await tx.thread.findFirst({
       where,
-      select: { unread: true, lastReadSeq: true, nextMessageSeq: true },
+      select: { lastReadSeq: true, nextMessageSeq: true },
     });
     if (!thread) return null;
     const latestSeq = thread.nextMessageSeq - 1;
-    if (!thread.unread && thread.lastReadSeq >= latestSeq) return null;
+    if (thread.lastReadSeq >= latestSeq) return null;
     const result = await tx.thread.updateMany({
       where,
-      data: { unread: false, lastReadSeq: latestSeq },
+      data: { lastReadSeq: latestSeq },
     });
     if (result.count > 1) throw new IsolationError();
     return dividerSeq(thread, latestSeq);
   }, THREAD_LOCK_TRANSACTION_OPTIONS);
 }
 
-/** A chat only gets a divider when its unread dot was on, so replies seen live never do. */
-function dividerSeq(thread: { unread: boolean; lastReadSeq: number }, latestSeq: number) {
-  return thread.unread && thread.lastReadSeq < latestSeq ? thread.lastReadSeq : null;
+/** A chat only gets a divider when it had unread messages, so replies seen live never do. */
+function dividerSeq(thread: { lastReadSeq: number }, latestSeq: number) {
+  return thread.lastReadSeq < latestSeq ? thread.lastReadSeq : null;
 }
 
 /**
@@ -73,7 +80,7 @@ export async function markThreadUnreadFrom(
   if (!message) throw new ORPCError("NOT_FOUND");
   const result = await prisma.thread.updateMany({
     where: { id: target.threadId, spaceId: actor.spaceId },
-    data: { unread: true, lastReadSeq: message.seq - 1 },
+    data: { lastReadSeq: message.seq - 1 },
   });
   if (result.count > 1) throw new IsolationError();
 }
@@ -84,13 +91,29 @@ export async function setThreadUnreadState(
   target: ThreadTarget,
   unread: boolean,
 ) {
+  const thread = await prisma.thread.findFirst({
+    where: { id: target.threadId, spaceId: actor.spaceId },
+    select: { lastReadSeq: true, nextMessageSeq: true },
+  });
+  if (!thread) return;
+  const latestSeq = thread.nextMessageSeq - 1;
+  // Marking unread moves the cursor back before the latest message; marking read
+  // moves it to the latest message. A thread already in the desired state is a no-op.
+  if (unread) {
+    if (thread.lastReadSeq < latestSeq) return;
+    if (latestSeq < 0) return;
+  } else if (thread.lastReadSeq >= latestSeq) {
+    return;
+  }
+  const targetSeq = unread ? latestSeq - 1 : latestSeq;
   const result = await prisma.thread.updateMany({
     where: {
       id: target.threadId,
       spaceId: actor.spaceId,
-      unread: { not: unread },
+      lastReadSeq: thread.lastReadSeq,
+      nextMessageSeq: thread.nextMessageSeq,
     },
-    data: { unread },
+    data: { lastReadSeq: targetSeq },
   });
   if (result.count > 1) throw new IsolationError();
 }

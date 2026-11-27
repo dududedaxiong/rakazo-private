@@ -52,7 +52,7 @@ BotArk（`src/renderer/src/store/delivery.ts`、`replyWatchdog.ts`）已经把�
 
 ### 5. 不在本批
 
-BotArk 的第三条（原子写 JSON + 读失败抛错）不立项，只记一笔：App 本地存储（草稿、收藏缓存、设置）是“读－改－写”，存在同一类丢数据风险，下次碰 App 本地存储时按此审查；同时给 [durable-execution-recovery-records](../../proposed/feature/2026-11-16-durable-execution-recovery-records.md) 那份长任务落库笔记补一个实现细节——落库的每一步必须是崩溃安全的，否则恢复点本身就是坏的。
+BotArk 的第三条（原子写 JSON + 读失败抛错）不立项，只记一笔：App 本地存储（草稿、收藏缓存、设置）是“读－改－写”，存在同一类丢数据风险，下次碰 App 本地存储时按此审查；同时给 durable-execution-recovery-records 那份长任务落库笔记补一个实现细节——落库的每一步必须是崩溃安全的，否则恢复点本身就是坏的。
 
 ### 6. Rebase 到产物页修复头（r2）与 zip 标题措辞
 

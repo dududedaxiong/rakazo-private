@@ -469,7 +469,6 @@ describePostgres("account import (PostgreSQL)", () => {
     expect(thread).toMatchObject({
       nextMessageSeq: 2,
       lastReadSeq: 1,
-      unread: false,
       historyCompactionSummary: "summary of the secret plan",
     });
     const messages = await system.message.findMany({

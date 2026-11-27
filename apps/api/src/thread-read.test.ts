@@ -1,7 +1,7 @@
 import type { Actor } from "@rakazo_mickvvw/contracts";
 import type { PrismaClient } from "@rakazo_mickvvw/db";
 import { describe, expect, it, vi } from "vitest";
-import { markThreadRead, markThreadUnreadFrom } from "./thread-read-state.js";
+import { markThreadRead, markThreadUnreadFrom, setThreadUnreadState } from "./thread-read-state.js";
 import type { ThreadTarget } from "./thread-target.js";
 
 const actor = {
@@ -12,7 +12,9 @@ const actor = {
 } satisfies Actor;
 const target = { kind: "bot", botId: "bot-1", threadId: "thread-1" } as ThreadTarget;
 
-type Row = { unread: boolean; lastReadSeq: number; nextMessageSeq: number };
+// Unread is derived from the read cursor: lastReadSeq < nextMessageSeq - 1.
+// There is no stored unread flag anymore (the threads.unread column was dropped).
+type Row = { lastReadSeq: number; nextMessageSeq: number };
 
 /** A thread row that applies a conditional write only when the guard still matches. */
 function threadStore(initial: Row, beforeWrite?: (row: Row) => void) {
@@ -43,9 +45,9 @@ function threadStore(initial: Row, beforeWrite?: (row: Row) => void) {
 
 describe("markThreadRead", () => {
   it("returns where the user had read up to and moves the cursor to the latest message", async () => {
-    const store = threadStore({ unread: true, lastReadSeq: 3, nextMessageSeq: 7 });
+    const store = threadStore({ lastReadSeq: 3, nextMessageSeq: 7 });
     await expect(markThreadRead(store.prisma, actor, target)).resolves.toBe(3);
-    expect(store.row()).toEqual({ unread: false, lastReadSeq: 6, nextMessageSeq: 7 });
+    expect(store.row()).toEqual({ lastReadSeq: 6, nextMessageSeq: 7 });
     expect(store.updateMany).toHaveBeenCalledWith({
       where: {
         id: "thread-1",
@@ -53,28 +55,29 @@ describe("markThreadRead", () => {
         lastReadSeq: 3,
         nextMessageSeq: 7,
       },
-      data: { unread: false, lastReadSeq: 6 },
+      data: { lastReadSeq: 6 },
     });
     await expect(markThreadRead(store.prisma, actor, target)).resolves.toBeNull();
   });
 
-  it("clears a chat marked unread by hand without inventing a divider", async () => {
-    const store = threadStore({ unread: true, lastReadSeq: 6, nextMessageSeq: 7 });
+  it("does nothing for a chat already read to the latest message", async () => {
+    const store = threadStore({ lastReadSeq: 6, nextMessageSeq: 7 });
     await expect(markThreadRead(store.prisma, actor, target)).resolves.toBeNull();
-    expect(store.row().unread).toBe(false);
+    expect(store.updateMany).not.toHaveBeenCalled();
+    expect(store.row()).toEqual({ lastReadSeq: 6, nextMessageSeq: 7 });
   });
 
   it("retries when a message lands between the read and the write", async () => {
-    const store = threadStore({ unread: true, lastReadSeq: 3, nextMessageSeq: 7 }, (row) => {
+    const store = threadStore({ lastReadSeq: 3, nextMessageSeq: 7 }, (row) => {
       row.nextMessageSeq = 8;
     });
     await expect(markThreadRead(store.prisma, actor, target)).resolves.toBe(3);
-    expect(store.row()).toEqual({ unread: false, lastReadSeq: 7, nextMessageSeq: 8 });
+    expect(store.row()).toEqual({ lastReadSeq: 7, nextMessageSeq: 8 });
     expect(store.updateMany).toHaveBeenCalledTimes(2);
   });
 
   it("moves the cursor under the thread's row lock when replies keep landing mid-write", async () => {
-    let row: Row = { unread: true, lastReadSeq: 3, nextMessageSeq: 7 };
+    let row: Row = { lastReadSeq: 3, nextMessageSeq: 7 };
     const findFirst = vi.fn(async () => ({ ...row }));
     // Every conditional write loses to a new reply.
     const updateMany = vi.fn(
@@ -111,17 +114,17 @@ describe("markThreadRead", () => {
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
       timeout: 20_000,
     });
-    expect(row).toEqual({ unread: false, lastReadSeq: 9, nextMessageSeq: 10 });
+    expect(row).toEqual({ lastReadSeq: 9, nextMessageSeq: 10 });
   });
 
-  it("moves the cursor of a chat that wasn't unread without placing a divider", async () => {
-    const store = threadStore({ unread: false, lastReadSeq: -1, nextMessageSeq: 1 });
-    await expect(markThreadRead(store.prisma, actor, target)).resolves.toBeNull();
-    expect(store.row()).toEqual({ unread: false, lastReadSeq: 0, nextMessageSeq: 1 });
+  it("places the divider at the start for a thread the user hasn't read", async () => {
+    const store = threadStore({ lastReadSeq: -1, nextMessageSeq: 1 });
+    await expect(markThreadRead(store.prisma, actor, target)).resolves.toBe(-1);
+    expect(store.row()).toEqual({ lastReadSeq: 0, nextMessageSeq: 1 });
   });
 
   it("does nothing for a thread outside the actor's space", async () => {
-    const store = threadStore({ unread: true, lastReadSeq: 3, nextMessageSeq: 7 });
+    const store = threadStore({ lastReadSeq: 3, nextMessageSeq: 7 });
     await expect(
       markThreadRead(store.prisma, { ...actor, spaceId: "space-2" }, target),
     ).resolves.toBeNull();
@@ -131,17 +134,47 @@ describe("markThreadRead", () => {
 
 describe("markThreadUnreadFrom", () => {
   it("moves the cursor to just before the message so the next open starts New there", async () => {
-    const store = threadStore({ unread: false, lastReadSeq: 6, nextMessageSeq: 7 });
+    const store = threadStore({ lastReadSeq: 6, nextMessageSeq: 7 });
     await markThreadUnreadFrom(store.prisma, actor, target, "message-4");
-    expect(store.row()).toEqual({ unread: true, lastReadSeq: 3, nextMessageSeq: 7 });
+    expect(store.row()).toEqual({ lastReadSeq: 3, nextMessageSeq: 7 });
     await expect(markThreadRead(store.prisma, actor, target)).resolves.toBe(3);
   });
 
   it("refuses a message that isn't in the thread", async () => {
-    const store = threadStore({ unread: false, lastReadSeq: 6, nextMessageSeq: 7 });
+    const store = threadStore({ lastReadSeq: 6, nextMessageSeq: 7 });
     await expect(
       markThreadUnreadFrom(store.prisma, actor, target, "message-elsewhere"),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
-    expect(store.row()).toEqual({ unread: false, lastReadSeq: 6, nextMessageSeq: 7 });
+    expect(store.row()).toEqual({ lastReadSeq: 6, nextMessageSeq: 7 });
+  });
+});
+
+describe("setThreadUnreadState", () => {
+  it("moves the cursor back before the latest message to mark a read chat unread", async () => {
+    const store = threadStore({ lastReadSeq: 6, nextMessageSeq: 7 });
+    await setThreadUnreadState(store.prisma, actor, target, true);
+    expect(store.row()).toEqual({ lastReadSeq: 5, nextMessageSeq: 7 });
+    await expect(markThreadRead(store.prisma, actor, target)).resolves.toBe(5);
+  });
+
+  it("does nothing when the chat is already unread", async () => {
+    const store = threadStore({ lastReadSeq: 3, nextMessageSeq: 7 });
+    await setThreadUnreadState(store.prisma, actor, target, true);
+    expect(store.updateMany).not.toHaveBeenCalled();
+    expect(store.row()).toEqual({ lastReadSeq: 3, nextMessageSeq: 7 });
+  });
+
+  it("moves the cursor to the latest message to mark an unread chat read", async () => {
+    const store = threadStore({ lastReadSeq: 3, nextMessageSeq: 7 });
+    await setThreadUnreadState(store.prisma, actor, target, false);
+    expect(store.row()).toEqual({ lastReadSeq: 6, nextMessageSeq: 7 });
+    await expect(markThreadRead(store.prisma, actor, target)).resolves.toBeNull();
+  });
+
+  it("does nothing when the chat is already read", async () => {
+    const store = threadStore({ lastReadSeq: 6, nextMessageSeq: 7 });
+    await setThreadUnreadState(store.prisma, actor, target, false);
+    expect(store.updateMany).not.toHaveBeenCalled();
+    expect(store.row()).toEqual({ lastReadSeq: 6, nextMessageSeq: 7 });
   });
 });

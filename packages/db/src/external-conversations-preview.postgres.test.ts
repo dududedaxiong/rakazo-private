@@ -352,7 +352,7 @@ describePostgres("team-chat conversation previews (PostgreSQL)", () => {
           botId: input.botId,
           userId,
           updatedAt: input.updatedAt,
-          thread: { create: { spaceId: input.spaceId, userId, unread: input.unread } },
+          thread: { create: { spaceId: input.spaceId, userId } },
         },
         include: { thread: { select: { id: true } } },
       }),
@@ -380,7 +380,10 @@ describePostgres("team-chat conversation previews (PostgreSQL)", () => {
       await runAsSystem("test fixture", () =>
         owner.thread.update({
           where: { id: threadId },
-          data: { nextMessageSeq: input.messageCount, unread: input.unread },
+          data: {
+            nextMessageSeq: input.messageCount,
+            lastReadSeq: input.unread ? -1 : input.messageCount - 1,
+          },
         }),
       );
     }
