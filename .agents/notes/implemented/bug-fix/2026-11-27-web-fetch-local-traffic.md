@@ -33,3 +33,4 @@ Status: implemented
 - `web_search` 不受影响，仍走服务器链。
 - 测试：新 `client-web-provider.test.ts` 20 个（手机成功、截断与开窗、8 种回落原因、缺上下文跳过、offset 超限先抛、意外错误直抛、取消停等、search 不派发、工厂 fake 不包与默认包）；`client-browser-provider` 24 个、`client-task-dispatcher` 11 个、`web-conformance` 等 6 个文件 83 个、`executor-readonly-approval` 与 `builtin-tool-bridge` 275 个全过；`executor.test.ts` 的 4 个 `userTurnInstructions` 失败是基线就有的提示词文本断言，与本次改动无关；`tsc` 在未改动的两个文件上有 4 个既存错误。
 - 已知缺口：手机抓完之后快照/点击仍看不到那页（最小版固有断点，同浏览器通道）；busy/限流仍是“先数后插”。
+- 后续：这篇“不改系统提示词的工具指引”一点已被 [web_fetch 指引与浏览器下载守卫](./2026-11-27-web-fetch-guidance-browser-download-guard.md) 翻转：两次重测证明模型不选 `web_fetch` 时 provider 层再对也走不到，指引必须同步改。

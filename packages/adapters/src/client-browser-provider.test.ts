@@ -177,15 +177,36 @@ describe("ClientBrowserProvider", () => {
     expect(result.url).toBe("https://server.example/page");
   });
 
-  it("does not dispatch downloads, or navigates without a bot or run", async () => {
+  it("navigates via the phone even when a downloads folder is set", async () => {
     const fallback = stubFallback();
     const dispatcher = stubDispatcher();
     const provider = new ClientBrowserProvider({ fallback, dispatcher });
-    await provider.navigate(COMPUTER, { url: "https://x.example/", downloads: "dl" }, context());
+    const result = await provider.navigate(
+      COMPUTER,
+      { url: "https://phone.example/page", downloads: "dl" },
+      context(),
+    );
+    // `downloads` is only the folder a download would be saved to; it is
+    // set on every navigation, so it must not skip the phone.
+    expect(dispatcher.fetchPage).toHaveBeenCalledWith({
+      userId: "user-1",
+      spaceId: "space-1",
+      botId: "bot-1",
+      runId: "run-1",
+      url: "https://phone.example/page",
+    });
+    expect(fallback.navigate).not.toHaveBeenCalled();
+    expect(result.tree).toBe("phone page text");
+  });
+
+  it("does not dispatch when navigating without a bot or run", async () => {
+    const fallback = stubFallback();
+    const dispatcher = stubDispatcher();
+    const provider = new ClientBrowserProvider({ fallback, dispatcher });
     await provider.navigate(COMPUTER, { url: "https://x.example/" }, context({ botId: undefined }));
     await provider.navigate(COMPUTER, { url: "https://x.example/" }, context({ runId: undefined }));
     expect(dispatcher.fetchPage).not.toHaveBeenCalled();
-    expect(fallback.navigate).toHaveBeenCalledTimes(3);
+    expect(fallback.navigate).toHaveBeenCalledTimes(2);
   });
 
   it("lets unexpected dispatcher errors propagate instead of hiding them", async () => {

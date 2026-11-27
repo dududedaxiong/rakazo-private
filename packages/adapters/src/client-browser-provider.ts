@@ -75,9 +75,12 @@ export class ClientBrowserProvider implements BrowserProvider {
     request: BrowserNavigateRequest,
     context: AdapterContext,
   ): Promise<BrowserNavigateResult> {
-    // The phone cannot save downloads, and a task needs a bot and a run to
-    // attribute it to; both go straight to the server browser.
-    if (request.downloads || !context.botId || !context.runId) {
+    // A task needs a bot and a run to attribute it to; without them, go
+    // straight to the server browser. `request.downloads` is only the folder
+    // a download would be saved to — it is set on every navigation, so it
+    // must not skip the phone: a genuine download fails fast on the phone
+    // and falls back to the server browser, which saves the file normally.
+    if (!context.botId || !context.runId) {
       this.clientNavigatedRuns.delete(context.runId ?? "");
       return this.fallback.navigate(computer, request, context);
     }

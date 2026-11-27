@@ -832,7 +832,7 @@ export const builtinAgentTools: ConnectorTool[] = [
   {
     name: "web_fetch",
     description:
-      "Fetch a public http(s) page and return readable text (title + content). Read-only; no JavaScript. Use after web_search when you need the page itself.",
+      "Fetch any public http(s) URL and return readable text (title + content). Read-only; no JavaScript. Use it for a direct URL too, not only after web_search. Never use shell curl/wget to fetch a URL; use web_fetch.",
     inputSchema: {
       type: "object",
       properties: {

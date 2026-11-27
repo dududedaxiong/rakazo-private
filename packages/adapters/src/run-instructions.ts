@@ -151,7 +151,7 @@ function webLookupClause(disabled?: ReadonlySet<string>): string | undefined {
   const search = builtinOffered(disabled, "web_search");
   const fetch = builtinOffered(disabled, "web_fetch");
   if (search && fetch) {
-    return "Use web_search and web_fetch to look something up or read a page without a computer.";
+    return "Use web_search and web_fetch to look something up or read a page without a computer. web_fetch reads any public URL, not only after web_search; never fetch a URL with shell curl/wget.";
   }
   if (search) return "Use web_search to look something up without a computer.";
   if (fetch) return "Use web_fetch to read a page without a computer.";
