@@ -60,6 +60,7 @@ vi.mock("@lingui/react/macro", () => {
 });
 
 import { REVEAL_MS, VaultSettings } from "./VaultSettings";
+import { VaultItemEditor } from "./vault/VaultItemEditor";
 
 const FAKE_VALUE = "fake-value-SENTINEL-1";
 const stamp = "2026-09-01T00:00:00.000Z";
@@ -423,6 +424,30 @@ describe("VaultSettings new items", () => {
     expect(editor()).toBeNull();
   });
 
+  it("keeps Save reachable on a phone screen with a long cookie pasted", async () => {
+    await render();
+    await startNew("login");
+    await click("vault-editor-mode-cookies");
+    await type(field("Site"), "https://example.com");
+    const longExport = Array.from(
+      { length: 30 },
+      (_, index) => `cookie-${index}=test-value-${index};`,
+    ).join("\n");
+    const cookies = field("Cookies") as HTMLTextAreaElement;
+    await type(cookies, longExport);
+    // The box caps its height and scrolls inside instead of growing past Save.
+    expect(cookies.classList.contains("max-h-48")).toBe(true);
+    expect(cookies.classList.contains("overflow-y-auto")).toBe(true);
+    expect(cookies.classList.contains("min-h-32")).toBe(true);
+    // The action row sticks to the bottom of the visible area while fields scroll.
+    const save = buttonIn(editor(), "Save")!;
+    expect(save.disabled).toBe(false);
+    const actions = save.parentElement!;
+    expect(actions.classList.contains("sticky")).toBe(true);
+    expect(actions.classList.contains("bottom-0")).toBe(true);
+    expect(actions.classList.contains("bg-dialog")).toBe(true);
+  });
+
   it("names a variable as it is exported, and refuses a reserved one", async () => {
     await render();
     await startNew("variable");
@@ -437,6 +462,31 @@ describe("VaultSettings new items", () => {
       destination: { name: "netbird_setup_key", origin: "", auth: { type: "command" } },
       value: FAKE_VALUE,
     });
+  });
+});
+
+describe("VaultItemEditor dialog", () => {
+  it("caps the dialog height and scrolls inside on a phone screen", async () => {
+    await act(async () => {
+      root.render(
+        <QueryClientProvider client={queryClient}>
+          <VaultItemEditor
+            open
+            onOpenChange={() => {}}
+            kind="login"
+            mode="ask"
+            heading="Test login"
+            onSave={async () => undefined}
+            failureText={() => "Could not save"}
+          />
+        </QueryClientProvider>,
+      );
+    });
+    await flush();
+    const dialog = byTestId("vault-editor");
+    // A tall form scrolls inside the dialog instead of running off the viewport.
+    expect(dialog.className).toContain("max-h-[calc(100dvh-2rem)]");
+    expect(dialog.classList.contains("overflow-y-auto")).toBe(true);
   });
 });
 

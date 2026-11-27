@@ -143,7 +143,10 @@ export function VaultItemEditor({
   const busyRef = useRef(false);
   return (
     <Dialog open={open} onOpenChange={(next) => !busyRef.current && onOpenChange(next)}>
-      <DialogContent data-testid="vault-editor" className="sm:max-w-md">
+      <DialogContent
+        data-testid="vault-editor"
+        className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-md"
+      >
         <EditorForm
           {...props}
           busyRef={busyRef}
@@ -575,7 +578,7 @@ function EditorForm({
               disabled={busy}
               placeholder={t`Paste the exported cookies`}
               onChange={(event) => setCookieContent(event.target.value)}
-              className="min-h-32 font-mono text-body-sm"
+              className="max-h-48 min-h-32 overflow-y-auto font-mono text-body-sm"
             />
           </FormField>
           <ul className="-mt-2 list-none space-y-0.5 text-body-sm text-muted-foreground">
@@ -754,7 +757,7 @@ function EditorForm({
           {error}
         </p>
       ) : null}
-      <div className="mt-1 flex items-center gap-2">
+      <div className="sticky bottom-0 mt-1 flex items-center gap-2 bg-dialog py-2">
         {asking && entryMode === "login" ? (
           <div className="flex items-center gap-2">
             <Switch
