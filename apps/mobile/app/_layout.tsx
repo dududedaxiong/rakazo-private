@@ -26,6 +26,7 @@ import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanima
 import { AppErrorBoundary } from "../components/app-error-boundary";
 import { CallCard } from "../components/CallCard";
 import { chatRouteHeader } from "../components/chat-route-header";
+import { ClientTaskHost } from "../components/client-task-host";
 import { CodeCopyButton } from "../components/code-copy-button";
 import { ComputerUpdateProgress } from "../components/computer-update-progress";
 import { floatingHeaderOptions, glassHeaderOptions } from "../components/glass-title";
@@ -46,6 +47,7 @@ import { clearAppBadge } from "../lib/app-badge";
 import { loadAppearancePreference, mobileTokens } from "../lib/appearance";
 import { replaceWithSignIn } from "../lib/auth-routing";
 import { AvatarScreenFocus } from "../lib/avatar-life";
+import { startClientTaskRunner } from "../lib/client-task-runner";
 import { installClientUpdates, watchForegroundUpdates } from "../lib/client-update";
 import { loadHapticsPreference } from "../lib/haptics";
 import { bootstrapI18n, useI18n } from "../lib/i18n";
@@ -282,7 +284,12 @@ function LayoutContent() {
   );
   useEffect(() => {
     if (!ready) return;
-    return startIncomingCalls();
+    const stopCalls = startIncomingCalls();
+    const stopTasks = startClientTaskRunner();
+    return () => {
+      stopCalls();
+      stopTasks();
+    };
   }, [ready, callSession]);
   const screen = analyticsScreen(usePathname());
   useEffect(() => setMobileMonitoringScreen(screen), [screen]);
@@ -569,6 +576,7 @@ function LayoutContent() {
               <MessageActionSheetHost />
               <CallCard />
               <IncomingCall />
+              <ClientTaskHost />
             </ThemeProvider>
           </ChatContentProviders>
         ) : (
