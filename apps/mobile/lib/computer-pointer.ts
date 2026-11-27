@@ -28,6 +28,13 @@ export type ComputerPointer = {
   height: number;
   /** Monotonic sequence; a new pointer is a new object, so views re-render. */
   seq: number;
+  /**
+   * Magnified snapshot of the screen around the click, as a data URL, or
+   * undefined when no snapshot was captured yet (see
+   * computer-pointer-snapshot). The lens in the marker renders this; without
+   * it the marker falls back to the dot, ring and arrow.
+   */
+  snapshot?: string;
 };
 
 let pointer: ComputerPointer | null = null;
@@ -78,6 +85,19 @@ export function extractComputerPointer(event: {
 export function setComputerPointer(next: Omit<ComputerPointer, "seq">): void {
   seq += 1;
   pointer = { ...next, seq };
+  notify();
+}
+
+/**
+ * Attach a magnified snapshot to the current pointer. Only the pointer with
+ * the matching sequence takes it — a late snapshot for an older click is
+ * ignored, and once a snapshot is set a second one (another screen face
+ * capturing the same click) does not replace it, so the marker's timer is
+ * not restarted twice.
+ */
+export function setComputerPointerSnapshot(seqNumber: number, dataUrl: string): void {
+  if (!pointer || pointer.seq !== seqNumber || pointer.snapshot) return;
+  pointer = { ...pointer, snapshot: dataUrl };
   notify();
 }
 

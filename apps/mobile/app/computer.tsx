@@ -61,6 +61,10 @@ import {
   isComputerKeyboardReadyMessage,
   NATIVE_COMPUTER_KEYBOARD_BOOT,
 } from "../lib/computer-keyboard";
+import {
+  handleComputerPointerSnapshotMessage,
+  useComputerPointerSnapshot,
+} from "../lib/computer-pointer-snapshot";
 import type { ComputerScreenChromeMode } from "../lib/computer-screen-chrome";
 import { computerScreenChromeScript } from "../lib/computer-screen-chrome";
 import { tabletopLayout } from "../lib/fold-layout";
@@ -111,6 +115,12 @@ export default function Computer() {
   const [releasing, setReleasing] = useState(false);
   const autoBooted = useRef<string | null>(null);
   const screenWebViewRef = useRef<WebView>(null);
+  // The preview is a second screen face with its own WebView; a new AI
+  // pointer asks both faces for a magnified snapshot of the click, and the
+  // store keeps the first one that comes back.
+  const previewWebViewRef = useRef<WebView>(null);
+  useComputerPointerSnapshot(screenWebViewRef);
+  useComputerPointerSnapshot(previewWebViewRef);
   const keyboardGate = useRef({
     key: "",
     session: 0,
@@ -522,6 +532,7 @@ export default function Computer() {
               url={embeddedScreenUrl}
               interactive={false}
               chromeMode="float"
+              webViewRef={previewWebViewRef}
               onScreenState={onScreenState}
               onLoadStart={onScreenLoadStart}
               onRendererLost={() => void reloadScreen()}
@@ -892,6 +903,9 @@ function ScreenWebView({
         .filter(Boolean)
         .join("\n")}
       onMessage={(event) => {
+        // A pointer snapshot answers a capture request; it is not screen
+        // state or keyboard traffic.
+        if (handleComputerPointerSnapshotMessage(event.nativeEvent.data)) return;
         const state = fromScreenPage(
           event.nativeEvent.url,
           sourceUrl.current,

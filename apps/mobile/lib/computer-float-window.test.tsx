@@ -44,10 +44,13 @@ const screens = vi.hoisted(() => ({
   source: "",
   injectedJavaScript: "",
   injectedJavaScriptBeforeContentLoaded: "",
+  injectJavaScript: vi.fn(),
+  onMessage: undefined as ((event: { nativeEvent: { data: string } }) => void) | undefined,
   onError: undefined as (() => void) | undefined,
   onHttpError: undefined as (() => void) | undefined,
   onLoad: undefined as (() => void) | undefined,
 }));
+const animatedLayouts = vi.hoisted(() => [] as Array<(event: unknown) => void>);
 const ios26 = vi.hoisted(() => ({ value: false }));
 const panConfigs = vi.hoisted(() => [] as Array<Record<string, unknown>>);
 const animatedLoops = vi.hoisted(() => ({ started: 0, stopped: 0 }));
@@ -189,8 +192,10 @@ vi.mock("react-native", () => {
     },
     Animated: {
       Value: MockAnimatedValue,
-      View: (props: { children?: ReactNode }) =>
-        createElement("div", { "data-animated": true }, props.children),
+      View: (props: { children?: ReactNode; onLayout?: (event: unknown) => void }) => {
+        if (props.onLayout) animatedLayouts.push(props.onLayout);
+        return createElement("div", { "data-animated": true }, props.children);
+      },
       loop,
       sequence,
       timing,
@@ -205,6 +210,13 @@ vi.mock("react-native", () => {
     StyleSheet: { create: <T,>(styles: T) => styles, hairlineWidth: 1 },
     Text: MockText,
     View: MockView,
+    Image: (props: { source?: { uri?: string }; style?: unknown }) => {
+      const flat = flatStyle(props.style);
+      return createElement("img", {
+        src: props.source?.uri ?? "",
+        "data-width": typeof flat.width === "number" ? flat.width : undefined,
+      });
+    },
     useWindowDimensions: () => ({ width: 393, height: 852, scale: 3, fontScale: 1 }),
   };
 });
@@ -231,17 +243,25 @@ vi.mock("react-native-webview", () => ({
     source?: { uri: string };
     injectedJavaScript?: string;
     injectedJavaScriptBeforeContentLoaded?: string;
+    onMessage?: (event: { nativeEvent: { data: string } }) => void;
     onError?: () => void;
     onHttpError?: () => void;
     onLoad?: () => void;
+    ref?: { current: { injectJavaScript: (script: string) => void } | null };
   }) => {
     screens.source = props.source?.uri ?? "";
     screens.injectedJavaScript = props.injectedJavaScript ?? "";
     screens.injectedJavaScriptBeforeContentLoaded =
       props.injectedJavaScriptBeforeContentLoaded ?? "";
+    screens.onMessage = props.onMessage;
     screens.onError = props.onError;
     screens.onHttpError = props.onHttpError;
     screens.onLoad = props.onLoad;
+    // The real WebView exposes injectJavaScript through its ref; the mock
+    // does the same so the pointer-snapshot hook can ask for a capture.
+    if (props.ref && typeof props.ref === "object") {
+      props.ref.current = { injectJavaScript: screens.injectJavaScript };
+    }
     return createElement("iframe", { title: "screen" });
   },
 }));
@@ -394,6 +414,9 @@ describe("computer float window", () => {
     activityStore.listeners.clear();
     avatarState.props = undefined;
     screens.source = "";
+    screens.onMessage = undefined;
+    screens.injectJavaScript.mockClear();
+    animatedLayouts.length = 0;
     screens.onError = undefined;
     screens.onHttpError = undefined;
     screens.onLoad = undefined;
@@ -589,6 +612,48 @@ describe("computer float window", () => {
     expect(screens.injectedJavaScriptBeforeContentLoaded).toContain("rakazo-screen-chrome");
     expect(screens.injectedJavaScriptBeforeContentLoaded).toContain("#mobile-key-bar");
     expect(screens.injectedJavaScriptBeforeContentLoaded).toContain("#mobile-view-controls");
+  });
+
+  it("shows the magnified lens when a snapshot arrives for the click", async () => {
+    // A distinct bot, so the module-level pointer does not leak into the
+    // other tests in this file (they all use bot-1).
+    const pointerMod = await import("./computer-pointer");
+    respond(runningStatus, "https://screen.example.test/embed");
+    const opened = renderFloat({ open: true, botId: "bot-lens" });
+    await settle();
+    await act(async () => {
+      pointerMod.setComputerPointer({
+        botId: "bot-lens",
+        x: 640,
+        y: 400,
+        width: 1280,
+        height: 800,
+      });
+    });
+    // The float's WebView is asked to capture the region around the click.
+    expect(screens.injectJavaScript).toHaveBeenCalled();
+    expect(String(screens.injectJavaScript.mock.calls[0]![0])).toContain("rakazo-pointer-snapshot");
+    // Give the marker its size, then feed the snapshot back through the
+    // WebView's message channel.
+    await act(async () => {
+      for (const onLayout of animatedLayouts) {
+        onLayout({ nativeEvent: { layout: { width: 300, height: 200 } } });
+      }
+    });
+    const seq = pointerMod.computerPointer()?.seq;
+    await act(async () => {
+      screens.onMessage?.({
+        nativeEvent: {
+          data: JSON.stringify({
+            type: "rakazo-pointer-snapshot",
+            seq,
+            dataUrl: "data:image/jpeg;base64,fakelens",
+          }),
+        },
+      });
+    });
+    const image = opened.querySelector("img");
+    expect(image?.getAttribute("src")).toBe("data:image/jpeg;base64,fakelens");
   });
 
   it("shows the offline state when the screen fails to load, without throwing", async () => {

@@ -164,4 +164,26 @@ describe("computer pointer store", () => {
     });
     expect(container?.textContent).toBe("bot-1:100,50#2");
   });
+
+  it("attaches a snapshot only to the pointer with the matching sequence", async () => {
+    const mod = await freshModule();
+    // No pointer yet: a snapshot has nowhere to land.
+    mod.setComputerPointerSnapshot(1, "data:image/jpeg,first");
+    expect(mod.computerPointer()).toBeNull();
+    mod.setComputerPointer({ botId: "bot-1", x: 640, y: 360, width: 1280, height: 720 });
+    const seq = mod.computerPointer()?.seq;
+    expect(seq).toBeTypeOf("number");
+    // A stale sequence is ignored.
+    mod.setComputerPointerSnapshot((seq ?? 0) + 1, "data:image/jpeg,stale");
+    expect(mod.computerPointer()?.snapshot).toBeUndefined();
+    // The matching sequence lands.
+    mod.setComputerPointerSnapshot(seq ?? -1, "data:image/jpeg,first");
+    expect(mod.computerPointer()?.snapshot).toBe("data:image/jpeg,first");
+    // A second snapshot for the same click does not replace the first.
+    mod.setComputerPointerSnapshot(seq ?? -1, "data:image/jpeg,second");
+    expect(mod.computerPointer()?.snapshot).toBe("data:image/jpeg,first");
+    // A new pointer starts without a snapshot.
+    mod.setComputerPointer({ botId: "bot-1", x: 100, y: 50, width: 1280, height: 720 });
+    expect(mod.computerPointer()?.snapshot).toBeUndefined();
+  });
 });
