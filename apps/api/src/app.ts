@@ -735,6 +735,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     notifications,
     pushTokens,
     events,
+    realtime,
     ticketChanges,
     boardEvents,
     auth,

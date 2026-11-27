@@ -1138,6 +1138,51 @@ export const appContract = {
     screenUrl: oc.input(botId).output(z.object({ url: z.string().nullable() })),
     heartbeat: oc.input(botId).output(z.object({ ok: z.literal(true) })),
   },
+  /**
+   * The phone side of the client browser task channel: the App subscribes
+   * while it is open, fetches pages over the user's local traffic, and
+   * reports results back. The server dispatches only while the user's
+   * local-traffic preference is on and their presence row is fresh.
+   */
+  clientTasks: {
+    /** Live while the App is open: one frame per pending fetch, plus heartbeats. */
+    subscribe: oc.output(
+      eventIterator(
+        z.object({
+          type: z.enum(["client.task.requested", "heartbeat"]),
+          taskId: Id.optional(),
+          url: z.string().url().optional(),
+          kind: z.literal("fetch").optional(),
+          expiresAt: z.string().optional(),
+        }),
+      ),
+    ),
+    /**
+     * Reports a task's verdict. Completing a row that is no longer pending
+     * is a silent no-op, so a late result never overwrites a timeout.
+     */
+    complete: oc
+      .input(
+        z.object({
+          taskId: Id,
+          status: z.enum(["completed", "failed", "declined"]),
+          result: z
+            .object({
+              url: z.string().url(),
+              title: z.string().max(1_000),
+              text: z.string().max(128_000),
+              truncated: z.boolean(),
+              error: z.string().max(1_000).optional(),
+            })
+            .optional(),
+        }),
+      )
+      .output(z.object({ ok: z.literal(true) })),
+    /** Syncs the App's local-traffic switch to the server. */
+    setPreference: oc
+      .input(z.object({ enabled: z.boolean() }))
+      .output(z.object({ ok: z.literal(true), localTrafficEnabled: z.boolean() })),
+  },
   memory: {
     list: oc
       .input(z.object({ botId: Id.optional(), scope: z.enum(["bot", "user"]).optional() }))

@@ -7,6 +7,7 @@ import type {
   NotificationProvider,
   PaymentWalletProvider,
   ProductAnalytics,
+  RealtimeFanout,
   SandboxProvider,
   SecretStore,
   TransactionalEmailProvider,
@@ -43,6 +44,7 @@ import { boardsRoutes } from "./routes/boards.js";
 import { botPackagesRoutes } from "./routes/bot-packages.js";
 import { botsRoutes } from "./routes/bots.js";
 import { capabilitiesRoutes } from "./routes/capabilities.js";
+import { clientTasksRoutes } from "./routes/client-tasks.js";
 import { computerRoutes } from "./routes/computer.js";
 import { computerProviderRoutes } from "./routes/computer-provider.js";
 import { connectionsRoutes } from "./routes/connections.js";
@@ -85,6 +87,8 @@ export interface RouterDeps {
   paymentWallet?: PaymentWalletProvider | null;
   prisma: PrismaClient;
   events: ThreadEvents;
+  /** Fanout for live signals (client task dispatch and completion); absent polls instead. */
+  realtime?: RealtimeFanout;
   boardEvents: BoardEvents;
   ticketChanges: TicketChangeNotifier;
   auth: Auth;
@@ -199,6 +203,7 @@ export function createRouter(deps: RouterDeps) {
     ...promptTemplatesRoutes(ctx),
     ...favoritesRoutes(ctx),
     ...threadsRoutes(ctx),
+    ...clientTasksRoutes(ctx),
     ...computerRoutes(ctx),
     ...computerProviderRoutes(ctx),
     ...memoryRoutes(ctx),
