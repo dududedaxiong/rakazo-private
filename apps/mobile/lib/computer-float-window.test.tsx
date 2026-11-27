@@ -592,6 +592,42 @@ describe("computer float window", () => {
     expect(opened.querySelector('button[aria-label="Reconnect"]')).not.toBeNull();
   });
 
+  it("recovers from a refused screen capability instead of showing the proxy error", async () => {
+    vi.useFakeTimers();
+    let screenUrl: string | null = "https://screen.example.test/embed?cap=old";
+    rpc.mockImplementation(async (method: string) => {
+      if (method === "computer/status") return runningStatus;
+      if (method === "computer/screenUrl") return { url: screenUrl };
+      return {};
+    });
+    const opened = renderFloat({ open: true });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1300);
+    });
+    expect(screens.source).toBe("https://screen.example.test/embed?cap=old");
+    // The proxy refuses the capability, and the refused page finishes loading right after:
+    // the load event must not clear the failure, and the raw proxy text must never stand
+    // in for the desktop.
+    act(() => {
+      screens.onHttpError?.();
+    });
+    act(() => {
+      screens.onLoad?.();
+    });
+    expect(opened.querySelector('iframe[title="screen"]')).toBeNull();
+    expect(opened.textContent).toContain("Computer temporarily offline");
+    // The next poll re-reads the screen, and the fresh capability loads on its own.
+    const before = calls("computer/screenUrl").length;
+    screenUrl = "https://screen.example.test/embed?cap=new";
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2500);
+    });
+    expect(calls("computer/screenUrl").length).toBeGreaterThan(before);
+    expect(screens.source).toBe("https://screen.example.test/embed?cap=new");
+    expect(opened.querySelector('iframe[title="screen"]')).not.toBeNull();
+    expect(opened.textContent).toContain("Online");
+  });
+
   it("shows the loading state while the screen URL has not arrived", async () => {
     vi.useFakeTimers();
     respond(runningStatus, null);

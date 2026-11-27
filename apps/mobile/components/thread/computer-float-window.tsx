@@ -216,6 +216,9 @@ export function ComputerFloatWindow({
   // The user was sent to system settings to grant the overlay permission.
   const pendingPermission = useRef(false);
   const heldScreenUrl = useRef<string | null>(null);
+  // The screen URL whose load the proxy refused. A refused page still finishes loading, so
+  // its load event must not clear the failure it just reported.
+  const failedScreenUrlRef = useRef<string | null>(null);
   // The latest screen URL, for the pop-out button and the permission return.
   const floatScreenUrlRef = useRef<string | null>(null);
   const onCloseRef = useRef(onClose);
@@ -246,7 +249,15 @@ export function ComputerFloatWindow({
           setComputer(status);
           setStatusError(false);
         },
-        onScreen: setScreenUrl,
+        onScreen: (url) => {
+          setScreenUrl(url);
+          // A fresh capability replaces a refused one: the window loads it on its own. The
+          // same URL is the refused seal again, so it stays offline instead of reloading it.
+          if (url && url !== failedScreenUrlRef.current) {
+            failedScreenUrlRef.current = null;
+            setScreenFailed(false);
+          }
+        },
         onReady: () => undefined,
         onInitialError: () => setStatusError(true),
       }),
@@ -270,6 +281,7 @@ export function ComputerFloatWindow({
     setComputer(null);
     setScreenUrl(null);
     setScreenFailed(false);
+    failedScreenUrlRef.current = null;
     setStatusError(false);
     setSize({ width: COMPUTER_FLOAT_WIDTH });
     setPosition(null);
@@ -396,6 +408,7 @@ export function ComputerFloatWindow({
   const embeddedScreenStream = embeddedScreenUrl ? screenStreamKey(embeddedScreenUrl) : null;
   useEffect(() => {
     setScreenFailed(false);
+    failedScreenUrlRef.current = null;
   }, [embeddedScreenStream]);
 
   const width = clampFloatWidth(size.width, windowSize.width, windowSize.height);
@@ -579,6 +592,7 @@ export function ComputerFloatWindow({
 
   function retry() {
     setScreenFailed(false);
+    failedScreenUrlRef.current = null;
     setStatusError(false);
     setPhase("loading");
     if (loadingTimer.current) clearTimeout(loadingTimer.current);
@@ -586,6 +600,14 @@ export function ComputerFloatWindow({
     void refreshController
       .refresh({ screenAttempts: SCREEN_URL_OPEN_ATTEMPTS })
       .catch(() => undefined);
+  }
+
+  // A refused screen capability is read again on the next poll instead of being kept as
+  // the fresh one; the window loads the fresh URL once it arrives.
+  function failScreen() {
+    refreshController.invalidateScreen();
+    failedScreenUrlRef.current = loadedScreenUrl;
+    setScreenFailed(true);
   }
 
   // A rotated capability re-points the system window at the new screen URL.
@@ -700,9 +722,16 @@ export function ComputerFloatWindow({
             style={styles.screen}
             source={{ uri: loadedScreenUrl }}
             scrollEnabled={false}
-            onLoad={() => setScreenFailed(false)}
-            onError={() => setScreenFailed(true)}
-            onHttpError={() => setScreenFailed(true)}
+            onLoad={() => {
+              // A refused page finishes loading too; only a different URL means the
+              // desktop is back.
+              if (loadedScreenUrl !== failedScreenUrlRef.current) {
+                failedScreenUrlRef.current = null;
+                setScreenFailed(false);
+              }
+            }}
+            onError={failScreen}
+            onHttpError={failScreen}
           />
         ) : null}
         {viewState === "loading" ? (
