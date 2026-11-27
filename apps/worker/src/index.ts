@@ -211,6 +211,7 @@ async function main() {
     notifications,
     jobs,
     events,
+    realtime,
     onTicketChange: ticketChanges,
     // Bots send from their own address through the same provider as account email.
     email,

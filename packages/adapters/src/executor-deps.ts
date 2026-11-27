@@ -12,6 +12,7 @@ import type {
   MemoryStore,
   NotificationProvider,
   PaymentWalletProvider,
+  RealtimeFanout,
   SandboxProvider,
   SecretStore,
   TransactionalEmailProvider,
@@ -70,6 +71,12 @@ export interface ExecutorDeps {
   mediaGeneration?: MediaGenerationProvider;
   /** Page browser (DOM refs) on the bot computer. Defaults to the sandbox live browser when supported. */
   browser?: BrowserProvider;
+  /**
+   * Realtime fanout for client task dispatch (phone fetches); absent, the
+   * dispatcher polls the task row instead. Passed through from the process
+   * that owns the fanout (worker/API), never constructed here.
+   */
+  realtime?: RealtimeFanout;
   secretHttp?: RemoteTransportDependencies;
   /** Allow RFC1918 / Docker-network MCP URLs when the operator enabled the escape. */
   mcpAllowPrivateEndpoint?: boolean;

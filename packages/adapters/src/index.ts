@@ -43,6 +43,7 @@ export { loadUserIncomingCalls, settleCallRequest } from "./call-request.js";
 export * from "./cartesia-voice.js";
 export * from "./chat-sdk-surface.js";
 export * from "./child-bots.js";
+export * from "./client-browser-provider.js";
 export * from "./client-task-dispatcher.js";
 export * from "./cloud-agent-emulator.js";
 export * from "./cloud-agent-factory.js";

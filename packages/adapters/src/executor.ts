@@ -59,7 +59,7 @@ import {
   loadRunCodeRedactions,
   loadRunLoginRedactions,
 } from "./bot-secrets.js";
-import { createBrowserProvider } from "./browser-provider-factory.js";
+import { createClientBrowserProvider } from "./client-browser-provider.js";
 import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
@@ -258,7 +258,12 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
   const web = executorDeps.web ?? createWebProvider();
   const mediaGeneration = executorDeps.mediaGeneration ?? createMediaGenerationProvider();
   const browser =
-    executorDeps.browser ?? createBrowserProvider(undefined, { sandbox: executorDeps.sandbox });
+    executorDeps.browser ??
+    createClientBrowserProvider(undefined, {
+      sandbox: executorDeps.sandbox,
+      prisma: executorDeps.prisma,
+      realtime: executorDeps.realtime,
+    });
   const cloudAgent = executorDeps.cloudAgent;
   const resolveConnectedModel = resolveConnectedRunModel.bind(undefined, executorDeps);
 

@@ -631,6 +631,7 @@ async function buildApp(overrides: CreateAppOverrides): Promise<AppHandles> {
     notifications,
     jobs,
     events,
+    realtime,
     onTicketChange: ticketChanges,
     email,
     messaging,
