@@ -8,6 +8,7 @@ import {
   browserResultForModel,
   browserSnapshotFromTool,
   isLoginPage,
+  isSignedInPage,
   parseBrowserActions,
   redactBrowserResult,
 } from "./browser-tools.js";
@@ -1600,6 +1601,75 @@ describe("browser_navigate with saved cookies", () => {
     });
   });
 
+  describe("isSignedInPage", () => {
+    it("is true when the snapshot has a sign-out link or button", () => {
+      expect(
+        isSignedInPage({
+          url: "https://example.com/",
+          tree: '- link "Log out" [e1]',
+          elements: [{ ref: "e1", role: "link", name: "Log out" }],
+        }),
+      ).toBe(true);
+      expect(
+        isSignedInPage({
+          url: "https://example.com/",
+          tree: '- button "Sign out" [e1]',
+          elements: [{ ref: "e1", role: "button", name: "Sign out" }],
+        }),
+      ).toBe(true);
+      // The tree alone carries the signal; the elements are not required.
+      expect(isSignedInPage({ url: "https://example.com/", tree: '- link "退出" [e1]' })).toBe(
+        true,
+      );
+      expect(
+        isSignedInPage({
+          url: "https://example.com/",
+          elements: [{ ref: "e1", role: "button", name: "登出" }],
+        }),
+      ).toBe(true);
+      expect(
+        isSignedInPage({
+          url: "https://example.com/",
+          tree: '- link "退出登录" [e1]',
+          elements: [{ ref: "e1", role: "link", name: "退出登录" }],
+        }),
+      ).toBe(true);
+    });
+
+    it("is false for an ordinary page, a profile link alone, and an exit-fullscreen button", () => {
+      expect(
+        isSignedInPage({
+          url: "https://example.com/",
+          tree: '- link "Home" [e1]\n- button "Search" [e2]',
+          elements: [
+            { ref: "e1", role: "link", name: "Home" },
+            { ref: "e2", role: "button", name: "Search" },
+          ],
+        }),
+      ).toBe(false);
+      // A profile link can sit on a logged-out page and lead to its sign-in page.
+      expect(
+        isSignedInPage({
+          url: "https://example.com/",
+          tree: '- link "My profile" [e1]\n- link "个人中心" [e2]',
+          elements: [
+            { ref: "e1", role: "link", name: "My profile" },
+            { ref: "e2", role: "link", name: "个人中心" },
+          ],
+        }),
+      ).toBe(false);
+      // "退出全屏" is an exit-fullscreen button, not a logout.
+      expect(
+        isSignedInPage({
+          url: "https://example.com/",
+          tree: '- button "退出全屏" [e1]',
+          elements: [{ ref: "e1", role: "button", name: "退出全屏" }],
+        }),
+      ).toBe(false);
+      expect(isSignedInPage({ url: "https://example.com/" })).toBe(false);
+    });
+  });
+
   it("passes saved cookies and UA to the browser, and nothing when there are none", async () => {
     const { seen, browser } = stubNavigate({ url: "https://example.com/", title: "Example" });
     await browserNavigateFromTool(
@@ -1688,5 +1758,52 @@ describe("browser_navigate with saved cookies", () => {
       url: "https://example.com/",
     });
     expect(noCookies).not.toHaveProperty("note");
+  });
+
+  it("says the cookies signed in when the page shows a sign-out control", async () => {
+    const signedInPage = {
+      url: "https://example.com/",
+      title: "Example",
+      tree: '- link "退出" [e1]\n- link "My profile" [e2]',
+      elements: [
+        { ref: "e1", role: "link", name: "退出" },
+        { ref: "e2", role: "link", name: "My profile" },
+      ],
+    };
+    const { browser } = stubNavigate(signedInPage);
+    const result = await browserNavigateFromTool(
+      browser,
+      computer,
+      context,
+      { url: "https://example.com/" },
+      { cookies: testCookies, findSiteLogin: async () => ({ name: "example-login" }) },
+    );
+    const note = String((result as { note?: string }).note);
+    expect(note).toContain("signed in");
+    expect(note).toContain("do not re-verify");
+    expect(JSON.stringify(result)).not.toContain("test-value");
+  });
+
+  it("prefers the did-not-sign-in note when the page is both a login page and shows a sign-out control", async () => {
+    const contradictory = {
+      url: "https://example.com/login",
+      title: "Sign in",
+      tree: '- textbox "Password" [e1]\n- link "Log out" [e2]',
+      elements: [
+        { ref: "e1", role: "textbox", name: "Password" },
+        { ref: "e2", role: "link", name: "Log out" },
+      ],
+    };
+    const { browser } = stubNavigate(contradictory);
+    const result = await browserNavigateFromTool(
+      browser,
+      computer,
+      context,
+      { url: "https://example.com/" },
+      { cookies: testCookies, findSiteLogin: async () => null },
+    );
+    const note = String((result as { note?: string }).note);
+    expect(note).toContain("did not sign in");
+    expect(note).not.toContain("signed in");
   });
 });

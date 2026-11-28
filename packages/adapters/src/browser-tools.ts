@@ -90,6 +90,14 @@ const COOKIE_SIGNIN_FAILED =
   "The saved cookies for this site did not sign in (they may have expired). Do not retry them.";
 
 /**
+ * What the bot is told when saved cookies signed in: the page shows a sign-out control.
+ * The mirror of the failure note above. It names the login state outright so the model
+ * takes it from this result instead of spending more steps re-verifying it.
+ */
+const COOKIE_SIGNED_IN =
+  "The saved cookies signed in: the page shows a sign-out control. Take this as the login state; do not re-verify the login with shell commands or another snapshot.";
+
+/**
  * What the bot is told when saved cookies did not sign in: the failure, and either the saved
  * account login to sign in with or that there is none. The note names only the login item;
  * a cookie value never appears in it.
@@ -121,6 +129,34 @@ async function cookieFallbackNote(
     return `${COOKIE_SIGNIN_FAILED} A saved account login named "${login.name}" exists for this site — sign in with it using browser_act fill_secret.`;
   }
   return `${COOKIE_SIGNIN_FAILED} No saved account login exists for this site.`;
+}
+
+/** A sign-out control's whole name: "Log out", "Sign out", "退出登录", "登出", "注销", "退出". */
+const SIGN_OUT_NAME = /^(log[-\s]?out|sign[-\s]?out|退出登录|登出|注销|退出)$/i;
+
+/**
+ * Whether a navigation landed on a signed-in page: the snapshot shows a sign-out control.
+ * The mirror of isLoginPage, for the success case it does not cover. Only a link or button
+ * counts — a page can mention signing out in plain text while logged out — and only its
+ * whole name, so "退出全屏" (exit fullscreen) is not a logout. A profile/account link is
+ * deliberately not a signal: a logged-out page can show one that leads to its sign-in page,
+ * and a false "signed in" is worse than saying nothing, because the bot would skip a login
+ * it still needs. When nothing conclusive is found the caller says nothing and the model
+ * judges the snapshot as before.
+ */
+export function isSignedInPage(result: Pick<BrowserNavigateResult, "tree" | "elements">): boolean {
+  if (
+    result.elements?.some(
+      (element) =>
+        (element.role === "link" || element.role === "button") && SIGN_OUT_NAME.test(element.name),
+    )
+  )
+    return true;
+  for (const line of (result.tree ?? "").split("\n")) {
+    const match = /^\s*-\s+(?:link|button)\s+"((?:[^"\\]|\\.)*)"/.exec(line);
+    if (match?.[1] && SIGN_OUT_NAME.test(match[1])) return true;
+  }
+  return false;
 }
 
 /** Fills a saved website login's field by its label; the model never supplies or sees the value. */
@@ -231,6 +267,16 @@ export async function browserNavigateFromTool(
       return {
         ...formatted,
         note: formatted.note ? `${note}\n${formatted.note}` : note,
+      };
+    }
+    // The success case the branch above does not cover: cookies carried and the page shows a
+    // sign-out control means the cookies signed in. Say so outright, so the model takes the
+    // login state from this result instead of spending more steps re-verifying it. The failure
+    // branch above stays first: a page showing both is treated as not signed in.
+    if (options.cookies?.length && isSignedInPage(formatted)) {
+      return {
+        ...formatted,
+        note: formatted.note ? `${COOKIE_SIGNED_IN}\n${formatted.note}` : COOKIE_SIGNED_IN,
       };
     }
     return formatted;
