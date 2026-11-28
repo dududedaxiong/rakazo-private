@@ -172,6 +172,16 @@ describe("system float window native contract", () => {
     expect(takeover).not.toContain("#mobile-controls{display");
     expect(takeover).not.toContain("#mobile-key-bar,#mobile-controls");
     expect(takeover).toContain("#mobile-view-controls{display:none!important}");
+    // The page starts both rows with the `hidden` attribute and only
+    // removes it when its own attach runs on an interactive page, so
+    // takeover chrome forces them visible too: the bar must show even
+    // if that un-hide did not run. (On its own this cannot drive
+    // anything — a view-only page never attaches the button handlers —
+    // so the takeover must also load the interactive URL.)
+    expect(takeover).toContain("#mobile-key-bar[hidden]{display:flex!important}");
+    expect(takeover).toContain("#mobile-controls[hidden]{display:flex!important}");
+    expect(takeover).toContain("#mobile-paste[hidden],#mobile-keyboard[hidden],");
+    expect(takeover).toContain("#mobile-trackpad[hidden]{display:block!important}");
     // The double quotes are escaped in the Kotlin source, so pin the
     // escaped form here; the kotlinc run below checks the real values.
     for (const arrow of ["ArrowLeft", "ArrowDown", "ArrowUp", "ArrowRight"]) {

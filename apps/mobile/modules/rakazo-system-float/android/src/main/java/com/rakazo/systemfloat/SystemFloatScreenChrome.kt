@@ -47,8 +47,18 @@ fun screenChromeCss(mode: SystemFloatScreenChromeMode): String {
     SystemFloatScreenChromeMode.TAKEOVER -> {
       // Keep #mobile-key-bar (Esc/Tab/Ctrl) and #mobile-controls
       // (paste/keyboard/trackpad) visible; hide only the +/- zoom and
-      // scroll cluster and the four arrow keys.
+      // scroll cluster and the four arrow keys. The page starts both
+      // rows with the `hidden` attribute and only removes it when its
+      // own attach runs on an interactive page, so force them visible
+      // here too — the bar must show even if that un-hide did not run.
+      // On its own this cannot drive anything: a view-only page never
+      // attaches the button handlers or sends input, so the takeover
+      // must also load the interactive URL.
       "#mobile-view-controls{display:none!important}\n" +
+        "#mobile-key-bar[hidden]{display:flex!important}\n" +
+        "#mobile-controls[hidden]{display:flex!important}\n" +
+        "#mobile-paste[hidden],#mobile-keyboard[hidden]," +
+        "#mobile-trackpad[hidden]{display:block!important}\n" +
         "#mobile-key-bar [data-key=\"ArrowLeft\"]," +
         "#mobile-key-bar [data-key=\"ArrowDown\"]," +
         "#mobile-key-bar [data-key=\"ArrowUp\"]," +
