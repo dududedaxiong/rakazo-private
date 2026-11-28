@@ -287,6 +287,88 @@ export async function expireStaleComputerControl(
   return clearInactiveUserComputerControl(deps.prisma, computer.id).catch(() => false);
 }
 
+/** Outcome of pausing the bot's active run so the user can take the screen. */
+export type PauseActiveRunForTakeoverOutcome = "paused" | "waiting" | "idle" | "changed";
+
+/**
+ * Pause the bot's active run through the existing takeover pause, so a user
+ * takeover does not have to stop the bot first. The run lands in
+ * `waiting_takeover` and the turn notices because the pause clears its lease.
+ *
+ * - "paused": this call paused the run; the grant must bind it.
+ * - "waiting": the run is already `waiting_takeover` (the bot asked first, or
+ *   asked while this call raced); the grant must bind it, but this call did
+ *   not pause anything.
+ * - "idle": the run finished or is gone; grant as an idle takeover.
+ * - "changed": the run is still active but not pausable right now (claimed
+ *   but not running yet, or its attempt moved on); the caller refuses and the
+ *   user retries once the run is running or done.
+ */
+export async function pauseActiveRunForTakeover(
+  deps: Pick<RouterDeps, "prisma" | "events">,
+  input: {
+    spaceId: string;
+    botId: string;
+    computerId: string;
+    runId: string;
+  },
+): Promise<PauseActiveRunForTakeoverOutcome> {
+  const run = await deps.prisma.run.findUnique({
+    where: { id: input.runId },
+    select: { status: true, threadId: true, leaseOwner: true, leaseFence: true },
+  });
+  if (!run || !(ACTIVE_RUN_STATUSES as readonly string[]).includes(run.status)) return "idle";
+  if (run.status === "waiting_takeover") return "waiting";
+  if (run.status !== "running" || !run.leaseOwner) return "changed";
+  const attempt = await deps.prisma.attempt.findFirst({
+    where: { runId: input.runId, status: "running" },
+    orderBy: { startedAt: "desc" },
+    select: { id: true, fence: true },
+  });
+  if (!attempt || attempt.fence !== run.leaseFence) return "changed";
+  let paused: boolean | { continuationRunId: string };
+  try {
+    paused = await deps.events.pauseRunForTakeover({
+      spaceId: input.spaceId,
+      threadId: run.threadId,
+      botId: input.botId,
+      runId: input.runId,
+      attemptId: attempt.id,
+      leaseOwner: run.leaseOwner,
+      leaseFence: run.leaseFence,
+      reason: "The user took over the computer.",
+      computerId: input.computerId,
+    });
+  } catch (error) {
+    // The run flipped to waiting_takeover under the pause but its attempt was
+    // already gone: treat it like a failed pause and re-read below.
+    if (
+      error instanceof Error &&
+      error.message === "Active run attempt was not available to pause"
+    ) {
+      paused = false;
+    } else {
+      throw error;
+    }
+  }
+  if (paused === true) return "paused";
+  if (typeof paused === "object") {
+    // The run was already released (checkpoint `takeover` / `takeover-skipped`)
+    // while this call raced it; that release owns the continuation.
+    return "idle";
+  }
+  // The run left `running` with this lease between the read and the pause.
+  const current = await deps.prisma.run.findUnique({
+    where: { id: input.runId },
+    select: { status: true },
+  });
+  if (!current || !(ACTIVE_RUN_STATUSES as readonly string[]).includes(current.status)) {
+    return "idle";
+  }
+  if (current.status === "waiting_takeover") return "waiting";
+  return "changed";
+}
+
 /** When the user already holds control during waiting_takeover, bind controlRunId so
  * takeoverRequested becomes true and release can resume the waiting run. */
 export async function bindWaitingTakeoverToControl(

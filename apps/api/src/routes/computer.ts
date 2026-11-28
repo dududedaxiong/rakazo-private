@@ -60,6 +60,7 @@ import {
   expireStaleComputerControl,
   holdsComputerControl,
   keepComputerAwake,
+  pauseActiveRunForTakeover,
   releaseComputerControl,
   runComputerReplace,
   withViewOnly,
@@ -365,6 +366,7 @@ export function computerRoutes(ctx: RouterContext) {
           return {
             leaseId: bot.computer.controlLeaseId!,
             expiresAt: bot.computer.controlLeaseExpiresAt!.toISOString(),
+            runPaused: false,
           };
         }
         if (hasActiveComputerControl(bot.computer) && bot.computer.controlBotId !== bot.id) {
@@ -403,6 +405,13 @@ export function computerRoutes(ctx: RouterContext) {
         if (waitingForTakeover && executionRun?.userId !== context.actor.userId) {
           throw new ORPCError("CONFLICT", { message: "The bot is waiting for someone else" });
         }
+        // A run that is still working pauses instead of refusing: the user takes
+        // the screen, drives, and releases to resume it. Only the run's own
+        // person may pause it; anyone else still has to stop the bot first.
+        let runPaused = false;
+        let takeoverRunId: string | null = waitingForTakeover
+          ? (executionLease?.runId ?? null)
+          : null;
         if (
           executionBlocksUserTakeover({
             hasLease: Boolean(executionLease),
@@ -411,8 +420,33 @@ export function computerRoutes(ctx: RouterContext) {
             takeoverRequested: waitingForTakeover,
           })
         ) {
-          throw new ORPCError("CONFLICT", { message: "Stop the bot first" });
+          if (executionRun && executionRun.userId !== context.actor.userId) {
+            throw new ORPCError("CONFLICT", { message: "Stop the bot first" });
+          }
+          if (!executionLease) {
+            throw new ORPCError("CONFLICT", { message: "Stop the bot first" });
+          }
+          const outcome = await pauseActiveRunForTakeover(deps, {
+            spaceId: context.actor.spaceId,
+            botId: bot.id,
+            computerId: bot.computer.id,
+            runId: executionLease.runId,
+          });
+          if (outcome === "changed") {
+            throw new ORPCError("CONFLICT", {
+              message: "Computer control changed; try again",
+            });
+          }
+          if (outcome === "paused") {
+            runPaused = true;
+            takeoverRunId = executionLease.runId;
+          } else if (outcome === "waiting") {
+            // The bot asked for takeover while this call raced it; bind the
+            // wait to the grant like a bot-initiated wait.
+            takeoverRunId = executionLease.runId;
+          }
         }
+        const takeoverRequested = waitingForTakeover || takeoverRunId !== null;
         // Keep an inactive lease as a fencing tombstone. The next run reclaims it
         // with a higher fence, even if this user's screen remains connected.
 
@@ -431,7 +465,7 @@ export function computerRoutes(ctx: RouterContext) {
             controlLeaseId: leaseId,
             controlLeaseExpiresAt: expiresAt,
             controlBotId: bot.id,
-            controlRunId: waitingForTakeover ? executionLease?.runId : null,
+            controlRunId: takeoverRunId,
             controlUserId: context.actor.userId,
             state: "running",
           },
@@ -461,6 +495,7 @@ export function computerRoutes(ctx: RouterContext) {
           return {
             leaseId: current.controlLeaseId!,
             expiresAt: current.controlLeaseExpiresAt!.toISOString(),
+            runPaused: false,
           };
         }
         const computerId = bot.computer.id;
@@ -476,7 +511,7 @@ export function computerRoutes(ctx: RouterContext) {
               controlRunId: null,
             },
           });
-        if (waitingForTakeover && executionLease) {
+        if (takeoverRequested && executionLease) {
           // The wait can end (expired, or yielded to newer work) between the read above and the
           // grant. Bound to an ended run, the user would share the screen with the next run.
           const waiting = await deps.prisma.run.findUnique({
@@ -500,11 +535,11 @@ export function computerRoutes(ctx: RouterContext) {
             threadId: bot.thread.id,
             botId: bot.id,
             type: "computer.takeover.granted",
-            payload: { leaseId, takeoverRequested: waitingForTakeover },
+            payload: { leaseId, takeoverRequested },
           });
         }
         scheduleComputerSleep(deps.jobs, bot.computer.id);
-        return { leaseId, expiresAt: expiresAt.toISOString() };
+        return { leaseId, expiresAt: expiresAt.toISOString(), runPaused };
       }),
       release: authed.computer.release.handler(async ({ context, input }) => {
         const bot = await repos.getBot(context.actor, input.botId);
