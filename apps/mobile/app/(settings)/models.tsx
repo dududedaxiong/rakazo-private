@@ -12,6 +12,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, ScrollView, StyleSheet, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ComputerPersonaPicker } from "../../components/computer-persona-picker";
 import { LoadFailure } from "../../components/load-failure";
 import { ModelProviders } from "../../components/model-providers";
 import type { ConnectableProvider, ModelConnectIntent } from "../../components/model-role-settings";
@@ -356,6 +357,23 @@ export default function Models() {
               modelRole="computer"
               title={t("Computer-use model")}
               defaultLabel={t("Same as main model")}
+            />
+            <ComputerPersonaPicker
+              userId={shared.userId}
+              spaceId={shared.spaceId}
+              scope={shared.scope}
+            />
+            <ModelRoleSettings
+              {...shared}
+              modelRole="image"
+              title={t("Image recognition")}
+              defaultLabel={t("Choose a model")}
+            />
+            <ModelRoleSettings
+              {...shared}
+              modelRole="video"
+              title={t("Video analysis")}
+              defaultLabel={t("Choose a model")}
             />
             {/* Connections are the account's in every Space, so a Space's override lists only its models. */}
             {target.scope === "account" ? (

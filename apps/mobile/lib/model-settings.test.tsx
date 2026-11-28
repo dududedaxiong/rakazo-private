@@ -48,6 +48,9 @@ const { push, back, params, rpcCalls, saved } = vi.hoisted(() => ({
     // A failed save either keeps the bot's own model or finds it already cleared elsewhere.
     failBotUpdates: {} as Record<string, "kept" | "changed elsewhere">,
     needsModel: false,
+    personaTemplateId: null as string | null,
+    failPersonaSave: false,
+    imageRole: null as { primary: unknown; seesImages?: boolean } | null,
   },
 }));
 
@@ -80,7 +83,39 @@ vi.mock("./api", () => ({
       };
     if (procedure === "models/probeOpenAiCompatible")
       return { models: Array.from({ length: 11 }, (_, index) => `found-${index}`) };
-    if (procedure === "models/role") return { primary: null, backups: [] };
+    if (procedure === "models/role") {
+      const role = (input as { role?: string } | undefined)?.role;
+      if (role === "image" && saved.imageRole) return { backups: [], ...saved.imageRole };
+      return { primary: null, backups: [] };
+    }
+    if (procedure === "models/computerPersona")
+      return { promptTemplateId: saved.personaTemplateId, scope: "account" };
+    if (procedure === "models/setComputerPersona") {
+      if (saved.failPersonaSave) throw new Error("offline");
+      saved.personaTemplateId = (input as { promptTemplateId: string | null }).promptTemplateId;
+      return { promptTemplateId: saved.personaTemplateId, scope: "account" };
+    }
+    if (procedure === "promptTemplates/list")
+      return [
+        {
+          id: "template-terse",
+          name: "Terse",
+          content: "Be terse.",
+          isBuiltIn: false,
+          sourceUrl: null,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+        {
+          id: "template-patient",
+          name: "Patient",
+          content: "Be patient.",
+          isBuiltIn: true,
+          sourceUrl: null,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ];
     if (procedure === "bots/list") {
       if (saved.failBotList) throw new Error("offline");
       return saved.bots;
@@ -849,6 +884,92 @@ it("offers a retry when the first load fails, then shows the model lists", async
   } finally {
     saved.failMe = false;
   }
+});
+
+describe("image, video and computer persona", () => {
+  async function renderModels() {
+    await remount(async () => {
+      await act(async () => root.render(createElement(Models)));
+    });
+  }
+
+  function menuChoice(label: string) {
+    return [...container.querySelectorAll("button")].find((button) => button.textContent === label);
+  }
+
+  it("always shows the image and video model lists", async () => {
+    await renderModels();
+    expect(container.textContent).toContain("Image recognition");
+    expect(container.textContent).toContain("Video analysis");
+    expect(rpcCalls).toContainEqual([
+      "models/role",
+      { role: "image", expectedUserId: "user-fixture", scope: "account" },
+      { requestContext: { headers: { "x-rakazo-space-id": "space-fixture" } } },
+    ]);
+    expect(rpcCalls).toContainEqual([
+      "models/role",
+      { role: "video", expectedUserId: "user-fixture", scope: "account" },
+      { requestContext: { headers: { "x-rakazo-space-id": "space-fixture" } } },
+    ]);
+  });
+
+  it("warns when the chosen image model cannot read images", async () => {
+    saved.imageRole = {
+      primary: { provider: "anthropic", modelId: "claude-fixture" },
+      seesImages: false,
+    };
+    try {
+      await renderModels();
+      expect(container.textContent).toContain(
+        "This model cannot read images. Choose a model that supports images.",
+      );
+    } finally {
+      saved.imageRole = null;
+    }
+  });
+
+  it("picks a computer persona from the prompt templates and clears it again", async () => {
+    try {
+      await renderModels();
+      expect(container.textContent).toContain("Computer persona");
+      expect(menuChoice("Terse")).toBeDefined();
+      expect(menuChoice("None")?.getAttribute("aria-pressed")).toBe("true");
+
+      await act(async () => menuChoice("Terse")!.click());
+      expect(rpcCalls).toContainEqual([
+        "models/setComputerPersona",
+        {
+          promptTemplateId: "template-terse",
+          expectedUserId: "user-fixture",
+          scope: "account",
+        },
+        { requestContext: { headers: { "x-rakazo-space-id": "space-fixture" } } },
+      ]);
+      expect(menuChoice("Terse")?.getAttribute("aria-pressed")).toBe("true");
+
+      await act(async () => menuChoice("None")!.click());
+      expect(rpcCalls).toContainEqual([
+        "models/setComputerPersona",
+        { promptTemplateId: null, expectedUserId: "user-fixture", scope: "account" },
+        { requestContext: { headers: { "x-rakazo-space-id": "space-fixture" } } },
+      ]);
+      expect(menuChoice("None")?.getAttribute("aria-pressed")).toBe("true");
+    } finally {
+      saved.personaTemplateId = null;
+    }
+  });
+
+  it("shows the save error when the persona change fails", async () => {
+    saved.failPersonaSave = true;
+    try {
+      await renderModels();
+      await act(async () => menuChoice("Terse")!.click());
+      expect(container.textContent).toContain("Could not update computer persona");
+      expect(saved.personaTemplateId).toBeNull();
+    } finally {
+      saved.failPersonaSave = false;
+    }
+  });
 });
 
 it("searches discovered models without losing the selected default", async () => {

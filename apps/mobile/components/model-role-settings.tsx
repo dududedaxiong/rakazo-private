@@ -456,6 +456,11 @@ export function ModelRoleSettings({
           onPress={() => pick("add")}
         />
       ) : null}
+      {(role === "image" || role === "video") && primary && settings?.seesImages === false ? (
+        <Text key="warning" accessibilityRole="alert" style={styles.error}>
+          {t("This model cannot read images. Choose a model that supports images.")}
+        </Text>
+      ) : null}
       {error ? (
         <Text key="error" accessibilityRole="alert" style={styles.error}>
           {error}
