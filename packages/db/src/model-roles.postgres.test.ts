@@ -132,4 +132,28 @@ describePostgres("model roles (PostgreSQL)", () => {
       backups: [{ provider: "azure", modelId: "gpt-5", thinkingLevel: "high" }],
     });
   });
+
+  it("round-trips the image role through its two pools in order", async () => {
+    await updateModelRole(prisma, scope, "image", {
+      mainPool: [{ provider: "openai-compatible", modelId: "vision-a" }],
+      backupPool: [{ provider: "openai-compatible", modelId: "vision-b", thinkingLevel: "low" }],
+    });
+
+    await expect(getModelRole(prisma, scope, "image")).resolves.toMatchObject({
+      primary: { provider: "openai-compatible", modelId: "vision-a" },
+      backups: [{ provider: "openai-compatible", modelId: "vision-b", thinkingLevel: "low" }],
+      mainPool: [{ provider: "openai-compatible", modelId: "vision-a" }],
+      backupPool: [{ provider: "openai-compatible", modelId: "vision-b", thinkingLevel: "low" }],
+    });
+    // A video role with no rows reads empty, and the image rows stay apart
+    // from the main role's.
+    await expect(getModelRole(prisma, scope, "video")).resolves.toMatchObject({
+      primary: null,
+      backups: [],
+    });
+    await expect(getModelRole(prisma, scope, "main")).resolves.toMatchObject({
+      primary: null,
+      backups: [],
+    });
+  });
 });

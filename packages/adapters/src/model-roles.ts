@@ -31,8 +31,11 @@ export function deploymentModelRole(
     const primary = checker ? { provider: checker.provider, modelId: checker.model } : null;
     return { primary, backups: [], mainPool: primary ? [primary] : [], backupPool: [] };
   }
-  // No computer model means the main model works the screen itself.
-  if (role === "computer") return { primary: null, backups: [], mainPool: [], backupPool: [] };
+  // No computer model means the main model works the screen itself, and no
+  // vision model means the deployment's text-only default never stands in
+  // for an image or video role either.
+  if (role === "computer" || role === "image" || role === "video")
+    return { primary: null, backups: [], mainPool: [], backupPool: [] };
   const provider = defaults.settings?.defaultModelProvider ?? defaults.deployment?.provider;
   const modelId =
     usableModelId(defaults.settings?.defaultModelId) ?? usableModelId(defaults.deployment?.model);

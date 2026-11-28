@@ -4,7 +4,7 @@ import type { ModelCatalogEntry } from "./model-connections.js";
 import { ModelBackupChoiceSchema, modelChoiceListSchema } from "./model-connections.js";
 
 /** Add purposes here; connections, persistence, pickers and backups stay shared. */
-export const ModelRoleSchema = z.enum(["main", "approval", "computer"]);
+export const ModelRoleSchema = z.enum(["main", "approval", "computer", "image", "video"]);
 export type ModelRole = z.infer<typeof ModelRoleSchema>;
 export const ModelRoleChoiceSchema = ModelBackupChoiceSchema.extend({
   thinkingLevel: ThinkingLevelSchema.nullable().optional(),
@@ -28,12 +28,15 @@ export const ModelRoleUpdateSchema = ModelRoleSettingsSchema.partial();
 /** A member's choices plus what the deployment runs when they chose no model. */
 export const ModelRoleViewSchema = ModelRoleSettingsSchema.extend({
   deploymentPrimary: ModelRoleChoiceSchema.nullable().optional(),
-  /** Main role only: whether the model that runs reads images on the connection runs use. */
+  /** Main, image and video roles only: whether the model that runs reads images on the connection runs use. */
   seesImages: z.boolean().optional(),
 });
 export type ModelRoleView = z.infer<typeof ModelRoleViewSchema>;
 
 export function modelSupportsRole(entry: ModelCatalogEntry, role: ModelRole): boolean {
   if (role === "approval") return true;
-  return entry.protocol !== "decisions" && (role !== "computer" || entry.images !== false);
+  if (entry.protocol === "decisions") return false;
+  // The main role runs text-only models too; every other role that looks at
+  // pictures needs a model that reads images.
+  return role === "main" || entry.images !== false;
 }

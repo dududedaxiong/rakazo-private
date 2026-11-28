@@ -217,14 +217,21 @@ export function createRouterContext(deps: RouterDeps) {
   };
   /**
    * The main role also says whether its model reads images where runs use it, so settings
-   * offer a computer-use model when screen work needs one. Left out when it cannot be told.
+   * offer a computer-use model when screen work needs one. The image and video roles say
+   * the same about their own chosen model, so the picker can warn when it cannot see.
+   * Left out when it cannot be told.
    */
   const withImageInput = async (
     actor: Actor,
     role: ModelRole,
     view: ModelRoleView,
   ): Promise<ModelRoleView> => {
-    const choice = role === "main" ? (view.primary ?? view.deploymentPrimary) : null;
+    const choice =
+      role === "main"
+        ? (view.primary ?? view.deploymentPrimary)
+        : role === "image" || role === "video"
+          ? view.primary
+          : null;
     if (!choice) return view;
     try {
       const [credential, catalog] = await Promise.all([
