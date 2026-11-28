@@ -253,6 +253,21 @@ describe("system float window native contract", () => {
     expect(chrome).toContain('var id=\\"rakazo-screen-chrome\\"');
     expect(chrome).toContain('style.getAttribute(\\"data-mode\\")!==mode');
     expect(chrome).toContain('style.setAttribute(\\"data-mode\\",mode)');
+    // The takeover CSS contains real newlines, and a single-quoted JS
+    // string literal cannot hold a line break: interpolating it raw
+    // made the whole injected script fail to parse (round 4), so the
+    // takeover chrome never installed and the float rules stayed live
+    // underneath. The CSS must go through the JSON-style escape helper
+    // — the same escaping the in-app screen gets from
+    // JSON.stringify(css) — never a raw single-quoted interpolation.
+    expect(chrome).toContain("fun jsStringLiteral(value: String): String");
+    expect(chrome).toContain("'\\n' -> out.append(\"\\\\n\")");
+    expect(chrome).toContain("var css=$" + "{jsStringLiteral(css)}");
+    expect(chrome).not.toContain("var css='$css'");
+    expect(chrome).not.toContain("needs no escaping");
+    // The chrome rules stay pure Kotlin with no Android imports, so
+    // they remain checkable without a device.
+    expect(chrome).not.toContain("import android.");
     // The rules mirror the in-app computer screen's takeover chrome
     // exactly — same selectors, same hidden set — so the native window
     // and the in-app screen agree.
