@@ -37,6 +37,38 @@ describe("system float window native contract", () => {
     expect(module).toContain("startForegroundService");
   });
 
+  it("tells JS when the native takeover button flips, so the tap can take the lease", () => {
+    const module = read("java/com/rakazo/systemfloat/RakazoSystemFloatModule.kt");
+    // The takeover button lives in the service, so a tap has no other
+    // way to reach JS: without this event the tap only flips local
+    // chrome and JS never takes the lease or loads the interactive
+    // URL — the round-3 failure, a blue button with no bottom bar.
+    expect(module).toContain('Events("onTakeoverChanged")');
+    expect(module).toContain("OnStartObserving");
+    expect(module).toContain("OnStopObserving");
+    expect(module).toContain('sendEvent("onTakeoverChanged"');
+    expect(module).toContain("RakazoSystemFloatService.takeoverListener");
+    // A late subscriber asks what the window is showing now instead
+    // of waiting for the next tap.
+    expect(module).toContain('AsyncFunction("isTakenOver")');
+    expect(module).toContain("RakazoSystemFloatService.takeoverState");
+    const service = read("java/com/rakazo/systemfloat/RakazoSystemFloatService.kt");
+    expect(service).toContain("var takeoverListener: ((Boolean) -> Unit)?");
+    expect(service).toContain("var takeoverState = false");
+    // Only a real flip notifies: a canvas tap while already taken
+    // over leaves the lease and the URL alone.
+    expect(service).toContain("val wasTakenOver = isTakenOver");
+    expect(service).toContain("if (isTakenOver != wasTakenOver) {");
+    expect(service).toContain("takeoverListener?.invoke(isTakenOver)");
+    // The JS side subscribes while the window is up and reconciles
+    // a tap that landed before the subscription.
+    const lib = readFileSync(resolve(mobileRoot, "lib/system-float.ts"), "utf8");
+    expect(lib).toContain("subscribeSystemFloatTakeover");
+    expect(lib).toContain('addListener(\n    event: "onTakeoverChanged"');
+    expect(lib).toContain("systemFloatIsTakenOver");
+    expect(lib).toContain("isTakenOver: () => Promise<boolean>");
+  });
+
   it("hosts the live screen in a WindowManager overlay kept alive by a foreground service", () => {
     const service = read("java/com/rakazo/systemfloat/RakazoSystemFloatService.kt");
     expect(service).toContain("TYPE_APPLICATION_OVERLAY");

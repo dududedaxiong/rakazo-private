@@ -80,6 +80,24 @@ class RakazoSystemFloatService : Service() {
 
     @Volatile
     var isRunning = false
+
+    /**
+     * The module's listener for takeover flips, set while JS is
+     * observing the takeover event and cleared when it stops. The
+     * takeover button lives in this service, so a tap has no other
+     * way to reach JS: without this the tap only flips local chrome
+     * and JS never takes the lease or loads the interactive URL.
+     */
+    @Volatile
+    var takeoverListener: ((Boolean) -> Unit)? = null
+
+    /**
+     * The takeover state the last applied transition left, for the
+     * module's query: a JS subscriber that arrives late asks what
+     * the window is showing now instead of waiting for the next flip.
+     */
+    @Volatile
+    var takeoverState = false
   }
 
   private var windowManager: WindowManager? = null
@@ -148,6 +166,7 @@ class RakazoSystemFloatService : Service() {
     savedParams = null
     isMaximized = false
     isTakenOver = false
+    takeoverState = false
     webView?.destroy()
     webView = null
     currentUrl = null
@@ -176,6 +195,7 @@ class RakazoSystemFloatService : Service() {
    * text field or the page's own keyboard button.
    */
   private fun applyTakeoverTransition(transition: SystemFloatTakeoverTransition) {
+    val wasTakenOver = isTakenOver
     isMaximized = transition.state.isMaximized
     isTakenOver = transition.state.isTakenOver
     val order = listOf(
@@ -198,6 +218,14 @@ class RakazoSystemFloatService : Service() {
         SystemFloatTakeoverEffect.APPLY_SCREEN_CHROME -> applyScreenChrome()
         SystemFloatTakeoverEffect.UPDATE_TAKEOVER_BUTTON -> updateTakeoverButton()
       }
+    }
+    // A flip of the takeover state is JS's business too: only JS can
+    // take the lease and load the interactive URL, so tell it. Taps
+    // that leave the state alone (a canvas tap while already taken
+    // over) say nothing — the lease and the URL are already right.
+    if (isTakenOver != wasTakenOver) {
+      takeoverState = isTakenOver
+      takeoverListener?.invoke(isTakenOver)
     }
   }
 

@@ -8,7 +8,9 @@ import {
   setSystemFloatWindowModule,
   showSystemFloat,
   showSystemFloatWindow,
+  subscribeSystemFloatTakeover,
   systemFloatHasPermission,
+  systemFloatIsTakenOver,
   systemFloatWindowIsShowing,
   systemFloatWindowSupported,
   updateSystemFloatWindowUrl,
@@ -120,12 +122,19 @@ function fakeWindow(
     supported?: boolean;
     showResult?: boolean;
     showing?: boolean;
+    takenOver?: boolean;
   } = {},
 ) {
   const show = vi.fn(async () => options.showResult ?? true);
   const updateUrl = vi.fn(async () => undefined);
   const hide = vi.fn(async () => undefined);
   const isShowing = vi.fn(async () => options.showing ?? false);
+  const addListener = vi.fn(
+    (_event: "onTakeoverChanged", _listener: (event: { takenOver: boolean }) => void) => ({
+      remove: () => undefined,
+    }),
+  );
+  const isTakenOver = vi.fn(async () => options.takenOver ?? false);
   const windowModule: SystemFloatWindowModule = {
     isSupported: async () => options.supported ?? true,
     hasOverlayPermission: async () => options.permitted ?? true,
@@ -134,8 +143,10 @@ function fakeWindow(
     updateUrl,
     hide,
     isShowing,
+    addListener,
+    isTakenOver,
   };
-  return { windowModule, show, updateUrl, hide, isShowing };
+  return { windowModule, show, updateUrl, hide, isShowing, addListener, isTakenOver };
 }
 
 describe("system float window", () => {
@@ -237,5 +248,41 @@ describe("system float window", () => {
   it("reports the window as gone when the module is missing", async () => {
     setSystemFloatWindowModule(null);
     await expect(systemFloatWindowIsShowing()).resolves.toBe(false);
+  });
+
+  it("subscribes to native takeover flips and forwards the new state", async () => {
+    const { windowModule, addListener } = fakeWindow();
+    setSystemFloatWindowModule(windowModule);
+    try {
+      const seen: boolean[] = [];
+      const subscription = await subscribeSystemFloatTakeover((takenOver) => {
+        seen.push(takenOver);
+      });
+      expect(subscription).not.toBeNull();
+      expect(addListener).toHaveBeenCalledWith("onTakeoverChanged", expect.any(Function));
+      const listener = addListener.mock.calls[0]![1];
+      listener({ takenOver: true });
+      listener({ takenOver: false });
+      expect(seen).toEqual([true, false]);
+    } finally {
+      setSystemFloatWindowModule(null);
+    }
+  });
+
+  it("reports whether the window is currently taken over", async () => {
+    const { windowModule, isTakenOver } = fakeWindow({ takenOver: true });
+    setSystemFloatWindowModule(windowModule);
+    try {
+      await expect(systemFloatIsTakenOver()).resolves.toBe(true);
+      expect(isTakenOver).toHaveBeenCalled();
+    } finally {
+      setSystemFloatWindowModule(null);
+    }
+  });
+
+  it("reports no takeover subscription or state when the module is missing", async () => {
+    setSystemFloatWindowModule(null);
+    await expect(subscribeSystemFloatTakeover(() => undefined)).resolves.toBeNull();
+    await expect(systemFloatIsTakenOver()).resolves.toBe(false);
   });
 });

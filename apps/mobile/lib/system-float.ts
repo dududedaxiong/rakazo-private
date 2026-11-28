@@ -91,6 +91,17 @@ export type SystemFloatWindowModule = {
   updateUrl: (url: string) => Promise<void>;
   hide: () => Promise<void>;
   isShowing: () => Promise<boolean>;
+  /**
+   * The takeover button lives in the native window, so its flips
+   * reach JS as an event: a tap takes the lease and loads the
+   * interactive URL, a release hands the lease back.
+   */
+  addListener(
+    event: "onTakeoverChanged",
+    listener: (event: { takenOver: boolean }) => void,
+  ): { remove(): void };
+  /** Whether the window is currently taken over, for a late subscriber. */
+  isTakenOver: () => Promise<boolean>;
 };
 
 let injectedWindow: SystemFloatWindowModule | null = null;
@@ -156,6 +167,35 @@ export async function systemFloatWindowIsShowing(): Promise<boolean> {
   try {
     const module = await loadWindow();
     return (await module?.isShowing()) ?? false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Subscribes to the native takeover button: the listener runs with the
+ * window's new takeover state whenever the button (or a tap into the
+ * maximized screen) flips it. Null when this build has no window
+ * module. A tap that landed before this subscription is not replayed —
+ * ask the window what it is showing now with systemFloatIsTakenOver.
+ */
+export async function subscribeSystemFloatTakeover(
+  listener: (takenOver: boolean) => void,
+): Promise<{ remove: () => void } | null> {
+  try {
+    const module = await loadWindow();
+    if (!module) return null;
+    return module.addListener("onTakeoverChanged", (event) => listener(event.takenOver));
+  } catch {
+    return null;
+  }
+}
+
+/** Whether the system window is currently taken over, for a late subscriber. */
+export async function systemFloatIsTakenOver(): Promise<boolean> {
+  try {
+    const module = await loadWindow();
+    return (await module?.isTakenOver()) ?? false;
   } catch {
     return false;
   }

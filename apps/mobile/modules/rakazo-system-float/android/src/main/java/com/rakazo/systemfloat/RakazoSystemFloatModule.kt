@@ -18,6 +18,24 @@ class RakazoSystemFloatModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("RakazoSystemFloat")
 
+    // The service owns the takeover button, so its flips reach JS as
+    // an event: a tap takes the lease and loads the interactive URL
+    // on the JS side, and a release hands the lease back. The service
+    // notifies only on a real flip, and a late subscriber asks the
+    // window what it is showing now (isTakenOver below) instead of
+    // waiting for the next tap.
+    Events("onTakeoverChanged")
+
+    OnStartObserving {
+      RakazoSystemFloatService.takeoverListener = { takenOver ->
+        sendEvent("onTakeoverChanged", mapOf("takenOver" to takenOver))
+      }
+    }
+
+    OnStopObserving {
+      RakazoSystemFloatService.takeoverListener = null
+    }
+
     AsyncFunction("isSupported") { true }
 
     AsyncFunction("hasOverlayPermission") {
@@ -89,5 +107,8 @@ class RakazoSystemFloatModule : Module() {
     }
 
     AsyncFunction("isShowing") { RakazoSystemFloatService.isRunning }
+
+    /** Whether the window is currently taken over, for a late subscriber. */
+    AsyncFunction("isTakenOver") { RakazoSystemFloatService.takeoverState }
   }
 }
