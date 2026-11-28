@@ -306,6 +306,186 @@ stays blue, window stays focusable and maximized);
 (e) `FLAG_NOT_FOCUSABLE` under a small window still lets taps through
 to noVNC as mouse clicks.
 
+## Round 3 (2026-11-28): the takeover button never reached the server
+
+Status: implemented (code + tests, no device yet). This round keeps
+round 2's design (no forced keyboard, no dismiss auto-release, chrome
+switch) and fixes the layer underneath it: the takeover button did
+not change what page the window was showing.
+
+### What the video showed
+
+The user installed the round-2 build, opened the system popup, and
+tapped the takeover button (blue, taken-over state), then tapped the
+computer for about nine seconds. The noVNC bottom bar (Esc, keyboard
+icon, trackpad) never appeared; the remote desktop stayed
+letterboxed with only the desktop's own taskbar at the bottom of the
+canvas.
+
+### Confirmed cause
+
+The takeover button was purely local, and the window opened on a
+view-only page. The exact code path, verified in the code:
+
+1. **The popup opens on the first URL fetched, which is view-only.**
+   The header entry opens the float with `systemOnly` set
+   (`thread-screen.tsx`). On open, the refresh controller fetches
+   `computer/screenUrl` at once, before any takeover; the server
+   returns a view-only URL when the user does not hold control
+   (`apps/api/src/routes/computer.ts` `screenUrl` handler:
+   `holder = holdsComputerControl(computer, bot.id, context.actor)`,
+   then `withViewOnly(session.url, !holder)`, and
+   `apps/api/src/computer-control.ts` `withViewOnly` sets
+   `view_only=true`). The auto-popout effect shows the system
+   window on the first loaded URL — the view-only one.
+2. **The open-time takeover exists, but nothing waits for it.**
+   The same file's takeover effect does `rpc("computer/takeover")`
+   and then a forced screen refresh, and the rotated-capability
+   effect re-points the window at the new URL via `updateUrl` — so
+   the system-only path can recover on its own when the takeover
+   succeeds. But the popout does not wait for it, and if the
+   takeover is refused (a run holds the lease: the server answers
+   "Stop the bot first") or the refresh does not land, the window
+   stays view-only with no retry path.
+3. **The other way in never takes over at all.** The in-app float's
+   pop-out button (`toggleSystemFloat` → `showSystemWindow`) shows
+   the system window with the current URL and never calls
+   `computer/takeover`.
+4. **The native takeover button could not fix any of it.** The
+   button (`RakazoSystemFloatService.onTakeoverTapped`) only ran
+   the local state machine (focusable + chrome). There was no
+   native→JS event channel — the round-1 report already noted
+   this — so the tap could never take the lease or change the URL.
+   A blue button with a view-only page behind it was the only
+   possible outcome.
+5. **On a view-only page the bars can never appear.** The computer
+   page (`infra/sandboxes/computer/embed.html`) only calls
+   `attachMobileKeyboard` under
+   `if (!rfb.viewOnly && (isTouchBrowser() || window.__rakazoNativeKeys))`,
+   and `attachMobileKeyboard` itself returns early on
+   `rfb.viewOnly`. So `#mobile-key-bar` and the three buttons keep
+   their `hidden` attribute forever, and a view-only RFB session
+   never sends input either. Round 2's chrome only stopped hiding
+   the rows; it never showed them, and even visible buttons would
+   be dead on a view-only page.
+6. **Correction to the task's point 2:** the page's CSS has a
+   `[hidden]` rule only for `#mobile-key-bar`
+   (`#mobile-key-bar[hidden]{display:none}`); the three buttons are
+   hidden by the `hidden` attribute's default style, not by a page
+   rule. The force-visible rules below cover both.
+
+### Decision (round 3)
+
+1. **Native→JS takeover event.** The module declares
+   `Events("onTakeoverChanged")` and an `isTakenOver` query; the
+   service notifies the module only when a transition really flips
+   the takeover state (a canvas tap while already taken over says
+   nothing — the lease and the URL are already right), and the
+   module forwards it with `sendEvent`. `lib/system-float.ts`
+   wraps both as `subscribeSystemFloatTakeover` /
+   `systemFloatIsTakenOver`.
+2. **A native takeover tap drives the lease and the URL.** While
+   the system window is up, the float subscribes and handles each
+   flip: taken over → `rpc("computer/takeover")`, then a forced
+   screen refresh — the existing rotated-capability effect
+   re-points the window at the interactive URL, whose page runs
+   the attach that un-hides the bottom bar. Released → hand the
+   lease back (`rpc("computer/release")`) and re-point at the
+   view-only URL. A lease the user already held before this
+   session opened is never taken or handed back here, and a tap
+   that landed before the subscription is reconciled by asking the
+   window what it is showing now.
+3. **The popup waits for the open-time takeover to settle.**
+   A `controlReady` flag is set when the takeover attempt finishes
+   (granted or refused, or already held); while the computer runs
+   and it is not set, the auto-popout waits, so the popup opens on
+   the interactive URL instead of the view-only one fetched first.
+   A refused takeover still pops out view-only — watching stays
+   useful, and the native tap retries the takeover later.
+4. **Defense in depth in the takeover CSS:** the takeover rules
+   now force `#mobile-key-bar[hidden]`,
+   `#mobile-controls[hidden]`, and the three buttons visible with
+   `!important`, so the bar shows even if the page's own un-hide
+   did not run. This is a complement to (2), not a substitute: on
+   its own it cannot work, because a view-only page never attaches
+   the button handlers and never sends input.
+5. **The in-app screen is not mirrored — verified, not guessed.**
+   `app/computer.tsx` drives its takeover from JS (`hasControl`
+   → takeover RPC → refetch), sets
+   `window.__rakazoNativeKeys`, and shows its own native
+   `ComputerKeyboardBar`; the page's own bars stay hidden there by
+   design (`pageChrome=false` in `attachMobileKeyboard`), so
+   forcing them visible in-app would duplicate the native bar.
+   The in-app chrome file is untouched.
+
+### Alternatives considered (round 3)
+
+- **Poll `isTakenOver` on a timer instead of an event** — strongest
+  reason: no native wiring, reuse the existing 2-second
+  `isShowing` poll. But that poll only exists in system-only mode,
+  the pop-out path would need a new loop, and every tap would wait
+  up to 2 seconds plus the takeover round trip. The event is the
+  idiomatic Expo pattern (the file-drop module's precedent) and
+  fires at once. No.
+- **Have the native service reload the page itself on takeover** —
+  strongest reason: no JS round trip. But the service has no lease
+  and no screen URL; it cannot take control or fetch the
+  interactive URL, so a reload would just reload the same
+  view-only page. No.
+- **Make the view-only page attach the keyboard handlers anyway**
+  — strongest reason: the bar would appear without any URL swap.
+  But view-only means the RFB session must not send input;
+  attaching handlers that send keys would break the view-only
+  contract, and the buttons would still be dead. No.
+- **Block the popup when the open-time takeover is refused** —
+  strongest reason: never show a view-only popup. But a refused
+  takeover (bot mid-run) would leave the user with no popup at all
+  instead of a watchable one; watching is still useful, and the
+  native tap retries the takeover later. No — pop out view-only,
+  retry on tap.
+
+### Testing (round 3)
+
+- `apps/mobile/lib/system-float-window-contract.test.ts`: 11/11
+  (was 9) — the event channel, the force-visible CSS, the popout
+  gate and the tap-handler wiring.
+- `apps/mobile/lib/system-float.test.ts`: 19/19 (was 16) — the
+  subscribe helper forwards flips, `isTakenOver` reads the
+  window's state, missing module gives null/false.
+- `apps/mobile/lib/computer-float-window.test.tsx`: 58/58 (was
+  56) — the gate test (the popup does not show while the takeover
+  is pending, then shows once it resolves) and the native-tap test
+  (take → takeover RPC + `updateUrl` with the interactive URL;
+  release → release RPC + `updateUrl` with the view-only URL).
+- Biome clean on the changed TS files; `tsc --noEmit` has no
+  errors in the changed files (pre-existing errors remain in
+  unrelated files this branch never touched). Kotlin is not
+  compiled here (no compiler available) — CI's Android build is
+  the backstop, as in rounds 1–2.
+
+### Still needs real-device confirmation (no device yet)
+
+Round 2's items carry over in updated form:
+
+(a) the bottom bar with ESC and the keyboard icon actually appears
+after tapping takeover in the system popup, and the keyboard button
+brings the keyboard up with typing reaching the computer;
+(b) the popup opens on the interactive URL directly when the
+takeover succeeds on open, with no view-only flash;
+(c) tapping takeover again to release hands the lease back (the bot
+can drive again) and the bar hides;
+(d) tapping into the maximized screen takes over once: only the
+first tap flips state, so the page reloads once to the interactive
+URL and later taps do not reload it — check the first tap's click
+is not lost to that reload;
+(e) a refused takeover (bot mid-run) still shows a watchable popup,
+and a later takeover tap retries it;
+(f) the live computer image serves a page version whose attach
+un-hides the bars on an interactive load. If the image predates
+that page code, the force-visible CSS will show the buttons but
+they will be dead until the image is rebuilt — this cannot be
+checked from the code side.
+
 ## Testing
 
 - `apps/mobile/lib/system-float-window-contract.test.ts`：旧的“键盘/打开应用按钮”断言改成接管按钮断言（同一文件、同一测试）；新增状态机转移与焦点 flag 的断言。
