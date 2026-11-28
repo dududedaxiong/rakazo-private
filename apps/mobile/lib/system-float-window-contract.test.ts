@@ -154,9 +154,7 @@ describe("system float window native contract", () => {
 
   it("keeps the Esc/keyboard bar visible in takeover chrome and hides it in float chrome", () => {
     const chrome = read("java/com/rakazo/systemfloat/SystemFloatScreenChrome.kt");
-    const takeover = chrome.slice(
-      chrome.indexOf("SystemFloatScreenChromeMode.TAKEOVER ->"),
-    );
+    const takeover = chrome.slice(chrome.indexOf("SystemFloatScreenChromeMode.TAKEOVER ->"));
     const float = chrome.slice(
       chrome.indexOf("SystemFloatScreenChromeMode.FLOAT ->"),
       chrome.indexOf("SystemFloatScreenChromeMode.TAKEOVER ->"),
@@ -189,10 +187,7 @@ describe("system float window native contract", () => {
     // The rules mirror the in-app computer screen's takeover chrome
     // exactly — same selectors, same hidden set — so the native window
     // and the in-app screen agree.
-    const inApp = readFileSync(
-      resolve(mobileRoot, "lib/computer-screen-chrome.ts"),
-      "utf8",
-    );
+    const inApp = readFileSync(resolve(mobileRoot, "lib/computer-screen-chrome.ts"), "utf8");
     // Same four selectors, same hide rule, in the in-app float mode.
     for (const selector of [
       "#mobile-view-controls",
@@ -214,12 +209,7 @@ describe("system float window native contract", () => {
     // No Android imports: the transition table must be checkable without
     // a device or a build.
     expect(machine).not.toContain("import android.");
-    for (const event of [
-      "TakeoverTapped",
-      "MaximizeTapped",
-      "ScreenTapped",
-      "WindowClosed",
-    ]) {
+    for (const event of ["TakeoverTapped", "MaximizeTapped", "ScreenTapped", "WindowClosed"]) {
       expect(machine).toContain(event);
     }
     // No keyboard-dismiss event: dismissing the keyboard never ends a

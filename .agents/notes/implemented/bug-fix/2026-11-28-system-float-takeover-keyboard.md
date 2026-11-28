@@ -109,6 +109,203 @@ WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
 - 未验证（无真机/模拟器）：（a）别的 App 的键盘在悬浮窗显示时是否确实恢复；（b）接管时键盘是否确实弹出、重试一次是否足够；（c）键盘收起检测在真机输入法上是否误触发或漏触发；（d）`FLAG_NOT_FOCUSABLE` 下小窗的点按是否仍正常透传给 noVNC 当鼠标点击。以上四项必须在真机上核实后才能算修完，见下面 Verification 一节。
 - 风险：`SHOW_FORCED` 的键盘在接管释放时若未及时收起，会短暂盖住下层应用；释放路径里先收键盘再恢复 flag，且 `onDestroy` 也走同一释放路径。
 
+## Round 2 (2026-11-28): 接管不是弹键盘，是设置里的电脑接管
+
+Status: implemented (code + tests, no device yet). This round supersedes
+round 1's Decision §3 (forced keyboard on takeover) and the
+keyboard-dismiss auto-release in Decision §2's table and §3's last
+paragraph: both are removed, not adjusted.
+
+### What the video showed
+
+The user sent a screen recording of the round-1 build on their phone.
+Frame-by-frame diagnosis found THREE takeover attempts, not two:
+
+1. **Attempt #1**: takeover button BLUE, pinyin keyboard up. Then the
+   keyboard GONE (the user tapped the noVNC canvas). Then the button
+   WHITE — auto-release.
+2. **Attempt #2**: button BLUE again, no keyboard visible. Then button
+   WHITE — auto-release #2. The window stayed maximized, so this was
+   the KeyboardDismissed auto-release, not a manual toggle-off.
+3. **Attempt #3**: button BLUE, keyboard NEVER appears, stays blue,
+   clicks still reach the computer (a later frame shows a shell command
+   running).
+
+### Confirmed causes
+
+**Failure 1 (attempts 1+2): the forced keyboard had no input connection.**
+The noVNC page's only keyboard path is a hidden `<textarea>`
+(`#mobile-keyboard-input`), focused ONLY by the page's own "Show
+keyboard" button. The float's chrome-hiding injection hid that button
+(it lives inside `#mobile-controls`), and nothing in the service ever
+focused the textarea. `showKeyboardAfterFocus` only did native
+`view.requestFocus()` + `showSoftInput(SHOW_FORCED)` on the WebView;
+with no editable element focused, `WebView.onCreateInputConnection`
+returns null, so the IME was forced up with no input connection and
+died on the first canvas tap. The page's own `keepOpen` guard only
+protects taps when the input IS focused — dead when it isn't. The
+dismiss listener then saw a real dismissal and released the takeover,
+which is what turned attempt #1's dead keyboard into a white button,
+and attempt #2's release the same way.
+
+**Failure 2 (attempt 3): the show path was blind fire-and-forget.**
+`hideKeyboard()` called `view.clearFocus()` after attempt #2's
+release, and the show path was `view.post{}` + one 250ms retry — both
+ran before the WindowManager applied the flag change and granted
+window focus, so both `showSoftInput` calls were silently dropped. No
+`onWindowFocusChanged` / `isActive` / `hasFocus` check exists anywhere
+in the module. The state machine stuck blue with no keyboard.
+
+**Ruled out**: the 250ms retry hiding the keyboard (a duplicate
+showSoftInput on an already-shown IME is a no-op); the layout-listener
+threshold misreading (the release requires 300ms with no visible pass,
+so it fired on a real dismissal); a stale retry from the first
+takeover (`cancelKeyboardRetry` ran on entry and in `hideKeyboard`,
+and the retry nulled its field at start).
+
+### The user's correction (replaces the forced-keyboard design)
+
+User 2026-11-28 17:13: "接管不是弹键盘啊，而是像设置里电脑接管一样"
+("Takeover is not about popping up the keyboard, it's like the
+computer takeover in Settings.") 17:14: "下面有esc，键盘图标那种"
+("Below there are ESC, the keyboard icon, that kind of thing.")
+
+What the Settings takeover is: the in-app computer screen has
+`hasControl` and `chromeMode={hasControl ? "takeover" : "float"}`. The
+chrome modes live in `computer-screen-chrome.ts`: "float" (watching)
+hides EVERY in-page control; "takeover" (user driving) KEEPS the
+Esc/Tab/Ctrl bar (`#mobile-key-bar`) and the paste/keyboard/trackpad
+row (`#mobile-controls`) visible (only hides the +/- zoom cluster and
+the arrow keys). The user drives the computer, and the keyboard comes
+up naturally when they tap a text field or noVNC's own keyboard
+button. The float's native WebView was permanently in "float"
+(watching) mode.
+
+### Decision (round 2)
+
+1. **Do NOT force-pop the soft keyboard.** `showSoftInput` and the
+   250ms retry are gone from the takeover path entirely — no
+   `showSoftInput` call exists in the service any more. This kills
+   both failure modes at the root: no forced IME with no input
+   connection, no blind show that can be dropped.
+2. **The takeover button switches the WebView's chrome from "float"
+   to "takeover" mode.** The takeover rules are the exact rules from
+   `computerScreenChromeScript("takeover")`: keep `#mobile-key-bar`
+   and `#mobile-controls` visible, hide only `#mobile-view-controls`
+   and the four `#mobile-key-bar [data-key="Arrow…"]` keys. Tapping
+   the button again switches back to "float" chrome (hide all
+   controls). The button's highlight still shows taken-over vs not.
+3. **The takeover button still makes the window focusable** (clear
+   `FLAG_NOT_FOCUSABLE`) while taken over, so the keyboard CAN appear
+   naturally when the user taps a text field or noVNC's keyboard
+   button. Nothing forces it up. Releasing restores
+   `FLAG_NOT_FOCUSABLE`.
+4. **The keyboard-dismiss auto-release is gone** — the layout
+   listener, the `KeyboardDismissed` event, and the transition are
+   all removed. Dismissing the keyboard must NOT end the takeover;
+   it ends ONLY on an explicit takeover-button tap,
+   maximize/restore, or close.
+5. **One injected style element carries both modes.** The chrome
+   rules live in a new pure function (`SystemFloatScreenChrome.kt`,
+   mirroring `computer-screen-chrome.ts` selector for selector), and
+   the service swaps its content per mode via a new
+   `APPLY_SCREEN_CHROME` effect. `onPageFinished` re-injects the
+   CURRENT mode's rules (not always the float rules), so a page
+   reload while taken over keeps takeover chrome. The style element
+   is keyed by id with a `data-mode` attribute, so a mode switch
+   rewrites the rules instead of stacking a second element.
+6. **At rest the float stays `FLAG_NOT_FOCUSABLE`** so other apps
+   keep their keyboards; while taken over it is focusable (needed
+   for typing into the computer); releasing goes back to
+   `NOT_FOCUSABLE` via the takeover button (or maximize/restore/
+   close). Unchanged from round 1.
+7. Small-window taps stay noVNC mouse clicks. Tapping into the
+   maximized screen while NOT taken over takes over (chrome to
+   takeover + focusable) — with no forced keyboard.
+8. Title-bar layout (takeover / maximize-restore / close) unchanged.
+
+The state machine's new transition table (no `KeyboardDismissed`
+event, no `SHOW_KEYBOARD_*` effects, `APPLY_SCREEN_CHROME` on every
+transition that changes the takeover state):
+
+| 事件 | 状态变化 | effect |
+| --- | --- | --- |
+| 点接管（小窗） | 未接管 → 已接管 | 最大化窗口、清 `FLAG_NOT_FOCUSABLE`、切 takeover chrome |
+| 点接管（已最大化） | 未接管 → 已接管 | 清 `FLAG_NOT_FOCUSABLE`、切 takeover chrome |
+| 再点接管（已接管） | 已接管 → 未接管 | 收键盘（若已弹出）、恢复 `FLAG_NOT_FOCUSABLE`、切 float chrome、还原小窗 |
+| 点放大（未接管） | 小窗 → 大窗 | 只最大化，不改焦点、不切 chrome |
+| 点还原（已接管） | 已接管 → 未接管 | 收键盘、恢复 `FLAG_NOT_FOCUSABLE`、切 float chrome、还原小窗 |
+| 点画面（已最大化、未接管） | 未接管 → 已接管 | 清 `FLAG_NOT_FOCUSABLE`、切 takeover chrome，不弹键盘 |
+| 点画面（小窗） | 不变 | 小窗只做观看，点按透传给 noVNC 当鼠标点击 |
+| 键盘被收起（已接管） | 不变 | 收起键盘不再结束接管 |
+| 关闭窗口 | → 未接管 | 收尾清理 |
+
+### Alternatives considered (round 2)
+
+- **Keep forcing the keyboard, but focus the page's hidden textarea
+  first (evaluateJavascript `input.focus()` before showSoftInput)** —
+  strongest reason: it would give the forced IME a real input
+  connection, fixing failure 1 without changing the design. But it
+  keeps the blind fire-and-forget show (failure 2 needs a focus
+  callback anyway), and it fights the user's stated model: they
+  pointed at the Esc/keyboard bar as the thing they want, i.e. the
+  page's own controls driving the keyboard, not the service forcing
+  one. No — the user corrected the design, not the mechanism.
+- **Keep the dismiss auto-release, but only after the keyboard was
+  shown by the page's own button** — strongest reason: it would
+  preserve round 1's "dismissing means done" convenience. But the
+  user explicitly wants to dismiss the keyboard and keep driving;
+  any dismiss-based release misfires the moment they hide the
+  keyboard to see the full screen. No.
+- **Two injected style elements (one per mode), toggling which is
+  active** — strongest reason: each mode's rules are independent
+  text, no rewriting logic. But two elements can both apply if the
+  toggle misses, and the float rules use `!important` on the same
+  selectors the takeover rules need visible — order/specificity
+  between two elements is exactly the bug class round 1 hit. No —
+  one element, content swapped per mode.
+
+### Testing (round 2)
+
+- `apps/mobile/lib/system-float-window-contract.test.ts`: the old
+  "forced keyboard on takeover" case is replaced by a case pinning
+  the new rules (no `showSoftInput` / `SHOW_FORCED` / `SHOW_IMPLICIT`
+  / retry / dismiss listener / `KeyboardDismissed` anywhere in the
+  service; `APPLY_SCREEN_CHROME` on takeover; `onPageFinished`
+  re-injects the current mode). New case pins the chrome rules
+  (takeover keeps `#mobile-key-bar` and `#mobile-controls` visible,
+  float hides them) with the exact selectors from
+  `computer-screen-chrome.ts`, and the state-machine case drops
+  `KeyboardDismissed` / `SHOW_KEYBOARD_*` and adds
+  `APPLY_SCREEN_CHROME`. 9/9 pass.
+- Pure Kotlin checks (one-off compiler, nothing added to the repo):
+  the state machine transitions (takeover/release/maximize/screen
+  tap/close, no `SHOW_KEYBOARD` effect anywhere) and the chrome
+  function (float hides all four panels, takeover keeps the
+  Esc/keyboard bars, script keys the style by id and records the
+  mode) — 34/34 pass.
+- `pnpm verify-notes` passes; Biome clean on the changed TS file;
+  `tsc --noEmit` no new errors. Kotlin service file not compiled
+  (no Android SDK here) — CI's Android build is the backstop, as in
+  round 1.
+
+### Still needs real-device confirmation (no device yet)
+
+Round 1's four unconfirmed items carry over in updated form — the
+first two are now the point of this round, and must be checked on the
+user's phone after packaging:
+
+(a) the bottom bar with ESC and the keyboard icon is actually visible
+in takeover mode (and hidden again after releasing);
+(b) tapping the keyboard icon brings the keyboard up and typing
+reaches the computer;
+(c) dismissing the keyboard does NOT release the takeover (button
+stays blue, window stays focusable and maximized);
+(d) other apps' keyboards still work while the float is at rest
+(`FLAG_NOT_FOCUSABLE` at rest, unchanged);
+(e) `FLAG_NOT_FOCUSABLE` under a small window still lets taps through
+to noVNC as mouse clicks.
+
 ## Testing
 
 - `apps/mobile/lib/system-float-window-contract.test.ts`：旧的“键盘/打开应用按钮”断言改成接管按钮断言（同一文件、同一测试）；新增状态机转移与焦点 flag 的断言。
