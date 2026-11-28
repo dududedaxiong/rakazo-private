@@ -111,7 +111,7 @@ export function ThreadBackgroundSheet({
     }),
   ).current;
 
-  if (!visible || Sheet === undefined) return null;
+  if (!visible) return null;
 
   const opacity = background?.opacity ?? CHAT_BACKGROUND_DEFAULT_OPACITY;
 

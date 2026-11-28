@@ -124,6 +124,55 @@ afterEach(async () => {
   node.remove();
 });
 
+describe("ThreadComposerChips routines, favorites, background, backup and gallery cards", () => {
+  it("navigates to the routines page when the routines card is tapped", async () => {
+    await mountChips();
+    const card = node.querySelector<HTMLButtonElement>('[aria-label="Routines: 0 running"]');
+    expect(card).not.toBeNull();
+    await act(async () => card!.click());
+    expect(callbacks.push).toHaveBeenCalledTimes(1);
+    expect(callbacks.push).toHaveBeenCalledWith({
+      pathname: "/routines",
+      params: { botId: "bot-1" },
+    });
+  });
+
+  it("opens the favorites sheet when the favorites card is tapped", async () => {
+    await mountChips();
+    const card = node.querySelector<HTMLButtonElement>('[aria-label="Favorites: No favorites"]');
+    expect(card).not.toBeNull();
+    await act(async () => card!.click());
+    expect(callbacks.openFavorites).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens the background sheet when the background card is tapped", async () => {
+    await mountChips();
+    const card = node.querySelector<HTMLButtonElement>('[aria-label="Background: Default"]');
+    expect(card).not.toBeNull();
+    await act(async () => card!.click());
+    expect(callbacks.openBackground).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens the backup sheet when the backup card is tapped", async () => {
+    await mountChips();
+    const card = node.querySelector<HTMLButtonElement>('[aria-label="Backup: Not set up"]');
+    expect(card).not.toBeNull();
+    await act(async () => card!.click());
+    expect(callbacks.openBackup).toHaveBeenCalledTimes(1);
+  });
+
+  it("navigates to the gallery when the gallery card is tapped", async () => {
+    await mountChips();
+    const card = node.querySelector<HTMLButtonElement>(
+      '[aria-label="Gallery: No generated media"]',
+    );
+    expect(card).not.toBeNull();
+    await act(async () => card!.click());
+    expect(callbacks.push).toHaveBeenCalledTimes(1);
+    expect(callbacks.push).toHaveBeenCalledWith("/gallery");
+  });
+});
+
 describe("ThreadComposerChips other models card", () => {
   it("shows the other models card after the voice model card", async () => {
     await mountChips();

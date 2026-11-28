@@ -326,7 +326,7 @@ export function ThreadCustomSettingsSheet({
   const settings = useCustomSettings(userId);
   const [busy, setBusy] = useState(false);
 
-  if (!visible || Sheet === undefined) return null;
+  if (!visible) return null;
 
   const heroHeight = heroBackgroundHeightFor(settings, threadKey);
   const fontFamily = customFontFamily(settings);
