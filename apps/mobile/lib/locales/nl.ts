@@ -519,6 +519,7 @@ export const NL_MESSAGES: Record<string, string> = {
   Complete: "Voltooien",
   Completed: "Voltooid",
   Copy: "Kopiëren",
+  "Copy all": "Copy all",
   "Could not archive bot": "Bot archiveren mislukt",
   "Could not clear conversation": "Gesprek wissen mislukt",
   "Could not load earlier messages": "Eerdere berichten laden mislukt",

@@ -34,7 +34,7 @@ Cookie 存在复用的保险库里，不另建表。`VaultCredential` 新增一�
 
 表单是显式的二选一。保险库表单（网页版 + App）和对话里弹出的保险库凭证卡片顶上都有模式选择：“账号密码”或“Cookie/UA”，选哪个只显示哪个的填写框，两种模式都存成 `VaultCredential` 行（auth 类型分别是 `login` 和 `browser_cookies`）。模式选择本身就是互斥机制，不再在密码字段下加提示行。
 
-列表只返回元数据（网站、条数、最早过期时间、更新时间）。Cookie 项禁用保险库的“验证身份后查看明文”，只有元数据和删除。删除要清两处：删数据库行，并且向浏览器发 `clear_cookies` 命令，按 name + domain + path 逐条调 CDP `Network.deleteCookies` 清 profile——只删行不够，浏览器是持久 profile。
+列表只返回元数据（网站、条数、最早过期时间、更新时间）。Cookie 项禁用保险库的“验证身份后查看明文”，只有元数据和删除。（2026-11-28 已翻转：用户要求与密码一样可见可复制，见 [2026-11-28-cookie-reveal-like-password.md](../../implemented/bug-fix/2026-11-28-cookie-reveal-like-password.md)。）删除要清两处：删数据库行，并且向浏览器发 `clear_cookies` 命令，按 name + domain + path 逐条调 CDP `Network.deleteCookies` 清 profile——只删行不够，浏览器是持久 profile。
 
 过期不自动续期：列表显示最早过期时间，注入时跳过已过期的，失效后用户重新导出导入覆盖同一网站的旧记录。再导入同一网站时按 name + origin + type 找到旧项并更新（`auth` 里的条数/过期/UA 一起更新），不新建、不报错。
 

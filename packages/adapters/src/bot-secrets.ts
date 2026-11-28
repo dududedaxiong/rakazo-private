@@ -2,12 +2,12 @@ import { randomBytes } from "node:crypto";
 import type { BrowserCookie, SecretStore } from "@rakazo_mickvvw/adapter-kit";
 import type {
   BotSecretDestination,
-  CardSecretValue,
   LoginField,
   LoginSecretValue,
   PurchaseCardField,
   SettingsScope,
   VaultPreview,
+  VaultRevealed,
 } from "@rakazo_mickvvw/contracts";
 import {
   BotSecretAuth,
@@ -1024,22 +1024,29 @@ export async function getBotSecretMetadata(
 
 /**
  * A saved value for its owner to read. Only for the owner-facing reveal, which confirms the
- * person first; bots never read values. A login returns its fields.
+ * person first; bots never read values. A login returns its fields; a saved cookie set reads
+ * back the same way, one field per cookie, so the owner can view and copy it like a password.
  */
 export async function revealBotSecret(input: {
   prisma: PrismaClient;
   secretStore: Pick<SecretStore, "load">;
   scope: BotSecretScope;
   name: string;
-}): Promise<LoginSecretValue | { card: CardSecretValue } | { value: string } | null> {
+}): Promise<VaultRevealed | null> {
   const row = await input.prisma.vaultCredential.findFirst({
     where: { ...(await vaultFields(input.prisma, input.scope)), name: input.name },
   });
   if (!row) return null;
   const type = BotSecretAuth.safeParse(row.auth).data?.type;
-  // Cookie values are directly usable session credentials: never shown, only deleted.
-  if (type === "browser_cookies") return null;
   const plaintext = await input.secretStore.load(row.ciphertext, row.id);
+  if (type === "browser_cookies")
+    return {
+      fields: decodeBrowserCookieSet(plaintext).map((cookie) => ({
+        label: cookie.name,
+        value: cookie.value,
+        hidden: true,
+      })),
+    };
   if (type === "login") return decodeLoginSecret(plaintext);
   if (type === "card") return { card: decodeCardSecret(plaintext) };
   return { value: plaintext };

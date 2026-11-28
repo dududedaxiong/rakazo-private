@@ -402,21 +402,38 @@ describe("vault.importCookies", () => {
 });
 
 describe("vault.reveal for browser cookies", () => {
-  it("refuses with a clear error instead of a 404 or the values", async () => {
+  it("returns the saved cookies as fields after identity confirmation", async () => {
     const { call } = setup();
     await call("vault", "importCookies", { actor }, importInput());
-    const error = await captureError(() =>
-      call("vault", "reveal", { actor, sessionId: "session-1" }, { name: "example-com" }),
+    const revealed = await call(
+      "vault",
+      "reveal",
+      { actor, sessionId: "session-1" },
+      { name: "example-com" },
     );
-    expect(error).toBeInstanceOf(ORPCError);
-    expect((error as { code: unknown }).code).toBe("FORBIDDEN");
-    expect((error as Error).message).toBe("Cookie values cannot be viewed");
+    expect(revealed).toEqual({
+      fields: [{ label: "session", value: "test-value", hidden: true }],
+    });
   });
 
   it("still reports a missing item as not found", async () => {
     const { call } = setup();
     const error = await captureError(() =>
       call("vault", "reveal", { actor, sessionId: "session-1" }, { name: "no-such-item" }),
+    );
+    expect((error as { code: unknown }).code).toBe("NOT_FOUND");
+  });
+
+  it("reports another user's item as not found", async () => {
+    const { call } = setup();
+    await call("vault", "importCookies", { actor }, importInput());
+    const error = await captureError(() =>
+      call(
+        "vault",
+        "reveal",
+        { actor: otherActor, sessionId: "session-1" },
+        { name: "example-com" },
+      ),
     );
     expect((error as { code: unknown }).code).toBe("NOT_FOUND");
   });

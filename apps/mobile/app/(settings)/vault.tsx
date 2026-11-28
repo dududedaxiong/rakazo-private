@@ -218,10 +218,17 @@ export default function Vault() {
         onPress: () =>
           presentMessageActionSheet({
             title,
-            actions: fields.map((field) => ({
-              text: t("Copy {label}", { label: field.label }),
-              onPress: () => copy(field.value),
-            })),
+            actions: [
+              {
+                text: t("Copy all"),
+                onPress: () =>
+                  copy(fields.map((field) => `${field.label}=${field.value}`).join("\n")),
+              },
+              ...fields.map((field) => ({
+                text: t("Copy {label}", { label: field.label }),
+                onPress: () => copy(field.value),
+              })),
+            ],
             cancel: t("Cancel"),
             more: t("More"),
             colorScheme,
@@ -231,7 +238,7 @@ export default function Vault() {
     ]);
   }
 
-  /** A login or card opens with its value, after the person confirms it's them, so Save keeps all of it. A cookie item has nothing to reveal: its values are never shown. */
+  /** A login or card opens with its value, after the person confirms it's them, so Save keeps all of it. A cookie item opens without one: its values are viewed from the detail sheet, never typed into the form. */
   async function edit(item: BotSecretMetadata) {
     const readable = readableItem(item);
     if (!readable) return;

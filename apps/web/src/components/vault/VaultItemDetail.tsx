@@ -275,7 +275,6 @@ export function VaultItemDetail({
       );
   }
   if (auth && kind === "browser_cookies") {
-    // Cookie values are never shown: metadata and Remove are all there is.
     rows.push(
       <DetailRow key="site" label={t`Site`} copy={item.origin}>
         {siteHost(item.origin)}
@@ -288,6 +287,23 @@ export function VaultItemDetail({
           {line}
         </DetailRow>,
       );
+    // Values read back like a password's: masked until the owner confirms it's them, then the
+    // whole set as name=value lines, copyable in full.
+    const cookieFields = revealed && "fields" in revealed ? revealed.fields : undefined;
+    const cookieText = cookieFields?.length
+      ? cookieFields.map((field) => `${field.label}=${field.value}`).join("\n")
+      : undefined;
+    rows.push(
+      <DetailRow
+        key="value"
+        label={t`Value`}
+        copy={cookieText}
+        action={showButton}
+        testId="vault-item-value"
+      >
+        <span className="break-all font-mono text-body-sm">{cookieText ?? MASK}</span>
+      </DetailRow>,
+    );
   }
   if (auth && (kind === "api_key" || kind === "variable")) {
     if (auth.type === "command") {

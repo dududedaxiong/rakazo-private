@@ -56,9 +56,10 @@ export function VaultItemSheet({
       add(t("Username"), preview?.username);
       list.push({ label: t("Password"), ...hidden });
     } else if (entry.auth.type === "browser_cookies") {
-      // Cookie values are never shown: the site and the count are all there is.
+      // Values read back like a password's: dots until the owner confirms it's them.
       add(t("Site"), siteHost(entry.origin));
       add(t("Cookies"), vaultItemSubtitle(entry));
+      list.push({ label: t("Value"), ...hidden });
     } else if (entry.auth.type === "card") {
       const card = preview?.card;
       list.push({

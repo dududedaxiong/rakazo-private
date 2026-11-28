@@ -514,6 +514,7 @@ export const PL_MESSAGES: Record<string, string> = {
   Complete: "Zakończ",
   Completed: "Ukończono",
   Copy: "Kopiuj",
+  "Copy all": "Copy all",
   "Could not archive bot": "Nie udało się zarchiwizować bota",
   "Could not clear conversation": "Nie udało się wyczyścić rozmowy",
   "Could not load earlier messages": "Nie udało się wczytać wcześniejszych wiadomości",

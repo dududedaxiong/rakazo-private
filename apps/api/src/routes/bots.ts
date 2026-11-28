@@ -11,7 +11,6 @@ import {
   findConnectedModelCredential,
   forgetBotSecret,
   forgetPageShareSecrets,
-  getBotSecretMetadata,
   hasActiveComputerControl,
   importBrowserCookies,
   isSecretAlreadySaved,
@@ -1527,15 +1526,6 @@ export function botsRoutes(ctx: RouterContext) {
         await requireIdentityConfirmation(deps.auth, context);
         // Resolved here, so the event names the vault that was read even when scope is omitted.
         const scope = await settingsTarget(deps.prisma, context.actor, "credentials", input.scope);
-        const saved = await getBotSecretMetadata(
-          deps.prisma,
-          vaultScope(context.actor, scope),
-          input.name,
-        );
-        // Cookie values are session credentials: viewing is disabled by design, not a
-        // missing item, so this is a clear refusal rather than a 404.
-        if (saved && BotSecretAuth.safeParse(saved.auth).data?.type === "browser_cookies")
-          throw new ORPCError("FORBIDDEN", { message: "Cookie values cannot be viewed" });
         const revealed = await revealBotSecret({
           prisma: deps.prisma,
           secretStore: deps.secrets,

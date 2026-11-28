@@ -407,7 +407,7 @@ describe("VaultSettings new items", () => {
     await click("vault-editor-mode-cookies");
     await type(field("Site"), "https://example.com");
     const exported = '[{"name":"session","value":"test-value","domain":"example.com","path":"/"}]';
-    await type(field("Cookies") as HTMLTextAreaElement, exported);
+    await type(field("Cookies") as unknown as HTMLTextAreaElement, exported);
     await type(field("User-Agent"), "TestBrowser/1.0");
     await click(buttonIn(editor(), "Save")!);
     expect(vault.importCookies).toHaveBeenCalledWith({
@@ -534,6 +534,43 @@ describe("VaultSettings item details", () => {
       byTestId("vault-item-value").querySelector<HTMLButtonElement>('[aria-label="Copy"]')!.click();
     });
     expect(writeText).toHaveBeenCalledWith(FAKE_VALUE);
+    await act(async () => {
+      vi.advanceTimersByTime(REVEAL_MS);
+    });
+    expect(document.body.innerHTML).not.toContain(FAKE_VALUE);
+  });
+
+  it("shows a cookie set's values after the person confirms it's them, copyable in full", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal("navigator", { clipboard: { writeText } });
+    vault.list.mockResolvedValue([
+      ...rows,
+      item({
+        name: "example-cookies",
+        title: "example.com",
+        origin: "https://example.com",
+        auth: { type: "browser_cookies", cookieCount: 2, earliestExpiry: null },
+      }),
+    ]);
+    vault.reveal.mockRejectedValueOnce(confirmationRequired).mockResolvedValueOnce({
+      fields: [
+        { label: "session", value: FAKE_VALUE, hidden: true },
+        { label: "prefs", value: "dark", hidden: true },
+      ],
+    });
+    await render();
+    await click(rowNamed("example-cookies"));
+    expect(byTestId("vault-item-value").textContent).toContain("••••");
+    await click("vault-item-show");
+    await click("identity-confirm");
+    expect(vault.reveal).toHaveBeenCalledWith({ scope: "account", name: "example-cookies" });
+    expect(byTestId("vault-item-value").textContent).toContain(`session=${FAKE_VALUE}`);
+    expect(byTestId("vault-item-value").textContent).toContain("prefs=dark");
+    await act(async () => {
+      byTestId("vault-item-value").querySelector<HTMLButtonElement>('[aria-label="Copy"]')!.click();
+    });
+    expect(writeText).toHaveBeenCalledWith(`session=${FAKE_VALUE}\nprefs=dark`);
     await act(async () => {
       vi.advanceTimersByTime(REVEAL_MS);
     });

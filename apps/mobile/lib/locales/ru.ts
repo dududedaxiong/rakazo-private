@@ -598,6 +598,7 @@ export const RU_MESSAGES: Record<string, string> = {
   Connected: "Подключено",
   "Connected.": "Подключено.",
   Copy: "Копировать",
+  "Copy all": "Copy all",
   More: "Ещё",
   "Could not add source": "Не удалось добавить источник",
   "Could not approve this server": "Не удалось одобрить этот сервер",

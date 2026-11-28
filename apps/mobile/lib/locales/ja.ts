@@ -504,6 +504,7 @@ export const JA_MESSAGES: Record<string, string> = {
   Complete: "完了",
   Completed: "完了済み",
   Copy: "コピー",
+  "Copy all": "Copy all",
   "Could not archive bot": "ボットをアーカイブできませんでした",
   "Could not clear conversation": "会話をクリアできませんでした",
   "Could not load earlier messages": "以前のメッセージを読み込めませんでした",

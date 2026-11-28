@@ -1747,7 +1747,7 @@ describe("saved browser cookies", () => {
     ).toBe(false);
   });
 
-  it("lists a cookie item as metadata only and never reveals its values", async () => {
+  it("lists a cookie item as metadata only", async () => {
     const db = fakeDatabase();
     await save(db);
     const items = await listVaultItems(db.prisma, secretStore, scope);
@@ -1760,8 +1760,31 @@ describe("saved browser cookies", () => {
       }),
     ]);
     expect(JSON.stringify(items)).not.toContain("test-value");
+  });
+
+  it("reveals a cookie item's values as fields, like a login", async () => {
+    const db = fakeDatabase();
+    await save(db);
     expect(
       await revealBotSecret({ prisma: db.prisma, secretStore, scope, name: "example-cookies" }),
+    ).toEqual({
+      fields: [
+        { label: "sessionid", value: "test-value", hidden: true },
+        { label: "prefs", value: "test-value", hidden: true },
+      ],
+    });
+  });
+
+  it("reveals nothing for another owner", async () => {
+    const db = fakeDatabase();
+    await save(db);
+    expect(
+      await revealBotSecret({
+        prisma: db.prisma,
+        secretStore,
+        scope: { ...scope, userId: "user-2" },
+        name: "example-cookies",
+      }),
     ).toBeNull();
   });
 });

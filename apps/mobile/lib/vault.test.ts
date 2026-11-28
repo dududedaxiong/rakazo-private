@@ -284,6 +284,6 @@ describe("saving from the editor", () => {
       origin: "https://example.com",
       auth: { type: "browser_cookies", cookieCount: 3, earliestExpiry: 1_790_000_000 },
     });
-    expect(save?.cookieImport.content).toContain("test-value");
+    expect(save?.cookieImport?.content).toContain("test-value");
   });
 });

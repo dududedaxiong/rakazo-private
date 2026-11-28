@@ -10,7 +10,12 @@ import Vault from "../app/(settings)/vault";
 type Credential = {
   name: string;
   origin: string;
-  auth: { type: string } | null;
+  auth: {
+    type: string;
+    cookieCount?: number;
+    earliestExpiry?: number | null;
+    userAgent?: string;
+  } | null;
   title: string;
   note: string;
   preview?: Record<string, unknown>;
@@ -316,6 +321,14 @@ beforeEach(() => {
           ],
         };
       }
+      if (input.name === "example-cookies") {
+        return {
+          fields: [
+            { label: "session", value: "session-value", hidden: true },
+            { label: "prefs", value: "prefs-value", hidden: true },
+          ],
+        };
+      }
       if (input.name === "visa") {
         return { card: { number: "4242424242424242", expMonth: 8, expYear: 2028, cvc: "123" } };
       }
@@ -343,6 +356,7 @@ it("lists the account vault with each item's title and subtitle", async () => {
     "Contact",
     "API key",
     "Variable",
+    "Browser cookies",
   ]);
 });
 
@@ -534,12 +548,54 @@ it("shows each field of a website login under its label, each with its own copy"
     actions: { text: string; onPress: () => void }[];
   };
   expect(sheet.actions.map((action) => action.text)).toEqual([
+    "Copy all",
     "Copy Email",
     "Copy Password",
     "Copy PIN",
   ]);
   for (const action of sheet.actions) await act(async () => action.onPress());
-  expect(state.copy.mock.calls).toEqual([["ada@example.test"], ["example-password"], ["1234"]]);
+  expect(state.copy.mock.calls).toEqual([
+    ["Email=ada@example.test\nPassword=example-password\nPIN=1234"],
+    ["ada@example.test"],
+    ["example-password"],
+    ["1234"],
+  ]);
+});
+
+it("shows a cookie set's values in a native alert with a copy-all action", async () => {
+  state.credentials = [
+    credential({
+      name: "example-cookies",
+      origin: "https://example.com",
+      auth: { type: "browser_cookies", cookieCount: 2, earliestExpiry: null },
+      title: "example.com",
+    }),
+  ];
+  await render();
+  await open("example.com");
+  await act(async () => button("Show", dialog())!.click());
+  expect(state.rpc).toHaveBeenCalledWith("vault/reveal", {
+    scope: "account",
+    name: "example-cookies",
+  });
+  expect(state.alert).toHaveBeenCalledWith(
+    "example.com",
+    "session\nsession-value\n\nprefs\nprefs-value",
+    expect.any(Array),
+  );
+  expect(container.textContent).not.toContain("session-value");
+  await act(async () => alertButton("Copy").onPress?.());
+  const sheet = state.actionSheet.mock.calls[0]![0] as {
+    title: string;
+    actions: { text: string; onPress: () => void }[];
+  };
+  expect(sheet.actions.map((action) => action.text)).toEqual([
+    "Copy all",
+    "Copy session",
+    "Copy prefs",
+  ]);
+  await act(async () => sheet.actions[0]!.onPress());
+  expect(state.copy).toHaveBeenCalledWith("session=session-value\nprefs=prefs-value");
 });
 
 it("shows a card's number, expiry and security code once revealed", async () => {

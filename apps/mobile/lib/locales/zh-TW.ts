@@ -541,6 +541,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Connected. Its tools are available from your next message.":
     "已連線。從你的下一條訊息起即可使用它的工具。",
   Copy: "複製",
+  "Copy all": "全部複製",
   More: "更多",
   "Could not add source": "無法新增來源",
   "Could not approve this server": "無法核准此伺服器",

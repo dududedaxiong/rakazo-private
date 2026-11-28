@@ -507,6 +507,7 @@ export const ES_MESSAGES: Record<string, string> = {
   Complete: "Completado",
   Completed: "Completado",
   Copy: "Copiar",
+  "Copy all": "Copy all",
   "Could not archive bot": "No se pudo archivar el bot",
   "Could not clear conversation": "No se pudo borrar la conversación",
   "Could not load earlier messages": "No se pudieron cargar los mensajes anteriores",
