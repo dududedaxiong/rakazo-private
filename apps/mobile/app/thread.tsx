@@ -115,7 +115,14 @@ export default function ThreadRoute() {
       <>
         {owner?.generation !== generation ? <ActivityIndicator color={tokens.foreground} /> : null}
         <View style={{ flex: 1, display: owner?.generation === generation ? "flex" : "none" }}>
-          {owner ? <Thread key={owner.key} sessionEpoch={ready} userId={owner.userId} /> : null}
+          {owner ? (
+            <Thread
+              key={owner.key}
+              sessionEpoch={ready}
+              userId={owner.userId}
+              spaceId={focusSync.activeSpaceId}
+            />
+          ) : null}
         </View>
       </>
     );

@@ -2142,6 +2142,9 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "Saved. Takes effect once the supporting update arrives.": "已儲存，將在配套更新到達後生效。",
   "Anthropic Messages（经 chat-completions 转译）":
     "Anthropic Messages（經 chat-completions 轉譯）",
+  "Account management": "帳號管理",
+  "{count} accounts": "{count} 個帳號",
+  "No accounts": "暫無帳號",
 };
 
 export const PEER_MESSAGE_FORMS = { other: "與{peer}的 {count} 則訊息" };

@@ -2122,6 +2122,9 @@ export const ES_MESSAGES: Record<string, string> = {
     "Saved. Takes effect once the supporting update arrives.",
   "Anthropic Messages（经 chat-completions 转译）":
     "Anthropic Messages（经 chat-completions 转译）",
+  "Account management": "Account management",
+  "{count} accounts": "{count} accounts",
+  "No accounts": "No accounts",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {

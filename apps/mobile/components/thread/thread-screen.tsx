@@ -136,7 +136,16 @@ function isActiveStatus(status: string | undefined): boolean {
  * The chat screen. Hook order is effect order: the snapshot, scroll, sync and send hooks run their
  * effects at the positions the screen ran them before they were split out.
  */
-export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId: string }) {
+export function Thread({
+  sessionEpoch,
+  userId,
+  spaceId,
+}: {
+  sessionEpoch: number;
+  userId: string;
+  /** The Space this thread runs in; null means the account's scope. */
+  spaceId?: string | null;
+}) {
   useChatOnScreen();
   const tokens = mobileTokens();
   const styles = useThemedStyles(createThreadHeaderStyles);
@@ -1372,6 +1381,7 @@ export function Thread({ sessionEpoch, userId }: { sessionEpoch: number; userId:
                 botId={botId}
                 currentBot={currentBot}
                 userId={userId}
+                spaceId={spaceId}
                 catalog={modelCatalog}
                 mainOverride={mainOverride}
                 videoOverride={videoOverride}

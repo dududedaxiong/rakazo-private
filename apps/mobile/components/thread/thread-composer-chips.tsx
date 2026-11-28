@@ -7,8 +7,8 @@ import type {
   VoiceStatus,
 } from "@rakazo_mickvvw/contracts";
 import { primaryBotModel } from "@rakazo_mickvvw/contracts";
-import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { formatActivityRelativeTime } from "../../lib/activity";
 import { rpc } from "../../lib/api";
@@ -18,6 +18,7 @@ import { useCustomSettings } from "../../lib/custom-settings";
 import { isGeneratedMedia } from "../../lib/gallery";
 import { useI18n } from "../../lib/i18n";
 import type { MobileBot, MobileModel } from "../../lib/mobile-types";
+import { settingsRpc, settingsTarget } from "../../lib/settings-target";
 import { NativeSymbol } from "../native-symbol";
 import type { ThreadModelPickerRole, ThreadModelSave } from "./thread-model-picker-sheet";
 
@@ -28,6 +29,7 @@ export type ComposerChip = {
     | "voiceModel"
     | "mediaModel"
     | "computer"
+    | "accounts"
     | "routines"
     | "favorites"
     | "background"
@@ -48,6 +50,7 @@ export function ThreadComposerChips({
   botId,
   currentBot,
   userId,
+  spaceId,
   catalog,
   mainOverride,
   computerChoice,
@@ -64,6 +67,8 @@ export function ThreadComposerChips({
   botId?: string;
   currentBot?: MobileBot;
   userId: string;
+  /** The thread's Space; without one the card counts the account's vault. */
+  spaceId?: string | null;
   /** The model catalog, fetched by the screen and shared with the composer. */
   catalog: MobileModel[] | null;
   /** The model saved from the sheet, until the chat's bot list catches up with it. */
@@ -92,6 +97,26 @@ export function ThreadComposerChips({
   const [routines, setRoutines] = useState<Routine[] | null>(null);
   const [backupHost, setBackupHost] = useState<string | null>(null);
   const [latestGeneratedAt, setLatestGeneratedAt] = useState<string | null>(null);
+  // Null while the vault count is loading; the card shows its label until then.
+  const [accountCount, setAccountCount] = useState<number | null>(null);
+  const vaultTarget = useMemo(() => settingsTarget(spaceId ?? undefined), [spaceId]);
+  const vaultRpc = useMemo(() => settingsRpc(vaultTarget), [vaultTarget]);
+
+  // The count changes when an item is added or removed in the vault, so refresh
+  // whenever this screen is entered or returned to, not just on mount.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      void vaultRpc("vault/list", { scope: vaultTarget.scope })
+        .then((items) => {
+          if (!cancelled) setAccountCount(items.length);
+        })
+        .catch(() => undefined);
+      return () => {
+        cancelled = true;
+      };
+    }, [vaultRpc, vaultTarget.scope]),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -252,6 +277,20 @@ export function ThreadComposerChips({
         },
       },
       {
+        id: "accounts",
+        label: t("Account management"),
+        value:
+          accountCount === null
+            ? t("Account management")
+            : accountCount > 0
+              ? t("{count} accounts", { count: accountCount })
+              : t("No accounts"),
+        active: (accountCount ?? 0) > 0,
+        onPress: () => {
+          router.push({ pathname: "/(settings)/vault", params: spaceId ? { spaceId } : {} });
+        },
+      },
+      {
         id: "routines",
         label: t("Routines"),
         value: routinesValue,
@@ -312,6 +351,8 @@ export function ThreadComposerChips({
     backgroundLabel,
     backupHost,
     latestGeneratedAt,
+    accountCount,
+    spaceId,
     t,
   ]);
 
@@ -383,15 +424,17 @@ export function ThreadComposerChips({
                         ? "film"
                         : chip.id === "computer"
                           ? "macbook"
-                          : chip.id === "routines"
-                            ? "clock.arrow.circlepath"
-                            : chip.id === "favorites"
-                              ? "bookmark"
-                              : chip.id === "backup"
-                                ? "icloud"
-                                : chip.id === "gallery"
-                                  ? "photo"
-                                  : "photo"
+                          : chip.id === "accounts"
+                            ? "key"
+                            : chip.id === "routines"
+                              ? "clock.arrow.circlepath"
+                              : chip.id === "favorites"
+                                ? "bookmark"
+                                : chip.id === "backup"
+                                  ? "icloud"
+                                  : chip.id === "gallery"
+                                    ? "photo"
+                                    : "photo"
               }
               android={
                 chip.id === "mainModel"
@@ -404,15 +447,17 @@ export function ThreadComposerChips({
                         ? "film-outline"
                         : chip.id === "computer"
                           ? "laptop-outline"
-                          : chip.id === "routines"
-                            ? "time-outline"
-                            : chip.id === "favorites"
-                              ? "bookmark-outline"
-                              : chip.id === "backup"
-                                ? "cloud-upload-outline"
-                                : chip.id === "gallery"
-                                  ? "images-outline"
-                                  : "image-outline"
+                          : chip.id === "accounts"
+                            ? "key-outline"
+                            : chip.id === "routines"
+                              ? "time-outline"
+                              : chip.id === "favorites"
+                                ? "bookmark-outline"
+                                : chip.id === "backup"
+                                  ? "cloud-upload-outline"
+                                  : chip.id === "gallery"
+                                    ? "images-outline"
+                                    : "image-outline"
               }
               size={21}
               color={tokens.link}

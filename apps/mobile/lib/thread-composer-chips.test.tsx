@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import type { ReactNode } from "react";
-import { act, createElement } from "react";
+import { act, createElement, useEffect } from "react";
 import type { Root } from "react-dom/client";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -15,7 +15,25 @@ const callbacks = vi.hoisted(() => ({
   openBackup: vi.fn(),
 }));
 
-vi.mock("expo-router", () => ({ useRouter: () => ({ push: callbacks.push }) }));
+const vaultState = vi.hoisted(() => ({
+  accountItems: [] as { name: string }[],
+  spaceItems: [] as { name: string }[],
+}));
+
+vi.mock("expo-router", () => ({
+  useRouter: () => ({ push: callbacks.push }),
+  useFocusEffect: (effect: () => (() => void) | undefined) => useEffect(effect, [effect]),
+}));
+vi.mock("./settings-target", () => ({
+  settingsTarget: (spaceId?: string) =>
+    spaceId ? { scope: "space", spaceId } : { scope: "account" },
+  settingsRpc: () => async (procedure: string, body?: { scope?: string }) => {
+    if (procedure === "vault/list") {
+      return body?.scope === "space" ? vaultState.spaceItems : vaultState.accountItems;
+    }
+    return null;
+  },
+}));
 vi.mock("./api", () => ({
   rpc: async (procedure: string) => {
     if (procedure === "voice/catalog") return [];
@@ -88,13 +106,14 @@ const currentBot = {
 let root: Root;
 let node: HTMLDivElement;
 
-async function mountChips(bot: MobileBot = currentBot) {
+async function mountChips(bot: MobileBot = currentBot, spaceId?: string | null) {
   await act(async () =>
     root.render(
       <ThreadComposerChips
         botId="bot-1"
         currentBot={bot}
         userId="user-1"
+        spaceId={spaceId}
         catalog={[]}
         mainOverride={null}
         videoOverride={null}
@@ -114,6 +133,8 @@ async function mountChips(bot: MobileBot = currentBot) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vaultState.accountItems = [];
+  vaultState.spaceItems = [];
   node = document.createElement("div");
   document.body.append(node);
   root = createRoot(node);
@@ -170,6 +191,56 @@ describe("ThreadComposerChips routines, favorites, background, backup and galler
     await act(async () => card!.click());
     expect(callbacks.push).toHaveBeenCalledTimes(1);
     expect(callbacks.push).toHaveBeenCalledWith("/gallery");
+  });
+});
+
+describe("ThreadComposerChips accounts card", () => {
+  it("shows the vault count after the computer card", async () => {
+    vaultState.accountItems = [{ name: "site-a" }, { name: "site-b" }];
+    await mountChips();
+    const card = node.querySelector<HTMLButtonElement>(
+      '[aria-label="Account management: 2 accounts"]',
+    );
+    expect(card).not.toBeNull();
+    const text = node.textContent ?? "";
+    expect(text.indexOf("Account management")).toBeGreaterThan(text.indexOf("Computer"));
+  });
+
+  it("shows no accounts when the vault is empty", async () => {
+    await mountChips();
+    const card = node.querySelector<HTMLButtonElement>(
+      '[aria-label="Account management: No accounts"]',
+    );
+    expect(card).not.toBeNull();
+  });
+
+  it("opens the space vault when the card is tapped", async () => {
+    vaultState.spaceItems = [{ name: "site-a" }, { name: "site-b" }];
+    await mountChips(currentBot, "space-1");
+    const card = node.querySelector<HTMLButtonElement>(
+      '[aria-label="Account management: 2 accounts"]',
+    );
+    expect(card).not.toBeNull();
+    await act(async () => card!.click());
+    expect(callbacks.push).toHaveBeenCalledTimes(1);
+    expect(callbacks.push).toHaveBeenCalledWith({
+      pathname: "/(settings)/vault",
+      params: { spaceId: "space-1" },
+    });
+  });
+
+  it("opens the account vault when there is no space", async () => {
+    await mountChips();
+    const card = node.querySelector<HTMLButtonElement>(
+      '[aria-label="Account management: No accounts"]',
+    );
+    expect(card).not.toBeNull();
+    await act(async () => card!.click());
+    expect(callbacks.push).toHaveBeenCalledTimes(1);
+    expect(callbacks.push).toHaveBeenCalledWith({
+      pathname: "/(settings)/vault",
+      params: {},
+    });
   });
 });
 

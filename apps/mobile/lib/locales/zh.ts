@@ -2154,6 +2154,9 @@ export const ZH_MESSAGES: Record<string, string> = {
   "Saved. Takes effect once the supporting update arrives.": "已保存，将在配套更新到达后生效。",
   "Anthropic Messages（经 chat-completions 转译）":
     "Anthropic Messages（经 chat-completions 转译）",
+  "Account management": "账号管理",
+  "{count} accounts": "{count} 个账号",
+  "No accounts": "暂无账号",
 };
 
 export const PEER_MESSAGE_FORMS: Partial<Record<Intl.LDMLPluralRule, string>> = {
