@@ -168,6 +168,48 @@ describe("lingui catalogs", () => {
     }
   });
 
+  it("translates media recognition and computer persona labels into Chinese", async () => {
+    const readCatalog = async (locale: string) => {
+      const filename = fileURLToPath(new URL(`../locales/${locale}/messages.po`, import.meta.url));
+      return formatter().parse(readFileSync(filename, "utf8"), {
+        locale,
+        sourceLocale: "en",
+        filename,
+      });
+    };
+    const translations: Record<string, Record<string, string>> = {
+      "zh-CN": {
+        "Image recognition": "图像识别",
+        "Video analysis": "视频分析",
+        "Computer persona": "电脑操作人设",
+        "This model may not be able to see images.": "此模型可能无法识别图片。",
+        "This model may not be able to see video.": "此模型可能无法识别视频。",
+      },
+      "zh-TW": {
+        "Image recognition": "圖像識別",
+        "Video analysis": "影片分析",
+        "Computer persona": "電腦操作人設",
+        "This model may not be able to see images.": "此模型可能無法辨識圖片。",
+        "This model may not be able to see video.": "此模型可能無法辨識影片。",
+      },
+    };
+    for (const [locale, messages] of Object.entries(translations)) {
+      const catalog = await readCatalog(locale);
+      // The parsed catalog is keyed by Lingui's short ids; the source text lives on each entry.
+      const byMessage = new Map(
+        Object.values(catalog).map((entry) => [entry.message ?? "", entry.translation ?? ""]),
+      );
+      for (const [id, translation] of Object.entries(messages)) {
+        expect(byMessage.get(id), `${locale}: ${id}`).toBe(translation);
+      }
+      const local = setupI18n({ locale });
+      local.load(locale, messages);
+      for (const [id, translation] of Object.entries(messages)) {
+        expect(local._(id), `${locale}: ${id}`).toBe(translation);
+      }
+    }
+  });
+
   it("names a fixed minute every few hours in every locale", () => {
     for (const locale of UI_LOCALES) {
       const catalog = readFileSync(

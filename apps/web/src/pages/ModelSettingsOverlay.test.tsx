@@ -17,6 +17,8 @@ const models = vi.hoisted(() => ({
   role: vi.fn(),
   forRole: vi.fn(),
   setRole: vi.fn(),
+  computerPersona: vi.fn(),
+  setComputerPersona: vi.fn(),
   credentials: vi.fn(),
   connect: vi.fn(),
   disconnect: vi.fn(),
@@ -32,12 +34,15 @@ const models = vi.hoisted(() => ({
   submitOAuthCode: vi.fn(),
 }));
 
+const promptTemplates = vi.hoisted(() => ({ list: vi.fn() }));
+
 const autoReview = vi.hoisted(() => ({ get: vi.fn() }));
 
 vi.mock("../lib/rpc", () => {
   const rpc = {
     models,
     autoReview,
+    promptTemplates,
     bots: { list: vi.fn(async () => []), update: vi.fn() },
     me: vi.fn(),
   };
@@ -157,6 +162,30 @@ vi.mock("@rakazo_mickvvw/ui-web", async (importOriginal) => {
       ) : null,
     NativeSelect: (props: ComponentProps<"select">) => <select {...props} />,
     NativeSelectOption: (props: ComponentProps<"option">) => <option {...props} />,
+    OptionSelect: (props: {
+      value?: string | null;
+      options?: { value: string; label: string }[];
+      onValueChange?: (value: string) => void;
+      disabled?: boolean;
+      "aria-label"?: string;
+      "data-testid"?: string;
+      id?: string;
+    }) => (
+      <select
+        aria-label={props["aria-label"]}
+        data-testid={props["data-testid"]}
+        id={props.id}
+        value={props.value ?? ""}
+        disabled={props.disabled}
+        onChange={(event) => props.onValueChange?.(event.target.value)}
+      >
+        {(props.options ?? []).map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    ),
   };
 });
 
@@ -257,6 +286,14 @@ async function typeInto(input: HTMLInputElement, value: string) {
   });
 }
 
+async function chooseSelect(select: HTMLSelectElement, value: string) {
+  await act(async () => {
+    const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+    setter?.call(select, value);
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+}
+
 async function click(element: Element | null | undefined) {
   if (!(element instanceof HTMLElement)) throw new Error("Missing element");
   await act(async () => element.click());
@@ -265,7 +302,7 @@ async function click(element: Element | null | undefined) {
   });
 }
 
-function section(role: "main" | "approval" | "computer") {
+function section(role: "main" | "approval" | "computer" | "image" | "video") {
   const found = document.querySelector(`[data-testid="model-role-${role}"]`);
   if (!found) throw new Error(`Missing ${role} model list`);
   return found;
@@ -368,6 +405,14 @@ beforeEach(() => {
   });
   models.connect.mockResolvedValue({});
   models.disconnect.mockResolvedValue(undefined);
+  models.computerPersona.mockResolvedValue({ promptTemplateId: null, scope: "account" });
+  models.setComputerPersona.mockImplementation(
+    async (input: { promptTemplateId: string | null }) => ({
+      promptTemplateId: input.promptTemplateId,
+      scope: "account",
+    }),
+  );
+  promptTemplates.list.mockResolvedValue([]);
   models.forRole.mockImplementation(() => models.list());
   models.setRole.mockImplementation(
     async ({ role: _role, expectedUserId: _user, ...patch }: Record<string, unknown>) => ({
@@ -659,6 +704,155 @@ it("shows the computer-use model when the main model cannot read images", async 
       expect(
         section("computer").querySelector('[data-testid="model-role-default"]')?.textContent,
       ).toBe("Choose a model that can see the screen"),
+    );
+  } finally {
+    await view.unmount();
+  }
+});
+
+it("always shows image and video model lists, even while the computer-use model stays hidden", async () => {
+  models.credentials.mockResolvedValue([deepseekCredential]);
+  const view = await renderSettings();
+  try {
+    expect(section("main").textContent).toContain("DeepSeek Chat");
+    expect(view.container.querySelector('[data-testid="model-role-computer"]')).toBeNull();
+    await vi.waitFor(() =>
+      expect(
+        section("image").querySelector('[data-testid="model-role-default"]')?.textContent,
+      ).toBe("Choose a model"),
+    );
+    expect(section("video").querySelector('[data-testid="model-role-default"]')?.textContent).toBe(
+      "Choose a model",
+    );
+    expect(view.container.querySelector('[data-testid="computer-persona"]')).toBeNull();
+  } finally {
+    await view.unmount();
+  }
+});
+
+it("warns when the image model cannot see images", async () => {
+  models.role.mockImplementation(async ({ role }: { role: string }) => {
+    if (role === "image")
+      return {
+        primary: { provider: "deepseek", modelId: "deepseek-chat" },
+        backups: [],
+        seesImages: false,
+      };
+    return { primary: null, backups: [] };
+  });
+  const view = await renderSettings();
+  try {
+    await vi.waitFor(() =>
+      expect(section("image").textContent).toContain("This model may not be able to see images."),
+    );
+    expect(section("video").querySelector('[role="alert"]')).toBeNull();
+  } finally {
+    await view.unmount();
+  }
+});
+
+it("warns when the video model cannot see video", async () => {
+  models.role.mockImplementation(async ({ role }: { role: string }) => {
+    if (role === "video")
+      return {
+        primary: { provider: "deepseek", modelId: "deepseek-chat" },
+        backups: [],
+        seesImages: false,
+      };
+    return { primary: null, backups: [] };
+  });
+  const view = await renderSettings();
+  try {
+    await vi.waitFor(() =>
+      expect(section("video").textContent).toContain("This model may not be able to see video."),
+    );
+    expect(section("image").querySelector('[role="alert"]')).toBeNull();
+  } finally {
+    await view.unmount();
+  }
+});
+
+/** The computer section shows, so its persona picker shows below it. */
+async function renderWithComputerSection() {
+  models.credentials.mockResolvedValue([deepseekCredential]);
+  models.role.mockImplementation(async ({ role }: { role: string }) => {
+    if (role === "main")
+      return {
+        primary: { provider: "deepseek", modelId: "deepseek-chat" },
+        backups: [],
+        seesImages: false,
+      };
+    return { primary: null, backups: [] };
+  });
+  const view = await renderSettings();
+  await vi.waitFor(() =>
+    expect(view.container.querySelector('[data-testid="computer-persona"]')).not.toBeNull(),
+  );
+  return view;
+}
+
+function personaSelect(container: HTMLElement) {
+  const select = container.querySelector<HTMLSelectElement>(
+    '[data-testid="computer-persona-select"]',
+  );
+  if (!select) throw new Error("Missing computer persona picker");
+  return select;
+}
+
+it("saves the computer persona from the template list", async () => {
+  promptTemplates.list.mockResolvedValue([
+    {
+      id: "tpl-1",
+      name: "Helper",
+      content: "Help out.",
+      isBuiltIn: false,
+      sourceUrl: null,
+      createdAt: "2026-11-28T00:00:00.000Z",
+      updatedAt: "2026-11-28T00:00:00.000Z",
+    },
+  ]);
+  const view = await renderWithComputerSection();
+  try {
+    const select = personaSelect(view.container);
+    await vi.waitFor(() => expect(select.querySelectorAll("option")).toHaveLength(2));
+    expect(select.querySelectorAll("option")[0]?.textContent).toBe("None");
+    await chooseSelect(select, "tpl-1");
+    await vi.waitFor(() =>
+      expect(models.setComputerPersona).toHaveBeenCalledWith({
+        promptTemplateId: "tpl-1",
+        expectedUserId: "user-1",
+        scope: "account",
+      }),
+    );
+  } finally {
+    await view.unmount();
+  }
+});
+
+it("clears the computer persona from None", async () => {
+  models.computerPersona.mockResolvedValue({ promptTemplateId: "tpl-1", scope: "account" });
+  promptTemplates.list.mockResolvedValue([
+    {
+      id: "tpl-1",
+      name: "Helper",
+      content: "Help out.",
+      isBuiltIn: false,
+      sourceUrl: null,
+      createdAt: "2026-11-28T00:00:00.000Z",
+      updatedAt: "2026-11-28T00:00:00.000Z",
+    },
+  ]);
+  const view = await renderWithComputerSection();
+  try {
+    const select = personaSelect(view.container);
+    await vi.waitFor(() => expect(select.value).toBe("tpl-1"));
+    await chooseSelect(select, "");
+    await vi.waitFor(() =>
+      expect(models.setComputerPersona).toHaveBeenCalledWith({
+        promptTemplateId: null,
+        expectedUserId: "user-1",
+        scope: "account",
+      }),
     );
   } finally {
     await view.unmount();

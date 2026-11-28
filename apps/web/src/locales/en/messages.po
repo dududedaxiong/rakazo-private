@@ -2360,6 +2360,10 @@ msgstr "Computer is asleep. Open it to wake."
 msgid "Computer is stopped"
 msgstr "Computer is stopped"
 
+#: src/pages/model-settings/computer-persona-picker.tsx
+msgid "Computer persona"
+msgstr "Computer persona"
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Computer-use model"
 msgstr "Computer-use model"
@@ -5066,6 +5070,10 @@ msgstr "Image model"
 msgid "Image prompt preset"
 msgstr "Image prompt preset"
 
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Image recognition"
+msgstr "Image recognition"
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image trigger words"
 msgstr "Image trigger words"
@@ -6569,6 +6577,7 @@ msgstr "No users match"
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
+#: src/pages/model-settings/computer-persona-picker.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "None"
 msgstr "None"
@@ -7948,6 +7957,7 @@ msgstr "Resume import"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Invite.tsx
+#: src/pages/model-settings/computer-persona-picker.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/plugins/manage-view.tsx
 #: src/pages/plugins/plugin-browse.tsx
@@ -9534,6 +9544,14 @@ msgstr "This model cannot read images. Choose a model that supports images."
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "This model cannot read images. Choose a model that supports images."
 
+#: src/pages/ModelRoleSettings.tsx
+msgid "This model may not be able to see images."
+msgstr "This model may not be able to see images."
+
+#: src/pages/ModelRoleSettings.tsx
+msgid "This model may not be able to see video."
+msgstr "This model may not be able to see video."
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This model's context window is too small. Choose another model."
@@ -10257,6 +10275,10 @@ msgstr "Verifying…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Video analysis"
+msgstr "Video analysis"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video edit model"

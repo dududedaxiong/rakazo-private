@@ -2360,6 +2360,10 @@ msgstr "Computer schläft. Öffne ihn, um ihn aufzuwecken."
 msgid "Computer is stopped"
 msgstr "Computer ist gestoppt"
 
+#: src/pages/model-settings/computer-persona-picker.tsx
+msgid "Computer persona"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Computer-use model"
 msgstr "Modell für Computernutzung"
@@ -5066,6 +5070,10 @@ msgstr ""
 msgid "Image prompt preset"
 msgstr ""
 
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Image recognition"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image trigger words"
 msgstr ""
@@ -6569,6 +6577,7 @@ msgstr ""
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
+#: src/pages/model-settings/computer-persona-picker.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "None"
 msgstr "Keine"
@@ -7948,6 +7957,7 @@ msgstr ""
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Invite.tsx
+#: src/pages/model-settings/computer-persona-picker.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/plugins/manage-view.tsx
 #: src/pages/plugins/plugin-browse.tsx
@@ -9534,6 +9544,14 @@ msgstr "Dieses Modell kann keine Bilder lesen. Wähle ein Modell, das Bilder unt
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "Dieses Modell kann keine Bilder lesen. Wähle ein Modell, das Bilder unterstützt."
 
+#: src/pages/ModelRoleSettings.tsx
+msgid "This model may not be able to see images."
+msgstr ""
+
+#: src/pages/ModelRoleSettings.tsx
+msgid "This model may not be able to see video."
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This model's context window is too small. Choose another model."
@@ -10257,6 +10275,10 @@ msgstr "Wird geprüft…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "Version"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Video analysis"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video edit model"

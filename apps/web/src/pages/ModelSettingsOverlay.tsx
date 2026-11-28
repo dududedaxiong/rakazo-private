@@ -28,6 +28,7 @@ import { useSpaceRpc } from "../lib/space-rpc";
 import type { ModelRoleConnectIntent } from "./ModelRoleSettings";
 import { ModelRoleSettings, useModelRole } from "./ModelRoleSettings";
 import { CompatibleModelFields } from "./model-settings/compatible-model-fields";
+import { ComputerPersonaPicker } from "./model-settings/computer-persona-picker";
 import { CompatibleKeyControls, ConnectionControls } from "./model-settings/connection-controls";
 import { ConnectionNameField, ProvidersSection } from "./model-settings/providers-section";
 import type { ConnectableProvider } from "./model-settings/role-model-picker";
@@ -374,26 +375,61 @@ export function ModelSettingsOverlay({
             />
           ) : null}
           {showComputer ? (
-            <ModelRoleSettings
-              userId={me.userId}
-              spaceId={me.spaceId}
-              scope={scope}
-              credentials={credentials}
-              modelRole="computer"
-              title={t`Computer-use model`}
-              defaultLabel={
-                mainSeesImages ? t`Same as main model` : t`Choose a model that can see the screen`
-              }
-              providers={providers}
-              providerLabel={providerLabel}
-              onConnect={(next, intent) => openConnection(next, intent, null, "computer")}
-              onManage={(id, credentialId) =>
-                openConnection({ id, name: id }, null, credentialId, "computer")
-              }
-              panel={connectionAt === "computer" ? panelFor(true) : null}
-              locatedModel={locateComputerModel}
-            />
+            <>
+              <ModelRoleSettings
+                userId={me.userId}
+                spaceId={me.spaceId}
+                scope={scope}
+                credentials={credentials}
+                modelRole="computer"
+                title={t`Computer-use model`}
+                defaultLabel={
+                  mainSeesImages ? t`Same as main model` : t`Choose a model that can see the screen`
+                }
+                providers={providers}
+                providerLabel={providerLabel}
+                onConnect={(next, intent) => openConnection(next, intent, null, "computer")}
+                onManage={(id, credentialId) =>
+                  openConnection({ id, name: id }, null, credentialId, "computer")
+                }
+                panel={connectionAt === "computer" ? panelFor(true) : null}
+                locatedModel={locateComputerModel}
+              />
+              <ComputerPersonaPicker userId={me.userId} scope={scope} />
+            </>
           ) : null}
+          <ModelRoleSettings
+            userId={me.userId}
+            spaceId={me.spaceId}
+            scope={scope}
+            credentials={credentials}
+            modelRole="image"
+            title={t`Image recognition`}
+            defaultLabel={t`Choose a model`}
+            providers={providers}
+            providerLabel={providerLabel}
+            onConnect={(next, intent) => openConnection(next, intent, null, "image")}
+            onManage={(id, credentialId) =>
+              openConnection({ id, name: id }, null, credentialId, "image")
+            }
+            panel={connectionAt === "image" ? panelFor(true) : null}
+          />
+          <ModelRoleSettings
+            userId={me.userId}
+            spaceId={me.spaceId}
+            scope={scope}
+            credentials={credentials}
+            modelRole="video"
+            title={t`Video analysis`}
+            defaultLabel={t`Choose a model`}
+            providers={providers}
+            providerLabel={providerLabel}
+            onConnect={(next, intent) => openConnection(next, intent, null, "video")}
+            onManage={(id, credentialId) =>
+              openConnection({ id, name: id }, null, credentialId, "video")
+            }
+            panel={connectionAt === "video" ? panelFor(true) : null}
+          />
           {scope === "space" ? null : (
             <ProvidersSection
               credentials={credentials}

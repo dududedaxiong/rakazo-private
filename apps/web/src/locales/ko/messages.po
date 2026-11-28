@@ -2360,6 +2360,10 @@ msgstr "컴퓨터가 절전 상태입니다. 열어 깨우세요."
 msgid "Computer is stopped"
 msgstr "컴퓨터가 중지됨"
 
+#: src/pages/model-settings/computer-persona-picker.tsx
+msgid "Computer persona"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Computer-use model"
 msgstr "컴퓨터 사용 모델"
@@ -5066,6 +5070,10 @@ msgstr ""
 msgid "Image prompt preset"
 msgstr ""
 
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Image recognition"
+msgstr ""
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image trigger words"
 msgstr ""
@@ -6569,6 +6577,7 @@ msgstr ""
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
+#: src/pages/model-settings/computer-persona-picker.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "None"
 msgstr "없음"
@@ -7948,6 +7957,7 @@ msgstr ""
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Invite.tsx
+#: src/pages/model-settings/computer-persona-picker.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/plugins/manage-view.tsx
 #: src/pages/plugins/plugin-browse.tsx
@@ -9534,6 +9544,14 @@ msgstr "이 모델은 이미지를 읽을 수 없습니다. 이미지를 지원�
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "이 모델은 이미지를 읽을 수 없습니다. 이미지를 지원하는 모델을 선택하세요."
 
+#: src/pages/ModelRoleSettings.tsx
+msgid "This model may not be able to see images."
+msgstr ""
+
+#: src/pages/ModelRoleSettings.tsx
+msgid "This model may not be able to see video."
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This model's context window is too small. Choose another model."
@@ -10257,6 +10275,10 @@ msgstr "확인 중…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "버전"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Video analysis"
+msgstr ""
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video edit model"

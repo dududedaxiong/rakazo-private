@@ -668,6 +668,15 @@ export function ModelRoleSettings({
           </FallbackDisclosure>
         </li>
       </ol>
+      {(role === "image" || role === "video") && primary && settings?.seesImages === false ? (
+        <p role="alert" className="mt-2 text-body-sm text-warning">
+          {role === "image" ? (
+            <Trans>This model may not be able to see images.</Trans>
+          ) : (
+            <Trans>This model may not be able to see video.</Trans>
+          )}
+        </p>
+      ) : null}
       {panel}
       {state.busy && !settings ? (
         <Spinner className="mt-3" aria-label={t`Loading model catalog…`} />

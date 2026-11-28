@@ -2360,6 +2360,10 @@ msgstr "电脑已休眠。打开就能唤醒。"
 msgid "Computer is stopped"
 msgstr "电脑已停止"
 
+#: src/pages/model-settings/computer-persona-picker.tsx
+msgid "Computer persona"
+msgstr "电脑操作人设"
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Computer-use model"
 msgstr "电脑操作模型"
@@ -5066,6 +5070,10 @@ msgstr "图片模型"
 msgid "Image prompt preset"
 msgstr "图片提示词预设"
 
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Image recognition"
+msgstr "图像识别"
+
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Image trigger words"
 msgstr "图片触发词"
@@ -6569,6 +6577,7 @@ msgstr "没有匹配的用户"
 #: src/components/SpendingLimitSettings.tsx
 #: src/components/vault/VaultItemEditor.tsx
 #: src/pages/model-settings/compatible-model-fields.tsx
+#: src/pages/model-settings/computer-persona-picker.tsx
 #: src/pages/onboarding/model-step.tsx
 msgid "None"
 msgstr "无"
@@ -7948,6 +7957,7 @@ msgstr "继续导入"
 #: src/pages/AdminAccessPage.tsx
 #: src/pages/Auth.tsx
 #: src/pages/Invite.tsx
+#: src/pages/model-settings/computer-persona-picker.tsx
 #: src/pages/ModelRoleSettings.tsx
 #: src/pages/plugins/manage-view.tsx
 #: src/pages/plugins/plugin-browse.tsx
@@ -9534,6 +9544,14 @@ msgstr "此模型无法读取图片。请选择支持图片的模型。"
 msgid "This model cannot read images. Choose a model that supports images."
 msgstr "此模型无法读取图片。请选择支持图片的模型。"
 
+#: src/pages/ModelRoleSettings.tsx
+msgid "This model may not be able to see images."
+msgstr "此模型可能无法识别图片。"
+
+#: src/pages/ModelRoleSettings.tsx
+msgid "This model may not be able to see video."
+msgstr "此模型可能无法识别视频。"
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "This model's context window is too small. Choose another model."
@@ -10257,6 +10275,10 @@ msgstr "正在校验…"
 #: src/pages/Artifacts.tsx
 msgid "Version"
 msgstr "版本"
+
+#: src/pages/ModelSettingsOverlay.tsx
+msgid "Video analysis"
+msgstr "视频分析"
 
 #: src/pages/shell/bot-settings-sections.tsx
 msgid "Video edit model"
