@@ -486,6 +486,170 @@ that page code, the force-visible CSS will show the buttons but
 they will be dead until the image is rebuilt — this cannot be
 checked from the code side.
 
+## Round 4 (2026-11-28): the takeover script never parsed
+
+Status: implemented (code + tests, no device yet). This round keeps
+rounds 2–3's design (no forced keyboard, no dismiss auto-release,
+chrome switch, native tap drives the lease and URL) and fixes the
+injection itself: the takeover chrome script was a JavaScript
+SyntaxError, so it never executed in the page at all.
+
+### What the user reported
+
+One line: "还是没出来，但是光标可以定位了" ("still didn't
+appear, but the cursor can be positioned"). The bottom bar still
+did not appear on takeover, but clicks reach the computer — so the
+round-3 takeover tap, lease, and URL swap work, and only the chrome
+injection fails.
+
+### Confirmed cause
+
+`screenChromeScript(TAKEOVER)` in
+`SystemFloatScreenChrome.kt` interpolated the takeover CSS raw
+into a single-quoted JS string literal (`var css='$css';`). The
+TAKEOVER CSS contains real newline characters (Kotlin `"\n"`
+escapes, lines 57–61), and a single-quoted JS string cannot contain
+a literal line break — so the whole IIFE failed to PARSE. The
+`try{...}catch(e){}` inside never ran, no
+`<style id="rakazo-screen-chrome">` was created or rewritten, and
+`applyScreenChrome()` passes a null callback to
+`evaluateJavascript`, so the error was swallowed silently.
+
+Worse, the FLOAT injection from the initial page load DID parse
+(its CSS has no `\n`) and created the style element with
+`data-mode="float"` and `display:none` for `#mobile-key-bar` /
+`#mobile-controls`. That element stays live; every takeover
+attempt failed to overwrite it. The bar was actively hidden by
+stale FLOAT rules, not merely un-shown.
+
+Proof (node v24): `node --check` on the generated TAKEOVER script
+exits 1 (`SyntaxError: Invalid or unexpected token` at the first
+literal newline); FLOAT passes; the same CSS with newlines escaped
+as two-character `\n` passes `node --check` and `new Function`,
+and executing it against a fake DOM sets `data-mode="takeover"`
+and the exact intended 5 rules. The double quotes
+(`[data-key="ArrowLeft"]`) are fine inside the single-quoted
+literal.
+
+History: `git show d2fb370` shows the TAKEOVER CSS already ended
+its first rule with `\n` — takeover chrome never parsed since
+round 2 — and commit `235a1bb` added three more `\n`s. The
+contract test only asserted `toContain` on Kotlin source
+substrings and never parsed the generated script, which is why it
+slipped through. The in-app equivalent is immune:
+`computer-screen-chrome.ts` embeds the CSS via
+`JSON.stringify(css)`, which escapes newlines.
+
+Ruled out (diagnosis, not re-investigated here): the injection
+path runs correctly (takeover state set before
+`APPLY_SCREEN_CHROME`; `onPageFinished` re-injects; no FLOAT
+re-injection after takeover; the load-URL dedup is not the
+blocker — the URL rotates and the cursor proves the reload
+happened); WebView settings do not break touch detection
+(`isTouchBrowser()` is true on a phone); there is exactly one
+WebView and it is the injection target; the `onTakeoverChanged`
+emission is correct.
+
+### Decision (round 4)
+
+1. **New pure-Kotlin `jsStringLiteral(value: String)` helper** in
+   `SystemFloatScreenChrome.kt`: returns a double-quoted,
+   JSON-style escaped JS string literal (escapes `"`, `\`,
+   newline as `\n`, carriage return as `\r`, tab as `\t`, and
+   other control characters as `\uXXXX`). This mirrors the
+   in-app screen's `JSON.stringify(css)` approach.
+2. **`screenChromeScript()` embeds the CSS through the helper**
+   (`var css=${jsStringLiteral(css)};`) instead of the raw
+   single-quoted interpolation (`var css='$css';`). The rest of
+   the script is identical (same style-element id, same
+   `data-mode` rewrite logic).
+3. **The now-wrong comment is fixed**: it claimed the CSS "contains
+   double quotes but no single quotes, so a single-quoted JS string
+   literal needs no escaping". The replacement explains the real
+   constraint (newlines must be escaped or the script fails to
+   parse) and names the helper.
+4. **Nothing else changes**: no CSS rule, no FLOAT/TAKEOVER mode
+   semantics, no state machine, no service, no in-app screen. No
+   `window.__rakazoNativeKeys` is set in the float — that flag
+   tells the page to hide its own chrome because the native app
+   shows its own bar, and the float has no native bar.
+
+### Alternatives considered (round 4)
+
+- **Escape only newlines (`\n` → `\\n`) and keep the
+  single-quoted literal** — strongest reason: the smallest change,
+  fixes exactly the characters that fail today. But the CSS
+  already contains double quotes and could gain backslashes or
+  other control characters later; a general JSON-style escaper
+  covers the whole class of failures, and it is the same approach
+  the in-app screen already uses, so the two screens stay in
+  sync. No — general helper.
+- **Build the script with the CSS in a template literal
+  (backticks)** — strongest reason: backticks allow newlines, so
+  no escaping helper is needed at all. But the CSS could later
+  contain a backtick or `${...}`, which would break the script in
+  a new way, and it would be a different escaping regime from the
+  in-app screen's `JSON.stringify`. One rule for both screens is
+  easier to keep correct. No.
+- **Have the contract test reconstruct the generated script from
+  the Kotlin source and run `new Function(...)` on it** —
+  strongest reason: the test would catch any future parse failure
+  directly instead of pinning source substrings. But
+  reconstructing Kotlin string concatenation in TypeScript
+  re-implements the code under test and breaks on any harmless
+  rewording; the source-level pin (helper call present, raw
+  interpolation absent) plus the kotlinc + node proof below
+  covers the same failure without that fragility. No — the
+  ad-hoc kotlinc proof stays the verification step for future
+  chrome changes.
+
+### Testing (round 4)
+
+- Pure Kotlin, compiled with a one-off kotlinc in `/tmp` (nothing
+  added to the repo): the helper's escaping is checked directly
+  (double quote, backslash, newline, carriage return, tab, and a
+  control character), and both `screenChromeScript` outputs are
+  generated from the real file. The old raw-interpolation form
+  was reproduced and fails `node --check` with `SyntaxError:
+  Invalid or unexpected token` (exit 1); the new TAKEOVER and
+  FLOAT scripts both pass `node --check` (node v24).
+- Fake-DOM execution of the generated scripts: FLOAT installs
+  `data-mode="float"` with the exact float CSS; TAKEOVER then
+  rewrites the SAME element to `data-mode="takeover"` with the
+  exact intended 5 rules (so the stale-float-rules failure is
+  gone, not just the parse failure); re-running TAKEOVER is
+  idempotent.
+- `apps/mobile/lib/system-float-window-contract.test.ts`: 11/11 —
+  the takeover-chrome case now pins the escape helper call,
+  its newline escaping, the absence of `var css='$css'`, the
+  corrected comment, and the file staying free of Android
+  imports. `system-float.test.ts`: 19/19.
+  `computer-float-window.test.tsx`: 58/58. Total 88/88.
+- `pnpm verify-notes` passes; Biome clean on the changed TS
+  file; `tsc --noEmit` no new errors. The Kotlin file is not
+  compiled by the repo (no Android SDK here) — the one-off
+  kotlinc run above is the backstop, as in rounds 1–3.
+
+### Still needs real-device confirmation (no device yet)
+
+Round 3's items carry over; the first four are now the point of
+this round, and must be checked on the user's phone after
+packaging:
+
+(a) the bottom bar with ESC and the keyboard icon actually
+appears after tapping takeover in the system popup;
+(b) tapping the keyboard icon brings the keyboard up and typing
+reaches the computer;
+(c) tapping takeover again to release hides the bar;
+(d) dismissing the keyboard does NOT release the takeover
+(button stays blue, window stays focusable and maximized);
+(e) the popup opens on the interactive URL directly when the
+takeover succeeds on open, with no view-only flash;
+(f) a refused takeover (bot mid-run) still shows a watchable
+popup, and a later takeover tap retries it;
+(g) the live computer image serves a page version whose attach
+un-hides the bars on an interactive load (see round 3 (f)).
+
 ## Testing
 
 - `apps/mobile/lib/system-float-window-contract.test.ts`：旧的“键盘/打开应用按钮”断言改成接管按钮断言（同一文件、同一测试）；新增状态机转移与焦点 flag 的断言。
