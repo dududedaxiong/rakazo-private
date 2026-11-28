@@ -13,19 +13,15 @@ import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.PixelFormat
-import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
-import android.os.Looper
 import android.provider.Settings
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
-import android.view.ViewTreeObserver
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.webkit.WebView
@@ -53,9 +49,13 @@ import kotlin.math.roundToInt
  * (FLAG_NOT_TOUCH_MODAL). The window starts NOT_FOCUSABLE, so it never
  * steals the keyboard from other apps: it only becomes focusable while the
  * user has explicitly taken over (the takeover button, or tapping into the
- * maximized screen to type), and gives focus back as soon as the takeover
- * ends. Every focus change goes through the takeover state machine
- * (SystemFloatTakeoverState.kt) — see the decision note for why.
+ * maximized screen to drive), and gives focus back as soon as the takeover
+ * ends. Taking over does NOT force the soft keyboard up — the keyboard
+ * appears naturally when the user taps a text field in the computer or
+ * the page's own keyboard button, which is why the takeover chrome keeps
+ * the page's Esc/keyboard bar visible. Every focus and chrome change goes
+ * through the takeover state machine (SystemFloatTakeoverState.kt) — see
+ * the decision note for why.
  */
 class RakazoSystemFloatService : Service() {
   companion object {
@@ -78,29 +78,6 @@ class RakazoSystemFloatService : Service() {
     private const val EDGE_DP = 16
     private const val GRIP_DP = 28
 
-    /** Delay before retrying showSoftInput once, so the layout update settles. */
-    private const val KEYBOARD_RETRY_DELAY_MS = 250L
-    /** Delay before releasing takeover after the keyboard disappears. */
-    private const val KEYBOARD_DISMISS_DELAY_MS = 300L
-    /** Visible-frame shrink that counts as the keyboard being up, in dp. */
-    private const val KEYBOARD_VISIBLE_THRESHOLD_DP = 100
-
-    /**
-     * Hides the screen page's own control panels (the +/- zoom cluster, the
-     * Esc/Tab/Ctrl and arrow-key bar, the paste/keyboard/trackpad row, and
-     * the stock noVNC control bar) — the same rules the in-app float
-     * injects (apps/mobile/lib/computer-screen-chrome.ts, float mode). The
-     * system window is for watching only, so every panel goes. Without
-     * this the buttons cover the screen: this WebView never had any
-     * injection at all.
-     */
-    private const val SCREEN_CHROME_HIDE_JS =
-      "(function(){try{var id=\"rakazo-screen-chrome\";var s=document.getElementById(id);" +
-        "if(!s){s=document.createElement(\"style\");s.id=id;" +
-        "s.textContent=\"#mobile-view-controls,#mobile-key-bar,#mobile-controls," +
-        "#noVNC_control_bar_anchor{display:none!important}\";" +
-        "(document.head||document.documentElement).appendChild(s);}}catch(e){}})();"
-
     @Volatile
     var isRunning = false
   }
@@ -117,13 +94,8 @@ class RakazoSystemFloatService : Service() {
   private var isMaximized = false
   private var maximizeButton: ImageButton? = null
   private var takeoverButton: ImageButton? = null
-  /** True while the user has taken over: the window is focusable and the keyboard is for the computer. */
+  /** True while the user has taken over: the window is focusable and the page's Esc/keyboard bar is visible. */
   private var isTakenOver = false
-  private val mainHandler = Handler(Looper.getMainLooper())
-  private var keyboardRetryRunnable: Runnable? = null
-  private var keyboardReleaseRunnable: Runnable? = null
-  private var keyboardWasVisible = false
-  private var keyboardLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
 
   override fun onBind(intent: Intent?): IBinder? = null
 
@@ -163,16 +135,6 @@ class RakazoSystemFloatService : Service() {
   }
 
   override fun onDestroy() {
-    cancelKeyboardRetry()
-    cancelKeyboardRelease()
-    keyboardLayoutListener?.let { listener ->
-      try {
-        overlay?.viewTreeObserver?.removeOnGlobalLayoutListener(listener)
-      } catch (_: Exception) {
-        // Already detached.
-      }
-    }
-    keyboardLayoutListener = null
     try {
       overlay?.let { windowManager?.removeView(it) }
     } catch (_: Exception) {
@@ -186,7 +148,6 @@ class RakazoSystemFloatService : Service() {
     savedParams = null
     isMaximized = false
     isTakenOver = false
-    keyboardWasVisible = false
     webView?.destroy()
     webView = null
     currentUrl = null
@@ -207,9 +168,12 @@ class RakazoSystemFloatService : Service() {
   /**
    * Applies one state-machine transition: the tracked state moves first,
    * then each effect runs in a fixed order (hide keyboard before restoring,
-   * resize before changing focus, keyboard only after focusable), so the
-   * window can never end up focusable without the takeover button showing
-   * it, or taken over without the keyboard request.
+   * resize before changing focus, chrome after focus), so the window can
+   * never end up focusable without the takeover button showing it, or
+   * taken over without the takeover chrome. The takeover path never asks
+   * the input method for anything: no showSoftInput call exists in this
+   * file, so the keyboard can only appear naturally, from a tap on a
+   * text field or the page's own keyboard button.
    */
   private fun applyTakeoverTransition(transition: SystemFloatTakeoverTransition) {
     isMaximized = transition.state.isMaximized
@@ -220,8 +184,7 @@ class RakazoSystemFloatService : Service() {
       SystemFloatTakeoverEffect.RESTORE_WINDOW,
       SystemFloatTakeoverEffect.MAKE_NOT_FOCUSABLE,
       SystemFloatTakeoverEffect.MAKE_FOCUSABLE,
-      SystemFloatTakeoverEffect.SHOW_KEYBOARD_FORCED,
-      SystemFloatTakeoverEffect.SHOW_KEYBOARD_IMPLICIT,
+      SystemFloatTakeoverEffect.APPLY_SCREEN_CHROME,
       SystemFloatTakeoverEffect.UPDATE_TAKEOVER_BUTTON,
     )
     for (effect in order) {
@@ -232,8 +195,7 @@ class RakazoSystemFloatService : Service() {
         SystemFloatTakeoverEffect.RESTORE_WINDOW -> restoreWindow()
         SystemFloatTakeoverEffect.MAKE_NOT_FOCUSABLE -> setWindowFocusable(false)
         SystemFloatTakeoverEffect.MAKE_FOCUSABLE -> setWindowFocusable(true)
-        SystemFloatTakeoverEffect.SHOW_KEYBOARD_FORCED -> showKeyboardAfterFocus(forced = true)
-        SystemFloatTakeoverEffect.SHOW_KEYBOARD_IMPLICIT -> showKeyboardAfterFocus(forced = false)
+        SystemFloatTakeoverEffect.APPLY_SCREEN_CHROME -> applyScreenChrome()
         SystemFloatTakeoverEffect.UPDATE_TAKEOVER_BUTTON -> updateTakeoverButton()
       }
     }
@@ -241,9 +203,13 @@ class RakazoSystemFloatService : Service() {
 
   /**
    * The takeover button: taking over maximizes a small window, makes it
-   * focusable, and shows the keyboard for the computer. Tapping again
-   * releases everything and restores the small window. The return path to
-   * the app stays available through the foreground notification.
+   * focusable, and switches the screen chrome to takeover mode, so the
+   * page's Esc/Tab/Ctrl bar and paste/keyboard/trackpad row are visible
+   * to drive with. Tapping again releases everything and restores the
+   * small window. The keyboard is never forced up: it appears naturally
+   * when the user taps a text field or the page's keyboard button. The
+   * return path to the app stays available through the foreground
+   * notification.
    */
   private fun onTakeoverTapped() {
     applyTakeoverTransition(
@@ -253,9 +219,9 @@ class RakazoSystemFloatService : Service() {
 
   /**
    * Toggles the window between its floating size and the full screen.
-   * Resizing never shows the keyboard: only the explicit takeover tap does.
-   * Restoring from a takeover releases the focus first, so the underlying
-   * app gets its keyboard back.
+   * Resizing never takes over: only the explicit takeover tap (or a tap
+   * into the maximized screen) does. Restoring from a takeover releases
+   * the focus first, so the underlying app gets its keyboard back.
    */
   private fun toggleMaximize() {
     applyTakeoverTransition(
@@ -312,61 +278,35 @@ class RakazoSystemFloatService : Service() {
   }
 
   /**
-   * Brings up the soft keyboard for the computer, after the window has
-   * become focusable: focus the WebView, then ask the input method. The
-   * request runs posted, so the layout update from [setWindowFocusable]
-   * has settled first. An explicit takeover tap uses SHOW_FORCED — the
-   * user tapped once and wants the keyboard — while a passive tap into
-   * the screen uses SHOW_IMPLICIT. One retry follows shortly after, in
-   * case the first request raced the window becoming focusable; the retry
-   * is a no-op if the keyboard is already up, and never fires once the
-   * takeover has ended.
+   * Applies the current mode's screen-chrome rules to the WebView: float
+   * rules while watching (every in-page control hidden), takeover rules
+   * while taken over (the Esc/Tab/Ctrl bar and paste/keyboard/trackpad
+   * row visible). Both modes share one <style> element keyed by id, so
+   * switching modes rewrites the rules instead of stacking a second
+   * element, and a page reload while taken over keeps takeover chrome
+   * because onPageFinished re-injects the current mode.
    */
-  private fun showKeyboardAfterFocus(forced: Boolean) {
+  private fun applyScreenChrome() {
     val view = webView ?: return
-    cancelKeyboardRetry()
-    view.post {
-      if (!isTakenOver) return@post
-      view.requestFocus()
-      showSoftInputNow(forced)
-      val retry = Runnable {
-        keyboardRetryRunnable = null
-        if (!isTakenOver) return@Runnable
-        view.requestFocus()
-        showSoftInputNow(forced)
-      }
-      keyboardRetryRunnable = retry
-      mainHandler.postDelayed(retry, KEYBOARD_RETRY_DELAY_MS)
+    val mode = if (isTakenOver) {
+      SystemFloatScreenChromeMode.TAKEOVER
+    } else {
+      SystemFloatScreenChromeMode.FLOAT
     }
+    view.evaluateJavascript(screenChromeScript(mode), null)
   }
 
-  private fun showSoftInputNow(forced: Boolean) {
-    val view = webView ?: return
-    val inputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-    inputMethodManager.showSoftInput(
-      view,
-      if (forced) InputMethodManager.SHOW_FORCED else InputMethodManager.SHOW_IMPLICIT,
-    )
-  }
-
+  /**
+   * Hides the soft keyboard, if the user had it up (for example via the
+   * page's own keyboard button), when a takeover ends. This is the only
+   * input-method call left in the takeover path: nothing here ever asks
+   * the keyboard to appear.
+   */
   private fun hideKeyboard() {
-    cancelKeyboardRetry()
-    cancelKeyboardRelease()
-    keyboardWasVisible = false
     val view = webView ?: return
     val inputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
     inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
     view.clearFocus()
-  }
-
-  private fun cancelKeyboardRetry() {
-    keyboardRetryRunnable?.let { mainHandler.removeCallbacks(it) }
-    keyboardRetryRunnable = null
-  }
-
-  private fun cancelKeyboardRelease() {
-    keyboardReleaseRunnable?.let { mainHandler.removeCallbacks(it) }
-    keyboardReleaseRunnable = null
   }
 
   /**
@@ -386,48 +326,6 @@ class RakazoSystemFloatService : Service() {
       if (isTakenOver) R.string.rakazo_system_float_release
       else R.string.rakazo_system_float_takeover,
     )
-  }
-
-  /**
-   * Watches for the keyboard going away while taken over: once it was up
-   * and is now gone (past a short delay, so a transient frame cannot end
-   * the takeover), the takeover focus is released so other apps get their
-   * keyboard back. The window stays maximized — dismissing the keyboard
-   * is not a request to shrink it.
-   */
-  private fun watchKeyboardDismissed(root: FrameLayout) {
-    val listener = ViewTreeObserver.OnGlobalLayoutListener {
-      val rect = Rect()
-      root.getWindowVisibleDisplayFrame(rect)
-      val keyboardHeight = resources.displayMetrics.heightPixels - rect.bottom
-      val keyboardVisible = keyboardHeight > dp(KEYBOARD_VISIBLE_THRESHOLD_DP)
-      if (!isTakenOver) {
-        keyboardWasVisible = false
-        return@OnGlobalLayoutListener
-      }
-      if (keyboardVisible) {
-        keyboardWasVisible = true
-        cancelKeyboardRelease()
-      } else if (keyboardWasVisible) {
-        cancelKeyboardRelease()
-        val release = Runnable {
-          keyboardReleaseRunnable = null
-          if (isTakenOver && keyboardWasVisible) {
-            keyboardWasVisible = false
-            applyTakeoverTransition(
-              reduceTakeover(
-                currentTakeoverState(),
-                SystemFloatTakeoverEvent.KeyboardDismissed,
-              ),
-            )
-          }
-        }
-        keyboardReleaseRunnable = release
-        mainHandler.postDelayed(release, KEYBOARD_DISMISS_DELAY_MS)
-      }
-    }
-    keyboardLayoutListener = listener
-    root.viewTreeObserver.addOnGlobalLayoutListener(listener)
   }
 
   @SuppressLint("ClickableViewAccessibility")
@@ -513,7 +411,7 @@ class RakazoSystemFloatService : Service() {
       settings.domStorageEnabled = true
       // Pinch to zoom the desktop: the built-in zoom controls are the
       // pinch gesture; the on-screen +/- buttons are hidden by the
-      // SCREEN_CHROME_HIDE_JS injection in onPageFinished below.
+      // screen-chrome injection in onPageFinished below.
       settings.setSupportZoom(true)
       settings.builtInZoomControls = true
       settings.displayZoomControls = false
@@ -521,14 +419,16 @@ class RakazoSystemFloatService : Service() {
       webViewClient = object : WebViewClient() {
         override fun onPageFinished(view: WebView, url: String) {
           super.onPageFinished(view, url)
-          view.evaluateJavascript(SCREEN_CHROME_HIDE_JS, null)
+          // Re-inject the CURRENT mode's rules, not always the float
+          // ones: a reload while taken over keeps takeover chrome.
+          applyScreenChrome()
         }
       }
     }
     webView = screen
-    // Tapping into the maximized screen to type takes over; taps on the
-    // small window stay mouse clicks into the remote screen. Returning
-    // false lets the tap through to the WebView either way.
+    // Tapping into the maximized screen takes over; taps on the small
+    // window stay mouse clicks into the remote screen. Returning false
+    // lets the tap through to the WebView either way.
     screen.setOnTouchListener { _, event ->
       if (event.actionMasked == MotionEvent.ACTION_DOWN) {
         applyTakeoverTransition(
@@ -581,7 +481,6 @@ class RakazoSystemFloatService : Service() {
 
     startForegroundNotification()
     manager.addView(root, params)
-    watchKeyboardDismissed(root)
     isRunning = true
     loadUrl(url)
   }
