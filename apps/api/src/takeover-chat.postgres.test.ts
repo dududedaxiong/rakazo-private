@@ -80,7 +80,7 @@ describePostgres("chat replies during screen takeover (PostgreSQL)", () => {
   const endWaits = (runIds: string[]) =>
     runAsSystem("test takeover wait", () => endTakeoverWaits(prisma, runIds));
 
-  async function setup(mode: "opened" | "unopened" = "opened", trigger = "user") {
+  async function setup(mode: "opened" | "unopened" | "running" = "opened", trigger = "user") {
     const id = randomUUID();
     organizations.push(id);
     await system.user.create({
@@ -187,19 +187,23 @@ describePostgres("chat replies during screen takeover (PostgreSQL)", () => {
           leaseExpiresAt: new Date(Date.now() + 60_000),
         },
       });
-      await runAsSystem("test fixture", () =>
-        events.pauseRunForTakeover({
-          spaceId: id,
-          threadId: thread.id,
-          botId: bot.id,
-          runId: run.id,
-          attemptId: attempt.id,
-          leaseOwner: "fixture-worker",
-          leaseFence: 1,
-          reason: "Enter the fixture code",
-          computerId: computer.id,
-        }),
-      );
+      // "running" leaves the run working so a user takeover can pause it;
+      // "unopened" pauses it first, like a bot-initiated takeover request.
+      if (mode === "unopened") {
+        await runAsSystem("test fixture", () =>
+          events.pauseRunForTakeover({
+            spaceId: id,
+            threadId: thread.id,
+            botId: bot.id,
+            runId: run.id,
+            attemptId: attempt.id,
+            leaseOwner: "fixture-worker",
+            leaseFence: 1,
+            reason: "Enter the fixture code",
+            computerId: computer.id,
+          }),
+        );
+      }
     }
     const queuedStates: Array<{ status: string; checkpoint: string | null }> = [];
     const enqueue = vi.fn<JobPublisher["enqueue"]>(async (job) => {
@@ -234,6 +238,17 @@ describePostgres("chat replies during screen takeover (PostgreSQL)", () => {
       return response!;
     };
     const control = () => system.computer.findUniqueOrThrow({ where: { id: computer.id } });
+    const release = async () => {
+      const { response } = await new RPCHandler(createRouter(deps)).handle(
+        new Request("http://127.0.0.1/rpc/computer/release", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ json: { botId: bot.id } }),
+        }),
+        { prefix: "/rpc", context: { actor } },
+      );
+      return response!;
+    };
     /** `beforeGrant` runs just before the grant's write, after the route has read the wait. */
     const takeover = async (beforeGrant?: () => Promise<unknown>) => {
       const routed = beforeGrant ? beforeUserGrant(prisma, beforeGrant) : prisma;
@@ -261,6 +276,7 @@ describePostgres("chat replies during screen takeover (PostgreSQL)", () => {
       queuedStates,
       send,
       takeover,
+      release,
       control,
       leaseId,
     };
@@ -874,6 +890,120 @@ describePostgres("chat replies during screen takeover (PostgreSQL)", () => {
     expect(await endWaits([fixture.run.id])).toBe(0);
     expect(await system.run.findUniqueOrThrow({ where: { id: fixture.run.id } })).toMatchObject({
       status: "waiting_takeover",
+    });
+  });
+
+  it("pauses an active run when the user takes over instead of refusing", async () => {
+    const fixture = await setup("running");
+    const response = await fixture.takeover();
+    expect(response.status).toBe(200);
+    const { json } = await response.json();
+    expect(json).toMatchObject({ runPaused: true });
+    expect(typeof json.leaseId).toBe("string");
+    expect(await fixture.control()).toMatchObject({
+      controlHolder: "user",
+      controlBotId: fixture.bot.id,
+      controlRunId: fixture.run.id,
+    });
+    expect(await system.run.findUniqueOrThrow({ where: { id: fixture.run.id } })).toMatchObject({
+      status: "waiting_takeover",
+    });
+    expect(
+      await system.event.findMany({
+        where: { runId: fixture.run.id, type: "computer.takeover.requested" },
+      }),
+    ).toMatchObject([
+      { payload: expect.objectContaining({ reason: "The user took over the computer." }) },
+    ]);
+    expect(
+      await system.event.findMany({
+        where: { threadId: fixture.thread.id, type: "computer.takeover.granted" },
+      }),
+    ).toMatchObject([{ payload: { takeoverRequested: true } }]);
+  });
+
+  it("resumes the paused run when the user releases the screen", async () => {
+    const fixture = await setup("running");
+    expect((await fixture.takeover()).status).toBe(200);
+    const response = await fixture.release();
+    expect(response.status).toBe(200);
+    expect(await fixture.control()).toMatchObject({
+      controlHolder: "bot",
+      controlRunId: null,
+      controlBotId: null,
+      controlLeaseId: null,
+    });
+    expect(await system.run.findUniqueOrThrow({ where: { id: fixture.run.id } })).toMatchObject({
+      status: "queued",
+      checkpoint: "takeover",
+    });
+    expect(fixture.queuedStates).toEqual([
+      expect.objectContaining({ status: "queued", checkpoint: "takeover" }),
+    ]);
+  });
+
+  it("takes over an idle computer without pausing anything", async () => {
+    const fixture = await setup("running");
+    await system.run.update({
+      where: { id: fixture.run.id },
+      data: { status: "completed" },
+    });
+    await system.computerExecutionLease.deleteMany({
+      where: { computerId: fixture.computer.id, botId: fixture.bot.id },
+    });
+    const response = await fixture.takeover();
+    expect(response.status).toBe(200);
+    const { json } = await response.json();
+    expect(json).toMatchObject({ runPaused: false });
+    expect(await fixture.control()).toMatchObject({
+      controlHolder: "user",
+      controlBotId: fixture.bot.id,
+      controlRunId: null,
+    });
+  });
+
+  it("still refuses a takeover when another person holds the screen", async () => {
+    const fixture = await setup("running");
+    await system.computer.update({
+      where: { id: fixture.computer.id },
+      data: {
+        controlHolder: "user",
+        controlBotId: fixture.bot.id,
+        controlLeaseId: randomUUID(),
+        controlLeaseExpiresAt: new Date(Date.now() + 60_000),
+        controlUserId: "someone-else",
+      },
+    });
+    const response = await fixture.takeover();
+    expect(response.status).toBe(409);
+    expect(await system.run.findUniqueOrThrow({ where: { id: fixture.run.id } })).toMatchObject({
+      status: "running",
+    });
+  });
+
+  it("still refuses a takeover when the run waits for someone else", async () => {
+    const fixture = await setup("unopened");
+    await system.run.update({
+      where: { id: fixture.run.id },
+      data: { userId: "someone-else" },
+    });
+    const response = await fixture.takeover();
+    expect(response.status).toBe(409);
+    expect(await system.run.findUniqueOrThrow({ where: { id: fixture.run.id } })).toMatchObject({
+      status: "waiting_takeover",
+    });
+  });
+
+  it("still refuses to pause a run that belongs to someone else", async () => {
+    const fixture = await setup("running");
+    await system.run.update({
+      where: { id: fixture.run.id },
+      data: { userId: "someone-else" },
+    });
+    const response = await fixture.takeover();
+    expect(response.status).toBe(409);
+    expect(await system.run.findUniqueOrThrow({ where: { id: fixture.run.id } })).toMatchObject({
+      status: "running",
     });
   });
 
