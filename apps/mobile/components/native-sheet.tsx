@@ -34,6 +34,11 @@ export function useNativeSheet() {
       active = false;
     };
   }, []);
+  // The native bottom sheet does not present on Android: with
+  // enableDynamicSizing the sheet measures its ScrollView content to zero
+  // height, so tapping a chip renders an invisible sheet. Every caller
+  // already has a Modal fallback, so force it on Android.
+  if (Platform.OS === "android") return null;
   return Sheet;
 }
 

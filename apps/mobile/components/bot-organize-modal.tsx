@@ -106,8 +106,6 @@ export function BotOrganizeModal({
     );
   }
 
-  if (Sheet === undefined) return null;
-
   const content = (
     <View
       style={

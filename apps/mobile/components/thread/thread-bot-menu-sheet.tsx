@@ -32,7 +32,7 @@ export function ThreadBotMenuSheet({
   const router = useRouter();
   const Sheet = useNativeSheet();
 
-  if (!visible || Sheet === undefined) return null;
+  if (!visible) return null;
 
   const rows: {
     key: string;
