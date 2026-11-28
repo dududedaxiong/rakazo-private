@@ -385,21 +385,29 @@ it("filters by kind only once there are two kinds, and searches only a long list
   expect(container.querySelector('input[aria-label="Search"]')).not.toBeNull();
 });
 
+it("lists the account vault for a Space without its own vault", async () => {
+  state.spaceId = "space-work";
+  await render();
+  // No scope is sent, so the server resolves the vault the Space uses — the account's here —
+  // the same vault the composer's account card counts for this Space.
+  expect(state.rpc).toHaveBeenCalledWith("vault/list", undefined, {
+    requestContext: { headers: { space: "space-work" } },
+  });
+  expect(rows()).toEqual(["api.github.com: API key", "netbird-key: $NETBIRD_KEY"]);
+});
+
 it("edits a Space's own vault through that Space", async () => {
   state.spaceId = "space-work";
   await render();
-  expect(state.rpc).toHaveBeenCalledWith(
-    "vault/list",
-    { scope: "space" },
-    { requestContext: { headers: { space: "space-work" } } },
-  );
+  expect(state.rpc).toHaveBeenCalledWith("vault/list", undefined, {
+    requestContext: { headers: { space: "space-work" } },
+  });
 
   await act(async () => button("Variable", menu("New item"))!.click());
   await act(async () => button("Save", dialog())!.click());
   expect(state.rpc).toHaveBeenCalledWith(
     "vault/put",
     {
-      scope: "space",
       destination: { name: "netbird-key", auth: { type: "command" } },
       value: "example-value",
       title: "",
@@ -620,8 +628,10 @@ it("reveals a Space's own vault through that Space", async () => {
   await act(async () => button("Show", dialog())!.click());
   expect(state.rpc).toHaveBeenCalledWith(
     "vault/reveal",
-    { scope: "space", name: "github" },
-    { requestContext: { headers: { space: "space-work" } } },
+    { name: "github" },
+    {
+      requestContext: { headers: { space: "space-work" } },
+    },
   );
 });
 

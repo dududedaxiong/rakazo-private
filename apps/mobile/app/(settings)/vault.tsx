@@ -27,7 +27,7 @@ import { useI18n } from "../../lib/i18n";
 import { presentMessageActionSheet } from "../../lib/message-action-sheet";
 import { native, useResolvedAppearance, useThemedStyles } from "../../lib/native";
 import { iosAtLeast } from "../../lib/native-controls";
-import { settingsRpc, settingsTarget } from "../../lib/settings-target";
+import { settingsRpc, settingsTarget, vaultScopeBody } from "../../lib/settings-target";
 import { useSideInsets } from "../../lib/side-insets";
 import { errorText } from "../../lib/user-error";
 import type { CookieImportSummary, VaultItem, VaultSave } from "../../lib/vault";
@@ -48,9 +48,10 @@ type Editing = { kind: VaultKind; item?: VaultItem; revealed?: VaultRevealed };
 
 /**
  * Logins, cards, contacts, API keys and variables bots can use. Opened with a Space that keeps its
- * own vault, it edits that Space's items instead of the account's. Show reads a protected value
- * back once the person confirms it's them; the value lives only in the native alert that shows it,
- * never in this screen's state.
+ * own vault, it edits that Space's items instead of the account's; a Space without its own vault
+ * shows the account's, since no scope is sent and the server resolves the vault the Space uses.
+ * Show reads a protected value back once the person confirms it's them; the value lives only in
+ * the native alert that shows it, never in this screen's state.
  */
 export default function Vault() {
   const { spaceId } = useLocalSearchParams<{ spaceId?: string }>();
@@ -58,6 +59,9 @@ export default function Vault() {
   const target = useMemo(() => settingsTarget(spaceId), [spaceId]);
   const rpc = useMemo(() => settingsRpc(target), [target]);
   const scope = target.scope;
+  // The vault calls below send no scope for a Space, so the server resolves the vault the
+  // Space uses; the request itself stays pinned to the Space, so its override still applies.
+  const vaultBody = useMemo(() => vaultScopeBody(target), [target]);
   const { t } = useI18n();
   const colorScheme = useResolvedAppearance();
   const sideInsets = useSideInsets();
@@ -90,7 +94,7 @@ export default function Vault() {
     useCallback(() => {
       let current = true;
       const changesAtRead = changes.current;
-      void rpc("vault/list", { scope })
+      void rpc("vault/list", vaultBody)
         .then((next) => {
           if (!current || changes.current !== changesAtRead) return;
           setItems(next);
@@ -103,7 +107,7 @@ export default function Vault() {
       return () => {
         current = false;
       };
-    }, [attempt, rpc, scope, t]),
+    }, [attempt, rpc, vaultBody, t]),
   );
 
   const startAdding = useCallback((kind: VaultKind) => {
@@ -139,7 +143,7 @@ export default function Vault() {
     // A pasted export is parsed on the server, so it never goes through vault.put.
     if (change.cookieImport) {
       const summary = await rpc("vault/importCookies", {
-        scope,
+        ...vaultBody,
         origin: change.destination.origin ?? "",
         content: change.cookieImport.content,
         ...(change.cookieImport.userAgent ? { userAgent: change.cookieImport.userAgent } : {}),
@@ -147,10 +151,10 @@ export default function Vault() {
         ...(change.title !== undefined ? { title: change.title } : {}),
         ...(change.note !== undefined ? { note: change.note } : {}),
       });
-      setItems(await rpc("vault/list", { scope }));
+      setItems(await rpc("vault/list", vaultBody));
       return summary;
     }
-    const saved = await rpc("vault/put", { scope, ...change });
+    const saved = await rpc("vault/put", { ...vaultBody, ...change });
     setItems((current) => withItem(current ?? [], saved));
   }
 
@@ -159,7 +163,7 @@ export default function Vault() {
     setPending(true);
     setError(null);
     try {
-      await rpc("vault/remove", { scope, name });
+      await rpc("vault/remove", { ...vaultBody, name });
       setItems((current) => current?.filter((entry) => entry.name !== name) ?? null);
       setOpened(null);
     } catch (err) {
@@ -181,7 +185,7 @@ export default function Vault() {
     setError(null);
     try {
       const revealed = await withIdentityConfirmation(() =>
-        rpc("vault/reveal", { scope, name: item.name }),
+        rpc("vault/reveal", { ...vaultBody, name: item.name }),
       );
       if (focused.current) showRevealed(item.title, revealed);
     } catch (err) {
@@ -249,7 +253,7 @@ export default function Vault() {
       setError(null);
       try {
         revealed = await withIdentityConfirmation(() =>
-          rpc("vault/reveal", { scope, name: readable.name }),
+          rpc("vault/reveal", { ...vaultBody, name: readable.name }),
         );
       } catch (err) {
         // Dismissing the confirmation prompt is the person's choice, not a failure.

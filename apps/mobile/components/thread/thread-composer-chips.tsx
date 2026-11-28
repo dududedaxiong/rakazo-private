@@ -18,7 +18,7 @@ import { useCustomSettings } from "../../lib/custom-settings";
 import { isGeneratedMedia } from "../../lib/gallery";
 import { useI18n } from "../../lib/i18n";
 import type { MobileBot, MobileModel } from "../../lib/mobile-types";
-import { settingsRpc, settingsTarget } from "../../lib/settings-target";
+import { settingsRpc, settingsTarget, vaultScopeBody } from "../../lib/settings-target";
 import { NativeSymbol } from "../native-symbol";
 import type { ThreadModelPickerRole, ThreadModelSave } from "./thread-model-picker-sheet";
 
@@ -67,7 +67,7 @@ export function ThreadComposerChips({
   botId?: string;
   currentBot?: MobileBot;
   userId: string;
-  /** The thread's Space; without one the card counts the account's vault. */
+  /** The thread's Space; a Space without its own vault counts the account's vault. */
   spaceId?: string | null;
   /** The model catalog, fetched by the screen and shared with the composer. */
   catalog: MobileModel[] | null;
@@ -101,13 +101,16 @@ export function ThreadComposerChips({
   const [accountCount, setAccountCount] = useState<number | null>(null);
   const vaultTarget = useMemo(() => settingsTarget(spaceId ?? undefined), [spaceId]);
   const vaultRpc = useMemo(() => settingsRpc(vaultTarget), [vaultTarget]);
+  // No scope is sent for a Space: the server resolves the vault the Space uses (its own, or
+  // the account's when it has none), so the count is the vault the card opens.
+  const vaultBody = useMemo(() => vaultScopeBody(vaultTarget), [vaultTarget]);
 
   // The count changes when an item is added or removed in the vault, so refresh
   // whenever this screen is entered or returned to, not just on mount.
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
-      void vaultRpc("vault/list", { scope: vaultTarget.scope })
+      void vaultRpc("vault/list", vaultBody)
         .then((items) => {
           if (!cancelled) setAccountCount(items.length);
         })
@@ -115,7 +118,7 @@ export function ThreadComposerChips({
       return () => {
         cancelled = true;
       };
-    }, [vaultRpc, vaultTarget.scope]),
+    }, [vaultRpc, vaultBody]),
   );
 
   useEffect(() => {

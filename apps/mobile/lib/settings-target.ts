@@ -1,4 +1,4 @@
-import type { RpcPath } from "@rakazo_mickvvw/contracts";
+import type { RpcPath, SettingsScope } from "@rakazo_mickvvw/contracts";
 import type { RpcArgs } from "./api";
 import { captureApiRequestContext, rpc } from "./api";
 
@@ -10,6 +10,16 @@ export const ACCOUNT_SETTINGS: SettingsTarget = { scope: "account" };
 /** A screen opened with a Space edits that Space's override; without one, the account's. */
 export function settingsTarget(spaceId: string | string[] | undefined): SettingsTarget {
   return typeof spaceId === "string" && spaceId ? { scope: "space", spaceId } : ACCOUNT_SETTINGS;
+}
+
+/**
+ * The body a vault call sends for this target. A Space's own vault exists only when the Space
+ * customized credentials, so a Space target sends no scope and the server resolves whichever
+ * vault the Space uses — its own, or the account's when it has none. The account's vault is
+ * explicit, so it never follows another Space's override.
+ */
+export function vaultScopeBody(target: SettingsTarget): { scope: SettingsScope } | undefined {
+  return target.scope === "account" ? { scope: "account" } : undefined;
 }
 
 /**

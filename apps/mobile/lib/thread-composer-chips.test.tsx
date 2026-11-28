@@ -18,6 +18,8 @@ const callbacks = vi.hoisted(() => ({
 const vaultState = vi.hoisted(() => ({
   accountItems: [] as { name: string }[],
   spaceItems: [] as { name: string }[],
+  // Whether the Space customized credentials, so it keeps its own vault.
+  spaceOwnVault: false,
 }));
 
 vi.mock("expo-router", () => ({
@@ -27,12 +29,23 @@ vi.mock("expo-router", () => ({
 vi.mock("./settings-target", () => ({
   settingsTarget: (spaceId?: string) =>
     spaceId ? { scope: "space", spaceId } : { scope: "account" },
-  settingsRpc: () => async (procedure: string, body?: { scope?: string }) => {
-    if (procedure === "vault/list") {
-      return body?.scope === "space" ? vaultState.spaceItems : vaultState.accountItems;
-    }
-    return null;
-  },
+  // No scope is sent for a Space: the server resolves the vault the Space uses, its own when
+  // it customized credentials, the account's otherwise — the same rule the vault page relies on.
+  vaultScopeBody: (target: { scope: string }) =>
+    target.scope === "account" ? { scope: "account" } : undefined,
+  // An explicit scope wins, as the server resolves it; no scope means the server resolves the
+  // vault the Space uses, its own when it customized credentials, the account's otherwise —
+  // the same rule the vault page relies on.
+  settingsRpc:
+    (target: { scope: string }) => async (procedure: string, body?: { scope?: string }) => {
+      if (procedure === "vault/list") {
+        if (body?.scope === "space") return vaultState.spaceItems;
+        if (body?.scope === "account") return vaultState.accountItems;
+        if (target.scope === "space" && !vaultState.spaceOwnVault) return vaultState.accountItems;
+        return target.scope === "space" ? vaultState.spaceItems : vaultState.accountItems;
+      }
+      return null;
+    },
 }));
 vi.mock("./api", () => ({
   rpc: async (procedure: string) => {
@@ -135,6 +148,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vaultState.accountItems = [];
   vaultState.spaceItems = [];
+  vaultState.spaceOwnVault = false;
   node = document.createElement("div");
   document.body.append(node);
   root = createRoot(node);
@@ -214,8 +228,30 @@ describe("ThreadComposerChips accounts card", () => {
     expect(card).not.toBeNull();
   });
 
+  it("counts the account vault for a Space without its own vault", async () => {
+    vaultState.accountItems = [{ name: "site-a" }, { name: "site-b" }];
+    vaultState.spaceItems = [];
+    await mountChips(currentBot, "space-1");
+    const card = node.querySelector<HTMLButtonElement>(
+      '[aria-label="Account management: 2 accounts"]',
+    );
+    expect(card).not.toBeNull();
+  });
+
+  it("counts the Space's own vault once it has one", async () => {
+    vaultState.accountItems = [{ name: "site-a" }, { name: "site-b" }];
+    vaultState.spaceItems = [{ name: "site-c" }];
+    vaultState.spaceOwnVault = true;
+    await mountChips(currentBot, "space-1");
+    const card = node.querySelector<HTMLButtonElement>(
+      '[aria-label="Account management: 1 accounts"]',
+    );
+    expect(card).not.toBeNull();
+  });
+
   it("opens the space vault when the card is tapped", async () => {
     vaultState.spaceItems = [{ name: "site-a" }, { name: "site-b" }];
+    vaultState.spaceOwnVault = true;
     await mountChips(currentBot, "space-1");
     const card = node.querySelector<HTMLButtonElement>(
       '[aria-label="Account management: 2 accounts"]',
