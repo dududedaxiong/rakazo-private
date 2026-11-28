@@ -110,27 +110,103 @@ describe("system float window native contract", () => {
     expect(service).toContain("openAppPendingIntent()");
   });
 
-  it("shows the keyboard only on takeover, forced for the explicit tap", () => {
+  it("never forces the keyboard up on takeover; it switches the screen chrome instead", () => {
     const service = read("java/com/rakazo/systemfloat/RakazoSystemFloatService.kt");
-    // Focus first, then the keyboard: the old showKeyboard asked with
-    // SHOW_IMPLICIT before the window was focusable and got nothing.
-    expect(service).not.toContain("private fun showKeyboard()");
-    expect(service).toContain("private fun showKeyboardAfterFocus(forced: Boolean)");
-    expect(service).toContain("InputMethodManager.SHOW_FORCED");
-    expect(service).toContain("InputMethodManager.SHOW_IMPLICIT");
-    expect(service).toContain("view.requestFocus()");
-    expect(service).toContain("view.post {");
-    // One retry after the layout update settles, cancelled on release.
-    expect(service).toContain("KEYBOARD_RETRY_DELAY_MS");
-    expect(service).toContain("cancelKeyboardRetry()");
-    // Dismissing the keyboard releases the takeover focus but leaves the
-    // window maximized.
-    expect(service).toContain("watchKeyboardDismissed");
-    expect(service).toContain("SystemFloatTakeoverEvent.KeyboardDismissed");
-    // Tapping into the maximized screen to type takes over implicitly;
-    // taps on the small window stay mouse clicks.
+    // Round 2: takeover is not about popping the keyboard, it is the
+    // Settings takeover — the page's own Esc/keyboard bar becomes
+    // visible and the keyboard appears naturally when the user taps a
+    // text field or the page's keyboard button. A forced showSoftInput
+    // with no editable element focused pops an IME with no input
+    // connection that dies on the first canvas tap, and a blind show
+    // raced against the window becoming focusable can be silently
+    // dropped, so the takeover path must not call it at all.
+    expect(service).not.toContain("showSoftInput");
+    expect(service).not.toContain("SHOW_FORCED");
+    expect(service).not.toContain("SHOW_IMPLICIT");
+    expect(service).not.toContain("private fun showKeyboardAfterFocus");
+    expect(service).not.toContain("KEYBOARD_RETRY_DELAY_MS");
+    // Dismissing the keyboard must not end the takeover either: the
+    // user may dismiss it and keep driving, so the dismiss listener
+    // and its event are gone entirely.
+    expect(service).not.toContain("watchKeyboardDismissed");
+    expect(service).not.toContain("KeyboardDismissed");
+    expect(service).not.toContain("OnGlobalLayoutListener");
+    expect(service).not.toContain("KEYBOARD_DISMISS_DELAY_MS");
+    expect(service).not.toContain("KEYBOARD_VISIBLE_THRESHOLD_DP");
+    // Taking over switches the injected chrome to takeover rules and
+    // releasing switches it back, through the state machine.
+    expect(service).toContain("SystemFloatTakeoverEffect.APPLY_SCREEN_CHROME");
+    expect(service).toContain("private fun applyScreenChrome()");
+    expect(service).toContain("screenChromeScript(mode)");
+    expect(service).toContain("SystemFloatScreenChromeMode.TAKEOVER");
+    expect(service).toContain("SystemFloatScreenChromeMode.FLOAT");
+    // A page reload while taken over keeps takeover chrome: the load
+    // handler re-injects the current mode, not always the float rules.
+    expect(service).not.toContain("SCREEN_CHROME_HIDE_JS");
+    expect(service).toContain("applyScreenChrome()");
+    const finished = service.slice(service.indexOf("override fun onPageFinished"));
+    expect(finished).toContain("applyScreenChrome()");
+    // Tapping into the maximized screen to drive takes over; taps on
+    // the small window stay mouse clicks.
     expect(service).toContain("SystemFloatTakeoverEvent.ScreenTapped");
     expect(service).toContain("setOnTouchListener { _, event ->");
+  });
+
+  it("keeps the Esc/keyboard bar visible in takeover chrome and hides it in float chrome", () => {
+    const chrome = read("java/com/rakazo/systemfloat/SystemFloatScreenChrome.kt");
+    const takeover = chrome.slice(
+      chrome.indexOf("SystemFloatScreenChromeMode.TAKEOVER ->"),
+    );
+    const float = chrome.slice(
+      chrome.indexOf("SystemFloatScreenChromeMode.FLOAT ->"),
+      chrome.indexOf("SystemFloatScreenChromeMode.TAKEOVER ->"),
+    );
+    // Float (watching) hides every in-page control, including the
+    // Esc/Tab/Ctrl bar and the paste/keyboard/trackpad row. (The rule
+    // is split across two string literals in the source, so pin both
+    // halves rather than the joined text.)
+    expect(float).toContain("#mobile-view-controls,#mobile-key-bar,#mobile-controls,");
+    expect(float).toContain("#noVNC_control_bar_anchor{display:none!important}");
+    // Takeover keeps #mobile-key-bar (Esc/Tab/Ctrl) and #mobile-controls
+    // (paste/keyboard/trackpad) visible: no rule hides either of them
+    // as a whole. Only the +/- zoom cluster and the four arrow keys go.
+    expect(takeover).not.toContain("#mobile-key-bar{display");
+    expect(takeover).not.toContain("#mobile-controls{display");
+    expect(takeover).not.toContain("#mobile-key-bar,#mobile-controls");
+    expect(takeover).toContain("#mobile-view-controls{display:none!important}");
+    // The double quotes are escaped in the Kotlin source, so pin the
+    // escaped form here; the kotlinc run below checks the real values.
+    for (const arrow of ["ArrowLeft", "ArrowDown", "ArrowUp", "ArrowRight"]) {
+      expect(takeover).toContain(`#mobile-key-bar [data-key=\\"${arrow}\\"]`);
+    }
+    // Both modes share one <style> keyed by id, so switching modes
+    // rewrites the rules instead of stacking a second element. (Quotes
+    // are escaped in the Kotlin source, so pin the escaped form; the
+    // kotlinc run below checks the real script text.)
+    expect(chrome).toContain('var id=\\"rakazo-screen-chrome\\"');
+    expect(chrome).toContain('style.getAttribute(\\"data-mode\\")!==mode');
+    expect(chrome).toContain('style.setAttribute(\\"data-mode\\",mode)');
+    // The rules mirror the in-app computer screen's takeover chrome
+    // exactly — same selectors, same hidden set — so the native window
+    // and the in-app screen agree.
+    const inApp = readFileSync(
+      resolve(mobileRoot, "lib/computer-screen-chrome.ts"),
+      "utf8",
+    );
+    // Same four selectors, same hide rule, in the in-app float mode.
+    for (const selector of [
+      "#mobile-view-controls",
+      "#mobile-key-bar",
+      "#mobile-controls",
+      "#noVNC_control_bar_anchor",
+    ]) {
+      expect(inApp).toContain(selector);
+    }
+    expect(inApp).toContain("{display:none!important}");
+    expect(inApp).toContain("#mobile-view-controls{display:none!important}");
+    for (const arrow of ["ArrowLeft", "ArrowDown", "ArrowUp", "ArrowRight"]) {
+      expect(inApp).toContain(`#mobile-key-bar [data-key="${arrow}"]`);
+    }
   });
 
   it("keeps the takeover/focus rules in a pure state machine", () => {
@@ -142,19 +218,21 @@ describe("system float window native contract", () => {
       "TakeoverTapped",
       "MaximizeTapped",
       "ScreenTapped",
-      "KeyboardDismissed",
       "WindowClosed",
     ]) {
       expect(machine).toContain(event);
     }
+    // No keyboard-dismiss event: dismissing the keyboard never ends a
+    // takeover, and no transition ever asks the keyboard to appear.
+    expect(machine).not.toContain("KeyboardDismissed");
+    expect(machine).not.toContain("SHOW_KEYBOARD");
     for (const effect of [
       "MAXIMIZE_WINDOW",
       "RESTORE_WINDOW",
       "MAKE_FOCUSABLE",
       "MAKE_NOT_FOCUSABLE",
-      "SHOW_KEYBOARD_FORCED",
-      "SHOW_KEYBOARD_IMPLICIT",
       "HIDE_KEYBOARD",
+      "APPLY_SCREEN_CHROME",
       "UPDATE_TAKEOVER_BUTTON",
     ]) {
       expect(machine).toContain(effect);

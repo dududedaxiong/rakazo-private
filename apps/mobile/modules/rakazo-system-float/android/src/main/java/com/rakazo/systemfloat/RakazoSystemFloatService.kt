@@ -171,7 +171,7 @@ class RakazoSystemFloatService : Service() {
    * resize before changing focus, chrome after focus), so the window can
    * never end up focusable without the takeover button showing it, or
    * taken over without the takeover chrome. The takeover path never asks
-   * the input method for anything: no showSoftInput call exists in this
+   * the input method to show the keyboard: no such call exists in this
    * file, so the keyboard can only appear naturally, from a tap on a
    * text field or the page's own keyboard button.
    */
