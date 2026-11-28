@@ -3,10 +3,10 @@
   <string name="rakazo_system_float_title">電腦畫面正在懸浮</string>
   <string name="rakazo_system_float_text">點按以回到 Rakazo</string>
   <string name="rakazo_system_float_channel">電腦畫面</string>
-  <string name="rakazo_system_float_open_app">開啟應用程式</string>
   <string name="rakazo_system_float_close">關閉</string>
   <string name="rakazo_system_float_resize">調整大小</string>
   <string name="rakazo_system_float_maximize">放大</string>
   <string name="rakazo_system_float_restore">還原</string>
-  <string name="rakazo_system_float_keyboard">鍵盤</string>
+  <string name="rakazo_system_float_takeover">接管</string>
+  <string name="rakazo_system_float_release">取消接管</string>
 </resources>

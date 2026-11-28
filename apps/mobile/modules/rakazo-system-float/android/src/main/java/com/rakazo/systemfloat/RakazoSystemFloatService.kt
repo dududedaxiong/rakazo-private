@@ -9,18 +9,23 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.provider.Settings
 import android.text.TextUtils
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewTreeObserver
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.webkit.WebView
@@ -45,8 +50,12 @@ import kotlin.math.roundToInt
  * The window is draggable by its title bar and resizable from its
  * bottom-right grip, keeping the same 16:10 frame as the in-app float.
  * Touches outside the window pass through to the app underneath
- * (FLAG_NOT_TOUCH_MODAL); the window itself takes focus when tapped, so
- * the remote screen accepts keyboard input.
+ * (FLAG_NOT_TOUCH_MODAL). The window starts NOT_FOCUSABLE, so it never
+ * steals the keyboard from other apps: it only becomes focusable while the
+ * user has explicitly taken over (the takeover button, or tapping into the
+ * maximized screen to type), and gives focus back as soon as the takeover
+ * ends. Every focus change goes through the takeover state machine
+ * (SystemFloatTakeoverState.kt) — see the decision note for why.
  */
 class RakazoSystemFloatService : Service() {
   companion object {
@@ -68,6 +77,13 @@ class RakazoSystemFloatService : Service() {
     private const val TOP_DP = 120
     private const val EDGE_DP = 16
     private const val GRIP_DP = 28
+
+    /** Delay before retrying showSoftInput once, so the layout update settles. */
+    private const val KEYBOARD_RETRY_DELAY_MS = 250L
+    /** Delay before releasing takeover after the keyboard disappears. */
+    private const val KEYBOARD_DISMISS_DELAY_MS = 300L
+    /** Visible-frame shrink that counts as the keyboard being up, in dp. */
+    private const val KEYBOARD_VISIBLE_THRESHOLD_DP = 100
 
     /**
      * Hides the screen page's own control panels (the +/- zoom cluster, the
@@ -100,8 +116,14 @@ class RakazoSystemFloatService : Service() {
   private var savedParams: WindowManager.LayoutParams? = null
   private var isMaximized = false
   private var maximizeButton: ImageButton? = null
-  private var keyboardButton: ImageButton? = null
-  private var openButton: ImageButton? = null
+  private var takeoverButton: ImageButton? = null
+  /** True while the user has taken over: the window is focusable and the keyboard is for the computer. */
+  private var isTakenOver = false
+  private val mainHandler = Handler(Looper.getMainLooper())
+  private var keyboardRetryRunnable: Runnable? = null
+  private var keyboardReleaseRunnable: Runnable? = null
+  private var keyboardWasVisible = false
+  private var keyboardLayoutListener: ViewTreeObserver.OnGlobalLayoutListener? = null
 
   override fun onBind(intent: Intent?): IBinder? = null
 
@@ -141,6 +163,16 @@ class RakazoSystemFloatService : Service() {
   }
 
   override fun onDestroy() {
+    cancelKeyboardRetry()
+    cancelKeyboardRelease()
+    keyboardLayoutListener?.let { listener ->
+      try {
+        overlay?.viewTreeObserver?.removeOnGlobalLayoutListener(listener)
+      } catch (_: Exception) {
+        // Already detached.
+      }
+    }
+    keyboardLayoutListener = null
     try {
       overlay?.let { windowManager?.removeView(it) }
     } catch (_: Exception) {
@@ -150,10 +182,11 @@ class RakazoSystemFloatService : Service() {
     overlayParams = null
     titleView = null
     maximizeButton = null
-    keyboardButton = null
-    openButton = null
+    takeoverButton = null
     savedParams = null
     isMaximized = false
+    isTakenOver = false
+    keyboardWasVisible = false
     webView?.destroy()
     webView = null
     currentUrl = null
@@ -168,61 +201,236 @@ class RakazoSystemFloatService : Service() {
     webView?.loadUrl(url)
   }
 
-  /** Brings up the soft keyboard for the screen, so the phone can type into the computer. */
-  private fun showKeyboard() {
-    val view = webView ?: return
-    view.requestFocus()
-    val inputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
-    inputMethodManager.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
+  private fun currentTakeoverState() =
+    SystemFloatTakeoverState(isMaximized = isMaximized, isTakenOver = isTakenOver)
+
+  /**
+   * Applies one state-machine transition: the tracked state moves first,
+   * then each effect runs in a fixed order (hide keyboard before restoring,
+   * resize before changing focus, keyboard only after focusable), so the
+   * window can never end up focusable without the takeover button showing
+   * it, or taken over without the keyboard request.
+   */
+  private fun applyTakeoverTransition(transition: SystemFloatTakeoverTransition) {
+    isMaximized = transition.state.isMaximized
+    isTakenOver = transition.state.isTakenOver
+    val order = listOf(
+      SystemFloatTakeoverEffect.HIDE_KEYBOARD,
+      SystemFloatTakeoverEffect.MAXIMIZE_WINDOW,
+      SystemFloatTakeoverEffect.RESTORE_WINDOW,
+      SystemFloatTakeoverEffect.MAKE_NOT_FOCUSABLE,
+      SystemFloatTakeoverEffect.MAKE_FOCUSABLE,
+      SystemFloatTakeoverEffect.SHOW_KEYBOARD_FORCED,
+      SystemFloatTakeoverEffect.SHOW_KEYBOARD_IMPLICIT,
+      SystemFloatTakeoverEffect.UPDATE_TAKEOVER_BUTTON,
+    )
+    for (effect in order) {
+      if (effect !in transition.effects) continue
+      when (effect) {
+        SystemFloatTakeoverEffect.HIDE_KEYBOARD -> hideKeyboard()
+        SystemFloatTakeoverEffect.MAXIMIZE_WINDOW -> maximizeWindow()
+        SystemFloatTakeoverEffect.RESTORE_WINDOW -> restoreWindow()
+        SystemFloatTakeoverEffect.MAKE_NOT_FOCUSABLE -> setWindowFocusable(false)
+        SystemFloatTakeoverEffect.MAKE_FOCUSABLE -> setWindowFocusable(true)
+        SystemFloatTakeoverEffect.SHOW_KEYBOARD_FORCED -> showKeyboardAfterFocus(forced = true)
+        SystemFloatTakeoverEffect.SHOW_KEYBOARD_IMPLICIT -> showKeyboardAfterFocus(forced = false)
+        SystemFloatTakeoverEffect.UPDATE_TAKEOVER_BUTTON -> updateTakeoverButton()
+      }
+    }
   }
 
   /**
-   * The phone drives the computer only once the window is expanded: the
-   * popup takes control when it opens, but the small floating window is
-   * just for watching, so its keyboard and return-to-app buttons stay
-   * hidden until the window is maximized. Expand and close always stay:
-   * expand is how the window is taken over, and close is the only way to
-   * dismiss it. The return path stays available through the foreground
-   * notification while the buttons are hidden.
+   * The takeover button: taking over maximizes a small window, makes it
+   * focusable, and shows the keyboard for the computer. Tapping again
+   * releases everything and restores the small window. The return path to
+   * the app stays available through the foreground notification.
    */
-  private fun updateOperationButtons() {
-    val visibility = if (isMaximized) View.VISIBLE else View.GONE
-    keyboardButton?.visibility = visibility
-    openButton?.visibility = visibility
+  private fun onTakeoverTapped() {
+    applyTakeoverTransition(
+      reduceTakeover(currentTakeoverState(), SystemFloatTakeoverEvent.TakeoverTapped),
+    )
   }
 
-  /** Toggles the window between its floating size and the full screen. */
+  /**
+   * Toggles the window between its floating size and the full screen.
+   * Resizing never shows the keyboard: only the explicit takeover tap does.
+   * Restoring from a takeover releases the focus first, so the underlying
+   * app gets its keyboard back.
+   */
   private fun toggleMaximize() {
-    val manager = windowManager ?: return
-    val root = overlay ?: return
-    val params = overlayParams ?: return
-    val metrics = resources.displayMetrics
-    if (isMaximized) {
-      val saved = savedParams ?: return
-      params.width = saved.width
-      params.height = saved.height
-      params.x = saved.x
-      params.y = saved.y
-      savedParams = null
-      isMaximized = false
-      maximizeButton?.setImageResource(R.drawable.ic_rakazo_system_float_maximize)
-      maximizeButton?.contentDescription = getString(R.string.rakazo_system_float_maximize)
-    } else {
-      savedParams = WindowManager.LayoutParams().apply {
-        copyFrom(params)
-      }
-      params.width = metrics.widthPixels
-      params.height = metrics.heightPixels
-      params.x = 0
-      params.y = 0
-      isMaximized = true
-      maximizeButton?.setImageResource(R.drawable.ic_rakazo_system_float_restore)
-      maximizeButton?.contentDescription = getString(R.string.rakazo_system_float_restore)
-    }
-    updateOperationButtons()
-    manager.updateViewLayout(root, params)
+    applyTakeoverTransition(
+      reduceTakeover(currentTakeoverState(), SystemFloatTakeoverEvent.MaximizeTapped),
+    )
   }
 
+  /** Expands the window to the full screen, saving the floating size for restoring. */
+  private fun maximizeWindow() {
+    val params = overlayParams ?: return
+    val root = overlay ?: return
+    val metrics = resources.displayMetrics
+    savedParams = WindowManager.LayoutParams().apply {
+      copyFrom(params)
+    }
+    params.width = metrics.widthPixels
+    params.height = metrics.heightPixels
+    params.x = 0
+    params.y = 0
+    maximizeButton?.setImageResource(R.drawable.ic_rakazo_system_float_restore)
+    maximizeButton?.contentDescription = getString(R.string.rakazo_system_float_restore)
+    windowManager?.updateViewLayout(root, params)
+  }
+
+  /** Restores the floating size saved by [maximizeWindow]. */
+  private fun restoreWindow() {
+    val params = overlayParams ?: return
+    val root = overlay ?: return
+    val saved = savedParams ?: return
+    params.width = saved.width
+    params.height = saved.height
+    params.x = saved.x
+    params.y = saved.y
+    savedParams = null
+    maximizeButton?.setImageResource(R.drawable.ic_rakazo_system_float_maximize)
+    maximizeButton?.contentDescription = getString(R.string.rakazo_system_float_maximize)
+    windowManager?.updateViewLayout(root, params)
+  }
+
+  /**
+   * Makes the window focusable (takeover) or not (rest). The window starts
+   * NOT_FOCUSABLE so it never steals the keyboard from other apps; it only
+   * becomes focusable while the user is taken over.
+   */
+  private fun setWindowFocusable(focusable: Boolean) {
+    val params = overlayParams ?: return
+    val root = overlay ?: return
+    params.flags = if (focusable) {
+      params.flags and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE.inv()
+    } else {
+      params.flags or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+    }
+    windowManager?.updateViewLayout(root, params)
+  }
+
+  /**
+   * Brings up the soft keyboard for the computer, after the window has
+   * become focusable: focus the WebView, then ask the input method. The
+   * request runs posted, so the layout update from [setWindowFocusable]
+   * has settled first. An explicit takeover tap uses SHOW_FORCED — the
+   * user tapped once and wants the keyboard — while a passive tap into
+   * the screen uses SHOW_IMPLICIT. One retry follows shortly after, in
+   * case the first request raced the window becoming focusable; the retry
+   * is a no-op if the keyboard is already up, and never fires once the
+   * takeover has ended.
+   */
+  private fun showKeyboardAfterFocus(forced: Boolean) {
+    val view = webView ?: return
+    cancelKeyboardRetry()
+    view.post {
+      if (!isTakenOver) return@post
+      view.requestFocus()
+      showSoftInputNow(forced)
+      val retry = Runnable {
+        keyboardRetryRunnable = null
+        if (!isTakenOver) return@Runnable
+        view.requestFocus()
+        showSoftInputNow(forced)
+      }
+      keyboardRetryRunnable = retry
+      mainHandler.postDelayed(retry, KEYBOARD_RETRY_DELAY_MS)
+    }
+  }
+
+  private fun showSoftInputNow(forced: Boolean) {
+    val view = webView ?: return
+    val inputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+    inputMethodManager.showSoftInput(
+      view,
+      if (forced) InputMethodManager.SHOW_FORCED else InputMethodManager.SHOW_IMPLICIT,
+    )
+  }
+
+  private fun hideKeyboard() {
+    cancelKeyboardRetry()
+    cancelKeyboardRelease()
+    keyboardWasVisible = false
+    val view = webView ?: return
+    val inputMethodManager = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+    inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+    view.clearFocus()
+  }
+
+  private fun cancelKeyboardRetry() {
+    keyboardRetryRunnable?.let { mainHandler.removeCallbacks(it) }
+    keyboardRetryRunnable = null
+  }
+
+  private fun cancelKeyboardRelease() {
+    keyboardReleaseRunnable?.let { mainHandler.removeCallbacks(it) }
+    keyboardReleaseRunnable = null
+  }
+
+  /**
+   * The takeover button shows whether the window is currently taken over
+   * (maximized + focused): a highlight tint while taken over, plain white
+   * otherwise. The button is always visible — taking over is how a small
+   * window becomes maximized, so hiding it until maximized would hide the
+   * only way in.
+   */
+  private fun updateTakeoverButton() {
+    val button = takeoverButton ?: return
+    button.setImageResource(R.drawable.ic_rakazo_system_float_takeover)
+    button.imageTintList = ColorStateList.valueOf(
+      if (isTakenOver) Color.rgb(0x7D, 0xD3, 0xFC) else Color.WHITE,
+    )
+    button.contentDescription = getString(
+      if (isTakenOver) R.string.rakazo_system_float_release
+      else R.string.rakazo_system_float_takeover,
+    )
+  }
+
+  /**
+   * Watches for the keyboard going away while taken over: once it was up
+   * and is now gone (past a short delay, so a transient frame cannot end
+   * the takeover), the takeover focus is released so other apps get their
+   * keyboard back. The window stays maximized — dismissing the keyboard
+   * is not a request to shrink it.
+   */
+  private fun watchKeyboardDismissed(root: FrameLayout) {
+    val listener = ViewTreeObserver.OnGlobalLayoutListener {
+      val rect = Rect()
+      root.getWindowVisibleDisplayFrame(rect)
+      val keyboardHeight = resources.displayMetrics.heightPixels - rect.bottom
+      val keyboardVisible = keyboardHeight > dp(KEYBOARD_VISIBLE_THRESHOLD_DP)
+      if (!isTakenOver) {
+        keyboardWasVisible = false
+        return@OnGlobalLayoutListener
+      }
+      if (keyboardVisible) {
+        keyboardWasVisible = true
+        cancelKeyboardRelease()
+      } else if (keyboardWasVisible) {
+        cancelKeyboardRelease()
+        val release = Runnable {
+          keyboardReleaseRunnable = null
+          if (isTakenOver && keyboardWasVisible) {
+            keyboardWasVisible = false
+            applyTakeoverTransition(
+              reduceTakeover(
+                currentTakeoverState(),
+                SystemFloatTakeoverEvent.KeyboardDismissed,
+              ),
+            )
+          }
+        }
+        keyboardReleaseRunnable = release
+        mainHandler.postDelayed(release, KEYBOARD_DISMISS_DELAY_MS)
+      }
+    }
+    keyboardLayoutListener = listener
+    root.viewTreeObserver.addOnGlobalLayoutListener(listener)
+  }
+
+  @SuppressLint("ClickableViewAccessibility")
   private fun createOverlay(url: String, title: String, locale: String) {
     currentLocale = locale
     val manager = getSystemService(WINDOW_SERVICE) as WindowManager
@@ -264,14 +472,14 @@ class RakazoSystemFloatService : Service() {
       gravity = Gravity.CENTER_VERTICAL
     }
     titleView = titleText
-    val keyboardButton = ImageButton(this).apply {
+    val takeoverButton = ImageButton(this).apply {
       layoutParams = LinearLayout.LayoutParams(barPx, barPx)
-      setImageResource(R.drawable.ic_rakazo_system_float_keyboard)
+      setImageResource(R.drawable.ic_rakazo_system_float_takeover)
       setBackgroundResource(0)
-      contentDescription = getString(R.string.rakazo_system_float_keyboard)
-      setOnClickListener { showKeyboard() }
+      contentDescription = getString(R.string.rakazo_system_float_takeover)
+      setOnClickListener { onTakeoverTapped() }
     }
-    this.keyboardButton = keyboardButton
+    this.takeoverButton = takeoverButton
     val maximizeButton = ImageButton(this).apply {
       layoutParams = LinearLayout.LayoutParams(barPx, barPx)
       setImageResource(R.drawable.ic_rakazo_system_float_maximize)
@@ -280,14 +488,6 @@ class RakazoSystemFloatService : Service() {
       setOnClickListener { toggleMaximize() }
     }
     this.maximizeButton = maximizeButton
-    val openButton = ImageButton(this).apply {
-      layoutParams = LinearLayout.LayoutParams(barPx, barPx)
-      setImageResource(R.drawable.ic_rakazo_system_float_open)
-      setBackgroundResource(0)
-      contentDescription = getString(R.string.rakazo_system_float_open_app)
-      setOnClickListener { openApp() }
-    }
-    this.openButton = openButton
     val closeButton = ImageButton(this).apply {
       layoutParams = LinearLayout.LayoutParams(barPx, barPx)
       setImageResource(R.drawable.ic_rakazo_system_float_close)
@@ -296,12 +496,12 @@ class RakazoSystemFloatService : Service() {
       setOnClickListener { stopSelf() }
     }
     bar.addView(titleText)
+    bar.addView(takeoverButton)
     bar.addView(maximizeButton)
-    bar.addView(keyboardButton)
-    bar.addView(openButton)
     bar.addView(closeButton)
-    // The window opens small, so the operation buttons start hidden.
-    updateOperationButtons()
+    // The takeover button is always visible: it is the way in from the
+    // small window, and it shows the taken-over state with its tint.
+    updateTakeoverButton()
 
     val screen = WebView(this).apply {
       layoutParams = LinearLayout.LayoutParams(
@@ -326,6 +526,17 @@ class RakazoSystemFloatService : Service() {
       }
     }
     webView = screen
+    // Tapping into the maximized screen to type takes over; taps on the
+    // small window stay mouse clicks into the remote screen. Returning
+    // false lets the tap through to the WebView either way.
+    screen.setOnTouchListener { _, event ->
+      if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+        applyTakeoverTransition(
+          reduceTakeover(currentTakeoverState(), SystemFloatTakeoverEvent.ScreenTapped),
+        )
+      }
+      false
+    }
     column.addView(bar)
     column.addView(screen)
     root.addView(column)
@@ -346,7 +557,12 @@ class RakazoSystemFloatService : Service() {
         @Suppress("DEPRECATION")
         WindowManager.LayoutParams.TYPE_PHONE
       },
-      WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+      // NOT_TOUCH_MODAL lets touches outside the window reach the app
+      // underneath; NOT_FOCUSABLE keeps the window from stealing the
+      // keyboard from other apps. The window only becomes focusable while
+      // the user has taken over (see setWindowFocusable).
+      WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+        WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
       PixelFormat.TRANSLUCENT,
     ).apply {
       gravity = Gravity.TOP or Gravity.START
@@ -365,6 +581,7 @@ class RakazoSystemFloatService : Service() {
 
     startForegroundNotification()
     manager.addView(root, params)
+    watchKeyboardDismissed(root)
     isRunning = true
     loadUrl(url)
   }
@@ -405,14 +622,6 @@ class RakazoSystemFloatService : Service() {
   private fun notificationBuilder(copyContext: Context): Notification.Builder =
     if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, CHANNEL_ID)
     else Notification.Builder(this)
-
-  private fun openApp() {
-    val intent = packageManager.getLaunchIntentForPackage(packageName)
-      ?: Intent(Intent.ACTION_VIEW, android.net.Uri.parse("rakazo://"))
-    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
-      Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-    startActivity(intent)
-  }
 
   private fun openAppPendingIntent(): PendingIntent {
     val intent = packageManager.getLaunchIntentForPackage(packageName)
