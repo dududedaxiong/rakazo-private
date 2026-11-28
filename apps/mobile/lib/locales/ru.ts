@@ -1195,6 +1195,7 @@ export const RU_MESSAGES: Record<string, string> = {
   "No artifacts yet": "Пока нет артефактов",
   "No matching artifacts": "Нет подходящих артефактов",
   "Long press to delete": "Нажмите и удерживайте, чтобы удалить",
+  "Long press to cancel": "Нажмите и удерживайте, чтобы отменить",
   "Could not load artifacts.": "Не удалось загрузить артефакты.",
   "Could not load this chat.": "Не удалось загрузить этот чат.",
   "Could not load this artifact.": "Не удалось загрузить этот артефакт.",

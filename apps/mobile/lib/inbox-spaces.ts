@@ -50,19 +50,18 @@ export type InboxItem = InboxSpaceItem | { type: "pinned"; chats: PinnedChat[] }
 
 /** What a chat adds to the off-screen unread pills: unread, and a bot waiting on you. */
 function chatSignal(chat: PinnedChat): InboxSignal {
-  return chat.kind === "bot"
-    ? {
-        unread: chat.bot.unread ? 1 : 0,
-        attention: logoAvatarNeedsAttention(
-          botAvatarActivity(
-            chat.bot,
-            mobileLogoAvatarActivity.getActivity(chat.bot.id, chat.bot.status),
-          ),
-        )
-          ? 1
-          : 0,
-      }
-    : { unread: chat.group.unread ? 1 : 0, attention: 0 };
+  if (chat.kind === "group")
+    return { unread: chat.group.unread ? 1 : 0, attention: 0, attentionBotIds: [] };
+  const attention = logoAvatarNeedsAttention(
+    botAvatarActivity(chat.bot, mobileLogoAvatarActivity.getActivity(chat.bot.id, chat.bot.status)),
+  )
+    ? 1
+    : 0;
+  return {
+    unread: chat.bot.unread ? 1 : 0,
+    attention,
+    attentionBotIds: attention ? [chat.bot.id] : [],
+  };
 }
 
 export function inboxItemKey(item: InboxItem): string {
@@ -73,15 +72,16 @@ export function inboxItemKey(item: InboxItem): string {
 }
 
 export function inboxSignal(item: InboxItem): InboxSignal {
-  if (item.type === "heading") return { unread: 0, attention: 0 };
+  if (item.type === "heading") return { unread: 0, attention: 0, attentionBotIds: [] };
   if (item.type === "bot") return chatSignal({ kind: "bot", bot: item.bot });
   if (item.type === "group") return chatSignal({ kind: "group", group: item.group });
   return item.chats.map(chatSignal).reduce(
     (total, signal) => ({
       unread: total.unread + signal.unread,
       attention: total.attention + signal.attention,
+      attentionBotIds: [...(total.attentionBotIds ?? []), ...(signal.attentionBotIds ?? [])],
     }),
-    { unread: 0, attention: 0 },
+    { unread: 0, attention: 0, attentionBotIds: [] as string[] },
   );
 }
 

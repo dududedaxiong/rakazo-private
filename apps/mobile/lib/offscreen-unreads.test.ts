@@ -3,7 +3,7 @@ import { estimateRowLayout, jumpOffset, offscreenUnreads, visibleRange } from ".
 
 const read = { unread: 0, attention: 0 };
 const unread = { unread: 1, attention: 0 };
-const waiting = { unread: 0, attention: 1 };
+const waiting = { unread: 0, attention: 1, attentionBotIds: ["bot-wait"] };
 
 describe("visibleRange", () => {
   const rows = Array.from({ length: 6 }, (_, index) => ({ y: index * 100, height: 100 }));
@@ -54,7 +54,7 @@ describe("visibleRange", () => {
         ],
         range!,
       ),
-    ).toEqual({ below: { kind: "unread", count: 2, index: 0 } });
+    ).toEqual({ below: { kind: "unread", count: 2, index: 0, attentionBotIds: [] } });
   });
 
   it("has no range before any row is measured", () => {
@@ -67,8 +67,8 @@ describe("offscreenUnreads", () => {
   it("counts unread chats on each side and targets the nearest one", () => {
     const signals = [unread, read, unread, read, read, read, unread, unread];
     expect(offscreenUnreads(signals, { first: 3, last: 5 })).toEqual({
-      above: { kind: "unread", count: 2, index: 2 },
-      below: { kind: "unread", count: 2, index: 6 },
+      above: { kind: "unread", count: 2, index: 2, attentionBotIds: [] },
+      below: { kind: "unread", count: 2, index: 6, attentionBotIds: [] },
     });
   });
 
@@ -82,19 +82,35 @@ describe("offscreenUnreads", () => {
       kind: "attention",
       count: 1,
       index: 4,
+      attentionBotIds: ["bot-wait"],
     });
   });
 
   it("targets the nearest waiting chat above, including a mixed pinned strip", () => {
     expect(
-      offscreenUnreads([{ unread: 2, attention: 2 }, waiting, unread, read], { first: 3, last: 3 })
-        .above,
-    ).toEqual({ kind: "attention", count: 3, index: 1 });
+      offscreenUnreads(
+        [{ unread: 2, attention: 2, attentionBotIds: ["bot-a", "bot-b"] }, waiting, unread, read],
+        { first: 3, last: 3 },
+      ).above,
+    ).toEqual({
+      kind: "attention",
+      count: 3,
+      index: 1,
+      attentionBotIds: ["bot-a", "bot-b", "bot-wait"],
+    });
   });
 
   it("counts every chat a pinned strip holds", () => {
     expect(offscreenUnreads([{ unread: 2, attention: 0 }, read], { first: 1, last: 1 })).toEqual({
-      above: { kind: "unread", count: 2, index: 0 },
+      above: { kind: "unread", count: 2, index: 0, attentionBotIds: [] },
+    });
+  });
+
+  it("carries only its own side's waiting bots, so a long-press cancels just those", () => {
+    const signals = [waiting, read, read, read, { ...waiting, attentionBotIds: ["bot-late"] }];
+    expect(offscreenUnreads(signals, { first: 1, last: 3 })).toEqual({
+      above: { kind: "attention", count: 1, index: 0, attentionBotIds: ["bot-wait"] },
+      below: { kind: "attention", count: 1, index: 4, attentionBotIds: ["bot-late"] },
     });
   });
 });

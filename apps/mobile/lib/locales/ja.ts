@@ -598,6 +598,7 @@ export const JA_MESSAGES: Record<string, string> = {
   "Could not load this artifact.": "このアーティファクトを読み込めませんでした。",
   "Could not share this artifact": "このアーティファクトを共有できませんでした",
   "Long press to delete": "長押しで削除",
+  "Long press to cancel": "長押しでキャンセル",
   "No artifacts yet": "アーティファクトはまだありません",
   "No matching artifacts": "一致するアーティファクトはありません",
   "No preview for this file type.": "このファイル形式はプレビューできません。",

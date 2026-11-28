@@ -1133,6 +1133,7 @@ export const ZH_TW_MESSAGES: Record<string, string> = {
   "No artifacts yet": "尚無成品",
   "No matching artifacts": "沒有符合的成品",
   "Long press to delete": "長按以刪除",
+  "Long press to cancel": "長按以取消",
   "Could not load artifacts.": "無法載入成品。",
   "Could not load this chat.": "無法載入此聊天。",
   "Could not load this artifact.": "無法載入此成品。",

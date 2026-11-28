@@ -608,6 +608,7 @@ export const PL_MESSAGES: Record<string, string> = {
   "Could not load this artifact.": "Nie udało się wczytać tego artefaktu.",
   "Could not share this artifact": "Nie udało się udostępnić tego artefaktu",
   "Long press to delete": "Przytrzymaj, aby usunąć",
+  "Long press to cancel": "Przytrzymaj, aby anulować",
   "No artifacts yet": "Nie ma jeszcze artefaktów",
   "No matching artifacts": "Brak pasujących artefaktów",
   "No preview for this file type.": "Podgląd tego typu pliku jest niedostępny.",

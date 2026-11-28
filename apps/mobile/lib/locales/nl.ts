@@ -613,6 +613,7 @@ export const NL_MESSAGES: Record<string, string> = {
   "Could not load this artifact.": "Dit artefact laden mislukt.",
   "Could not share this artifact": "Dit artefact delen mislukt",
   "Long press to delete": "Lang indrukken om te verwijderen",
+  "Long press to cancel": "Lang indrukken om te annuleren",
   "No artifacts yet": "Nog geen artefacten",
   "No matching artifacts": "Geen overeenkomende artefacten",
   "No preview for this file type.": "Geen voorbeeld voor dit bestandstype.",

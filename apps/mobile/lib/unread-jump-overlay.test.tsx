@@ -49,7 +49,7 @@ import { useUnreadJumpPills } from "../components/unread-jump-overlay";
 import { useHeaderHeightIfAny } from "./floating-header";
 
 type Pills = ReturnType<typeof useUnreadJumpPills<unknown>>;
-type Signal = { unread: number; attention: number };
+type Signal = { unread: number; attention: number; attentionBotIds?: string[] };
 
 const read = { unread: 0, attention: 0 };
 const unread = { unread: 1, attention: 0 };
@@ -93,13 +93,31 @@ describe("useUnreadJumpPills", () => {
     vi.unstubAllGlobals();
   });
 
-  function Harness({ keys, signals }: { keys: string[]; signals: Signal[] }) {
+  function Harness({
+    keys,
+    signals,
+    onCancelAttention,
+  }: {
+    keys: string[];
+    signals: Signal[];
+    onCancelAttention?: (botIds: readonly string[]) => void;
+  }) {
     const listRef = useRef({ scrollToOffset } as never);
-    pills = useUnreadJumpPills({ keys, signals, listRef, topInset: 0, bottomInset: 0 });
+    pills = useUnreadJumpPills({
+      keys,
+      signals,
+      listRef,
+      topInset: 0,
+      bottomInset: 0,
+      onCancelAttention,
+    });
     return null;
   }
-  const render = (keys: string[], signals: Signal[]) =>
-    act(() => root.render(createElement(Harness, { keys, signals })));
+  const render = (
+    keys: string[],
+    signals: Signal[],
+    onCancelAttention?: (botIds: readonly string[]) => void,
+  ) => act(() => root.render(createElement(Harness, { keys, signals, onCancelAttention })));
   const viewport = (height: number, content: number) =>
     act(() => {
       pills.listProps.onLayout({ nativeEvent: { layout: { height } } } as never);
@@ -123,7 +141,12 @@ describe("useUnreadJumpPills", () => {
     return edge as ReactElement<{
       entering?: unknown;
       exiting?: unknown;
-      children: ReactElement<{ onPress: () => void; label: string; accessibilityLabel: string }>;
+      children: ReactElement<{
+        onPress: () => void;
+        onLongPress?: () => void;
+        label: string;
+        accessibilityLabel: string;
+      }>;
     }> | null;
   };
   const below = () => edgeAt(1);
@@ -152,6 +175,27 @@ describe("useUnreadJumpPills", () => {
     expect(below()?.props.children.props.accessibilityLabel).toBe("Needs attention, below");
     render(["a", "b", "c"], [unread, read, { unread: 0, attention: 2 }]);
     expect(below()?.props.children.props.accessibilityLabel).toBe("2 need attention, below");
+  });
+
+  it("long-presses an attention pill to cancel its waiting bots, and never an unread pill", () => {
+    const cancelAttention = vi.fn();
+    render(
+      ["a", "b", "c"],
+      [unread, read, { unread: 0, attention: 1, attentionBotIds: ["bot-wait"] }],
+      cancelAttention,
+    );
+    layOut("a", 0);
+    layOut("b", 100);
+    viewport(100, 300);
+    const pill = below()?.props.children.props;
+    expect(pill?.accessibilityLabel).toBe("Needs attention, below");
+    act(() => pill?.onLongPress?.());
+    expect(cancelAttention).toHaveBeenCalledOnce();
+    expect(cancelAttention).toHaveBeenCalledWith(["bot-wait"]);
+    // An unread pill offers no long-press: it only jumps.
+    render(["a", "b", "c"], [unread, read, unread], cancelAttention);
+    expect(below()?.props.children.props.onLongPress).toBeUndefined();
+    expect(cancelAttention).toHaveBeenCalledTimes(1);
   });
 
   it("keeps each row's layout by key when rows above it go away", () => {

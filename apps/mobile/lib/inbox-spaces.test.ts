@@ -508,15 +508,38 @@ describe("inbox attention pills", () => {
       kind: "attention",
       count: 1,
       index: 1,
+      attentionBotIds: ["bot-1"],
     });
     expect(offscreenUnreads(signals, { first: 2, last: 2 }).above).toEqual({
       kind: "attention",
       count: 1,
       index: 1,
+      attentionBotIds: ["bot-1"],
     });
     expect(inboxSignal({ type: "pinned", chats: [{ kind: "bot", bot: waiting }] })).toEqual({
       unread: 0,
       attention: 1,
+      attentionBotIds: ["bot-1"],
+    });
+  });
+
+  it("drops the pill once the waiting bot's status clears, as a refresh after a stop shows", () => {
+    const waiting = { ...bot, avatarSet: "rakazo" as const, status: "waiting_input" };
+    const signals = [
+      inboxSignal({ type: "heading", key: "custom", title: "Research" }),
+      inboxSignal({ type: "bot", bot: waiting }),
+      { unread: 0, attention: 0 },
+    ];
+    expect(offscreenUnreads(signals, { first: 0, last: 0 }).below?.kind).toBe("attention");
+    const cleared = [
+      inboxSignal({ type: "heading", key: "custom", title: "Research" }),
+      inboxSignal({ type: "bot", bot: { ...waiting, status: "cancelled" } }),
+      { unread: 0, attention: 0 },
+    ];
+    expect(cleared[1]).toEqual({ unread: 0, attention: 0, attentionBotIds: [] });
+    expect(offscreenUnreads(cleared, { first: 0, last: 0 })).toEqual({
+      above: undefined,
+      below: undefined,
     });
   });
 
@@ -549,7 +572,11 @@ describe("inbox attention pills", () => {
       },
     };
     mobileLogoAvatarActivity.hydrate("test", snapshot);
-    expect(inboxSignal({ type: "bot", bot: waiting })).toEqual({ unread: 1, attention: 0 });
+    expect(inboxSignal({ type: "bot", bot: waiting })).toEqual({
+      unread: 1,
+      attention: 0,
+      attentionBotIds: [],
+    });
     mobileLogoAvatarActivity.hydrate("test", {
       ...snapshot,
       cursor: 2,
@@ -558,6 +585,7 @@ describe("inbox attention pills", () => {
     expect(inboxSignal({ type: "bot", bot: { ...waiting, status: "idle" } })).toEqual({
       unread: 1,
       attention: 1,
+      attentionBotIds: ["bot-1"],
     });
     mobileLogoAvatarActivity.clear();
   });

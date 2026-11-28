@@ -620,6 +620,7 @@ export const DE_MESSAGES: Record<string, string> = {
   "Could not load this artifact.": "Dieses Artefakt konnte nicht geladen werden.",
   "Could not share this artifact": "Dieses Artefakt konnte nicht geteilt werden",
   "Long press to delete": "Zum Löschen gedrückt halten",
+  "Long press to cancel": "Zum Abbrechen gedrückt halten",
   "No artifacts yet": "Noch keine Artefakte",
   "No matching artifacts": "Keine passenden Artefakte",
   "No preview for this file type.": "Keine Vorschau für diesen Dateityp.",

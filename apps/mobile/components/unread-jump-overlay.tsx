@@ -44,12 +44,18 @@ export function useUnreadJumpPills<Item>({
   listRef,
   topInset,
   bottomInset,
+  onCancelAttention,
 }: {
   signals: readonly InboxSignal[];
   keys: readonly string[];
   listRef: RefObject<FlatList<Item> | null>;
   topInset: number;
   bottomInset: number;
+  /**
+   * Long-pressing an attention pill cancels the stuck runs behind it, no confirmation;
+   * the pill clears once the inbox refreshes. Absent where cancelling is unsupported.
+   */
+  onCancelAttention?: (botIds: readonly string[]) => void;
 }) {
   const { t } = useI18n();
   // Measured rows by key, so a row keeps its layout when rows above it come or go.
@@ -258,6 +264,11 @@ export function useUnreadJumpPills<Item>({
             direction === "above" ? t("{label}, above", { label }) : t("{label}, below", { label })
           }
           onPress={() => jump(direction, pill)}
+          onLongPress={
+            pill.kind === "attention" && onCancelAttention
+              ? () => onCancelAttention(pill.attentionBotIds)
+              : undefined
+          }
         />
       </Animated.View>
     );

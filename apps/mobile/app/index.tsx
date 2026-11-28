@@ -43,6 +43,7 @@ import { forgetAppBadge, syncInboxAppBadge, unreadChatCount } from "../lib/app-b
 import { mobileTokens, resolveMobileAppearance } from "../lib/appearance";
 import { explicitSignInRoute } from "../lib/auth-routing";
 import { AvatarViewportScope, createAvatarViewport } from "../lib/avatar-life";
+import { cancelAttentionBots } from "../lib/cancel-attention";
 import type { CreateAction } from "../lib/create-chooser";
 import { createInboxBot } from "../lib/create-inbox-bot";
 import { useHeaderHeightIfAny } from "../lib/floating-header";
@@ -406,7 +407,8 @@ function Home({ embedded, onSelectSpace, onShareSelect }: InboxPaneProps & { emb
           next.some(
             (signal, index) =>
               signal.unread !== previous[index]?.unread ||
-              signal.attention !== previous[index]?.attention,
+              signal.attention !== previous[index]?.attention ||
+              signal.attentionBotIds?.join() !== previous[index]?.attentionBotIds?.join(),
           )
         )
           previous = next;
@@ -415,6 +417,26 @@ function Home({ embedded, onSelectSpace, onShareSelect }: InboxPaneProps & { emb
     }, [listData]),
   );
   const jumpKeys = useMemo(() => listData.map(inboxItemKey), [listData]);
+  // Long-pressing a needs-attention pill cancels its stuck runs at once, no confirmation;
+  // the refresh clears the pill, and a stop that fails leaves its pill in place.
+  const cancellingAttentionRef = useRef(false);
+  const cancelAttention = useCallback(
+    async (botIds: readonly string[]) => {
+      if (cancellingAttentionRef.current || botIds.length === 0) return;
+      cancellingAttentionRef.current = true;
+      hapticImpact();
+      try {
+        const failed = await cancelAttentionBots(botIds, async () => {
+          await refreshBots();
+          await loadActivity();
+        });
+        if (failed.length > 0) Alert.alert(t("Failed to stop work"), t("Try again."));
+      } finally {
+        cancellingAttentionRef.current = false;
+      }
+    },
+    [refreshBots, loadActivity, t],
+  );
   const unreadJump = useUnreadJumpPills({
     signals: jumpSignals,
     keys: jumpKeys,
@@ -422,6 +444,7 @@ function Home({ embedded, onSelectSpace, onShareSelect }: InboxPaneProps & { emb
     // The Liquid Glass header floats over the list; the older header sits above it.
     topInset: nativeHeader ? headerHeight : 0,
     bottomInset: insets.bottom,
+    onCancelAttention: cancelAttention,
   });
   const router = useRouter();
   const pathname = usePathname();

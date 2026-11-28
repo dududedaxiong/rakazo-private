@@ -1,5 +1,10 @@
 /** How many unread and waiting-on-you chats one inbox row holds; a pinned strip holds several. */
-export type InboxSignal = { unread: number; attention: number };
+export type InboxSignal = {
+  unread: number;
+  attention: number;
+  /** Bots waiting on the user behind this row, for the pill's long-press cancel. */
+  attentionBotIds?: readonly string[];
+};
 
 export type RowLayout = { y: number; height: number };
 
@@ -13,7 +18,13 @@ export type VisibleRange = { first: number; last: number };
 export type JumpDirection = "above" | "below";
 
 /** The pill for one edge: what it counts and the nearest off-screen row it scrolls to. */
-export type JumpPill = { kind: "unread" | "attention"; count: number; index: number };
+export type JumpPill = {
+  kind: "unread" | "attention";
+  count: number;
+  index: number;
+  /** Bots waiting on the user behind an attention pill; empty for unread pills. */
+  attentionBotIds: readonly string[];
+};
 
 /** Gap between a pill and the edge it sits on, above and below. */
 export const PILL_GAP = 8;
@@ -55,14 +66,27 @@ export function offscreenUnreads(
   signals: readonly InboxSignal[],
   range: VisibleRange,
 ): { above?: JumpPill; below?: JumpPill } {
-  const above = { unread: 0, attention: 0, nearest: -1, nearestAttention: -1 };
-  const below = { unread: 0, attention: 0, nearest: -1, nearestAttention: -1 };
+  const above = {
+    unread: 0,
+    attention: 0,
+    attentionBotIds: [] as string[],
+    nearest: -1,
+    nearestAttention: -1,
+  };
+  const below = {
+    unread: 0,
+    attention: 0,
+    attentionBotIds: [] as string[],
+    nearest: -1,
+    nearestAttention: -1,
+  };
   signals.forEach((signal, index) => {
     if (index >= range.first && index <= range.last) return;
     if (signal.unread === 0 && signal.attention === 0) return;
     const edge = index < range.first ? above : below;
     edge.unread += signal.unread;
     edge.attention += signal.attention;
+    if (signal.attention > 0) edge.attentionBotIds.push(...(signal.attentionBotIds ?? []));
     // Nearest to the visible rows: the last match above, the first match below.
     if (index < range.first || edge.nearest === -1) edge.nearest = index;
     if (signal.attention > 0 && (index < range.first || edge.nearestAttention === -1)) {
@@ -75,14 +99,20 @@ export function offscreenUnreads(
 function pill(edge: {
   unread: number;
   attention: number;
+  attentionBotIds: readonly string[];
   nearest: number;
   nearestAttention: number;
 }): JumpPill | undefined {
   if (edge.nearest === -1) return undefined;
   if (edge.nearestAttention !== -1) {
-    return { kind: "attention", count: edge.attention, index: edge.nearestAttention };
+    return {
+      kind: "attention",
+      count: edge.attention,
+      index: edge.nearestAttention,
+      attentionBotIds: edge.attentionBotIds,
+    };
   }
-  return { kind: "unread", count: edge.unread, index: edge.nearest };
+  return { kind: "unread", count: edge.unread, index: edge.nearest, attentionBotIds: [] };
 }
 
 /**
