@@ -7,8 +7,9 @@ import { createRoot } from "react-dom/client";
 import { expect, it, vi } from "vitest";
 
 const runs = vi.hoisted(() => ({ list: vi.fn() }));
+const threadsStop = vi.hoisted(() => vi.fn());
 vi.mock("../lib/rpc", () => ({
-  rpc: { runs },
+  rpc: { runs, threads: { stop: threadsStop } },
   rpcForSpace: () => ({ runs }),
   createSpaceRpc: () => ({ runs }),
   selectedSpaceId: () => null,
@@ -26,9 +27,7 @@ vi.mock("@rakazo_mickvvw/ui-web", () => {
       <div data-open={open === undefined ? undefined : String(open)}>{children}</div>
     ),
     CollapsibleContent: Container,
-    CollapsibleTrigger: ({ children }: { children?: ReactNode }) => (
-      <button type="button">{children}</button>
-    ),
+    CollapsibleTrigger: (props: ComponentProps<"button">) => <button type="button" {...props} />,
     GroupAvatar: () => <i data-avatar="group" />,
     Input: () => null,
     Label: Container,
@@ -213,6 +212,67 @@ it("groups attention, work and unread chats under folding headers", async () => 
   } finally {
     await act(async () => root.unmount());
     client.clear();
+    vi.unstubAllGlobals();
+  }
+});
+
+it("right-clicks the Needs attention header to cancel its stuck runs and clear the section", async () => {
+  vi.stubGlobal("IS_REACT_ACT_ENVIRONMENT", true);
+  let stopped = false;
+  runs.list.mockImplementation(async ({ filter }: { filter: string }) => ({
+    runs:
+      filter === "active" && !stopped
+        ? [
+            {
+              ...run,
+              runId: "ask",
+              botId: "marketing",
+              botName: "Marketing",
+              status: "waiting_input",
+            },
+            {
+              ...run,
+              runId: "takeover",
+              botId: "scout",
+              botName: "Scout",
+              groupId: "group-1",
+              groupName: "Team",
+              status: "waiting_takeover",
+            },
+          ]
+        : [],
+  }));
+  threadsStop.mockImplementation(async () => {
+    stopped = true;
+  });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const container = document.createElement("div");
+  document.body.append(container);
+  const root = createRoot(container);
+  try {
+    await act(async () =>
+      root.render(
+        <QueryClientProvider client={client}>
+          <ActivityList {...listProps} />
+        </QueryClientProvider>,
+      ),
+    );
+    await vi.waitFor(() => expect(container.textContent).toContain("Marketing"));
+    const header = container.querySelector('section[aria-label="Needs attention"] button');
+    expect(header).not.toBeNull();
+    await act(async () => {
+      header!.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true }));
+    });
+    await vi.waitFor(() => expect(threadsStop).toHaveBeenCalledTimes(2));
+    expect(threadsStop).toHaveBeenNthCalledWith(1, { botId: "marketing" });
+    expect(threadsStop).toHaveBeenNthCalledWith(2, { groupId: "group-1" });
+    await vi.waitFor(() =>
+      expect(container.querySelector('section[aria-label="Needs attention"]')).toBeNull(),
+    );
+  } finally {
+    await act(async () => root.unmount());
+    client.clear();
+    container.remove();
     vi.unstubAllGlobals();
   }
 });

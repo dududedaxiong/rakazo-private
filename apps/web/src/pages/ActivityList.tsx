@@ -18,8 +18,8 @@ import {
 } from "@rakazo_mickvvw/ui-web";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import type { ReactNode } from "react";
-import { useId, useMemo, useState } from "react";
+import type { MouseEvent, ReactNode } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 import type { ActivityListFilters } from "../lib/activity-list-filters";
 import {
   activityFiltersActive,
@@ -30,6 +30,7 @@ import {
 } from "../lib/activity-list-filters";
 import { useSpaceQueries } from "../lib/query";
 import { formatRelativeTime } from "../lib/relative-time";
+import { rpc } from "../lib/rpc";
 
 export function statusTone(status: RunActivityRow["status"]): string {
   if (status === "failed") return "text-destructive";
@@ -129,6 +130,28 @@ export function ActivityList({
         onOpen={() => onOpenRun(run)}
       />
     ));
+  // Right-clicking the Needs attention header cancels its stuck runs at once, no confirmation:
+  // one `threads/stop` per run — the same call the thread's Stop button makes — then the feed
+  // refetches so the section clears. A stop that fails leaves its run waiting, so the section
+  // stays and the failure stays visible instead of silently clearing.
+  const cancellingAttentionRef = useRef(false);
+  const cancelAttentionRuns = async () => {
+    if (cancellingAttentionRef.current || sections.attention.length === 0) return;
+    cancellingAttentionRef.current = true;
+    try {
+      for (const run of sections.attention) {
+        try {
+          if (run.groupId) await rpc.threads.stop({ groupId: run.groupId });
+          else await rpc.threads.stop({ botId: run.botId });
+        } catch {
+          // Covered above: the run stays waiting and the section stays visible.
+        }
+      }
+    } finally {
+      cancellingAttentionRef.current = false;
+    }
+    void Promise.all([active.refetch(), recent.refetch()]);
+  };
   const unreadCount = filtersOn ? 0 : sections.unreadGroups.length + sections.unreadBots.length;
   const hasAnyRuns = activeRuns.length > 0 || recentRuns.length > 0;
   const hasVisibleRuns = filteredActive.length > 0 || filteredRecent.length > 0;
@@ -176,6 +199,10 @@ export function ActivityList({
       {sections.attention.length > 0 ? (
         <ActivitySection
           {...section("attention", t`Needs attention`, sections.attention.length, true)}
+          onContextMenu={(event) => {
+            event.preventDefault();
+            void cancelAttentionRuns();
+          }}
         >
           {runRows(sections.attention)}
         </ActivitySection>
@@ -405,19 +432,25 @@ function ActivitySection({
   count,
   open,
   onToggle,
+  onContextMenu,
   children,
 }: {
   title: string;
   count: number;
   open: boolean;
   onToggle: () => void;
+  /** Right-clicking the header cancels the section's runs; only the attention section sets it. */
+  onContextMenu?: (event: MouseEvent) => void;
   children: ReactNode;
 }) {
   return (
     <section aria-label={title}>
       <Collapsible open={open} onOpenChange={onToggle}>
         <SectionHeading variant="label">
-          <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg px-2.5 pb-1 pt-1.5 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring">
+          <CollapsibleTrigger
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 pb-1 pt-1.5 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ring"
+            onContextMenu={onContextMenu}
+          >
             <span className="min-w-0 flex-1 truncate text-start">{title}</span>
             <span className="tabular-nums">{count}</span>
             <ChevronDown
