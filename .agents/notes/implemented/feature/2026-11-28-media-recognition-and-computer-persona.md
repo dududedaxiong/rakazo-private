@@ -132,3 +132,11 @@ RPC 是 `models.computerPersona`（读）与 `models.setComputerPersona`（写�
   36/36; Biome clean; `pnpm verify-notes` ok. Two Polish catalog tests fail identically
   on the clean base (empty pl translation for an image-generation string from earlier
   branch work) and are unrelated to this change.
+
+### App UI: image/video roles and computer persona picker (2026-11-28)
+
+- Added `ModelRoleSettings` sections for the `image` ("Image recognition") and `video` ("Video analysis") roles in `apps/mobile/app/(settings)/models.tsx`, below the computer-use model, always shown on both account and Space scopes — the same visibility rule as the App's computer section and the web UI. Empty label is "Choose a model": these roles have no deployment fallback (server `deploymentModelRole` returns no primary for image/video), so an empty slot means no vision model is configured.
+- Added `apps/mobile/components/computer-persona-picker.tsx`: a native `MenuPicker` (Expo `MenuView`, per the App's native-controls rule) below the computer section, listing the account's prompt templates from `promptTemplates.list` plus "None". It loads `models.computerPersona` and saves `models.setComputerPersona` with `expectedUserId` and `scope`, so a Space scope edits that Space's override; the account's templates are shared across Spaces. No new list endpoint was needed.
+- Warning without blocking: when an image/video role has a chosen model and the role view reports `seesImages === false`, the section shows the existing "This model cannot read images. Choose a model that supports images." line; the pick itself stays allowed (permissive picker, per the server contract).
+- i18n: four new strings in all eight mobile catalogs (zh-CN/zh-TW translated, others English fallback); the warning and "None" reuse strings already translated everywhere. Locale parity is enforced by `lib/i18n.test.ts`, which passes.
+- Verification: `lib/model-settings.test.tsx` + `lib/i18n.test.ts` — 67/68 pass; the one failure ("offers deployment-funded providers and Ollama Cloud…") is pre-existing at HEAD (provider sort order) and was verified identical with the App changes stashed. Biome clean; `tsc --noEmit` clean for the touched files. `native-sheet.test.tsx` fails 34/34 with `SyntaxError: Unexpected token 'typeof'` in this env, pre-existing and unrelated (it imports none of the touched files).
