@@ -68,6 +68,40 @@ fun screenChromeCss(mode: SystemFloatScreenChromeMode): String {
 }
 
 /**
+ * Returns [value] as a double-quoted, JSON-style escaped JavaScript
+ * string literal, the same escaping the in-app computer screen gets
+ * from `JSON.stringify(css)`. A JS string literal cannot contain a
+ * raw line break, and the takeover CSS does contain them, so the CSS
+ * must go through this helper before it is interpolated into the
+ * generated script — interpolating it raw makes the whole script fail
+ * to parse (the `try{...}catch(e){}` inside never runs, so nothing
+ * is installed and the failure is silent).
+ */
+fun jsStringLiteral(value: String): String {
+  val out = StringBuilder(value.length + 2)
+  out.append('"')
+  for (ch in value) {
+    when (ch) {
+      '"' -> out.append("\\\"")
+      '\\' -> out.append("\\\\")
+      '\n' -> out.append("\\n")
+      '\r' -> out.append("\\r")
+      '\t' -> out.append("\\t")
+      else -> {
+        if (ch < ' ') {
+          out.append("\\u")
+          out.append(ch.code.toString(16).padStart(4, '0'))
+        } else {
+          out.append(ch)
+        }
+      }
+    }
+  }
+  out.append('"')
+  return out.toString()
+}
+
+/**
  * JavaScript that installs the mode's rules in a <style> keyed by id and
  * records the mode that produced it, so running it again with a different
  * mode rewrites the rules instead of adding a second element. The float
@@ -77,12 +111,15 @@ fun screenChromeCss(mode: SystemFloatScreenChromeMode): String {
  * (with the current mode) and on every takeover/release.
  */
 fun screenChromeScript(mode: SystemFloatScreenChromeMode): String {
-  // The CSS contains double quotes but no single quotes, so a
-  // single-quoted JS string literal needs no escaping.
+  // The CSS contains double quotes and real newlines. A single-quoted
+  // JS string literal cannot hold a literal line break, so the CSS is
+  // embedded through jsStringLiteral (JSON-style escaping, same as the
+  // in-app screen's JSON.stringify(css)); interpolating it raw made
+  // the whole script fail to parse.
   val css = screenChromeCss(mode)
   val modeName = if (mode == SystemFloatScreenChromeMode.TAKEOVER) "takeover" else "float"
   return "(function(){try{var id=\"rakazo-screen-chrome\";var mode='$modeName';" +
-    "var css='$css';var style=document.getElementById(id);" +
+    "var css=${jsStringLiteral(css)};var style=document.getElementById(id);" +
     "if(!style){style=document.createElement(\"style\");style.id=id;" +
     "(document.head||document.documentElement).appendChild(style);}" +
     "if(style.getAttribute(\"data-mode\")!==mode){" +
