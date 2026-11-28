@@ -86,6 +86,8 @@ const bubbleBox = vi.hoisted(() => ({
 const windowBox = vi.hoisted(() => ({
   permitted: true,
   showing: true,
+  takenOver: false,
+  takeoverListeners: new Set<(event: { takenOver: boolean }) => void>(),
   show: vi.fn(async (_url: string, _title: string, _locale: string) => true),
   updateUrl: vi.fn(async (_url: string) => undefined),
   hide: vi.fn(async () => undefined),
@@ -440,6 +442,8 @@ describe("computer float window", () => {
     bubbleBox.requestOverlayPermission.mockClear();
     windowBox.permitted = true;
     windowBox.showing = true;
+    windowBox.takenOver = false;
+    windowBox.takeoverListeners.clear();
     windowBox.show.mockClear();
     windowBox.updateUrl.mockClear();
     windowBox.hide.mockClear();
@@ -507,7 +511,24 @@ describe("computer float window", () => {
       updateUrl: (url: string) => windowBox.updateUrl(url),
       hide: () => windowBox.hide(),
       isShowing: async () => windowBox.showing,
+      addListener: (
+        _event: "onTakeoverChanged",
+        listener: (event: { takenOver: boolean }) => void,
+      ) => {
+        windowBox.takeoverListeners.add(listener);
+        return {
+          remove: () => {
+            windowBox.takeoverListeners.delete(listener);
+          },
+        };
+      },
+      isTakenOver: async () => windowBox.takenOver,
     });
+  }
+
+  /** Fires a native takeover flip, as the system window's own button would. */
+  function emitNativeTakeover(takenOver: boolean) {
+    for (const listener of [...windowBox.takeoverListeners]) listener({ takenOver });
   }
 
   it("sizes the title avatar to the mockup's 34pt and leaves group seats at 28", () => {
@@ -993,6 +1014,89 @@ describe("computer float window", () => {
     // The system window carries the screen now, so the in-app float steps aside.
     expect(opened.querySelector('iframe[title="screen"]')).toBeNull();
     expect(opened.textContent).toBe("");
+  });
+
+  it("waits for the takeover to settle before popping the system window out in system-only mode", async () => {
+    injectWindowModule();
+    let resolveTakeover!: () => void;
+    const takeoverGate = new Promise<void>((resolve) => {
+      resolveTakeover = resolve;
+    });
+    rpc.mockImplementation(async (method: string) => {
+      if (method === "computer/status") return runningStatus;
+      if (method === "computer/screenUrl") return { url: "https://screen.example.test/embed" };
+      if (method === "computer/takeover") {
+        await takeoverGate;
+        return {};
+      }
+      return {};
+    });
+    renderFloat({ open: true, systemOnly: true });
+    await settle();
+    // The takeover has not resolved, so the popup must not open on
+    // the view-only URL fetched first.
+    expect(calls("computer/takeover")).toHaveLength(1);
+    expect(windowBox.show).not.toHaveBeenCalled();
+    await act(async () => {
+      resolveTakeover();
+    });
+    await settle();
+    expect(windowBox.show).toHaveBeenCalledTimes(1);
+    expect(windowBox.show).toHaveBeenCalledWith(
+      "https://screen.example.test/embed",
+      "Computer screen",
+      "en",
+    );
+  });
+
+  it("takes control and re-points the window at the interactive URL when the native takeover button is tapped", async () => {
+    injectWindowModule();
+    let screenUrl: string | null = "https://screen.example.test/embed?view_only=true";
+    rpc.mockImplementation(async (method: string) => {
+      if (method === "computer/status") return runningStatus;
+      if (method === "computer/screenUrl") return { url: screenUrl };
+      return {};
+    });
+    const opened = renderFloat({ open: true });
+    await settle();
+    const popOut = opened.querySelector(
+      'button[aria-label="Float outside the app"]',
+    ) as HTMLButtonElement;
+    act(() => {
+      popOut.click();
+    });
+    await settle();
+    expect(windowBox.show).toHaveBeenCalledTimes(1);
+    expect(windowBox.show).toHaveBeenCalledWith(
+      "https://screen.example.test/embed?view_only=true",
+      "Computer screen",
+      "en",
+    );
+    // This path never took control on open: the popup opened view-only.
+    expect(calls("computer/takeover")).toHaveLength(0);
+    // The user taps the native takeover button in the system window:
+    // the tap takes the lease and the window reloads interactive.
+    screenUrl = "https://screen.example.test/embed?view_only=false";
+    await act(async () => {
+      emitNativeTakeover(true);
+    });
+    await settle();
+    expect(calls("computer/takeover")).toHaveLength(1);
+    expect(calls("computer/takeover")[0]?.[1]).toEqual({ botId: "bot-1" });
+    expect(windowBox.updateUrl).toHaveBeenCalledWith(
+      "https://screen.example.test/embed?view_only=false",
+    );
+    // Tapping it again hands the lease back and re-points at the view-only URL.
+    screenUrl = "https://screen.example.test/embed?view_only=true";
+    await act(async () => {
+      emitNativeTakeover(false);
+    });
+    await settle();
+    expect(calls("computer/release")).toHaveLength(1);
+    expect(calls("computer/release")[0]?.[1]).toEqual({ botId: "bot-1" });
+    expect(windowBox.updateUrl).toHaveBeenCalledWith(
+      "https://screen.example.test/embed?view_only=true",
+    );
   });
 
   it("hands control back when the system popup closes", async () => {

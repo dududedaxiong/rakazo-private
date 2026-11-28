@@ -69,6 +69,33 @@ describe("system float window native contract", () => {
     expect(lib).toContain("isTakenOver: () => Promise<boolean>");
   });
 
+  it("opens the system window with a control URL and lets a native takeover tap drive the lease", () => {
+    const window = readFileSync(
+      resolve(mobileRoot, "components/thread/computer-float-window.tsx"),
+      "utf8",
+    );
+    // The popup waits for the open-time takeover to settle before
+    // showing, so it opens with a control URL instead of the
+    // view-only URL fetched first.
+    expect(window).toContain("const [controlReady, setControlReady] = useState(false)");
+    expect(window).toContain("setControlReady(true)");
+    expect(window).toContain('if (computer?.state === "running" && !controlReady) return;');
+    // A native takeover tap takes the lease and re-reads the screen;
+    // the rotated-capability effect re-points the window at it, and
+    // releasing hands the lease back. A tap that landed before the
+    // subscription is reconciled by asking the window what it shows.
+    expect(window).toContain("subscribeSystemFloatTakeover");
+    expect(window).toContain("systemFloatIsTakenOver");
+    expect(window).toContain("handleNativeTakeover");
+    expect(window).toContain("nativeTakeoverRef");
+    expect(window).toContain('rpc("computer/takeover", { botId })');
+    expect(window).toContain('rpc("computer/release", { botId })');
+    // A lease held before this session opened is never taken or
+    // handed back by the tap handler.
+    expect(window).toContain("alreadyHeld");
+    expect(window).toContain("if (!alreadyHeld) tookControlRef.current = true;");
+  });
+
   it("hosts the live screen in a WindowManager overlay kept alive by a foreground service", () => {
     const service = read("java/com/rakazo/systemfloat/RakazoSystemFloatService.kt");
     expect(service).toContain("TYPE_APPLICATION_OVERLAY");

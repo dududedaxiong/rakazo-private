@@ -36,7 +36,9 @@ import {
   requestSystemFloatPermission,
   showSystemFloat,
   showSystemFloatWindow,
+  subscribeSystemFloatTakeover,
   systemFloatHasPermission,
+  systemFloatIsTakenOver,
   systemFloatWindowIsShowing,
   updateSystemFloatWindowUrl,
 } from "../../lib/system-float";
@@ -220,6 +222,13 @@ export function ComputerFloatWindow({
   const tookControlRef = useRef(false);
   const takeoverAttemptedRef = useRef(false);
   const autoPopOutDoneRef = useRef(false);
+  // True once the open-time takeover has settled (granted or refused,
+  // or already held): the popup opens only then, so it opens with a
+  // control URL instead of the view-only URL fetched first.
+  const [controlReady, setControlReady] = useState(false);
+  // The takeover state JS has last acted on, from the native window's
+  // own button: a tap there has no other way to reach this side.
+  const nativeTakeoverRef = useRef(false);
   // The user was sent to system settings to grant the overlay permission.
   const pendingPermission = useRef(false);
   const heldScreenUrl = useRef<string | null>(null);
@@ -232,6 +241,8 @@ export function ComputerFloatWindow({
   useComputerPointerSnapshot(screenWebViewRef);
   // The latest screen URL, for the pop-out button and the permission return.
   const floatScreenUrlRef = useRef<string | null>(null);
+  const computerRef = useRef(computer);
+  computerRef.current = computer;
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const wasRunningRef = useRef(false);
@@ -297,6 +308,8 @@ export function ComputerFloatWindow({
     setSize({ width: COMPUTER_FLOAT_WIDTH });
     setPosition(null);
     setSystemUnavailable(false);
+    setControlReady(false);
+    nativeTakeoverRef.current = false;
     tookControlRef.current = false;
     takeoverAttemptedRef.current = false;
     autoPopOutDoneRef.current = false;
@@ -327,7 +340,11 @@ export function ComputerFloatWindow({
       computer.controlHolder === "user" &&
       computer.controlBotId === botId &&
       !computer.controlledByOther;
-    if (hasControl || takeoverAttemptedRef.current) return;
+    if (hasControl) {
+      setControlReady(true);
+      return;
+    }
+    if (takeoverAttemptedRef.current) return;
     takeoverAttemptedRef.current = true;
     const action = refreshController.beginAction();
     void rpc("computer/takeover", { botId })
@@ -342,7 +359,10 @@ export function ComputerFloatWindow({
         await action.refresh({ screenAttempts: SCREEN_URL_OPEN_ATTEMPTS }).catch(() => undefined);
       })
       .catch(() => undefined)
-      .finally(() => action.finish());
+      .finally(() => {
+        action.finish();
+        setControlReady(true);
+      });
   }, [systemOnly, open, botId, computer, refreshController]);
 
   // Closing the popup hands back a lease this session took, so the bot
@@ -351,11 +371,51 @@ export function ComputerFloatWindow({
     if (open) return;
     takeoverAttemptedRef.current = false;
     autoPopOutDoneRef.current = false;
+    setControlReady(false);
+    nativeTakeoverRef.current = false;
     if (tookControlRef.current && botId) {
       tookControlRef.current = false;
       void rpc("computer/release", { botId }).catch(() => undefined);
     }
   }, [open, botId]);
+
+  // A takeover tapped in the system window's own title bar reaches
+  // this side as an event: the window has no other way to ask for the
+  // lease, so the tap takes control on the server and re-reads the
+  // screen — the rotated-capability effect then re-points the window
+  // at the interactive URL, whose page runs the attach that un-hides
+  // the bottom bar. Releasing hands the lease back and re-points the
+  // window at the view-only URL. A lease the user already held before
+  // this session opened is never taken or handed back here.
+  const handleNativeTakeover = useCallback(
+    async (takenOver: boolean) => {
+      if (!botId) return;
+      if (takenOver === nativeTakeoverRef.current) return;
+      nativeTakeoverRef.current = takenOver;
+      if (!refreshController.isActive()) return;
+      const computerNow = computerRef.current;
+      const alreadyHeld =
+        computerNow?.controlHolder === "user" &&
+        computerNow?.controlBotId === botId &&
+        !computerNow?.controlledByOther;
+      if (takenOver) {
+        const granted = await rpc("computer/takeover", { botId })
+          .then(() => true)
+          .catch(() => false);
+        if (!granted || !refreshController.isActive()) return;
+        if (!alreadyHeld) tookControlRef.current = true;
+      } else {
+        if (!tookControlRef.current) return;
+        tookControlRef.current = false;
+        await rpc("computer/release", { botId }).catch(() => undefined);
+        if (!refreshController.isActive()) return;
+      }
+      await refreshController
+        .refresh({ screenAttempts: SCREEN_URL_OPEN_ATTEMPTS })
+        .catch(() => undefined);
+    },
+    [botId, refreshController],
+  );
 
   // After the user opens the system settings to grant the overlay permission,
   // the screen floats once they come back to the app: the system window
@@ -628,6 +688,34 @@ export function ComputerFloatWindow({
     void updateSystemFloatWindowUrl(loadedScreenUrl);
   }, [loadedScreenUrl]);
 
+  // The system window's own takeover button reports through the
+  // native event while the window is up. A tap that landed before
+  // this subscription is reconciled by asking the window what it is
+  // showing now, instead of waiting for the next tap.
+  useEffect(() => {
+    if (!open || !botId || !systemFloatOn) return;
+    let subscription: { remove: () => void } | null = null;
+    let cancelled = false;
+    void subscribeSystemFloatTakeover((takenOver) => {
+      void handleNativeTakeover(takenOver);
+    })
+      .then(async (sub) => {
+        if (cancelled) {
+          sub?.remove();
+          return;
+        }
+        subscription = sub;
+        if (sub && (await systemFloatIsTakenOver())) {
+          void handleNativeTakeover(true);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+      subscription?.remove();
+    };
+  }, [open, botId, systemFloatOn, handleNativeTakeover]);
+
   // System-only mode pops the screen out to the system window as soon as
   // its URL is ready. A refused overlay permission asks once; declining
   // it, or a build without the window module, falls back to the in-app
@@ -636,6 +724,11 @@ export function ComputerFloatWindow({
     if (!systemOnly || systemUnavailable || !open || !botId) return;
     if (!loadedScreenUrl || systemFloatOn) return;
     if (autoPopOutDoneRef.current) return;
+    // The popup operates the computer, so it opens with a control URL,
+    // not the view-only URL fetched before the takeover resolved: while
+    // the computer runs and the takeover has not settled, wait — the
+    // takeover's refresh lands first and the popup opens on it.
+    if (computer?.state === "running" && !controlReady) return;
     autoPopOutDoneRef.current = true;
     void showSystemWindow().then((result) => {
       if (result === "no-permission") {
@@ -652,6 +745,8 @@ export function ComputerFloatWindow({
     loadedScreenUrl,
     systemFloatOn,
     showSystemWindow,
+    computer,
+    controlReady,
   ]);
 
   // The system window has its own close button, so the app only learns it
