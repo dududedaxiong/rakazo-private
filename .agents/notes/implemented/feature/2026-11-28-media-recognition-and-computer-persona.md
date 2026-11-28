@@ -107,3 +107,28 @@ RPC 是 `models.computerPersona`（读）与 `models.setComputerPersona`（写�
 **Consequences.** In a Space without a credentials override, the card count and the vault page now show the account vault — the same items the bots use — and saves from the vault page land in the account vault. In a Space with an override, behavior is unchanged (its own vault). The account vault page (no Space) is unchanged (explicit account scope). The `BotEmailAddressesGroup` gate still keys off the target scope, not the effective vault.
 
 **Verification.** Mobile vitest: 50 passed (composer chips 14, vault settings 21, vault helpers 15), including new tests for a Space without its own vault (card counts the account's 2 items; vault page lists them with no scope sent) and a Space with its own vault; the new card test fails on the pre-fix code. Biome clean on all 5 changed files.
+
+### Web UI: image/video roles and computer persona picker (2026-11-28, af02773)
+
+- Added `image` ("Image recognition") and `video` ("Video analysis") `ModelRoleSettings`
+  sections to `ModelSettingsOverlay`, below the computer section, reusing the computer
+  section's props and connection-panel anchors.
+- Visibility rule: the image/video sections always show, on web and App alike — they are
+  not gated on the web's conditional `showComputer` logic (which still gates only the
+  computer section and its persona picker).
+- The picker is permissive, as specified: the server already filters the role catalog to
+  image-capable models, and the UI never blocks a pick. When a chosen image/video model
+  fails the live `seesImages` probe, `ModelRoleSettings` shows a one-line warning under
+  that list instead ("This model may not be able to see images/video.").
+- Computer persona picker (`model-settings/computer-persona-picker.tsx`) sits below the
+  computer section, lists `promptTemplates.list` with a "None" option, reads the current
+  value from `models.computerPersona`, and saves through `models.setComputerPersona`
+  (null for None), updating the query cache on save. No new list endpoint was added.
+- i18n: `pnpm lingui extract` added the 5 new strings to all 15 catalogs; zh-CN/zh-TW
+  are translated (persona → 人设, matching existing "Current persona" → 当前人设);
+  other locales fall back to English. A catalog test proves the zh-CN/zh-TW labels
+  render through the real Lingui runtime.
+- Verification: `ModelSettingsOverlay.test.tsx` 58/58; adjacent role/settings suites
+  36/36; Biome clean; `pnpm verify-notes` ok. Two Polish catalog tests fail identically
+  on the clean base (empty pl translation for an image-generation string from earlier
+  branch work) and are unrelated to this change.
