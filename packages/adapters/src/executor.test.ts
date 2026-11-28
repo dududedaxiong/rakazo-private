@@ -1561,6 +1561,38 @@ describe("userTurnInstructions", () => {
     ]);
   });
 
+  it("inserts the media analysis context when set and omits it when unset", () => {
+    const withAnalysis = userTurnInstructions({
+      ...base,
+      mediaAnalysisContext: "[Media analysis — photo.png]\nA red square.",
+      groupContext: undefined,
+      messagingContext: undefined,
+      redactedMemoryContext: undefined,
+      redactedScratchpadContext: undefined,
+      hasHistoricalContext: false,
+      agentEnvironmentInstruction: undefined,
+      botDirectory: undefined,
+      pluginLine: undefined,
+      agentSkillsLine: undefined,
+      taughtSkillsLine: undefined,
+    }).filter(Boolean);
+    expect(withAnalysis).toContain("[Media analysis — photo.png]\nA red square.");
+    const withoutAnalysis = userTurnInstructions({
+      ...base,
+      groupContext: undefined,
+      messagingContext: undefined,
+      redactedMemoryContext: undefined,
+      redactedScratchpadContext: undefined,
+      hasHistoricalContext: false,
+      agentEnvironmentInstruction: undefined,
+      botDirectory: undefined,
+      pluginLine: undefined,
+      agentSkillsLine: undefined,
+      taughtSkillsLine: undefined,
+    }).filter(Boolean);
+    expect(withoutAnalysis.join("\n")).not.toContain("Media analysis");
+  });
+
   it("appends the computer persona as a computer-scoped clause only when set", () => {
     const withPersona = userTurnInstructions({
       ...base,

@@ -428,9 +428,11 @@ describe("run computer provisioning", () => {
       expect(provisionComputer).not.toHaveBeenCalled();
       expect(sandbox.writeFile).not.toHaveBeenCalled();
       if (attachments === "image") {
-        expect(runtimeRun.mock.calls[0]?.[0].currentTurnImages).toEqual([
-          expect.objectContaining({ mimeType: "image/png", data: new Uint8Array([1, 2, 3, 4]) }),
-        ]);
+        // The attachment is analyzed by the vision pre-step instead of
+        // reaching the main model raw; this harness configures no image
+        // model, so the instructions carry the failure note.
+        expect(runtimeRun.mock.calls[0]?.[0].currentTurnImages).toBeUndefined();
+        expect(runtimeRun.mock.calls[0]?.[0].instructions).toContain("could not be analyzed");
       }
       expect(sink.events).toContainEqual(
         expect.objectContaining({ message: "run.computer", reason: "none", ready: false }),

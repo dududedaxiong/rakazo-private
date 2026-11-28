@@ -113,6 +113,7 @@ import {
   neutralizeSpeakerLabels,
   personSpeaker,
 } from "./history-speakers.js";
+import { analyzeTurnMedia, loadCurrentTurnVideos } from "./media-analysis.js";
 import { createMediaGenerationProvider } from "./media-generation-factory.js";
 import { matchBotMediaTrigger } from "./media-intent.js";
 import { loadAgentMemoryContext } from "./memory-context.js";
@@ -874,6 +875,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const [
           discovered,
           currentTurnImages,
+          currentTurnVideos,
           computerPersona,
           memoryContext,
           scratchpadContext,
@@ -882,6 +884,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         ] = await Promise.all([
           discoveredPromise,
           loadCurrentTurnImages(deps, turnBlocks, context),
+          loadCurrentTurnVideos(deps, turnBlocks, context),
           // The persona is optional context: a lookup failure leaves the run
           // exactly as it was without one.
           resolvedComputerPersona(deps.prisma, {
@@ -905,6 +908,55 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
               }),
           recallPromise,
         ]);
+        // The vision pre-step runs before the main run starts, so it is a
+        // sequential call, not a nested one. Every image and video attachment
+        // is analyzed by the preset vision models; the main model only ever
+        // reads the analysis text, never the raw attachment.
+        const turnImageNames =
+          turnBlocks
+            ?.filter(
+              (block): block is Extract<MessageBlock, { kind: "image" }> => block.kind === "image",
+            )
+            .map((block) => block.name) ?? [];
+        const turnVideoNames =
+          turnBlocks
+            ?.filter(
+              (block): block is Extract<MessageBlock, { kind: "file" }> =>
+                block.kind === "file" && block.mimeType.startsWith("video/"),
+            )
+            .map((block) => block.name) ?? [];
+        let mediaAnalysisContext: string | undefined;
+        if (turnImageNames.length || turnVideoNames.length) {
+          try {
+            mediaAnalysisContext = await analyzeTurnMedia(
+              {
+                prisma: deps.prisma,
+                runtime: deps.runtime,
+                resolveConnectedModel,
+                registerSecrets: (values) => runSecrets.push(...values),
+              },
+              {
+                scope: { userId: run.userId, spaceId: run.spaceId },
+                botId: bot.id,
+                operationId: runId,
+                media: {
+                  images: currentTurnImages ?? [],
+                  imageNames: turnImageNames,
+                  videos: currentTurnVideos ?? [],
+                  videoNames: turnVideoNames,
+                },
+                signal: context.signal,
+              },
+            );
+          } catch (error) {
+            // Analysis never fails the run; without context the main model
+            // answers from the attachment markers alone.
+            getLogger().warn("media analysis did not run", {
+              reason: error instanceof Error ? error.message : String(error),
+            });
+            mediaAnalysisContext = undefined;
+          }
+        }
         const semanticMemoryEnabled = Boolean(semanticMemory) && !nonOwnerChatRun;
         let recalledMemory = "";
         let recallSucceeded = false;
@@ -1905,6 +1957,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   tools.some((tool) => tool.name === "search_history"),
                 computerInstruction,
                 computerPersona: computerPersona?.content,
+                mediaAnalysisContext,
                 pageBrowserAllowed,
                 taskCatalogInstruction,
                 workspaceInstruction,
@@ -1935,15 +1988,21 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 .filter((instruction): instruction is string => Boolean(instruction))
                 .join("\n\n"),
               history: runtimeHistory,
-              currentTurnImages,
-              currentRunRequiresImageInput,
-              currentTurnImageFileFallback: Boolean(
-                currentTurnImages?.length &&
-                  currentTurnFiles.length &&
-                  !turnBlocks?.some(
-                    (block) => block.kind === "image" && block.imageHandling === "confirm",
-                  ),
-              ),
+              // The analysis text is what the main model reads about this
+              // turn's attachments; the raw images never reach it.
+              currentTurnImages: mediaAnalysisContext !== undefined ? undefined : currentTurnImages,
+              currentRunRequiresImageInput:
+                mediaAnalysisContext !== undefined ? false : currentRunRequiresImageInput,
+              currentTurnImageFileFallback:
+                mediaAnalysisContext !== undefined
+                  ? false
+                  : Boolean(
+                      currentTurnImages?.length &&
+                        currentTurnFiles.length &&
+                        !turnBlocks?.some(
+                          (block) => block.kind === "image" && block.imageHandling === "confirm",
+                        ),
+                    ),
               tools,
               // The live array: secrets learned later in the run redact too.
               secrets: runSecrets,

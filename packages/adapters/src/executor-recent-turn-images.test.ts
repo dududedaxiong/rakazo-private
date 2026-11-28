@@ -598,9 +598,13 @@ describe("recent turn images follow model vision", () => {
     const bound = await runWithModel(VISION_MODEL, undefined, false, false, true, {
       pictureMessage: { waiting: false },
     });
-    expect(bound.request.currentTurnImages).toEqual([
-      { name: "reply.png", mimeType: "image/png", data: new Uint8Array([1, 2, 3, 4]) },
-    ]);
+    // The attachment is analyzed by the vision pre-step instead of reaching
+    // the main model raw; this harness configures no image model, so the
+    // instructions carry the failure note.
+    expect(bound.request.currentTurnImages).toBeUndefined();
+    expect(bound.request.instructions).toContain(
+      'The attached image "reply.png" could not be analyzed: no vision model is configured.',
+    );
   });
 
   it("continues with no backups when the indexed lookup fails", async () => {
