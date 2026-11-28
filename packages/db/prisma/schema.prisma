@@ -84,6 +84,7 @@ model User {
   actionApprovalRules         ActionApprovalRule[]
   actionAutoReviewPreferences ActionAutoReviewPreference[]
   modelRoleChoices            UserModelRoleChoice[]
+  computerPersona             UserComputerPersona?
   modelPreferences            UserModelPreference[]
   voicePreferences            UserVoicePreference[]
   approvalRules               UserActionApprovalRule[]
@@ -142,6 +143,8 @@ model PromptTemplate {
   sourceUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  computerPersonas      UserComputerPersona[]  @relation("UserComputerPersonaTemplate")
+  spaceComputerPersonas SpaceComputerPersona[] @relation("SpaceComputerPersonaTemplate")
 
   @@unique([userId, name])
   @@index([userId, updatedAt])
@@ -885,6 +888,7 @@ model SpaceMember {
   voicePreferences SpaceVoicePreference[]
   aiDataConsents AiDataConsent[]
   modelRoleChoices SpaceModelRoleChoice[]
+  computerPersona  SpaceComputerPersona?
   settingOverrides SpaceSettingOverride[]
 
   @@unique([spaceId, userId])
@@ -2961,6 +2965,19 @@ model SpaceModelRoleChoice {
   @@map("space_model_role_choices")
 }
 
+/// The Space's own copy of the member's computer persona; see UserComputerPersona.
+model SpaceComputerPersona {
+  spaceId          String
+  userId           String
+  spaceMember      SpaceMember    @relation(fields: [spaceId, userId], references: [spaceId, userId], onDelete: Cascade)
+  promptTemplateId String
+  promptTemplate   PromptTemplate @relation("SpaceComputerPersonaTemplate", fields: [promptTemplateId], references: [id], onDelete: Cascade)
+  updatedAt        DateTime       @updatedAt
+
+  @@id([spaceId, userId])
+  @@map("space_computer_personas")
+}
+
 /// Which of a member's account-wide settings a Space replaces with its own. Without a row the
 /// Space follows the account: "models" covers every model role, "voice" the voice choices,
 /// "confirmations" the approval rules and auto review.
@@ -2993,6 +3010,19 @@ model UserModelRoleChoice {
   @@index([credentialId, userId])
   // Unique index user_model_role_choices_model_connection_key (NULLS NOT DISTINCT) is created in SQL.
   @@map("user_model_role_choices")
+}
+
+/// The member's computer persona: one prompt template that shapes how the bot
+/// behaves while operating the computer. One row per member; absent means unset.
+model UserComputerPersona {
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  promptTemplateId String
+  promptTemplate   PromptTemplate @relation("UserComputerPersonaTemplate", fields: [promptTemplateId], references: [id], onDelete: Cascade)
+  updatedAt        DateTime       @updatedAt
+
+  @@id([userId])
+  @@map("user_computer_personas")
 }
 
 /// A connection's own model and effort, which belong to the connection in every Space.

@@ -99,6 +99,7 @@ import {
   ComputerStatusSchema,
   ComputerUpdateSchema,
 } from "./computer.js";
+import { ComputerPersonaSchema } from "./computer-persona.js";
 import {
   AccessGrantInputSchema,
   AccessGrantSchema,
@@ -660,6 +661,24 @@ export const appContract = {
         }),
       )
       .output(ModelRoleViewSchema),
+    /** The member's computer persona: the prompt template id, or null when unset. */
+    computerPersona: oc
+      .input(
+        z.object({
+          expectedUserId: Id.optional(),
+          scope: SettingsScopeSchema.optional(),
+        }),
+      )
+      .output(ComputerPersonaSchema),
+    setComputerPersona: oc
+      .input(
+        z.object({
+          promptTemplateId: Id.nullable(),
+          expectedUserId: Id.optional(),
+          scope: SettingsScopeSchema.optional(),
+        }),
+      )
+      .output(ComputerPersonaSchema),
     list: oc.output(z.array(ModelCatalogEntrySchema)),
     credentials: oc.output(z.array(ModelCredentialSchema)),
     backups: oc.output(z.array(ModelBackupChoiceSchema)),

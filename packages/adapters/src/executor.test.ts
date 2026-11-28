@@ -1561,6 +1561,41 @@ describe("userTurnInstructions", () => {
     ]);
   });
 
+  it("appends the computer persona as a computer-scoped clause only when set", () => {
+    const withPersona = userTurnInstructions({
+      ...base,
+      computerPersona: "Speak like a careful archivist.",
+      groupContext: undefined,
+      messagingContext: undefined,
+      redactedMemoryContext: undefined,
+      redactedScratchpadContext: undefined,
+      hasHistoricalContext: false,
+      agentEnvironmentInstruction: undefined,
+      botDirectory: undefined,
+      pluginLine: undefined,
+      agentSkillsLine: undefined,
+      taughtSkillsLine: undefined,
+    }).filter(Boolean);
+    const clause = "When operating the computer, Speak like a careful archivist.";
+    expect(withPersona).toContain(clause);
+    // Directly after the computer instruction, never bleeding into other guidance.
+    expect(withPersona.indexOf(clause)).toBe(withPersona.indexOf(computerLine) + 1);
+    const withoutPersona = userTurnInstructions({
+      ...base,
+      groupContext: undefined,
+      messagingContext: undefined,
+      redactedMemoryContext: undefined,
+      redactedScratchpadContext: undefined,
+      hasHistoricalContext: false,
+      agentEnvironmentInstruction: undefined,
+      botDirectory: undefined,
+      pluginLine: undefined,
+      agentSkillsLine: undefined,
+      taughtSkillsLine: undefined,
+    }).filter(Boolean);
+    expect(withoutPersona.join("\n")).not.toContain("When operating the computer");
+  });
+
   it("ends with the untrusted-content block when no optional context exists", () => {
     const instructions = userTurnInstructions({
       backgroundHelpersAllowed: true,

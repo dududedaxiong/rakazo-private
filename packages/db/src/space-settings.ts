@@ -11,6 +11,8 @@ type CopyClient = Pick<
   | "spaceSettingOverride"
   | "spaceModelRoleChoice"
   | "userModelRoleChoice"
+  | "spaceComputerPersona"
+  | "userComputerPersona"
   | "spaceVoicePreference"
   | "userVoicePreference"
   | "actionApprovalRule"
@@ -107,6 +109,8 @@ async function clearSpaceCopy(tx: CopyClient, scope: Scope, setting: SpaceSettin
   const member = { spaceId: scope.spaceId, userId: scope.userId };
   if (setting === "models") {
     await tx.spaceModelRoleChoice.deleteMany({ where: member });
+  } else if (setting === "computerPersona") {
+    await tx.spaceComputerPersona.deleteMany({ where: member });
   } else if (setting === "voice") {
     await tx.spaceVoicePreference.deleteMany({ where: member });
   } else if (setting === "credentials") {
@@ -127,6 +131,16 @@ async function copyAccountIntoSpace(tx: CopyClient, scope: Scope, setting: Space
     if (rows.length) {
       await tx.spaceModelRoleChoice.createMany({
         data: rows.map(({ userId: _userId, ...row }) => ({ ...row, ...member })),
+      });
+    }
+  } else if (setting === "computerPersona") {
+    const row = await tx.userComputerPersona.findUnique({
+      where: { userId: scope.userId },
+      select: { promptTemplateId: true },
+    });
+    if (row) {
+      await tx.spaceComputerPersona.create({
+        data: { ...member, promptTemplateId: row.promptTemplateId },
       });
     }
   } else if (setting === "voice") {

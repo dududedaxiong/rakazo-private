@@ -31,7 +31,9 @@ import {
 import { clampCatalogThinkingLevel } from "@rakazo_mickvvw/core";
 import type { PrismaClient } from "@rakazo_mickvvw/db";
 import {
+  appliedComputerPersona,
   appliedModelRole,
+  ComputerPersonaTemplateNotFoundError,
   comparePreferenceOrder,
   defaultModelCredentialCandidates,
   deleteUnreferencedCredentialSecret,
@@ -43,6 +45,7 @@ import {
   Prisma,
   runAsSystemInTransaction,
   saveModelPreference,
+  setComputerPersona,
   updateModelRole,
   withTransactionRetry,
   writeModelRole,
@@ -276,6 +279,26 @@ export function modelsRoutes(ctx: RouterContext) {
             ),
           ),
         );
+      }),
+      computerPersona: authed.models.computerPersona.handler(async ({ context, input }) => {
+        if (input.expectedUserId && input.expectedUserId !== context.actor.userId)
+          throw new ORPCError("FORBIDDEN");
+        return appliedComputerPersona(deps.prisma, context.actor, input.scope);
+      }),
+      setComputerPersona: authed.models.setComputerPersona.handler(async ({ context, input }) => {
+        if (input.expectedUserId && input.expectedUserId !== context.actor.userId)
+          throw new ORPCError("FORBIDDEN");
+        try {
+          return await setComputerPersona(
+            deps.prisma,
+            { userId: context.actor.userId, spaceId: context.actor.spaceId, scope: input.scope },
+            input.promptTemplateId,
+          );
+        } catch (error) {
+          if (error instanceof ComputerPersonaTemplateNotFoundError)
+            throw new ORPCError("NOT_FOUND", { message: "Prompt template not found" });
+          throw error;
+        }
       }),
       backups: authed.models.backups.handler(async ({ context }) =>
         (await appliedModelRole(deps.prisma, context.actor, "main")).backups.map(

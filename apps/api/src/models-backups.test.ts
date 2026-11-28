@@ -64,6 +64,36 @@ function setup(
   };
   const userModelRoleChoice = roleTable("account");
   const spaceModelRoleChoice = roleTable("space");
+  // One computer persona row per copy; a row without a spaceId is the account's.
+  let personaRows: Array<{ userId: string; spaceId?: string; promptTemplateId: string }> = [];
+  const personaTable = (copy: "account" | "space") => {
+    type PersonaRow = (typeof personaRows)[number];
+    const owns = (row: PersonaRow, where: Partial<PersonaRow>) =>
+      (copy === "space") === (row.spaceId !== undefined) &&
+      (Object.keys(where) as (keyof PersonaRow)[]).every((key) => row[key] === where[key]);
+    return {
+      findFirst: vi.fn(
+        async ({ where }: { where: Partial<PersonaRow> }) =>
+          personaRows.find((row) => owns(row, where)) ?? null,
+      ),
+      deleteMany: vi.fn(async ({ where }: { where: Partial<PersonaRow> }) => {
+        const before = personaRows.length;
+        personaRows = personaRows.filter((row) => !owns(row, where));
+        return { count: before - personaRows.length };
+      }),
+      create: vi.fn(async ({ data }: { data: PersonaRow }) => {
+        personaRows.push(data);
+        return data;
+      }),
+    };
+  };
+  const userComputerPersona = personaTable("account");
+  const spaceComputerPersona = personaTable("space");
+  const promptTemplate = {
+    findUnique: vi.fn(async ({ where }: { where: { id: string } }) =>
+      where.id === "template-one" ? { userId: owner.userId } : null,
+    ),
+  };
   type OverrideKey = { spaceId: string; userId: string; setting: string };
   let overrides: OverrideKey[] = (options.overrides ?? []).map((row) => ({
     ...row,
@@ -93,6 +123,9 @@ function setup(
   const tx = {
     userModelRoleChoice,
     spaceModelRoleChoice,
+    userComputerPersona,
+    spaceComputerPersona,
+    promptTemplate,
     spaceSettingOverride,
     $queryRaw: vi.fn().mockResolvedValue([{ locked: 1 }]),
   };
@@ -106,6 +139,9 @@ function setup(
     },
     userModelRoleChoice,
     spaceModelRoleChoice,
+    userComputerPersona,
+    spaceComputerPersona,
+    promptTemplate,
     spaceSettingOverride,
     userModelCredential: {
       findMany: vi.fn(async ({ where }: { where: { userId: string; provider?: string } }) =>
@@ -839,4 +875,59 @@ it("lets a deployment-managed model lead the main model like any other purpose",
   } finally {
     vi.unstubAllEnvs();
   }
+});
+
+describe("computer persona settings API", () => {
+  it("reads an unset persona, sets one, then clears it", async () => {
+    const { call } = setup();
+
+    const before = await call("models/computerPersona", {});
+    expect(before.response.status).toBe(200);
+    await expect(before.response.json()).resolves.toEqual({
+      json: { promptTemplateId: null, scope: "account" },
+    });
+
+    const set = await call("models/setComputerPersona", { promptTemplateId: "template-one" });
+    expect(set.response.status).toBe(200);
+    await expect(set.response.json()).resolves.toEqual({
+      json: { promptTemplateId: "template-one", scope: "account" },
+    });
+
+    const read = await call("models/computerPersona", {});
+    await expect(read.response.json()).resolves.toEqual({
+      json: { promptTemplateId: "template-one", scope: "account" },
+    });
+
+    const cleared = await call("models/setComputerPersona", { promptTemplateId: null });
+    expect(cleared.response.status).toBe(200);
+    await expect(cleared.response.json()).resolves.toEqual({
+      json: { promptTemplateId: null, scope: "account" },
+    });
+  });
+
+  it("refuses a template that belongs to someone else", async () => {
+    const { call } = setup();
+
+    const refused = await call("models/setComputerPersona", {
+      promptTemplateId: "template-other",
+    });
+    expect(refused.response.status).toBe(404);
+
+    const read = await call("models/computerPersona", {});
+    await expect(read.response.json()).resolves.toEqual({
+      json: { promptTemplateId: null, scope: "account" },
+    });
+  });
+
+  it("rejects a read for another member", async () => {
+    const { call } = setup();
+
+    const read = await call("models/computerPersona", { expectedUserId: "user-two" });
+    expect(read.response.status).toBe(403);
+    const set = await call("models/setComputerPersona", {
+      promptTemplateId: "template-one",
+      expectedUserId: "user-two",
+    });
+    expect(set.response.status).toBe(403);
+  });
 });

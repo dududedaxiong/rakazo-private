@@ -42,6 +42,7 @@ import {
   RunHistoryWriteError,
   readRunTimingFields,
   recordUsage,
+  resolvedComputerPersona,
   settleReleasedTakeoverCards,
   teamChatRunFromOwner,
 } from "@rakazo_mickvvw/db";
@@ -59,10 +60,10 @@ import {
   loadRunCodeRedactions,
   loadRunLoginRedactions,
 } from "./bot-secrets.js";
-import { createClientBrowserProvider } from "./client-browser-provider.js";
-import { createClientWebProvider } from "./client-web-provider.js";
 import { partitionTools } from "./builtin-tool-bridge.js";
 import { agentConnectionTools, builtinAgentTools } from "./builtin-tools.js";
+import { createClientBrowserProvider } from "./client-browser-provider.js";
+import { createClientWebProvider } from "./client-web-provider.js";
 import { cloudAgentsEnabled } from "./cloud-agent-factory.js";
 import { mergeConnectedPlugins, needsLivePluginSync } from "./composio-connector.js";
 import { diskNoteInstruction, recordComputerDisk } from "./computer-disk.js";
@@ -77,12 +78,12 @@ import {
   renewComputerExecutionLease,
   screenLeaseIdForRun,
 } from "./computer-lifecycle.js";
+import type { ComputerRunModel } from "./computer-model-settings.js";
 import {
   computerCheckpointResolver,
   isLostPinnedModel,
   PINNED_COMPUTER_MODEL_LOST_RUN_ERROR,
   resolveComputerRunModels,
-  type ComputerRunModel,
 } from "./computer-model-settings.js";
 import { teamWorkspaceInstruction } from "./computer-support.js";
 import { checkpointRunComputerWorkspace } from "./computer-workspace.js";
@@ -873,6 +874,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const [
           discovered,
           currentTurnImages,
+          computerPersona,
           memoryContext,
           scratchpadContext,
           ticketContext,
@@ -880,6 +882,12 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         ] = await Promise.all([
           discoveredPromise,
           loadCurrentTurnImages(deps, turnBlocks, context),
+          // The persona is optional context: a lookup failure leaves the run
+          // exactly as it was without one.
+          resolvedComputerPersona(deps.prisma, {
+            userId: run.userId,
+            spaceId: run.spaceId,
+          }).catch(() => null),
           nonOwnerChatRun
             ? Promise.resolve("")
             : loadAgentMemoryContext(deps.memory, bot.id, context),
@@ -1202,26 +1210,26 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
         const computerRunModels: ComputerRunModel[] = pinnedComputerModels?.computer
           ? [{ ...pinnedComputerModels.computer, pool: "main" }]
           : // A paused turn resumes with the models it started with, even one saved before this setting.
-            (scripted || storedTurnCheckpoint || !graphical
-              ? []
-              : await resolveComputerRunModels(
-                  {
-                    prisma: deps.prisma,
-                    resolve: resolveCheckpointModel,
-                    connectionFor: async (provider, modelId) =>
-                      (
-                        await findConnectedModelCredential(
-                          deps.prisma,
-                          deps.secretStore,
-                          run,
-                          provider,
-                          modelId,
-                        )
-                      )?.id,
-                  },
-                  { userId: run.userId, spaceId: run.spaceId },
-                  mainRunModel,
-                ));
+            scripted || storedTurnCheckpoint || !graphical
+            ? []
+            : await resolveComputerRunModels(
+                {
+                  prisma: deps.prisma,
+                  resolve: resolveCheckpointModel,
+                  connectionFor: async (provider, modelId) =>
+                    (
+                      await findConnectedModelCredential(
+                        deps.prisma,
+                        deps.secretStore,
+                        run,
+                        provider,
+                        modelId,
+                      )
+                    )?.id,
+                },
+                { userId: run.userId, spaceId: run.spaceId },
+                mainRunModel,
+              );
         const computerModel = computerRunModels[0];
         const sourceMessage =
           (run.trigger === "user" || run.trigger === "follow_up") && run.sourceMessageId
@@ -1765,23 +1773,19 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
           ),
         ]);
         const fallbackModelIds = new Set([
-          ...mainPoolModels.map((candidate) =>
-            fallbackKey(candidate.provider, candidate.modelId),
-          ),
-          ...fallbackModels.map((candidate) =>
-            fallbackKey(candidate.provider, candidate.modelId),
-          ),
+          ...mainPoolModels.map((candidate) => fallbackKey(candidate.provider, candidate.modelId)),
+          ...fallbackModels.map((candidate) => fallbackKey(candidate.provider, candidate.modelId)),
         ]);
         // The computer detour's own pools, minus the computer model already
         // running; the runtime walks the main pool first, then the backups.
         const computerModelKey = (model: ComputerRunModel) =>
           JSON.stringify([model.provider, model.id, model.connectionId ?? null]);
-        const computerRunningKey = computerModel
-          ? computerModelKey(computerModel)
-          : undefined;
+        const computerRunningKey = computerModel ? computerModelKey(computerModel) : undefined;
         const computerPoolTriples = (pool: "main" | "backup") =>
           computerRunModels
-            .filter((model) => model.pool === pool && computerModelKey(model) !== computerRunningKey)
+            .filter(
+              (model) => model.pool === pool && computerModelKey(model) !== computerRunningKey,
+            )
             .map((model) => ({
               provider: model.provider,
               id: model.id,
@@ -1900,6 +1904,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                   contextStrategy !== "current" &&
                   tools.some((tool) => tool.name === "search_history"),
                 computerInstruction,
+                computerPersona: computerPersona?.content,
                 pageBrowserAllowed,
                 taskCatalogInstruction,
                 workspaceInstruction,
@@ -1954,8 +1959,7 @@ export function createRunExecutor(executorDeps: ExecutorDeps) {
                 ? async (provider, modelId, connectionId) => {
                     const key = fallbackKey(provider, modelId, connectionId);
                     const found = computerRunModels.find(
-                      (model) =>
-                        fallbackKey(model.provider, model.id, model.connectionId) === key,
+                      (model) => fallbackKey(model.provider, model.id, model.connectionId) === key,
                     );
                     if (!found) throw new Error("Computer backup model is not selected");
                     return found;

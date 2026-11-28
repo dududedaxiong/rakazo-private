@@ -90,6 +90,9 @@ export function SpaceSettingOverrides({
         voice: [queries.voice.key()],
         confirmations: [queries.approvalRules.key(), queries.autoReview.key()],
         credentials: [queries.vault.key()],
+        // No client query reads the computer persona yet; the entry only
+        // keeps the record exhaustive now the setting exists.
+        computerPersona: [],
       };
       for (const queryKey of affected[setting]) void queryClient.invalidateQueries({ queryKey });
     } catch (err) {
