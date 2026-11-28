@@ -15,6 +15,7 @@ import {
   findBotSecret,
   findCommandVariableConflict,
   findRunLogin,
+  findSiteCookie,
   findSiteLogin,
   forgetBotSecret,
   generateBotSecret,
@@ -168,6 +169,14 @@ export const secretTools: ToolHandlers = {
           ? await findSiteLogin(deps.prisma, run, destination.origin)
           : null;
       if (siteLogin) return call.finish({ saved: true, ...botSecretToolView(siteLogin) });
+      // A cookie saved for this exact site is a login route too: the browser injects it on
+      // navigate, so a login ask is satisfied without an account login, and a cookie ask is
+      // satisfied by the same item saved under another name.
+      const siteCookie =
+        !known && !siteLogin && args.replace !== true
+          ? await findSiteCookie(deps.prisma, run, destination.origin)
+          : null;
+      if (siteCookie) return call.finish({ saved: true, ...botSecretToolView(siteCookie) });
       // Action approval authorizes showing the card; it is not a credential submission.
       // Return the claim to intended so the answer transaction can approve the saved value.
       if (call.claimedEffect) {

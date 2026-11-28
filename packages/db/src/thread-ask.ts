@@ -8,6 +8,7 @@ import type {
 import {
   BOT_INSTRUCTIONS_MAX_LENGTH,
   BOT_SECRET_VALUE_MAX_LENGTH,
+  BotSecretAuth,
   encodeLoginSecret,
   loginAnswerValue,
   MessageBlock as MessageBlockSchema,
@@ -37,6 +38,7 @@ import { createThreadMessageInTransaction, loadMessageAuthor } from "./messages.
 import { deleteRunSecretsInTransaction } from "./run-secrets.js";
 import { RUN_TURN_CHECKPOINT_KIND } from "./run-turn-checkpoint.js";
 import { recordSecurityEvent } from "./security-events.js";
+import { settingsTarget } from "./space-settings.js";
 import { createPendingSteeringRun } from "./thread-steering.js";
 import { THREAD_LOCK_TRANSACTION_OPTIONS } from "./transaction-retry.js";
 
@@ -520,6 +522,225 @@ export async function answerRunInput(
   }
   await notifyRealtime(realtime, committed.threadId, committed.seq);
   return true;
+}
+
+export interface SavedCredentialAskResolution {
+  threadId: string;
+  runId: string;
+  messageId: string;
+  seq: number;
+}
+
+export interface ResolveSecretAsksForSavedCredentialInput {
+  spaceId: string;
+  userId: string;
+  destination: BotSecretDestination;
+}
+
+/**
+ * Whether the saved credential satisfies a pending secret ask, judged by what the resumed
+ * request_secret call can find: the same credential by name, the only login for the site,
+ * or the only cookie item for the site. A cookie is a login route (the browser injects it
+ * on navigate), so it satisfies a login ask; anything else stays pending. The site lookups
+ * are HTTPS-only, matching findSiteLogin / findSiteCookie.
+ */
+function savedCredentialSatisfiesSecretAsk(
+  saved: BotSecretDestination,
+  ask: BotSecretDestination,
+  counts: { logins: number; cookies: number },
+): boolean {
+  if (!saved.origin || saved.origin !== ask.origin) return false;
+  const siteLookup = saved.origin.startsWith("https://");
+  if (ask.auth.type === "login") {
+    if (saved.auth.type === "login") {
+      return saved.name === ask.name || (siteLookup && counts.logins === 1);
+    }
+    if (saved.auth.type === "browser_cookies") {
+      return siteLookup && counts.cookies === 1;
+    }
+    return false;
+  }
+  if (ask.auth.type === "browser_cookies") {
+    if (saved.auth.type !== "browser_cookies") return false;
+    return saved.name === ask.name || (siteLookup && counts.cookies === 1);
+  }
+  return false;
+}
+
+/**
+ * Answer every pending secret ask this saved credential satisfies, so a run parked on
+ * request_secret resumes instead of waiting for a card the person already answered by
+ * saving in Settings. The credential is already stored; this only marks the asks
+ * answered, approves their request_secret effects with the saved credential, and queues
+ * the runs. A save the run cannot read (another vault) resolves nothing. The counts are
+ * read once up front; a concurrent save changing them can only make the resumed tool
+ * ask again, never use the wrong credential.
+ */
+export async function answerPendingSecretAsksForSavedCredential(
+  prisma: PrismaClient,
+  input: ResolveSecretAsksForSavedCredentialInput,
+  realtime?: RealtimeFanout,
+): Promise<SavedCredentialAskResolution[]> {
+  const { spaceId, userId, destination } = input;
+  if (!destination.origin) return [];
+  // The vault this Space's runs read: the account's, or the Space's own.
+  const target = await settingsTarget(prisma, { userId, spaceId }, "credentials");
+  const vaultWhere = { userId, spaceId: target === "space" ? spaceId : null };
+  // The saved row must be in the vault the run reads; a save aimed at the other vault is
+  // invisible to the bot, so resolving would resume a run that still finds nothing.
+  const savedRow = await prisma.vaultCredential.findFirst({
+    where: { ...vaultWhere, name: destination.name },
+    select: { id: true },
+  });
+  if (!savedRow) return [];
+  const rows = await prisma.vaultCredential.findMany({
+    where: { ...vaultWhere, origin: destination.origin },
+    select: { auth: true },
+  });
+  const counts = { logins: 0, cookies: 0 };
+  for (const row of rows) {
+    const auth = BotSecretAuth.safeParse(row.auth).data;
+    if (auth?.type === "login") counts.logins += 1;
+    else if (auth?.type === "browser_cookies") counts.cookies += 1;
+  }
+  const runs = await prisma.run.findMany({
+    where: { spaceId, userId, status: "waiting_input" },
+    select: { id: true, threadId: true, botId: true },
+  });
+  const resolved: SavedCredentialAskResolution[] = [];
+  for (const run of runs) {
+    const messages = await prisma.message.findMany({
+      where: { threadId: run.threadId, runId: run.id, role: "bot" },
+      orderBy: { seq: "desc" },
+      take: 50,
+      select: { id: true, blocks: true },
+    });
+    // A waiting run is parked on exactly one pending ask; older asks are already answered.
+    let pending: { messageId: string; credential: BotSecretDestination } | null = null;
+    for (const message of messages) {
+      const parsed = MessageBlockSchema.array().safeParse(message.blocks);
+      if (!parsed.success) continue;
+      const ask = parsed.data.find(
+        (block) =>
+          block.kind === "ask" &&
+          block.status !== "answered" &&
+          block.input === "secret" &&
+          block.credential !== undefined,
+      );
+      if (ask?.kind === "ask" && ask.credential) {
+        pending = { messageId: message.id, credential: ask.credential };
+        break;
+      }
+    }
+    if (!pending) continue;
+    if (!savedCredentialSatisfiesSecretAsk(destination, pending.credential, counts)) continue;
+    const committed = await prisma.$transaction(
+      async (tx: Prisma.TransactionClient) =>
+        commitResolveSecretAsk(tx, {
+          spaceId,
+          threadId: run.threadId,
+          runId: run.id,
+          botId: run.botId,
+          messageId: pending.messageId,
+          userId,
+          savedDestination: destination,
+        }),
+      THREAD_LOCK_TRANSACTION_OPTIONS,
+    );
+    if (committed) {
+      resolved.push(committed);
+      await notifyRealtime(realtime, committed.threadId, committed.seq);
+    }
+  }
+  return resolved;
+}
+
+/**
+ * The answer half of commitAnswerRunInput for a credential that is already stored: mark the
+ * ask answered, approve its request_secret effect with the saved credential, and queue the
+ * run. No value is stored and no login fields are validated here; the vault save that
+ * called this already did both.
+ */
+async function commitResolveSecretAsk(
+  tx: Prisma.TransactionClient,
+  input: {
+    spaceId: string;
+    threadId: string;
+    runId: string;
+    botId: string;
+    messageId: string;
+    userId: string;
+    savedDestination: BotSecretDestination;
+  },
+): Promise<{ threadId: string; runId: string; messageId: string; seq: number } | null> {
+  await tx.$queryRaw`SELECT id FROM threads WHERE id = ${input.threadId} FOR UPDATE`;
+  const run = await tx.run.findFirst({
+    where: {
+      id: input.runId,
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      status: "waiting_input",
+    },
+    select: { userId: true },
+  });
+  if (!run || run.userId !== input.userId) return null;
+  const message = await tx.message.findFirst({
+    where: {
+      id: input.messageId,
+      threadId: input.threadId,
+      runId: input.runId,
+      role: "bot",
+    },
+  });
+  const parsed = MessageBlockSchema.array().safeParse(message?.blocks);
+  if (!message || !parsed.success) return null;
+  const pendingAsk = parsed.data.find(
+    (block) => block.kind === "ask" && block.status !== "answered",
+  );
+  if (pendingAsk?.kind !== "ask") return null;
+  // The ask may have been answered or dismissed since it was found; only a still-pending
+  // secret ask for a credential is resolved here.
+  if (!isSecretAskBlock(pendingAsk) || !pendingAsk.credential) return null;
+  const queued = await tx.run.updateMany({
+    where: {
+      id: input.runId,
+      spaceId: input.spaceId,
+      threadId: input.threadId,
+      status: "waiting_input",
+    },
+    data: { status: "queued" },
+  });
+  if (queued.count !== 1) return null;
+  await tx.externalEffect.updateMany({
+    where: {
+      runId: input.runId,
+      spaceId: input.spaceId,
+      kind: "request_secret",
+      status: "intended",
+    },
+    data: {
+      status: "approved",
+      result: { credentialSaved: input.savedDestination },
+    },
+  });
+  const blocks = parsed.data.map((block) =>
+    block === pendingAsk ? { ...block, status: "answered" as const, answer: "" } : block,
+  );
+  await tx.message.update({ where: { id: message.id }, data: { blocks } });
+  const updated = await appendEventInTransaction(tx, {
+    spaceId: input.spaceId,
+    threadId: input.threadId,
+    botId: input.botId,
+    type: "thread.message.updated",
+    runId: input.runId,
+    payload: { messageId: message.id, role: "bot", blocks },
+  });
+  return {
+    threadId: updated.threadId,
+    runId: input.runId,
+    messageId: message.id,
+    seq: updated.seq,
+  };
 }
 
 /** The caller holds the thread row lock acquired while accepting the new user message. */

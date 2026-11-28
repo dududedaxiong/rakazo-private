@@ -52,8 +52,18 @@ import { deleteRunSecretsInTransaction } from "./run-secrets.js";
 import { isRunResponse, readRunTimingFields } from "./run-timing.js";
 import { RUN_TURN_CHECKPOINT_KIND } from "./run-turn-checkpoint.js";
 import { SpaceDeletionInProgressError, spaceTakesWork } from "./spaces.js";
-import type { AnswerRunInput, PauseRunForInput, RunSecretWriter } from "./thread-ask.js";
-import { answerRunInput, pauseRunForInput } from "./thread-ask.js";
+import type {
+  AnswerRunInput,
+  PauseRunForInput,
+  ResolveSecretAsksForSavedCredentialInput,
+  RunSecretWriter,
+  SavedCredentialAskResolution,
+} from "./thread-ask.js";
+import {
+  answerPendingSecretAsksForSavedCredential,
+  answerRunInput,
+  pauseRunForInput,
+} from "./thread-ask.js";
 import type { ClaimedSteeringMessage, ClaimSteeringInput } from "./thread-steering.js";
 import {
   claimSteering,
@@ -105,6 +115,9 @@ export interface ThreadEvents {
     signal?: AbortSignal,
   ): AsyncGenerator<ChatAlert>;
   answerRunInput(input: AnswerRunInput): Promise<boolean>;
+  answerPendingSecretAsksForSavedCredential(
+    input: ResolveSecretAsksForSavedCredentialInput,
+  ): Promise<SavedCredentialAskResolution[]>;
   append(input: AppendEventInput): Promise<ProductEvent>;
   claimSteering(input: ClaimSteeringInput): Promise<ClaimedSteeringMessage[]>;
   clearThread(input: ClearThreadInput): Promise<ClearThreadResult>;
@@ -222,6 +235,8 @@ export function createThreadEvents(
     },
     followIncomingCalls: (userId, signal) => followIncomingCallSignals(realtime, userId, signal),
     answerRunInput: (input) => answerRunInput(prisma, input, realtime, options.runSecretWriter),
+    answerPendingSecretAsksForSavedCredential: (input) =>
+      answerPendingSecretAsksForSavedCredential(prisma, input, realtime),
     append: (input) => appendEvent(prisma, input, realtime, options.analytics),
     claimSteering: (input) => claimSteering(prisma, input),
     clearThread: (input) => clearThread(prisma, input, realtime),

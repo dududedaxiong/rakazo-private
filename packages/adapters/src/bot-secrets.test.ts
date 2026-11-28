@@ -9,6 +9,7 @@ import {
   credentialArgument,
   encodeRunCode,
   encodeRunLogin,
+  findSiteCookie,
   forgetBotSecret,
   listBotSecrets,
   listVaultItems,
@@ -1684,6 +1685,34 @@ describe("saved browser cookies", () => {
         url: "https://example.com/",
       }),
     ).toBeNull();
+  });
+
+  it("finds the one cookie item saved for a site, and nothing else", async () => {
+    const db = fakeDatabase();
+    expect(await findSiteCookie(db.prisma, scope, origin)).toBeNull();
+    await save(db);
+    expect(await findSiteCookie(db.prisma, scope, origin)).toEqual(destination);
+    expect(await findSiteCookie(db.prisma, scope, "https://other.example.test")).toBeNull();
+    expect(await findSiteCookie(db.prisma, scope, "http://example.com")).toBeNull();
+  });
+
+  it("finds nothing for a site with two cookie items or only a login", async () => {
+    const db = fakeDatabase();
+    await save(db);
+    await save(db, { ...destination, name: "example-cookies-2" });
+    expect(await findSiteCookie(db.prisma, scope, origin)).toBeNull();
+    const db2 = fakeDatabase();
+    await storeBotSecret({
+      prisma: db2.prisma,
+      secretStore,
+      scope,
+      destination: { name: "example-login", origin, auth: { type: "login" } },
+      plaintext: JSON.stringify({
+        username: "fake-user@example.test",
+        password: "fake-password-1",
+      }),
+    });
+    expect(await findSiteCookie(db2.prisma, scope, origin)).toBeNull();
   });
 
   it("re-importing refreshes the cookies and their metadata instead of refusing", async () => {

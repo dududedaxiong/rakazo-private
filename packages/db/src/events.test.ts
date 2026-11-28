@@ -1,4 +1,5 @@
 import type { RealtimeFanout } from "@rakazo_mickvvw/adapter-kit";
+import type { BotSecretDestination } from "@rakazo_mickvvw/contracts";
 import { BOT_SECRET_VALUE_MAX_LENGTH, encodeLoginSecret } from "@rakazo_mickvvw/contracts";
 import {
   TAKEOVER_COMPUTER_DONE_STATE,
@@ -23,6 +24,7 @@ import { installSecurityEventStore } from "./security-events.js";
 import type { AnswerRunInput } from "./thread-ask.js";
 import {
   AnswerTooLongError,
+  answerPendingSecretAsksForSavedCredential,
   answerRunInput,
   answerWaitingRunWithTextInTransaction,
   pauseRunForInput,
@@ -2489,6 +2491,221 @@ describe("answerWaitingRunWithTextInTransaction", () => {
         answer: "allow",
       }),
     ).resolves.toBeNull();
+    expect(tx.run.updateMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("answerPendingSecretAsksForSavedCredential", () => {
+  const origin = "https://example.com";
+  const loginAuth = { type: "login" as const };
+  const cookieAuth = { type: "browser_cookies" as const, cookieCount: 10, earliestExpiry: null };
+  const loginDestination = { name: "example-login", origin, auth: loginAuth };
+  const cookieDestination = { name: "example-cookies", origin, auth: cookieAuth };
+
+  const secretAsk = (credential: unknown, status = "pending") => ({
+    kind: "ask" as const,
+    text: "Sign in to example.com",
+    status,
+    input: "secret" as const,
+    credential,
+  });
+
+  function secretAskPrisma(setup: {
+    vaultScope?: "account" | "space";
+    savedRow?: boolean;
+    vaultAuths?: Array<Record<string, unknown>>;
+    runUserId?: string;
+    messages?: Array<{ id: string; blocks: unknown[] }>;
+  }) {
+    const messages = setup.messages ?? [{ id: "message-1", blocks: [secretAsk(loginDestination)] }];
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue([{ id: "thread-1" }]),
+      run: {
+        findFirst: vi.fn().mockResolvedValue({ userId: setup.runUserId ?? "user-1" }),
+        findUnique: vi.fn().mockResolvedValue({
+          status: "queued",
+          startedAt: null,
+          firstResponseAt: null,
+          userId: "user-1",
+          leaseOwner: null,
+          leaseFence: null,
+        }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      message: {
+        findFirst: vi
+          .fn()
+          .mockImplementation(({ where }: { where: { id: string } }) =>
+            Promise.resolve(messages.find((message) => message.id === where.id) ?? null),
+          ),
+        update: vi.fn().mockResolvedValue({ id: "message-1" }),
+      },
+      externalEffect: { updateMany: vi.fn().mockResolvedValue({ count: 1 }) },
+      thread: { update: vi.fn().mockResolvedValue({ nextEventSeq: 10 }) },
+      event: {
+        create: vi.fn(async ({ data }: { data: { seq: number; type: string } }) => ({
+          ...event(data.seq),
+          type: data.type,
+        })),
+        findFirst: vi.fn().mockResolvedValue(null),
+      },
+    };
+    const prisma = {
+      spaceSettingOverride: {
+        findUnique: vi
+          .fn()
+          .mockResolvedValue(setup.vaultScope === "space" ? { scope: "space" } : null),
+      },
+      vaultCredential: {
+        findFirst: vi.fn().mockResolvedValue(setup.savedRow === false ? null : { id: "vault-1" }),
+        findMany: vi
+          .fn()
+          .mockResolvedValue((setup.vaultAuths ?? [loginAuth]).map((auth) => ({ auth }))),
+      },
+      run: {
+        findMany: vi
+          .fn()
+          .mockResolvedValue([{ id: "run-1", threadId: "thread-1", botId: "bot-1" }]),
+      },
+      message: {
+        findMany: vi.fn().mockResolvedValue(messages),
+      },
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    } as unknown as PrismaClient;
+    return { prisma, tx };
+  }
+
+  const resolve = (prisma: PrismaClient, destination: BotSecretDestination) =>
+    answerPendingSecretAsksForSavedCredential(
+      prisma,
+      { spaceId: "workspace-1", userId: "user-1", destination },
+      new TestFanout(),
+    );
+
+  it("resolves a same-site login ask saved under the same name", async () => {
+    const { prisma, tx } = secretAskPrisma({});
+    const resolved = await resolve(prisma, loginDestination);
+    expect(resolved).toEqual([
+      { threadId: "thread-1", runId: "run-1", messageId: "message-1", seq: 9 },
+    ]);
+    expect(tx.run.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: "queued" } }),
+    );
+    expect(tx.externalEffect.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { status: "approved", result: { credentialSaved: loginDestination } },
+      }),
+    );
+    expect(tx.message.update).toHaveBeenCalledWith({
+      where: { id: "message-1" },
+      data: {
+        blocks: [{ ...secretAsk(loginDestination), status: "answered", answer: "" }],
+      },
+    });
+  });
+
+  it("resolves a same-site cookie ask saved under the same name", async () => {
+    const { prisma, tx } = secretAskPrisma({
+      messages: [{ id: "message-1", blocks: [secretAsk(cookieDestination)] }],
+      vaultAuths: [cookieAuth],
+    });
+    const resolved = await resolve(prisma, cookieDestination);
+    expect(resolved).toHaveLength(1);
+    expect(tx.externalEffect.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { status: "approved", result: { credentialSaved: cookieDestination } },
+      }),
+    );
+  });
+
+  it("resolves a login ask when the site has exactly one saved cookie set", async () => {
+    const { prisma, tx } = secretAskPrisma({ vaultAuths: [cookieAuth] });
+    const resolved = await resolve(prisma, cookieDestination);
+    expect(resolved).toHaveLength(1);
+    // The effect carries the saved cookie, not the login the ask named: the resumed tool
+    // matches the submitted result against the saved credential.
+    expect(tx.externalEffect.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { status: "approved", result: { credentialSaved: cookieDestination } },
+      }),
+    );
+  });
+
+  it("resolves a login ask saved under another name when it is the only login for the site", async () => {
+    const { prisma } = secretAskPrisma({});
+    const otherLogin = { name: "other-login", origin, auth: loginAuth };
+    const resolved = await resolve(prisma, otherLogin);
+    expect(resolved).toHaveLength(1);
+  });
+
+  it("leaves a different-origin ask pending", async () => {
+    const { prisma, tx } = secretAskPrisma({});
+    const otherSite = {
+      name: "example-login",
+      origin: "https://other.example.com",
+      auth: loginAuth,
+    };
+    const resolved = await resolve(prisma, otherSite);
+    expect(resolved).toEqual([]);
+    expect(tx.run.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("leaves a cookie ask pending when only a login was saved", async () => {
+    const { prisma, tx } = secretAskPrisma({
+      messages: [{ id: "message-1", blocks: [secretAsk(cookieDestination)] }],
+    });
+    const resolved = await resolve(prisma, loginDestination);
+    expect(resolved).toEqual([]);
+    expect(tx.run.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("leaves a one-time-code ask pending", async () => {
+    const codeAsk = {
+      kind: "ask" as const,
+      text: "Enter the code from the page",
+      status: "pending" as const,
+      input: "secret" as const,
+      oneTimeCode: { origin },
+    };
+    const { prisma, tx } = secretAskPrisma({
+      messages: [{ id: "message-1", blocks: [codeAsk] }],
+    });
+    const resolved = await resolve(prisma, loginDestination);
+    expect(resolved).toEqual([]);
+    expect(tx.run.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("resolves nothing when the saved row is not in the vault the run reads", async () => {
+    const { prisma, tx } = secretAskPrisma({ savedRow: false });
+    const resolved = await resolve(prisma, loginDestination);
+    expect(resolved).toEqual([]);
+    expect(tx.run.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("does not re-resolve an already answered ask", async () => {
+    const { prisma, tx } = secretAskPrisma({
+      messages: [{ id: "message-1", blocks: [secretAsk(loginDestination, "answered")] }],
+    });
+    const resolved = await resolve(prisma, loginDestination);
+    expect(resolved).toEqual([]);
+    expect(tx.run.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("leaves a cookie ask pending when two cookie items exist for the site", async () => {
+    const { prisma, tx } = secretAskPrisma({
+      messages: [{ id: "message-1", blocks: [secretAsk(cookieDestination)] }],
+      vaultAuths: [cookieAuth, cookieAuth],
+    });
+    const otherCookies = { name: "other-cookies", origin, auth: cookieAuth };
+    const resolved = await resolve(prisma, otherCookies);
+    expect(resolved).toEqual([]);
+    expect(tx.run.updateMany).not.toHaveBeenCalled();
+  });
+
+  it("does not resolve another person's run", async () => {
+    const { prisma, tx } = secretAskPrisma({ runUserId: "user-2" });
+    const resolved = await resolve(prisma, loginDestination);
+    expect(resolved).toEqual([]);
     expect(tx.run.updateMany).not.toHaveBeenCalled();
   });
 });

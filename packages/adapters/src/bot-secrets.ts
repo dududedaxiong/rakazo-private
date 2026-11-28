@@ -553,6 +553,29 @@ export async function findSiteLogin(prisma: PrismaClient, scope: BotSecretScope,
 }
 
 /**
+ * The one cookie item saved for exactly this HTTPS site, whatever its name. A cookie is a login
+ * route too — the browser injects it on navigate — so a login ask for the site is satisfied by
+ * it, and a cookie ask is satisfied by the same item under another name. None when two are
+ * saved, mirroring resolveCookieInjection's exactly-one rule.
+ */
+export async function findSiteCookie(prisma: PrismaClient, scope: BotSecretScope, origin: string) {
+  if (!origin.startsWith("https://")) return null;
+  const rows = await prisma.vaultCredential.findMany({
+    where: { ...(await vaultFields(prisma, scope)), origin },
+    select: metadata,
+  });
+  const cookies = rows.flatMap((row) => {
+    try {
+      const item = normalizeSecretDestination(row);
+      return item.auth.type === "browser_cookies" ? [item] : [];
+    } catch {
+      return [];
+    }
+  });
+  return cookies.length === 1 ? cookies[0] : null;
+}
+
+/**
  * The value as it is saved: a login, card or contact in its current shape, so every reader gets
  * one form. Throws when the value is not one of its kind.
  */

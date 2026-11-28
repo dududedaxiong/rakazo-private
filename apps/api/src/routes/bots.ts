@@ -33,6 +33,7 @@ import type {
   Bot,
   BotModelEntry,
   BotPromptPreset,
+  BotSecretDestination,
   BotSecretMetadata,
   SettingsScope,
   VaultImportCookiesInput,
@@ -142,6 +143,40 @@ function vaultScope(actor: Actor, vault?: SettingsScope) {
 }
 
 /**
+ * A vault save can be the answer to a run parked on request_secret: resolve any pending
+ * secret ask the saved credential satisfies, so the run resumes instead of waiting for a
+ * card the person already answered by saving. Never fails the save itself: the credential
+ * is stored either way, and a stuck ask is a nuisance, not a failed save.
+ */
+async function resolveSecretAsksForSavedCredential(
+  deps: RouterDeps,
+  scope: { userId: string; spaceId: string },
+  destination: BotSecretDestination,
+): Promise<void> {
+  let resolved: Array<{ threadId: string; runId: string; seq: number }>;
+  try {
+    resolved = await deps.events.answerPendingSecretAsksForSavedCredential({
+      spaceId: scope.spaceId,
+      userId: scope.userId,
+      destination,
+    });
+  } catch (error) {
+    getLogger().warn("vault save did not resolve pending secret asks", {
+      errorName: error instanceof Error ? error.name : typeof error,
+    });
+    return;
+  }
+  for (const item of resolved) {
+    await deps.events.notify(item.threadId, item.seq).catch((error: unknown) => {
+      getLogger().error("secret ask resolution realtime notification", error);
+    });
+    await deps.jobs.enqueue(runContinueJob(item.runId)).catch((error: unknown) => {
+      getLogger().error("secret ask resolution run enqueue", error);
+    });
+  }
+}
+
+/**
  * Save a vault item. One without a name is new and gets a free name from its title. One already
  * saved under the name keeps its value when none is given, so its title or note can change alone.
  */
@@ -167,12 +202,17 @@ async function saveVaultCredential(
   // A pasted page URL is saved under its site. One with a username or password is left
   // as typed, so the origin rule turns it down and the person can fix it.
   const site = pageUrlOrigin(input.destination.origin, { allowUserinfo: false, maxLength: 2048 });
+  const destinationFor = (itemName: string): BotSecretDestination => ({
+    ...input.destination,
+    name: itemName,
+    ...(site ? { origin: site } : {}),
+  });
   const store = (itemName: string, createOnly: boolean) =>
     storeBotSecret({
       prisma: deps.prisma,
       secretStore: deps.secrets,
       scope,
-      destination: { ...input.destination, name: itemName, ...(site ? { origin: site } : {}) },
+      destination: destinationFor(itemName),
       plaintext: value,
       title: input.title,
       note: input.note,
@@ -181,6 +221,7 @@ async function saveVaultCredential(
   try {
     if (name) {
       await store(name, false);
+      await resolveSecretAsksForSavedCredential(deps, scope, destinationFor(name));
       return vaultItemDto(deps, scope, name);
     }
     // A new item is named from its title. It is only ever created, so another save that took
@@ -190,6 +231,7 @@ async function saveVaultCredential(
       const fresh = await newVaultItemName(deps.prisma, scope, base, input.destination.auth.type);
       try {
         await store(fresh, true);
+        await resolveSecretAsksForSavedCredential(deps, scope, destinationFor(fresh));
         return vaultItemDto(deps, scope, fresh);
       } catch (error) {
         if (attempt >= 2 || !isSecretAlreadySaved(error)) throw error;
@@ -285,6 +327,7 @@ async function importVaultCookies(
   } catch (error) {
     throw mapBotSecretStoreError(error);
   }
+  await resolveSecretAsksForSavedCredential(deps, scope, { name, origin, auth });
   return {
     name,
     imported: parsed.imported,

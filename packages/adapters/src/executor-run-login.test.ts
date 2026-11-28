@@ -398,6 +398,48 @@ describe("request_secret for a website login", () => {
     });
   });
 
+  describe("saved cookies for the same site", () => {
+    const savedCookies = {
+      name: "site_cookies",
+      origin: ORIGIN,
+      auth: { type: "browser_cookies", cookieCount: 2, earliestExpiry: null },
+    };
+    const paused = [{ details: { secret: "paused" } }];
+
+    it("returns the cookie item instead of asking for a login again", async () => {
+      const { toolResults } = await runTool(requestLogin(), { vault: [savedCookies] });
+      expect(toolResults).toEqual([{ saved: true, ...savedCookies }]);
+    });
+
+    it("returns the cookie item for a cookie ask under another name", async () => {
+      const { toolResults } = await runTool(
+        requestLogin({
+          credential: {
+            name: "site_cookies_2",
+            origin: ORIGIN,
+            auth: { type: "browser_cookies", cookieCount: 0, earliestExpiry: null },
+          },
+        }),
+        { vault: [savedCookies] },
+      );
+      expect(toolResults).toEqual([{ saved: true, ...savedCookies }]);
+    });
+
+    it("asks when two cookie items are saved for the site", async () => {
+      const { toolResults } = await runTool(requestLogin(), {
+        vault: [savedCookies, { ...savedCookies, name: "site_cookies_2" }],
+      });
+      expect(toolResults).toMatchObject(paused);
+    });
+
+    it("asks when the cookie is saved for another site", async () => {
+      const { toolResults } = await runTool(requestLogin(), {
+        vault: [{ ...savedCookies, origin: "https://other.example.test" }],
+      });
+      expect(toolResults).toMatchObject(paused);
+    });
+  });
+
   it("can't be told by the bot whether to save the login", async () => {
     const { toolResults, calls } = await runTool(
       requestLogin({ remember: false, persist: false, save: false, once: true }),
